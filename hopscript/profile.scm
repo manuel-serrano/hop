@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sat Jun 16 12:45:50 2018 (serrano)                */
+;*    Last change :  Wed Jun 20 16:55:35 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -413,7 +413,7 @@
 (define js-profile-allocs (make-vector 32 #l0))
 (define js-profile-accesses (make-vector 32 #l0))
 (define js-profile-extensions (make-vector 32 #l0))
-(define js-profile-vectors (make-vector 32 #l0))
+(define js-profile-vectors (make-vector 256 #l0))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-allocs ...                                               */
@@ -479,7 +479,8 @@
 	  (display ",\n \"vectorExtensions\":")
 	  (show-json-percentages js-profile-vectors)
 	  (print "\n},"))
-	 (else #f)))
+	 (else
+	  (error "hop" "no alloc profiling configured" #f))))
 				  
    (define (show-text-alloc)
       (cond-expand
@@ -492,11 +493,12 @@
 	  (show-text-percentages js-profile-extensions)
 	  (print  "\nVECTOR EXTENSIONS:\n" "==================\n")
 	  (show-text-percentages js-profile-vectors))
-	 (else #f)))
-   
+	 (else
+	  (error "hop" "no alloc profiling configured" #f))))
+
    (with-output-to-port *profile-port*
       (lambda ()
-	 (let ((m (pregexp-match "hopscript:alloc([0-9]+)" trc)))
+	 (let ((m (pregexp-match "hopscript:alloc([0-9]*)" trc)))
 	    (cond-expand
 	       (profile
 		(if (string-contains trc "format:json")

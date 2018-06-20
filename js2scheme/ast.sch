@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sun May 20 17:02:35 2018 (serrano)                */
+;*    Last change :  Tue Jun 19 20:31:57 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -167,6 +167,15 @@
        (fun ,fun)
        (thisarg ,thisarg)
        (args ,args)))
+
+(define-macro (J2SMethodCall/cache* fun thisarg args cspecs cache)
+   `(instantiate::J2SCall
+       (loc loc)
+       (fun ,fun)
+       (thisarg ,thisarg)
+       (args ,args)
+       (cspecs ,cspecs)
+       (cache ,cache)))
 
 (define-macro (J2SAccess obj field)
    `(instantiate::J2SAccess

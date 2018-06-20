@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed May  9 12:01:04 2018 (serrano)                */
+;*    Last change :  Tue Jun 19 18:53:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -88,6 +88,7 @@
 	      (point::long (default -1))
 	      (name::obj (default '||))
 	      (method::obj (default #f))
+	      (function::obj (default #f))
 	      (pcache::obj (default #f))
 	      (usage::symbol (default '-))
 	      (cntmiss::long (default 0))

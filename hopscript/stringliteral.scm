@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Apr  8 18:08:53 2018 (serrano)                */
+;*    Last change :  Wed Jun 20 15:08:25 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -36,6 +36,7 @@
 	   (js-jsstring-ref ::obj ::uint32)
 	   (js-jsstring-ref-as-string ::obj ::uint32)
 	   (js-jsstring-length::uint32 ::obj)
+	   (js-string-literal-length::uint32 ::JsStringLiteral)
 	   (js-string-ref ::obj ::obj ::JsGlobalObject)
 	   (js-string-ref-as-string ::obj ::obj ::JsGlobalObject)
 	   (inline js-jsstring-lengthfx::long ::obj)
@@ -1043,8 +1044,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lengthu32 ::JsStringLiteral ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-lengthu32 o::JsStringLiteral %this #!optional cache)
-   (js-jsstring-codeunit-length o))
+;* (define-method (js-get-lengthu32 o::JsStringLiteral %this #!optional cache) */
+;*    (js-jsstring-codeunit-length o))                                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::JsStringLiteralASCII ...                         */
@@ -1055,8 +1056,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lengthu32 ::JsStringLiteralASCII ...                      */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-lengthu32 o::JsStringLiteralASCII %this #!optional)
-   (js-string-literal-length o))
+;* (define-method (js-get-lengthu32 o::JsStringLiteralASCII %this #!optional) */
+;*    (js-string-literal-length o))                                    */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-string! ...                                               */

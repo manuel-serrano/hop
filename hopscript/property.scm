@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jun 18 16:16:47 2018 (serrano)                */
+;*    Last change :  Tue Jun 19 20:12:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -34,6 +34,10 @@
 	   __hopscript_lib
 	   __hopscript_profile
 	   __hopscript_arithmetic)
+
+   (use    __hopscript_array
+	   __hopscript_stringliteral
+	   __hopscript_arraybufferview)
    
    (extern ($js-make-pcache::obj (::obj ::int ::obj ::JsPropertyCache)
 	      "bgl_make_pcache")
@@ -93,7 +97,7 @@
 	   
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
 	   (generic js-get-length::obj ::obj ::JsGlobalObject #!optional cache)
-	   (generic js-get-lengthu32::uint32 ::obj ::JsGlobalObject #!optional cache)
+	   (js-get-lengthu32::uint32 ::obj ::JsGlobalObject #!optional cache)
 	   
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   
@@ -1467,14 +1471,27 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lengthu32::uint32 ::obj ...                               */
+;*    -------------------------------------------------------------    */
+;*    This is not defined as a generic to avoid boxing uint32          */
+;*    results.                                                         */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get-lengthu32::uint32 o::obj %this::JsGlobalObject
-		   #!optional cache)
-   (js-touint32
-      (if cache
-	  (js-get-name/cache o 'length #f %this cache)
-	  (js-get o 'length %this))
-      %this))
+(define (js-get-lengthu32::uint32 o::obj %this::JsGlobalObject
+	   #!optional cache)
+   (cond
+      ((isa? o JsArray)
+       (js-array-length o))
+      ((isa? o JsStringLiteralASCII)
+       (js-string-literal-length o))
+      ((isa? o JsStringLiteral)
+       (js-jsstring-codeunit-length o))
+      ((isa? o JsTypedArray)
+       (js-typedarray-lengthu32 o %this cache))
+      (else
+       (js-touint32
+	  (if cache
+	      (js-get-name/cache o 'length #f %this cache)
+	      (js-get o 'length %this))
+	  %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get/cache ...                                                 */
@@ -1873,6 +1890,7 @@
 			    (set! cmap nextmap)
 			    v)))
 		     (single
+		      (js-invalidate-pcaches-pmap! %this name)
 		      (extend-cmap! cmap name flags)
 		      (with-access::JsConstructMap cmap (ctor methods)
 			 (if (isa? v JsFunction)
@@ -1881,6 +1899,7 @@
 			     (begin
 				(js-invalidate-cache-method! cmap index)
 				(when cache
+				   
 				   (js-validate-pcaches-pmap! %this)
 				   (js-pcache-next-direct! cache o cmap index))))
 			 (js-object-push/ctor! o index v ctor))
@@ -1888,6 +1907,7 @@
 		     (else
 		      ;; create a new map
 		      (let ((nextmap (extend-cmap cmap name flags)))
+			 (js-invalidate-pcaches-pmap! %this name)
 			 (with-access::JsConstructMap nextmap (methods ctor)
 			    (if (isa? v JsFunction)
 				;; validate cache method and don't cache
@@ -2944,7 +2964,7 @@
       (case (procedure-arity procedure)
 	 ((1)
 	  (case largs
-	     ((0) (lambda (this) (procedure this)))
+	     ((0) procedure)
 	     ((1) (lambda (this a0) (procedure this)))
 	     ((2) (lambda (this a0 a1) (procedure this)))
 	     ((3) (lambda (this a0 a1 a2) (procedure this)))
@@ -2956,7 +2976,7 @@
 	 ((2)
 	  (case largs
 	     ((0) (lambda (this) (procedure this (js-undefined))))
-	     ((1) (lambda (this a0) (procedure this a0)))
+	     ((1) procedure)
 	     ((2) (lambda (this a0 a1) (procedure this a0)))
 	     ((3) (lambda (this a0 a1 a2) (procedure this a0)))
 	     ((4) (lambda (this a0 a1 a2 a3) (procedure this a0)))
@@ -2968,8 +2988,19 @@
 	  (case largs
 	     ((0) (lambda (this) (procedure this (js-undefined) (js-undefined))))
 	     ((1) (lambda (this a0) (procedure this a0 (js-undefined))))
-	     ((2) (lambda (this a0 a1) (procedure this a0 a1)))
+	     ((2) procedure)
 	     ((3) (lambda (this a0 a1 a2) (procedure this a0 a1)))
+	     ((4) (lambda (this a0 a1 a2 a3) (procedure this a0 a1)))
+	     ((5) (lambda (this a0 a1 a2 a3 a4) (procedure this a0 a1)))
+	     ((6) (lambda (this a0 a1 a2 a3 a4 a5) (procedure this a0 a1)))
+	     ((7) (lambda (this a0 a1 a2 a3 a4 a5 a6) (procedure this a0 a1)))
+	     (else (lambda (this a0 a1 a2 a3 a4 a5 a6 . _) (procedure this a0 a1)))))
+	 ((4)
+	  (case largs
+	     ((0) (lambda (this) (procedure this (js-undefined) (js-undefined) (js-undefined))))
+	     ((1) (lambda (this a0) (procedure this a0 (js-undefined) (js-undefined))))
+	     ((2) (lambda (this a0 a1) (procedure this a0 a1 (js-undefined))))
+	     ((3) procedure)
 	     ((4) (lambda (this a0 a1 a2 a3) (procedure this a0 a1)))
 	     ((5) (lambda (this a0 a1 a2 a3 a4) (procedure this a0 a1)))
 	     ((6) (lambda (this a0 a1 a2 a3 a4 a5) (procedure this a0 a1)))
@@ -2999,36 +3030,41 @@
 			    (let ((f (funval el-or-desc)))
 			       (cond
 				  ((procedure? f)
-				   (with-access::JsPropertyCache ccache (pmap emap cmap index method)
+				   (with-access::JsPropertyCache ccache (pmap emap cmap index method function)
 				      ;; correct arity, put in cache
 				      (js-validate-pcaches-pmap! %this)
 				      (set! pmap omap)
 				      (set! emap #t)
 				      (set! cmap #f)
 				      (set! index i)
+				      (set! function #f)
 				      (set! method (method->procedure f))))
 				  ((isa? f JsFunction)
 				   (with-access::JsFunction f (len method)
 				      (cond
 					 ((=fx (procedure-arity method) (+fx 1 (length args)))
-					  (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method))
+					  (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
 					     ;; correct arity, put in cache
 					     (js-validate-pcaches-pmap! %this)
 					     (set! pmap omap)
 					     (set! emap #t)
 					     (set! cmap #f)
 					     (set! index i)
+					     (set! function f)
+					     (procedure-attr-set! method f)
 					     (set! cmethod method)))
 					 ((procedureN method (length args))
 					  =>
 					  (lambda (procedure)
-					     (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method))
+					     (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
 						;; correct arity, put in cache
 						(js-validate-pcaches-pmap! %this)
 						(set! pmap omap)
 						(set! emap #t)
 						(set! cmap #f)
 						(set! index i)
+						(set! function f)
+						(procedure-attr-set! procedure f)
 						(set! cmethod procedure))))
 					 (else
 					  ;; arity missmatch, never cache

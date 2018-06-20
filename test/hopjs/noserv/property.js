@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Tue Feb  6 12:35:45 2018 (serrano)                */
+/*    Last change :  Wed Jun 20 16:42:10 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
@@ -359,6 +359,15 @@ var o = { __proto__: pz };
 eq( getZ( o ), 45, "first cache" );
 pz.z = 55;
 eq( getZ( o ), 55, "second cache" );
+
+var tz0 = { a: 10, z: 45 };
+var tz = { __proto__: tz0 };
+var o2 = { __proto__: tz };
+var f = function() { return 0 };
+
+eq( getZ( o2 ), 45, "first cache (bis)" );
+tz.z = f;
+eq( getZ( o2 ), f, "second cache (bis)" );
 
 /*---------------------------------------------------------------------*/
 /*    Cmap property bug                                                */

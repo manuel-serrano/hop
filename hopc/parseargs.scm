@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Jun 16 12:35:19 2018 (serrano)                */
+;*    Last change :  Wed Jun 20 16:06:48 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -336,6 +336,9 @@
 	     (hopc-j2s-flags-set! (cons* :profile-hint #t (hopc-j2s-flags))))
 	    (("--profile-call" (help "Call profiling mode (see HOPTRACE)"))
 	     (hopc-j2s-flags-set! (cons* :profile-call #t (hopc-j2s-flags))))
+	    (("--profile-alloc" (help "Alloc profiling mode (see HOPTRACE)"))
+	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
+	     (hopc-j2s-flags-set! (cons* :profile-alloc #t (hopc-j2s-flags))))
 	    (section "Experimental features")
 	    (("--js-cspecs" ?cspecs (help "force default cache specs"))
 	     (call-with-input-string cspecs

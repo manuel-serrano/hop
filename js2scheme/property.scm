@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed May  9 12:36:53 2018 (serrano)                */
+;*    Last change :  Tue Jun 19 20:34:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -219,7 +219,7 @@
 	     (if (eq? (j2s-type obj) 'pair)
 		 (call-default-walker)
 		 (begin
-		    (set! cache (inc! count))
+		    (unless cache (set! cache (inc! count)))
 		    (cons cache (call-default-walker))))))
 	 ((read-only-function? fun)
 	  (call-default-walker))

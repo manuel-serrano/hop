@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Feb 16 08:46:41 2018 (serrano)                */
+;*    Last change :  Wed Jun 20 15:25:00 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -30,7 +30,8 @@
 	   __hopscript_worker
 	   __hopscript_arraybuffer)
 
-   (export (js-init-arraybufferview! ::JsGlobalObject)))
+   (export (js-init-arraybufferview! ::JsGlobalObject)
+	   (js-typedarray-lengthu32 o::JsTypedArray %this #!optional cache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
@@ -750,13 +751,26 @@
 	  (call-next-method)
 	  (uint32->fixnum length))))
 
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-get-lengthu32 ::JsTypedArray ...                              *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-get-lengthu32 o::JsTypedArray %this #!optional cache) */
+;*    (with-access::JsTypedArray o (length)                            */
+;*       (if (or (not *optimize-length*) (=u32 length #u32:0))         */
+;* 	  (call-next-method)                                           */
+;* 	  length)))                                                    */
+
 ;*---------------------------------------------------------------------*/
-;*    js-get-lengthu32 ::JsTypedArray ...                              */
+;*    js-typedarray-lengthu32 ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-lengthu32 o::JsTypedArray %this #!optional cache)
+(define (js-typedarray-lengthu32 o::JsTypedArray %this #!optional cache)
    (with-access::JsTypedArray o (length)
       (if (or (not *optimize-length*) (=u32 length #u32:0))
-	  (call-next-method)
+	  (js-touint32
+	     (if cache
+		 (js-get-name/cache o 'length #f %this cache)
+		 (js-get o 'length %this))
+	     %this)
 	  length)))
 
 ;*---------------------------------------------------------------------*/

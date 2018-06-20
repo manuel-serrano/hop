@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Thu May  3 08:10:28 2018 (serrano)                */
+;*    Last change :  Tue Jun 19 19:44:00 2018 (serrano)                */
 ;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -40,6 +40,8 @@
 	     ,js-pcache-owner-expander))
    (eval `(define-expander js-pcache-method
 	     ,js-pcache-method-expander))
+   (eval `(define-expander js-pcache-function
+	     ,js-pcache-function-expander))
    (eval `(define-expander js-get-name/cache
 	     ,js-get-name/cache-expander))
 

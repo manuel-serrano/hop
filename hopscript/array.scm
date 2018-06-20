@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Jun  5 14:51:19 2018 (serrano)                */
+;*    Last change :  Wed Jun 20 15:07:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -497,8 +497,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lengthu32 ::JsArray ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-lengthu32 arr::JsArray %this #!optional cache)
-   (js-array-length arr))
+;* (define-method (js-get-lengthu32 arr::JsArray %this #!optional cache) */
+;*    (js-array-length arr))                                           */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-inlined? ...                                            */
@@ -1031,7 +1031,6 @@
       (if (not (isa? this JsArray))
 	  (let ((o (js-toobject %this this)))
 	     (let ((n (js-uint32-tointeger (js-get-lengthu32 o %this))))
-		
 		(for-each (lambda (item)
 			     (js-put! o n item #f %this)
 			     (set! n (+ 1 n)))
@@ -3202,8 +3201,6 @@
 		(vector-set! vec (uint32->fixnum n) item)
 		(set! ilen idx)
 		(set! length idx)
-		;; ms: 22 feb 2017
-		;; (js-array-update-length! o (+fx (uint32->fixnum n) 1))
 		(js-uint32-tointeger idx)))
 	    ((=fx (vector-length vec) 0)
 	     (set! vec (js-create-vector (DEFAULT-EMPTY-ARRAY-SIZE)))

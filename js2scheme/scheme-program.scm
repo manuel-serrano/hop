@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Jun 15 21:41:27 2018 (serrano)                */
+;*    Last change :  Wed Jun 20 14:35:57 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -24,6 +24,7 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_scheme
+	   __js2scheme_scheme-fun
 	   __js2scheme_scheme-utils))
 
 ;*---------------------------------------------------------------------*/
@@ -123,15 +124,18 @@
 					 cnsts globals)
       (let ((scmheaders (j2s-scheme headers mode return conf))
 	    (scmdecls (j2s-scheme decls mode return conf))
+	    (scmclos (filter-map (lambda (d)
+				   (j2s-scheme-closure d mode return conf))
+		       decls))
 	    (scmnodes (j2s-scheme nodes mode return conf))
 	    (scmcnsts (%cnsts cnsts mode return conf)))
 	 (if (and main (not (config-get conf :worker #t)))
 	     (j2s-main-sans-worker-module this name
 		scmcnsts
-		(flatten-nodes (append scmheaders scmdecls))
+		(flatten-nodes (append scmheaders scmdecls scmclos))
 		(flatten-nodes scmnodes)
 		conf)
-	     (let ((body (flatten-nodes (append scmheaders scmdecls scmnodes))))
+	     (let ((body (flatten-nodes (append scmheaders scmdecls scmclos scmnodes))))
 		(cond
 		   (module
 		    ;; a module whose declaration is in the source
@@ -210,7 +214,8 @@
 (define (profilers conf)
    (when (or (config-get conf :profile-call #f)
 	     (config-get conf :profile-cache #f)
-	     (config-get conf :profile-hint #f))
+	     (config-get conf :profile-hint #f)
+	     (config-get conf :profile-alloc #f))
       `(js-profile-init ',(filter-config conf)
 	  ,(if (config-get conf :profile-call #f)
 	       '(vector %source %call-log %call-locations)
