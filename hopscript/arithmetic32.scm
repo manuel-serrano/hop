@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Jun 15 15:46:35 2018 (serrano)                */
+;*    Last change :  Thu Jun 21 08:27:27 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -174,8 +174,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-touint32-slow::uint32 obj %this)
    (cond
-      ((fixnum? obj) (fixnum->uint32 obj))
       ((flonum? obj) (js-number-touint32 obj))
+      ((fixnum? obj) (fixnum->uint32 obj))
       ((eq? obj (js-undefined)) 0)
       (else (js-number-touint32 (js-tointeger obj %this)))))
 
@@ -239,8 +239,8 @@
 	  (positive-double->uint32 obj))))
    
    (cond
-      ((fixnum? obj) (fixnum->uint32 obj))
       ((flonum? obj) (double->uint32 obj))
+      ((fixnum? obj) (fixnum->uint32 obj))
       (else (error "js-number-touint32" "bad number type" obj))))
 
 ;*---------------------------------------------------------------------*/
