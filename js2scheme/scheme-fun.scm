@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Jun 20 14:36:19 2018 (serrano)                */
+;*    Last change :  Thu Jun 21 13:01:40 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -298,7 +298,7 @@
 			  ',mode ,(eq? vararg 'rest)
 			  ,constrsize))))))))
    
-   (when (isa? this J2SDeclFun)
+   (when (and (isa? this J2SDeclFun) (not (isa? this J2SDeclSvc)))
       (with-access::J2SDeclFun this (loc id scope val usage ronly)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator)

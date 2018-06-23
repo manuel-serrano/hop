@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Jun 15 15:46:35 2018 (serrano)                */
+;*    Last change :  Thu Jun 21 09:58:22 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -513,7 +513,7 @@
       (else
        (if (>=u32 x y)
 	   (js-uint32-tointeger (-u32 x y))
-	   (-fl (uint32->real x) (uint32->real y))))))
+	   (-fl (uint32->flonum x) (uint32->flonum y))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    -/overflow ...                                                   */

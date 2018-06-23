@@ -3,7 +3,8 @@ Building and exporting the docker image
 =======================================
 
   (cd docker; docker build -t hop .)
-  docker export -o hop-docker-`date '+%d%b%y'`-git rev-parse --short HEAD`.tgz
+  docker image save -o "/tmp/hop-docker-image-`date '+%d%b%y'`-`(cd ..; git rev-parse --short HEAD)`.tgz" hop
+  docker export -o "/tmp/hop-docker-`date '+%d%b%y'`-`(cd ..; git rev-parse --short HEAD)`.tgz"
 
 
 Importing a docker image
@@ -12,6 +13,7 @@ Importing a docker image
 The Hop web site contains a pre-built docker image. To import it, use
 the following:
 
+  docker load < hop-docker-image-4may2018.tgz
   docker import hop-docker-4may2018.tgz -- hop
   
 
@@ -44,8 +46,27 @@ Run a Hop container image and execute:
 
   docker cp hop:/tmp/hop/3.2.0/docker/hop.docker .
 
-Example
-=======
+Example with hop.docker
+=======================
+
+$ mkdir -p $HOME/.config/hop
+$ cat > $HOME/.config/hop/hoprc.js << EOF
+hop = require( "hop" );
+var user = require( hop.user );
+user.add( { name: "anonymous", services: "*", directories: "*" } );
+EOF
+$ cat > /tmp/hello.js << EOF
+console.log( "Hello World!" );
+
+service hello() {
+  return <html>Hello World!</html>'
+}
+EOF
+$ hop.docker /tmp/hello.js
+$ firefox http://localhost:8080/hop/hello
+
+Example without hop.docker
+==========================
 
 $ mkdir /tmp/hopdocker
 $ cp -r examples /tmp/hopdocker

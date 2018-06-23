@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed May  9 11:55:34 2018 (serrano)                */
+/*    Last change :  Thu Jun 21 08:03:38 2018 (serrano)                */
 /*    Copyright   :  2016-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -225,13 +225,12 @@ static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 /*    -------------------------------------------------------------    */
 /*    !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!!  */
 /*    -------------------------------------------------------------    */
-/*    This C version of the array allocation, creates inner pointer    */
+/*    This C version of the array allocation creates inner pointer     */
 /*    from the object to its vector component. This is safe as long    */
 /*    as the array lives in the JavaScript world but not if the        */
-/*    array is passed to Scheme as in this situation, there will       */
-/*    not necessary be any pointer to the beginning of the object.     */
-/*    For this to be safe the GC has to be configured with             */
-/*    INNER_POINTER activated.                                         */
+/*    array is passed to Scheme because there will not necessary be a  */
+/*    pointer to the beginning of the object. For this to be safe the  */
+/*    GC has to be configured with INNER_POINTER activated.            */
 /*---------------------------------------------------------------------*/
 obj_t
 bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj_t absent, uint32_t mode ) {
