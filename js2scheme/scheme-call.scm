@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jun 19 13:43:00 2018 (serrano)                */
+;*    Last change :  Sun Jun 24 16:52:43 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -557,8 +557,10 @@ ft		`(,f ,@%gen
 	       ((isa? fun J2SAccess)
 		(if (and (config-get conf :profile-call #f) (>=fx profid 0))
 		    (with-access::J2SAccess fun (obj)
-		       (call-unknown-function fun
-			  (list (j2s-scheme obj mode return conf)) args))
+		       (let ((self (if (isa? obj J2SSuper)
+				       '(this)
+				       (list (j2s-scheme obj mode return conf)))))
+			  (call-unknown-function fun self args)))
 		    (call-method cache cspecs fun args)))
 	       ((isa? fun J2SParen)
 		(with-access::J2SParen fun (expr)
