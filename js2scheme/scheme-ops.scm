@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jun 15 15:51:44 2018 (serrano)                */
+;*    Last change :  Sun Jun 24 20:00:01 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1398,7 +1398,7 @@
 			      ,n ,(fixnum->uint32 (-fx (bit-lsh 1 k) 1)))
 			#u32:0)
 		     (uint32->fixnum (bit-rshu32 ,n ,k))
-		     (/js ,n ,(bit-lsh 1 k) %this))))
+		     (/fl (uint32->flonum ,n) (fixnum->flonum ,(bit-lsh 1 k))))))
 	    ((int32)
 	     `(let ((,n ,(j2s-scheme lhs mode return conf)))
 		 (if (=s32 (bit-ands32
@@ -1407,7 +1407,7 @@
 		     ,(if (positive? lhs)
 			  `(int32->fixnum (bit-rshs32 ,n ,k))
 			  `(int32->fixnum (/pow2s32 ,n ,k)))
-		     (/js ,n ,(bit-lsh 1 k) %this))))
+		     (/fl (int32->flonum ,n) (fixnum->flonum ,(bit-lsh 1 k))))))
 	    (else
 	     `(let ((,n ,(j2s-scheme lhs mode return conf)))
 		 (if (and (fixnum? ,n) (=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0))
