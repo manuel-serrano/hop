@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sat Jan 27 10:10:30 2018 (serrano)                */
+;*    Last change :  Sat Jun 23 06:52:37 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -415,7 +415,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (socket-timeout-set! socket ti to)
    (input-timeout-set! (socket-input socket) ti)
-   '(output-timeout-set! (socket-output socket) to))
+   (output-timeout-set! (socket-output socket) to))
 
 ;*---------------------------------------------------------------------*/
 ;*    socket-buffers-detach! ...                                       */
