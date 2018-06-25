@@ -3,8 +3,8 @@ Building and exporting the docker image
 =======================================
 
   (cd docker; docker build -t hop .)
-  docker image save -o "/tmp/hop-docker-image-`date '+%d%b%y'`-`(cd ..; git rev-parse --short HEAD)`.tgz" hop
-  docker export -o "/tmp/hop-docker-`date '+%d%b%y'`-`(cd ..; git rev-parse --short HEAD)`.tgz"
+  docker image save -o "/tmp/hop-docker-image-`date '+%d%b%y'`-`(git rev-parse --short HEAD)`.tgz" hop
+  docker export -o "/tmp/hop-docker-`date '+%d%b%y'`-`(git rev-parse --short HEAD)`.tgz"
 
 
 Importing a docker image
