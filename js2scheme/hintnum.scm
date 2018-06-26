@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Tue Jun 26 15:48:58 2018 (serrano)                */
+;*    Last change :  Tue Jun 26 17:56:23 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -100,16 +100,17 @@
 	  (cell-set! fix #f)
 	  newhint)
 	 ((not (every (lambda (h) (pair? (assq (car h) hint))) newhint))
-	  (cell-set! fix #f)
 	  (for-each (lambda (h)
 		       (let ((c (assq (car h) hint)))
-			  (if (pair? c)
+			  (cond
+			     ((pair? c)
 			      (when (<fx (cdr c) (cdr h))
 				 (cell-set! fix #f)
-				 (set-cdr! c (cdr h)))
-			      (begin
-				 (cell-set! fix #f)
-				 (set! hint (cons h hint))))))
+				 (set-cdr! c (cdr h))))
+			     ((or (not (eq? (car h) 'real))
+				  (not (pair? (assq 'index hint))))
+			      (cell-set! fix #f)
+			      (set! hint (cons h hint))))))
 	     newhint)
 	  hint)
 	 (else
@@ -269,13 +270,11 @@
 	 ((- / *)
 	  (when (or (eq? (j2s-vtype lhs) 'real) (eq? (j2s-vtype rhs) 'real))
 	     (unless (eq? type 'real)
-		(tprint "SET REAL " (j2s->list this))
 		(set! type 'real)
 		(cell-set! fix #f))))
 	 ((+)
 	  (when (and (eq? (j2s-vtype lhs) 'real) (eq? (j2s-vtype rhs) 'real))
 	     (unless (eq? type 'real)
-		(tprint "SET REAL " (j2s->list this))
 		(set! type 'real)
 		(cell-set! fix #f)))))))
 
@@ -288,7 +287,6 @@
       (when (memq op '(- +))
 	 (when (eq? (j2s-vtype expr) 'real)
 	    (unless (eq? type 'real)
-	       (tprint "SET REAL " (j2s->list this))
 	       (set! type 'real)
 	       (cell-set! fix #f))))))
 
