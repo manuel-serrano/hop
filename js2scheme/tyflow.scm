@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Jun 17 12:24:33 2018 (serrano)                */
+;*    Last change :  Tue Jun 26 10:15:10 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1527,7 +1527,7 @@
 	    (eq? op '&&))))
    
    (define (typing-one-test test envt enve)
-      (multiple-value-bind (op decl typ)
+      (multiple-value-bind (op decl typ ref)
 	 (j2s-expr-type-test test)
 	 (if (symbol? typ)
 	     (case op

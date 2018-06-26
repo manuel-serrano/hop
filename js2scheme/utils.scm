@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Jun  7 09:00:34 2018 (serrano)                */
+;*    Last change :  Tue Jun 26 10:16:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -406,19 +406,19 @@
 		((isa? rhs J2SString)
 		 (typeof op lhs rhs))
 		((isa? rhs J2SNull)
-		 (when (isa? lhs J2SRef)
+		 (when (and (isa? lhs J2SRef) (memq op '(=== !==)))
 		    (with-access::J2SRef lhs (decl)
 		       (values op decl 'null lhs))))
 		((isa? rhs J2SUndefined)
-		 (when (isa? lhs J2SRef)
+		 (when (and (isa? lhs J2SRef) (memq op '(=== !==)))
 		    (with-access::J2SRef lhs (decl)
 		       (values op decl 'undefined lhs))))
 		((isa? lhs J2SNull)
-		 (when (isa? rhs J2SRef)
+		 (when (and (isa? rhs J2SRef) (memq op '(=== !==)))
 		    (with-access::J2SRef rhs (decl)
 		       (values op decl 'null rhs))))
 		((isa? lhs J2SUndefined)
-		 (when (isa? rhs J2SRef)
+		 (when (and (isa? rhs J2SRef) (memq op '(=== !==)))
 		    (with-access::J2SRef rhs (decl)
 		       (values op decl 'undefined rhs))))
 		(else

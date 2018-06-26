@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jun 20 16:06:48 2018 (serrano)                */
+;*    Last change :  Tue Jun 26 15:58:57 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -271,6 +271,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-hint-loop #t (hopc-j2s-flags))))
 	    (("-fno-hint-loop" (help "Disable loop hint typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hint-loop #f (hopc-j2s-flags))))
+	    (("-fhintnum" (help "Enable hintnum typing"))
+	     (hopc-j2s-flags-set! (cons* :optim-hintnum #t (hopc-j2s-flags))))
+	    (("-fno-hintnum" (help "Disable hintnum typing"))
+	     (hopc-j2s-flags-set! (cons* :optim-hintnum #f (hopc-j2s-flags))))
 	    (("-frange" (help "Enable range optimization (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-range #t (hopc-j2s-flags))))
 	    (("-fno-range" (help "Disable range optimization"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Sun Jun  3 06:11:13 2018 (serrano)                */
+;*    Last change :  Tue Jun 26 15:48:58 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -269,11 +269,13 @@
 	 ((- / *)
 	  (when (or (eq? (j2s-vtype lhs) 'real) (eq? (j2s-vtype rhs) 'real))
 	     (unless (eq? type 'real)
+		(tprint "SET REAL " (j2s->list this))
 		(set! type 'real)
 		(cell-set! fix #f))))
 	 ((+)
 	  (when (and (eq? (j2s-vtype lhs) 'real) (eq? (j2s-vtype rhs) 'real))
 	     (unless (eq? type 'real)
+		(tprint "SET REAL " (j2s->list this))
 		(set! type 'real)
 		(cell-set! fix #f)))))))
 
@@ -286,6 +288,7 @@
       (when (memq op '(- +))
 	 (when (eq? (j2s-vtype expr) 'real)
 	    (unless (eq? type 'real)
+	       (tprint "SET REAL " (j2s->list this))
 	       (set! type 'real)
 	       (cell-set! fix #f))))))
 

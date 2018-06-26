@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Fri Jun 15 21:43:56 2018 (serrano)                */
+;*    Last change :  Tue Jun 26 10:06:33 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -49,6 +49,7 @@
 	 (int32 ,js-uint32->int32)
 	 (int53 ,js-uint32->fixnum)
 	 (integer ,js-uint32->integer)
+	 (real ,js-uint32->real)
 	 (number ,js-uint32->integer)
 	 (propname ,js-uint32->propname)
 	 (bool ,js-uint32->bool)
@@ -120,6 +121,7 @@
 	((uint32 js-number-touint32)
 	 (int32 js-number-toint32)
 	 (object js-number->jsobject)
+	 (number nop)
 	 (any nop)))
      (class
 	((any nop)))
@@ -174,6 +176,13 @@
        `(uint32->fixnum ,v))
       (else
        `(js-uint32-tointeger ,v))))
+
+(define (js-uint32->real v expr conf)
+   (cond
+      ((uint32? v) 
+       (uint32->flonum v))
+      (else
+       `(uint32->flonum ,v))))
 
 (define (js-uint32->fixnum v expr conf)
    (if (uint32? v) (uint32->fixnum v) `(uint32->fixnum ,v)))
@@ -401,6 +410,12 @@
 	 ((begin (and ?prof (js-profile-log-call . ?-)) ?call)
 	  `(begin ,prof ,(loop call return)))
 	 (((or bit-orjs bit-andjs bit-xorjs bitnojs) . ?rest)
+	  `(js-toflonum ,v))
+	 ((-fx/overflow ?x ?y)
+	  `(-fl (fixnum->flonum ,x) (fixnum->flonum ,y)))
+	 ((+fx/overflow ?x ?y)
+	  `(+fl (fixnum->flonum ,x) (fixnum->flonum ,y)))
+	 ((%$$NN ?x ?y)
 	  `(js-toflonum ,v))
 	 (else
 	  (let ((f (car v)))
