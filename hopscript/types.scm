@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jun 19 18:53:37 2018 (serrano)                */
+;*    Last change :  Tue Jun 26 18:49:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -91,13 +91,13 @@
 	      (function::obj (default #f))
 	      (pcache::obj (default #f))
 	      (usage::symbol (default '-))
-	      (cntmiss::long (default 0))
-	      (cntimap::long (default 0))
-	      (cntemap::long (default 0))
-	      (cntcmap::long (default 0))
-	      (cntpmap::long (default 0))
-	      (cntamap::long (default 0))
-	      (cntvtable::long (default 0)))
+	      (cntmiss::uint32 (default #u32:0))
+	      (cntimap::uint32 (default #u32:0))
+	      (cntemap::uint32 (default #u32:0))
+	      (cntcmap::uint32 (default #u32:0))
+	      (cntpmap::uint32 (default #u32:0))
+	      (cntamap::uint32 (default #u32:0))
+	      (cntvtable::uint32 (default #u32:0)))
 	   
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))

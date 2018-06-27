@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jun 19 20:12:48 2018 (serrano)                */
+;*    Last change :  Tue Jun 26 18:48:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -207,7 +207,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    vtable-threshold ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (vtable-threshold) 100)
+(define (vtable-threshold) #u32:100)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -1412,14 +1412,14 @@
 	    cache::JsPropertyCache point::long cspecs::pair-nil)
 
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage)
-      (set! cntmiss (+fx 1 cntmiss))
+      (set! cntmiss (+u32 #u32:1 cntmiss))
       (set! cname name)
       (set! cpoint point)
       (set! usage 'get))
    
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
-	 (when (>=fx cntmiss (vtable-threshold))
+	 (when (>=u32 cntmiss (vtable-threshold))
 	    (when (=fx vindex (js-not-a-index))
 	       (set! vindex (js-get-vindex %this)))
 	    (js-cmap-vtable-add! omap vindex i cache))))
@@ -2046,14 +2046,14 @@
       (let* ((%omap cmap)
 	     (tmp (js-put-jsobject! o prop v throw #t %this cache point cspecs)))
 	 (with-access::JsPropertyCache cache (cntmiss name (cpoint point) usage)
-	    (set! cntmiss (+fx 1 cntmiss))
+	    (set! cntmiss (+u32 #u32:1 cntmiss))
 	    (set! name prop)
 	    (set! cpoint point)
 	    (set! usage 'put))
 
 	 (unless (eq? %omap (js-not-a-cmap))
 	    (with-access::JsPropertyCache cache (index vindex cntmiss)
-	       (when (=fx cntmiss (vtable-threshold))
+	       (when (=u32 cntmiss (vtable-threshold))
 		   (when (>=fx index 0)
 		      (when (=fx vindex (js-not-a-index))
 			 (set! vindex (js-get-vindex %this)))
@@ -2893,7 +2893,7 @@
 	   point::long ccspecs::pair-nil ocspecs::pair-nil)
    
    (with-access::JsPropertyCache ccache (cntmiss (cname name) (cpoint point) usage)
-      (set! cntmiss (+fx 1 cntmiss))
+      (set! cntmiss (+u32 #u32:1 cntmiss))
       (set! cname name)
       (set! cpoint point)
       (set! usage 'call))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Jun 20 16:55:35 2018 (serrano)                */
+;*    Last change :  Tue Jun 26 18:44:35 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -55,11 +55,11 @@
 (define *profile* #f)
 (define *profile-cache* #f)
 (define *profile-caches* '())
-(define *profile-gets* 0)
+(define *profile-gets* #l0)
 (define *profile-gets-props* #f)
-(define *profile-puts* 0)
+(define *profile-puts* #l0)
 (define *profile-puts-props* #f)
-(define *profile-methods* 0)
+(define *profile-methods* #l0)
 (define *profile-methods-props* #f)
 (define *profile-call-tables* '())
 
@@ -130,12 +130,12 @@
 	   #!key imap emap cmap pmap amap vtable)
    (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntamap cntvtable)
       (cond
-	 (imap (set! cntimap (+ 1 cntimap)))
-	 (emap (set! cntemap (+ 1 cntemap)))
-	 (cmap (set! cntcmap (+ 1 cntcmap)))
-	 (pmap (set! cntpmap (+ 1 cntpmap)))
-	 (amap (set! cntamap (+ 1 cntamap)))
-	 (vtable (set! cntvtable (+ 1 cntvtable))))))
+	 (imap (set! cntimap (+u32 #u32:1 cntimap)))
+	 (emap (set! cntemap (+u32 #u32:1 cntemap)))
+	 (cmap (set! cntcmap (+u32 #u32:1 cntcmap)))
+	 (pmap (set! cntpmap (+u32 #u32:1 cntpmap)))
+	 (amap (set! cntamap (+u32 #u32:1 cntamap)))
+	 (vtable (set! cntvtable (+u32 #u32:1 cntvtable))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-index ...                                         */
@@ -150,7 +150,7 @@
 ;*    js-profile-log-get ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-get prop)
-   (set! *profile-gets* (+ 1 *profile-gets*))
+   (set! *profile-gets* (+llong #l1 *profile-gets*))
    (when *profile-gets-props*
       (let ((c (assq prop *profile-gets-props*)))
 	 (if (pair? c)
@@ -161,7 +161,7 @@
 ;*    js-profile-log-put ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-put prop)
-   (set! *profile-puts* (+ 1 *profile-puts*))
+   (set! *profile-puts* (+llong #l1 *profile-puts*))
    (when *profile-puts-props*
       (let ((c (assq prop *profile-puts-props*)))
 	 (if (pair? c)
@@ -172,7 +172,7 @@
 ;*    js-profile-log-method ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-method prop)
-   (set! *profile-methods* (+ 1 *profile-methods*))
+   (set! *profile-methods* (+llong #l1 *profile-methods*))
    (when *profile-methods-props*
       (let ((c (assq prop *profile-methods-props*)))
 	 (if (pair? c)
@@ -225,10 +225,36 @@
    (set! *log-vtables* #t))
 
 ;*---------------------------------------------------------------------*/
+;*    ->llong ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (->llong::llong n)
+   (cond
+      ((fixnum? n) (fixnum->llong n))
+      ((uint32? n) (uint32->llong n))
+      ((flonum? n) (flonum->llong n))
+      ((elong? n) (elong->llong n))
+      ((flonum? n) (flonum->llong n))
+      ((llong? n) n)
+      (else #l0)))
+
+;*---------------------------------------------------------------------*/
+;*    ->flonum ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (->flonum::double n)
+   (cond
+      ((fixnum? n) (fixnum->flonum n))
+      ((uint32? n) (uint32->flonum n))
+      ((flonum? n) n)
+      ((elong? n) (elong->flonum n))
+      ((llong? n) (llong->flonum n))
+      (else 0.0)))
+
+;*---------------------------------------------------------------------*/
 ;*    percent ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (percent x y)
-   (inexact->exact (floor (/ (* 100 x) y))))
+   (inexact->exact
+      (floor (*fl 100.0 (/fl (->flonum x) (->flonum y))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    padding ...                                                      */
@@ -268,10 +294,27 @@
 	     (string-append (number->string (/u32 o #u32:1000000)) ".10^6"))
 	    (else
 	     s))))
+
+   (define (format-llong o)
+      (let ((s (number->string o)))
+	 (cond
+	    ((and (<= (string-length s) sz) (<llong o #l10000))
+	     s)
+	    ((<llong o #l1000)
+	     (number->string o))
+	    ((<llong o #l1000000)
+	     (string-append (number->string (/llong o #l1000)) ".10^3"))
+	    ((<llong o #l1000000000)
+	     (string-append (number->string (/llong o #l1000000)) ".10^6"))
+	    ((<llong o #l1000000000000)
+	     (string-append (number->string (/llong o #l1000000000)) ".10^9"))
+	    (else
+	     s))))
    
    (let* ((s (cond
 		((string? o) o)
 		((uint32? o) (format-uint32 o))
+		((llong? o) (format-llong o))
 		((number? o) (format-number o))
 		((symbol? o) (symbol->string o))
 		(else (call-with-output-string (lambda () (display o))))))
@@ -646,35 +689,39 @@
       (let ((m (pregexp-match "hopscript:cache=([0-9]+)" trc)))
 	 (if m (string->integer (cadr m)) 100)))
 
-   (define (pcache-hits pc)
+   (define (pcache-hits::llong pc)
       (with-access::JsPropertyCache pc (cntimap cntemap cntcmap cntpmap cntamap cntvtable)
-	 (+ cntimap
-	    (+ cntemap
-	       (+ cntcmap
-		  (+ cntpmap
-		     (+ cntamap cntvtable)))))))
+	 (+llong (uint32->llong cntimap)
+	    (+llong (uint32->llong cntemap)
+	       (+llong (uint32->llong cntcmap)
+		  (+llong (uint32->llong cntpmap)
+		     (+llong (uint32->llong cntamap)
+			(uint32->llong cntvtable))))))))
 
    (define (pcache-multi pc)
       (with-access::JsPropertyCache pc (name usage cntimap cntemap cntcmap cntpmap cntamap cntvtable)
-	 (when (> (+ (if (> cntimap 0) 1 0)
-		     (if (> cntemap 0) 1 0)
-		     (if (> cntcmap 0) 1 0)
-		     (if (> cntpmap 0) 1 0)
-		     (if (> cntamap 0) 1 0)
-		     (if (> cntvtable 0) 1 0))
+	 (when (> (+ (if (>u32 cntimap 0) 1 0)
+		     (if (>u32 cntemap 0) 1 0)
+		     (if (>u32 cntcmap 0) 1 0)
+		     (if (>u32 cntpmap 0) 1 0)
+		     (if (>u32 cntamap 0) 1 0)
+		     (if (>u32 cntvtable 0) 1 0))
 		  1)
-	    (cons name (+ cntimap cntemap cntcmap cntpmap cntamap cntvtable)))))
+	    (cons name (pcache-hits pc)))))
 
-   (define (filecache-sum-field filecaches fieldname)
+   (define (filecache-sum-field::llong filecaches fieldname)
+
       (let ((field (find-class-field JsPropertyCache fieldname)))
-	 (if field
-	     (let ((proc (class-field-accessor field)))
-		(apply +
-		   (append-map (lambda (fc) (vmap proc (filecache-caches fc)))
-		      filecaches)))
-	     (error "filecache-sum-field" "cannot find field" fieldname))))
+         (if field
+             (let ((proc (class-field-accessor field)))
+                (apply +
+                   (append-map (lambda (fc)
+				  (vmap (lambda (n) (->llong (proc n)))
+				     (filecache-caches fc)))
+                      filecaches)))
+             (error "filecache-sum-field" "cannot find field" fieldname))))
    
-   (define (filecaches-hits filecaches)
+   (define (filecaches-hits::llong filecaches)
       (apply +
 	 (append-map (lambda (fc) (vmap pcache-hits (filecache-caches fc)))
 	    filecaches)))
@@ -716,13 +763,18 @@
 		       (filecache-caches fc)))))
 	 filecaches))
 
-   (define (total-uncaches)
-      (+ *profile-gets* *profile-puts*))
+   (define (total-uncaches::llong)
+      (+llong *profile-gets* *profile-puts*))
 
    (define total
-      (+ (filecaches-hits filecaches)
-	 (filecaches-misses filecaches)
-	 (total-uncaches)))
+      (begin
+	 (let ((h1 (filecaches-hits filecaches))
+	       (m1 (filecaches-misses filecaches))
+	       (u1 (total-uncaches)))
+	    (+llong (filecaches-hits filecaches)
+	       (+llong
+		  (filecaches-misses filecaches)
+		  (total-uncaches))))))
 
    (define multi
       (filecaches-multis filecaches))
