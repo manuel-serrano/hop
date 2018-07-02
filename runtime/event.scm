@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Jan 14 17:48:38 2018 (serrano)                */
+;*    Last change :  Mon Jul  2 07:37:11 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -230,8 +230,10 @@
 				  (apply-listeners ltns event)))))))))))
 
    (define (down e)
-      (with-access::server srv (down-listeners)
-	 (apply-listeners down-listeners e)))
+      (with-trace 'event "down@server-init!"
+	 (trace-item "e=" e)
+	 (with-access::server srv (down-listeners)
+	    (apply-listeners down-listeners e))))
 
    (with-access::server srv (host port ssl authorization %websocket %key mutex)
       (synchronize mutex
@@ -622,9 +624,12 @@
 	    (let ((resp (websocket-server-response req key :protocol '("json"))))
 	       (watch-socket! socket
 		  (lambda (s)
-		     (socket-close s)
-		     (notify-client! "disconnect" #f req
-			*disconnect-listeners*)))
+		     (with-trace 'event
+			   "watch@websocket-register-new-connection!"
+			(trace-item "CLOSING s=" s)
+			(socket-close s)
+			(notify-client! "disconnect" #f req
+			   *disconnect-listeners*))))
 	       (trace-item "resp=" (typeof resp))
 	       ;; register the websocket
 	       (synchronize *event-mutex*
@@ -657,7 +662,8 @@
 	       (with-trace 'event "start websocket service"
 		  (trace-item "key=" key)
 		  (let ((req (current-request)))
-		     (with-access::http-request req (header)
+		     (with-access::http-request req (header socket)
+			(trace-item "req.socket=" socket)
 			(if (websocket-proxy-request? header)
 			    (websocket-proxy-response req)
 			    (websocket-register-new-connection! req key)))))))
@@ -1273,30 +1279,32 @@
 	 (flush-output-port p)))
    
    (define (hybi-signal-value vstr socket)
-      (let ((p (socket-output socket)))
-	 (let ((l (string-length vstr)))
-	    ;; FIN=1, OPCODE=x1 (text)
-	    (display (integer->char #x81) p)
-	    (cond
-	       ((<=fx l 125)
-		;; 1 byte length
-		(display (integer->char l) p))
-	       ((<=fx l 65535)
-		;; 2 bytes length
-		(display #a126 p)
-		(display (integer->char (bit-rsh l 8)) p)
-		(display (integer->char (bit-and l #xff)) p))
-	       (else
-		;; 4 bytes length
-		(display #a127 p)
-		(display "\000\000\000\000" p)
-		(display (integer->char (bit-rsh l 24)) p)
-		(display (integer->char (bit-and (bit-rsh l 16) #xff)) p)
-		(display (integer->char (bit-and (bit-rsh l 8) #xff)) p)
-		(display (integer->char (bit-and l #xff)) p)))
-	    ;; payload data
-	    (display-string vstr p)
-	    (flush-output-port p))))
+      (with-trace 'event "hybi-signal-value"
+	 (let ((p (socket-output socket)))
+	    (trace-item "p=" p " closed=" (closed-output-port? p))
+	    (let ((l (string-length vstr)))
+	       ;; FIN=1, OPCODE=x1 (text)
+	       (display (integer->char #x81) p)
+	       (cond
+		  ((<=fx l 125)
+		   ;; 1 byte length
+		   (display (integer->char l) p))
+		  ((<=fx l 65535)
+		   ;; 2 bytes length
+		   (display #a126 p)
+		   (display (integer->char (bit-rsh l 8)) p)
+		   (display (integer->char (bit-and l #xff)) p))
+		  (else
+		   ;; 4 bytes length
+		   (display #a127 p)
+		   (display "\000\000\000\000" p)
+		   (display (integer->char (bit-rsh l 24)) p)
+		   (display (integer->char (bit-and (bit-rsh l 16) #xff)) p)
+		   (display (integer->char (bit-and (bit-rsh l 8) #xff)) p)
+		   (display (integer->char (bit-and l #xff)) p)))
+	       ;; payload data
+	       (display-string vstr p)
+	       (flush-output-port p)))))
    
    (with-access::http-response-websocket resp ((req request))
       (with-access::http-request req (socket)
@@ -1317,6 +1325,7 @@
 	    (with-access::http-response-websocket resp (accept)
 	       (with-trace 'event "ws-signal"
 		  (trace-item "resp=" resp)
+		  (trace-item "accept=" accept)
 		  (if accept
 		      (hybi-signal-value vstr socket)
 		      (hixie-signal-value vstr socket))))))))

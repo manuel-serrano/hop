@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 21 18:31:30 2017                          */
-;*    Last change :  Wed Mar  7 11:56:07 2018 (serrano)                */
+;*    Last change :  Mon Jul  2 06:57:16 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Watch for socket close                                           */
@@ -63,21 +63,30 @@
 		      (open-pipes)
 		      (set! *inpipe* in)
 		      (set! *outpipe* out))))
-	     (multiple-value-bind (readfs _ _)
+	     (multiple-value-bind (readfs _ errfs)
 		(with-handler
 		   (lambda (e)
 		      (values '() #f #f))
 		   (select :read (cons *inpipe* *sockets*)))
 		(let ((socks (filter socket? readfs)))
-		   (for-each onclose socks)
-		   (synchronize *watch-mutex*
-		      (for-each (lambda (s)
-				   (set! *sockets* (remq! s *sockets*)))
-			 socks)
-		      (unless (pair? *sockets*)
-			 (close-input-port *inpipe*)
-			 (close-output-port *outpipe*)
-			 (set! *inpipe* #f)
-			 (set! *outpipe* #f)))
-		   (when *outpipe*
-		      (loop)))))))))
+		   (with-trace 'watch "watch-thread"
+		      (trace-item "readfs=" readfs)
+		      (trace-item "errfs=" errfs)
+		      (when (pair? readfs)
+			 (for-each (lambda (p)
+				      (tprint "p=" p " c="
+					 (read-byte (socket-input p))))
+			    readfs))
+		      (for-each onclose socks)
+		      (synchronize *watch-mutex*
+			 (for-each (lambda (s)
+				      (set! *sockets* (remq! s *sockets*)))
+			    socks)
+			 (unless (pair? *sockets*)
+			    (close-input-port *inpipe*)
+			    (close-output-port *outpipe*)
+			    (set! *inpipe* #f)
+			    (set! *outpipe* #f)))
+		      (when *outpipe*
+			 (sleep 1000000)
+			 (loop))))))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Apr 26 10:24:57 2018 (serrano)                */
+;*    Last change :  Mon Jul  2 07:03:44 2018 (serrano)                */
 ;*    Copyright   :  2012-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -623,96 +623,110 @@
 
    (with-access::websocket ws (%mutex %condvar %socket url authorization state onopens protocol
 				 onmessages onerrors oncloses onbinary)
-      (synchronize %mutex
-	 (unless (websocket-connected? ws)
-	    (multiple-value-bind (scheme userinfo host port path)
-	       (url-parse url)
-	       (let* ((sock (make-client-socket/timeout host port -1 0 (string=? scheme "https")))
-		      (in (socket-input sock))
-		      (out (socket-output sock)))
-		  (set! %socket sock)
-		  (let* ((uagent (format "Hop ~a" (hop-version)))
-			 (origin (format "http://~a:~a" host port))
-			 (sec-ws-key (base64-encode
-					(format "ws~a"
-					   (hop-login-cookie-crypt-key)))))
-		     (http :in in :out out
-			:method 'GET
-			:http-version 'HTTP/1.1
-			:host (format "~a:~a" host port)
-			:path path
-			:authorization authorization
-			:header (append `((user-agent: . ,uagent)
-					  (Connection: . Upgrade)
-					  (Upgrade: . websocket)
-					  (Origin: . ,origin)
-					  (Sec-WebSocket-Key: . ,sec-ws-key)
-					  (Sec-WebSocket-Version: . 13))
-				   (if (string? protocol)
-				       `((Sec-WebSocket-Protocol: . ,protocol))
-				       '())))
-		     (multiple-value-bind (http status line)
-			(http-parse-status-line in)
-			(if (=fx status 101)
-			    (multiple-value-bind (header host port clen tenc auth pauth connection)
-			       (http-parse-header in out)
-			       (let ((accept (assq sec-websocket-accept: header)))
-				  (when (and (pair? accept)
-					     (string=?
-						(websocket-hybi-accept sec-ws-key)
-						(cdr accept)))
-				     (set! state 'open)
-				     (when (pair? onopens)
-					(let ((se (instantiate::websocket-event
-						     (name "open")
-						     (target ws)
-						     (value ws))))
-					   (apply-listeners onopens se)))
-				     (thread-start!
-					(instantiate::hopthread
-					   (body (lambda ()
-						    (synchronize %mutex
-						       (unless (or (pair? onmessages)
-								   (pair? onerrors)
-								   (pair? oncloses))
-							  (condition-variable-wait! %condvar %mutex)))
-						    (with-handler
-						       (lambda (e)
-							  (if (not %socket)
-							      (close)
-							      (begin
-								 (exception-notify e)
-								 (if (eof-error? e)
-								     (close)
-								     (abort e)))))
-						       (let ((in (socket-input sock)))
-							  (input-timeout-set! in 0)
-							  (let loop ()
-							     (multiple-value-bind (opcode payload)
-								(websocket-read sock)
-								(case (bit-and opcode #xf)
-								   ((0)
-								    (close))
-								   ((1)
-								    ;; text message
-								    (cond
-								       ((string? payload)
-									(message payload)
-									(if %socket (loop) (close)))
-								       ((eof-object? payload)
-									(close))
-								       (else
-									(abort payload))))
-								   ((2)
-								    ;; binary message
-								    (if onbinary
-									(with-handler
-									   (lambda (e) #f)
-									   (onbinary payload)))
-								    (loop))
-								   (else
-								    (abort payload))))))))))))))
-			    (close))))))))))
+      (with-trace 'websocket "websocket-connect!"
+	 (synchronize %mutex
+	    (trace-item "ws=" ws)
+	    (trace-item "websocket-connected?=" (websocket-connected? ws))
+	    (unless (websocket-connected? ws)
+	       (multiple-value-bind (scheme userinfo host port path)
+		  (url-parse url)
+		  (let* ((sock (make-client-socket/timeout host port -1 0 (string=? scheme "https")))
+			 (in (socket-input sock))
+			 (out (socket-output sock)))
+		     (set! %socket sock)
+		     (let* ((uagent (format "Hop ~a" (hop-version)))
+			    (origin (format "http://~a:~a" host port))
+			    (sec-ws-key (base64-encode
+					   (format "ws~a"
+					      (hop-login-cookie-crypt-key)))))
+			(http :in in :out out
+			   :method 'GET
+			   :http-version 'HTTP/1.1
+			   :host (format "~a:~a" host port)
+			   :path path
+			   :authorization authorization
+			   :header (append `((user-agent: . ,uagent)
+					     (Connection: . Upgrade)
+					     (Upgrade: . websocket)
+					     (Origin: . ,origin)
+					     (Sec-WebSocket-Key: . ,sec-ws-key)
+					     (Sec-WebSocket-Version: . 13))
+				      (if (string? protocol)
+					  `((Sec-WebSocket-Protocol: . ,protocol))
+					  '())))
+			(multiple-value-bind (http status line)
+			   (http-parse-status-line in)
+			   (trace-item "http=" http)
+			   (trace-item "status=" status)
+			   (trace-item "line=" line)
+			   (if (=fx status 101)
+			       (multiple-value-bind (header host port clen tenc auth pauth connection)
+				  (http-parse-header in out)
+				  (trace-item "header=" header)
+				  (trace-item "host=" host)
+				  (trace-item "port=" port)
+				  (trace-item "connection=" connection)
+				  (let ((accept (assq sec-websocket-accept: header)))
+				     (trace-item "accept=" accept)
+				     (when (and (pair? accept)
+						(string=?
+						   (websocket-hybi-accept sec-ws-key)
+						   (cdr accept)))
+					(set! state 'open)
+					(when (pair? onopens)
+					   (let ((se (instantiate::websocket-event
+							(name "open")
+							(target ws)
+							(value ws))))
+					      (apply-listeners onopens se)))
+					(thread-start!
+					   (instantiate::hopthread
+					      (body (lambda ()
+						       (with-trace 'websocket "thread@websocket-connect!"
+							  (synchronize %mutex
+							     (unless (or (pair? onmessages)
+									 (pair? onerrors)
+									 (pair? oncloses))
+								(condition-variable-wait! %condvar %mutex)))
+							  (with-handler
+							     (lambda (e)
+								(if (not %socket)
+								    (close)
+								    (begin
+								       (exception-notify e)
+								       (if (eof-error? e)
+									   (close)
+									   (abort e)))))
+							     (let ((in (socket-input sock)))
+								(input-timeout-set! in 0)
+								(let loop ()
+								   (multiple-value-bind (opcode payload)
+								      (websocket-read sock)
+								      (trace-item "opcode=" opcode)
+								      (trace-item "payload=" payload)
+								      (case (bit-and opcode #xf)
+									 ((0)
+									  (close))
+									 ((1)
+									  ;; text message
+									  (cond
+									     ((string? payload)
+									      (message payload)
+									      (if %socket (loop) (close)))
+									     ((eof-object? payload)
+									      (close))
+									     (else
+									      (abort payload))))
+									 ((2)
+									  ;; binary message
+									  (if onbinary
+									      (with-handler
+										 (lambda (e) #f)
+										 (onbinary payload)))
+									  (loop))
+									 (else
+									  (abort payload)))))))))))))))
+			       (close)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-close ...                                              */
@@ -935,6 +949,7 @@
       (let ((s (read-byte in)))
 	 (if (integer? s)
 	     (let ((len (read-payload-len (bit-and s #x7f) in)))
+		(trace-item "len=" len)
 		(cond
 		   ((not len)
 		    (if (eof-object? len)
@@ -955,6 +970,8 @@
 				   (if (integer? key3)
 				       (let ((key (vector key0 key1 key2 key3))
 					     (payload (read-chars len in)))
+					  (trace-item "key=" key)
+					  (trace-item "playload=" payload)
 					  (if (string? payload)
 					      (unmask payload key)
 					      payload))
@@ -963,16 +980,18 @@
 			       key1)
 			   key0)))))
 	     s)))
-   
-   (let ((in (socket-input sock)))
-      ;; MS: to be completed with ping, pong, and close.
-      (let ((b (read-byte in)))
-	 (cond
-	    ((or (check-byte b #x81) (check-byte b #x82))
-	     (values b (payload in)))
-	    ((integer? b)
-	     (values b #f))
-	    ((eof-object? b)
-	     (values 0 #f))
-	    (else
-	     (values -1 #f))))))
+
+   (with-trace 'websocket "websocket-read"
+      (let ((in (socket-input sock)))
+	 ;; MS: to be completed with ping, pong, and close.
+	 (let ((b (read-byte in)))
+	    (trace-item "b0=" (if (integer? b) (integer->string b 16) b))
+	    (cond
+	       ((or (check-byte b #x81) (check-byte b #x82))
+		(values b (payload in)))
+	       ((integer? b)
+		(values b #f))
+	       ((eof-object? b)
+		(values 0 #f))
+	       (else
+		(values -1 #f)))))))
