@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Jun  7 08:12:08 2018 (serrano)                */
+;*    Last change :  Fri Jun 29 16:50:59 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1683,9 +1683,11 @@
 ;*    nodejs-tty-handle ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tty-handle %worker fd readable)
+   ;; dup in order not to impact Scheme program that might expected
+   ;; the console to be blocking
    (instantiate::UvTty
       (loop (worker-loop %worker))
-      (fd fd)
+      (fd (uv-fs-dup fd))
       (readable readable)))
 
 ;*---------------------------------------------------------------------*/
