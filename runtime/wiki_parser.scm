@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/wiki_parser.scm           */
+;*    serrano/prgm/project/hop/3.2.x/runtime/wiki_parser.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sat Nov  7 09:59:24 2015 (serrano)                */
-;*    Copyright   :  2006-15 Manuel Serrano                            */
+;*    Last change :  Tue Jul  3 11:08:05 2018 (serrano)                */
+;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -1202,13 +1202,13 @@
       
       ;; embedded hop
       (",("
-	 (rgc-buffer-unget-char (the-port) (char->integer #\())
+       (rgc-buffer-unget-char (the-port) (char->integer #\())
 	 (with-handler
 	    (lambda (e)
 	       (exception-notify e)
 	       (add-expr! (<SPAN> :hssclass "hop-parse-error"
 			     (string (the-failure)))))
-	    (let ((expr (hop-read (the-port))))
+	    (let ((expr (hop-read (the-port) :charset charset)))
 	       (with-handler
 		  (lambda (e)
 		     (exception-notify e)
