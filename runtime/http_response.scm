@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/3.2.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Sep 11 00:37:20 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Mon Jul  2 18:02:44 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -777,7 +777,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure #!key args body)
    (with-trace 'hop-response "http-send-request"
-      (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout connection-timeout connection)
+      (with-access::http-request req (scheme method path (httpv http) host port header userinfo timeout connection-timeout connection)
 	 (let ((ssl (eq? scheme 'https)))
 	    (let loop ((host host)
 		       (port port)

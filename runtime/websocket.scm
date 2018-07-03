@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Mon Jul  2 07:03:44 2018 (serrano)                */
+;*    Last change :  Mon Jul  2 17:28:38 2018 (serrano)                */
 ;*    Copyright   :  2012-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -568,35 +568,38 @@
 (define (websocket-connect! ws::websocket)
    
    (define (close)
-      (with-access::websocket ws (%mutex %socket oncloses state)
-	 (synchronize %mutex
-	    (unless (memq state '(closed closing))
-	       (when (pair? oncloses)
-		  (set! state 'closing)
+      (with-trace 'websocket "close@websocket-connect!"
+	 (with-access::websocket ws (%mutex %socket oncloses state)
+	    (synchronize %mutex
+	       (unless (memq state '(closed closing))
+		  (when (pair? oncloses)
+		     (set! state 'closing)
+		     (let ((se (instantiate::websocket-event
+				  (name "close")
+				  (target ws)
+				  (value ws))))
+			(apply-listeners oncloses se)))
+		  (set! state 'closed)
+		  (when (socket? %socket)
+		     (socket-shutdown %socket)
+		     (set! %socket #f)))))))
+   
+   (define (abort e)
+      (with-trace 'websocket "abort@websocket-connect!"
+	 (trace-item "e=" e)
+	 (with-access::websocket ws (%mutex %socket onerrors state)
+	    (synchronize %mutex
+	       (when (pair? onerrors)
 		  (let ((se (instantiate::websocket-event
 			       (name "close")
 			       (target ws)
-			       (value ws))))
-		     (apply-listeners oncloses se)))
-	       (set! state 'closed)
+			       (data e)
+			       (value e))))
+		     (apply-listeners onerrors se)))
 	       (when (socket? %socket)
 		  (socket-shutdown %socket)
+		  (set! state 'closed)
 		  (set! %socket #f))))))
-   
-   (define (abort e)
-      (with-access::websocket ws (%mutex %socket onerrors state)
-	 (synchronize %mutex
-	    (when (pair? onerrors)
-	       (let ((se (instantiate::websocket-event
-			    (name "close")
-			    (target ws)
-			    (data e)
-			    (value e))))
-		  (apply-listeners onerrors se)))
-	    (when (socket? %socket)
-	       (socket-shutdown %socket)
-	       (set! state 'closed)
-	       (set! %socket #f)))))
    
    (define (message val)
       (with-access::websocket ws (onmessages %mutex)
@@ -630,6 +633,10 @@
 	    (unless (websocket-connected? ws)
 	       (multiple-value-bind (scheme userinfo host port path)
 		  (url-parse url)
+		  (trace-item "url=" url)
+		  (trace-item "host=" host)
+		  (trace-item "port=" port)
+		  (trace-item "path=" path)
 		  (let* ((sock (make-client-socket/timeout host port -1 0 (string=? scheme "https")))
 			 (in (socket-input sock))
 			 (out (socket-output sock)))
@@ -663,8 +670,6 @@
 			       (multiple-value-bind (header host port clen tenc auth pauth connection)
 				  (http-parse-header in out)
 				  (trace-item "header=" header)
-				  (trace-item "host=" host)
-				  (trace-item "port=" port)
 				  (trace-item "connection=" connection)
 				  (let ((accept (assq sec-websocket-accept: header)))
 				     (trace-item "accept=" accept)

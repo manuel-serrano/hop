@@ -3,10 +3,22 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 21 18:31:30 2017                          */
-;*    Last change :  Mon Jul  2 06:57:16 2018 (serrano)                */
+;*    Last change :  Tue Jul  3 04:59:12 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Watch for socket close                                           */
+;*    -------------------------------------------------------------    */
+;*    This module implements the WATCH-SOCKET! facility that waits     */
+;*    for a socket termination. More precisely, it waits for a char    */
+;*    to be available on the socket, as the only char that can be      */
+;*    read is EOF.                                                     */
+;*                                                                     */
+;*    The *INPIPE* variable is used to "unlock" the SELECT call when   */
+;*    a new thread is to be added to the watch set.                    */
+;*                                                                     */
+;*    An alternative method, without select would consist in spawning  */
+;*    a new thread waiting for EOF each time a new socket is to be     */
+;*    watched.                                                         */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -35,8 +47,15 @@
 (define (watch-socket! socket onclose)
    (cond-expand
       (bigloo4.3a
-       #unspecified)
+       ;; alternative without select
+       (thread-start!
+	  (instantiate::hopthread
+	     (body (lambda ()
+		      (input-port-timeout-set! (socket-input socket) 0)
+		      (onclose socket))))))
       (else
+       ;; efficient method with select and an pipe to unlock it
+       ;; when a new socket is to be added
        (synchronize *watch-mutex*
 	  (set! *sockets* (cons socket *sockets*))
 	  (if *outpipe*
@@ -72,11 +91,6 @@
 		   (with-trace 'watch "watch-thread"
 		      (trace-item "readfs=" readfs)
 		      (trace-item "errfs=" errfs)
-		      (when (pair? readfs)
-			 (for-each (lambda (p)
-				      (tprint "p=" p " c="
-					 (read-byte (socket-input p))))
-			    readfs))
 		      (for-each onclose socks)
 		      (synchronize *watch-mutex*
 			 (for-each (lambda (s)
