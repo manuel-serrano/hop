@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Thu Jul  5 17:44:31 2018 (serrano)                */
+/*    Last change :  Thu Jul  5 19:27:16 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
@@ -11,6 +11,18 @@
 "use hopscript";
 
 var assert = require( "assert" );
+
+/*---------------------------------------------------------------------*/
+/*    hop                                                              */
+/*---------------------------------------------------------------------*/
+function hopa() {
+   const obj = {};
+   ({ foo: obj.prop } = { foo: 123 });
+   return obj.prop;
+}
+
+console.log( "hop" );
+console.log( "   hopa()"); assert.ok( hopa(), 123 );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -174,25 +186,25 @@ function kangaxs() {
       c === 6 && d instanceof Array && d.length === 0;
 }
 
-function kangaxt() {
-   var a = [1, 2, 3], first, last;
-   [first, ...[a[2], last]] = a;
-   return first === 1 && last === 3 && (a + "") === "1,2,2";
+/* function kangaxt() {                                                */
+/*    var a = [1, 2, 3], first, last;                                  */
+/*    [first, ...[a[2], last]] = a;                                    */
+/*    return first === 1 && last === 3 && (a + "") === "1,2,2";        */
+/* }                                                                   */
+
+function kangaxu() {
+   [] = [1,2];
+   ({} = {a:1,b:2});
+   return true;
 }
 
-/* function kangaxu() {                                                */
-/*    [] = [1,2];                                                      */
-/*    ({} = {a:1,b:2});                                                */
-/*    return true;                                                     */
-/* }                                                                   */
-/*                                                                     */
-/* function kangaxv() {                                                */
-/*    var a,b,c,d,e,f;                                                 */
-/*    ({a = 1, b = 0, z:c = 3} = {b:2, z:undefined});                  */
-/*    [d = 0, e = 5, f = 6] = [4,,undefined];                          */
-/*    return a === 1 && b === 2 && c === 3                             */
-/*       && d === 4 && e === 5 && f === 6;                             */
-/* }                                                                   */
+function kangaxv() {
+   var a,b,c,d,e,f;
+   ({a = 1, b = 0, z:c = 3} = {b:2, z:undefined});
+   [d = 0, e = 5, f = 6] = [4,,undefined];
+   return a === 1 && b === 2 && c === 3
+      && d === 4 && e === 5 && f === 6;
+}
 
 console.log( "kangax" );
 console.log( "   kangaxa()"); assert.ok( kangaxa(), "kangaxa" );
@@ -215,6 +227,6 @@ console.log( "   kangaxq()"); assert.ok( kangaxq(), "kangaxq" );
 console.log( "   kangaxr()"); assert.ok( kangaxr(), "kangaxr" );
 console.log( "   kangaxs()"); assert.ok( kangaxs(), "kangaxs" );
 console.log( "   kangaxt()"); assert.ok( kangaxt(), "kangaxt" );
-/* console.log( "   kangaxu()"); assert.ok( kangaxu(), "kangaxu" );    */
-/* console.log( "   kangaxv()"); assert.ok( kangaxv(), "kangaxv" );    */
+console.log( "   kangaxu()"); assert.ok( kangaxu(), "kangaxu" );
+console.log( "   kangaxv()"); assert.ok( kangaxv(), "kangaxv" );
        
