@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Jun 19 20:31:57 2018 (serrano)                */
+;*    Last change :  Thu Jul  5 10:59:34 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -309,6 +309,14 @@
        (endloc loc)
        (decls ,decls)
        (nodes ,(if (pair? nodes) `(list ,@nodes) ''()))))
+
+(define-macro (J2SLetRecBlock* rec decls nodes)
+   `(instantiate::J2SLetBlock
+       (loc loc)
+       (rec ,rec)
+       (endloc loc)
+       (decls ,decls)
+       (nodes ,nodes)))
 
 (define-macro (J2STry body catch . finally)
    `(instantiate::J2STry

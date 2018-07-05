@@ -1,34 +1,16 @@
 /*=====================================================================*/
-/*    .../hop/3.2.x/test/hopjs/noserv/es6-destructing-assig.js         */
+/*    serrano/trashcan/es6-destructing-assig.js                        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Sun Apr 22 08:02:27 2018 (serrano)                */
+/*    Last change :  Thu Jul  5 17:44:31 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
 /*=====================================================================*/
-
 "use hopscript";
 
 var assert = require( "assert" );
-
-/*---------------------------------------------------------------------*/
-/*    hop                                                              */
-/*---------------------------------------------------------------------*/
-const hopa = ( {a, b}, res ) => {
-   return a - b == res;
-};
-
-const hopb = ( {a: A, b: B}, res ) => {
-   return A - B == res;
-};
-
-console.log( "hop" );
-console.log( "   hopa()"); assert.ok( hopa( {a: 1, b: 2}, -1 ), "hopa" );
-console.log( "   hopa()"); assert.ok( hopa( {b: 2, a: 1}, -1 ), "hopa" );
-console.log( "   hopb()"); assert.ok( hopb( {a: 1, b: 2}, -1 ), "hopb" );
-console.log( "   hopb()"); assert.ok( hopb( {b: 2, a: 1}, -1 ), "hopb" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -83,13 +65,13 @@ function kangaxe() {
 
 function kangaxf() {
    var a,b,c;
-   [a, b, c] = __create(global.__createIterableObject([1, 2]));
+   [a, b, c] = __createIterableObject([1, 2], {});
    return a === 1 && b === 2 && c === undefined;
 }
 
 function kangaxg() {
    var closed = false;
-   var iter = global.__createIterableObject([1, 2, 3], {
+   var iter = __createIterableObject([1, 2, 3], {
       'return': function(){ closed = true; return {}; }
    });
    var a,b;
@@ -198,19 +180,19 @@ function kangaxt() {
    return first === 1 && last === 3 && (a + "") === "1,2,2";
 }
 
-function kangaxu() {
-   [] = [1,2];
-   ({} = {a:1,b:2});
-   return true;
-}
-
-function kangaxv() {
-   var a,b,c,d,e,f;
-   ({a = 1, b = 0, z:c = 3} = {b:2, z:undefined});
-   [d = 0, e = 5, f = 6] = [4,,undefined];
-   return a === 1 && b === 2 && c === 3
-      && d === 4 && e === 5 && f === 6;
-}
+/* function kangaxu() {                                                */
+/*    [] = [1,2];                                                      */
+/*    ({} = {a:1,b:2});                                                */
+/*    return true;                                                     */
+/* }                                                                   */
+/*                                                                     */
+/* function kangaxv() {                                                */
+/*    var a,b,c,d,e,f;                                                 */
+/*    ({a = 1, b = 0, z:c = 3} = {b:2, z:undefined});                  */
+/*    [d = 0, e = 5, f = 6] = [4,,undefined];                          */
+/*    return a === 1 && b === 2 && c === 3                             */
+/*       && d === 4 && e === 5 && f === 6;                             */
+/* }                                                                   */
 
 console.log( "kangax" );
 console.log( "   kangaxa()"); assert.ok( kangaxa(), "kangaxa" );
@@ -233,6 +215,6 @@ console.log( "   kangaxq()"); assert.ok( kangaxq(), "kangaxq" );
 console.log( "   kangaxr()"); assert.ok( kangaxr(), "kangaxr" );
 console.log( "   kangaxs()"); assert.ok( kangaxs(), "kangaxs" );
 console.log( "   kangaxt()"); assert.ok( kangaxt(), "kangaxt" );
-console.log( "   kangaxu()"); assert.ok( kangaxu(), "kangaxu" );
-console.log( "   kangaxv()"); assert.ok( kangaxv(), "kangaxv" );
+/* console.log( "   kangaxu()"); assert.ok( kangaxu(), "kangaxu" );    */
+/* console.log( "   kangaxv()"); assert.ok( kangaxv(), "kangaxv" );    */
        
