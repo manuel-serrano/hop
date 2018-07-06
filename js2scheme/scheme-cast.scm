@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Jun 26 10:06:33 2018 (serrano)                */
+;*    Last change :  Fri Jul  6 07:48:31 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -42,7 +42,7 @@
 	 (propname ,js-int32->propname)
 	 (bool ,js-int32->bool)
 	 (string ,js-int32->string)
-	 (object js-number->jsobject)
+	 (object ,js-int32->jsobject)
 	 (any ,js-int32->integer)))
      (uint32
 	((uint29 nop)
@@ -54,14 +54,14 @@
 	 (propname ,js-uint32->propname)
 	 (bool ,js-uint32->bool)
 	 (string ,js-uint32->string)
-	 (object js-number->jsobject)
+	 (object ,js-uint32->jsobject)
 	 (any ,js-uint32->integer)))
      (int53
 	((int30 nop)
 	 (int32 js-int53-toint32)
 	 (uint32 js-int53-touint32)
 	 (number js-int53-tointeger)
-	 (object js-number->jsobject)
+	 (object ,js-number->jsobject)
 	 (any js-int53-tointeger)))
      (integer
 	((int32 ,js-fixnum->int32)
@@ -120,7 +120,7 @@
      (real
 	((uint32 js-number-touint32)
 	 (int32 js-number-toint32)
-	 (object js-number->jsobject)
+	 (object ,js-number->jsobject)
 	 (number nop)
 	 (any nop)))
      (class
@@ -347,6 +347,24 @@
        `(fixnum->uint32 ,v))
       (else
        `(js-number-touint32 ,v))))
+
+(define (js-int32->jsobject v expr conf)
+   (cond
+      ((inrange-int30? expr)
+       `(js-number->jsNumber (int32->fixnum ,v) %this))
+      ((m64? conf)
+       `(js-number->jsNumber (int32->fixnum ,v) %this))
+      (else
+       `(js-number->jsNumber (int32->flonum ,v) %this))))
+
+(define (js-uint32->jsobject v expr conf)
+   (cond
+      ((inrange-int30? expr)
+       `(js-number->jsNumber (uint32->fixnum ,v) %this))
+      ((m64? conf)
+       `(js-number->jsNumber (uint32->fixnum ,v) %this))
+      (else
+       `(js-number->jsNumber (uint32->flonum ,v) %this))))
 
 (define (js-number->jsobject v expr conf)
    `(js-number->jsNumber ,v %this))

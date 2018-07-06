@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jun 19 18:58:31 2018 (serrano)                */
+;*    Last change :  Fri Jul  6 08:02:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1677,78 +1677,77 @@
 			      ,tmp))))))))
    
    (define (aput-inc tyobj otmp prop op lhs field cache inc cs)
-      (with-access::J2SAccess lhs (loc obj cspecs (loca loc))
-	 (with-access::J2SExpr obj (type)
-	    (let* ((tmp (gensym 'aput))
-		   (oref (instantiate::J2SHopRef
-			    (loc loc)
-			    (id otmp)
-			    (type tyobj)))
-		   (oacc (duplicate::J2SAccess lhs
-			    (cspecs cs)
-			    (obj oref)
-			    (field field)))
-		   (rhs (instantiate::J2SNumber
-			   (loc loc)
-			   (val inc)
-			   (type 'int32)))
-		   (scmlhs (j2s-scheme oacc mode return conf)))
-	       (cond
-		  ((type-fixnum? type)
-		   (let ((tref (instantiate::J2SHopRef
-				  (loc loc)
-				  (id tmp)
-				  (type 'bint))))
-		      `(let ((,tmp ,scmlhs))
-			  ,(new-or-old tmp
-			      (js-binop2 loc '+ 'number
-				 tref rhs mode return conf)
-			      (lambda (val tmp)
-				 `(begin
-				     ,(j2s-put! loc otmp tyobj
-					 prop
-					 (j2s-vtype field)
-					 val 'number
-					 (strict-mode? mode) conf
-					 cache cs)
-				     ,tmp))))))
-		  (else
+      (with-access::J2SAccess lhs (loc obj cspecs (loca loc) type)
+	 (let* ((tmp (gensym 'aput))
+		(oref (instantiate::J2SHopRef
+			 (loc loc)
+			 (id otmp)
+			 (type tyobj)))
+		(oacc (duplicate::J2SAccess lhs
+			 (cspecs cs)
+			 (obj oref)
+			 (field field)))
+		(rhs (instantiate::J2SNumber
+			(loc loc)
+			(val inc)
+			(type 'int32)))
+		(scmlhs (j2s-scheme oacc mode return conf)))
+	    (cond
+	       ((type-fixnum? type)
+		(let ((tref (instantiate::J2SHopRef
+			       (loc loc)
+			       (id tmp)
+			       (type 'bint))))
 		   `(let ((,tmp ,scmlhs))
-		       (if (fixnum? ,tmp)
-			   ,(let ((tref (instantiate::J2SHopRef
-					   (loc loc)
-					   (id tmp)
-					   (type 'bint))))
-			       (new-or-old tmp
-				  (js-binop2 loc '+ 'number
-				     tref rhs mode return conf)
-				  (lambda (val tmp)
-				     `(begin
-					 ,(j2s-put! loc otmp tyobj
-					     prop
-					     (j2s-vtype field)
-					     val 'number
-					     (strict-mode? mode) conf
-					     cache cs)
-					 ,tmp))))
-			   ,(let* ((tmp2 (gensym 'tmp))
-				   (tref (instantiate::J2SHopRef
-					    (loc loc)
-					    (id tmp2)
-					    (type 'number))))
-			       `(let ((,tmp2 (js-tonumber ,tmp %this)))
-				   ,(new-or-old tmp2
-				       (js-binop2 loc '+ 'number
-					  tref rhs mode return conf)
-				       (lambda (val tmp)
-					  `(begin
-					      ,(j2s-put! loc otmp tyobj
-						  prop
-						  (j2s-vtype field)
-						  val 'number
-						  (strict-mode? mode) conf
-						  cache cs)
-					      ,tmp2)))))))))))))
+		       ,(new-or-old tmp
+			   (js-binop2 loc '+ 'number
+			      tref rhs mode return conf)
+			   (lambda (val tmp)
+			      `(begin
+				  ,(j2s-put! loc otmp tyobj
+				      prop
+				      (j2s-vtype field)
+				      val 'number
+				      (strict-mode? mode) conf
+				      cache cs)
+				  ,tmp))))))
+	       (else
+		`(let ((,tmp ,scmlhs))
+		    (if (fixnum? ,tmp)
+			,(let ((tref (instantiate::J2SHopRef
+					(loc loc)
+					(id tmp)
+					(type 'bint))))
+			    (new-or-old tmp
+			       (js-binop2 loc '+ 'number
+				  tref rhs mode return conf)
+			       (lambda (val tmp)
+				  `(begin
+				      ,(j2s-put! loc otmp tyobj
+					  prop
+					  (j2s-vtype field)
+					  val 'number
+					  (strict-mode? mode) conf
+					  cache cs)
+				      ,tmp))))
+			,(let* ((tmp2 (gensym 'tmp))
+				(tref (instantiate::J2SHopRef
+					 (loc loc)
+					 (id tmp2)
+					 (type 'number))))
+			    `(let ((,tmp2 (js-tonumber ,tmp %this)))
+				,(new-or-old tmp2
+				    (js-binop2 loc '+ 'number
+				       tref rhs mode return conf)
+				    (lambda (val tmp)
+				       `(begin
+					   ,(j2s-put! loc otmp tyobj
+					       prop
+					       (j2s-vtype field)
+					       val 'number
+					       (strict-mode? mode) conf
+					       cache cs)
+					   ,tmp2))))))))))))
 
    (define (rhs-cache rhs)
       (if (isa? rhs J2SCast)
@@ -1786,7 +1785,8 @@
    
    (define (access-inc-sans-object otmp::symbol prop op::symbol lhs::J2SAccess rhs::J2SExpr inc::int)
       (with-access::J2SAccess lhs (field)
-	 (if (or (isa? field J2SRef) (and (isa? field J2SLiteral) (not (isa? field J2SArray))))
+	 (if (or (isa? field J2SRef)
+		 (and (isa? field J2SLiteral) (not (isa? field J2SArray))))
 	     (access-inc-sans-object/field otmp prop op lhs rhs inc field)
 	     (let* ((%field (gensym '%field)))
 		`(let ((,%field ,(j2s-scheme field mode return conf)))
@@ -1810,18 +1810,24 @@
 			 `(if (js-object? ,otmp)
 			      ,(with-object obj
 				  (lambda ()
-				     (access-inc-sans-object otmp prop op lhs rhs inc)))
-			      ,(j2s-put! loc otmp 'any prop 'any 1 'any (strict-mode? mode) conf cache '()))))
+				     (access-inc-sans-object otmp
+					prop op lhs rhs inc)))
+			      ,(j2s-put! loc otmp 'any prop 'any 1 'any
+				  (strict-mode? mode) conf cache '()))))
 		     (let* ((ptmp (gensym 'prop))
 			    (pvar (J2SHopRef ptmp)))
 			`(let ((,ptmp ,(j2s-scheme field mode return conf)))
 			    ,(if (type-object? (j2s-type obj))
-				 (access-inc-sans-object otmp pvar op lhs rhs inc)
+				 (access-inc-sans-object otmp
+				    pvar op lhs rhs inc)
 				 `(if (js-object? ,otmp)
 				      ,(with-object obj
 					  (lambda ()
-					     (access-inc-sans-object otmp pvar op lhs rhs inc)))
-				      ,(j2s-put! loc otmp 'any pvar 'any 1 'any (strict-mode? mode) conf cache '()))))))))))
+					     (access-inc-sans-object otmp
+						pvar op lhs rhs inc)))
+				      ,(j2s-put! loc otmp 'any pvar 'any 1 'any
+					  (strict-mode? mode)
+					  conf cache '()))))))))))
 
    (with-access::J2SAssig this (loc lhs rhs type)
       (epairify-deep loc

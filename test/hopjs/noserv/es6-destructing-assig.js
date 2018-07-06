@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Thu Jul  5 19:27:16 2018 (serrano)                */
+/*    Last change :  Fri Jul  6 08:29:10 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
@@ -21,8 +21,15 @@ function hopa() {
    return obj.prop;
 }
 
+function hopb() {
+   var [a, ...[b,c]] = [1,2,3];
+
+   return a*100 + b*10 + c;
+}
+
 console.log( "hop" );
 console.log( "   hopa()"); assert.ok( hopa(), 123 );
+console.log( "   hopb()"); assert.ok( hopb(), 123 )
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -186,11 +193,11 @@ function kangaxs() {
       c === 6 && d instanceof Array && d.length === 0;
 }
 
-/* function kangaxt() {                                                */
-/*    var a = [1, 2, 3], first, last;                                  */
-/*    [first, ...[a[2], last]] = a;                                    */
-/*    return first === 1 && last === 3 && (a + "") === "1,2,2";        */
-/* }                                                                   */
+function kangaxt() {
+   var a = [1, 2, 3], first, last;
+   [first, ...[a[2], last]] = a;
+   return first === 1 && last === 3 && (a + "") === "1,2,2";
+}
 
 function kangaxu() {
    [] = [1,2];
