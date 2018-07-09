@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Thu Jun 21 09:58:22 2018 (serrano)                */
+;*    Last change :  Sun Jul  8 09:30:32 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -344,13 +344,20 @@
 ;*    tolong ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (tolong x)
-   (when (fixnum? x) x))
+   (cond
+      ((fixnum? x) x)
+      ((int32? x) (int32->fixnum x))
+      (else #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    todouble ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (todouble::double x)
-   (if (fixnum? x) (fixnum->flonum x) x))
+   (cond
+      ((fixnum? x) (fixnum->flonum x))
+      ((int32? x) (int32->flonum x))
+      ((uint32? x) (uint32->flonum x))
+      (else x)))
 
 ;*---------------------------------------------------------------------*/
 ;*    +fx/overflow ...                                                 */

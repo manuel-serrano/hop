@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Wed Apr 18 10:00:03 2018 (serrano)                */
+/*    Last change :  Sun Jul  8 10:26:37 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
@@ -24,11 +24,23 @@ const hopb = ( {a: A, b: B}, res ) => {
    return A - B == res;
 };
 
+function hopc() {
+   var [[a], b] = [[5], 6 ];
+   return a + b;
+}
+
+function hopd() {
+   var { a, c:e = 20 } = {a: 10, b:20 };
+   return a + e;
+}
+
 console.log( "hop" );
 console.log( "   hopa()"); assert.ok( hopa( {a: 1, b: 2}, -1 ), "hopa" );
 console.log( "   hopa()"); assert.ok( hopa( {b: 2, a: 1}, -1 ), "hopa" );
 console.log( "   hopb()"); assert.ok( hopb( {a: 1, b: 2}, -1 ), "hopb" );
 console.log( "   hopb()"); assert.ok( hopb( {b: 2, a: 1}, -1 ), "hopb" );
+console.log( "   hopc()"); assert.ok( hopc(), 11, "hopc" );
+console.log( "   hopd()"); assert.ok( hopd(), 30, "hopd" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -67,8 +79,8 @@ function kangaxc() {
 }
 
 function kangaxd() {
-   var [c] = "𠮷𠮶";
-   return c === "𠮷";
+   var [c] = decodeURI( "%F0%A0%AE%B7%F0%A0%AE%B6" );
+   return c === decodeURI( "%F0%A0%AE%B7" );
 }
 
 function kangaxe() {

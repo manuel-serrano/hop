@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jul  6 08:24:33 2018 (serrano)                */
+;*    Last change :  Sun Jul  8 09:35:30 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2584,48 +2584,143 @@
 ;*    j2s-destructure ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-destructure lhs::J2SExpr decl::J2SDecl bind::bool)
-   (with-access::J2SDecl decl (id)
-      (destructure-path lhs decl id bind)))
+   (with-access::J2SExpr lhs (loc)
+      (destructure-path lhs decl '* bind)))
 
 ;*---------------------------------------------------------------------*/
 ;*    destructure-path ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (destructure-path lhs::J2SExpr decl::J2SDecl path::obj bind::bool)
-   (cond
-      ((isa? lhs J2SObjInit)
-       (with-access::J2SObjInit lhs (inits)
-	  (append-map (lambda (init)
-			 (cond
-			    ((isa? init J2SDataPropertyInit)
-			     (with-access::J2SDataPropertyInit init (name val)
-				(destructure-expr val
-				   name decl path bind)))
-			    (else
-			     (parse-node-error "Bad argument" init))))
-	     inits)))
-      ((isa? lhs J2SArray)
-       (with-access::J2SArray lhs (exprs len)
-          (append-map (lambda (e i)
-                         (if (isa? e J2SArrayAbsent)
-                             '()
-                             (with-access::J2SExpr e (loc)
-                                (destructure-expr e
-				   (J2SNumber i) decl path bind))))
-             exprs (iota len))))
-      ((isa? lhs J2SUnresolvedRef)
-       (with-access::J2SUnresolvedRef lhs (loc)
-	  (tprint "UNRESOLVED lhs=" (j2s->list lhs) " dec=" (j2s->list decl))
-	  (list (J2SAssig lhs (J2SRef decl)))))
-      ((and (isa? lhs J2SAccess) (not bind))
-       (with-access::J2SAccess lhs (loc)
-	  (list (J2SAssig lhs (J2SRef decl)))))
-      (else
-       (parse-node-error "Bad declaration" lhs))))
+(define (destructure-path::pair-nil lhs::J2SExpr decl::J2SDecl path bind::bool)
+
+   (define (J2SDeclAssig loc id val::J2SExpr)
+      (if bind
+	  (instantiate::J2SDeclInit
+	     (loc loc)
+	     (id id)
+	     (val val))
+	  (instantiate::J2SAssig
+	     (loc loc)
+	     (lhs (J2SUnresolvedRef id))
+	     (rhs val))))
+
+   (define (destructure-unref lhs src path)
+      (with-access::J2SUnresolvedRef lhs (id loc)
+	 (list (J2SDeclAssig loc id (J2SDConsumer decl path src)))))
+
+   (define (destructure-access lhs src path)
+      (if (not bind)
+	  (with-access::J2SAccess lhs (loc)
+	     (list (J2SAssig lhs src)))
+	  (parse-node-error "Bad access declaration" lhs)))
+
+   (define (destructure-obj lhs::J2SExpr tmp path)
+      (with-access::J2SObjInit lhs (inits)
+	 (append-map (lambda (init)
+			(cond
+			   ((isa? init J2SDataPropertyInit)
+			    (with-access::J2SDataPropertyInit init (name val loc)
+			       (cond
+				  ((isa? val J2SUnresolvedRef)
+				   ;; { ...., id, ... }
+				   ;; { ...., id:alias, ... }
+				   (destructure val (J2SAccess tmp name)
+				      `(get ,path ,name) bind))
+				  ((isa? val J2SBinary)
+				   ;; { ...., id = def, ... }
+				   (with-access::J2SBinary val (lhs rhs)
+				      (set! lhs (J2SAccess tmp name))
+				      (with-access::J2SString name ((id val))
+					 (destructure
+					    (J2SUnresolvedRef
+					       (string->symbol id))
+					    val
+					    `(get-default ,path ,rhs)
+					    bind))))
+				  ((isa? val J2SAssig)
+				   ;; { ...., id:alias = def, ... }
+				   (with-access::J2SAssig val (lhs rhs)
+				      (destructure lhs
+					 (J2SBinary 'OR
+					    (J2SAccess tmp name) rhs)
+					 `(get-alias-default ,rhs)
+					 bind)))
+				  (else
+				   ;; { ..., id:pat, ... }
+				   (destructure val (J2SAccess tmp name)
+				      `(get ,path ,name) bind)))))
+			   (else
+			    (parse-node-error "Bad object argument" init))))
+	    inits)))
+
+   (define (destructure-array lhs::J2SExpr tmp path)
+
+      (define (destructure-aref e i tmp path)
+	 (cond
+	    ((isa? e J2SArrayAbsent)
+	     ;; [ ..., , ... ]
+	     '())
+	    ((isa? e J2SDots)
+	     ;; [ ..., ... id ]
+	     (with-access::J2SDots e (loc lhs)
+		(let ((decl (instantiate::J2SDeclInit
+			       (binder 'let)
+			       (loc loc)
+			       (id (gensym '%dots))
+			       (val (J2SDConsumer decl path
+				       (J2SCall (J2SAccess tmp
+						   (J2SString "slice"))
+					  (J2SNumber i)))))))
+		   (cons decl
+		      (destructure lhs (J2SRef decl)
+			 `(spread ,path) bind)))))
+	    ((isa? e J2SAssig)
+	     ;; [ ...., id = def, ... ]
+	     (with-access::J2SAssig e (lhs rhs loc)
+		(destructure lhs
+		   (J2SBinary 'OR (J2SAccess tmp (J2SNumber i)) rhs)
+		   `(get-alias-default ,rhs)
+		   bind)))
+	    (else
+	     ;; [ ..., id, ... ]
+	     (with-access::J2SExpr e (loc)
+		(destructure e (J2SAccess tmp (J2SNumber i))
+		   `(aref ,path ,i) bind)))))
+      
+      (with-access::J2SArray lhs (exprs len)
+	 (append-map (lambda (e i) (destructure-aref e i tmp path))
+	    exprs (iota len))))
+
+   (define (destructure-tmp lhs::J2SExpr src path destructure/tmp)
+      (if (isa? src J2SUnresolvedRef)
+	  (destructure/tmp lhs src path)
+	  (with-access::J2SExpr lhs (loc)
+	     (let ((decl (instantiate::J2SDeclInit
+			    (binder 'let)
+			    (loc loc)
+			    (id (gensym '%tmp))
+			    (val src))))
+		(cons decl (destructure/tmp lhs (J2SRef decl) path))))))
+
+   (define (destructure lhs src path bind)
+      (cond
+	 ((isa? lhs J2SUnresolvedRef)
+	  (destructure-unref lhs src path))
+	 ((isa? lhs J2SObjInit)
+	  (destructure-tmp lhs src path destructure-obj))
+	 ((isa? lhs J2SArray)
+	  (destructure-tmp lhs src path destructure-array))
+	 ((isa? lhs J2SAccess)
+	  (destructure-access lhs src path))
+	 (else
+	  (parse-node-error "Bad declaration" lhs))))
+
+   (with-access::J2SDecl decl (loc)
+      (destructure lhs (J2SRef decl) path bind)))
 
 ;*---------------------------------------------------------------------*/
 ;*    destructure-expr ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (destructure-expr::pair val::J2SExpr name decl::J2SDecl path bind::bool)
+'(define (destructure-expr::pair val::J2SExpr name decl::J2SDecl path bind::bool)
 
    (define (J2SDeclAssig loc id val)
       (if bind
@@ -2645,17 +2740,24 @@
 	     (list
 		(J2SDeclAssig loc id
 		   (J2SDConsumer decl
-		      `(get ,name ,path)
-		      (J2SAccess (J2SRef decl) name))))))
+		      path
+		      (J2SAccess (J2SRef decl)))))))
+	 ((isa? val J2SDataPropertyInit)
+	  (with-access::J2SDataPropertyInit init (name val)
+	     (list
+		(J2SDeclAssig loc name
+		   (J2SDConsumer decl
+		      path
+		      (J2SAccess (J2SRef decl) ))))))
 	 ((isa? val J2SBinary)
-	  (with-access::J2SBinary val (lhs rhs)
+	  (with-access::J2SBinary val (lhs rhs op)
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(let ((id id))
-		   (set! lhs (J2SAccess (J2SRef decl) name))
+		   (set! lhs (J2SAccess (J2SRef decl) id))
 		   (list
 		      (J2SDeclAssig loc id
 			 (J2SDConsumer decl
-			    `(get-default ,name ,path ,rhs)
+			    `(binary ,op ,path)
 			    val)))))))
 	 ((isa? val J2SAssig)
 	  (with-access::J2SAssig val (lhs rhs)
@@ -2664,9 +2766,9 @@
 		    (list
 		       (J2SDeclAssig loc id
 			  (J2SDConsumer decl
-			     `(get-alias-default ,name ,path ,rhs)
+			     `(assig ,id ,rhs)
 			     (J2SBinary 'OR
-				(J2SAccess (J2SRef decl) name)
+				(J2SAccess (J2SRef decl) id)
 				rhs)))))
 		 (parse-node-error "Bad form" val))))
 	 ((isa? val J2SDots)
@@ -2680,8 +2782,10 @@
 			     (id tmp)
 			     (val (J2SDConsumer decl path
 				     (J2SCall (J2SAccess (J2SRef decl)
-						 (J2SString "slice")) name))))))
-		(cons decl (destructure-path lhs decl path bind)))))
+						 (J2SString "slice"))
+					name))))))
+		(cons decl
+		   (destructure-expr (J2SRef decl) lhs `(dots ,path) bind)))))
 ;* 	  (with-access::J2SString name ((id val))                      */
 ;* 	     (let* ((tmp (gensym '%tmp))                               */
 ;* 		    (path `(get ,name ,path))                          */
@@ -2732,7 +2836,10 @@
 (define (destructure-fun-params params::pair-nil args::pair-nil body::J2SBlock)
    (if (find (lambda (a) (isa? a J2SObjInit)) args)
        (with-access::J2SBlock body (loc nodes)
-	  (let* ((decls (append-map (lambda (p a) (j2s-destructure a p #t))
+	  (let* ((decls (append-map (lambda (p a)
+				       (if (isa? a J2SUnresolvedRef)
+					   '()
+					   (j2s-destructure a p #t)))
 			   params args))
 		 (vdecls (instantiate::J2SVarDecls
 			    (loc loc)
