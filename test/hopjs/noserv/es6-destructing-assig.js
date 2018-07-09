@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/trashcan/es6-destructing-assig.js                        */
+/*    .../hop/3.2.x/test/hopjs/noserv/es6-destructing-assig.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Fri Jul  6 08:29:10 2018 (serrano)                */
+/*    Last change :  Mon Jul  9 08:57:33 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
@@ -27,9 +27,27 @@ function hopb() {
    return a*100 + b*10 + c;
 }
 
+function hopc() {
+   const arr = [];
+   ({ bar: arr[0] } = { bar: true });
+
+   return arr.length == 1 && arr[ 0 ] === true;
+}
+
+function hopd() {
+   const obj = {};
+   var first;
+   [first, ...obj.prop] = ['a', 'b', 'c'];
+
+   return first == "a" && obj.prop.length == 2 &&
+      obj.prop[ 0 ] == "b" && obj.prop[ 1 ] == "c";
+}
+
 console.log( "hop" );
-console.log( "   hopa()"); assert.ok( hopa(), 123 );
-console.log( "   hopb()"); assert.ok( hopb(), 123 )
+console.log( "   hopa()"); assert.ok( hopa(), "hopa" );
+console.log( "   hopb()"); assert.ok( hopb(), "hopb" )
+console.log( "   hopc()"); assert.ok( hopc(), "hopc" )
+console.log( "   hopd()"); assert.ok( hopd(), "hopd" )
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -72,8 +90,8 @@ function kangaxc() {
 
 function kangaxd() {
    var c;
-   [c] = "𠮷𠮶";
-   return c === "𠮷";
+   [c] = decodeURI( "%F0%A0%AE%B7%F0%A0%AE%B6" );
+   return c === decodeURI( "%F0%A0%AE%B7" );
 }
 
 function kangaxe() {

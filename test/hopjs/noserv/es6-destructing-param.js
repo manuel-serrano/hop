@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Sun Jul  8 10:26:37 2018 (serrano)                */
+/*    Last change :  Mon Jul  9 08:53:37 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
@@ -34,13 +34,28 @@ function hopd() {
    return a + e;
 }
 
+function hope() {
+   const obj = { a: [{ foo: 123, bar: 'abc' }, {}], b: true };
+   const { a: [{foo: f}] } = obj;
+   return f;
+}
+
+function hopf() {
+   const {length: len} = 'abc'; // len = 3
+   const {toString: s} = 123;
+
+   return len === 3 && s === Number.prototype.toString;
+}
+
 console.log( "hop" );
 console.log( "   hopa()"); assert.ok( hopa( {a: 1, b: 2}, -1 ), "hopa" );
 console.log( "   hopa()"); assert.ok( hopa( {b: 2, a: 1}, -1 ), "hopa" );
 console.log( "   hopb()"); assert.ok( hopb( {a: 1, b: 2}, -1 ), "hopb" );
 console.log( "   hopb()"); assert.ok( hopb( {b: 2, a: 1}, -1 ), "hopb" );
-console.log( "   hopc()"); assert.ok( hopc(), 11, "hopc" );
-console.log( "   hopd()"); assert.ok( hopd(), 30, "hopd" );
+console.log( "   hopc()"); assert.ok( hopc() === 11, "hopc" );
+console.log( "   hopd()"); assert.ok( hopd() === 30, "hopd" );
+console.log( "   hope()"); assert.ok( hope() === 123, "hope" );
+console.log( "   hopf()"); assert.ok( hopf(), "hopf" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
