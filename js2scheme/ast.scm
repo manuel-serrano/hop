@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jul  6 08:24:15 2018 (serrano)                */
+;*    Last change :  Wed Jul 11 16:00:12 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -276,7 +276,9 @@
 	      (vtype::symbol (default 'unknown) (info '("notraverse")))
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      (range::obj (default #unspecified) (info '("notraverse")))
-	      (binder::symbol (default 'var) (info '("notraverse"))))
+	      (binder::symbol (default 'var) (info '("notraverse")))
+	      ;; es6 modules
+	      (export::obj (default #f) (info '("notraverse"))))
 	   
 	   (class J2SDeclInit::J2SDecl
 	      (val::J2SExpr (info '("ast"))))
