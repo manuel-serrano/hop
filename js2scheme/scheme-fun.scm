@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Jun 21 13:01:40 2018 (serrano)                */
+;*    Last change :  Wed Jul 11 15:21:41 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -146,6 +146,26 @@
 		     (and (memq 'new usage)
 			  (not (memq 'ref usage))
 			  (not (memq 'call usage)))))))))
+
+   (define (lambda? id)
+      (or (memq id '(lambda lambda::obj))
+	  (when (symbol? id)
+	     (string-prefix? "lambda::" (symbol->string id)))))
+
+   (define (type-lambda lambd id)
+      (if (memq lambd '(lambda lambda::obj))
+	  id
+	  (symbol-append id
+	     (string->symbol (substring (symbol->string lambd) 6)))))
+      
+   (define (beautiful-define expr)
+      (match-case expr
+	 ((define ?id (labels ((?id ?args . ?body)) ?id))
+	  `(define (,id ,@args) ,@body))
+	 ((define ?id ((and ?lambd (? lambda?)) ?args . ?body))
+	  `(define (,(type-lambda lambd id) ,@args) ,@body))
+	 (else
+	  expr)))
    
    (with-access::J2SDeclFun this (loc id scope val usage ronly)
       (let ((val (declfun-fun this)))
@@ -155,10 +175,11 @@
 	       (epairify-deep loc
 		  (case scope
 		     ((none)
-		      `(define ,fastid
-			  ,(jsfun->lambda val mode return conf
-			      (j2s-declfun-prototype this)
-			      (constructor-only? this))))
+		      (beautiful-define
+			 `(define ,fastid
+			     ,(jsfun->lambda val mode return conf
+				 (j2s-declfun-prototype this)
+				 (constructor-only? this)))))
 		     ((letblock)
 		      (let ((def `(,fastid ,(jsfun->lambda val mode return conf
 					       (j2s-declfun-prototype this)
@@ -169,24 +190,21 @@
 			     (list def `(,scmid ,(make-function this))))))
 		     ((global %scope)
 		      `(begin
-			  (define ,fastid
-			     ,(jsfun->lambda val mode return conf
-				 (j2s-declfun-prototype this)
-				 (constructor-only? this)))
+			  ,(beautiful-define
+			      `(define ,fastid
+				  ,(jsfun->lambda val mode return conf
+				      (j2s-declfun-prototype this)
+				      (constructor-only? this))))
 			  ,@(if (no-closure? this)
 				'()
 				`((define ,scmid #unspecified)))))
-;* 				     ,(if (js-need-global? this scope mode) */
-;* 					  `(js-bind! %this ,scope ',id */
-;* 					      :configurable #f         */
-;* 					      :value ,(make-function this)) */
-;* 					  (make-function this)))))))   */
 		     (else
 		      `(begin
-			  (define ,fastid
-			     ,(jsfun->lambda val mode return conf
-				 (j2s-declfun-prototype this)
-				 (constructor-only? this)))
+			  ,(beautiful-define
+			      `(define ,fastid
+				  ,(jsfun->lambda val mode return conf
+				      (j2s-declfun-prototype this)
+				      (constructor-only? this))))
 			  ,@(if (no-closure? this)
 				'()
 				`((define ,scmid 
