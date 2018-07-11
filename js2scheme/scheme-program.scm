@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Jul 11 15:29:42 2018 (serrano)                */
+;*    Last change :  Wed Jul 11 16:51:52 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -77,7 +77,7 @@
 	  (j2s-master-module module scmcnsts body)))
 
    (define (j2s-main-module/workers name scmcnsts body)
-      (let ((module `(module ,(j2s-module-name name)
+      (let ((module `(module ,(string->symbol name)
 			(eval (library hop)
 			   (library hopscript)
 			   (library nodejs))
@@ -161,7 +161,7 @@
 		    (j2s-main-module/workers name scmcnsts body))
 		   (else
 		    ;; generate the module clause
-		    (let ((module `(module ,(j2s-module-name name)
+		    (let ((module `(module ,(string->symbol name)
 				      (library hop hopscript js2scheme nodejs)
 				      (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))))
 		       (j2s-module module scmcnsts body)))))))))
@@ -170,7 +170,7 @@
 ;*    j2s-main-sans-worker-module ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-main-sans-worker-module this name scmcnsts toplevel body conf)
-   (let ((module `(module ,(j2s-module-name name)
+   (let ((module `(module ,(string->symbol name)
 		     (eval (library hop)
 			(library hopscript)
 			(library nodejs))
@@ -317,9 +317,3 @@
 	    (else
 	     #f))))
    vec)
-
-;*---------------------------------------------------------------------*/
-;*    j2s-module-name ...                                              */
-;*---------------------------------------------------------------------*/
-(define (j2s-module-name name)
-   (string->symbol (string-append "__hop_" name)))

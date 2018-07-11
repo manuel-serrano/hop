@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Jul 11 15:21:41 2018 (serrano)                */
+;*    Last change :  Wed Jul 11 17:13:45 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -161,9 +161,9 @@
    (define (beautiful-define expr)
       (match-case expr
 	 ((define ?id (labels ((?id ?args . ?body)) ?id))
-	  `(define (,id ,@args) ,@body))
+	  `(define ,(cons id args) ,@body))
 	 ((define ?id ((and ?lambd (? lambda?)) ?args . ?body))
-	  `(define (,(type-lambda lambd id) ,@args) ,@body))
+	  `(define ,(cons (type-lambda lambd id) args) ,@body))
 	 (else
 	  expr)))
    
