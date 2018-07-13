@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jun 26 18:48:47 2018 (serrano)                */
+;*    Last change :  Fri Jul 13 08:17:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -189,7 +189,8 @@
 	      (hidden-class #t))
 
 	   (js-define ::JsGlobalObject ::JsObject
-	      ::symbol ::procedure ::obj ::obj ::obj)
+	      ::symbol ::procedure ::obj ::obj ::obj
+	      #!key (hidden-class #t))
 	   
 	   (js-method-call-name/cache ::JsGlobalObject ::obj ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::long ::pair-nil ::pair-nil . args)
@@ -2297,12 +2298,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Wrapper to js-bind! used to keep generated files smaller.        */
 ;*---------------------------------------------------------------------*/
-(define (js-define %this obj id get set src pos)
-   (let ((name (if (>=fx (bigloo-debug) 1)
-		   (string-append src ":" (integer->string pos))
-		   src)))
+(define (js-define %this obj id get set src pos #!key (hidden-class #t))
+   (let ((name (string-append src ":" (integer->string pos))))
       (js-bind! %this obj id
 	 :configurable #f
+	 :hidden-class hidden-class
 	 :get (js-make-function %this get 1 name)
 	 :set (when set (js-make-function %this set 2 name)))))
 

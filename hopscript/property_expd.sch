@@ -3,13 +3,30 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Jun 19 19:43:46 2018 (serrano)                */
+;*    Last change :  Fri Jul 13 08:12:14 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
 ;*    See expanders.sch and property.sch                               */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    js-define-jseval-expander ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-define-jseval-expander x e)
+   (match-case x
+      ((define-jseval ?var ?val ?evname ?evenv ?source ?loc . ?rest)
+       (let ((tmp (gensym '%tmp)))
+	  `(define ,var
+	      (let ((,tmp ,val))
+		 (js-define %this ,evenv ,evname
+		    (lambda (%) ,var)
+		    (lambda (% %v) (set! ,var %v))
+		    ,source ,loc ,@rest)
+		 ,tmp))))
+      (else
+       (error "Js-define-eval" "bad syntax" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-cache-expander ...                                */

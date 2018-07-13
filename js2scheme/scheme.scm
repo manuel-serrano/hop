@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jul  6 08:02:52 2018 (serrano)                */
+;*    Last change :  Fri Jul 13 08:19:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -189,6 +189,13 @@
 ;*    j2s-scheme-decl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-decl this::J2SDecl value writable mode return conf)
+
+   (define (hidden-class decl::J2SDecl)
+      (when (isa? decl J2SDeclExtern)
+	 (with-access::J2SDeclExtern decl (hidden-class)
+	    (when (not hidden-class)
+	       `(:hidden-class #f)))))
+   
    (with-access::J2SDecl this (loc scope id utype ronly)
       (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
@@ -200,13 +207,9 @@
 		       `(js-decl-eval-put! %scope
 			   ',id ,value ,(strict-mode? mode) %this)
 		       (if (js-need-global? this scope mode)
-			   `(begin
-			       (define ,ident ,value)
-			       (js-define %this ,scope ',id
-				  (lambda (%) ,ident)
-				  (lambda (% %v) (set! ,ident %v))
-				  %source
-				  ,(caddr loc)))
+			   `(define-jseval ,ident ,value
+			       ',id %scope %source ,(caddr loc)
+			       ,@(or (hidden-class this) '()))
 			   `(define ,ident ,value)))))
 	       ((memq scope '(letblock letvar))
 		(if ronly

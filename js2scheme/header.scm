@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Wed Mar 14 08:18:13 2018 (serrano)                */
+;*    Last change :  Fri Jul 13 08:31:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -50,7 +50,8 @@
 ;*---------------------------------------------------------------------*/
 (define (hopscript-header::pair id path loc conf)
    
-   (define (js-def-extern js bind writable expr #!optional (type 'unknown))
+   (define (js-def-extern js bind writable expr
+	      #!key (type 'unknown) (hidden-class #t))
       (instantiate::J2SDeclExtern
 	 (loc loc)
 	 (id js)
@@ -59,21 +60,22 @@
 	 (bind bind)
 	 (itype type)
 	 (binder 'let-opt)
+	 (hidden-class hidden-class)
 	 (val (instantiate::J2SPragma
 		 (type type)
 		 (loc loc)
 		 (expr expr)))))
 
    (list
-      (js-def-extern 'global #t #t '%this 'global)
-      (js-def-extern 'GLOBAL #t #f '%this 'global)
-      (js-def-extern 'module #t #t 
-	 `(begin
-	   ;;(js-put! %scope 'module %module #f %this)
-	   (js-bind! %this %scope 'module
-	      :value %module
-	      :writable #t :enumerable #t :configurable #t :hidden-class #f)
-	   %module))
+      (js-def-extern 'global #t #t '%this :type 'global)
+      (js-def-extern 'GLOBAL #t #f '%this :type 'global)
+      (js-def-extern 'module #t #t '%module :type 'global :hidden-class #f)
+;* 	 `(begin                                                       */
+;* 	   ;;(js-put! %scope 'module %module #f %this)                 */
+;* 	   (js-bind! %this %scope 'module                              */
+;* 	      :value %module                                           */
+;* 	      :writable #t :enumerable #t :configurable #t :hidden-class #f) */
+;* 	   %module))                                                   */
       (js-def-extern 'exports #t #t
 	 '(js-get %module 'exports %scope))
       (js-def-extern 'require #t #f
@@ -86,19 +88,20 @@
       (js-def-extern 'Worker #t #t
 	 '(nodejs-worker %this %scope %module))
       (js-def-extern '__filename #t #f
-	 '(js-get %module 'filename %scope) 'string)
+	 '(js-get %module 'filename %scope) :type 'string)
       (js-def-extern '__dirname #t #f
-	 '(js-string->jsstring (dirname (js-jsstring->string (js-get %module 'filename %scope)))) 'string)
+	 '(js-string->jsstring (dirname (js-jsstring->string (js-get %module 'filename %scope)))) :type 'string)
       (js-def-extern '%__GLOBAL #f #f
 	 ;; this will not be compiled as a global (see scheme.scm)
 	 '(js-put! GLOBAL 'global GLOBAL #f %this))
-      (js-def-extern 'process #t #t '(nodejs-process %worker %this) 'object)
+      (js-def-extern 'process #t #t '(nodejs-process %worker %this)
+	 :type 'object)
       (if (or (string=? id "console.js") (string=? id "node_stdio.js"))
 	  (instantiate::J2SUndefined
 	     (type 'undefined)
 	     (loc loc))
 	  (js-def-extern 'console #t #f
-	     '(nodejs-require-core "console" %worker %this) 'object))
+	     '(nodejs-require-core "console" %worker %this) :type 'object))
       (if (string=? path "hop")
 	  (instantiate::J2SUndefined
 	     (type 'undefined)
