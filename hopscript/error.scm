@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed May  2 16:26:17 2018 (serrano)                */
+;*    Last change :  Mon Jul 16 14:20:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -192,6 +192,13 @@
 		      (set! msg m))
 		   (set! fname (js-string->jsstring f))
 		   (set! location l))
+		  ((?m (and ?loc (? js-object?)) #unspecified)
+		   (unless (eq? m (js-undefined))
+		      (js-bind! %this this 'message :value m :enumerable #f
+			 :hidden-class #t)
+		      (set! msg m))
+		   (set! fname (js-get loc 'filename %this))
+		   (set! location (js-get loc 'pos %this)))
 		  ((?m . ?-)
 		   (unless (eq? m (js-undefined))
 		      (js-bind! %this this 'message :value m :enumerable #f

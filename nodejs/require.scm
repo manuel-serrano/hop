@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jun  9 10:58:17 2018 (serrano)                */
+;*    Last change :  Mon Jul 16 11:43:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1295,7 +1295,7 @@
 		  ;; set the loaded property
 		  (js-put! mod 'loaded #t #f %this)
 		  ;; return the newly created module
-		  (trace-item "mod=" (typeof mod))
+		  (trace-item "mod=" (typeof mod) " filename=" filename)
 		  mod)))))
 
    (define (load-module-html)
