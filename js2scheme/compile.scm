@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Jun 15 22:30:43 2018 (serrano)                */
+;*    Last change :  Tue Jul 17 10:25:45 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -64,11 +64,7 @@
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
-	   (j2s-compile in::input-port
-	      #!key
-	      (driver (j2s-optim-driver))
-	      tmp
-	      #!rest args)
+	   (j2s-compile in #!key (driver (j2s-optim-driver)) tmp #!rest args)
 
 	   (j2s-make-driver ::pair-nil)
 	   (j2s-builtin-drivers-list::pair)
@@ -348,26 +344,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-compile ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (j2s-compile in::input-port
-	   #!key
-	   (driver (j2s-optim-driver))
-	   tmp
-	   #!rest
-	   args)
+(define (j2s-compile in #!key (driver (j2s-optim-driver)) tmp #!rest args)
    (unless (and (list? driver) (every (lambda (s) (isa? s J2SStage))))
       (bigloo-type-error "j2s-compile" "driver list" driver))
-   (let* ((tmp (or tmp
+   (let* ((filename (cond
+		       ((input-port? in)
+			(input-port-name in))
+		       ((isa? in J2SProgram)
+			(with-access::J2SProgram in (path)
+			   path))
+		       (else
+			(bigloo-type-error "j2s-compile"
+			   "port or J2SProgram" in))))
+	  (tmp (or tmp
 		   (make-file-path (os-tmp) 
 		      (or (getenv "USER") "anonymous")
 		      "J2S"
-		      (if (string=? (input-port-name in) "[string]")
+		      (if (string=? filename "[string]")
 			  "stdin"
-			  (input-port-name in)))))
-	  (opts (compile-opts in args))
+			  filename))))
+	  (opts (compile-opts filename in args))
 	  (conf (cons* :mmaps '() :tmp tmp opts)))
       (when (>=fx (bigloo-debug) 1) (make-directories tmp))
       (unwind-protect
-	 (let ((ast (j2s-parser in conf)))
+	 (let ((ast (cond
+		       ((input-port? in)
+			(j2s-parser in conf))
+		       ((isa? in J2SProgram)
+			in))))
 	    (if (eof-object? ast)
 		'()
 		(let loop ((ast ast)
@@ -384,7 +388,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    compile-opts ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (compile-opts in args)
+(define (compile-opts filename in args)
    (let ((o (append args (j2s-compile-options)))
 	 (l (config-get args :optim 0)))
       ;; profiling
@@ -442,7 +446,7 @@
 ;* 			(set! o (cons* :optim-cce #t o)))              */
       
       (unless (memq :filename o)
-	 (set! o (cons* :filename (input-port-name in) o)))
+	 (set! o (cons* :filename filename o)))
 
       (when (member (config-get args :language)
 	       '("hopscript" "ecmascript6" "ecmascript2017"))

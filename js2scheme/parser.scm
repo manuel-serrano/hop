@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jul  9 09:02:20 2018 (serrano)                */
+;*    Last change :  Tue Jul 17 09:37:34 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -23,7 +23,7 @@
 	   __js2scheme_dump
 	   __js2scheme_utils)
 
-   (export (j2s-parser ::input-port ::pair-nil)
+   (export (j2s-parser ::input-port ::pair-nil #!optional plugins)
 	   (j2s-tag->expr ::pair ::bool)))
 
 ;*---------------------------------------------------------------------*/
@@ -31,13 +31,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*---------------------------------------------------------------------*/
-(define (j2s-parser input-port conf::pair-nil)
+(define (j2s-parser input-port conf::pair-nil #!optional plugins)
    
    (define tilde-level (config-get conf :tilde-level 0))
    (define lang (config-get conf :language "hopscript"))
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
-   
+
    (define (with-tilde proc)
       (set! tilde-level (+fx tilde-level 1))
       (let ((res (proc)))
@@ -201,6 +201,8 @@
    
    (define (eof?)
       (eq? (peek-token-type) 'EOF))
+
+   (define parser-controller #f)
    
    (define (read-regexp intro-token)
       (when (eq? intro-token '/=)
@@ -1504,17 +1506,8 @@
 	     (let* ((op (consume-any!))
 		    (rhs (assig-expr in-for-init? #f)))
 		(cond
-;* 		   ((and (eq? op '=) (isa? lhs J2SRef))               */
-;* 		    (instantiate::J2SAssig                             */
-;* 		       (loc (token-loc op))                            */
-;* 		       (lhs lhs)                                      */
-;* 		       (rhs rhs)))                                     */
 		   ((eq? (car op) '=)
 		    (cond
-;* 		       ((isa? lhs J2SAccess)                          */
-;* 			`(instantiate::J2SAssig                        */
-;* 			    (lhs ,lhs)                                */
-;* 			    (rhs ,rhs)))                               */
 		       ((or (isa? lhs J2SArray) (isa? lhs J2SObjInit))
 			(let* ((loc (token-loc op))
 			       (endloc loc)
@@ -1968,11 +1961,17 @@
 		(loc loc))))
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
-	     (if (eq? (peek-token-type) '=>)
-		 (arrow-function (list token) (token-loc token))
+	     (cond
+		((eq? (peek-token-type) '=>)
+		 (arrow-function (list token) (token-loc token)))
+		((and plugins (assq (token-value token) plugins))
+		 =>
+		 (lambda (p)
+		    ((cdr p) token parser-controller)))
+		(else
 		 (instantiate::J2SUnresolvedRef
 		    (loc (token-loc token))
-		    (id (token-value token))))))
+		    (id (token-value token)))))))
 	 ((HOP)
 	  (let ((token (consume-token! 'HOP)))
 	     (instantiate::J2SHopRef
@@ -2474,6 +2473,9 @@
 		   (nodes (list (dialect el 'normal conf)))))
 	     el)))
 
+   (set! parser-controller
+      (vector peek-token consume-token! consume-any! expression))
+   
    (case (config-get conf :parser #f)
       ((script-expression) (with-tilde tilde-expression))
       ((tilde-expression) (with-tilde tilde-expression))

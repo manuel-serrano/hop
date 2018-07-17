@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jul 13 08:32:54 2018 (serrano)                */
+;*    Last change :  Tue Jul 17 15:54:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -388,7 +388,7 @@
 	      (cache (default #f) (info '("notraverse")))
 	      (cspecs (default '(pmap vtable)) (info '("notraverse")))
 	      (fun::J2SExpr (info '("ast")))
-	      (protocol (default 'direct) (info '("notraverse")))
+	      (protocol::symbol (default 'direct) (info '("notraverse")))
 	      (thisarg::pair-nil (info '("ast")))
 	      (args::pair-nil (default '()) (info '("ast"))))
 	   
