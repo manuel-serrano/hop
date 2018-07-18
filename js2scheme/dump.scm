@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Jul  5 17:30:15 2018 (serrano)                */
+;*    Last change :  Wed Jul 18 07:30:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -301,11 +301,11 @@
 	       (list (format "~a" this))
 	       '()))
        `(alien :typeof ,(string->symbol (typeof this))
-	   :expr ,@(if (or (string? this) (symbol? this)
-			   (struct? this) (boolean? this)
-			   (number? this) (char? this))
-		       (list (format "~a" this))
-		       '()))))
+	   :expr ,(if (or (string? this) (symbol? this)
+			  (struct? this) (boolean? this)
+			  (number? this) (char? this))
+		      (format "~a" this)
+		      (format "~s" this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SStmt ...                                          */
@@ -524,7 +524,7 @@
 		 :optimize ,optimize
 		 :mode ,mode
 		 ,@(dump-range this)
-		 :thisp ,(j2s->list thisp)
+		 :thisp ,(when thisp (j2s->list thisp))
 		 ,@(dump-size this)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
@@ -542,7 +542,7 @@
 		 :optimize ,optimize
 		 :mode ,mode
 		 ,@(dump-range this)
-		 :thisp ,(j2s->list thisp)
+		 :thisp ,(when thisp (j2s->list thisp))
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
@@ -556,7 +556,7 @@
 	      :optimize ,optimize
 	      :mode ,mode
 	      ,@(dump-range this)
-	      :thisp ,(j2s->list thisp)
+	      :thisp ,(when thisp (j2s->list thisp))
 	      ,(map j2s->list params) ,(j2s->list body))))))
 
 ;*---------------------------------------------------------------------*/

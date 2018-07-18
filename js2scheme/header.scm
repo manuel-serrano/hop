@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Fri Jul 13 08:31:27 2018 (serrano)                */
+;*    Last change :  Tue Jul 17 18:46:23 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -67,9 +67,9 @@
 		 (expr expr)))))
 
    (list
-      (js-def-extern 'global #t #t '%this :type 'global)
-      (js-def-extern 'GLOBAL #t #f '%this :type 'global)
-      (js-def-extern 'module #t #t '%module :type 'global :hidden-class #f)
+      (js-def-extern 'global #t #t '%this :type 'object)
+      (js-def-extern 'GLOBAL #t #f '%this :type 'object)
+      (js-def-extern 'module #t #t '%module :type 'object :hidden-class #f)
 ;* 	 `(begin                                                       */
 ;* 	   ;;(js-put! %scope 'module %module #f %this)                 */
 ;* 	   (js-bind! %this %scope 'module                              */

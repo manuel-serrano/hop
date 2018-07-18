@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jul 17 09:37:34 2018 (serrano)                */
+;*    Last change :  Wed Jul 18 09:49:15 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1967,7 +1967,10 @@
 		((and plugins (assq (token-value token) plugins))
 		 =>
 		 (lambda (p)
-		    ((cdr p) token parser-controller)))
+		    ;; (tprint ">>> plugin " (token-value token))
+		    (let ((r ((cdr p) token parser-controller)))
+		       ;; (tprint "<<< " (token-value token) " " (j2s->list r))
+		       r)))
 		(else
 		 (instantiate::J2SUnresolvedRef
 		    (loc (token-loc token))
@@ -2474,7 +2477,8 @@
 	     el)))
 
    (set! parser-controller
-      (vector peek-token consume-token! consume-any! expression))
+      (vector #unspecified #unspecified
+	 peek-token consume-token! consume-any! expression statement block))
    
    (case (config-get conf :parser #f)
       ((script-expression) (with-tilde tilde-expression))

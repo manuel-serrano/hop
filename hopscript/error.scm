@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Jul 16 14:20:47 2018 (serrano)                */
+;*    Last change :  Wed Jul 18 08:47:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -101,7 +101,7 @@
    (object-display o port))
    
 ;*---------------------------------------------------------------------*/
-;*    exception-notify ::obj ...                                       */
+;*    exception-notify ::JsError ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (exception-notify exc::JsError)
    (with-access::JsError exc (name msg stack fname location)
