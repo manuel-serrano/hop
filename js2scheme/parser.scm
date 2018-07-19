@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Jul 18 09:49:15 2018 (serrano)                */
+;*    Last change :  Thu Jul 19 10:36:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1967,10 +1967,7 @@
 		((and plugins (assq (token-value token) plugins))
 		 =>
 		 (lambda (p)
-		    ;; (tprint ">>> plugin " (token-value token))
-		    (let ((r ((cdr p) token parser-controller)))
-		       ;; (tprint "<<< " (token-value token) " " (j2s->list r))
-		       r)))
+		    ((cdr p) token parser-controller)))
 		(else
 		 (instantiate::J2SUnresolvedRef
 		    (loc (token-loc token))
