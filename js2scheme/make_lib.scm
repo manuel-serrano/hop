@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/make_lib.scm            */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/make_lib.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Dec 29 06:57:39 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Jul 17 09:38:42 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the js2scheme heap file.                */
 ;*=====================================================================*/
@@ -72,7 +72,6 @@
 	   (class J2SDeclFun)
 	   (class J2SDeclSvc)
 	   (class J2SDeclExtern)
-;* 	   (class J2SParam)                                            */
 	   (class J2SLiteral)
 	   (class J2SArrayAbsent)
 	   (class J2SNull)
@@ -104,5 +103,9 @@
 	   (class J2SPropertyInit)
 	   (class J2SDataPropertyInit)
 	   (class J2SAccessorPropertyInit)
+	   (class J2SKont)
+	   (class J2SOPTInitSeq)
+	   (class J2SDProducer)
+	   (class J2SDConsumer)
 
            (export-all)))

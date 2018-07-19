@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Jun  7 13:09:28 2018 (serrano)                */
+;*    Last change :  Tue Jul 17 18:30:47 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -210,7 +210,8 @@
 		      (or (hop-run-server) (eq? (hop-enable-repl) 'js))
 		      nodejs-new-global-object)))
       ;; js loader
-      (hop-loader-add! "js" (lambda (path . test) (nodejs-load path %worker)))
+      (hop-loader-add! "js"
+	 (lambda (path . test) (nodejs-load path path %worker)))
       ;; profiling
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f))
@@ -284,7 +285,7 @@
 	       (let ((oldload (hop-rc-loaded)))
 		  (hop-rc-loaded! #f)
 		  (unwind-protect
-		     (nodejs-load path %worker)
+		     (nodejs-load path path %worker)
 		     (hop-rc-loaded! oldload)))))))
 
    (let ((path (string-append (prefix (hop-rc-loaded)) ".js")))
@@ -405,7 +406,7 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
-		      (nodejs-load path %worker))))))
+		      (nodejs-load path path %worker))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))
 	 (else

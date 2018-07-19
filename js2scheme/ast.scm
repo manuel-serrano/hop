@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jul 13 08:32:54 2018 (serrano)                */
+;*    Last change :  Wed Jul 18 10:10:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -158,13 +158,13 @@
 	   
 	   (class J2SFun::J2SExpr
 	      (rtype::symbol (default 'unknown) (info '("notraverse")))
-	      (idthis (default 'this) (info '("notraverse")))
+	      (idthis::obj (default 'this) (info '("notraverse")))
 	      (idgen read-only (default #f) (info '("notraverse")))
 	      (mode::symbol (default 'normal) (info '("notraverse")))
 	      (decl (default #f) (info '("notraverse")))
 	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
 	      (vararg::obj (default #f) (info '("notraverse")))
-	      (name read-only (default '||) (info '("notraverse")))
+	      (name::symbol read-only (default '||) (info '("notraverse")))
 	      (generator::bool (default #f) (info '("notraverse")))
 	      (optimize (default #t) (info '("notraverse")))
 	      (thisp (default #f) (info '("notraverse")))
@@ -388,7 +388,7 @@
 	      (cache (default #f) (info '("notraverse")))
 	      (cspecs (default '(pmap vtable)) (info '("notraverse")))
 	      (fun::J2SExpr (info '("ast")))
-	      (protocol (default 'direct) (info '("notraverse")))
+	      (protocol::symbol (default 'direct) (info '("notraverse")))
 	      (thisarg::pair-nil (info '("ast")))
 	      (args::pair-nil (default '()) (info '("ast"))))
 	   

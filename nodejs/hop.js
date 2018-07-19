@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/nodejs/hop.js                     */
+/*    serrano/prgm/project/hop/3.2.x/nodejs/hop.js                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Oct 20 08:16:15 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Tue Jul 17 09:45:52 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
@@ -209,6 +209,7 @@ exports.hss = hop.modulesDir + "/hss";
 exports.markdown = hop.modulesDir + "/markdown";
 exports.syslog = hop.modulesDir + "/syslog";
 exports.systime = hop.modulesDir + "/systime";
+exports.hopc = hop.modulesDir + "/hopc";
 
 Object.seal( exports );
 Object.freeze( exports );

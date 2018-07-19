@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jun  9 10:58:17 2018 (serrano)                */
+;*    Last change :  Tue Jul 17 18:17:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -27,7 +27,7 @@
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang srcalias)
+	   (nodejs-load src ::bstring ::WorkerHopThread #!optional lang srcalias)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-abort-all!)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
@@ -752,7 +752,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile filename::bstring #!key lang worker-slave)
+(define (nodejs-compile src filename::bstring #!key lang worker-slave)
    
    (define (compile-file filename::bstring mod)
       (with-trace 'require "compile-file"
@@ -793,11 +793,34 @@
 		  :worker-slave worker-slave
 		  :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 		  :debug (bigloo-debug))))))
+
+   (define (compile-ast ast::J2SProgram mod)
+      (with-trace 'require "compile-ast"
+	 (with-access::J2SProgram ast (path)
+	    (trace-item "ast=" path)
+	    (debug-compile-trace path)
+	    (list `(define hopscript
+		      ,(j2s-compile ast
+			 :driver (nodejs-driver)
+			 :driver-name "nodejs-driver"
+			 :filename filename
+			 :language (or lang "hopscript")
+			 :module-main #f
+			 :module-name (symbol->string mod)
+			 :worker-slave worker-slave
+			 :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+			 :debug (bigloo-debug)))))))
    
-   (define (compile filename::bstring mod)
-      (if (file-exists? filename)
-	  (compile-file filename mod)
-	  (compile-url filename mod)))
+   (define (compile src mod)
+      (cond
+	 ((isa? src J2SProgram)
+	  (compile-ast src mod))
+	 ((not (string? src))
+	  (bigloo-type-error "nodejs-compile" "string or J2SProgram" src))
+	 ((file-exists? filename)
+	  (compile-file filename mod))
+	 (else
+	  (compile-url filename mod))))
 
    (unless nodejs-debug-compile
       (set! nodejs-debug-compile
@@ -810,7 +833,7 @@
 	 (trace-item "filename=" filename)
 	 (or (hashtable-get compile-table filename)
 	     (let* ((mod (gensym))
-		    (expr (compile filename mod))
+		    (expr (compile src mod))
 		    (evmod (eval-module)))
 		(when (eq? nodejs-debug-compile 'yes)
 		   (unless (directory? "/tmp/HOP")
@@ -1243,11 +1266,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-load filename worker::WorkerHopThread #!optional lang srcalias)
+(define (nodejs-load src filename worker::WorkerHopThread #!optional lang srcalias)
 
    (define (loadso-or-compile filename lang worker-slave)
       (if worker-slave
-	  (nodejs-compile filename :lang lang :worker-slave #t)
+	  (nodejs-compile src filename :lang lang :worker-slave #t)
 	  (let loop ((sopath (hop-find-sofile filename)))
 	     (cond
 		((string? sopath)
@@ -1263,13 +1286,13 @@
 		     (loop (nodejs-socompile filename lang)))
 		    ((nte nte1 nte+)
 		     (nodejs-socompile-queue-push filename lang)
-		     (nodejs-compile filename :lang lang))
+		     (nodejs-compile src filename :lang lang))
 		    (else
-		     (nodejs-compile filename :lang lang))))
+		     (nodejs-compile src filename :lang lang))))
 		(else
 		 (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
 		    (nodejs-socompile-queue-push filename lang))
-		 (nodejs-compile filename :lang lang))))))
+		 (nodejs-compile src filename :lang lang))))))
    
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
@@ -1295,14 +1318,14 @@
 		  ;; set the loaded property
 		  (js-put! mod 'loaded #t #f %this)
 		  ;; return the newly created module
-		  (trace-item "mod=" (typeof mod))
+		  (trace-item "mod=" (typeof mod) " filename=" filename)
 		  mod)))))
 
    (define (load-module-html)
       (with-trace 'require "require@load-module-html"
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
-	       (let ((hopscript (nodejs-compile filename :lang lang))
+	       (let ((hopscript (nodejs-compile filename filename :lang lang))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-module (if js-main filename ".")
@@ -1434,7 +1457,7 @@
 	 (js-put! mod 'exports json #f %this)
 	 mod))
    
-   (define (load-module path worker %this %module lang compiler srcalias)
+   (define (load-module src path worker %this %module lang compiler srcalias)
       (cond
 	 ((core-module? path)
 	  (nodejs-core-module path worker %this))
@@ -1447,6 +1470,15 @@
 		   (cond
 		      ((string=? ty "filename")
 		       (load-module (js-tostring val %this)
+			  (js-tostring val %this)
+			  worker %this %module
+			  (if (eq? langc (js-undefined))
+			      lang
+			      (js-tostring langc %this))
+			  #f
+			  path))
+		      ((string=? ty "ast")
+		       (load-module val path
 			  worker %this %module
 			  (if (eq? langc (js-undefined))
 			      lang
@@ -1466,7 +1498,7 @@
 	 ((or (eq? lang 'json) (string-suffix? ".json" path))
 	  (load-json path))
 	 (else
-	  (let ((mod (nodejs-load path worker lang srcalias)))
+	  (let ((mod (nodejs-load src path worker lang srcalias)))
 	     (unless (js-get mod 'parent %this)
 		;; parent and children
 		(let* ((children (js-get %module 'children %this))
@@ -1482,7 +1514,7 @@
 	    (trace-item "path=" path)
 	    (trace-item "mod=" (if (eq? mod (js-absent)) 'absent (typeof mod)))
 	    (if (eq? mod (js-absent))
-		(let ((mod (load-module path worker %this %module lang compiler #f)))
+		(let ((mod (load-module path path worker %this %module lang compiler #f)))
 		   (js-get mod 'exports %this))
 		(let ((exports (js-get mod 'exports %this)))
 		   (trace-item "exports=" (typeof exports))
