@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Jul 19 10:36:32 2018 (serrano)                */
+;*    Last change :  Fri Jul 20 12:53:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1320,7 +1320,7 @@
    (define (fun-body-params-defval params::pair-nil)
       (filter-map param-defval params))
 
-   (define (fun-body params::pair-nil args mode)
+   (define (fun-body params::pair-nil args mode::symbol)
       (let ((cmode current-mode))
 	 (set! current-mode mode)
 	 (unwind-protect
@@ -2779,7 +2779,7 @@
 	       ((pair? escape) (memq 'octal escape))
 	       ((string=? "use strict" val) 'strict)
 	       ((string=? "use hopscript" val) 'hopscript)
-	       (else #t))))))
+	       (else #f))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    javascript-module-nodes ...                                      */
