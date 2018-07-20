@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jul 18 08:47:32 2018 (serrano)                */
+;*    Last change :  Fri Jul 20 19:27:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -339,6 +339,12 @@
 		     :hidden-class #t))))
 	 
 	 ;; bind the properties of the prototype
+	 (js-bind! %this js-error-prototype 'notify
+	    :value (js-make-function %this
+		      (lambda (exn)
+			 (exception-notify exn))
+		      1 'notify)
+	    :enumerable #f)
 	 (js-bind! %this js-error-prototype 'message
 	    :set (js-make-function %this
 		    (lambda (o v)
