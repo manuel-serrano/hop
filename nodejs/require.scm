@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jul 17 18:17:29 2018 (serrano)                */
+;*    Last change :  Sat Jul 21 07:44:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -799,17 +799,24 @@
 	 (with-access::J2SProgram ast (path)
 	    (trace-item "ast=" path)
 	    (debug-compile-trace path)
-	    (list `(define hopscript
-		      ,(j2s-compile ast
-			 :driver (nodejs-driver)
-			 :driver-name "nodejs-driver"
-			 :filename filename
-			 :language (or lang "hopscript")
-			 :module-main #f
-			 :module-name (symbol->string mod)
-			 :worker-slave worker-slave
-			 :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
-			 :debug (bigloo-debug)))))))
+	    (let ((m (when (file-exists? path)
+			(open-mmap filename read: #t :write #f))))
+	       (unwind-protect
+		  (list
+		     `(define hopscript
+			 ,(j2s-compile ast
+			     :driver (nodejs-driver)
+			     :driver-name "nodejs-driver"
+			     :filename filename
+			     :language (or lang "hopscript")
+			     :module-main #f
+			     :mmap-src m
+			     :module-name (symbol->string mod)
+			     :worker-slave worker-slave
+			     :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+			     :debug (bigloo-debug))))
+		  (when (mmap? m)
+		     (close-mmap m)))))))
    
    (define (compile src mod)
       (cond
