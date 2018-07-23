@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jul 20 12:53:26 2018 (serrano)                */
+;*    Last change :  Mon Jul 23 07:06:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -251,14 +251,21 @@
 	 ((function)
 	  (function-declaration))
 	 ((ID)
-	  (if (eq? (peek-token-value) 'async)
-	      (let* ((token (consume-any!))
-		     (next (peek-token-type)))
-		 (token-push-back! token)
-		 (if (eq? next 'function)
-		     (async-declaration)
-		     (statement)))
-	      (statement)))
+	  (let ((token (peek-token)))
+	     (cond
+		((and plugins (assq (token-value token) plugins))
+		 =>
+		 (lambda (p)
+		    ((cdr p) (consume-any!) #t parser-controller)))
+		((eq? (token-value token) 'async)
+		 (let* ((token (consume-any!))
+			(next (peek-token-type)))
+		    (token-push-back! token)
+		    (if (eq? next 'function)
+			(async-declaration)
+			(statement))))
+		(else
+		 (statement)))))
 	 ((service)
 	  (service-declaration))
 	 ((class)
@@ -1967,7 +1974,7 @@
 		((and plugins (assq (token-value token) plugins))
 		 =>
 		 (lambda (p)
-		    ((cdr p) token parser-controller)))
+		    ((cdr p) token #f parser-controller)))
 		(else
 		 (instantiate::J2SUnresolvedRef
 		    (loc (token-loc token))
