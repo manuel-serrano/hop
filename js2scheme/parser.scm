@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jul 23 07:06:22 2018 (serrano)                */
+;*    Last change :  Mon Jul 23 20:49:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1481,17 +1481,18 @@
    (define (expression::J2SExpr in-for-init? destructuring?)
       (let ((assig (assig-expr in-for-init? destructuring?)))
 	 (let loop ((rev-exprs (list assig)))
-	    (if (eq? (peek-token-type) 'COMMA)
-		(begin
-		   (consume-any!)
-		   (loop (cons (assig-expr in-for-init? #f) rev-exprs)))
-		(if (null? (cdr rev-exprs))
-		    (car rev-exprs)
-		    (let ((exprs (reverse! rev-exprs)))
-		       (with-access::J2SNode (car exprs) (loc)
-			  (instantiate::J2SSequence
-			     (loc loc)
-			     (exprs exprs)))))))))
+	    (cond
+	       ((eq? (peek-token-type) 'COMMA)
+		(consume-any!)
+		(loop (cons (assig-expr in-for-init? #f) rev-exprs)))
+	       ((null? (cdr rev-exprs))
+		(car rev-exprs))
+	       (else
+		(let ((exprs (reverse! rev-exprs)))
+		   (with-access::J2SNode (car exprs) (loc)
+		      (instantiate::J2SSequence
+			 (loc loc)
+			 (exprs exprs)))))))))
    
    (define (assig-operator? x)
       (case x
@@ -1859,10 +1860,12 @@
 		    (loop (cons arg rev-args)))))))
 
    (define (xml-expression tag delim)
-      (html-parser input-port (cons* :tilde-level tilde-level conf) tag delim))
+      (html-parser input-port
+	 (cons* :tilde-level tilde-level conf) main-parser tag delim))
 
    (define (doctype-expression)
-      (html-parser input-port (cons* :tilde-level tilde-level conf)))
+      (html-parser input-port
+	 (cons* :tilde-level tilde-level conf) main-parser))
 
    (define (tilde token)
       (with-tilde
@@ -2482,18 +2485,22 @@
 
    (set! parser-controller
       (vector #unspecified #unspecified
-	 peek-token consume-token! consume-any! expression statement block))
-   
-   (case (config-get conf :parser #f)
-      ((script-expression) (with-tilde tilde-expression))
-      ((tilde-expression) (with-tilde tilde-expression))
-      ((dollar-expression) (dollar-expression))
-      ((module) (program #f))
-      ((repl) (repl))
-      ((eval) (eval #f))
-      ((eval-strict) (eval-strict))
-      ((client-program) (program #t))
-      (else (program #f))))
+	 peek-token consume-token! consume-any!
+	 expression statement block cond-expr))
+
+   (define (main-parser input-port conf)
+      (case (config-get conf :parser #f)
+	 ((script-expression) (with-tilde tilde-expression))
+	 ((tilde-expression) (with-tilde tilde-expression))
+	 ((dollar-expression) (dollar-expression))
+	 ((module) (program #f))
+	 ((repl) (repl))
+	 ((eval) (eval #f))
+	 ((eval-strict) (eval-strict))
+	 ((client-program) (program #t))
+	 (else (program #f))))
+
+   (main-parser input-port conf))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-tag->expr ...                                                */
