@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jul 23 20:49:18 2018 (serrano)                */
+;*    Last change :  Fri Jul 27 01:27:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2486,7 +2486,13 @@
    (set! parser-controller
       (vector #unspecified #unspecified
 	 peek-token consume-token! consume-any!
-	 expression statement block cond-expr))
+	 expression statement block cond-expr
+	 (lambda (this)
+	    (let ((othis _this))
+	       (set! _this this)
+	       (unwind-protect
+		  (block)
+		  (set! _this othis))))))
 
    (define (main-parser input-port conf)
       (case (config-get conf :parser #f)
