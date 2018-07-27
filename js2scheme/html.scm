@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Mon Jul 23 20:45:32 2018 (serrano)                */
+;*    Last change :  Fri Jul 27 21:56:49 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -24,12 +24,13 @@
 	   __js2scheme_dump
 	   __js2scheme_utils)
    
-   (export (html-parser ::input-port ::pair-nil plugins #!optional tag sep)))
+   (export (html-parser ::input-port ::pair-nil parser plugins
+	      #!optional tag sep)))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-parser ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (html-parser port conf::pair-nil parser #!optional tag sep)
+(define (html-parser port conf::pair-nil parser plugins #!optional tag sep)
    (let ((lang (config-get conf :language "hopscript")))
       (if tag
 	  (let ((str (symbol->string! (token-value tag))))
@@ -39,13 +40,13 @@
 	     (read/rp xml-grammar port '()
 		(string=? lang "hopscript") #f
 		(lambda (x) x)
-		(hop-locale) lang conf parser))
+		(hop-locale) lang conf parser plugins))
 	  (let loop ()
 	     (let ((v (read/rp xml-grammar port '()
 			 (string=? lang "hopscript") #f
 			 (lambda (x) x)
 			 (hop-locale)
-			 lang conf parser)))
+			 lang conf parser plugins)))
 		(cond
 		   ((isa? v J2SString)
 		    (with-access::J2SString v (val)
@@ -160,9 +161,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    html-parse-script ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (html-parse-script iport conf parser)
+(define (html-parse-script iport conf plugins)
    (rgc-buffer-insert-substring! iport "~{" 0 2)
-   (parser iport (cons* :parser 'script-expression conf)))
+   (j2s-parser iport (cons* :parser 'script-expression conf) plugins))
 
 ;*---------------------------------------------------------------------*/
 ;*    special ...                                                      */
@@ -292,7 +293,8 @@
 		     encoding
 		     lang
 		     conf
-		     parser)
+		     parser
+		     plugins)
       
       (define (find-special stack)
          ;;; find the top-most special element of the stack, if any
@@ -324,7 +326,7 @@
 		(let ((tag (token type sym (the-length))))
 		   (push-node-ignore
 		      (make-dom-create tag attributes
-			 (list (html-parse-script (the-port) conf parser))
+			 (list (html-parse-script (the-port) conf plugins))
 			 lang conf))))
 	       (else
 		(let* ((tag (token type sym (the-length)))
@@ -560,6 +562,15 @@
    (define (html? tag)
       (when (symbol? (token-value tag))
 	 (memq (token-value tag) '(<html> <HTML>))))
+
+   (define (debug-attribute? inits)
+      (find (lambda (i)
+	       (when (isa? i J2SDataPropertyInit)
+		  (with-access::J2SDataPropertyInit i (name)
+		     (when (isa? name J2SString)
+			(with-access::J2SString name (val)
+			   (string=? val "%location"))))))
+	 inits))
    
    (let ((attrs '())
 	 (abody '()))
@@ -586,7 +597,7 @@
       (let* ((loc (token-loc tag))
 	     (inits (reverse! attrs))
 	     (dbg (> (config-get conf :debug 0) 0))
-	     (inits (if dbg
+	     (inits (if (and dbg (not (debug-attribute? inits)))
 			(cons (debug-init loc (token-value tag)) inits)
 			inits))
 	     (inits (if (or (string=? lang "hopscript") (not (html? tag)))
@@ -741,7 +752,11 @@
       ("${"
        (let ((str (the-string)))
 	  (rgc-buffer-insert-substring! (the-port) str 0 2))
-       (parser (the-port) (cons* :parser 'dollar-expression conf)))
+       (let ((o (parser (the-port) (cons* :parser 'dollar-expression conf))))
+	  (if (isa? o J2SObjInit)
+	      (with-access::J2SObjInit o (inits)
+		 (car inits))
+	      o)))
       (else
        (let ((c (the-failure))
 	     (loc (input-port-position (the-port))))

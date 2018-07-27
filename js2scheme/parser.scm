@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jul 27 01:27:32 2018 (serrano)                */
+;*    Last change :  Fri Jul 27 23:27:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1861,11 +1861,11 @@
 
    (define (xml-expression tag delim)
       (html-parser input-port
-	 (cons* :tilde-level tilde-level conf) main-parser tag delim))
+	 (cons* :tilde-level tilde-level conf) main-parser plugins tag delim))
 
    (define (doctype-expression)
       (html-parser input-port
-	 (cons* :tilde-level tilde-level conf) main-parser))
+	 (cons* :tilde-level tilde-level conf) main-parser plugins))
 
    (define (tilde token)
       (with-tilde
