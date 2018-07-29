@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jul 27 23:27:35 2018 (serrano)                */
+;*    Last change :  Sat Jul 28 13:54:56 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2492,7 +2492,8 @@
 	       (set! _this this)
 	       (unwind-protect
 		  (block)
-		  (set! _this othis))))))
+		  (set! _this othis))))
+	 (lambda () (with-tilde (lambda () (cond-expr #f))))))
 
    (define (main-parser input-port conf)
       (case (config-get conf :parser #f)
@@ -2578,6 +2579,11 @@
 		 (loop (cdr nodes) (stricter-mode mode m)))
 		(m
 		 (loop (cdr nodes) mode))
+		((isa? (car nodes) J2SStmtExpr)
+		 (with-access::J2SStmtExpr (car nodes) (expr)
+		    (if (isa? expr J2SString)
+			(loop (cdr nodes) mode)
+			mode)))
 		(else
 		 mode)))
 	  mode)))

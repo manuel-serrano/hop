@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Jul 13 08:12:14 2018 (serrano)                */
+;*    Last change :  Sat Jul 28 13:04:30 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -18,13 +18,14 @@
    (match-case x
       ((define-jseval ?var ?val ?evname ?evenv ?source ?loc . ?rest)
        (let ((tmp (gensym '%tmp)))
-	  `(define ,var
-	      (let ((,tmp ,val))
-		 (js-define %this ,evenv ,evname
-		    (lambda (%) ,var)
-		    (lambda (% %v) (set! ,var %v))
-		    ,source ,loc ,@rest)
-		 ,tmp))))
+	  (e `(define ,var
+		 (let ((,tmp ,val))
+		    (js-define %this ,evenv ,evname
+		       (lambda (%) ,var)
+		       (lambda (% %v) (set! ,var %v))
+		       ,source ,loc ,@rest)
+		    ,tmp))
+	     e)))
       (else
        (error "Js-define-eval" "bad syntax" x))))
 

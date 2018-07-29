@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jul 18 08:31:57 2018 (serrano)                */
+;*    Last change :  Sat Jul 28 13:16:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -207,9 +207,14 @@
 		       `(js-decl-eval-put! %scope
 			   ',id ,value ,(strict-mode? mode) %this)
 		       (if (js-need-global? this scope mode)
-			   `(define-jseval ,ident ,value
-			       ',id %scope %source ,(caddr loc)
-			       ,@(or (hidden-class this) '()))
+			   `(define ,ident
+			       (let ((%%tmp ,value))
+				  (js-define %this %scope ',id
+				     (lambda (%) ,ident)
+				     (lambda (% %v) (set! ,ident %v))
+				     %source ,(caddr loc)
+				     ,@(or (hidden-class this) '()))
+				  %%tmp))
 			   `(define ,ident ,value)))))
 	       ((memq scope '(letblock letvar))
 		(if ronly

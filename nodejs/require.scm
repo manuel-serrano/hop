@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jul 21 07:44:31 2018 (serrano)                */
+;*    Last change :  Sat Jul 28 16:14:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -493,15 +493,24 @@
 	 :configurable #f :writable #f))
    
    ;; require.resolve
-   (js-put! require 'resolve
-      (js-make-function this
-	 (lambda (_ name)
-	    (let ((name (js-tostring name this)))
-	       (if (core-module? name)
-		   (js-string->jsstring name)
-		   (js-string->jsstring (nodejs-resolve name this %module 'body)))))
-	 1 "resolve")
-      #f this)
+   (js-bind! this require 'resolve
+      :value (js-make-function this
+		(lambda (_ name)
+		   (let ((name (js-tostring name this)))
+		      (if (core-module? name)
+			  (js-string->jsstring name)
+			  (js-string->jsstring (nodejs-resolve name this %module 'body)))))
+		1 "resolve")
+      :configurable #t :writable #t :enumerable #t)
+;*    (js-put! require 'resolve                                        */
+;*       (js-make-function this                                        */
+;* 	 (lambda (_ name)                                              */
+;* 	    (let ((name (js-tostring name this)))                      */
+;* 	       (if (core-module? name)                                 */
+;* 		   (js-string->jsstring name)                          */
+;* 		   (js-string->jsstring (nodejs-resolve name this %module 'body))))) */
+;* 	 1 "resolve")                                                  */
+;*       #f this)                                                      */
 
    ;; require.cache
    (with-access::WorkerHopThread worker (module-cache)
