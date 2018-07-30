@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Jul  8 09:30:32 2018 (serrano)                */
+;*    Last change :  Mon Jul 30 12:12:10 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -222,21 +222,18 @@
 ;*---------------------------------------------------------------------*/
 (define (js-number-touint32::uint32 obj)
    
-   (define 2^32 (exptfl 2. 32.))
-   
-   (define (positive-double->uint32::uint32 obj::double)
-      (if (<fl obj 2^32)
-	  (flonum->uint32 obj)
-	  (flonum->uint32 (remainderfl obj 2^32))))
-   
    (define (double->uint32::uint32 obj::double)
       (cond
 	 ((or (= obj +inf.0) (= obj -inf.0) (not (= obj obj)))
 	  #u32:0)
 	 ((<fl obj 0.)
-	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floorfl (absfl obj))))))
+	  (llong->uint32
+	     (+llong (bit-lshllong #l1 32)
+		(flonum->llong (*fl -1. (floorfl (absfl obj)))))))
 	 (else
-	  (positive-double->uint32 obj))))
+	  (llong->uint32
+	     (+llong (bit-lshllong #l1 32)
+		(flonum->llong (floorfl (absfl obj))))))))
    
    (cond
       ((flonum? obj) (double->uint32 obj))
