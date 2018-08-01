@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Mar  9 10:28:38 2018 (serrano)                */
+;*    Last change :  Wed Aug  1 15:14:48 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -448,13 +448,10 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 	     res)))
    
    (define incs '())
-
    (define idiom "scheme")
-
    (define context #f)
-
+   (define module #f)
    (define favico #f)
-
    (define location #f)
 
    (let loop ((a args)
@@ -538,6 +535,9 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		 ((:context)
 		  (set! context (cadr a))
 		  (loop (cddr a) #f rts dir path base inl packed els))
+		 ((:module)
+		  (set! module (cadr a))
+		  (loop (cddr a) #f rts dir path base inl packed els))
 		 ((:inline)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
 		      (loop (cddr a) #f rts dir path base (cadr a) packed els)
@@ -587,7 +587,8 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		       (cons (script (absolute-path file dir) inl) els))))
 	     ((:require :module)
 	      (let* ((v (car a))
-		     (file (clientc-resolve-filename v (or context path))))
+		     (file (clientc-resolve-filename v
+			      (or context path) module)))
 		 (if (not file)
 		     (error "<HEAD>" "Cannot find required file" file)
 		     (loop (cdr a) mode rts dir path base inl packed 
@@ -725,6 +726,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		      (type (hop-mime-type))
 		      (idiom #f)
 		      (context #f)
+		      (module #f)
 		      (lang #f)
 		      (attributes)
 		      body)
@@ -778,7 +780,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 	    ((not (string? src))
 	     (default src))
 	    (lang
-	     (let ((file (clientc-resolve-filename src context)))
+	     (let ((file (clientc-resolve-filename src context module)))
 		(require file src inline lang)))
 	    ((and inline (file-exists? src))
 	     (inl src))

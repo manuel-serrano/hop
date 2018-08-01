@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jul 28 16:14:55 2018 (serrano)                */
+;*    Last change :  Wed Aug  1 15:02:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -83,14 +83,16 @@
       (if i
 	  (let ((lang (substring query (+fx i 6))))
 	     (if (string=? lang "hopscript")
-		 (nodejs-compile-file-hopscript ifile name ofile query #f lang)
+		 (nodejs-compile-file-hopscript ifile ifile
+		    name ofile query #f lang)
 		 (nodejs-compile-file-lang ifile name ofile query lang)))
-	  (nodejs-compile-file-hopscript ifile name ofile query #f "hopscript"))))
+	  (nodejs-compile-file-hopscript ifile ifile name ofile query #f
+	     "hopscript"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file-hopscript ...                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-file-hopscript ifile name ofile query srcalias lang::bstring)
+(define (nodejs-compile-file-hopscript obj ifile name ofile query srcalias lang::bstring)
    (let* ((srcmap (when (>fx (bigloo-debug) 0)
 		     (string-append ofile ".map")))
 	  (op (if (string=? ofile "-")
@@ -101,7 +103,8 @@
 		 ((string-prefix? "el=" query) 'el)
 		 (else 'js)))
 	  (tree (unwind-protect
-		   (module->javascript ifile name op #f #f srcmap qr srcalias lang)
+		   (module->javascript obj ifile
+		      name op #f #f srcmap qr srcalias lang)
 		   (unless (eq? op (current-output-port))
 		      (close-output-port op)))))
       (when (>fx (bigloo-debug) 0)
@@ -115,7 +118,12 @@
 (define (nodejs-compile-file-lang ifile name ofile query lang::bstring)
 
    (define (filename->file val lang %this)
-      (nodejs-compile-file-hopscript (js-tostring val %this)
+      (let ((ifile (js-tostring val %this)))
+	 (nodejs-compile-file-hopscript ifile ifile
+	    name ofile query ifile lang)))
+
+   (define (ast->file val lang %this)
+      (nodejs-compile-file-hopscript val ifile
 	 name ofile query ifile lang))
 
    (define (json->file val lang %this)
@@ -155,6 +163,8 @@
 				      (value->file val lang %this))
 				     ((string=? ty "error")
 				      (raise val))
+				     ((string=? ty "ast")
+				      (ast->file val lang %this))
 				     (else
 				      (js-raise-error (js-new-global-object)
 					 "Wrong language compiler output"
@@ -272,9 +282,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (module->javascript filename::bstring id op compile isexpr srcmap query
+(define (module->javascript obj filename id op compile isexpr srcmap query
 	   srcalias lang::bstring)
-
+   
    (define (init-dummy-module! this worker)
       (with-access::JsGlobalObject this (js-object)
 	 (let ((mod (js-new0 this js-object))
@@ -295,7 +305,47 @@
 	       (nodejs-process worker this) #f this)
 	    (js-put! this 'console
 	       (nodejs-require-core "console" worker this) #f this))))
-
+   
+   (define (hopscript->javascript obj filename header lang::bstring esplainp this worker)
+      (debug-compile-trace filename)
+      (j2s-compile obj
+	 :%this this
+	 :source filename
+	 :resource (dirname filename)
+	 :filename filename
+	 :worker worker
+	 :header header
+	 :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+	 :parser 'client-program
+	 :driver (if (or (<=fx (bigloo-debug) 0) esplainp)
+		     (j2s-javascript-driver)
+		     (j2s-javascript-debug-driver))
+	 :driver-name (if (or (<=fx (bigloo-debug) 0) "esplainp")
+			  "j2s-javascript-driver"
+			  "j2s-javascript-debug-driver")
+	 :language lang
+	 :site 'client
+	 :debug (if esplainp 0 (bigloo-debug))))
+   
+   (define (compile obj header offset esplainp worker this)
+      (let ((tree (hopscript->javascript obj filename
+		     header lang esplainp this worker)))
+	 (for-each (lambda (exp)
+		      (unless (isa? exp J2SNode)
+			 ;; skip node information, used
+			 ;; for sourcemap generation
+			 (display exp op)))
+	    tree)
+	 (when header
+	    (display "\nreturn module.exports;}\n" op)
+	    (when srcmap
+	       (fprintf op "\n\nhop_source_mapping_url(~s, \"~a\");\n"
+		  (or srcalias filename) srcmap)
+	       (fprintf op "\n//# sourceMappingURL=~a\n" srcmap)))
+	 ;; first element of the tree is a position offset
+	 ;; see sourcemap generation
+	 (cons offset tree)))
+   
    (let ((this (nodejs-new-global-object))
 	 (worker (js-current-worker))
 	 (esplainp (eq? query 'es)))
@@ -311,46 +361,11 @@
 	       (or srcalias filename))
 	    (flush-output-port op))
 	 (let ((offset (output-port-position op)))
-	    (call-with-input-file filename
-	       (lambda (in)
-		  (debug-compile-trace filename)
-		  (let ((tree (j2s-compile in
-				 :%this this
-				 :source filename
-				 :resource (dirname filename)
-				 :filename filename
-				 :worker worker
-				 :header header
-				 :verbose (if (>=fx (bigloo-debug) 3)
-					      (hop-verbose)
-					      0)
-				 :parser 'client-program
-				 :driver (if (or (<=fx (bigloo-debug) 0)
-						 esplainp)
-					     (j2s-javascript-driver)
-					     (j2s-javascript-debug-driver))
-				 :driver-name (if (or (<=fx (bigloo-debug) 0)
-						      "esplainp")
-						  "j2s-javascript-driver"
-						  "j2s-javascript-debug-driver")
-				 :language lang
-				 :site 'client
-				 :debug (if esplainp 0 (bigloo-debug)))))
-		     (for-each (lambda (exp)
-				  (unless (isa? exp J2SNode)
-				     ;; skip node information, used
-				     ;; for sourcemap generation
-				     (display exp op)))
-			tree)
-		     (when header
-			(display "\nreturn module.exports;}\n" op)
-			(when srcmap
-			   (fprintf op "\n\nhop_source_mapping_url(~s, \"~a\");\n"
-			      (or srcalias filename) srcmap)
-			   (fprintf op "\n//# sourceMappingURL=~a\n" srcmap)))
-		     ;; first element of the tree is a position offset
-		     ;; see sourcemap generation
-		     (cons offset tree))))))))
+	    (if (string? obj)
+		(call-with-input-file filename
+		   (lambda (in)
+		      (compile in header offset esplainp worker this)))
+		(compile obj header offset esplainp worker this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-paths ...                                                     */
@@ -579,7 +594,8 @@
    (define script
       (js-make-function %this
 	 (lambda (this attrs . nodes)
-	    (let ((tmp (apply <SCRIPT> :idiom "javascript" :context %scope
+	    (let ((tmp (apply <SCRIPT> :idiom "javascript"
+			  :context %scope :module %module
 			  (when (isa? attrs JsObject)
 			     (js-object->keyword-arguments* attrs %this))
 			  nodes)))
@@ -1715,10 +1731,11 @@
 	     nodejs-env-path))))
    
    (with-trace 'require "nodejs-resolve"
+      (trace-item "name=" name)
+      (trace-item "%module=" (typeof %module))
       (let* ((mod %module)
 	     (filename (js-jsstring->string (js-get mod 'filename %this)))
 	     (dir (dirname filename)))
-	 (trace-item "name=" name)
 	 (trace-item "dir=" dir)
 	 (trace-item "paths=" (let ((paths (js-get mod 'paths %this)))
 				(if (isa? paths JsArray)
