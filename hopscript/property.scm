@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jul 13 08:17:06 2018 (serrano)                */
+;*    Last change :  Wed Aug  1 14:11:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1199,7 +1199,9 @@
 ;*    Returns a vector of the properties symbol.                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-properties-symbol::vector o %this::JsGlobalObject)
-   (js-raise-type-error %this "[[PROP]]: not an object ~s" o))
+   (if (pair? o)
+       '#()
+       (js-raise-type-error %this "[[PROP]]: not an object ~s" o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-symbol::vector ::JsObject ...                      */

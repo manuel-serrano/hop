@@ -78,15 +78,6 @@
 		 (enumerable #t)
 		 (configurable #f))
 	      (js-undefined)))
-	 ((toArray)
-	  (if (epair? o)
-	      (instantiate::JsValueDescriptor	
-		 (name 'cer)
-		 (writable #t)
-		 (value (js-obj->jsobject (cer o) %this))
-		 (enumerable #t)
-		 (configurable #f))
-	      (js-undefined)))
 	 (else
 	  (js-undefined)))))
 
