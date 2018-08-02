@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Sat Feb 24 21:14:12 2018 (serrano)                */
+;*    Last change :  Thu Aug  2 12:41:20 2018 (serrano)                */
 ;*    Copyright   :  2009-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Client-side debugging facility (includes when Hop launched in    */
+;*    Client-side debugging facility (included when Hop launched in    */
 ;*    debug mode).                                                     */
 ;*=====================================================================*/
 
@@ -452,9 +452,9 @@
 ;*    See HOP_CALLBACK, hop-lib.js.                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-handler e ctx)
-   ;; store the exception for the default handler to display it, don't
-   ;; display it now, otherwise we would have to implement a complex
-   ;; machinery to prevent hop-onerror-handler to also display it
+   ;; store the exception for the default handler to display it but don't
+   ;; display it right away otherwise we would have to implement a complex
+   ;; machinery to prevent hop-onerror-handler to also display it.
    (let ((stk (append (hop-get-exception-stack e) ctx)))
       (set! hop-current-exception e)
       (set! hop-current-exception-stack (hop-debug-exception-stack stk)))
@@ -469,6 +469,7 @@
 			       document.location.href)
 		      :msg (get-exception-message e)
 		      :obj (if (js-in? "scObject" e) e.scObject #unspecified)
+		      :loc (if (js-in? "location" e) e.location #unspecified)
 		      :stack hop-current-exception-stack))))
    (raise e))
 

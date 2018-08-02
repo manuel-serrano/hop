@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon Jun 11 14:20:33 2018 (serrano)                */
+;*    Last change :  Thu Aug  2 01:22:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -677,7 +677,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDeclInit env mode withs wenv genv ctx conf)
    (with-access::J2SDeclInit this (loc id val)
-      (let ((ndecl::J2SDecl (find-decl id env)))
+      (let ((ndecl::J2SDecl (or (find-decl id env) this)))
 	 ;; strict mode restrictions
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1
 	 (when (eq? mode 'strict)
