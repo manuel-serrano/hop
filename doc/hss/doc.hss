@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/doc/hss/doc.hss                   */
+/*    serrano/prgm/project/hop/3.2.x/doc/hss/doc.hss                   */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Mon Jan 29 15:07:18 2018 (serrano)                */
+/*    Last change :  Sun Aug  5 18:54:50 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -62,13 +62,19 @@ p.danger {
 .jumbotron svg {
   transition: 0.5s all;
 }  
-  .jumbotron h1, .jumbotron p {
+
+.jumbotron h1, .jumbotron p {
   transition: 0.2s all;
+}
+
+.jumbotron p.version {
+  text-align: left;
+  padding-top: 60px;
 }
 
 [scrolled="yes"] .jumbotron {
   margin-top: 0;
-  padding-top: 48px;
+  padding-top: 38px;
   padding-bottom: 0px;
 }
 
@@ -84,10 +90,21 @@ p.danger {
 [scrolled="yes"] .jumbotron h1 {
   margin-top: 20px;
   font-size: 300%;
+  border: 1px solid blue;
 }
+
 [scrolled="yes"] .jumbotron p {
   margin-top: 8px;
   font-size: 110%;
+}
+
+[scrolled="yes"] .jumbotron p.version {
+  text-align: left;
+  padding-top: 30px;
+}
+
+[scrolled="yes"] div.col-md-2 {
+  height: 14ex;
 }
 
 /*---------------------------------------------------------------------*/

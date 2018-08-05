@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Jun 17 12:21:08 2018 (serrano)                */
+;*    Last change :  Sun Aug  5 19:41:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -33,7 +33,11 @@
    (instantiate::J2SStageProc
       (name "use")
       (comment "Usage property for all variables")
-      (proc j2s-use!)
+      (proc (lambda (n args)
+	       (unless (isa? n J2SProgram)
+		  (tprint "use n=" (typeof n))
+		  (tprint (j2s->list n)))
+	       (j2s-use! n args)))
       (optional #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -43,7 +47,11 @@
    (instantiate::J2SStageProc
       (name "dead")
       (comment "Removed dead variables")
-      (proc j2s-dead!)))
+      (proc (lambda (n args)
+	       (unless (isa? n J2SProgram)
+		  (tprint "dead n=" (typeof n))
+		  (tprint (j2s->list n)))
+	       (j2s-dead! n args)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use! ::J2SProgram ...                                        */

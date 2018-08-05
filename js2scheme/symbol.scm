@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Aug  2 01:22:09 2018 (serrano)                */
+;*    Last change :  Sun Aug  5 19:53:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -28,8 +28,7 @@
 
    (static (class J2SDeclArguments::J2SDecl))
 
-   (export j2s-symbol-stage
-	   (generic j2s-symbol ::obj ::obj)))
+   (export j2s-symbol-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-symbol-stage                                                 */
@@ -42,40 +41,35 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-symbol ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-generic (j2s-symbol this conf)
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    j2s-symbol ::J2SProgram ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    Warning, headers are not scanned for variable resolution!        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-symbol this::J2SProgram conf)
-   (with-access::J2SProgram this (nodes loc mode headers decls)
-      ;; filters out double definitions
-      (set! nodes (decl-cleanup-duplicate! nodes))
-      (let* ((hds (append-map (lambda (s) (collect* s)) headers))
-	     (vars (append-map (lambda (s) (collect* s)) nodes))
-	     (lets (collect-let nodes))
-	     (env (append hds vars lets))
-	     (genv (list (instantiate::J2SDecl (id '__%dummy%__) (loc loc))))
-	     (scope (config-get conf :bind-global '%scope))
-	     (vdecls (bind-decls! vars env mode scope '() '() genv conf)))
-	 (when (pair? vars)
-	    (set! decls (filter (lambda (d) (isa? d J2SDecl)) vdecls)))
-	 (when (pair? lets)
-	    (for-each (lambda (d::J2SDecl)
-			 (with-access::J2SDecl d (scope)
-			    (set! scope 'global)))
-	       lets)
-	    (set! decls (append decls lets)))
-	 (set! nodes
-	    (append (filter (lambda (d) (not (isa? d J2SDecl))) vdecls)
-	       nodes))
-	 (set! nodes
-	    (map! (lambda (o) (resolve! o env mode '() '() genv #f conf))
-	       nodes))))
+(define (j2s-symbol this conf)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (nodes loc mode headers decls)
+	 ;; filters out double definitions
+	 (set! nodes (decl-cleanup-duplicate! nodes))
+	 (let* ((hds (append-map (lambda (s) (collect* s)) headers))
+		(vars (append-map (lambda (s) (collect* s)) nodes))
+		(lets (collect-let nodes))
+		(env (append hds vars lets))
+		(genv (list (instantiate::J2SDecl (id '__%dummy%__) (loc loc))))
+		(scope (config-get conf :bind-global '%scope))
+		(vdecls (bind-decls! vars env mode scope '() '() genv conf)))
+	    (when (pair? vars)
+	       (set! decls (filter (lambda (d) (isa? d J2SDecl)) vdecls)))
+	    (when (pair? lets)
+	       (for-each (lambda (d::J2SDecl)
+			    (with-access::J2SDecl d (scope)
+			       (set! scope 'global)))
+		  lets)
+	       (set! decls (append decls lets)))
+	    (set! nodes
+	       (append (filter (lambda (d) (not (isa? d J2SDecl))) vdecls)
+		  nodes))
+	    (set! nodes
+	       (map! (lambda (o) (resolve! o env mode '() '() genv #f conf))
+		  nodes)))))
    this)
 
 ;*---------------------------------------------------------------------*/

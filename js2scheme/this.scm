@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Jan 24 15:58:03 2018 (serrano)                */
+;*    Last change :  Sun Aug  5 19:51:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -20,8 +20,7 @@
 	   __js2scheme_stage
 	   __js2scheme_utils)
 
-   (export j2s-this-stage
-	   (generic j2s-this ::obj ::obj)))
+   (export j2s-this-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-this-stage ...                                               */
@@ -36,17 +35,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-this ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-this this args)
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    j2s-this ::J2SProgram ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-this this::J2SProgram args)
-   (with-access::J2SProgram this (nodes headers decls)
-      (for-each (lambda (o) (this! o)) headers)
-      (for-each (lambda (o) (this! o)) decls)
-      (for-each (lambda (o) (this! o)) nodes))
+(define (j2s-this this args)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (nodes headers decls)
+	 (for-each (lambda (o) (this! o)) headers)
+	 (for-each (lambda (o) (this! o)) decls)
+	 (for-each (lambda (o) (this! o)) nodes)))
    this)
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Tue Mar 13 15:44:44 2018 (serrano)                */
+/*    Last change :  Sun Aug  5 18:46:59 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -30,12 +30,14 @@ function title( attrs, ... subtitle ) {
              src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
              height="16ex" width="10em"/>
 	 </div>
-	 <div class="col-md-10">
+	 <div class="col-md-7">
 	   <h1>
               ${attrs.title ? attrs.title : "Hop.js"}
               ${subtitle.length > 0 ? <small>/${subtitle}</small> : ""}
 	   </h1>
-	   <p>
+	 </div>
+	 <div class="col-md-3">
+	   <p class="version">
              <span class="label label-default lbl-lg">
               version ${attrs.version ? attrs.version : config.version}
 	     </span>
