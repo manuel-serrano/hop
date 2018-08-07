@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Aug  7 10:17:41 2018 (serrano)                */
+#*    Last change :  Tue Aug  7 10:59:52 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -362,6 +362,7 @@ flash/%.swf: flash/%.as
 #*---------------------------------------------------------------------*/
 hop-exception.js: hop-exception.scm ../runtime/client-exception.sch
 	$(call compile3,$(HOPC),--no-use-strict --no-source-map $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
+	cat hop-exception-onload.js >> hop-exception.js
 
 hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch values.sch
 	$(call compile3,$(HOPC),--no-use-strict --no-source-map $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
