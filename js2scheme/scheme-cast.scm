@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Fri Jul  6 07:48:31 2018 (serrano)                */
+;*    Last change :  Tue Aug  7 11:33:12 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -398,6 +398,14 @@
       (match-case v
 	 ((? symbol?)
 	  `(js-toflonum ,v))
+	 ((? fixnum?)
+	  (fixnum->flonum v))
+	 ((? flonum?)
+	  v)
+	 ((? llong?)
+	  (llong->flonum v))
+	 ((? elong?)
+	  (elong->flonum v))
 	 (((or let let* letrec letrec*) ?- ?body)
 	  (set-car! (cddr v) (loop body return))
 	  v)
@@ -435,6 +443,10 @@
 	  `(+fl (fixnum->flonum ,x) (fixnum->flonum ,y)))
 	 ((%$$NN ?x ?y)
 	  `(js-toflonum ,v))
+	 ((js-tonumber
+	     (js-global-object-get-name %scope ((kwote quote) Infinity) ?- %this)
+	     %this)
+	  +inf.0)
 	 (else
 	  (let ((f (car v)))
 	     (unless (memq f *debug-real*)

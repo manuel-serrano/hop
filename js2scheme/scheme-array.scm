@@ -419,7 +419,7 @@
 		      `(vector-ref ,(j2s-scheme obj mode return conf)
 			  (uint32->fixum
 			     ,(j2s-scheme-as-uint32 field mode return conf))))
-		     ((and (interval? range) (>=fx (interval-min range) 0))
+		     ((and (interval? range) (>=llong (interval-min range) 0))
 		      (let ((i (gensym 'idx)))
 			 `(let ((,i ,(j2s-scheme-as-uint32 field mode
 					return conf)))

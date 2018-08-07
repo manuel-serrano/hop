@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Jun 16 12:38:02 2018 (serrano)                */
+;*    Last change :  Mon Aug  6 15:09:14 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -942,10 +942,18 @@
 	 (with-access::J2SRef fun (decl)
 	    (when (isa? decl J2SDeclFun)
 	       (with-access::J2SDeclFun decl (val hintinfo)
-		  (with-access::J2SFun val (generator)
-		     (unless generator
-			(when (isa? hintinfo FunHintInfo)
-			   hintinfo))))))))
+		  (cond
+		     ((isa? val J2SFun)
+		      (with-access::J2SFun val (generator)
+			 (unless generator
+			    (when (isa? hintinfo FunHintInfo)
+			       hintinfo))))
+		     ((isa? val J2SMethod)
+		      (with-access::J2SMethod val (function)
+			 (with-access::J2SFun function (generator)
+			    (unless generator
+			       (when (isa? hintinfo FunHintInfo)
+				  hintinfo)))))))))))
    
    (with-access::J2SCall this (fun args thisarg)
       (set! args (map! (lambda (n) (j2s-call-hint! n concrete-type)) args))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Jun 26 10:16:49 2018 (serrano)                */
+;*    Last change :  Mon Aug  6 15:37:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -550,7 +550,7 @@
 ;*---------------------------------------------------------------------*/
 (define (usage? keys usage)
    (any (lambda (k)
-	   [assert (k) (memq k '(init new ref assig get set call eval))]
+	   [assert (k) (memq k '(init new ref assig get set call eval delete))]
 	   (memq k usage))
       keys))
 
@@ -559,7 +559,7 @@
 ;*---------------------------------------------------------------------*/
 (define (only-usage? keys usage)
    (every (lambda (u)
-	     [assert (u) (memq u '(init new ref assig get set call eval))]
+	     [assert (u) (memq u '(init new ref assig get set call eval delete))]
 	     (memq u keys))
       usage))
 

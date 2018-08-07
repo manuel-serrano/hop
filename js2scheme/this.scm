@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Aug  5 19:51:29 2018 (serrano)                */
+;*    Last change :  Mon Aug  6 14:29:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Init the this variable of all function in non-strict mode        */
+;*    Init the this variable of all functions in non-strict mode.      */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/

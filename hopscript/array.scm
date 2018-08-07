@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jun 20 15:07:47 2018 (serrano)                */
+;*    Last change :  Mon Aug  6 15:19:41 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -480,6 +480,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-mark)
    *JS-ARRAY-MARK*)
+
+;*---------------------------------------------------------------------*/
+;*    js-array-mark-invalidate! ...                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-mark-invalidate!)
+   (set! *JS-ARRAY-MARK* (+fx 1 *JS-ARRAY-MARK*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-length ...                                              */
@@ -2498,7 +2504,7 @@
 		     (append! (js-array-inline-vector-properties arr %this offset)
 			(cdr (js-object-properties arr))))))
 	    (set! ilen offset)
-	    (set! *JS-ARRAY-MARK* (+fx 1 *JS-ARRAY-MARK*)))
+	    (js-array-mark-invalidate!))
 	 arr)))
 
 ;*---------------------------------------------------------------------*/
@@ -2571,7 +2577,7 @@
 		  (cons plen
 		     (append! (js-array-holey-vector-properties arr %this)
 			(cdr (js-object-properties arr))))))
-	    (set! *JS-ARRAY-MARK* (+fx 1 *JS-ARRAY-MARK*)))
+	    (js-array-mark-invalidate!))
 	 arr)))
 
 ;*---------------------------------------------------------------------*/
@@ -2605,6 +2611,7 @@
 		 (if (eq? q 'length)
 		     (let ((newdesc (duplicate::JsValueDescriptor owndesc
 				       (value v))))
+			(js-array-mark-invalidate!)
 			(js-array-update-length-property! o)
 			(js-define-own-property o q newdesc throw %this))
 		     (with-access::JsValueDescriptor owndesc ((valuedesc value))			
@@ -2707,7 +2714,9 @@
    (with-access::JsArray o (length ilen)
       (let ((len (->uint32 v)))
 	 (set! length len)
-	 (when (<u32 len ilen) (set! ilen len))
+	 (when (<u32 len ilen)
+	    (js-array-mark-invalidate!)
+	    (set! ilen len))
 	 (%assert-array! o "js-put-length!"))))
 
 ;*---------------------------------------------------------------------*/
@@ -2717,12 +2726,9 @@
    (with-access::JsArray o (vec length ilen)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
-;* 	    ((and (=uint32 (+u32 i #u32:1) ilen) (js-isindex? i))      */
-;* 	     (u32vset! vec i (js-absent))                              */
-;* 	     (set! ilen i)                                             */
-;* 	     #t)                                                       */
 	    ((and (<u32 i ilen) (js-object-mode-inline? o))
 	     (unless (js-object-mode-frozen? o)
+		(js-array-mark-invalidate!)
 		(js-object-mode-inline-set! o #f)
 		(js-object-mode-holey-set! o #t)
 		(u32vset! vec i (js-absent))
@@ -2732,6 +2738,7 @@
 	     #f)
 	    (else
 	     (when (<u32 i (fixnum->uint32 (vector-length vec)))
+		(js-array-mark-invalidate!)
 		(u32vset! vec i (js-absent))
 		(when (<u32 i ilen) (set! ilen i)))
 	     (call-next-method))))))
