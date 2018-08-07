@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Jun  4 12:19:13 2018 (serrano)                */
+#*    Last change :  Tue Aug  7 10:17:41 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -136,6 +136,7 @@ POPULATION	= $(RTSCONFIG) $(EXTRA) \
                   $(BUTTONS:%=buttons/%) \
                   editor \
 		  $(FLASH:%=flash/%) \
+                  values.sch \
                   Makefile
 
 #*---------------------------------------------------------------------*/
@@ -360,10 +361,10 @@ flash/%.swf: flash/%.as
 #*    JavaScript compilation                                           */
 #*---------------------------------------------------------------------*/
 hop-exception.js: hop-exception.scm ../runtime/client-exception.sch
-	$(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
+	$(call compile3,$(HOPC),--no-use-strict --no-source-map $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
 
-hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch
-	$(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
+hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch values.sch
+	$(call compile3,$(HOPC),--no-use-strict --no-source-map $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 hop-builtin-serializers.js: $(BUILDETCDIR)/mkserializer.hop
 	($(call compile,$(BIGLOO),-suffix hop ,-L $(BUILDLIBDIR), -static-all-bigloo $<) && ./a.out > $@ && $(RM) -f a.out $(BUILDETCDIR)/mkserializer.o) || ($(RM) -f $@; exit 1)

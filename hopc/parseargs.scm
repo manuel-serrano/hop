@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Jun 26 15:58:57 2018 (serrano)                */
+;*    Last change :  Tue Aug  7 10:17:47 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -64,7 +64,8 @@
 	 (p (hop-port))
 	 (login #f)
 	 (command-string #f)
-	 (ecmascriptv 2017))
+	 (ecmascriptv 2017)
+	 (source-map #t))
       (bind-exit (stop)
 	 (args-parse (cdr args)
 	    ((("-h" "--help") (help "This message"))
@@ -103,7 +104,8 @@
 		(cons (format "-O~a" (min (hopc-optim-level) 6))
 		   (hopc-bigloo-options))))
 	    (("-g?level" (help "Increase or set debug level"))
-	     (hopc-clientc-source-map-set! #t)
+	     (when source-map
+		(hopc-clientc-source-map-set! #t))
 	     (hopc-clientc-arity-check-set! #t)
 	     (hopc-clientc-type-check-set! #t)
 	     (bigloo-warning-set! (string->integer level))
@@ -164,6 +166,7 @@
 	    (("--source-map" (help "Enable source-map table generation"))
 	     (hopc-clientc-source-map-set! #t))
 	    (("--no-source-map" (help "Disable source-map table generation"))
+	     (set! source-map #f)
 	     (hopc-clientc-source-map-set! #f))
 	    (("--use-strict" (help "Enable use-strict annotation"))
 	     (hopc-clientc-use-strict-set! #t))

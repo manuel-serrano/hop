@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul 29 14:46:23 2013                          */
-;*    Last change :  Wed Mar 14 07:22:05 2018 (serrano)                */
+;*    Last change :  Tue Aug  7 09:58:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop runtime debugging support                                    */
@@ -15,6 +15,7 @@
 (module __hop-debug
    
    (include
+      "values.sch"
       "../runtime/base64_vlq.sch"
       "../runtime/sourcemap.sch")
    
