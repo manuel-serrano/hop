@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed May  9 12:47:30 2018 (serrano)                */
+;*    Last change :  Mon Aug  6 14:55:13 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -311,7 +311,6 @@
 	     (with-access::J2SExpr from (type)
 		(set! expr (type-cast! expr type))))
 	    (else
-	     (tprint "PAS FROM: " (j2s->list this))
 	     (set! expr (type-cast! expr '*))))
 	 this)))
 

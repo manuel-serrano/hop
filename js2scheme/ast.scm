@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Jul 18 10:10:40 2018 (serrano)                */
+;*    Last change :  Mon Aug  6 15:37:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -270,6 +270,7 @@
 	      (useinloop::bool (default #f) (info '("notraverse")))
 	      (useinfun::bool (default #f) (info '("notraverse")))
 	      ;; usage: init, new, ref, assig, get (field), set (field), call
+	      ;; delete
 	      (usage::pair-nil (default '()) (info '("notraverse")))
 	      (utype::symbol (default 'unknown) (info '("notraverse")))
 	      (itype::symbol (default 'unknown) (info '("notraverse")))
