@@ -32,8 +32,8 @@ RUN wget http://redrock.inria.fr:8888/home/serrano/prgm/distrib/hop-3.2.0-pre1.t
     && ./configure && make -j$(nproc) && make install \
     && cd ..; rm -rf hop-3.2.0/hopc
 
-RUN git clone https://github.com/colinvidal/hiphop.git \
-    && (cd hiphop; git checkout master) \
+RUN git clone inria:GIT/hiphop.git \
+    && (cd hiphop; git checkout 0.2.x) \
     && mv hiphop /usr/local/lib/hop/3.2.0/node_modules/
 
 RUN useradd --no-log-init -d /home/hop -s /bin/bash hop
