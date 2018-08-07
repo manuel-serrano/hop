@@ -6,6 +6,14 @@ Building and exporting the docker image
   docker image save -o "/tmp/hop-docker-image-`date '+%d%b%y'`-`(git rev-parse --short HEAD)`.tgz" hop
   docker export -o "/tmp/hop-docker-`date '+%d%b%y'`-`(git rev-parse --short HEAD)`.tgz"
 
+It might be needed to first remove an existing Hop image with:
+
+  docker images
+
+to get the Hop docker <image-id>, and then:
+
+  docker rmi <image-id>
+
 
 Importing a docker image
 ========================

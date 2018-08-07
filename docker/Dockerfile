@@ -32,7 +32,7 @@ RUN wget http://redrock.inria.fr:8888/home/serrano/prgm/distrib/hop-3.2.0-pre1.t
     && ./configure && make -j$(nproc) && make install \
     && cd ..; rm -rf hop-3.2.0/hopc
 
-RUN git clone inria:GIT/hiphop.git \
+RUN git clone http://redrock.inria.fr:8888/home/serrano/prgm/project/hiphop/hiphop.git \
     && (cd hiphop; git checkout 0.2.x) \
     && mv hiphop /usr/local/lib/hop/3.2.0/node_modules/
 
