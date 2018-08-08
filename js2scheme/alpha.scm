@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sun Jun 17 12:37:41 2018 (serrano)                */
+;*    Last change :  Wed Aug  8 08:02:43 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -241,8 +241,14 @@
       (with-access::J2SDecl decl (%info)
 	 (if (isa? %info AlphaInfo)
 	     (with-access::AlphaInfo %info (new)
-		(duplicate::J2SThis this
-		   (decl new)))
+		(cond
+		   ((isa? new J2SDecl)
+		    (duplicate::J2SThis this
+		       (decl new)))
+		   ((isa? new J2SExpr)
+		    (alpha new))
+		   (else
+		    (error "alpha" "new must be a decl or an expr" new))))
 	     (duplicate::J2SThis this)))))
 
 ;*---------------------------------------------------------------------*/
