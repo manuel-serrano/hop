@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Apr 23 10:44:26 2018 (serrano)                */
+#*    Last change :  Wed Aug  8 05:20:57 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -56,7 +56,8 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   html-idx.json mdn-idx.json mdn.js
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
-  hss.html config.html user.html 01-html.html markdown.html syslog.html
+  hss.html config.html user.html 01-html.html markdown.html syslog.html \
+  systime.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
   01-es.html 03-react.html 01-module.html cpp.html
@@ -84,6 +85,7 @@ VPATH=api lang dev widget intf \
   ../node_modules/user/doc \
   ../node_modules/markdown/doc \
   ../node_modules/syslog/doc \
+  ../node_modules/systime/doc \
   ../node_modules/cpp/doc
 
 #*---------------------------------------------------------------------*/
