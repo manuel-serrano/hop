@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue Jun 26 18:44:35 2018 (serrano)                */
+;*    Last change :  Thu Aug  9 10:22:12 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -354,7 +354,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    log-function! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (log-function! )
+(define (log-function!)
    (set! *log-functions* #t))
 
 ;*---------------------------------------------------------------------*/
@@ -410,45 +410,85 @@
 ;*    profile-hints ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (profile-hints trc)
-   (with-output-to-port *profile-port*
-      (lambda ()
-	 (let ((m (pregexp-match "hopscript:function([0-9]+)" trc)))
-	    (when m
-	       (set! *function-threshold* (string->integer (cadr m)))))
-	 (for-each (lambda (e)
-		      (set-car! (cdr e) (apply + (vector->list (cddr e)))))
-	    *functions*)
-	 (print  "\nFUNCTIONS:\n" "==========\n")
-	 (print "total number of functions: "
-	    (length *functions*))
-	 (print "  total function hinted calls  : "
-	    (let ((i (attr->index 'hint)))
-	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
-	 (print "  total function unhinted calls: "
-	    (let ((i (attr->index 'nohint)))
-	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
-	 (print "  total function dipatch calls : "
-	    (let ((i (attr->index 'dispatch)))
-	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
-	 (print "  total function typed calls   : " 
-	    (let ((i (attr->index 'type)))
-	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
-	 (print "  total function untyped calls : "
-	    (let ((i (attr->index 'notype)))
-	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
-	 (newline)
-	 (print ";; function: hint/nohint/dispatch/type/notype")
-	 (for-each (lambda (e)
-		      (when (>= (cadr e) *function-threshold*)
-			 (print (car e) ": "
-			    (format "~(/)" (vector->list (cddr e))))))
-	    (sort (lambda (e1 e2)
-		     (cond
-			((> (cadr e1) (cadr e2)) #t)
-			((< (cadr e1) (cadr e2)) #f)
-			(else (string<=? (car e1) (car e2)))))
-	       *functions*))
-	 (newline))))
+
+   (define (show-json-hints)
+      (with-output-to-port *profile-port*
+	 (lambda ()
+	    (let ((m (pregexp-match "hopscript:function([0-9]+)" trc)))
+	       (when m
+		  (set! *function-threshold* (string->integer (cadr m)))))
+	    (for-each (lambda (e)
+			 (set-car! (cdr e) (apply + (vector->list (cddr e)))))
+	       *functions*)
+	    (print "\"functions\": {")
+	    (print "  \"functionNumber\": " (length *functions*) ",")
+	    (print "  \"calls\": {")
+	    (print "    \"hinted\": "
+	       (let ((i (attr->index 'hint)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*)))
+	       ",")
+	    (print "    \"unhinted\": "
+	       (let ((i (attr->index 'nohint)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*)))
+	       ",")
+	    (print "    \"dispatch\": "
+	       (let ((i (attr->index 'dispatch)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*)))
+	       
+	       ",")
+	    (print "    \"typed\": " 
+	       (let ((i (attr->index 'type)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*)))
+	       ",")
+	    (print "    \"untyped\": "
+	       (let ((i (attr->index 'notype)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*)))
+	       "\n  }\n},"))))
+   
+   (define (show-text-hints)
+      (with-output-to-port *profile-port*
+	 (lambda ()
+	    (let ((m (pregexp-match "hopscript:function([0-9]+)" trc)))
+	       (when m
+		  (set! *function-threshold* (string->integer (cadr m)))))
+	    (for-each (lambda (e)
+			 (set-car! (cdr e) (apply + (vector->list (cddr e)))))
+	       *functions*)
+	    (print  "\nFUNCTIONS:\n" "==========\n")
+	    (print "total number of functions: "
+	       (length *functions*))
+	    (print "  total function hinted calls  : "
+	       (let ((i (attr->index 'hint)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
+	    (print "  total function unhinted calls: "
+	       (let ((i (attr->index 'nohint)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
+	    (print "  total function dispatch calls : "
+	       (let ((i (attr->index 'dispatch)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
+	    (print "  total function typed calls   : " 
+	       (let ((i (attr->index 'type)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
+	    (print "  total function untyped calls : "
+	       (let ((i (attr->index 'notype)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
+	    (newline)
+	    (print ";; function: hint/nohint/dispatch/type/notype")
+	    (for-each (lambda (e)
+			 (when (>= (cadr e) *function-threshold*)
+			    (print (car e) ": "
+			       (format "~(/)" (vector->list (cddr e))))))
+	       (sort (lambda (e1 e2)
+			(cond
+			   ((> (cadr e1) (cadr e2)) #t)
+			   ((< (cadr e1) (cadr e2)) #f)
+			   (else (string<=? (car e1) (car e2)))))
+		  *functions*))
+	    (newline))))
+   
+   (if (string-contains trc "format:json")
+       (show-json-hints)
+       (show-text-hints)))
 
 ;*---------------------------------------------------------------------*/
 ;*    profiling                                                        */

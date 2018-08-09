@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Aug  7 07:16:10 2018 (serrano)                */
+;*    Last change :  Thu Aug  9 11:34:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -294,22 +294,16 @@
 ;*    j2s->list ::obj ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s->list this)
-   (if (isa? this J2SNode)
-       `(,(string->symbol (typeof this))
-	 ,@(if (or (string? this) (symbol? this) (struct? this) (boolean? this)
-		   (number? this) (char? this))
-	       (list (format "~a" this))
-	       '()))
-       `(alien :typeof ,(string->symbol (typeof this))
-	   :expr ,(cond
-		     ((or (string? this) (symbol? this)
-			  (struct? this) (boolean? this)
-			  (number? this) (char? this))
-		      (format "~a" this))
-		     ((list? this)
-		      (format "~a" (map j2s->list this)))
-		     (else
-		      (format "~s" (typeof this)))))))
+   `(alien :typeof ,(string->symbol (typeof this))
+       :expr ,(cond
+		 ((or (string? this) (symbol? this)
+		      (struct? this) (boolean? this)
+		      (number? this) (char? this))
+		  (format "~a" this))
+		 ((list? this)
+		  (format "~a" (map j2s->list this)))
+		 (else
+		  (format "~s" (typeof this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::object ...                                           */
@@ -318,10 +312,14 @@
    (list (typeof this)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SStmt ...                                          */
+;*    j2s->list ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SStmt)
-   (call-next-method))
+(define-method (j2s->list this::J2SNode)
+   `(,(string->symbol (typeof this))
+     ,@(if (or (string? this) (symbol? this) (struct? this) (boolean? this)
+	       (number? this) (char? this))
+	   (list (format "~a" this))
+	   '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SMeta ...                                          */

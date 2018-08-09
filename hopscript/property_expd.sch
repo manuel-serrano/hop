@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Jul 28 13:04:30 2018 (serrano)                */
+;*    Last change :  Thu Aug  9 10:14:54 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -45,7 +45,7 @@
 				      (let ((id (symbol-append 'cnt
 						   (string->symbol
 						      (keyword->string c)))))
-					 `(set! ,id (+fx 1 ,id)))))
+					 `(set! ,id (+u32 #u32:1 ,id)))))
 		       cspecs))
 	      e))
 	  (else
