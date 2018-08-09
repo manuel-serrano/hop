@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Jan 21 08:18:52 2017 (serrano)                */
-/*    Copyright   :  2007-17 Manuel Serrano                            */
+/*    Last change :  Thu Aug  9 09:40:51 2018 (serrano)                */
+/*    Copyright   :  2007-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -1178,8 +1178,8 @@ function hop_bytearray_to_obj( s, extension ) {
       return read_word( s, sz );
    }
       
-   function read_llong( sz ) {
-      return read_word( s, sz );
+   function read_llong( s ) {
+      return read_float( s );
    }
 
    function read_unsupported( type ) {
@@ -1269,7 +1269,7 @@ function hop_bytearray_to_obj( s, extension ) {
 	 case 0x66 /* f */: return read_float( s );
 	 case 0x2d /* - */: return -read_integer( s );
          case 0x45 /* E */: return read_elong( read_size( s ) );
-         case 0x4c /* L */: return read_llong( read_size( s ) );
+         case 0x4c /* L */: return read_llong( s );
          case 0x64 /* d */: return read_date();
          case 0x44 /* D */: return read_nanoseconds();
          case 0x6b /* k */: return read_class();
