@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Mar 23 17:19:12 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 10:46:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -242,7 +242,7 @@
 ;*---------------------------------------------------------------------*/
 (define (make-stmt-kont loc stmt::J2SStmt)
    (let* ((name (gensym '%kstmt))
-	  (arg (J2SParam '(ref) (gensym '%karg) :vtype 'any))
+	  (arg (J2SParam '(ref) (gensym '%karg) :type 'any))
 	  (kfun (J2SFun #f (list arg) (J2SBlock/w-endloc stmt))))
       (J2SLetOpt '(call) name kfun)))
    
@@ -367,8 +367,8 @@
 (define-method (cps this::J2SYield k pack kbreaks kcontinues ktry fun)
    
    (define (make-yield-kont k loc)
-      (let* ((arg (J2SParam '(call ref) (gensym '%arg) :vtype 'any))
-	     (exn (J2SParam '(ref) (gensym '%exn) :vtype 'bool))
+      (let* ((arg (J2SParam '(call ref) (gensym '%arg) :type 'any))
+	     (exn (J2SParam '(ref) (gensym '%exn) :type 'bool))
 	     (body (kcall k (J2SRef arg)))
 	     (cont (J2SIf (J2SBinary 'eq? (J2SRef exn) (J2SBool #t))
 		      (J2SThrow (J2SRef arg))
@@ -1014,7 +1014,7 @@
    (define (make-kont-decl loc k)
       (assert-kont k KontExpr this)
       (let* ((name (gensym '%kcond))
-	     (arg (J2SParam '(call ref) (gensym '%arg) :vtype 'any))
+	     (arg (J2SParam '(call ref) (gensym '%arg) :type 'any))
 	     (kfun (J2SFun name (list arg)
 		      (J2SBlock/w-endloc (kcall k (J2SRef arg))))))
 	 (J2SLetOpt '(call) name kfun)))
@@ -1116,7 +1116,7 @@
 				     (cps body
 					k pack kbreaks kcontinues ktry fun)))))
 		     (declc (J2SLetOpt '(call) cname catch))
-		     (eparam (J2SParam '(ref) (gensym '%exc) :vtype 'any)))
+		     (eparam (J2SParam '(ref) (gensym '%exc) :type 'any)))
 		 (J2SLetBlock (list declc)
 		    (J2STry
 		       (cps-try-body body
@@ -1124,14 +1124,14 @@
 		       (Catch loc declc eparam))))))
 	 ((isa? catch J2SNop)
 	  (let* ((fname (gensym '%kfinally))
-		 (paramf (J2SParam '(ref) (gensym '%excf) :vtype 'any))
-		 (paramt (J2SParam '(ref) (gensym '%exct) :vtype 'bool))
+		 (paramf (J2SParam '(ref) (gensym '%excf) :type 'any))
+		 (paramt (J2SParam '(ref) (gensym '%exct) :type 'bool))
 		 (final (J2SFun fname (list paramt paramf)
 			   (J2SBlock/w-endloc
 			      (cps (SeqFinally loc finally paramt paramf)
 				 k pack kbreaks kcontinues ktry fun))))
 		 (declf (J2SLetOpt '(call ref) fname final))
-		 (eparam (J2SParam '(ref)  (gensym '%exc) :vtype 'any)))
+		 (eparam (J2SParam '(ref)  (gensym '%exc) :type 'any)))
 	     (J2SLetBlock (list declf)
 		(J2STry
 		   (cps-try-body (SeqTry loc body declf)
@@ -1140,15 +1140,15 @@
 	 (else
 	  (with-access::J2SCatch catch ((cbody body) param)
 	     (let* ((fname (gensym '%kfinally))
-		    (paramf (J2SParam '(ref)  (gensym '%excf) :vtype 'any))
-		    (paramt (J2SParam '(ref) (gensym '%exct) :vtype 'bool))
+		    (paramf (J2SParam '(ref)  (gensym '%excf) :type 'any))
+		    (paramt (J2SParam '(ref) (gensym '%exct) :type 'bool))
 		    (final (J2SFun fname (list paramt paramf)
 			      (J2SBlock/w-endloc
 				 (cps (SeqFinally loc finally paramt paramf)
 				    k pack kbreaks kcontinues ktry fun))))
 		    (declf (J2SLetOpt '(call ref) fname final))
 		    (cname (gensym '%kcatch))
-		    (eparam (J2SParam '(ref)  (gensym '%exc) :vtype 'any))
+		    (eparam (J2SParam '(ref)  (gensym '%exc) :type 'any))
 		    (catch (J2SFun cname (list param)
 			      (cps (J2SBlock/w-endloc
 				      (J2STry cbody (J2SNop)

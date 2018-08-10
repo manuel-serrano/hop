@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Aug  6 14:29:48 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 10:43:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all functions in non-strict mode.      */
@@ -75,8 +75,8 @@
       (when (eq? mode 'normal)
 	 (let ((nbody (this! body)))
 	    (when (this? nbody)
-	       (with-access::J2SDecl thisp (vtype)
-		  (set! vtype 'any))
+	       (with-access::J2SDecl thisp (usrtype)
+		  (set! usrtype 'any))
 	       (set! body
 		  (with-access::J2SBlock body (endloc)
 		     (instantiate::J2SBlock

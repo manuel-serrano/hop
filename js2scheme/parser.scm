@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Jul 28 13:54:56 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 09:36:23 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -53,7 +53,7 @@
    (define _this
       (instantiate::J2SDecl
 	 (loc `(at ,(input-port-name input-port) 0))
-	 (vtype 'object)
+	 (usrtype 'object)
 	 (id '%this)
 	 (_scmid '%this)))
    
@@ -1205,7 +1205,7 @@
 			  (val (assig-expr #f #f))
 			  (loc loc)
 			  (id (token-value token))
-			  (utype typ)
+			  (usrtype typ)
 			  (hint hint))
 		       #f))
 		 ;; no default value
@@ -1214,7 +1214,7 @@
 		       (binder 'param)
 		       (loc loc)
 		       (id (token-value token))
-		       (utype typ)
+		       (usrtype typ)
 		       (hint hint))
 		    #f))))
 	 ((LBRACE)

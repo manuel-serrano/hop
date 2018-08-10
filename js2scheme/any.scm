@@ -3,12 +3,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Mon Feb 12 20:50:39 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 09:48:22 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An optional stage used in debug mode to assign to replace        */
 ;*    all UNKNOWN type occurrences with ANY.                           */
-;*    to all                                                           */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -73,7 +72,7 @@
       (set! type 'bool)))
 
 ;*---------------------------------------------------------------------*/
-;*    any-types ::J2SArray ...                                          */
+;*    any-types ::J2SArray ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SArray)
    (with-access::J2SExpr this (type)
@@ -101,19 +100,16 @@
 ;*    any-types ::J2SHopRef ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SHopRef)
-   (with-access::J2SHopRef this (itype rtype)
-      (set! itype (map-type itype))
-      (set! rtype (map-type rtype)))
+   (with-access::J2SHopRef this (type)
+      (set! type (map-type type)))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    any-types ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SDecl)
-   (with-access::J2SDecl this (utype vtype itype id)
-      (set! itype (map-type itype))
-      (set! vtype (map-type vtype))
-      (set! utype (map-type utype))))
+   (with-access::J2SDecl this (vartype id)
+      (set! vartype (map-type vartype))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    any-types ::J2SDeclInit ...                                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Jun  6 07:30:02 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 07:39:38 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -46,7 +46,8 @@
 	   (typeof-this obj conf)
 	   (maybe-number? expr::J2SNode)
 	   (utype-ident ident utype conf #!optional compound)
-	   (type-ident ident type)
+	   (vtype-ident ident vtype conf #!optional compound)
+	   (type-ident ident type conf)
 	   (j2s-number val conf)
 	   (j2s-error proc msg obj #!optional str)
 	   (is-fixnum? expr::J2SExpr conf)
@@ -249,8 +250,8 @@
 	     (if (eq? tyv 'object)
 		 (if (and (isa? obj J2SThis)
 			  (with-access::J2SThis obj (decl)
-			     (with-access::J2SDecl decl (vtype)
-				(eq? vtype 'this))))
+			     (with-access::J2SDecl decl (vartype)
+				(eq? vartype 'this))))
 		     'this
 		     tyv)
 		 tyv)))))
@@ -279,14 +280,31 @@
        ident)))
 
 ;*---------------------------------------------------------------------*/
+;*    vtype-ident ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (vtype-ident ident utype conf #!optional compound)
+
+   (define (atomic-type? typ)
+      (memq typ '(int32 uint32 number integer bint
+		  int53 fixnum undefined bool null)))
+
+   (cond
+      ((or (eq? utype 'any) (eq? utype 'unknown))
+       ident)
+      (compound
+       (symbol-append ident '|::| (type-name utype conf)))
+      (else
+       ident)))
+
+;*---------------------------------------------------------------------*/
 ;*    type-ident ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (type-ident ident type)
+(define (type-ident ident type conf)
    (cond
       ((memq type '(int32 uint32)) (symbol-append ident '|::| type))
       ((memq type '(bint)) (symbol-append ident '|::bint|))
       ((eq? type 'any) (symbol-append ident '|::obj|))
-      ((type-name type '())
+      ((type-name type conf)
        =>
        (lambda (tname) (symbol-append ident '|::| tname)))
       (else ident)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Aug  9 11:34:28 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 09:36:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -120,10 +120,10 @@
 ;*    dump-vtype ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (dump-vtype this::J2SDecl)
-   (with-access::J2SDecl this (vtype)
+   (with-access::J2SDecl this (vartype usrtype initype)
       (if (or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
-	  `(:vtype ,vtype)
+	  `(:vtype ,vartype :utype ,usrtype :itype ,initype)
 	  '())))
       
 ;*---------------------------------------------------------------------*/
@@ -134,21 +134,6 @@
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:scope"))
        `(:scope ,scope)
        '()))
-      
-;*---------------------------------------------------------------------*/
-;*    dump-itype ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (dump-itype this::J2SDecl)
-   (with-access::J2SDecl this (itype utype vtype)
-      (cond
-	 ((>= (bigloo-debug) 2)
-	  `(:utype ,utype :itype ,itype :vtype ,vtype))
-	 ((string-contains (or (getenv "HOPTRACE") "") "j2s:utype")
-	  `( :utype ,utype :itype ,itype :vtype ,vtype))
-	 ((string-contains (or (getenv "HOPTRACE") "") "j2s:type")
-	  `(:itype ,itype :vtype ,vtype))
-	 (else
-	  '()))))
       
 ;*---------------------------------------------------------------------*/
 ;*    dump-hint ...                                                    */
@@ -835,7 +820,7 @@
 	,@(dump-dump this)
 	,@(dump-key key)
 	,@(dump-access this)
-	,@(dump-itype this)
+	,@(dump-vtype this)
 	,@(dump-hint this)
 	,@(dump-range this)
 	,@(if _scmid `(:_scmid ,_scmid) '())

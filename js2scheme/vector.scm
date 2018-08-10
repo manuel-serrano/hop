@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Wed Dec 20 17:49:39 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Fri Aug 10 09:53:22 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
 ;*    -------------------------------------------------------------    */
@@ -90,8 +90,8 @@
    (with-access::J2SAccess this (obj field)
       (if (isa? obj J2SRef)
 	  (with-access::J2SRef obj (decl)
-	     (with-access::J2SDecl decl (vtype %info)
-		(when (eq? vtype 'array)
+	     (with-access::J2SDecl decl (vartype %info)
+		(when (eq? vartype 'array)
 		   (unless (and (range? %info) (not (range-intervals %info)))
 		      (unless (range? %info) (set! %info (range '())))
 		      (with-access::J2SExpr field (range)
@@ -112,8 +112,8 @@
 	 (with-access::J2SAccess lhs (obj field)
 	    (when (isa? obj J2SRef)
 	       (with-access::J2SRef obj (decl)
-		  (with-access::J2SDecl decl (vtype %info)
-		     (when (eq? vtype 'array)
+		  (with-access::J2SDecl decl (vartype %info)
+		     (when (eq? vartype 'array)
 			(unless (and (range? %info) (not (range-intervals %info)))
 			   (unless (range? %info) (set! %info (range '())))
 			   (with-access::J2SExpr field (range)
@@ -210,8 +210,8 @@
    (define (in-range? sz intv)
       (and (>= (interval-min intv) 0) (< (interval-max intv) sz)))
 
-   (with-access::J2SDeclInit this (vtype itype id %info val usage hint loc)
-      (when (and (eq? vtype 'array)
+   (with-access::J2SDeclInit this (vartype id %info val usage hint loc)
+      (when (and (eq? vartype 'array)
 		 (only-usage? '(init get set) usage)
 		 (range? %info)
 		 (or (pair? (range-intervals %info))
@@ -221,8 +221,7 @@
 		       (every (lambda (i) (in-range? size i))
 			  (range-intervals %info)))
 	       ;; optimize this array by turning it into a vector
-	       (set! vtype 'vector)
-	       (set! itype 'vector)
+	       (set! vartype 'vector)
 	       (set! hint (list size))
 	       (with-access::J2SExpr val (type)
 		  (set! type 'vector))
@@ -316,8 +315,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (patch-vector this::J2SRef)
    (with-access::J2SRef this (decl type)
-      (with-access::J2SDecl decl (vtype)
-	 (when (eq? vtype 'vector)
+      (with-access::J2SDecl decl (vartype)
+	 (when (eq? vartype 'vector)
 	    (set! type 'vector)))))
 
 ;*---------------------------------------------------------------------*/
@@ -362,13 +361,10 @@
 	  (val (J2SNew
 		  (J2SGlobalRef 'Array)
 		  (J2SNumber size)))
-	  (decl (J2SLetOptUtype 'vector '(init ref) id val)))
+	  (decl (J2SLetOptVtype 'vector '(init ref) id val)))
       (with-access::J2SExpr val (type)
 	 (set! type 'vector))
-      (with-access::J2SDecl decl (itype vtype)
-	 (set! itype 'vector)
-	 (set! vtype 'vector)
-	 decl)))
+      decl))
 
 ;*---------------------------------------------------------------------*/
 ;*    hook-alloc! ...                                                  */

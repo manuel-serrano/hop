@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Aug  6 14:29:56 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 16:15:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -187,6 +187,7 @@
       j2s-constant-stage
       j2s-varpreinit-stage
       j2s-tyflow-stage
+      j2s-sweep-stage
       j2s-hintnum-stage
       j2s-property-stage
       j2s-instanceof-stage

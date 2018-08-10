@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Jun 19 17:21:30 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 16:37:29 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -261,10 +261,7 @@
 (define (j2s-inline-profile-cleanup! this::J2SProgram conf)
    (with-access::J2SProgram this (decls nodes)
       ;; cleanup use count
-      (for-each reset-use-count decls)
-      (for-each reset-use-count nodes)
-      (for-each (lambda (n) (use-count n +1 #f)) decls)
-      (for-each (lambda (n) (use-count n +1 #f)) nodes)
+      (reinit-use-count! this)
       (set! decls (filter used-decl? decls))
       ;; cleanup metainl
       (unmetainl! this)

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May  4 07:52:08 2018                          */
-#*    Last change :  Tue Jun 12 23:36:20 2018 (serrano)                */
+#*    Last change :  Fri Aug 10 18:35:38 2018 (serrano)                */
 #*    Copyright   :  2018 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Run Hop thru a docker container                                  */
@@ -56,6 +56,10 @@ while : ; do
         appdir=`dirname $1`
         appfile=`basename $1`
         app=$1;
+
+	if [ "$appdir " = ". " ]; then
+	  appdir=`pwd`;
+	fi
       else
         opts="$opts $1";
       fi

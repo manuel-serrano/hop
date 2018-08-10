@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Thu Jul  5 10:59:34 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 09:51:40 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -202,20 +202,19 @@
        (id ,id)
        (module ,(when (pair? module) (car module)))))
 
-(define-macro (J2SHopRef/type id vtype type . module)
+(define-macro (J2SHopRef/type id type . module)
    `(instantiate::J2SHopRef
        (loc loc)
        (id ,id)
        (type ,type)
-       (vtype ,vtype)
        (module ,(when (pair? module) (car module)))))
 
 (define-macro (J2SHopRef/rtype id rtype . module)
    `(instantiate::J2SHopRef
        (loc loc)
        (id ,id)
+       (type 'function)
        (rtype ,rtype)
-       (type ,rtype)
        (module ,(when (pair? module) (car module)))))
 
 (define-macro (J2SRef decl . opts)
@@ -368,9 +367,7 @@
        (loc loc)
        (binder 'param)
        (usage ,usage)
-       (utype ,(let ((c (memq :type opts))) (if (pair? c) (cadr c) ''unknown)))
-       (vtype ,(let ((c (memq :vtype opts))) (if (pair? c) (cadr c) ''unknown)))
-       (itype ,(let ((c (memq :vtype opts))) (if (pair? c) (cadr c) ''unknown)))
+       (usrtype ,(let ((c (memq :type opts))) (if (pair? c) (cadr c) ''unknown)))
        (id ,id)))
 
 (define-macro (J2SDeclInit usage id val)
@@ -400,20 +397,8 @@
        (loc loc)
        (writable #f)
        (ronly #t)
-       (vtype ,typ)
+       (vartype ,typ)
        (usecnt 1)
-       (binder 'let-opt)
-       (usage ,usage)
-       (val ,val)
-       (id ,id)))
-
-(define-macro (J2SLetOptUtype utype usage id val)
-   `(instantiate::J2SDeclInit
-       (loc loc)
-       (writable #f)
-       (ronly #t)
-       (usecnt 1)
-       (utype ,utype)
        (binder 'let-opt)
        (usage ,usage)
        (val ,val)

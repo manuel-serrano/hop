@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Jul 30 12:12:10 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 09:12:07 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -359,7 +359,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    +fx/overflow ...                                                 */
 ;*    -------------------------------------------------------------    */
-;*    The argument are 30bit integers encoded into long values.        */
+;*    The arguments are 30bit integers encoded into long values.       */
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow x::obj y::obj)
    (cond-expand

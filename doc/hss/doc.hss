@@ -76,6 +76,7 @@ p.danger {
   margin-top: 0;
   padding-top: 38px;
   padding-bottom: 0px;
+  opacity: 0.85;
 }
 
 [scrolled="yes"] .jumbotron h1 {

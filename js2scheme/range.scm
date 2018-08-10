@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Apr 30 07:29:44 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 13:44:58 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -148,6 +148,7 @@
    (set! *length-intv* (interval #l0 *max-length*))
    (set! *int30-intv* (interval *min-int30* *max-int30*))
    (set! *int32-intv* (interval *min-int32* *max-int32*))
+   (set! *uint32-intv* (interval #l0 *max-uint32*))
    (set! *int53-intv* (interval *min-int53* *max-int53*))
    (set! *integer* (interval *min-integer* *max-integer*))
    (set! *infinity-intv* (interval *-inf.0* *+inf.0*))
@@ -191,6 +192,7 @@
 (define *min-int30* (negllong (exptllong #l2 29)))
 (define *max-int32* (-llong (exptllong #l2 31) #l1))
 (define *min-int32* (negllong (exptllong #l2 31)))
+(define *max-uint32* (-llong (exptllong #l2 32) #l1))
 (define *max-int53* (exptllong #l2 53))
 (define *min-int53* (negllong (exptllong #l2 53)))
 (define *max-integer* (exptllong #l2 53))
@@ -203,6 +205,7 @@
 (define *length-intv* #f)
 (define *int30-intv* #f)
 (define *int32-intv* #f)
+(define *uint32-intv* #f)
 (define *int53-intv* #f)
 (define *integer* #f)
 (define *infinity-intv* #f)
@@ -211,28 +214,19 @@
 (define *-inf.0* (negllong (exptllong #l2 54)))
 
 ;*---------------------------------------------------------------------*/
-;*    type->range ...                                                  */
+;*    type->js-range ...                                               */
+;*    -------------------------------------------------------------    */
+;*    Type names mapped to their speicifying JS intervals.             */
 ;*---------------------------------------------------------------------*/
-(define (type->range type args)
+(define (type->js-range type)
    (case type
-      ((index)
-       *index-intv*)
-      ((integer)
-       (if (>=fx (config-get args :int-size 0) 53)
-	   *int53-intv*
-	   *int30-intv*))
-      (else
-       #f)))
-
-;*---------------------------------------------------------------------*/
-;*    string-method-range ...                                          */
-;*---------------------------------------------------------------------*/
-(define (string-method-range name)
-   (case (string->symbol name)
-;*       ((charCodeAt) *uint29-intv*)                                  */
-      ((indexOf lastIndexOf) *indexof-intv*)
-      ((naturalCompare) *int30-intv*)
-      ((localeCompare) *int30-intv*)))
+      ((index) *index-intv*)
+      ((indexof) *indexof-intv*)
+      ((length) *length-intv*)
+      ((integer) *int53-intv*)
+      ((int32) *int32-intv*)
+      ((uint32) *uint32-intv*)
+      (else *infinity-intv*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-env ...                                                     */
@@ -250,10 +244,10 @@
 ;*    extend-env ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (extend-env::pair-nil env::pair-nil decl::J2SDecl intv)
-   (with-access::J2SDecl decl (scope range vtype)
+   (with-access::J2SDecl decl (scope range vartype)
       (cond
 	 ((memq scope '(%scope global))
-	  (when (memq vtype '(index integer number))
+	  (when (memq vartype '(integer number))
 	     (if (interval? range)
 		 (set! range (interval-merge range intv))
 		 (set! range intv)))
@@ -952,7 +946,7 @@
 
    (define (integer->llong num)
       (if (fixnum? num) (fixnum->llong num) (flonum->llong num)))
-	  
+
    (with-access::J2SNumber this (val type)
       (if (and (type-number? type) (integer? val))
 	  (let ((intv (interval (integer->llong val) (integer->llong val))))
@@ -1043,7 +1037,7 @@
 	 ((== === eq?) op)
 	 ((!= !==) op)
 	 (else op)))
-
+   
    (define (is-js-index test)
       ;; if test === (js-index? (ref decl) ) return decl
       ;; see __js2scheme_ast
@@ -1056,7 +1050,7 @@
 			(when (isa? (car args) J2SRef)
 			   (with-access::J2SRef (car args) (decl)
 			      decl)))))))))
-
+   
    (define (is-fixnum test)
       ;; if test === (fixnum? (ref decl) ) return decl
       ;; see __js2scheme_ast
@@ -1069,7 +1063,7 @@
 			(when (isa? (car args) J2SRef)
 			   (with-access::J2SRef (car args) (decl)
 			      decl)))))))))
-
+   
    (cond
       ((isa? test J2SBinary)
        (with-access::J2SBinary test (op lhs rhs)
@@ -1128,13 +1122,17 @@
       ((is-js-index test)
        =>
        (lambda (decl)
-	  (if (m64? args)
-	      (values (make-env decl *index-intv*) (empty-env))
-	      (values (make-env decl *index30-intv*) (empty-env)))))
+	  (values (make-env decl *index-intv*) (empty-env))))
       ((is-fixnum test)
        =>
        (lambda (decl)
-	  (values (make-env decl (type->range 'integer args)) (empty-env))))
+	  (cond
+	     ((>=fx (config-get args :int-size 0) 53)
+	      (values (make-env decl *int53-intv*) (empty-env)))
+	     ((>=fx (config-get args :int-size 0) 32)
+	      (values (make-env decl *int32-intv*) (empty-env)))
+	     (else
+	      (values (make-env decl *int30-intv*) (empty-env))))))
       (else
        (values (empty-env) (empty-env)))))
 
@@ -1333,15 +1331,10 @@
 (define-walk-method (node-range this::J2SFun env::pair-nil args fix::struct)
    (with-access::J2SFun this (body params)
       (let ((envp (filter-map (lambda (p)
-				 (with-access::J2SDecl p (itype range ronly vtype)
-				    (cond
-				       ((and (type-number? itype)
-					     (interval? range))
-					(cons p range))
-				       ((not ronly)
-					#f)
-				       (else
-					#f))))
+				 (with-access::J2SDecl p (initype range)
+				    (when (and (type-number? initype)
+					       (interval? range))
+				       (cons p range))))
 		     params)))
 	 (multiple-value-bind (intv env)
 	    (node-range body envp args fix)
@@ -1358,8 +1351,8 @@
 		    (args args))
 	    (cond
 	       ((and (pair? params) (pair? args))
-		(with-access::J2SDecl (car params) (itype range)
-		   (when (type-number? itype)
+		(with-access::J2SDecl (car params) (vartype range)
+		   (when (type-number? vartype)
 		      (with-access::J2SExpr (car args) ((ainfo range))
 			 (let ((ni (interval-merge range ainfo)))
 			    (unless (equal? ni range)
@@ -1368,7 +1361,6 @@
 		   (loop (cdr params) (cdr args))))
 	       ((eq? rtype 'any)
 		(return *infinity-intv* env))
-;* 		(node-interval-set! this env fix *infinity-intv*))     */
 	       (else
 		(node-interval-set! this env fix range))))))
    
@@ -1396,16 +1388,7 @@
 	     (with-access::J2SAccess callee (obj field)
 		(let ((fn (j2s-field-name field)))
 		   (if (string? fn)
-		       (case (j2s-type obj)
-			  ((string)
-			   (let ((intv (string-method-range fn)))
-			      (with-access::J2SCall this (range)
-				 (unless (equal? intv range)
-				    (unfix! fix "j2scall")
-				    (set! range intv)))
-			      (return intv env)))
-			  (else
-			   (return *infinity-intv* env)))
+		       (type->js-range (builtin-method-type obj fn))
 		       (return *infinity-intv* env))))))
 	 (else
 	  (multiple-value-bind (_ env)
@@ -1436,8 +1419,8 @@
 ;*    node-range ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SDeclInit env::pair-nil args fix::struct)
-   (with-access::J2SDeclInit this (val itype range)
-      (if (type-number? itype)
+   (with-access::J2SDeclInit this (val range vartype)
+      (if (type-number? vartype)
 	  (multiple-value-bind (intv env)
 	     (node-range val env args fix)
 	     (node-interval-set! this env fix intv)
@@ -1691,28 +1674,26 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SDecl tymap)
    (call-default-walker)
-   (with-access::J2SDecl this (range itype vtype id key scope useinfun usage)
+   (with-access::J2SDecl this (range vartype key scope useinfun usage)
       (cond
 	 ((memq scope '(%scope global))
-	  (when (or (range-type? vtype) (eq? vtype 'unknown))
+	  (when (or (range-type? vartype) (eq? vartype 'unknown))
 	     (let ((ty (cond
 			  ((interval? range)
 			   (let ((ty (min-type
-					(interval->type range tymap) vtype)))
+					(interval->type range tymap) vartype)))
 			      (if (usage? '(assig) usage)
 				  (type->boxed-type ty)
 				  ty)))
 			  (else
-			   (min-type 'number vtype)))))
-		(set! itype ty)
-		(set! vtype ty))))
-	 ((and (interval? range) (range-type? vtype))
+			   (min-type 'number vartype)))))
+		(set! vartype ty))))
+	 ((and (interval? range) (range-type? vartype))
 	  (let ((ty (interval->type range tymap)))
 	     (when ty
-		(let* ((tym (min-type ty vtype))
+		(let* ((tym (min-type ty vartype))
 		       (tyb (if useinfun (type->boxed-type tym) tym)))
-		   (set! itype ty)
-		   (set! vtype tyb)))))))
+		   (set! vartype tyb)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -1752,12 +1733,12 @@
 (define-walk-method (type-range! this::J2SRef tymap)
    (call-next-method)
    (with-access::J2SRef this (decl type (rng range) loc)
-      (with-access::J2SDecl decl (vtype id key range)
-	 (if (and (interval? rng) (range-type? vtype))
+      (with-access::J2SDecl decl (vartype id key range)
+	 (if (and (interval? rng) (range-type? vartype))
 	     (begin
 		(set! range (interval-merge range rng))
-		(set! vtype (interval->type range tymap)))
-	     (set! vtype (map-type vtype defmap)))))
+		(set! vartype (interval->type range tymap)))
+	     (set! vartype (map-type vartype defmap)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -1768,12 +1749,12 @@
    (with-access::J2SPrefix this (lhs rhs (rng range))
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
-	    (with-access::J2SDecl decl (vtype id key range)
-	       (if (and (interval? rng) (range-type? vtype))
+	    (with-access::J2SDecl decl (vartype id key range)
+	       (if (and (interval? rng) (range-type? vartype))
 		   (begin
 		      (set! range (interval-merge range rng))
-		      (set! vtype (interval->type range tymap)))
-		   (set! vtype (map-type vtype defmap)))))))
+		      (set! vartype (interval->type range tymap)))
+		   (set! vartype (map-type vartype defmap)))))))
    this)
 	 
 ;*---------------------------------------------------------------------*/
@@ -1825,9 +1806,8 @@
 ;*    typemapXX ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define typemap32
-   '((int29 int32)
-     (uint29 uint32)
-     (index uint32)
+   '((index uint32)
+     (indexof number)
      (length uint32)
      (int53 number)
      (integer number)
@@ -1836,16 +1816,15 @@
 (define typemap53
    '((int29 int32)
      (uint29 uint32)
+     (indexof int53)
      (index uint32)
      (length uint32)
      (integer int53)
      (number number)))
 
 (define defmap
-   '((int29 integer)
-     (int29 integer)
-     (uint29 integer)
-     (index number)
+   '((index number)
+     (indexof number)
      (length integer)
      (integer integer)
      (number number)))
@@ -1887,8 +1866,8 @@
 ;*    map-types ::J2SHopRef ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SHopRef tmap)
-   (with-access::J2SHopRef this (itype rtype)
-      (set! itype (map-type itype tmap))
+   (with-access::J2SHopRef this (type rtype)
+      (set! type (map-type type tmap))
       (set! rtype (map-type rtype tmap)))
    (call-default-walker))
 
@@ -1896,10 +1875,8 @@
 ;*    map-types ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SDecl tmap)
-   (with-access::J2SDecl this (utype vtype itype id)
-      (set! itype (map-type itype tmap))
-      (set! vtype (map-type vtype tmap))
-      (set! utype (map-type utype tmap)))
+   (with-access::J2SDecl this (vartype)
+      (set! vartype (map-type vartype tmap)))
    (call-default-walker))
 	 
 ;*---------------------------------------------------------------------*/

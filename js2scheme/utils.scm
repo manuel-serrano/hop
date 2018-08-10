@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Mon Aug  6 15:37:19 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 10:21:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -58,7 +58,13 @@
 	   (only-usage?::bool ::pair-nil ::pair-nil)
 	   (strict-usage?::bool ::pair-nil ::pair-nil)
 
-	   (is-hint?::bool ::J2SExpr ::symbol)))
+	   (is-hint?::bool ::J2SExpr ::symbol)
+
+	   (string-method-type ::bstring)
+	   (number-method-type ::bstring)
+	   (array-method-type ::bstring)
+	   (regexp-method-type ::bstring)
+	   (builtin-method-type ::J2SExpr ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -506,15 +512,15 @@
    (cond
       ((isa? node J2SRef)
        (with-access::J2SRef node (decl)
-	  (with-access::J2SDecl decl (vtype)
-	     vtype)))
+	  (with-access::J2SDecl decl (vartype)
+	     vartype)))
       ((isa? node J2SGlobalRef)
        (with-access::J2SGlobalRef node (decl)
-	  (with-access::J2SDecl decl (vtype)
-	     vtype)))
+	  (with-access::J2SDecl decl (vartype)
+	     vartype)))
       ((isa? node J2SHopRef)
-       (with-access::J2SHopRef node (vtype)
-	  vtype))
+       (with-access::J2SHopRef node (type)
+	  type))
       ((isa? node J2SParen)
        (with-access::J2SParen node (expr)
 	  (j2s-vtype expr)))
@@ -588,3 +594,115 @@
 	       (else
 		(loop (cdr hint) h)))))))
 
+;*---------------------------------------------------------------------*/
+;*    assoc-method-type ...                                            */
+;*---------------------------------------------------------------------*/
+(define (assoc-method-type name methods)
+   (let ((c (assoc name methods)))
+      (if (pair? c) (cdr c) 'any)))
+
+;*---------------------------------------------------------------------*/
+;*    string-method-type ...                                           */
+;*---------------------------------------------------------------------*/
+(define (string-method-type name)
+   (assoc-method-type name
+      '(("indexOf" . indexof)
+	("lastIndexOf" . indexof)
+	("charCodeAt" . number)
+	("charAt" . string)
+	("substring" . string)
+	("substr" . string)
+	("toLowerCase" . string)
+	("toUpperCase" . string)
+	("split" . array)
+	("replace" . string)
+	("naturalCompare" . indexof)
+	("localeCompare" . indexof)
+	("trim" . string))))
+
+;*---------------------------------------------------------------------*/
+;*    string-static-method-type ...                                    */
+;*---------------------------------------------------------------------*/
+(define (string-static-method-type name)
+   (assoc-method-type name
+      '(("fromCharCode" . string))))
+   
+;*---------------------------------------------------------------------*/
+;*    math-static-method-type ...                                      */
+;*---------------------------------------------------------------------*/
+(define (math-static-method-type name)
+   (assoc-method-type name
+      '(("abs" . number)
+	("acos" . real)
+	("asin" . real)
+	("atan" . real)
+	("atan2" . real)
+	("ceil" . number)
+	("cos" . real)
+	("exp" . number)
+	("floor" . number)
+	("log" . real)
+	("max" . number)
+	("min" . number)
+	("pow" . number)
+	("random" . number)
+	("round" . number)
+	("sin" . real)
+	("sqrt" . real)
+	("tan" . real))))
+   
+;*---------------------------------------------------------------------*/
+;*    regexp-method-type ...                                           */
+;*---------------------------------------------------------------------*/
+(define (regexp-method-type name)
+   (assoc-method-type name
+      '(("test" . bool))))
+
+;*---------------------------------------------------------------------*/
+;*    number-method-type ...                                           */
+;*---------------------------------------------------------------------*/
+(define (number-method-type name)
+   (assoc-method-type name
+      '(("isInteger" . bool)
+	("toString" . string))))
+
+;*---------------------------------------------------------------------*/
+;*    array-method-type ...                                            */
+;*---------------------------------------------------------------------*/
+(define (array-method-type name)
+   (assoc-method-type name
+      '(("indexOf" . indexof)
+	("lastIndexOf" . indexof))))
+
+;*---------------------------------------------------------------------*/
+;*    assoc-method-type ...                                            */
+;*---------------------------------------------------------------------*/
+(define (builtin-method-type obj fn)
+
+   (define (is-global? obj ident)
+      (when (isa? obj J2SGlobalRef)
+	 (with-access::J2SGlobalRef obj (id decl)
+	    (when (eq? id ident)
+	       (with-access::J2SDecl decl (ronly)
+		  ronly)))))
+   
+   (define (String? obj)
+      (is-global? obj 'String))
+
+   (define (Array? obj)
+      (is-global? obj 'Array))
+
+   (define (Math? obj)
+      (is-global? obj 'Math))
+
+   (case (j2s-type obj)
+      ((string) (string-method-type fn))
+      ((regexp) (regexp-method-type fn))
+      ((number integer index) (number-method-type fn))
+      ((array) (array-method-type fn))
+      ((unknown) 'unknown)
+      (else
+       (cond
+	  ((String? obj) (string-static-method-type fn))
+	  ((Math? obj) (math-static-method-type fn))
+	  (else 'any)))))

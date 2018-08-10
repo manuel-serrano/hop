@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Aug  6 14:55:13 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 14:07:20 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -246,12 +246,12 @@
 				    vals))
 			 nvals)))
 		  (else
-		   (with-access::J2SDecl (car params) (vtype)
-		      (let ((ptype (if (and (eq? vtype 'array)
+		   (with-access::J2SDecl (car params) (vartype)
+		      (let ((ptype (if (and (eq? vartype 'array)
 					    (null? (cdr params))
 					    vararg)
 				       'any
-				       vtype)))
+				       vartype)))
 			 (loop (cdr params) (cdr vals)
 			    (cons (type-cast! (car vals) ptype)
 			       nvals))))))))))
@@ -327,8 +327,8 @@
 ;*    type-cast! ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SDeclInit totype)
-   (with-access::J2SDeclInit this (val vtype id)
-      (set! val (type-cast! val vtype))
+   (with-access::J2SDeclInit this (val vartype id)
+      (set! val (type-cast! val vartype))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -345,6 +345,11 @@
 (define-method (type-cast! this::J2SAssig totype)
    (with-access::J2SAssig this (lhs rhs type loc)
       (cond
+	 ((and (isa? lhs J2SRef)
+	       (with-access::J2SRef lhs (decl)
+		  (with-access::J2SDecl decl (vartype usrtype)
+		     (not (eq? usrtype 'unknown)))))
+	  (error "type-cast!" "not implemented yet" (j2s->list this)))
 	 ((eq? (j2s-vtype lhs) type)
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs type))
@@ -398,35 +403,14 @@
    (with-access::J2SAssigOp this (op lhs rhs)
       (case op
 	 ((>> <<)
-;* 	  (if (memq (j2s-vtype rhs) '(int32 uint32))                */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs 'int32))                    */
-;* 		 (set! rhs (type-cast! rhs 'uint32)))                  */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs '*))                        */
-;* 		 (set! rhs (type-cast! rhs '*))))                      */
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs 'uint32))
 	  (cast this totype))
 	 ((>>>)
-;* 	  (if (memq (j2s-vtype rhs) '(int32 uint32))                */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs 'uint32))                   */
-;* 		 (set! rhs (type-cast! rhs 'uint32))                   */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs '*))                        */
-;* 		 (set! rhs (type-cast! rhs '*)))))                     */
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs 'uint32))
 	  (cast this totype))
 	 ((^ & BIT_OR)
-;* 	  (if (memq (j2s-vtype rhs) '(int32 uint32))                */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs 'int32))                    */
-;* 		 (set! rhs (type-cast! rhs 'int32)))                   */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs '*))                        */
-;* 		 (set! rhs (type-cast! rhs '*))))                      */
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs 'int32))
 	  (cast this totype))

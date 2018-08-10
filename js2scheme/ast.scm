@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Aug  6 15:37:29 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 09:33:59 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -234,9 +234,8 @@
 
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
-	      (itype::symbol (default 'any))
 	      (rtype::symbol (default 'any))
-	      (vtype::symbol (default 'any))
+;* 	      (vtype::symbol (default 'any))                           */
 	      (module read-only (default #f)))
 
 	   (class J2SLetRef::J2SRef)
@@ -272,12 +271,17 @@
 	      ;; usage: init, new, ref, assig, get (field), set (field), call
 	      ;; delete
 	      (usage::pair-nil (default '()) (info '("notraverse")))
-	      (utype::symbol (default 'unknown) (info '("notraverse")))
-	      (itype::symbol (default 'unknown) (info '("notraverse")))
-	      (vtype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; initial type of paramaters
+	      (initype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; user declare type, if set, assign will be guarded
+	      (usrtype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; variable type value
+	      (vartype::symbol (default 'unknown) (info '("notraverse")))
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      (range::obj (default #unspecified) (info '("notraverse")))
 	      (binder::symbol (default 'var) (info '("notraverse"))))
+
+	   (class J2SDeclArguments::J2SDecl)
 	   
 	   (class J2SDeclInit::J2SDecl
 	      (val::J2SExpr (info '("ast"))))

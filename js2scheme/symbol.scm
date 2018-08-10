@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Aug  5 19:53:09 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 09:46:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -25,8 +25,6 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_lexer)
-
-   (static (class J2SDeclArguments::J2SDecl))
 
    (export j2s-symbol-stage))
 
@@ -274,9 +272,7 @@
 			  (collect* body)))
 		(arguments (instantiate::J2SDeclArguments
 			      (id 'arguments)
-			      (itype 'arguments)
-			      (utype 'arguments)
-			      (vtype (if (eq? fmode 'normal) 'any 'arguments))
+			      (usrtype (if (eq? fmode 'normal) 'any 'arguments))
 			      (loc loc)))
 		(envl (append decls params))
 		(env1 (append envl env0))
@@ -588,7 +584,7 @@
 	    (else
 	     (let ((decl (instantiate::J2SDecl
 			    (ronly #t)
-			    (vtype 'any)
+			    (usrtype 'any)
 			    (loc loc)
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))
