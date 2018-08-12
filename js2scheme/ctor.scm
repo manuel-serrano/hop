@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Fri Aug 10 14:13:43 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:16:45 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -208,8 +208,8 @@
 				     (with-access::J2SRef ref-or-bool ((rd decl))
 					(when (eq? rd decl)
 					   (simple-expr? rhs decl)))
-				     (with-access::J2SDecl decl (vartype)
-					(when (eq? vartype 'object)
+				     (with-access::J2SDecl decl (vtype)
+					(when (eq? vtype 'object)
 					   obj)))))))))))))
    
    (define (split-init-sequence this)

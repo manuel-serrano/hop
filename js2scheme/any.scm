@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Fri Aug 10 09:48:22 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:14:11 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An optional stage used in debug mode to assign to replace        */
@@ -108,8 +108,8 @@
 ;*    any-types ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SDecl)
-   (with-access::J2SDecl this (vartype id)
-      (set! vartype (map-type vartype))))
+   (with-access::J2SDecl this (vtype id)
+      (set! vtype (map-type vtype))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    any-types ::J2SDeclInit ...                                      */

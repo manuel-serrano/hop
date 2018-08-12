@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Fri Aug 10 09:51:40 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:14:30 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -367,7 +367,7 @@
        (loc loc)
        (binder 'param)
        (usage ,usage)
-       (usrtype ,(let ((c (memq :type opts))) (if (pair? c) (cadr c) ''unknown)))
+       (utype ,(let ((c (memq :type opts))) (if (pair? c) (cadr c) ''unknown)))
        (id ,id)))
 
 (define-macro (J2SDeclInit usage id val)
@@ -397,7 +397,7 @@
        (loc loc)
        (writable #f)
        (ronly #t)
-       (vartype ,typ)
+       (vtype ,typ)
        (usecnt 1)
        (binder 'let-opt)
        (usage ,usage)

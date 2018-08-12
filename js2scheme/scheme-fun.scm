@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Aug 10 07:40:25 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:17:16 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -382,8 +382,8 @@
 
    (define (j2s-type-scheme p)
       (let ((a (j2s-scheme p mode return conf)))
-	 (with-access::J2SDecl p (vartype)
-	    (type-ident a vartype conf))))
+	 (with-access::J2SDecl p (vtype)
+	    (type-ident a vtype conf))))
 		    
    (define (fixarg-lambda fun id body)
       (with-access::J2SFun fun (idgen idthis params rtype)
@@ -422,17 +422,17 @@
 	  (cond
 	     ((or (not (j2s-this-cache? thisp)) (not ctor-only))
 	      (flatten-stmt (j2s-scheme body mode return conf)))
-	     ((eq? (with-access::J2SDecl thisp (vartype) vartype) 'object)
-	      (with-access::J2SDecl thisp (vartype)
-		 (set! vartype 'this))
+	     ((eq? (with-access::J2SDecl thisp (vtype) vtype) 'object)
+	      (with-access::J2SDecl thisp (vtype)
+		 (set! vtype 'this))
 	      (let ((stmt (j2s-scheme body mode return conf)))
 		 `(with-access::JsObject this (cmap elements)
 		     (let ((%thismap cmap)
 			   (%thiselements elements))
 			,(flatten-stmt stmt)))))
 	     (else
-	      (with-access::J2SDecl thisp (vartype)
-		 (set! vartype 'this))
+	      (with-access::J2SDecl thisp (vtype)
+		 (set! vtype 'this))
 	      (let ((stmt (j2s-scheme body mode return conf)))
 		 `(let (%thismap %thiselements)
 		     (unless (eq? this (js-undefined))

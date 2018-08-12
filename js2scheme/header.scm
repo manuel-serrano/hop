@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Fri Aug 10 11:16:23 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:11:30 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -58,7 +58,7 @@
 	 (writable writable)
 	 (scope '%scope)
 	 (bind bind)
-	 (usrtype type)
+	 (utype type)
 	 (binder 'let-opt)
 	 (hidden-class hidden-class)
 	 (val (instantiate::J2SPragma

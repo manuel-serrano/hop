@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Aug 10 09:46:44 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:13:45 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -272,7 +272,7 @@
 			  (collect* body)))
 		(arguments (instantiate::J2SDeclArguments
 			      (id 'arguments)
-			      (usrtype (if (eq? fmode 'normal) 'any 'arguments))
+			      (utype (if (eq? fmode 'normal) 'any 'arguments))
 			      (loc loc)))
 		(envl (append decls params))
 		(env1 (append envl env0))
@@ -584,7 +584,7 @@
 	    (else
 	     (let ((decl (instantiate::J2SDecl
 			    (ronly #t)
-			    (usrtype 'any)
+			    (utype 'any)
 			    (loc loc)
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))

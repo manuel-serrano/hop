@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Aug 10 09:57:04 2018 (serrano)                */
+;*    Last change :  Sat Aug 11 23:02:46 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -65,13 +65,7 @@
 ;*    Maps to tyflow understood types.                                 */
 ;*---------------------------------------------------------------------*/
 (define (tyflow-type ty)
-   (cond
-      ((memq ty
-	  '(integer real number bool string regexp array arguments
-	    function object null undefined void scmstring tilde cmap any))
-       ty)
-      ((eq? ty '(index indexof length)) 'integer)
-      (else (error "js2scheme" "Illegal tyflow type" ty))))
+   (j2s-hint-type ty))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-program! ...                                                */
@@ -81,48 +75,54 @@
    (define j2s-verbose (config-get args :verbose 0))
    
    (with-access::J2SProgram this (headers decls nodes)
-      (when (>=fx j2s-verbose 4) (display " " (current-error-port)))
+      (when (>=fx j2s-verbose 3) (display " " (current-error-port)))
       ;; mark local captured variables
       (program-capture! this)
       ;; main fix point
       (when (config-get args :optim-tyflow #f)
 	 (let ((fix (make-cell 0)))
 	    (let loop ((i 1))
-	       (when (>=fx j2s-verbose 4)
+	       (when (>=fx j2s-verbose 3)
 		  (fprintf (current-error-port) "~a." i)
 		  (flush-output-port (current-error-port)))
 	       (let ((ofix (cell-ref fix)))
 		  ;; type all the nodes
 		  (typing-seq (append headers decls nodes) '() fix)
-		  (if (=fx (cell-ref fix) ofix)
-		      (if (config-get args :optim-tyflow-resolve #f)
-			  ;; type check resolution
-			  (begin
-			     (j2s-resolve! this args fix)
-			     (if (=fx (cell-ref fix) ofix)
-				 (when (config-get args :optim-hint #f)
-				    ;; hint typing optimization
-				    (when (>=fx j2s-verbose 4)
-				       (fprintf (current-error-port) "hint"))
-				    (let ((dups (j2s-hint! this args)))
-				       (when (pair? dups)
-					  (when (>=fx j2s-verbose 3)
-					     (fprintf (current-error-port)
-						(format " [~(,)]."
-						   (map (lambda (d)
-							   (with-access::J2SDecl d (id)
-							      id))
-						      dups))))
-					  (for-each reset-type! decls)
-					  (for-each reset-type! nodes)
-					  (loop (+fx i 1)))))
-				 (loop (+fx i 1)))))
-		      (loop (+fx i 1))))))
+		  (cond
+		     ((not (=fx (cell-ref fix) ofix))
+		      (loop (+fx i 1)))
+		     ((config-get args :optim-tyflow-resolve #f)
+		      ;; type check resolution
+		      (j2s-resolve! this args fix)
+		      (cond
+			 ((not (=fx (cell-ref fix) ofix))
+			  (loop (+fx i 1)))
+			 ((config-get args :optim-hint #f)
+			  ;; hint typing optimization
+			  (when (>=fx j2s-verbose 3)
+			     (fprintf (current-error-port) "hint"))
+			  (let ((dups (j2s-hint! this args)))
+			     (cond
+				((pair? dups)
+				 (when (>=fx j2s-verbose 3)
+				    (fprintf (current-error-port)
+				       (format " [~(,)]."
+					  (map (lambda (d)
+						  (with-access::J2SDecl d (id)
+						     id))
+					     dups))))
+				 (for-each reset-type! decls)
+				 (for-each reset-type! nodes)
+				 (loop (+fx i 1)))
+				((force-type this 'unknown 'any)
+				 (when (>=fx j2s-verbose 3)
+				    (fprintf (current-error-port) "."))
+				 (loop (+fx i 1))))))
+			 ((force-type this 'unknown 'any)
+			  (loop (+fx i 1)))))))))
 	 (unless (config-get args :optim-integer)
-	    (force-type! this 'integer 'number)))
+	    (force-type this 'integer 'number)))
 	 ;;(force-unary-type! this))
-      ;; cleanup the ast use count and remove obviously useless definitions
-      (force-type! this 'unknown 'any)
       ;;(cleanup-hint! this)
       (program-cleanup! this))
    this)
@@ -232,11 +232,11 @@
 ;*    Assign a unique type to a variable declaration.                  */
 ;*---------------------------------------------------------------------*/
 (define (decl-vtype-set! decl::J2SDecl ty::symbol fix::cell)
-   (with-access::J2SDecl decl (vartype id)
-      [assert (ty) (or (eq? vartype 'unknown) (eq? vartype ty))]
-      (when (or (eq? vartype 'unknown) (not (eq? vartype ty)))
-	 (unfix! fix (format "J2SDecl(~a) vtype=~a/~a" id vartype ty))
-	 (set! vartype (tyflow-type ty)))))
+   (with-access::J2SDecl decl (vtype id)
+      [assert (ty) (or (eq? vtype 'unknown) (eq? vtype ty))]
+      (when (or (eq? vtype 'unknown) (not (eq? vtype ty)))
+	 (unfix! fix (format "J2SDecl(~a) vtype=~a/~a" id vtype ty))
+	 (set! vtype (tyflow-type ty)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    decl-vtype-add! ...                                              */
@@ -250,10 +250,27 @@
 	  (and (memq t1 '(index length indexof)) (memq t2 '(integer number)))
 	  (and (eq? t1 'integer) (eq? t2 'number))))
 
-   (with-access::J2SDecl decl (vartype id)
-      (unless (or (eq? ty 'unknown) (subtype? ty vartype) (eq? vartype 'any))
-	 (unfix! fix (format "J2SDecl(~a) vtype=~a/~a" id vartype ty))
-	 (set! vartype (tyflow-type (merge-types vartype ty))))))
+   (with-access::J2SDecl decl (vtype id)
+      (unless (or (eq? ty 'unknown) (subtype? ty vtype) (eq? vtype 'any))
+	 (unfix! fix (format "J2SDecl(~a) vtype=~a/~a" id vtype ty))
+	 (set! vtype (tyflow-type (merge-types vtype ty))))))
+
+;*---------------------------------------------------------------------*/
+;*    decl-itype-add! ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Add a new initial type to a variable declaration.                */
+;*---------------------------------------------------------------------*/
+(define (decl-itype-add! decl::J2SDecl ty::symbol fix::cell)
+   
+   (define (subtype? t1 t2)
+      (or (eq? t1 t2)
+	  (and (memq t1 '(index length indexof)) (memq t2 '(integer number)))
+	  (and (eq? t1 'integer) (eq? t2 'number))))
+
+   (with-access::J2SDecl decl (itype id)
+      (unless (or (eq? ty 'unknown) (subtype? ty itype) (eq? itype 'any))
+	 (unfix! fix (format "J2SDecl(~a) vtype=~a/~a" id itype ty))
+	 (set! itype (tyflow-type (merge-types itype ty))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expr-type-set! ...                                               */
@@ -317,7 +334,7 @@
    (let ((c (assq decl env)))
       (if (pair? c)
 	  (cdr c)
-	  (with-access::J2SDecl decl (vartype) vartype))))
+	  (with-access::J2SDecl decl (vtype) vtype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    env-merge ...                                                    */
@@ -554,32 +571,34 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SGlobalRef env::pair-nil fix::cell)
    (with-access::J2SGlobalRef this (decl)
-      (with-access::J2SDecl decl (usrtype)
-	 (if (eq? usrtype 'unknown)
+      (with-access::J2SDecl decl (utype)
+	 (if (eq? utype 'unknown)
 	     (call-next-method)
-	     (expr-type-set! this env fix usrtype)))))
+	     (expr-type-set! this env fix utype)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SRef ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SRef env::pair-nil fix::cell)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (id key usrtype)
+      (with-access::J2SDecl decl (id key utype)
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val)
 	       (if (isa? val J2SMethod)
 		   (escape-method val fix)
 		   (escape-fun val fix))))
-	 (if (eq? usrtype 'unknown)
+	 (if (eq? utype 'unknown)
 	     (let ((ty (env-lookup env decl)))
 		(expr-type-set! this env fix ty))
-	     (expr-type-set! this env fix usrtype)))))
+	     (expr-type-set! this env fix utype)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SThis ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SThis env::pair-nil fix::cell)
-   (call-next-method))
+   (with-access::J2SThis this (decl)
+      (with-access::J2SDecl decl (utype)
+	 (expr-type-set! this env fix (if (eq? utype 'object) 'object 'any)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SWithRef ...                                          */
@@ -616,13 +635,13 @@
 ;*    typing ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SDeclInit env::pair-nil fix::cell)
-   (with-access::J2SDeclInit this (val usrtype usage)
+   (with-access::J2SDeclInit this (val utype usage)
       (multiple-value-bind (ty env bk)
 	 (typing val env fix)
 	 (cond
-	    ((not (eq? usrtype 'unknown))
-	     (decl-vtype-set! this usrtype fix)
-	     (return 'void (extend-env env this usrtype) bk))
+	    ((not (eq? utype 'unknown))
+	     (decl-vtype-set! this utype fix)
+	     (return 'void (extend-env env this utype) bk))
 	    ((usage? '(eval) usage)
 	     (decl-vtype-add! this 'any fix)
 	     (return 'void (extend-env env this ty) bk))
@@ -687,7 +706,7 @@
 	    ;; variable assignment
 	    ((isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
-		(with-access::J2SDecl decl (writable usrtype id)
+		(with-access::J2SDecl decl (writable utype id)
 		   (multiple-value-bind (tyr env rbk)
 		      (typing rhs envl fix)
 		      (cond
@@ -695,8 +714,8 @@
 			  (let ((nenv (extend-env env decl tyv)))
 			     (expr-type-set! this nenv fix tyv
 				(append lbk rbk))))
-			 ((not (eq? usrtype 'unknown))
-			  (return usrtype env (append lbk rbk)))
+			 ((not (eq? utype 'unknown))
+			  (return utype env (append lbk rbk)))
 			 (tyr
 			  (with-access::J2SRef lhs (decl loc)
 			     (decl-vtype-add! decl tyr fix)
@@ -736,7 +755,7 @@
 	    ((isa? lhs J2SRef)
 	     ;; a variable assignment
 	     (with-access::J2SRef lhs (decl)
-		(with-access::J2SDecl decl (writable usrtype)
+		(with-access::J2SDecl decl (writable utype)
 		   (cond
 		      ((not writable)
 		       (multiple-value-bind (tyv envl lbk)
@@ -744,8 +763,8 @@
 			  (let ((nenv (extend-env env decl tyv)))
 			     (expr-type-set! this nenv fix tyv
 				(append lbk bkr)))))
-		      ((not (eq? usrtype 'unknown))
-		       (return usrtype env bkr))
+		      ((not (eq? utype 'unknown))
+		       (return utype env bkr))
 		      (else
 		       (decl-vtype-add! decl tyr fix)
 		       (let ((nenv (extend-env envr decl tyr)))
@@ -771,7 +790,7 @@
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
 		(with-access::J2SRef lhs (decl)
-		   (with-access::J2SDecl decl (writable usrtype)
+		   (with-access::J2SDecl decl (writable utype)
 		      (cond
 			 ((not writable)
 			  (multiple-value-bind (tyv envl lbk)
@@ -779,10 +798,10 @@
 			     (let ((nenv (extend-env env decl tyv)))
 				(expr-type-set! this nenv fix tyv
 				   (append lbk bkr)))))
-			 ((not (eq? usrtype 'unknown))
-			  (return usrtype env bkr))
+			 ((not (eq? utype 'unknown))
+			  (return utype env bkr))
 			 (else
-			  (decl-vtype-set! decl tyr fix)
+			  (decl-vtype-add! decl tyr fix)
 			  (let ((nenv (extend-env envr decl tyr)))
 			     (expr-type-set! this nenv fix tyr
 				(append lbk bkr))))))))
@@ -804,7 +823,7 @@
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
 		(with-access::J2SRef lhs (decl)
-		   (with-access::J2SDecl decl (writable usrtype)
+		   (with-access::J2SDecl decl (writable utype)
 		      (cond
 			 ((not writable)
 			  (multiple-value-bind (tyv envl lbk)
@@ -812,10 +831,10 @@
 			     (let ((nenv (extend-env env decl tyv)))
 				(expr-type-set! this nenv fix tyv
 				   (append lbk bkr)))))
-			 ((not (eq? usrtype 'unknown))
-			  (return usrtype env bkr))
+			 ((not (eq? utype 'unknown))
+			  (return utype env bkr))
 			 (else
-			  (decl-vtype-set! decl tyr fix)
+			  (decl-vtype-add! decl tyr fix)
 			  (let ((nenv (extend-env envr decl tyr)))
 			     (expr-type-set! this nenv fix tyr
 				(append lbk bkr))))))))
@@ -847,17 +866,17 @@
 (define (typing-fun this::J2SFun env::pair-nil fix::cell)
    (with-access::J2SFun this (body params rtype thisp %info vararg type)
       (let ((envp (map (lambda (p::J2SDecl)
-			  (with-access::J2SDecl p (usage usrtype initype)
+			  (with-access::J2SDecl p (usage utype itype)
 			     (cond
-				((not (eq? usrtype 'unknown))
-				 (set! initype usrtype)
+				((not (eq? utype 'unknown))
+				 (set! itype utype)
 				 (cond
 				    ((not (eq? usage 'rest))
-				     (decl-vtype-add! p usrtype fix)
-				     (cons p usrtype))
-				    ((eq? usrtype 'array)
-				     (decl-vtype-add! p usrtype fix)
-				     (cons p usrtype))
+				     (decl-vtype-add! p utype fix)
+				     (cons p utype))
+				    ((eq? utype 'array)
+				     (decl-vtype-add! p utype fix)
+				     (cons p utype))
 				    (else
 				     (error "js2scheme"
 					"Illegal parameter type"
@@ -869,8 +888,13 @@
 				 (decl-vtype-add! p 'any fix)
 				 (cons p 'any))
 				(else
-				 (cons p initype)))))
+				 (cons p itype)))))
 		     params)))
+	 ;; transfer all the itypes to vtypes
+	 (for-each (lambda (decl)
+		      (with-access::J2SDecl decl (itype)
+			 (decl-vtype-add! decl itype fix)))
+	    params)
 	 (multiple-value-bind (_ envf _)
 	    (typing body (append envp env) fix)
 	    (set! %info envf))
@@ -886,8 +910,8 @@
       (filter-map (lambda (c)
 		     (let ((d (car c))
 			   (t (cdr c)))
-			(with-access::J2SDecl d (ronly vartype)
-			   (if ronly c (cons d vartype)))))
+			(with-access::J2SDecl d (ronly vtype)
+			   (if ronly c (cons d vtype)))))
 	 env)))
 
 ;*---------------------------------------------------------------------*/
@@ -903,8 +927,8 @@
    (with-access::J2SFun val (params rtype)
       (set! rtype (tyflow-type (escape-type rtype)))
       (for-each (lambda (p::J2SDecl)
-		   (with-access::J2SDecl p (usrtype)
-		      (when (eq? usrtype 'unknown)
+		   (with-access::J2SDecl p (utype)
+		      (when (eq? utype 'unknown)
 			 (decl-vtype-set! p 'any fix))))
 	 params)))
 
@@ -956,14 +980,14 @@
 	       (with-access::J2SDecl (car params) (usage)
 		  (cond
 		     (vararg
-		      (decl-vtype-add! (car params) 'any fix))
+		      (decl-itype-add! (car params) 'any fix))
 		     ((and (null? (cdr params)) (memq 'rest usage))
-		      (decl-vtype-add! (car params) 'array fix))
+		      (decl-itype-add! (car params) 'array fix))
 		     ((null? args)
-		      (decl-vtype-add! (car params) 'undefined fix)
+		      (decl-itype-add! (car params) 'undefined fix)
 		      (loop (cdr params) '()))
 		     (else
-		      (decl-vtype-add! (car params) (j2s-type (car args)) fix)
+		      (decl-itype-add! (car params) (j2s-type (car args)) fix)
 		      (loop (cdr params) (cdr args)))))))))
    
    (define (type-inline-call callee args env bk)
@@ -1022,7 +1046,7 @@
 	 (with-access::J2SAccess callee (obj field)
 	    (let* ((fn (j2s-field-name field))
 		   (ty (if (string? fn)
-			   (tyflow-type (builtin-method-type obj fn))
+			   (tyflow-type (car (builtin-method-type obj fn)))
 			   'any)))
 	       (if (eq? ty 'any)
 		   ;; the method is unknown, filter out the typing env
@@ -1189,12 +1213,18 @@
 			    'real)
 			   ((and (type-integer? typl) (type-integer? typr))
 			    'integer)
+			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			    'unknown)
 			   (else
 			    'number)))
 		       ((% /)
 			(cond
 			   ((or (eq? typl 'real) (eq? typr 'real))
 			    'real)
+			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			    'unknown)
+			   ((or (eq? typl 'any) (eq? typr 'any))
+			    'any)
 			   (else
 			    'number)))
 		       ((== === != !== < <= > >= eq?)
@@ -1251,51 +1281,47 @@
 	 (with-access::J2SUnresolvedRef expr (id)
 	    (eq? id 'Number))))
    
-   (with-handler
-      (lambda (e)
-	 (exception-notify e)
-	 (raise e))
-      (with-access::J2SAccess this (obj field)
-	 (multiple-value-bind (tyo envo bko)
-	    (typing obj env fix)
-	    (multiple-value-bind (tyf envf bkf)
-	       (typing field envo fix)
-	       (cond
-		  ((and (memq tyo '(array string)) (j2s-field-length? field))
-		   (with-access::J2SString field (val)
-		      (expr-type-set! this envf fix 'integer (append bko bkf))))
-		  ((eq? tyo 'string)
-		   (let* ((fn (j2s-field-name field))
-			  (ty (if (and fn (eq? (string-method-type fn) 'any))
-				  'any 'function)))
-		      (expr-type-set! this envf fix ty (append bko bkf))))
-		  ((eq? tyo 'regexp)
-		   (let* ((fn (j2s-field-name field))
-			  (ty (if (and fn (eq? (regexp-method-type fn) 'any))
-				  'any 'function)))
-		      (expr-type-set! this envf fix ty (append bko bkf))))
-		  ((eq? tyo 'number)
-		   (let* ((fn (j2s-field-name field))
-			  (ty (if (and fn (eq? (number-method-type fn) 'any))
-				  'any 'function)))
-		      (expr-type-set! this envf fix ty (append bko bkf))))
-		  ((eq? tyo 'array)
-		   (let* ((fn (j2s-field-name field))
-			  (ty (if (and fn (eq? (array-method-type fn) 'any))
-				  'any 'function)))
-		      (expr-type-set! this envf fix ty (append bko bkf))))
-		  ((is-number-ref? obj)
-		   (let ((name (j2s-field-name field)))
-		      (if (member name
-			     '("POSITIVE_INFINITY" "NEGATIVE_INFINITY"))
-			  (expr-type-set! this envf fix 'number
-			     (append bko bkf))
-			  (expr-type-set! this envf fix 'any
-			     (append bko bkf)))))
-		  ((eq? tyo 'unknown)
-		   (expr-type-set! this envf fix 'unknown (append bko bkf)))
-		  (else
-		   (expr-type-set! this envf fix 'any (append bko bkf)))))))))
+   (with-access::J2SAccess this (obj field)
+      (multiple-value-bind (tyo envo bko)
+	 (typing obj env fix)
+	 (multiple-value-bind (tyf envf bkf)
+	    (typing field envo fix)
+	    (cond
+	       ((and (memq tyo '(array string)) (j2s-field-length? field))
+		(with-access::J2SString field (val)
+		   (expr-type-set! this envf fix 'integer (append bko bkf))))
+	       ((eq? tyo 'string)
+		(let* ((fn (j2s-field-name field))
+		       (ty (if (and fn (eq? (car (string-method-type fn)) 'any))
+			       'any 'function)))
+		   (expr-type-set! this envf fix ty (append bko bkf))))
+	       ((eq? tyo 'regexp)
+		(let* ((fn (j2s-field-name field))
+		       (ty (if (and fn (eq? (car (regexp-method-type fn)) 'any))
+			       'any 'function)))
+		   (expr-type-set! this envf fix ty (append bko bkf))))
+	       ((eq? tyo 'number)
+		(let* ((fn (j2s-field-name field))
+		       (ty (if (and fn (eq? (car (number-method-type fn)) 'any))
+			       'any 'function)))
+		   (expr-type-set! this envf fix ty (append bko bkf))))
+	       ((eq? tyo 'array)
+		(let* ((fn (j2s-field-name field))
+		       (ty (if (and fn (eq? (car (array-method-type fn)) 'any))
+			       'any 'function)))
+		   (expr-type-set! this envf fix ty (append bko bkf))))
+	       ((is-number-ref? obj)
+		(let ((name (j2s-field-name field)))
+		   (if (member name
+			  '("POSITIVE_INFINITY" "NEGATIVE_INFINITY"))
+		       (expr-type-set! this envf fix 'number
+			  (append bko bkf))
+		       (expr-type-set! this envf fix 'any
+			  (append bko bkf)))))
+	       ((eq? tyo 'unknown)
+		(expr-type-set! this envf fix 'unknown (append bko bkf)))
+	       (else
+		(expr-type-set! this envf fix 'any (append bko bkf))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SCacheCheck ...                                       */
@@ -1371,10 +1397,10 @@
 (define-walk-method (typing this::J2SLetBlock env::pair-nil fix::cell)
    (with-access::J2SLetBlock this (decls nodes)
       (let ((ienv (map (lambda (d::J2SDecl)
-			  (with-access::J2SDecl d (usrtype vartype)
-			     (if (eq? usrtype 'unknown)
-				 (cons d vartype)
-				 (cons d usrtype))))
+			  (with-access::J2SDecl d (utype vtype)
+			     (if (eq? utype 'unknown)
+				 (cons d vtype)
+				 (cons d utype))))
 		     decls)))
 	 (multiple-value-bind (_ denv bk)
 	    (typing-seq decls (append ienv env) fix)
@@ -1819,43 +1845,56 @@
 		 (call-default-walker)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    force-type ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (force-type::bool this::J2SNode from to)
+   (let ((cell (make-cell #f)))
+      (force-type! this from to cell)
+      (cell-ref cell)))
+
+;*---------------------------------------------------------------------*/
 ;*    force-type! ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SNode from to)
+(define-walk-method (force-type! this::J2SNode from to cell::cell)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SExpr from to)
+(define-walk-method (force-type! this::J2SExpr from to cell)
    (with-access::J2SExpr this (type)
-      (when (eq? type from) (set! type to)))
+      (when (and (eq? type from) (not (eq? type to)))
+	 (cell-set! cell #t)
+	 (set! type to)))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SFun from to)
-   (with-access::J2SFun this (rtype thisp type)
-      (set! type 'function)
-      (when (isa? thisp J2SNode) (force-type! thisp from to))
-      (when (eq? rtype from) (set! rtype to)))
+(define-walk-method (force-type! this::J2SFun from to cell)
+   (with-access::J2SFun this (rtype thisp)
+      (when (isa? thisp J2SNode) (force-type! thisp from to cell))
+      (when (and (eq? rtype from) (not (eq? rtype to)))
+	 (cell-set! cell #t)
+	 (set! rtype to)))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SDecl ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SDecl from to)
-   (with-access::J2SDecl this (vartype)
-      (when (eq? vartype from) (set! vartype to)))
+(define-walk-method (force-type! this::J2SDecl from to cell)
+   (with-access::J2SDecl this (vtype)
+      (when (and (eq? vtype from) (not (eq? vtype to)))
+	 (cell-set! cell #t)
+	 (set! vtype to)))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SCatch ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SCatch from to)
+(define-walk-method (force-type! this::J2SCatch from to cell)
    (with-access::J2SCatch this (param)
-      (force-type! param from to)
+      (force-type! param from to cell)
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -1877,9 +1916,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-type! this::J2SDecl)
    (call-default-walker)
-   (with-access::J2SDecl this (vartype usrtype)
-      (when (eq? usrtype 'unknown)
-	 (set! vartype 'unknown)))
+   (with-access::J2SDecl this (vtype utype)
+      (when (eq? utype 'unknown)
+	 (set! vtype 'unknown)))
    this)
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Fri Aug 10 14:15:12 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:16:55 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -216,11 +216,11 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hintnum this::J2SDeclInit fix::cell)
    (call-default-walker)
-   (with-access::J2SDeclInit this (hint val vartype)
+   (with-access::J2SDeclInit this (hint val vtype)
       (unless (isa? this J2SDeclFun)
 	 (add-expr-hint! val hint  #f fix)
 	 (when (is-hint? val 'real)
-	    (set! vartype 'real)))))
+	    (set! vtype 'real)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SAssig ...                                           */
@@ -254,9 +254,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-types this::J2SRef fix::cell)
    (with-access::J2SRef this (decl type)
-      (with-access::J2SDecl decl (vartype)
-	 (when (type<? vartype type)
-	    (set! type vartype)
+      (with-access::J2SDecl decl (vtype)
+	 (when (type<? vtype type)
+	    (set! type vtype)
 	    (cell-set! fix #f)))))
 
 ;*---------------------------------------------------------------------*/

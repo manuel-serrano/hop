@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Aug 10 09:41:07 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:13:31 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -90,8 +90,8 @@
 	 (with-access::J2SDecl thisp (usecnt)
 	    (cond
 	       ((only-usage? '(new init) usage)
-		(with-access::J2SDecl thisp (usrtype)
-		   (set! usrtype 'object)))
+		(with-access::J2SDecl thisp (utype)
+		   (set! utype 'object)))
 	       ((and (usage? '(ref get) usage)
 		     (not (usage? '(new) usage))
 		     (>=fx usecnt this-occurrence-threshold)
@@ -118,10 +118,10 @@
 	     (nbody (j2s-alpha body (cons thisp params) (cons nthisp nparams))))
 	 (set! optimize #f)
 	 (use-count nbody +1 #f)
-;* 	 (with-access::J2SDecl thisp (usrtype)                         */
-;* 	    (set! usrtype 'any))                                       */
-	 (with-access::J2SDecl nthisp (usrtype)
-	    (set! usrtype 'object)
+;* 	 (with-access::J2SDecl thisp (utype)                         */
+;* 	    (set! utype 'any))                                       */
+	 (with-access::J2SDecl nthisp (utype)
+	    (set! utype 'object)
 	    (let ((m (duplicate::J2SFun this
 			(optimize #t)
 			(name (when (symbol? name) (symbol-append name '%%%)))

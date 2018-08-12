@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Aug 10 07:39:38 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:17:23 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -250,8 +250,8 @@
 	     (if (eq? tyv 'object)
 		 (if (and (isa? obj J2SThis)
 			  (with-access::J2SThis obj (decl)
-			     (with-access::J2SDecl decl (vartype)
-				(eq? vartype 'this))))
+			     (with-access::J2SDecl decl (vtype)
+				(eq? vtype 'this))))
 		     'this
 		     tyv)
 		 tyv)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Aug 10 14:07:20 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:15:45 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -246,12 +246,12 @@
 				    vals))
 			 nvals)))
 		  (else
-		   (with-access::J2SDecl (car params) (vartype)
-		      (let ((ptype (if (and (eq? vartype 'array)
+		   (with-access::J2SDecl (car params) (vtype)
+		      (let ((ptype (if (and (eq? vtype 'array)
 					    (null? (cdr params))
 					    vararg)
 				       'any
-				       vartype)))
+				       vtype)))
 			 (loop (cdr params) (cdr vals)
 			    (cons (type-cast! (car vals) ptype)
 			       nvals))))))))))
@@ -327,8 +327,8 @@
 ;*    type-cast! ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SDeclInit totype)
-   (with-access::J2SDeclInit this (val vartype id)
-      (set! val (type-cast! val vartype))
+   (with-access::J2SDeclInit this (val vtype id)
+      (set! val (type-cast! val vtype))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -347,8 +347,8 @@
       (cond
 	 ((and (isa? lhs J2SRef)
 	       (with-access::J2SRef lhs (decl)
-		  (with-access::J2SDecl decl (vartype usrtype)
-		     (not (eq? usrtype 'unknown)))))
+		  (with-access::J2SDecl decl (vtype utype)
+		     (not (eq? utype 'unknown)))))
 	  (error "type-cast!" "not implemented yet" (j2s->list this)))
 	 ((eq? (j2s-vtype lhs) type)
 	  (set! lhs (type-cast! lhs '*))

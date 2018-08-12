@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Aug 10 13:44:58 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:15:19 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -244,10 +244,10 @@
 ;*    extend-env ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (extend-env::pair-nil env::pair-nil decl::J2SDecl intv)
-   (with-access::J2SDecl decl (scope range vartype)
+   (with-access::J2SDecl decl (scope range vtype)
       (cond
 	 ((memq scope '(%scope global))
-	  (when (memq vartype '(integer number))
+	  (when (memq vtype '(integer number))
 	     (if (interval? range)
 		 (set! range (interval-merge range intv))
 		 (set! range intv)))
@@ -1331,8 +1331,8 @@
 (define-walk-method (node-range this::J2SFun env::pair-nil args fix::struct)
    (with-access::J2SFun this (body params)
       (let ((envp (filter-map (lambda (p)
-				 (with-access::J2SDecl p (initype range)
-				    (when (and (type-number? initype)
+				 (with-access::J2SDecl p (itype range)
+				    (when (and (type-number? itype)
 					       (interval? range))
 				       (cons p range))))
 		     params)))
@@ -1351,8 +1351,8 @@
 		    (args args))
 	    (cond
 	       ((and (pair? params) (pair? args))
-		(with-access::J2SDecl (car params) (vartype range)
-		   (when (type-number? vartype)
+		(with-access::J2SDecl (car params) (vtype range)
+		   (when (type-number? vtype)
 		      (with-access::J2SExpr (car args) ((ainfo range))
 			 (let ((ni (interval-merge range ainfo)))
 			    (unless (equal? ni range)
@@ -1419,8 +1419,8 @@
 ;*    node-range ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SDeclInit env::pair-nil args fix::struct)
-   (with-access::J2SDeclInit this (val range vartype)
-      (if (type-number? vartype)
+   (with-access::J2SDeclInit this (val range vtype)
+      (if (type-number? vtype)
 	  (multiple-value-bind (intv env)
 	     (node-range val env args fix)
 	     (node-interval-set! this env fix intv)
@@ -1674,26 +1674,26 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SDecl tymap)
    (call-default-walker)
-   (with-access::J2SDecl this (range vartype key scope useinfun usage)
+   (with-access::J2SDecl this (range vtype key scope useinfun usage)
       (cond
 	 ((memq scope '(%scope global))
-	  (when (or (range-type? vartype) (eq? vartype 'unknown))
+	  (when (or (range-type? vtype) (eq? vtype 'unknown))
 	     (let ((ty (cond
 			  ((interval? range)
 			   (let ((ty (min-type
-					(interval->type range tymap) vartype)))
+					(interval->type range tymap) vtype)))
 			      (if (usage? '(assig) usage)
 				  (type->boxed-type ty)
 				  ty)))
 			  (else
-			   (min-type 'number vartype)))))
-		(set! vartype ty))))
-	 ((and (interval? range) (range-type? vartype))
+			   (min-type 'number vtype)))))
+		(set! vtype ty))))
+	 ((and (interval? range) (range-type? vtype))
 	  (let ((ty (interval->type range tymap)))
 	     (when ty
-		(let* ((tym (min-type ty vartype))
+		(let* ((tym (min-type ty vtype))
 		       (tyb (if useinfun (type->boxed-type tym) tym)))
-		   (set! vartype tyb)))))))
+		   (set! vtype tyb)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -1733,12 +1733,12 @@
 (define-walk-method (type-range! this::J2SRef tymap)
    (call-next-method)
    (with-access::J2SRef this (decl type (rng range) loc)
-      (with-access::J2SDecl decl (vartype id key range)
-	 (if (and (interval? rng) (range-type? vartype))
+      (with-access::J2SDecl decl (vtype id key range)
+	 (if (and (interval? rng) (range-type? vtype))
 	     (begin
 		(set! range (interval-merge range rng))
-		(set! vartype (interval->type range tymap)))
-	     (set! vartype (map-type vartype defmap)))))
+		(set! vtype (interval->type range tymap)))
+	     (set! vtype (map-type vtype defmap)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -1749,12 +1749,12 @@
    (with-access::J2SPrefix this (lhs rhs (rng range))
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
-	    (with-access::J2SDecl decl (vartype id key range)
-	       (if (and (interval? rng) (range-type? vartype))
+	    (with-access::J2SDecl decl (vtype id key range)
+	       (if (and (interval? rng) (range-type? vtype))
 		   (begin
 		      (set! range (interval-merge range rng))
-		      (set! vartype (interval->type range tymap)))
-		   (set! vartype (map-type vartype defmap)))))))
+		      (set! vtype (interval->type range tymap)))
+		   (set! vtype (map-type vtype defmap)))))))
    this)
 	 
 ;*---------------------------------------------------------------------*/
@@ -1875,8 +1875,8 @@
 ;*    map-types ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SDecl tmap)
-   (with-access::J2SDecl this (vartype)
-      (set! vartype (map-type vartype tmap)))
+   (with-access::J2SDecl this (vtype)
+      (set! vtype (map-type vtype tmap)))
    (call-default-walker))
 	 
 ;*---------------------------------------------------------------------*/

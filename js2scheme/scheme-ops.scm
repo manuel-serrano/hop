@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Aug 10 07:41:10 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 14:33:28 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1184,6 +1184,10 @@
 		  ((eq? tl 'bint)
 		   (binop-bint-xxx '+ type lhs tl left rhs tr right conf #f))
 		  ((eq? tr 'bint)
+		   (binop-int53-xxx '+ type rhs tr right lhs tl left conf #t))
+		  ((eq? tl 'int53)
+		   (binop-int53-xxx '+ type lhs tl left rhs tr right conf #f))
+		  ((eq? tr 'int53)
 		   (binop-bint-xxx '+ type rhs tr right lhs tl left conf #t))
 		  ((eq? tl 'real)
 		   (binop-real-xxx '+ type lhs tl left rhs tr right conf #f))
@@ -2147,7 +2151,6 @@
 ;*    Only used on 64-bit platforms.                                   */
 ;*---------------------------------------------------------------------*/
 (define (binop-int53-xxx op type lhs tl left rhs tr right conf flip)
-   (tprint "BINOP53...")
    (case tr
       ((int32)
        (binop-fixnum-fixnum op type left (asfixnum right tr) flip))

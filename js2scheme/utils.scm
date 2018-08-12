@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Aug 10 10:21:08 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:12:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -512,12 +512,12 @@
    (cond
       ((isa? node J2SRef)
        (with-access::J2SRef node (decl)
-	  (with-access::J2SDecl decl (vartype)
-	     vartype)))
+	  (with-access::J2SDecl decl (vtype)
+	     vtype)))
       ((isa? node J2SGlobalRef)
        (with-access::J2SGlobalRef node (decl)
-	  (with-access::J2SDecl decl (vartype)
-	     vartype)))
+	  (with-access::J2SDecl decl (vtype)
+	     vtype)))
       ((isa? node J2SHopRef)
        (with-access::J2SHopRef node (type)
 	  type))
@@ -599,80 +599,80 @@
 ;*---------------------------------------------------------------------*/
 (define (assoc-method-type name methods)
    (let ((c (assoc name methods)))
-      (if (pair? c) (cdr c) 'any)))
+      (if (pair? c) (cdr c) '(any))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-method-type ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (string-method-type name)
    (assoc-method-type name
-      '(("indexOf" . indexof)
-	("lastIndexOf" . indexof)
-	("charCodeAt" . number)
-	("charAt" . string)
-	("substring" . string)
-	("substr" . string)
-	("toLowerCase" . string)
-	("toUpperCase" . string)
-	("split" . array)
-	("replace" . string)
-	("naturalCompare" . indexof)
-	("localeCompare" . indexof)
-	("trim" . string))))
+      '(("indexOf" . (indexof index))
+	("lastIndexOf" . (indexof index))
+	("charCodeAt" . (number index))
+	("charAt" . (string index))
+	("substring" . (string index index))
+	("substr" . (string index index))
+	("toLowerCase" . (string))
+	("toUpperCase" . (string))
+	("split" . (array (string regexp) index))
+	("replace" . (string (string regexp) (string function)))
+	("naturalCompare" . (integer (string)))
+	("localeCompare" . (integer (string)))
+	("trim" . (string)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-static-method-type ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (string-static-method-type name)
    (assoc-method-type name
-      '(("fromCharCode" . string))))
+      '(("fromCharCode" . (string integer)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    math-static-method-type ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (math-static-method-type name)
    (assoc-method-type name
-      '(("abs" . number)
-	("acos" . real)
-	("asin" . real)
-	("atan" . real)
-	("atan2" . real)
-	("ceil" . number)
-	("cos" . real)
-	("exp" . number)
-	("floor" . number)
-	("log" . real)
-	("max" . number)
-	("min" . number)
-	("pow" . number)
-	("random" . number)
-	("round" . number)
-	("sin" . real)
-	("sqrt" . real)
-	("tan" . real))))
+      '(("abs" . (number number))
+	("acos" . (real real))
+	("asin" . (real real))
+	("atan" . (real real))
+	("atan2" . (real real))
+	("ceil" . (number real))
+	("cos" . (real real))
+	("exp" . (number real))
+	("floor" . (number real))
+	("log" . (real real))
+	("max" . (number number))
+	("min" . (number number))
+	("pow" . (number number))
+	("random" . (real))
+	("round" . (number real))
+	("sin" . (real real))
+	("sqrt" . (real real))
+	("tan" . (real real)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    regexp-method-type ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (regexp-method-type name)
    (assoc-method-type name
-      '(("test" . bool))))
+      '(("test" . (bool string)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    number-method-type ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (number-method-type name)
    (assoc-method-type name
-      '(("isInteger" . bool)
-	("toString" . string))))
+      '(("isInteger" . (bool))
+	("toString" . (string number)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array-method-type ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (array-method-type name)
    (assoc-method-type name
-      '(("indexOf" . indexof)
-	("lastIndexOf" . indexof))))
+      '(("indexOf" . (indexof index))
+	("lastIndexOf" . (indexof index)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    assoc-method-type ...                                            */
@@ -700,9 +700,9 @@
       ((regexp) (regexp-method-type fn))
       ((number integer index) (number-method-type fn))
       ((array) (array-method-type fn))
-      ((unknown) 'unknown)
+      ((unknown) '(unknown))
       (else
        (cond
 	  ((String? obj) (string-static-method-type fn))
 	  ((Math? obj) (math-static-method-type fn))
-	  (else 'any)))))
+	  (else '(any))))))

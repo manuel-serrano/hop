@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Aug 10 07:40:42 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:17:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -196,7 +196,7 @@
 	    (when (not hidden-class)
 	       `(:hidden-class #f)))))
    
-   (with-access::J2SDecl this (loc scope id vartype ronly)
+   (with-access::J2SDecl this (loc scope id vtype ronly)
       (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
 	    (cond
@@ -218,7 +218,7 @@
 			   `(define ,ident ,value)))))
 	       ((memq scope '(letblock letvar))
 		(if ronly
-		    `(,(vtype-ident ident vartype conf) ,value)
+		    `(,(vtype-ident ident vtype conf) ,value)
 		    `(,ident ,value)))
 	       (else
 		`(define ,ident ,value)))))))
@@ -229,8 +229,8 @@
 (define-method (j2s-scheme this::J2SDecl mode return conf)
    
    (define (j2s-scheme-param this)
-      (with-access::J2SDecl this (vartype)
-	 (vtype-ident (j2s-decl-scheme-id this) vartype conf)))
+      (with-access::J2SDecl this (vtype)
+	 (vtype-ident (j2s-decl-scheme-id this) vtype conf)))
    
    (define (j2s-scheme-var this)
       (with-access::J2SDecl this (loc id writable)
@@ -780,9 +780,9 @@
    
    (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return conf singledecl
 	      typed)
-      (with-access::J2SDeclInit d (usage id vartype ronly)
+      (with-access::J2SDeclInit d (usage id vtype ronly)
 	 (let* ((ident (j2s-decl-scheme-id d))
-		(var (type-ident ident vartype conf))
+		(var (type-ident ident vtype conf))
 		(val (j2sdeclinit-val-fun d)))
 	    (cond
 	       ((or (not (isa? val J2SFun))
@@ -2714,15 +2714,15 @@
       (let ((otype type))
 	 (if (isa? expr J2SRef)
 	     (with-access::J2SRef expr (decl)
-		(with-access::J2SDecl decl (vartype usage ronly)
+		(with-access::J2SDecl decl (vtype usage ronly)
 		   (if ronly
-		       (let ((ovartype vartype))
-			  (set! vartype 'object)
+		       (let ((ovtype vtype))
+			  (set! vtype 'object)
 			  (set! type 'object)
 			  (unwind-protect
 			     (thunk)
 			     (begin
-				(set! vartype ovartype)
+				(set! vtype ovtype)
 				(set! type otype))))
 		       (thunk))))
 	     (unwind-protect

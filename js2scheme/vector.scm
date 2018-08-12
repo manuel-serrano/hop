@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Fri Aug 10 09:53:22 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:15:37 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
@@ -90,8 +90,8 @@
    (with-access::J2SAccess this (obj field)
       (if (isa? obj J2SRef)
 	  (with-access::J2SRef obj (decl)
-	     (with-access::J2SDecl decl (vartype %info)
-		(when (eq? vartype 'array)
+	     (with-access::J2SDecl decl (vtype %info)
+		(when (eq? vtype 'array)
 		   (unless (and (range? %info) (not (range-intervals %info)))
 		      (unless (range? %info) (set! %info (range '())))
 		      (with-access::J2SExpr field (range)
@@ -112,8 +112,8 @@
 	 (with-access::J2SAccess lhs (obj field)
 	    (when (isa? obj J2SRef)
 	       (with-access::J2SRef obj (decl)
-		  (with-access::J2SDecl decl (vartype %info)
-		     (when (eq? vartype 'array)
+		  (with-access::J2SDecl decl (vtype %info)
+		     (when (eq? vtype 'array)
 			(unless (and (range? %info) (not (range-intervals %info)))
 			   (unless (range? %info) (set! %info (range '())))
 			   (with-access::J2SExpr field (range)
@@ -210,8 +210,8 @@
    (define (in-range? sz intv)
       (and (>= (interval-min intv) 0) (< (interval-max intv) sz)))
 
-   (with-access::J2SDeclInit this (vartype id %info val usage hint loc)
-      (when (and (eq? vartype 'array)
+   (with-access::J2SDeclInit this (vtype id %info val usage hint loc)
+      (when (and (eq? vtype 'array)
 		 (only-usage? '(init get set) usage)
 		 (range? %info)
 		 (or (pair? (range-intervals %info))
@@ -221,7 +221,7 @@
 		       (every (lambda (i) (in-range? size i))
 			  (range-intervals %info)))
 	       ;; optimize this array by turning it into a vector
-	       (set! vartype 'vector)
+	       (set! vtype 'vector)
 	       (set! hint (list size))
 	       (with-access::J2SExpr val (type)
 		  (set! type 'vector))
@@ -315,8 +315,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (patch-vector this::J2SRef)
    (with-access::J2SRef this (decl type)
-      (with-access::J2SDecl decl (vartype)
-	 (when (eq? vartype 'vector)
+      (with-access::J2SDecl decl (vtype)
+	 (when (eq? vtype 'vector)
 	    (set! type 'vector)))))
 
 ;*---------------------------------------------------------------------*/

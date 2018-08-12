@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Aug 10 09:36:58 2018 (serrano)                */
+;*    Last change :  Sun Aug 12 07:11:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -120,10 +120,10 @@
 ;*    dump-vtype ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (dump-vtype this::J2SDecl)
-   (with-access::J2SDecl this (vartype usrtype initype)
+   (with-access::J2SDecl this (vtype utype itype)
       (if (or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
-	  `(:vtype ,vartype :utype ,usrtype :itype ,initype)
+	  `(:vtype ,vtype :utype ,utype :itype ,itype)
 	  '())))
       
 ;*---------------------------------------------------------------------*/
