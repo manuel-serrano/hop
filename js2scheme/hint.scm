@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/hint.scm                */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/hint.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Aug 12 07:11:01 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 07:56:54 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -74,11 +74,13 @@
 (define (j2s-hint-type ty)
    (cond
       ((memq ty
-	  '(integer real number bool string regexp array arguments
-	    function object null undefined void scmstring tilde cmap any
-	    unknown))
+	  '(integer real number bool string
+	    regexp array date arguments function object
+	    null undefined void
+	    any unknown
+	    cmap scmstring tilde pair))
        ty)
-      ((eq? ty '(index indexof length)) 'integer)
+      ((memq ty '(index indexof length)) 'integer)
       (else (error "js2scheme" "Illegal hint type" ty))))
 
 ;*---------------------------------------------------------------------*/

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/utils.scm               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/utils.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Aug 12 07:12:57 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 07:56:00 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -388,6 +388,12 @@
 	 ((!==) '==)
 	 ((instanceof) '!instanceof)
 	 (else (error "j2s-expr-type-test" "Unknown op" op))))
+
+   (define (string->typename val)
+      (let ((s (string->symbol val)))
+	 (if (eq? s 'boolean)
+	     'bool
+	     s)))
    
    (define (typeof op expr str)
       (when (isa? expr J2SUnary)
@@ -400,7 +406,7 @@
 		  ((and (eq? bop 'typeof) (isa? expr J2SRef))
 		   (with-access::J2SRef expr (decl)
 		      (with-access::J2SString str (val)
-			 (values op decl (string->symbol val) expr)))))))))
+			 (values op decl (string->typename val) expr)))))))))
    
    (define (binary-type-test expr)
       (with-access::J2SBinary expr (op lhs rhs)

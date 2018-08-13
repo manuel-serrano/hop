@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/tyflow.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/tyflow.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Aug 11 23:02:46 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 07:47:11 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -213,12 +213,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    unfix! ...                                                       */
 ;*---------------------------------------------------------------------*/
-;* (define (unfix! fix reason)                                         */
-;*    (tprint "--- UNFIX (" (cell-ref fix) ") reason=" reason)         */
-;*    (cell-set! fix (+fx 1 (cell-ref fix))))                          */
+(define (unfix! fix reason)
+   (tprint "--- UNFIX (" (cell-ref fix) ") reason=" reason)
+   (cell-set! fix (+fx 1 (cell-ref fix))))
 
-(define-macro (unfix! fix reason)
-   `(cell-set! ,fix (+fx 1 (cell-ref ,fix))))
+;* (define-macro (unfix! fix reason)                                   */
+;*    `(cell-set! ,fix (+fx 1 (cell-ref ,fix))))                       */
 
 ;*---------------------------------------------------------------------*/
 ;*    return ...                                                       */
@@ -232,10 +232,10 @@
 ;*    Assign a unique type to a variable declaration.                  */
 ;*---------------------------------------------------------------------*/
 (define (decl-vtype-set! decl::J2SDecl ty::symbol fix::cell)
-   (with-access::J2SDecl decl (vtype id)
+   (with-access::J2SDecl decl (vtype id loc)
       [assert (ty) (or (eq? vtype 'unknown) (eq? vtype ty))]
       (when (or (eq? vtype 'unknown) (not (eq? vtype ty)))
-	 (unfix! fix (format "J2SDecl(~a) vtype=~a/~a" id vtype ty))
+	 (unfix! fix (format "J2SDecl.set(~a, ~a) vtype=~a/~a" id loc vtype ty))
 	 (set! vtype (tyflow-type ty)))))
 
 ;*---------------------------------------------------------------------*/
@@ -250,9 +250,9 @@
 	  (and (memq t1 '(index length indexof)) (memq t2 '(integer number)))
 	  (and (eq? t1 'integer) (eq? t2 'number))))
 
-   (with-access::J2SDecl decl (vtype id)
+   (with-access::J2SDecl decl (vtype id loc)
       (unless (or (eq? ty 'unknown) (subtype? ty vtype) (eq? vtype 'any))
-	 (unfix! fix (format "J2SDecl(~a) vtype=~a/~a" id vtype ty))
+	 (unfix! fix (format "J2SDecl.add(~a, ~a) vtype=~a/~a" id loc vtype ty))
 	 (set! vtype (tyflow-type (merge-types vtype ty))))))
 
 ;*---------------------------------------------------------------------*/
@@ -895,9 +895,12 @@
 		      (with-access::J2SDecl decl (itype)
 			 (decl-vtype-add! decl itype fix)))
 	    params)
-	 (multiple-value-bind (_ envf _)
-	    (typing body (append envp env) fix)
-	    (set! %info envf))
+	 (with-access::J2SDecl thisp (itype itype)
+	    (decl-vtype-add! thisp itype fix)
+	    (let ((fenv (cons (cons thisp itype) (append envp env))))
+	       (multiple-value-bind (_ envf _)
+		  (typing body fenv fix)
+		  (set! %info fenv))))
 	 (expr-type-set! this env fix 'function))))
 
 ;*---------------------------------------------------------------------*/
@@ -924,12 +927,13 @@
 	 ((undefined any obj object null) rtype)
 	 (else 'any)))
    
-   (with-access::J2SFun val (params rtype)
+   (with-access::J2SFun val (params rtype thisp)
+      (decl-vtype-add! thisp 'any fix)
       (set! rtype (tyflow-type (escape-type rtype)))
       (for-each (lambda (p::J2SDecl)
 		   (with-access::J2SDecl p (utype)
 		      (when (eq? utype 'unknown)
-			 (decl-vtype-set! p 'any fix))))
+			 (decl-vtype-add! p 'any fix))))
 	 params)))
 
 ;*---------------------------------------------------------------------*/
@@ -973,7 +977,8 @@
 	 env))
    
    (define (type-known-call-args callee args env bk)
-      (with-access::J2SFun callee (rtype params vararg)
+      (with-access::J2SFun callee (rtype params vararg thisp mode)
+	 (decl-itype-add! thisp (if (eq? mode 'strict) 'undefined 'object) fix)
 	 (let loop ((params params)
 		    (args args))
 	    (when (pair? params)
@@ -1347,10 +1352,14 @@
 (define-walk-method (typing this::J2SPragma env::pair-nil fix::cell)
    (with-access::J2SPragma this (lang expr type)
       (if (eq? lang 'scheme)
-	  (return type env '())
+	  (if (eq? type 'unknown)
+	      (expr-type-set! this env fix 'any)
+	      (return type env '()))
 	  (multiple-value-bind (_ _ bk)
 	     (typing expr env fix)
-	     (return type env '())))))
+	     (if (eq? type 'unknown)
+		 (expr-type-set! this env fix 'any bk)
+		 (return type env '()))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SParen ...                                            */
@@ -1623,7 +1632,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SCatch env::pair-nil fix::cell)
    (with-access::J2SCatch this (body param)
-      (decl-vtype-set! param 'any fix)
+      (decl-vtype-add! param 'any fix)
       (typing body env fix)))
 
 ;*---------------------------------------------------------------------*/
@@ -1678,7 +1687,7 @@
       (or (eq? type typ)
 	  (and (memq type '(date array)) (eq? typ 'object))
 	  (and (eq? typ 'number) (memq type '(integer index real)))
-	  (and (eq? typ 'boolean) (eq? type 'bool))))
+	  (and (eq? type 'bool))))
    
    (with-access::J2SBinary this (loc op)
       (case op
@@ -1862,8 +1871,11 @@
 ;*    force-type! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SExpr from to cell)
-   (with-access::J2SExpr this (type)
+   (with-access::J2SExpr this (type loc)
       (when (and (eq? type from) (not (eq? type to)))
+	 (when (eq? from 'unknown)
+	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
+	       " " (j2s->list this)))
 	 (cell-set! cell #t)
 	 (set! type to)))
    (call-default-walker))
@@ -1872,9 +1884,12 @@
 ;*    force-type! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SFun from to cell)
-   (with-access::J2SFun this (rtype thisp)
+   (with-access::J2SFun this (rtype thisp loc)
       (when (isa? thisp J2SNode) (force-type! thisp from to cell))
       (when (and (eq? rtype from) (not (eq? rtype to)))
+	 (when (eq? from 'unknown)
+	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
+	       " " (j2s->list this)))
 	 (cell-set! cell #t)
 	 (set! rtype to)))
    (call-default-walker))
@@ -1883,8 +1898,11 @@
 ;*    force-type! ::J2SDecl ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SDecl from to cell)
-   (with-access::J2SDecl this (vtype)
+   (with-access::J2SDecl this (vtype loc)
       (when (and (eq? vtype from) (not (eq? vtype to)))
+	 (when (eq? from 'unknown)
+	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
+	       " " (j2s->list this)))
 	 (cell-set! cell #t)
 	 (set! vtype to)))
    (call-default-walker))

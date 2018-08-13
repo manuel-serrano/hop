@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/sweep.scm               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/sweep.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Aug 10 16:40:05 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 08:05:28 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
@@ -41,7 +41,7 @@
 (define (j2s-sweep! this::J2SNode args)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)
-	 (let loop ((stamp 24323)
+	 (let loop ((stamp (cons 1 2))
 		    (removed '()))
 	    (let ((deval (make-cell #f)))
 	       (mark this deval stamp)
@@ -51,7 +51,7 @@
 		     (sweep! this rems stamp)
 		     (cond
 			((pair? (cell-ref rems))
-			 (loop (+fx stamp 1)
+			 (loop (cons 1 2)
 			    (append (cell-ref rems) removed)))
 			((>= (config-get args :verbose 0) 3)
 			 (fprintf (current-error-port) " (~(, ))"
@@ -62,7 +62,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    use-decl! ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (use-decl! this::J2SDecl stamp::long)
+(define (use-decl! this::J2SDecl stamp)
    (with-access::J2SDecl this (%info)
       (unless (eq? %info stamp)
 	 (set! %info stamp)
@@ -71,7 +71,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    mark-decl! ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (mark-decl! this::J2SDecl deval::cell stamp::long)
+(define (mark-decl! this::J2SDecl deval::cell stamp)
    (with-access::J2SDecl this (%info)
       (unless (eq? %info stamp)
 	 (set! %info stamp)
@@ -82,7 +82,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SNode ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark this::J2SNode deval::cell stamp::long)
+(define-walk-method (mark this::J2SNode deval::cell stamp)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -124,6 +124,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SRef deval stamp)
    (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (id %info)
+	 (when (memq id '(iii applyListeners eventListenerMonitor))
+	    (tprint "MARK " (j2s->list this) " " stamp " "
+	       (if (number? %info) %info))))
       (when (use-decl! decl stamp)
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val)
@@ -172,7 +176,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    sweep! ::J2SNode ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (sweep! this::J2SNode rems::cell stamp::long)
+(define-walk-method (sweep! this::J2SNode rems::cell stamp)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -200,14 +204,14 @@
 ;*    sweep! ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (sweep! this::J2SDeclInit rems stamp)
-   (with-access::J2SDeclInit this (%info loc id)
+   (with-access::J2SDeclInit this (%info loc id val)
       (if (eq? %info stamp)
 	  ;; used, keep it
 	  (call-default-walker)
 	  (begin
 	     ;; unused, remove it
 	     (cell-set! rems (cons id (cell-ref rems)))
-	     (J2SNop)))))
+	     (J2SStmtExpr val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sweep! ::J2SLeBlock ...                                          */
