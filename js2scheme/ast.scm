@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/ast.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Aug 12 07:11:13 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 18:45:45 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -168,6 +168,7 @@
 	      (generator::bool (default #f) (info '("notraverse")))
 	      (optimize (default #t) (info '("notraverse")))
 	      (thisp (default #f) (info '("notraverse")))
+	      (argumentsp (default #f) (info '("notraverse")))
 	      (params::pair-nil (default '()))
 	      (constrsize::int (default 3) (info '("notraverse")))
 	      (src::bool (default #t) (info '("notraverse")))

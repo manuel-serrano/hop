@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/symbol.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/symbol.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Aug 12 07:13:45 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 18:44:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -302,7 +302,7 @@
 		(set! body (walk! body nenv fmode withs nwenv genv ctx conf)))
 	    (with-access::J2SDeclArguments arguments (usecnt)
 	       (when (>fx usecnt 0)
-		  (with-access::J2SFun this (vararg params)
+		  (with-access::J2SFun this (vararg argumentsp params)
 		     (if vararg
 			 (with-access::J2SDecl (car (last-pair params)) (id loc)
 			    (raise
@@ -312,7 +312,9 @@
 				  (obj id)
 				  (fname (cadr loc))
 				  (location (caddr loc)))))
-			 (set! vararg 'arguments))))))))
+			 (begin
+			    (set! argumentsp arguments)
+			    (set! vararg 'arguments)))))))))
    this)
 
 ;*---------------------------------------------------------------------*/

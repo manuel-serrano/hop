@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Aug 13 09:23:32 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 19:21:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -504,7 +504,8 @@
 ;*    j2s->list ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
-   (with-access::J2SFun this (name thisp params body decl mode rtype optimize
+   (with-access::J2SFun this (name thisp argumentsp params body decl mode
+				rtype optimize
 				need-bind-exit-return idthis generator loc)
       (cond
 	 ((isa? decl J2SDeclFun)
@@ -523,6 +524,7 @@
 		 :mode ,mode
 		 ,@(dump-range this)
 		 :thisp ,(when thisp (j2s->list thisp))
+		 :argumentsp ,(when argumentsp (j2s->list argumentsp))
 		 ,@(dump-size this)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
@@ -541,6 +543,7 @@
 		 :mode ,mode
 		 ,@(dump-range this)
 		 :thisp ,(when thisp (j2s->list thisp))
+		 :argumentsp ,(when argumentsp (j2s->list argumentsp))
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
@@ -555,6 +558,7 @@
 	      :mode ,mode
 	      ,@(dump-range this)
 	      :thisp ,(when thisp (j2s->list thisp))
+	      :argumentsp ,(when argumentsp (j2s->list argumentsp))
 	      ,(map j2s->list params) ,(j2s->list body))))))
 
 ;*---------------------------------------------------------------------*/

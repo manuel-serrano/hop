@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Aug 13 09:02:06 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 18:40:28 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -728,7 +728,11 @@
 			     (expr-type-set! this nenv fix tyv
 				(append lbk rbk))))
 			 ((not (eq? utype 'unknown))
-			  (return utype env (append lbk rbk)))
+			  ;; force utype to be in vtype (for instance, for
+			  ;; argumentsp)
+			  (decl-vtype-add! decl utype fix)
+			  (expr-type-set! this env fix utype
+			     (append lbk rbk)))
 			 (tyr
 			  (with-access::J2SRef lhs (decl loc)
 			     (decl-vtype-add! decl tyr fix)
@@ -877,7 +881,7 @@
 ;*    typing-fun ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (typing-fun this::J2SFun env::pair-nil fix::cell)
-   (with-access::J2SFun this (body thisp params rtype %info vararg type)
+   (with-access::J2SFun this (body thisp params rtype %info vararg argumentsp type)
       (let ((envp (map (lambda (p::J2SDecl)
 			  (with-access::J2SDecl p (usage utype itype)
 			     (cond
@@ -908,12 +912,18 @@
 		      (with-access::J2SDecl decl (itype)
 			 (decl-vtype-add! decl itype fix)))
 	    params)
-	 (with-access::J2SDecl thisp (itype itype)
-	    (decl-vtype-add! thisp itype fix)
-	    (let ((fenv (extend-env (append envp env) thisp itype)))
-	       (multiple-value-bind (_ envf _)
-		  (typing body fenv fix)
-		  (set! %info fenv))))
+	 (let ((fenv (append envp env)))
+	    (when thisp
+	       (with-access::J2SDecl thisp (itype itype)
+		  (decl-vtype-add! thisp itype fix)
+		  (set! fenv (extend-env fenv thisp itype))))
+	    (when argumentsp
+	       (decl-itype-add! argumentsp 'arguments fix)
+	       (decl-vtype-add! argumentsp 'arguments fix)
+	       (set! fenv (extend-env fenv argumentsp 'arguments)))
+	    (multiple-value-bind (_ envf _)
+	       (typing body fenv fix)
+	       (set! %info fenv)))
 	 (expr-type-set! this env fix 'function))))
 
 ;*---------------------------------------------------------------------*/
@@ -941,7 +951,7 @@
 	 (else 'any)))
    
    (with-access::J2SFun val (params rtype thisp)
-      (decl-vtype-add! thisp 'any fix)
+      (when thisp (decl-vtype-add! thisp 'any fix))
       (set! rtype (tyflow-type (escape-type rtype)))
       (for-each (lambda (p::J2SDecl)
 		   (with-access::J2SDecl p (utype itype)
@@ -1208,7 +1218,7 @@
 		(tye (case op
 			((+) (if (non-zero-integer? ty expr) 'integer tnum))
 			((-) (if (non-zero-integer? ty expr) 'integer tnum))
-			((~) (if (type-integer? ty) 'integer 'unknown))
+			((~) 'integer)
 			((!) 'bool)
 			((typeof) 'string)
 			(else 'any))))
@@ -1280,15 +1290,7 @@
 			   (else
 			    (merge-types typr typl))))
 		       ((<< >> >>> ^ & BIT_OR)
-			(cond
-			   ((and (type-integer? typl) (type-integer? typr))
-			    'integer)
-			   ((and (type-number? typl) (type-number? typr))
-			    'number)
-			   ((or (eq? typl 'any) (eq? typr 'any))
-			    'any)
-			   (else
-			    'unknown)))
+			'integer)
 		       (else
 			'any))))
 	    (return typ (if (eq? op 'OR) (env-merge envl envr) envr)
