@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/dump.scm                */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/dump.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Aug 12 07:11:55 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 09:23:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -121,10 +121,15 @@
 ;*---------------------------------------------------------------------*/
 (define (dump-vtype this::J2SDecl)
    (with-access::J2SDecl this (vtype utype itype)
-      (if (or (>= (bigloo-debug) 2)
+      (cond
+	 ((or (>= (bigloo-debug) 2)
+	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type+"))
+	  `(:vtype ,vtype :utype ,utype :itype ,itype))
+	 ((or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
-	  `(:vtype ,vtype :utype ,utype :itype ,itype)
-	  '())))
+	  `(:vtype ,vtype))
+	 (else
+	  '()))))
       
 ;*---------------------------------------------------------------------*/
 ;*    dump-scope ...                                                   */

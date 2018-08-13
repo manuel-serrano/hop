@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Mon Aug 13 08:05:28 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 10:57:20 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
@@ -94,7 +94,7 @@
       (for-each (lambda (n) (mark n deval stamp)) nodes)
       ;; decls
       (for-each (lambda (n)
-		   (when (isa? n J2SDeclSvc)
+		   (when (isa? n J2SDeclInit)
 		      (mark n deval stamp)))
 	 decls)))
    
@@ -102,7 +102,7 @@
 ;*    mark ::J2SDeclInit ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SDeclInit deval stamp)
-   (with-access::J2SDeclInit this (val)
+   (with-access::J2SDeclInit this (val id)
       (mark val deval stamp)))
 
 ;*---------------------------------------------------------------------*/
@@ -124,13 +124,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SRef deval stamp)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (id %info)
-	 (when (memq id '(iii applyListeners eventListenerMonitor))
-	    (tprint "MARK " (j2s->list this) " " stamp " "
-	       (if (number? %info) %info))))
       (when (use-decl! decl stamp)
 	 (when (isa? decl J2SDeclFun)
-	    (with-access::J2SDeclFun decl (val)
+	    (with-access::J2SDeclFun decl (val id)
 	       (mark val deval stamp))))))
 
 ;*---------------------------------------------------------------------*/
@@ -211,7 +207,9 @@
 	  (begin
 	     ;; unused, remove it
 	     (cell-set! rems (cons id (cell-ref rems)))
-	     (J2SStmtExpr val)))))
+	     (if (isa? this J2SDeclFun)
+		 (J2SNop)
+		 (J2SStmtExpr val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sweep! ::J2SLeBlock ...                                          */

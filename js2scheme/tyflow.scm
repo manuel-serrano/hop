@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Aug 13 07:47:11 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 09:02:06 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -114,11 +114,11 @@
 				 (for-each reset-type! decls)
 				 (for-each reset-type! nodes)
 				 (loop (+fx i 1)))
-				((force-type this 'unknown 'any)
+				((and #f (force-type this 'unknown 'any))
 				 (when (>=fx j2s-verbose 3)
 				    (fprintf (current-error-port) "."))
 				 (loop (+fx i 1))))))
-			 ((force-type this 'unknown 'any)
+			 ((and #f (force-type this 'unknown 'any))
 			  (loop (+fx i 1)))))))))
 	 (unless (config-get args :optim-integer)
 	    (force-type this 'integer 'number)))
@@ -213,12 +213,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    unfix! ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (unfix! fix reason)
-   (tprint "--- UNFIX (" (cell-ref fix) ") reason=" reason)
-   (cell-set! fix (+fx 1 (cell-ref fix))))
+;* (define (unfix! fix reason)                                         */
+;*    (tprint "--- UNFIX (" (cell-ref fix) ") reason=" reason)         */
+;*    (cell-set! fix (+fx 1 (cell-ref fix))))                          */
 
-;* (define-macro (unfix! fix reason)                                   */
-;*    `(cell-set! ,fix (+fx 1 (cell-ref ,fix))))                       */
+(define-macro (unfix! fix reason)
+   `(cell-set! ,fix (+fx 1 (cell-ref ,fix))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return ...                                                       */
@@ -364,8 +364,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    typing-args ...                                                  */
 ;*    -------------------------------------------------------------    */
-;*    Types all the arguments and returns a new environment. The       */
-;*    arguments are typed a as left to right sequence.                 */
+;*    Type all the arguments and return a new environment. The         */
+;*    arguments are typed as left to right sequence.                   */
 ;*---------------------------------------------------------------------*/
 (define (typing-args::pair-nil args env::pair-nil fix::cell)
    (let loop ((args args)
@@ -570,11 +570,26 @@
 ;*    typing ::J2SGlobalRef ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SGlobalRef env::pair-nil fix::cell)
-   (with-access::J2SGlobalRef this (decl)
-      (with-access::J2SDecl decl (utype)
-	 (if (eq? utype 'unknown)
-	     (call-next-method)
-	     (expr-type-set! this env fix utype)))))
+   (with-access::J2SGlobalRef this (decl id)
+      (with-access::J2SDecl decl (utype usage)
+	 (cond
+	    ((not (eq? utype 'unknown))
+	     (decl-vtype-add! decl utype fix)
+	     (expr-type-set! this env fix utype))
+	    ((usage? '(assig) usage)
+	     (multiple-value-bind (tyv env bk)
+		(call-next-method)
+		(decl-vtype-add! decl tyv fix)
+		(return tyv env bk)))
+	    ((memq id '(Math String Error Regex Date Function Array Promise))
+	     (decl-vtype-add! decl 'object fix)
+	     (expr-type-set! this env fix 'object))
+	    ((eq? id 'undefined)
+	     (decl-vtype-add! decl 'undefined fix)
+	     (expr-type-set! this env fix 'undefined))
+	    (else
+	     (decl-vtype-add! decl 'any fix)
+	     (expr-type-set! this env fix 'any))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SRef ...                                              */
@@ -628,14 +643,15 @@
 ;*    typing ::J2SDeclArguments ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SDeclArguments env::pair-nil fix::cell)
+   (decl-itype-add! this 'arguments fix)
    (decl-vtype-add! this 'arguments fix)
-   (return 'void env '()))
+   (return 'void (extend-env env this 'arguments) '()))
    
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SDeclInit env::pair-nil fix::cell)
-   (with-access::J2SDeclInit this (val utype usage)
+   (with-access::J2SDeclInit this (val utype usage id loc)
       (multiple-value-bind (ty env bk)
 	 (typing val env fix)
 	 (cond
@@ -658,15 +674,12 @@
 
    (define (constructor-only? decl)
       (with-access::J2SDeclFun decl (usage)
-	 (and (usage? '(new) usage)
-	      (not (usage? '(ref call eval) usage)))))
+	 (only-usage? '(new init) usage)))
 
    (define (typing-ctor-only val)
-      (with-access::J2SFun val (thisp generator rtype)
+      (with-access::J2SFun val (generator rtype)
 	 (when generator
-	    (set! rtype 'any))
-	 (when (isa? thisp J2SDecl)
-	    (decl-vtype-set! thisp 'object fix))))
+	    (set! rtype 'any))))
    
    (with-access::J2SDeclFun this (val)
       (decl-vtype-set! this 'function fix)
@@ -864,7 +877,7 @@
 ;*    typing-fun ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (typing-fun this::J2SFun env::pair-nil fix::cell)
-   (with-access::J2SFun this (body params rtype thisp %info vararg type)
+   (with-access::J2SFun this (body thisp params rtype %info vararg type)
       (let ((envp (map (lambda (p::J2SDecl)
 			  (with-access::J2SDecl p (usage utype itype)
 			     (cond
@@ -897,7 +910,7 @@
 	    params)
 	 (with-access::J2SDecl thisp (itype itype)
 	    (decl-vtype-add! thisp itype fix)
-	    (let ((fenv (cons (cons thisp itype) (append envp env))))
+	    (let ((fenv (extend-env (append envp env) thisp itype)))
 	       (multiple-value-bind (_ envf _)
 		  (typing body fenv fix)
 		  (set! %info fenv))))
@@ -931,9 +944,9 @@
       (decl-vtype-add! thisp 'any fix)
       (set! rtype (tyflow-type (escape-type rtype)))
       (for-each (lambda (p::J2SDecl)
-		   (with-access::J2SDecl p (utype)
+		   (with-access::J2SDecl p (utype itype)
 		      (when (eq? utype 'unknown)
-			 (decl-vtype-add! p 'any fix))))
+			 (decl-itype-add! p 'any fix))))
 	 params)))
 
 ;*---------------------------------------------------------------------*/
@@ -966,6 +979,19 @@
 ;*    detailed in the code below.                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SCall env::pair-nil fix::cell)
+   (with-access::J2SCall this ((callee fun) thisarg args)
+      (multiple-value-bind (tty env bkt)
+	 (if (pair? thisarg)
+	     (typing (car thisarg) env fix)
+	     (values 'unknown env '()))
+	 (multiple-value-bind (rty env bkc)
+	    (typing-call callee tty args env fix)
+	    (expr-type-set! this env fix rty (append bkt bkc))))))
+
+;*---------------------------------------------------------------------*/
+;*    typing-call ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (typing-call callee tty args env fix)
    
    (define (unknown-call-env env)
       ;; compute a new typing environment where all mutated globals
@@ -977,8 +1003,13 @@
 	 env))
    
    (define (type-known-call-args callee args env bk)
-      (with-access::J2SFun callee (rtype params vararg thisp mode)
-	 (decl-itype-add! thisp (if (eq? mode 'strict) 'undefined 'object) fix)
+      (with-access::J2SFun callee (rtype params vararg mode thisp mode)
+	 (decl-itype-add! thisp
+	    (cond
+	       ((not (eq? tty 'unknown)) tty)
+	       ((eq? mode 'strict) 'object)
+	       (else 'undefined))
+	    fix)
 	 (let loop ((params params)
 		    (args args))
 	    (when (pair? params)
@@ -1002,20 +1033,21 @@
       (type-known-call-args callee args env bk)
       (multiple-value-bind (_ envf _)
 	 (typing-fun callee env fix)
-	 (with-access::J2SFun callee (rtype)
-	    (expr-type-set! this envf fix rtype bk))))
-
+	 (with-access::J2SFun callee (rtype thips mode)
+	    (return rtype env bk))))
+   
    (define (type-known-call ref::J2SRef callee args env bk)
       ;; type a known constant function call: F( ... )
       ;; the new typing environment is a merge of env and the environment
       ;; produced by the function
-      (expr-type-set! ref env fix 'function)
-      (type-known-call-args callee args env bk)
       (with-access::J2SRef ref (decl)
-	 (with-access::J2SDecl decl (scope)
+	 (expr-type-set! ref env fix 'function)
+	 (type-known-call-args callee args env bk)
+	 (with-access::J2SDecl decl (scope usage)
 	    (with-access::J2SFun callee (rtype %info)
-	       (let ((nenv (if (env? %info) (env-override env %info) env)))
-		  (expr-type-set! this nenv fix rtype bk))))))
+;* 	       (let ((nenv (if (env? %info) (env-override env %info) env))) */
+	       (let ((nenv env))
+		  (return rtype nenv bk))))))
    
    (define (type-ref-call callee args env bk)
       ;; call a JS variable, check is it a known function
@@ -1033,7 +1065,7 @@
 		    (type-unknown-call callee env bk))))
 	    (else
 	     (type-unknown-call callee env bk)))))
-
+   
    (define (is-global? obj ident)
       (when (isa? obj J2SGlobalRef)
 	 (with-access::J2SGlobalRef obj (id decl)
@@ -1043,7 +1075,7 @@
    
    (define (Array? obj)
       (is-global? obj 'Array))
-
+   
    (define (type-method-call callee args env bk)
       ;; type a method call: O.m( ... )
       (multiple-value-bind (_ env bk)
@@ -1055,19 +1087,19 @@
 			   'any)))
 	       (if (eq? ty 'any)
 		   ;; the method is unknown, filter out the typing env
-		   (expr-type-set! this (unknown-call-env env) fix ty bk)
-		   (expr-type-set! this env fix ty bk))))))
+		   (return ty (unknown-call-env env) bk)
+		   (return ty env bk))))))
    
    (define (type-hop-call callee args env bk)
       ;; type a hop (foreign function) call: H( ... )
       ;; hop calls have no effect on the typing env
-      (with-access::J2SHopRef callee (rtype)
-	 (expr-type-set! this env fix rtype bk)))
-
+      (with-access::J2SHopRef callee (rtype loc)
+	 (return rtype env bk)))
+   
    (define (type-global-call callee args env bk)
       (cond
 	 ((Array? callee)
-	  (expr-type-set! this (unknown-call-env env) fix 'array bk))
+	  (return 'array (unknown-call-env env) bk))
 	 (else
 	  (type-unknown-call callee env bk))))
    
@@ -1076,19 +1108,18 @@
       ;; filter out the typing env
       (multiple-value-bind (_ env bk)
 	 (typing callee env fix)
-	 (expr-type-set! this (unknown-call-env env) fix 'any bk)))
-   
-   (with-access::J2SCall this ((callee fun) thisarg args)
-      (multiple-value-bind (env bk)
-	 (typing-args args env fix)
-	 (cond
-	    ((isa? callee J2SFun) (type-inline-call callee args env bk))
-	    ((isa? callee J2SRef) (type-ref-call callee args env bk))
-	    ((isa? callee J2SHopRef) (type-hop-call callee args env bk))
-	    ((isa? callee J2SAccess) (type-method-call callee args env bk))
-	    ((isa? callee J2SGlobalRef) (type-global-call callee args env bk))
-	    (else (type-unknown-call callee env bk))))))
+	 (return 'any (unknown-call-env env) bk)))
 
+   (multiple-value-bind (env bk)
+      (typing-args args env fix)
+      (cond
+	 ((isa? callee J2SFun) (type-inline-call callee args env bk))
+	 ((isa? callee J2SRef) (type-ref-call callee args env bk))
+	 ((isa? callee J2SHopRef) (type-hop-call callee args env bk))
+	 ((isa? callee J2SAccess) (type-method-call callee args env bk))
+	 ((isa? callee J2SGlobalRef) (type-global-call callee args env bk))
+	 (else (type-unknown-call callee env bk)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SCond ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -1120,12 +1151,10 @@
 		(else 'object)))
 	  'object))
 
-   (with-access::J2SNew this (clazz args)
+   (with-access::J2SNew this (clazz args loc)
       (multiple-value-bind (_ env bk)
-	 (typing clazz env fix)
-	 (multiple-value-bind (env bka)
-	    (typing-args args env fix)
-	    (expr-type-set! this env fix (class-type clazz) (append bk bka))))))
+	 (typing-call clazz 'object args env fix)
+	 (expr-type-set! this env fix (class-type clazz) bk))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDataPropertyInit ...                                 */
@@ -1148,16 +1177,14 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SObjInit env::pair-nil fix::cell)
    (with-access::J2SObjInit this (inits)
-      (let ((args (filter-map (lambda (init)
+      (let ((args (append-map (lambda (init)
 				 (cond
 				    ((isa? init J2SDataPropertyInit)
-				     (with-access::J2SDataPropertyInit init (val)
-					val))
+				     (with-access::J2SDataPropertyInit init (name val)
+					(list name val)))
 				    ((isa? init J2SAccessorPropertyInit)
-				     (with-access::J2SAccessorPropertyInit init (get set)
-					(typing get env fix)
-					(typing set env fix))
-				     #f)))
+				     (with-access::J2SAccessorPropertyInit init (name get set)
+					(list name get set)))))
 		     inits)))
 	 (multiple-value-bind (env bk)
 	    (typing-args args env fix)
@@ -1292,27 +1319,29 @@
 	 (multiple-value-bind (tyf envf bkf)
 	    (typing field envo fix)
 	    (cond
-	       ((and (memq tyo '(array string)) (j2s-field-length? field))
+	       ((and (memq tyo '(array string arguments)) (j2s-field-length? field))
 		(with-access::J2SString field (val)
 		   (expr-type-set! this envf fix 'integer (append bko bkf))))
+	       ((not (j2s-field-name field))
+		(expr-type-set! this envf fix 'any (append bko bkf)))
 	       ((eq? tyo 'string)
 		(let* ((fn (j2s-field-name field))
-		       (ty (if (and fn (eq? (car (string-method-type fn)) 'any))
+		       (ty (if (eq? (car (string-method-type fn)) 'any)
 			       'any 'function)))
 		   (expr-type-set! this envf fix ty (append bko bkf))))
 	       ((eq? tyo 'regexp)
 		(let* ((fn (j2s-field-name field))
-		       (ty (if (and fn (eq? (car (regexp-method-type fn)) 'any))
+		       (ty (if (eq? (car (regexp-method-type fn)) 'any)
 			       'any 'function)))
 		   (expr-type-set! this envf fix ty (append bko bkf))))
 	       ((eq? tyo 'number)
 		(let* ((fn (j2s-field-name field))
-		       (ty (if (and fn (eq? (car (number-method-type fn)) 'any))
+		       (ty (if (eq? (car (number-method-type fn)) 'any)
 			       'any 'function)))
 		   (expr-type-set! this envf fix ty (append bko bkf))))
 	       ((eq? tyo 'array)
 		(let* ((fn (j2s-field-name field))
-		       (ty (if (and fn (eq? (car (array-method-type fn)) 'any))
+		       (ty (if (eq? (car (array-method-type fn)) 'any)
 			       'any 'function)))
 		   (expr-type-set! this envf fix ty (append bko bkf))))
 	       ((is-number-ref? obj)
@@ -1958,6 +1987,12 @@
    (with-access::J2SExpr this (type)
       (set! type 'unknown))
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    reset-type! ::J2SHopExpr ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-type! this::J2SExpr)
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    force-unary-type! ...                                            */

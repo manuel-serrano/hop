@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/parser.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/parser.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Aug 12 07:11:37 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 12:01:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -54,6 +54,7 @@
       (instantiate::J2SDecl
 	 (loc `(at ,(input-port-name input-port) 0))
 	 (utype 'object)
+	 (vtype 'object)
 	 (id '%this)
 	 (_scmid '%this)))
    

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Mon Aug 13 07:56:00 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 11:29:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -595,8 +595,10 @@
 	    (cond
 	       ((null? hint)
 		(eq? (car h) type))
-	       ((>fx (cdr (car hint)) (cdr h))
-		(loop (cdr hint) (car hint)))
+	       ((>=fx (cdr (car hint)) (cdr h))
+		(if (eq? (car (car hint)) type)
+		    (loop (cdr hint) h)
+		    (loop (cdr hint) (car hint))))
 	       (else
 		(loop (cdr hint) h)))))))
 

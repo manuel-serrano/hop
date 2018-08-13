@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Aug 13 07:56:54 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 10:46:45 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -219,9 +219,9 @@
 	     ((eq? (j2s-type lhs) 'real)
 	      (j2s-hint rhs '((real . 5))))
 	     ((not (memq (j2s-type lhs) '(any unknown)))
-	      (j2s-hint rhs `((j2s-type lhs) . 5)))
+	      (j2s-hint rhs `((,(j2s-type lhs) . 5))))
 	     ((not (memq (j2s-type rhs) '(any unknown)))
-	      (j2s-hint lhs `((j2s-type lhs) . 5)))
+	      (j2s-hint lhs `((,(j2s-type lhs) . 5))))
 	     (else
 	      (call-default-walker))))
 	 ((instanceof)
@@ -589,14 +589,16 @@
 		   (if (<fx (apply max (map cdr besthints)) 10)
 		       ;; no benefit in duplicating this function
 		       (loop #f)
-		       (let ((htypes (map (lambda (bh)
+		       (let ((htypes (map (lambda (bh p)
 					     (if (>=fx (cdr bh) 3)
 						 (car bh)
-						 'any))
-					besthints)))
+						 (with-access::J2SDecl p (vtype)
+						    vtype)))
+					besthints params)))
 			  (if (or (not (memq 'object htypes))
 				  (not (self-recursive? this)))
-			      ;; only hints non-recursive or non-object functions
+			      ;; only hints non-recursive or
+			      ;; non-object functions
 			      (let* ((vtypes (map (lambda (p::J2SDecl)
 						     (with-access::J2SDecl p (vtype)
 							vtype))
@@ -818,9 +820,10 @@
       (case t
 	 ((integer) #\I)
 	 ((number) #\N)
-	 ((array) #\V)
+	 ((array) #\A)
 	 ((string) #\S)
 	 ((unknown) #\X)
+	 ((any) #\_)
 	 (else (string-ref (symbol->string t) 0))))
    
    (with-access::J2SDeclFun fun (val id hintinfo)
@@ -939,6 +942,7 @@
 					   (decl unhinted))))))
 			    ((every (lambda (a t)
 				       (or (eq? t 'unknown)
+					   (eq? t 'any)
 					   (let ((tya (j2s-type a)))
 					      (or (and (eq? t 'number)
 						       (type-number? tya))
@@ -957,6 +961,7 @@
 					   (decl hinted))))))
 			    ((every (lambda (a t)
 				       (or (eq? t 'unknown)
+					   (eq? t 'any)
 					   (let ((tya (j2s-type a)))
 					      (or (memq tya '(any unknown))
 						  (eq? tya t)

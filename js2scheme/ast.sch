@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.sch                 */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/ast.sch       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sun Aug 12 07:14:30 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 10:26:31 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -200,6 +200,7 @@
    `(instantiate::J2SHopRef
        (loc loc)
        (id ,id)
+       (type 'any)
        (module ,(when (pair? module) (car module)))))
 
 (define-macro (J2SHopRef/type id type . module)
