@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-cast.scm         */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-cast.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Aug  7 11:33:12 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 12:32:14 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -60,9 +60,9 @@
 	((int30 nop)
 	 (int32 js-int53-toint32)
 	 (uint32 js-int53-touint32)
-	 (number js-int53-tointeger)
+	 (number nop)
 	 (object ,js-number->jsobject)
-	 (any js-int53-tointeger)))
+	 (any nop)))
      (integer
 	((int32 ,js-fixnum->int32)
 	 (uint32 ,js-fixnum->uint32)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Aug 13 10:46:45 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 12:12:54 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -395,12 +395,17 @@
       (with-access::J2SAccess callee (obj field)
 	 (let* ((fn (j2s-field-name field))
 		(tys (if (string? fn)
-			 (map j2s-hint-type (builtin-method-type obj fn))
+			 (builtin-method-type obj fn)
 			 '(any))))
 	    (let loop ((args args)
 		       (tys (cdr tys)))
 	       (when (and (pair? args) (pair? tys))
-		  (j2s-hint (car args) `((,(car tys) . 2)))
+		  (j2s-hint (car args)
+		     (if (pair? (car tys))
+			 (map (lambda (t)
+				 `(,(j2s-hint-type t) . 2))
+			    (car tys))
+			 `((,(j2s-hint-type (car tys)) . 2))))
 		  (loop (cdr args) (cdr tys)))))))
    
    (with-access::J2SCall this (fun args)
