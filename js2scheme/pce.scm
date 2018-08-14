@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/pce.scm                 */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/pce.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Sun Jun  3 09:14:02 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 09:53:27 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -224,7 +224,7 @@
 ;*    insert-pce! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (insert-pce! this::J2SFun)
-   (with-access::J2SFun this (optimize body)
+   (with-access::J2SFun this (optimize body loc)
       (when optimize
 	 (set! body (insert-pce! body)))
       this))
@@ -480,16 +480,17 @@
        (with-access::J2SBlockPCE this (ainfos loc endloc)
 	  (let ((ncaches (get-caches ainfos counter))
 		(dupblock (j2s-alpha (duplicate::J2SBlock this) '() '())))
-	     (J2SIf (expand-pce-pretest ncaches loc)
-		(expand-pce!
-		   (update-cache! (duplicate::J2SBlock this) ncaches ainfos)
-		   counter #t)
-		(J2SBlock
-		   (expand-pce! dupblock counter #f)
-		   (J2SIf (expand-pce-posttest ncaches loc)
-		      (J2SStmtExpr (J2SUndefined))
-		      ;;(enable-pce-cache ncaches loc)
-		      (disable-pce-cache ncaches loc))))))
+	     (J2SBlock
+		(J2SIf (expand-pce-pretest ncaches loc)
+		   (expand-pce!
+		      (update-cache! (duplicate::J2SBlock this) ncaches ainfos)
+		      counter #t)
+		   (J2SBlock
+		      (expand-pce! dupblock counter #f)
+		      (J2SIf (expand-pce-posttest ncaches loc)
+			 (J2SStmtExpr (J2SUndefined))
+			 ;;(enable-pce-cache ncaches loc)
+			 (disable-pce-cache ncaches loc)))))))
        (duplicate::J2SBlock this)))
 
 ;*---------------------------------------------------------------------*/

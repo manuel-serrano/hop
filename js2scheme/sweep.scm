@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Mon Aug 13 10:57:20 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 12:36:37 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
@@ -154,6 +154,10 @@
 ;*---------------------------------------------------------------------*/
 (define (dead-expr? this::J2SExpr)
    (or (isa? this J2SLiteralCnst)
+       (and (isa? this J2SLiteral)
+	    (or (not (isa? this J2SArray))
+		(with-access::J2SArray this (exprs)
+		   (every dead-expr? exprs))))
        (isa? this J2SFun)
        (isa? this J2SRef)))
 
@@ -201,24 +205,20 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (sweep! this::J2SDeclInit rems stamp)
    (with-access::J2SDeclInit this (%info loc id val)
-      (if (eq? %info stamp)
+      (if (or (eq? %info stamp) (not (dead-expr? val)))
 	  ;; used, keep it
 	  (call-default-walker)
-	  (begin
-	     ;; unused, remove it
-	     (cell-set! rems (cons id (cell-ref rems)))
-	     (if (isa? this J2SDeclFun)
-		 (J2SNop)
-		 (J2SStmtExpr val))))))
+	  (J2SNop))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sweep! ::J2SLeBlock ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (sweep! this::J2SLetBlock rems stamp)
    (with-access::J2SLetBlock this (decls)
-      (set! decls (filter (lambda (d)
-			     (with-access::J2SDecl d (%info id)
-				(eq? %info stamp)))
+      (set! decls (filter-map (lambda (d)
+				 (let ((n (sweep! d rems stamp)))
+				    (unless (isa? n J2SNop)
+				       n)))
 		     decls))
       (call-default-walker)))
 

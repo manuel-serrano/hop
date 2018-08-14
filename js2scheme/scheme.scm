@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/scheme.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Aug 12 07:17:07 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 15:15:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -841,19 +841,32 @@
 		 ,@(j2s-scheme nodes mode return conf))))
 	 (else
 	  ;; inner letblock, create a let block
-	  (let ((ds (append-map (lambda (d)
-				   (cond
-				      ((j2s-let-opt? d)
-				       (j2s-let-decl-inner d
-					  mode return conf
-					  (null? (cdr decls))
-					  (not rec)))
-				      ((isa? d J2SDeclFun)
-				       (j2s-scheme d mode return conf))
-				      (else
-				       (list (j2s-scheme d mode return conf)))))
-		       decls))
-		(body (j2s-nodes* loc nodes mode return conf)))
+	  (let* ((ds (append-map (lambda (d)
+				    (cond
+				       ((j2s-let-opt? d)
+					(j2s-let-decl-inner d
+					   mode return conf
+					   (null? (cdr decls))
+					   (not rec)))
+				       ((isa? d J2SDeclFun)
+					(j2s-scheme d mode return conf))
+				       (else
+					(list (j2s-scheme d mode return conf)))))
+			decls))
+		 (body (j2s-nodes* loc nodes mode return conf))
+		 (rec (or rec
+			  (any (lambda (d)
+				  (when (isa? d J2SDeclFun)
+				     (with-access::J2SDeclFun d (val)
+					(cond
+					   ((isa? val J2SFun)
+					    (with-access::J2SFun val (generator)
+					       generator))
+					   ((isa? val J2SMethod)
+					    (with-access::J2SMethod val (function)
+					       (with-access::J2SFun function (generator)
+						  generator)))))))
+			     decls))))
 	     (epairify loc
 		(cond
 		   ((null? ds)

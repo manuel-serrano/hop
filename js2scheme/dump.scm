@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Aug 13 19:21:11 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 06:07:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_dump
+
+   (include "ast.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_utils
@@ -156,6 +158,58 @@
        '()))
 
 ;*---------------------------------------------------------------------*/
+;*    exptllong ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (exptllong n exp::long)
+   (if (=llong n #l2)
+       (bit-lshllong #l1 exp)
+       (error "exptllong" "wrong number" n)))
+
+;*---------------------------------------------------------------------*/
+;*    integer bounds                                                   */
+;*---------------------------------------------------------------------*/
+(define *max-length* (-llong (exptllong #l2 32) #l1))
+(define *max-index* (-llong *max-length* #l1))
+(define *max-uint29* (-llong (exptllong #l2 29) #l1))
+(define *max-int30* (-llong (exptllong #l2 29) #l1))
+(define *min-int30* (negllong (exptllong #l2 29)))
+(define *max-int32* (-llong (exptllong #l2 31) #l1))
+(define *min-int32* (negllong (exptllong #l2 31)))
+(define *max-uint32* (-llong (exptllong #l2 32) #l1))
+(define *max-int53* (exptllong #l2 53))
+(define *min-int53* (negllong (exptllong #l2 53)))
+(define *max-integer* (exptllong #l2 53))
+(define *min-integer* (negllong (exptllong #l2 53)))
+(define *+inf.0* (exptllong #l2 54))
+(define *-inf.0* (negllong (exptllong #l2 54)))
+
+;*---------------------------------------------------------------------*/
+;*    pp-range ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (pp-range rng)
+
+   (define (pp-range-int int)
+      (cond
+	 ((=llong int *max-length*) 'length)
+	 ((=llong int *max-index*) 'index)
+	 ((=llong int *max-uint29*) 'uint29)
+	 ((=llong int *max-int30*) 'max-int30)
+	 ((=llong int *min-int30*) 'min-int30)
+	 ((=llong int *max-int32*) 'max-int32)
+	 ((=llong int *min-int32*) 'min-int32)
+	 ((=llong int *max-uint32*) 'max-uint32)
+	 ((=llong int *max-int53*) 'max-int53)
+	 ((=llong int *min-int53*) 'min-int53)
+	 ((=llong int *min-int53*) 'min-int53)
+	 ((>=llong int *+inf.0*) '+inf)
+	 ((<=llong int *-inf.0*) '-inf)
+	 (else int)))
+
+   (interval
+      (pp-range-int (interval-min rng))
+      (pp-range-int (interval-max rng))))
+   
+;*---------------------------------------------------------------------*/
 ;*    dump-range ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (dump-range this::J2SNode)
@@ -168,7 +222,7 @@
 		       (with-access::J2SDecl this (range) range))
 		      (else
 		       '()))))
-	  (if (not (eq? range #unspecified)) `(:range ,range) '()))
+	  (if (interval? range) `(:range ,(pp-range range)) '()))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -940,6 +994,7 @@
    (with-access::J2SDeclClass this (val key ronly writable val scope id)
       `(,@(call-next-method)
 	  ,@(dump-key key)
+	  ,@(dump-vtype this)
 	  ,@(if (> (bigloo-debug) 2) `(:ronly ,ronly) '())
 	  ,@(if (> (bigloo-debug) 2) `(:writable ,writable) '())
 	  ,@(if (> (bigloo-debug) 3) `(:scope ,scope) '())
@@ -952,9 +1007,10 @@
    (with-access::J2SClass this (name super elements decl)
       `(J2SClass ,@(if name (list :name name) '())
 	  :super ,(j2s->list super)
+	  ,@(dump-type this)
 	  ,@(if (isa? decl J2SDecl)
 		(with-access::J2SDecl decl (key)
-		   (dump-key key))
+		   (append (dump-key key) (dump-vtype decl)))
 		'())
 	  ,@(map j2s->list elements))))
 

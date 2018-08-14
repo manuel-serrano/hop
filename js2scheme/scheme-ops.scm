@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-ops.scm          */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-ops.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Aug 12 14:33:28 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 06:50:30 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -617,7 +617,7 @@
 			 lhs tl left rhs tr right conf #f))
 		     ((eq? tr 'int53)
 		      (binop-int53-xxx op 'bool
-			 lhs tl left rhs tr right conf #t))
+			 rhs tr right lhs tl left conf #t))
 		     ((eq? tl 'integer)
 		      (binop-integer-xxx op 'bool
 			 lhs tl left rhs tr right conf #f))
@@ -1539,11 +1539,11 @@
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(if (fixnum? ,left)
 	       (remainderfx ,left ,(asfixnum right tr))
-	       (remainder ,left ,(todouble right tr conf))))
+	       (remainderfl ,left ,(todouble right tr conf))))
 	 ((eq? tr 'int32)
 	  `(if (fixnum? ,left)
 	       (remainderfx ,left ,(asfixnum right tr))
-	       (remainder ,left ,(todouble right tr conf))))
+	       (remainderfl ,left ,(todouble right tr conf))))
 	 ((eq? tr 'uint32)
 	  `(if (fixnum? ,left)
 	       (remainderfx ,left ,(asfixnum right tr))
@@ -1568,15 +1568,15 @@
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(if (fixnum? ,left)
 	       (fixnum->int32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr conf))))
+	       (let ((n (remainderfl ,left ,(todouble right tr conf))))
 		  (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n)))))
 	 ((eq? tr 'int32)
 	  `(if (fixnum? ,left)
 	       (fixnum->int32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr conf))))
+	       (let ((n (remainderfl ,left ,(todouble right tr conf))))
 		  (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n)))))
 	 (else
-	  `(let ((n (remainder ,(todouble left tl conf) ,(todouble right tr conf))))
+	  `(let ((n (remainderfl ,(todouble left tl conf) ,(todouble right tr conf))))
 	      (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n))))))
    
    (define (remainderu32 left right tl tr)
@@ -1592,15 +1592,15 @@
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(if (fixnum? ,left)
 	       (fixnum->uint32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr conf))))
+	       (let ((n (remainderfl ,left ,(todouble right tr conf))))
 		  (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n)))))
 	 ((eq? tr 'int32)
 	  `(if (fixnum? ,left)
 	       (fixnum->uint32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr conf))))
+	       (let ((n (remainderfl ,left ,(todouble right tr conf))))
 		  (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n)))))
 	 (else
-	  `(let ((n (remainder ,(todouble left tl conf) ,(todouble right tr conf))))
+	  `(let ((n (remainderfl ,(todouble left tl conf) ,(todouble right tr conf))))
 	      (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n))))))
    
    (with-tmp lhs rhs mode return conf '*
@@ -1713,25 +1713,19 @@
 ;*    known to fit the types but the static type is not known.         */
 ;*---------------------------------------------------------------------*/
 (define (coerceint32 val type::symbol conf)
-   (if (m64? conf)
-       (asint32 val type)
-       `(if (fixnum? ,val) ,(asint32 val type) (flonum->int32 ,val))))
+   `(if (fixnum? ,val) ,(asint32 val type) (flonum->int32 ,val)))
    
 ;*---------------------------------------------------------------------*/
 ;*    coerceuint32 ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (coerceuint32 val type::symbol conf)
-   (if (m64? conf)
-       (asuint32 val type)
-       `(if (fixnum? ,val) ,(asuint32 val type) (flonum->uint32 ,val))))
+   `(if (fixnum? ,val) ,(asuint32 val type) (flonum->uint32 ,val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    coercereal ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (coercereal val type::symbol conf)
-   (if (m64? conf)
-       `(fixnum->flonum ,val)
-       `(if (fixnum? ,val) (fixnum->flonum ,val) ,val)))
+   `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))
 
 ;*---------------------------------------------------------------------*/
 ;*    toflonum ...                                                     */
@@ -2346,40 +2340,52 @@
    (if flip `(,op ,right ,left) `(,op ,left ,right)))
    
 (define (binop-int32-int32 op type left right flip)
-   (let ((op (cond
-		((memq op '(== ===)) '=s32)
-		((eq? op '<<=) '<=s32)
-		((eq? op '>>=) '>=s32)
-		(else (symbol-append op 's32)))))
+   (let ((ops32 (cond
+		   ((memq op '(== ===)) '=s32)
+		   ((eq? op '<<=) '<=s32)
+		   ((eq? op '>>=) '>=s32)
+		   (else (symbol-append op 's32)))))
       (case type
 	 ((int32)
-	  (binop-flip op left right flip))
+	  (binop-flip ops32 left right flip))
 	 ((uint32)
-	  `(int32->uint32 ,(binop-flip op left right flip)))
+	  `(int32->uint32 ,(binop-flip ops32 left right flip)))
 	 ((real)
-	  `(int32->flonum ,(binop-flip op left right flip)))
+	  (binop-flonum-flonum op type
+	     (asreal left 'int32) (asreal right 'int32)
+	     flip))
+	 ((int53)
+	  (binop-fixnum-fixnum op type
+	     (asfixnum left 'int32) (asfixnum right 'int32)
+	     flip))
 	 ((bool)
-	  (binop-flip op left right flip))
+	  (binop-flip ops32 left right flip))
 	 (else
-	  (binop-flip (symbol-append op '/overflow) left right flip)))))
+	  (binop-flip (symbol-append ops32 '/overflow) left right flip)))))
    
 (define (binop-uint32-uint32 op type left right flip)
-   (let ((op (cond
-		((memq op '(== ===)) '=u32)
-		((eq? op '<<=) '<=u32)
-		((eq? op '>>=) '>=u32)
-		(else (symbol-append op 'u32)))))
+   (let ((opu32 (cond
+		   ((memq op '(== ===)) '=u32)
+		   ((eq? op '<<=) '<=u32)
+		   ((eq? op '>>=) '>=u32)
+		   (else (symbol-append op 'u32)))))
       (case type
 	 ((int32)
-	  `(uint32->int32 ,(binop-flip op left right flip)))
+	  `(uint32->int32 ,(binop-flip opu32 left right flip)))
 	 ((uint32)
-	  (binop-flip op left right flip))
+	  (binop-flip opu32 left right flip))
 	 ((real)
-	  `(uint32->flonum ,(binop-flip op left right flip)))
+	  (binop-flonum-flonum op type
+	     (asreal left 'int32) (asreal right 'int32)
+	     flip))
+	 ((int53)
+	  (binop-fixnum-fixnum op type
+	     (asfixnum left 'int32) (asfixnum right 'int32)
+	     flip))
 	 ((bool)
-	  (binop-flip op left right flip))
+	  (binop-flip opu32 left right flip))
 	 (else
-	  (binop-flip (symbol-append op '/overflow) left right flip)))))
+	  (binop-flip (symbol-append opu32 '/overflow) left right flip)))))
    
 (define (binop-fixnum-fixnum op type left right flip)
    (let ((op (cond
@@ -2392,6 +2398,8 @@
 	  `(fixnum->int32 ,(binop-flip op left right flip)))
 	 ((uint32)
 	  `(fixnum->uint32 ,(binop-flip op left right flip)))
+	 ((int53)
+	  (binop-flip op left right flip))
 	 ((real)
 	  `(fixnum->flonum ,(binop-flip op left right flip)))
 	 ((bool)

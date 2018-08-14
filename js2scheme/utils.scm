@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Mon Aug 13 11:29:32 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 05:58:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -626,7 +626,9 @@
 	("replace" . (string (string regexp) (string function)))
 	("naturalCompare" . (integer (string)))
 	("localeCompare" . (integer (string)))
-	("trim" . (string)))))
+	("trim" . (string))
+	("concat" . (string string string string))
+	("slice" . (string index index)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-static-method-type ...                                    */
@@ -680,7 +682,9 @@
 (define (array-method-type name)
    (assoc-method-type name
       '(("indexOf" . (indexof index))
-	("lastIndexOf" . (indexof index)))))
+	("lastIndexOf" . (indexof index))
+	("concat" . (array array array array))
+	("slice" . (array index index)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    assoc-method-type ...                                            */

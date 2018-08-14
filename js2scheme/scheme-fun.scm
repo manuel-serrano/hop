@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-fun.scm          */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-fun.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Aug 12 07:17:16 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 11:42:42 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -344,6 +344,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclSvc mode return conf)
    (with-access::J2SDeclSvc this (loc id val scope)
+      (unless (isa? val J2SSvc)
+	 (tprint "PAS BON " (j2s->list this)))
       (let ((scmid (j2s-decl-scheme-id this))
 	    (fastid (j2s-fast-id id)))
 	 (epairify-deep loc
@@ -366,6 +368,12 @@
 ;*---------------------------------------------------------------------*/
 (define (jsfun->lambda this::J2SFun mode return conf proto ctor-only::bool)
 
+   (define (type-this idthis thisp)
+      (if (isa? thisp J2SDecl)
+	  (with-access::J2SDecl thisp (vtype)
+	     (type-ident idthis vtype conf))
+	  idthis))
+   
    (define (lambda-or-labels rtype %gen this id args body)
       ;; in addition to the user explicit arguments, this and %gen
       ;; are treated as:
@@ -386,35 +394,38 @@
 	    (type-ident a vtype conf))))
 		    
    (define (fixarg-lambda fun id body)
-      (with-access::J2SFun fun (idgen idthis params rtype)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype)
 	 (let ((args (map j2s-type-scheme params)))
-	    (lambda-or-labels rtype idgen idthis id args body))))
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id args body))))
    
    (define (rest-lambda fun id body)
-      (with-access::J2SFun fun (idgen idthis params rtype)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype)
 	 (let ((args (j2s-scheme params mode return conf)))
-	    (lambda-or-labels rtype idgen idthis id args body))))
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id args body))))
    
    (define (normal-vararg-lambda fun id body)
       ;; normal mode: arguments is an alias
       (let ((id (or id (gensym 'fun)))
 	    (rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idgen idthis rtype)
-	    (lambda-or-labels rtype idgen idthis id rest
+	 (with-access::J2SFun fun (idgen idthis thisp rtype)
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id rest
 	       (jsfun-normal-vararg-body fun body id rest)))))
    
    (define (strict-vararg-lambda fun id body)
       ;; strict mode: arguments is initialized on entrance
       (let ((rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idgen idthis rtype)
-	    (lambda-or-labels rtype idgen idthis id rest
+	 (with-access::J2SFun fun (idgen idthis thisp rtype)
+	    (lambda-or-labels rtype idgen (type-this idthis thisp) id rest
 	       (jsfun-strict-vararg-body fun body id rest)))))
 
    (define (generator-body body)
-      `(letrec ((%gen (js-make-generator
-			 (lambda (%v %e) ,body)
-			 ,proto
-			 %this)))
+      `(letrec ((%gen (js-make-generator (lambda (%v %e) ,body) ,proto %this)))
 	  %gen))
 
    (define (this-body thisp body mode)

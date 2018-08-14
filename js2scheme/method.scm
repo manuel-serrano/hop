@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/method.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/method.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Aug 12 07:13:31 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 15:33:46 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -68,8 +68,8 @@
 (define-walk-method (method! this::J2SAssig)
    (with-access::J2SAssig this (lhs rhs)
       (when (isa? rhs J2SFun)
-	 (with-access::J2SFun rhs (thisp loc body)
-	    (when thisp
+	 (with-access::J2SFun rhs (thisp loc body generator)
+	    (when (and thisp (not generator))
 	       (with-access::J2SDecl thisp (usecnt)
 		  (when (and (>=fx usecnt this-occurrence-threshold)
 			     (<fx (node-size body) body-size-threshold))
@@ -86,7 +86,7 @@
 (define-walk-method (method! this::J2SDeclFun)
    (with-access::J2SDeclFun this (usage val id)
       (set! val (method! val))
-      (with-access::J2SFun val (thisp loc body)
+      (with-access::J2SFun val (thisp loc body generator)
 	 (with-access::J2SDecl thisp (usecnt)
 	    (cond
 	       ((only-usage? '(new init) usage)
@@ -95,7 +95,8 @@
 	       ((and (usage? '(ref get) usage)
 		     (not (usage? '(new) usage))
 		     (>=fx usecnt this-occurrence-threshold)
-		     (<fx (node-size body) body-size-threshold))
+		     (<fx (node-size body) body-size-threshold)
+		     (not generator))
 		(set! val
 		   (instantiate::J2SMethod
 		      (loc loc)

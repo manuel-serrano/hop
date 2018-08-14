@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-array.scm        */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-array.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue May  1 15:31:38 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 17:45:44 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -295,7 +295,7 @@
 			   ,(j2s-decl-scheme-id amark)
 			   ,(strict-mode? mode)
 			   %this)
-		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj
+		       `(JS-ARRAY-FIXNUM-FAST-SET! ,scmobj
 			   (int32->fixnum ,scmfield) ,scmrhs
 			   ,scmarray ,scmalen
 			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
@@ -308,7 +308,7 @@
 			   ,(j2s-decl-scheme-id amark)
 			   ,(strict-mode? mode)
 			   %this)
-		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj ,scmfield ,scmrhs
+		       `(JS-ARRAY-FIXNUM-FAST-SET! ,scmobj ,scmfield ,scmrhs
 			   ,scmarray ,scmalen
 			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			   ,(strict-mode? mode)

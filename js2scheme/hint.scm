@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Aug 13 12:12:54 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 08:13:49 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -75,10 +75,10 @@
    (cond
       ((memq ty
 	  '(integer real number bool string
-	    regexp array date arguments function object
+	    regexp array date arguments function class object
 	    null undefined void
 	    any unknown
-	    cmap scmstring tilde pair))
+	    cmap scmstring procedure tilde pair no-string))
        ty)
       ((memq ty '(index indexof length)) 'integer)
       (else (error "js2scheme" "Illegal hint type" ty))))
@@ -298,7 +298,7 @@
 		(if (string=? val "length")
 		    (if maybe-string
 			(j2s-hint obj '((array . 5) (string . 5) (object . 2)))
-			(j2s-hint obj '((array . 5) (no-string . 20) (object . 2))))
+			(j2s-hint obj '((array . 5) (no-string . 0) (object . 2))))
 		    (j2s-hint obj '((object . 5))))))
 	    ((isa? field J2SLiteralCnst)
 	     (with-access::J2SLiteralCnst field (val)
@@ -307,7 +307,7 @@
 	     (j2s-hint field '())
 	     (if maybe-string
 		 (j2s-hint obj '((object . 5)))
-		 (j2s-hint obj '((object . 5) (no-string . 20)))))))))
+		 (j2s-hint obj '((object . 5) (no-string . 0)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAccess ...                                         */

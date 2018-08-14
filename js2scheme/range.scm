@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/range.scm               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/range.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Aug 12 07:15:19 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 06:31:23 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -860,6 +860,13 @@
       (node-range* inits env args fix)))
 
 ;*---------------------------------------------------------------------*/
+;*    node-range ::J2SArray ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SArray env::pair-nil args fix::struct)
+   (with-access::J2SArray this (exprs)
+      (node-range* exprs env args fix)))
+   
+;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SPragma ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SPragma env::pair-nil args fix::struct)
@@ -959,16 +966,16 @@
 (define-walk-method (node-range this::J2SRef env::pair-nil args fix::struct)
    (with-access::J2SRef this (decl type loc)
       (if (type-number? type)
-	  (with-access::J2SDecl decl (range ronly key id scope)
-	     (let ((intv (env-lookup env decl)))
-		(when ronly
-		   (with-access::J2SDecl decl (id range)
-		      (when (and (interval? range) (not (interval? intv)))
-			 (set! intv range))))
-		(if intv
-		    (node-interval-set! this env fix intv)
-		    (return range env))))
-	  (return #f env))))
+	 (with-access::J2SDecl decl (range ronly key id scope)
+	    (let ((intv (env-lookup env decl)))
+	       (when ronly
+		  (with-access::J2SDecl decl (id range)
+		     (when (and (interval? range) (not (interval? intv)))
+			(set! intv range))))
+	       (if intv
+		   (node-interval-set! this env fix intv)
+		   (return range env))))
+	 (return #f env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SUnresolvedRef ...                                */
@@ -1198,7 +1205,7 @@
 		       (node-interval-set! this env fix
 			  (interval-div intl intr)))
 		      ((%)
-		       (with-access::J2SExpr rhs (type)
+		       (when (interval? intr)
 			  (if (and (eq? type 'integer)
 				   (> (interval-min intr) 0))
 			      (node-interval-set! this env fix intl)
@@ -1247,17 +1254,17 @@
    (with-access::J2SAssig this (lhs rhs type)
       (cond
 	 ((type-number? type)
-	  (multiple-value-bind (_ env)
-	     (node-range lhs env args fix)
-	     (cond
-		((isa? lhs J2SRef)
-		 ;; a variable assignment
-		 (multiple-value-bind (ir env)
-		    (node-range rhs env args fix)
-		    (with-access::J2SRef lhs (decl)
-		       (let ((nenv (extend-env env decl ir)))
-			  (node-interval-set! this nenv fix ir)))))
-		(else
+	  (cond
+	     ((isa? lhs J2SRef)
+	      ;; a variable assignment
+	      (multiple-value-bind (ir env)
+		 (node-range rhs env args fix)
+		 (with-access::J2SRef lhs (decl)
+		    (let ((nenv (extend-env env decl ir)))
+		       (node-interval-set! this nenv fix ir)))))
+	     (else
+	      (multiple-value-bind (_ env)
+		 (node-range lhs env args fix)
 		 ;; a non variable assignment
 		 (multiple-value-bind (intv nenv)
 		    (node-range rhs env args fix)

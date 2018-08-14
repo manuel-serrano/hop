@@ -3,20 +3,20 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Sun Aug 12 07:16:55 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 10:11:13 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
 ;*    -------------------------------------------------------------    */
-;*    This optimization consists in propagating expressions and        */
-;*    declarations hints that will be used by the code generator.      */
+;*    This optimization consists in propagating expression and         */
+;*    declaration hints that will be used by the code generator.       */
 ;*    -------------------------------------------------------------    */
 ;*    Two top-down hints are propagated on unary op, binary op, and    */
 ;*    assignments.                                                     */
 ;*                                                                     */
 ;*      1- if only one argument of binary expression is typed/hinted,  */
 ;*         add its type/hint as a hint of the second argument.         */
-;*      2- if the result is typed/hinted propagate that hint to the    */
+;*      2- if the result is typed/hinted, propagate that hint to the   */
 ;*         arguments.                                                  */
 ;*      3- in a variable assignment (aliasing), if one of the vars     */
 ;*         is hinted/typed, the hint is propagated.                    */
@@ -67,7 +67,7 @@
 	    (hintnum this fix)
 	    (unless (cell-ref fix)
 	       (loop (+fx i 1)))))
-      (when (>=fx j2s-verbose 4) "/")
+      (when (>=fx j2s-verbose 4) (fprintf (current-error-port) "/"))
       (let ((fix (make-cell #t)))
 	 (let loop ((i 1))
 	    (when (>=fx j2s-verbose 4)
@@ -95,34 +95,34 @@
 (define (add-expr-hint! this::J2SExpr newhint propagate::bool fix)
    
    (define (add-hint! hint newhint)
-      (cond
-	 ((null? hint)
-	  (cell-set! fix #f)
-	  newhint)
-	 ((not (every (lambda (h) (pair? (assq (car h) hint))) newhint))
-	  (for-each (lambda (h)
-		       (let ((c (assq (car h) hint)))
-			  (cond
-			     ((pair? c)
-			      (when (<fx (cdr c) (cdr h))
-				 (cell-set! fix #f)
-				 (set-cdr! c (cdr h))))
-			     ((or (not (eq? (car h) 'real))
-				  (not (pair? (assq 'index hint))))
-			      (cell-set! fix #f)
-			      (set! hint (cons h hint))))))
+      (if (null? hint)
+	  (begin
+	     (cell-set! fix #f)
 	     newhint)
-	  hint)
-	 (else
-	  hint)))
+	  (begin
+	     (for-each (lambda (h)
+			  (let ((o (assq (car h) hint)))
+			     (if (pair? o)
+				 (when (<fx (cdr o) (cdr h))
+				    (cell-set! fix #f)
+				    (set-cdr! o (cdr h)))
+				 (begin
+				    (cell-set! fix #f)
+				    (set! hint (cons h hint))))))
+		newhint)
+	     hint)))
 
    (when (pair? newhint)
       (with-access::J2SExpr this (hint)
 	 (set! hint (add-hint! hint newhint)))
       (when (and propagate (isa? this J2SRef))
 	 (with-access::J2SRef this (decl)
-	    (with-access::J2SDecl decl (hint)
-	       (set! hint (add-hint! hint newhint)))))))
+	    (with-access::J2SDecl decl (hint id)
+	       (if (eq? id 'nnn)
+		   (tprint ">>> ADD NNN=" newhint " " (j2s->list this)))
+	       (set! hint (add-hint! hint newhint))
+	       (if (eq? id 'nnn)
+		   (tprint "<<< ADD NNN=" hint " " (j2s->list this))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    union-hint! ...                                                  */

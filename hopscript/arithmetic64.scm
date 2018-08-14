@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmetic64.scm        */
+;*    .../project/hop/3.2.x-new-types/hopscript/arithmetic64.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Apr 22 14:46:10 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 05:37:52 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -54,8 +54,8 @@
 	  (+/overflow::obj ::obj ::obj)
 	  
 	  (inline -fx/overflow::obj ::long ::long)
-	  (inline -s32/overflow::obj ::int32 ::int32)
-	  (inline -u32/overflow::obj ::uint32 ::uint32)
+	  (inline -s32/overflow::long ::int32 ::int32)
+	  (inline -u32/overflow::long ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
 	  
 	  (inline *fx/overflow::obj ::long ::long)
@@ -399,13 +399,13 @@
 ;*    +s32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (+s32/overflow x::int32 y::int32)
-   (+fx/overflow (int32->fixnum x) (int32->fixnum y)))
+   (+fx (int32->fixnum x) (int32->fixnum y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    +u32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (+u32/overflow x::uint32 y::uint32)
-   (+fx/overflow (uint32->fixnum x) (uint32->fixnum y)))
+   (+fx (uint32->fixnum x) (uint32->fixnum y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    +/overflow ...                                                   */
@@ -435,13 +435,13 @@
 ;*    -s32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (-s32/overflow x::int32 y::int32)
-   (-fx/overflow (int32->fixnum x) (int32->fixnum y)))
+   (-fx (int32->fixnum x) (int32->fixnum y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    -u32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (-u32/overflow x::uint32 y::uint32)
-   (-fx/overflow (int32->fixnum x) (int32->fixnum y)))
+   (-fx (int32->fixnum x) (int32->fixnum y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    -/overflow ...                                                   */
