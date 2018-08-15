@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Aug 15 07:17:52 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 18:46:15 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -77,11 +77,8 @@
 		       (map-types this tymap))
 		    (map-types this defmap)))
 	     (map-types this defmap)))
-      (with-access::J2SProgram this (decls nodes)
-	 ;; the range has improved type precision that might have created
-	 ;; new hint call opportunities
-	 (for-each (lambda (n) (j2s-call-hint! n #t)) decls)
-	 (for-each (lambda (n) (j2s-call-hint! n #t)) nodes))
+      (tprint "TO DECOMMENT...")
+      ;;(j2s-call-hint! this #t)
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -93,9 +90,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    debug control                                                    */
 ;*---------------------------------------------------------------------*/
+(define *debug-range* #f)
 (define *dump-stop* -1)
 (define *dump-env* '())
 (define *dump-unfix* #f)
+
+(define *debug-range-if* #t)
+(define *debug-range-call* #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    interval constructor ...                                         */
@@ -785,7 +786,8 @@
 		     (let ((keys (if (pair? ids) ids *dump-env*)))
 			(when (or (symbol? keys)
 				  (memq id keys)
-				  (memq key keys))
+				  (memq key keys)
+				  (null? keys))
 			   (cons (format "~a:~a" id key) (cdr e))))))
       env))
 
@@ -843,8 +845,6 @@
 (define-walk-method (node-range this::J2SExpr env::pair-nil args fix::struct)
    (multiple-value-bind (ints envs)
       (call-default-walker)
-      (unless (or (null? envs) (pair? envs))
-	 (tprint "PAS BON ENV " (j2s->list this) " envs=" (typeof envs)))
       (with-access::J2SExpr this (type)
 	 (if (type-number? type)
 	     (return ints envs)
@@ -969,6 +969,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SRef env::pair-nil args fix::struct)
    (with-access::J2SRef this (decl type loc)
+      (when (isa? decl J2SDeclInit)
+	 (with-access::J2SDeclInit decl (val)
+	    (when (isa? val J2SFun)
+	       (node-range val env args fix))))
       (if (type-number? type)
 	 (with-access::J2SDecl decl (range ronly key id scope)
 	    (let ((intv (env-lookup env decl)))
@@ -1209,11 +1213,12 @@
 		       (node-interval-set! this env fix
 			  (interval-div intl intr)))
 		      ((%)
+		       (tprint "% intr=" intr " intl=" intl " type=" type)
 		       (when (interval? intr)
 			  (if (and (eq? type 'integer)
 				   (> (interval-min intr) 0))
 			      (node-interval-set! this env fix intl)
-			      (return *infinity-intv* env))))
+			      (node-interval-set! this env fix #f))))
 		      ((<<)
 		       (when (memq type '(integer index number))
 			  (node-interval-set! this env fix
@@ -1340,6 +1345,21 @@
 ;*    node-range ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SFun env::pair-nil args fix::struct)
+   (with-access::J2SFun this (params range)
+      (unless (eq? range *infinity-intv*)
+	 (set! range *infinity-intv*)
+	 (unfix! fix "escape"))
+      (for-each (lambda (a)
+		   (with-access::J2SDecl a (range)
+		      (unless (eq? range *infinity-intv*)
+			 (set! range *infinity-intv*)
+			 (unfix! fix "escape"))))
+	 params)))
+
+;*---------------------------------------------------------------------*/
+;*    node-range-fun ...                                               */
+;*---------------------------------------------------------------------*/
+(define (node-range-fun this::J2SFun env::pair-nil args fix::struct)
    (with-access::J2SFun this (body params)
       (let ((envp (filter-map (lambda (p)
 				 (with-access::J2SDecl p (itype range)
@@ -1347,6 +1367,7 @@
 					       (interval? range))
 				       (cons p range))))
 		     params)))
+	 (tprint "envp=" (dump-env envp))
 	 (multiple-value-bind (intv env)
 	    (node-range body envp args fix)
 	    (return #f env)))))
@@ -1357,25 +1378,28 @@
 (define-walk-method (node-range this::J2SCall env::pair-nil args fix::struct)
    
    (define (node-range-fun callee args env)
-      (with-access::J2SFun callee (params range rtype)
-	 (let loop ((params params)
-		    (args args))
-	    (cond
-	       ((and (pair? params) (pair? args))
-		(with-access::J2SDecl (car params) (vtype range)
-		   (when (type-number? vtype)
-		      (with-access::J2SExpr (car args) ((ainfo range))
-			 (let ((ni (interval-merge range ainfo)))
-			    (unless (equal? ni range)
-			       (unfix! fix "j2scall")
-			       (set! range ni)))))
-		   (loop (cdr params) (cdr args))))
-	       ((eq? rtype 'any)
-		(return *infinity-intv* env))
-	       (else
-		(node-interval-set! this env fix range))))))
-   
-   (call-default-walker)
+      (multiple-value-bind (_ env)
+	 (node-range* args env args fix)
+	 (with-access::J2SFun callee (params range rtype name)
+	    (let loop ((params params)
+		       (args args))
+	       (cond
+		  ((and (pair? params) (pair? args))
+		   (with-access::J2SDecl (car params) (vtype range)
+		      (when (type-number? vtype)
+			 (with-access::J2SExpr (car args) ((ainfo range))
+			    (let ((ni (interval-merge range ainfo)))
+			       (when *debug-range-call*
+				     (tprint "--- CALL " (j2s->list (car params)) " <- " ni " (" range "/" ainfo ")"))
+			       (unless (equal? ni range)
+				  (unfix! fix "j2scall")
+				  
+				  (set! range ni)))))
+		      (loop (cdr params) (cdr args))))
+		  ((eq? rtype 'any)
+		   (return *infinity-intv* env))
+		  (else
+		   (node-interval-set! this env fix range)))))))
    
    (with-access::J2SCall this ((callee fun) args type)
       (cond
@@ -1386,6 +1410,8 @@
 	     (cond
 		((isa? decl J2SDeclFun)
 		 (with-access::J2SDeclFun decl (ronly val id)
+		    (when *debug-range-call*
+		       (tprint ">>> CALL " id " " (map j2s->list args)))
 		    (if ronly
 			(node-range-fun val args env)
 			(return *infinity-intv* env))))
@@ -1430,15 +1456,20 @@
 ;*    node-range ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SDeclInit env::pair-nil args fix::struct)
-   (with-access::J2SDeclInit this (val range vtype)
-      (if (type-number? vtype)
+   (with-access::J2SDeclInit this (val range vtype id)
+      (cond
+	 ((type-number? vtype)
 	  (multiple-value-bind (intv env)
 	     (node-range val env args fix)
 	     (node-interval-set! this env fix intv)
-	     (return #f (extend-env env this intv)))
+	     (return #f (extend-env env this intv))))
+	 ((isa? val J2SFun)
+	  (tprint "===== " id " ================")
+	  (node-range-fun val env args fix))
+	 (else
 	  (begin
 	     (call-default-walker)
-	     (return #f env)))))
+	     (return #f env))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SStmtExpr ...                                     */
@@ -1480,14 +1511,18 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SIf env::pair-nil args fix::struct)
    (with-access::J2SIf this (test then else)
+      (when *debug-range-if*
+	 (tprint "J2SIf>>> " (j2s->list test) " env=" (dump-env env)))
       (multiple-value-bind (_ env)
 	 (node-range test env args fix)
-	 ;; (tprint "J2SIf>>> " (j2s->list test) " env=" (dump-env env))
 	 (multiple-value-bind (envt envo)
 	    (test-envs test env args fix)
-	    ;; (tprint "J2SIf<<< envt=" (dump-env envt))
+	    (when *debug-range-if*
+	       (tprint "J2SIf--- envt=" (dump-env envt)))
 	    (multiple-value-bind (_ nenvt)
 	       (node-range then (append-env envt env) args fix)
+	       (when *debug-range-if*
+		  (tprint "J2SIf<<< envo=" (dump-env envo)))
 	       (multiple-value-bind (_ nenvo)
 		  (node-range else (append-env envo env) args fix)
 		  (return #f (env-merge nenvt nenvo))))))))
@@ -1499,30 +1534,30 @@
    (with-access::J2SFor this (init test incr body)
       (let ((denv (dump-env env))
 	    (ffix (fix-stamp fix)))
-	 (when (pair? denv)
+	 (when (and *debug-range* (pair? denv))
 	    (tprint ">>> for [" ffix "] test=" (j2s->list test))
 	    (tprint ">>> env=" denv))
 	 (multiple-value-bind (initi inite)
 	    (node-range init env args fix)
 	    (let loop ((env inite))
 	       (let ((ostamp (fix-stamp fix)))
-		  (when (pair? denv)
+		  (when (and *debug-range* (pair? denv))
 		     (tprint "--- for [" ffix "] / " ostamp))
 		  (multiple-value-bind (testi teste)
 		     (node-range test env args fix)
-		     (when (pair? denv)
+		     (when (and *debug-range* (pair? denv))
 			(tprint "    [" ffix "] test=" (j2s->list test))
 			(tprint "    [" ffix "] teste=" (dump-env teste)))
 		     (multiple-value-bind (testet testef)
 			(test-envs test env args fix)
-			(when (pair? denv)
+			(when (and *debug-range* (pair? denv))
 			   (tprint "    [" ffix "] inloope=" (dump-env testet)))
 			(multiple-value-bind (bodyi bodye)
 			   (node-range-seq (list body incr)
 			      (append-env testet teste) args fix)
 			   (if (=fx ostamp (fix-stamp fix))
 			       (begin
-				  (when (pair? denv)
+				  (when (and *debug-range* (pair? denv))
 				     (tprint "<<< for [" ffix "] "
 					(dump-env (append-env testef bodye))))
 				  (return #f (append-env testef bodye)))
@@ -1708,6 +1743,14 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    type-range! ::J2SDeclInit ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-range! this::J2SDeclInit tymap)
+   (with-access::J2SDeclInit this (val)
+      (type-range! val tymap)
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SExpr tymap)
@@ -1767,7 +1810,7 @@
 		      (set! vtype (interval->type range tymap)))
 		   (set! vtype (map-type vtype defmap)))))))
    this)
-	 
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-range-opt-program! ...                                       */
 ;*---------------------------------------------------------------------*/
@@ -1865,6 +1908,26 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    map-types ::J2SCall ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SCall tmap)
+   (call-next-method)
+   (with-access::J2SCall this (fun type loc)
+      (when (isa? fun J2SRef)
+	 (with-access::J2SRef fun (decl)
+	    (cond
+	       ((isa? decl J2SDeclFun)
+		(with-access::J2SDeclFun decl (ronly val)
+		   (with-access::J2SFun val (rtype)
+		      (when ronly
+			 (set! type rtype)))))
+	       ((isa? decl J2SDeclInit)
+		(with-access::J2SDeclInit decl (ronly val)
+		   (if (and ronly (isa? val J2SFun))
+		       (with-access::J2SFun val (rtype)
+			  (set! type rtype))))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SFun tmap)
@@ -1894,8 +1957,8 @@
 ;*    any-types ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SDeclInit tmap)
-   (call-next-method)
-   (with-access::J2SDeclInit this (val)
+   (with-access::J2SDeclInit this (val id)
+      (call-next-method)
       (map-types val tmap)))
 
 ;*---------------------------------------------------------------------*/
@@ -1920,3 +1983,4 @@
 	  (set! type 'int32)
 	  (set! type (map-type type tmap))))
    (call-default-walker))
+

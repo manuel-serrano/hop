@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Aug 14 06:07:06 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 18:31:14 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -126,7 +126,11 @@
       (cond
 	 ((or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type+"))
-	  `(:vtype ,vtype :utype ,utype :itype ,itype))
+	  (if (isa? this J2SDeclFun)
+	      (with-access::J2SDeclFun this (val)
+		 (with-access::J2SFun val (rtype)
+		    `(:vtype ,vtype :utype ,utype :itype ,itype :rtype ,rtype)))
+	      `(:vtype ,vtype :utype ,utype :itype ,itype)))
 	 ((or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
 	  `(:vtype ,vtype))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Aug 14 06:50:30 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 18:21:53 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1564,7 +1564,7 @@
 	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(remainders32 ,left (uint32->int32 ,right)))
 	 ((and (eq? tl 'int53) (eq? tr 'uint32))
-	  `(remainderfx ,left ,(asfixnum right tr)))
+	  `(fixnum->int32 (remainderfx ,left ,(asfixnum right tr))))
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(if (fixnum? ,left)
 	       (fixnum->int32 (remainderfx ,left ,(asfixnum right tr)))
@@ -1589,6 +1589,8 @@
 	  `(int32->uint32 (remainders32 (uint32->int32 ,left) ,right)))
 	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(int32->uint32 (remainders32 ,left (uint32->int32 ,right))))
+	 ((and (eq? tl 'int53) (eq? tr 'uint32))
+	  `(fixnum->uint32 (remainderfx ,left ,(asfixnum right tr))))
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(if (fixnum? ,left)
 	       (fixnum->uint32 (remainderfx ,left ,(asfixnum right tr)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Aug 13 18:49:49 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 18:34:02 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -229,7 +229,7 @@
 (define-method (type-cast! this::J2SCall totype)
    
    (define (known-fun this fun::J2SFun)
-      (with-access::J2SCall this (args)
+      (with-access::J2SCall this (args type)
 	 (with-access::J2SFun fun (rtype params vararg)
 	    (let loop ((params params)
 		       (vals args)
@@ -237,7 +237,7 @@
 	       (cond
 		  ((null? vals)
 		   (set! args (reverse! nvals))
-		   (cast-expr this rtype totype))
+		   (cast-expr this type totype))
 		  ((null? params)
 		   (loop params '()
 		      (append (reverse

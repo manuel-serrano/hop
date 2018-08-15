@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Aug 10 16:15:18 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 19:35:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -193,6 +193,7 @@
       j2s-instanceof-stage
       j2s-propcce-stage
       j2s-range-stage
+      j2s-sweep-stage
       j2s-ctor-stage
       j2s-pce-stage
       j2s-cast-stage

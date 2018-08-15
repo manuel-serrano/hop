@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Aug 15 08:03:10 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 18:25:05 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -149,16 +149,20 @@
    (if (int32? v) (int32->uint32 v) `(int32->uint32 ,v)))
 
 (define (js-int32->integer v expr conf)
-   (cond
-      ((and (int32? v)
-	    (or (and (<s32 v (-s32 (bit-lshs32 #s32:1 29) #s32:1))
-		     (>=s32 v (-s32 #s32:0 (bit-lshs32 #s32:1 29))))
-		(m64? conf)))
-       (int32->fixnum v))
-      ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
-       `(int32->fixnum ,v))
+   (match-case v
+      ((fixnum->int32 ?x)
+       x)
       (else
-       `(js-int32-tointeger ,v))))
+       (cond
+	  ((and (int32? v)
+		(or (and (<s32 v (-s32 (bit-lshs32 #s32:1 29) #s32:1))
+			 (>=s32 v (-s32 #s32:0 (bit-lshs32 #s32:1 29))))
+		    (m64? conf)))
+	   (int32->fixnum v))
+	  ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
+	   `(int32->fixnum ,v))
+	  (else
+	   `(js-int32-tointeger ,v))))))
 
 (define (js-int32->bool v expr conf)
    (if (int32? v) (not (=s32 v #s32:0)) `(not (=s32 ,v #s32:0))))
