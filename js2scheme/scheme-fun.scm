@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Aug 14 11:42:42 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 09:01:58 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -369,7 +369,7 @@
 (define (jsfun->lambda this::J2SFun mode return conf proto ctor-only::bool)
 
    (define (type-this idthis thisp)
-      (if (isa? thisp J2SDecl)
+      (if (and idthis (isa? thisp J2SDecl))
 	  (with-access::J2SDecl thisp (vtype)
 	     (type-ident idthis vtype conf))
 	  idthis))

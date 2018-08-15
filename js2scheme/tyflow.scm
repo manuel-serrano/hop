@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Aug 14 05:40:06 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 05:13:16 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -603,7 +603,7 @@
 ;*    typing ::J2SRef ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SRef env::pair-nil fix::cell)
-   (with-access::J2SRef this (decl)
+   (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (id key utype usage)
 	 (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
 	    (with-access::J2SDeclFun decl (val)
@@ -736,7 +736,7 @@
 	       (with-access::J2SThis obj (decl)
 		  decl)))))
    
-   (with-access::J2SAssig this (lhs rhs)
+   (with-access::J2SAssig this (lhs rhs loc)
       (multiple-value-bind (tyv envl lbk)
 	 (typing lhs env fix)
 	 (cond
@@ -814,15 +814,12 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SPostfix ...                                          */
-;*    -------------------------------------------------------------    */
-;*    As a fix point is involved, POSTFIX and PREFIX operations        */
-;*    can be handled similarly.                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SPostfix env::pair-nil fix::cell)
    (with-access::J2SPostfix this (lhs rhs op)
       (multiple-value-bind (tyr envr bkr)
 	 (typing rhs env fix)
-	 (unless (type-number? tyr) (set! tyr 'number))
+	 ;;(unless (type-number? tyr) (set! tyr 'number))
 	 (multiple-value-bind (tyv __ lbk)
 	    (typing lhs env fix)
 	    (cond
@@ -855,7 +852,7 @@
    (with-access::J2SPrefix this (lhs rhs op)
       (multiple-value-bind (tyr envr bkr)
 	 (typing rhs env fix)
-	 (unless (type-number? tyr) (set! tyr 'number))
+	 ;;(unless (type-number? tyr) (set! tyr 'number))
 	 (multiple-value-bind (tyv __ lbk)
 	    (typing lhs env fix)
 	    (cond
@@ -1106,9 +1103,6 @@
 	       (with-access::J2SDecl decl (ronly)
 		  ronly)))))
    
-   (define (Array? obj)
-      (is-global? obj 'Array))
-   
    (define (type-method-call callee args env bk)
       ;; type a method call: O.m( ... )
       (multiple-value-bind (_ env bk)
@@ -1116,7 +1110,7 @@
 	 (with-access::J2SAccess callee (obj field)
 	    (let* ((fn (j2s-field-name field))
 		   (ty (if (string? fn)
-			   (tyflow-type (car (builtin-method-type obj fn)))
+			   (tyflow-type (car (find-builtin-method-type obj fn)))
 			   'any)))
 	       (if (eq? ty 'any)
 		   ;; the method is unknown, filter out the typing env
@@ -1132,8 +1126,10 @@
    (define (type-global-call callee args env bk)
       (typing callee env fix)
       (cond
-	 ((Array? callee)
+	 ((is-global? callee 'Array)
 	  (return 'array (unknown-call-env env) bk))
+	 ((is-global? callee 'String)
+	  (return 'string (unknown-call-env env) bk))
 	 (else
 	  (type-unknown-call callee env bk))))
    

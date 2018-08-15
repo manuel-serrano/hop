@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Aug 14 05:58:26 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 06:02:20 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -60,11 +60,15 @@
 
 	   (is-hint?::bool ::J2SExpr ::symbol)
 
-	   (string-method-type ::bstring)
-	   (number-method-type ::bstring)
-	   (array-method-type ::bstring)
-	   (regexp-method-type ::bstring)
-	   (builtin-method-type ::J2SExpr ::bstring)))
+	   (string-method-type name #!optional (default '(any any)))
+	   (string-static-method-type name #!optional (default '(any any)))
+	   (math-static-method-type name #!optional (default '(any any)))
+	   (regexp-method-type name #!optional (default '(any any)))
+	   (number-method-type name #!optional (default '(any any)))
+	   (array-method-type name #!optional (default '(any any)))
+	   
+	   (find-builtin-method-type ::J2SExpr ::bstring)
+	   (guess-builtin-method-type ::J2SExpr ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -604,92 +608,114 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    assoc-method-type ...                                            */
+;*    -------------------------------------------------------------    */
+;*    A method entry is structured as follows:                         */
+;*      1- the return type                                             */
+;*      2- the type of the receiver                                    */
+;*      3- a list of argument types: type or type*                     *
 ;*---------------------------------------------------------------------*/
-(define (assoc-method-type name methods)
+(define (assoc-method-type name default methods)
    (let ((c (assoc name methods)))
-      (if (pair? c) (cdr c) '(any))))
+      (if (pair? c) (cdr c) default)))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-method-type ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (string-method-type name)
-   (assoc-method-type name
-      '(("indexOf" . (indexof index))
-	("lastIndexOf" . (indexof index))
-	("charCodeAt" . (number index))
-	("charAt" . (string index))
-	("substring" . (string index index))
-	("substr" . (string index index))
-	("toLowerCase" . (string))
-	("toUpperCase" . (string))
-	("split" . (array (string regexp) index))
-	("replace" . (string (string regexp) (string function)))
-	("naturalCompare" . (integer (string)))
-	("localeCompare" . (integer (string)))
-	("trim" . (string))
-	("concat" . (string string string string))
-	("slice" . (string index index)))))
+(define (string-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("charAt" . (string string index))
+	("charCodeAt" . (number string index))
+	("concat" . (string string string string string))
+	("indexOf" . (indexof string index))
+	("lastIndexOf" . (indexof string index))
+	("localeCompare" . (integer string (string)))
+	("naturalCompare" . (integer string (string)))
+	("replace" . (string string (string regexp) (string function)))
+	("search" . (index string regexp))
+	("slice" . (string string index index))
+	("split" . (array string (string regexp) index))
+	("substr" . (string string index index))
+	("substring" . (string string index index))
+	("toLowerCase" . (string string))
+	("toLocaleLowerCase" . (string string))
+	("toUpperCase" . (string string))
+	("toLocaleUpperCase" . (string string))
+	("trim" . (string string)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-static-method-type ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (string-static-method-type name)
-   (assoc-method-type name
-      '(("fromCharCode" . (string integer)))))
+(define (string-static-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("fromCharCode" . (string undefined integer)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    math-static-method-type ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (math-static-method-type name)
-   (assoc-method-type name
-      '(("abs" . (number number))
-	("acos" . (real real))
-	("asin" . (real real))
-	("atan" . (real real))
-	("atan2" . (real real))
-	("ceil" . (number real))
-	("cos" . (real real))
-	("exp" . (number real))
-	("floor" . (number real))
-	("log" . (real real))
-	("max" . (number number))
-	("min" . (number number))
-	("pow" . (number number))
-	("random" . (real))
-	("round" . (number real))
-	("sin" . (real real))
-	("sqrt" . (real real))
-	("tan" . (real real)))))
+(define (math-static-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("abs" . (number undefined number))
+	("acos" . (real undefined real))
+	("asin" . (real undefined real))
+	("atan" . (real undefined real))
+	("atan2" . (real undefined real))
+	("ceil" . (number undefined real))
+	("cos" . (real undefined real))
+	("exp" . (number undefined real))
+	("floor" . (number undefined real))
+	("log" . (real undefined real))
+	("max" . (number undefined number))
+	("min" . (number undefined number))
+	("pow" . (number undefined number))
+	("random" . (real undefined))
+	("round" . (number undefined real))
+	("sin" . (real undefined real))
+	("sqrt" . (real undefined real))
+	("tan" . (real undefined real)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    regexp-method-type ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (regexp-method-type name)
-   (assoc-method-type name
-      '(("test" . (bool string)))))
+(define (regexp-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("test" . (bool regexp string)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    number-method-type ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (number-method-type name)
-   (assoc-method-type name
-      '(("isInteger" . (bool))
-	("toString" . (string number)))))
+(define (number-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("isInteger" . (bool number))
+	("toString" . (string number number)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array-method-type ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (array-method-type name)
-   (assoc-method-type name
-      '(("indexOf" . (indexof index))
-	("lastIndexOf" . (indexof index))
-	("concat" . (array array array array))
-	("slice" . (array index index)))))
+(define (array-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("concat" . (array array array array array))
+	("every" . (bool array function))
+	("filter" . (array array function))
+	("find" . (any array function))
+	("indexOf" . (indexof array index))
+	("forEach" . (any array function))
+	("join" . (string array string))
+	("lastIndexOf" . (indexof array index))
+	("map" . (array array function))
+	("reduce" . (any array function))
+	("reduceRight" . (any array function))
+	("reverse" . (array array))
+	("shift" . (array array))
+	("slice" . (array array index index))
+	("sort" . (array array function))
+	("some" . (bool array function))
+	("splice" . (array array index integer))
+	("unshift" . (array array)))))
 
 ;*---------------------------------------------------------------------*/
-;*    assoc-method-type ...                                            */
+;*    find-builtin-method-type ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (builtin-method-type obj fn)
+(define (find-builtin-method-type obj fn)
 
    (define (is-global? obj ident)
       (when (isa? obj J2SGlobalRef)
@@ -701,9 +727,6 @@
    (define (String? obj)
       (is-global? obj 'String))
 
-   (define (Array? obj)
-      (is-global? obj 'Array))
-
    (define (Math? obj)
       (is-global? obj 'Math))
 
@@ -712,9 +735,95 @@
       ((regexp) (regexp-method-type fn))
       ((number integer index) (number-method-type fn))
       ((array) (array-method-type fn))
-      ((unknown) '(unknown))
+      ((unknown) '(unknown ()))
       (else
        (cond
 	  ((String? obj) (string-static-method-type fn))
 	  ((Math? obj) (math-static-method-type fn))
-	  (else '(any))))))
+	  (else '(any any))))))
+
+;*---------------------------------------------------------------------*/
+;*    guess-builtin-method-type ...                                    */
+;*---------------------------------------------------------------------*/
+(define (guess-builtin-method-type obj fn)
+
+   (define (is-global? obj ident)
+      (when (isa? obj J2SGlobalRef)
+	 (with-access::J2SGlobalRef obj (id decl)
+	    (when (eq? id ident)
+	       (with-access::J2SDecl decl (ronly)
+		  ronly)))))
+   
+   (define (String? obj)
+      (is-global? obj 'String))
+
+   (define (Math? obj)
+      (is-global? obj 'Math))
+
+   (define (map-delete-duplicates l1 l2)
+      ;; merge the two argument type lists
+      (let loop ((l1 l1)
+		 (l2 l2))
+	 (cond
+	    ((null? l1)
+	     l2)
+	    ((null? l2)
+	     l1)
+	    (else
+	     (let ((l (cond
+			 ((pair? (car l1))
+			  (cond
+			     ((pair? (car l2))
+			      (delete-duplicates (append (car l1) (car l2))))
+			     ((memq (car l2) (car l1))
+			      (car l1))
+			     (else
+			      (cons (car l2) (car l1)))))
+			 ((pair? (car l2))
+			  (cond
+			     ((memq (car l1) (car l2))
+			      (car l2))
+			     (else
+			      (cons (car l1) (car l2)))))
+			 ((eq? (car l1) (car l2))
+			  (car l1))
+			 (else
+			  (list (car l1) (car l2))))))
+		(cons l (loop (cdr l1) (cdr l2))))))))
+	     
+   (define (merge-candidate x y)
+      (if (null? y)
+	  x
+	  (let ((ret (if (eq? (car x) (car y))
+			 (car x)
+			 (list (car x) (car y))))
+		(self (if (eq? (cadr x) (cadr y))
+			  (cadr x)
+			  (list (cadr x) (cadr y))))
+		(args (map-delete-duplicates (cddr x) (cddr y))))
+	     (cons* ret self args))))
+      
+   (define (guess-method obj fn)
+      (let ((candidates (list
+			  (string-method-type fn #f)
+			  (regexp-method-type fn #f)
+			  (number-method-type fn #f)
+			  (array-method-type fn #f)
+			  (and (String? obj) (string-static-method-type fn #f))
+			  (and (Math? obj) (math-static-method-type fn #f)))))
+	 (let loop ((l candidates)
+		    (res '()))
+	    (cond
+	       ((null? l)
+		(if (pair? res) res '(any any)))
+	       ((car l)
+		(loop (cdr l) (merge-candidate (car l) res)))
+	       (else
+		(loop (cdr l) res))))))
+   
+   (let ((ty (j2s-type obj)))
+      (if (memq ty '(unknown any))
+	  (guess-method obj fn)
+	  (find-builtin-method-type obj fn))))
+
+   

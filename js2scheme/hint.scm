@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Aug 14 08:13:49 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 06:17:57 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -262,29 +262,16 @@
       (for-each (lambda (cases)
 		   (j2s-hint cases hints))
 	 cases)))
-	 
-;*---------------------------------------------------------------------*/
-;*    j2s-string-methods ...                                           */
-;*---------------------------------------------------------------------*/
-(define j2s-string-methods
-   '("charAt" "charCodeAt" "localeCompare" "naturalCompare"
-     "match" "replace" "search" "split" "substring" "toLowerCase"
-     "toLocaleLowerCase" "toUpperCase" "toLocaleUpperCase"
-     "trim" "substr"))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-string-array-methods ...                                     */
+;*    j2s-hint ::J2SDeclInit ...                                       */
 ;*---------------------------------------------------------------------*/
-(define j2s-string-array-methods
-   '("indexOf" "lastIndexOf" "concat"))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-array-methods ...                                            */
-;*---------------------------------------------------------------------*/
-(define j2s-array-methods
-   '("push" "pop" "join" "reverse" "shift" "slice" "sort" "splice" "unshift"
-     "every" "some" "forEach" "map" "filter" "find" "reduce" "reduceRight"
-     "iterator"))
+(define-walk-method (j2s-hint this::J2SDeclInit hints)
+   (with-access::J2SDeclInit this (val type hint)
+      (let ((ty (j2s-type val)))
+	 (when (symbol? ty)
+	    (add-hints! this `((,ty . 3)))))
+      (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint-access ...                                              */
@@ -353,27 +340,31 @@
 ;*    j2s-hint ::J2SFun ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SFun hints)
-   (with-access::J2SFun this (body)
+   (with-access::J2SFun this (body loc name)
       (j2s-hint body hints)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SCall ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SCall hints)
+
+   (define (hint-unknown-call callee args)
+      (for-each (lambda (a) (j2s-hint a '())) args)
+      (j2s-hint callee '((function . 5))))
    
    (define (hint-known-call callee args)
       (with-access::J2SFun callee (params)
 	 (let loop ((args args)
 		    (params params))
-	    (when (and (pair? args) (pair? params))
-	       (let ((ty (j2s-type (car args))))
-		  (unless (memq ty '(any unknown))
-		     (j2s-hint (car args) `((,ty . 2)))))
-	       (loop (cdr args) (cdr params))))))
-   
-   (define (hint-unknown-call callee args)
-      (for-each (lambda (a) (j2s-hint a '())) args)
-      (j2s-hint callee '((function . 5))))
+	    (when (pair? args)
+	       (if (pair? params)
+		   (with-access::J2SDecl (car params) (vtype)
+		      (let ((hints (if (memq vtype '(any unknown))
+				       '()
+				       `((,vtype . 2)))))
+			 (j2s-hint (car args) hints)
+			 (loop (cdr args) (cdr params))))
+		   (for-each (lambda (a) (j2s-hint a '())) args))))))
    
    (define (hint-ref-call callee args)
       (with-access::J2SRef callee (decl)
@@ -392,21 +383,36 @@
 	     (hint-unknown-call callee args)))))
    
    (define (hint-access-call callee args)
-      (with-access::J2SAccess callee (obj field)
+      (with-access::J2SAccess callee (obj field loc)
 	 (let* ((fn (j2s-field-name field))
 		(tys (if (string? fn)
-			 (builtin-method-type obj fn)
-			 '(any))))
+			 (guess-builtin-method-type obj fn)
+			 '(any any))))
+	    ;; hint the receiver object
+	    (unless (eq? (cadr tys) 'any)
+	       (let ((hints (cond
+			       ((pair? (cadr tys))
+				(map (lambda (t)
+					`(,(j2s-hint-type t) . 2))
+				   (cadr tys)))
+			       ((eq? (cadr tys) 'any)
+				'())
+			       (else
+				`((,(j2s-hint-type (cadr tys)) . 4))))))
+		  (j2s-hint obj hints)))
+	    ;; hint the arguments
 	    (let loop ((args args)
-		       (tys (cdr tys)))
-	       (when (and (pair? args) (pair? tys))
-		  (j2s-hint (car args)
-		     (if (pair? (car tys))
-			 (map (lambda (t)
-				 `(,(j2s-hint-type t) . 2))
-			    (car tys))
-			 `((,(j2s-hint-type (car tys)) . 2))))
-		  (loop (cdr args) (cdr tys)))))))
+		       (tys (cddr tys)))
+	       (when (pair? args)
+		  (if (pair? tys)
+		      (let ((hints (if (pair? (car tys))
+				       (map (lambda (t)
+					       `(,(j2s-hint-type t) . 2))
+					  (car tys))
+				       `((,(j2s-hint-type (car tys)) . 4)))))
+			 (j2s-hint (car args) hints)
+			 (loop (cdr args) (cdr tys)))
+		      (for-each (lambda (a) (j2s-hint a '())) args)))))))
    
    (with-access::J2SCall this (fun args)
       (cond
@@ -540,9 +546,9 @@
 		    (not (isa? val J2SSvc))
 		    (any (lambda (p)
 			    (with-access::J2SDecl p (vtype itype)
-			       ;; at leat one parameter is not precisely typed
-			       (and (memq vtype '(unknown number))
-				    (memq itype '(unknown number)))))
+			       ;; at least one parameter is not precisely typed
+			       (and (memq vtype '(unknown number any))
+				    (memq itype '(unknown number any)))))
 		       params)
 		    (not (type-checker? val)))))))
    
@@ -583,7 +589,7 @@
 		  (with-access::FunHintInfo hintinfo (unhinted hinted)
 		     (or (eq? hinted fun) (eq? unhinted fun))))))))
    
-   (with-access::J2SDeclFun this (val id rtype)
+   (with-access::J2SDeclFun this (val id)
       (let loop ((dup (fun-duplicable? this)))
 	 (cond
 	    (dup
@@ -890,10 +896,12 @@
        (duplicate::J2SDeclInit p
 	  (key (ast-decl-key))
 	  (hint '())
+	  (vtype 'unknown)
 	  (itype type))
        (duplicate::J2SDecl p
 	  (key (ast-decl-key))
 	  (hint '())
+	  (vtype 'unknown)
 	  (itype type))))
 
 ;*---------------------------------------------------------------------*/

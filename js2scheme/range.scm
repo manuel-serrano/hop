@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Aug 14 06:31:23 2018 (serrano)                */
+;*    Last change :  Wed Aug 15 07:17:52 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -729,7 +729,11 @@
       ((or (>= (interval-max left) 0) (>= (interval-max right) 0))
        (let* ((mi (min (interval-min left) (interval-min right)))
 	      (ma (min (interval-max left) (interval-max right)))
-	      (intr (interval mi ma)))
+	      (min (if (or (>= (interval-min left) 0)
+			   (>= (interval-min right) 0))
+		      0
+		      mi))
+	      (intr (interval min ma)))
 	  (shrink32 intr)))
       (else
        *int32-intv*)))
@@ -1395,7 +1399,7 @@
 	     (with-access::J2SAccess callee (obj field)
 		(let ((fn (j2s-field-name field)))
 		   (if (string? fn)
-		       (type->js-range (builtin-method-type obj fn))
+		       (type->js-range (car (find-builtin-method-type obj fn)))
 		       (return *infinity-intv* env))))))
 	 (else
 	  (multiple-value-bind (_ env)
