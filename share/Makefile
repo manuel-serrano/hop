@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Aug 16 15:09:03 2018 (serrano)                */
+#*    Last change :  Thu Aug 16 17:14:22 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -257,7 +257,8 @@ hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
 	echo >> $@
 	echo "\"use strict\";" >> $@
 	echo >> $@
-	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+	cat $(filter %.js,$^) \
+               | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                | sed -e "s|//[^\"]*$$||g" \
                | sed -e "/^[ \t]*$$/D" \
                | $(BGLCPP) -DHOP_SCHEME\
@@ -274,13 +275,15 @@ hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
 	echo "\"use strict\";" >> $@
 	echo >> $@
 	if [ "$(DEBUG) " != "yes " ]; then \
-	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+	  cat $(filter %.js,$^) \
+                 | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
                  | $(BGLCPP) -DHOP_SCHEME -DHOP_RTS_DEBUG \
                  >> $@; \
         else \
-	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+	  cat $(filter %.js,$^) \
+                 | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
                  | $(BGLCPP) -DHOP_SCHEME \
@@ -305,7 +308,8 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
 	echo "function hop_callback_html_context(m) { return m; }" >> $@
 	echo "function hop_callback_handler( e, ctx ) { throw e; }" >> $@
 	echo "function sc_error( proc, msg, obj ) { throw msg; }" >> $@
-	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+	cat $(filter %.js,$^) \
+               | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                | sed -e "s|//[^\"]*$$||g" \
                | sed -e "/^[ \t]*$$/D" \
                | $(BGLCPP) -DHOP_JAVASCRIPT | $(CLOSURE) \
