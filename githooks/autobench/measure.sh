@@ -23,7 +23,10 @@ export FILLER=""
 echo "$2:"
 
 rm -f $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
-touch $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
+
+echo "[ " > $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
+
+sepentry=""
 
 for ((s=0; s<$AUTOBENCH_STACK_SHIFT; s++)) do
     tm=
@@ -44,10 +47,15 @@ for ((s=0; s<$AUTOBENCH_STACK_SHIFT; s++)) do
 
         sep=","
     done
-	
+
+    echo $sepentry >> \
+      $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
+
     echo "{ stack_shift: $s, times: $times ], cycles: $cycles ] }"
     echo "{ stack_shift: $s, times: $times ], cycles: $cycles ] }" >> \
-      $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
+	 $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
+    
+    sepentry=","
 done
 
-
+echo "] " >> $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json

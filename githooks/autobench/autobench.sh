@@ -9,17 +9,17 @@ fi
 
 for h in $HOSTS; do 
   if [ "$h " = "$HOST " ]; then
-    for s in $SYSTEMS; do
-      if [ -d $GITHOOKS_DIR/autobench/$s ]; then
+    for sys in $SYSTEMS; do
+      if [ -d $GITHOOKS_DIR/autobench/$sys ]; then
         echo "system $s"
         set -a
-        source $GITHOOKS_DIR/autobench/install.sh $s || exit 1
+        source $GITHOOKS_DIR/autobench/install.sh $sys || exit 1
 	for b in $BENCHMARKS; do
-          source $GITHOOKS_DIR/autobench/prepare.sh $s $b
-          source $GITHOOKS_DIR/autobench/measure.sh $s $b
+          source $GITHOOKS_DIR/autobench/prepare.sh $sys $b
+          source $GITHOOKS_DIR/autobench/measure.sh $sys $b
 	done
-        source $GITHOOKS_DIR/autobench/commit.sh $s
-        source $GITHOOKS_DIR/autobench/cleanup.sh $s
+        source $GITHOOKS_DIR/autobench/commit.sh $sys
+        source $GITHOOKS_DIR/autobench/cleanup.sh $sys
         set +a
         echo "system $s...done"
       fi
