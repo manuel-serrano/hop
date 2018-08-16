@@ -105,7 +105,6 @@ etc/hopsh.man
 # misc
 .hoprelease
 TODO
-bench/
 devel/
 old/
 repository/
