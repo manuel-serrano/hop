@@ -86,7 +86,7 @@ build: runtime-build
 	$(MAKE) $(BACKEND)
 
 #* native: o heap-c lib-c                                              */
-native: heap-c lib-c
+native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 
 clean: runtime-clean mco-clean
