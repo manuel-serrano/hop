@@ -7,16 +7,14 @@ benchmark=$2
 
 mkdir -p $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME
 
-string_res=
-
 #* TIMEFORMAT="%3R"                                                    */
 #* export TIMEFORMAT                                                   */
 
 function mkstring() {
-  string_res=""
+  FILLER=""
 
   for ((i=0; i<$1; i++)) do
-      string_res+="########"
+      FILLER+="########"
   done
 }
   
@@ -33,9 +31,8 @@ for ((s=0; s<$AUTOBENCH_STACK_SHIFT; s++)) do
     sep="["
     
     mkstring $s
-    FILLER=$string_res
-    
-    env
+
+    /usr/bin/env
     
     for ((i=0; i<$AUTOBENCH_ITER; i++)) do
         p=`$PERF stat $TMP/$benchmark 2> $TMP/perf.run > /dev/null`
