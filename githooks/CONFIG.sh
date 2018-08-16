@@ -1,3 +1,3 @@
 HOSTS="arctic redrock.inria.fr"
 SYSTEMS="hop"
-BENCHMARKS="bague.js fib.js fib42.js maze.js puzzle.js qsort.js sieve.js"
+BENCHMARKS="bague fib42 maze puzzle qsort sieve"
