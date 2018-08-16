@@ -34,14 +34,8 @@ for ((s=0; s<$AUTOBENCH_STACK_SHIFT; s++)) do
     
     mkstring $s
 
-    export -n tm
-    export -n p
-    export -n times
-    export -n cycles
-    export -n sep
-    
     for ((i=0; i<$AUTOBENCH_ITER; i++)) do
-        p=`$PERF stat $TMP/$benchmark 2> $TMP/perf.run > /dev/null`
+        p=`env -i FILLER=$FILLER $PERF stat $TMP/$benchmark 2> $TMP/perf.run > /dev/null`
         cy=`grep "   cycles  " $TMP/perf.run | awk '{print $1}' | sed 's/,//g'`
         tm=`grep " seconds time elapsed" $TMP/perf.run | awk '{print $1}'`
 
