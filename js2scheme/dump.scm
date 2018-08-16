@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Aug 15 18:31:14 2018 (serrano)                */
+;*    Last change :  Thu Aug 16 04:59:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -210,6 +210,7 @@
 	 (else int)))
 
    (interval
+      (interval-type rng)
       (pp-range-int (interval-min rng))
       (pp-range-int (interval-max rng))))
    
@@ -223,7 +224,7 @@
 		      ((isa? this J2SExpr)
 		       (with-access::J2SExpr this (range) range))
 		      ((isa? this J2SDecl)
-		       (with-access::J2SDecl this (range) range))
+		       (with-access::J2SDecl this (vrange) vrange))
 		      (else
 		       '()))))
 	  (if (interval? range) `(:range ,(pp-range range)) '()))

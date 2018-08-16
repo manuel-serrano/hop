@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Aug 13 18:45:45 2018 (serrano)                */
+;*    Last change :  Thu Aug 16 04:58:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -272,15 +272,20 @@
 	      ;; usage: init, new, ref, assig, get (field), set (field), call
 	      ;; delete
 	      (usage::pair-nil (default '()) (info '("notraverse")))
-	      ;; initial type of paramaters
-	      (itype::symbol (default 'unknown) (info '("notraverse")))
-	      ;; user declare type, if set, assign will be guarded
+	      ;; variable range
+	      (binder::symbol (default 'var) (info '("notraverse")))
+	      ;; user declared type, if set, assign will be guarded
 	      (utype::symbol (default 'unknown) (info '("notraverse")))
-	      ;; variable type value
+	      ;; initial parameter type
+	      (itype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; computed variable type value
 	      (vtype::symbol (default 'unknown) (info '("notraverse")))
-	      (hint::pair-nil (default '()) (info '("notraverse")))
-	      (range::obj (default #unspecified) (info '("notraverse")))
-	      (binder::symbol (default 'var) (info '("notraverse"))))
+	      ;; initial parameter range
+	      (irange::obj (default #unspecified) (info '("notraverse")))
+	      ;; computed variable range
+	      (vrange::obj (default #unspecified) (info '("notraverse")))
+	      ;; variable 
+	      (hint::pair-nil (default '()) (info '("notraverse"))))
 
 	   (class J2SDeclArguments::J2SDecl)
 	   
