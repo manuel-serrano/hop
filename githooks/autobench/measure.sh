@@ -32,7 +32,7 @@ for ((shift=0; shift<$AUTOBENCH_STACK_SHIFT; shift++)) do
     cycles=
     sep="["
     
-    mkstring( $shift )
+    mkstring $shift
     FILLER=$string_res
     
     env
