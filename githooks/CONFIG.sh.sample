@@ -1,3 +1,0 @@
-HOSTS="redrock.inria.fr"
-SYSTEMS="gcc"
-BENCHMARKS=fib

@@ -1,4 +1,4 @@
- Hop -- Multitier JavaScript
+Hop -- Multitier JavaScript
 ===========================
 
 ### To build:
@@ -29,6 +29,3 @@ Resources
 ---------
 
  * <http://hop.inria.fr>
-
-
-
