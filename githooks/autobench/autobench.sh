@@ -1,7 +1,7 @@
 #!/bin/bash
 
 [ -z "$AUTOBENCH_ITER" ] && AUTOBENCH_ITER=3
-[ -z "$AUTOBENCH_STACK_SHIFT" ] && AUTOBENCH_ITER=64
+[ -z "$AUTOBENCH_STACK_SHIFT" ] && AUTOBENCH_STACK_SHIFT=64
 
 if [ -f $GITHOOKS_DIR/CONFIG.autobench.sh ]; then
   . $GITHHOOKS_DIR/CONFIG.autobench.sh
