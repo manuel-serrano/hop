@@ -27,12 +27,12 @@ echo "$2:"
 rm -f $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
 touch $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
 
-for ((shift=0; shift<$AUTOBENCH_STACK_SHIFT; shift++)) do
+for ((s=0; s<$AUTOBENCH_STACK_SHIFT; s++)) do
     times=
     cycles=
     sep="["
     
-    mkstring $shift
+    mkstring $s
     FILLER=$string_res
     
     env
@@ -48,8 +48,8 @@ for ((shift=0; shift<$AUTOBENCH_STACK_SHIFT; shift++)) do
         sep=","
     done
 	
-    echo "{ shift: $shift, times: $times ], cycles: $cycles ] }"
-    echo "{ shift: $shift, times: $times ], cycles: $cycles ] }" >> \
+    echo "{ stack_shift: $s, times: $times ], cycles: $cycles ] }"
+    echo "{ stack_shift: $s, times: $times ], cycles: $cycles ] }" >> \
       $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
 done
 
