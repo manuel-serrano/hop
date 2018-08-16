@@ -1,0 +1,8 @@
+#!/bin/bash
+# a hook to be installed in .git/hooks/post-receive
+
+touch /tmp/GIT.post-receive.hook
+while IFS= read -r line; do
+  printf '%s\n' "$line" >> /tmp/GIT.post-receive.hook
+
+done
