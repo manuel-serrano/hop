@@ -7,25 +7,50 @@ benchmark=$2
 
 mkdir -p $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME
 
-times=
-cycles=
-sep="["
+string_res;
 
 #* TIMEFORMAT="%3R"                                                    */
 #* export TIMEFORMAT                                                   */
 
-for ((i=0; i<$AUTOBENCH_ITER; i++)) do
-  p=`$PERF stat $TMP/$benchmark 2> $TMP/perf.run > /dev/null`
-  cy=`grep "   cycles  " $TMP/perf.run | awk '{print $1}' | sed 's/,//g'`
-  tm=`grep " seconds time elapsed" $TMP/perf.run | awk '{print $1}'`
+function mkstring() {
+  string_res="";
 
-  times="$times$sep $tm"
-  cycles="$cycles$sep $cy"
-
-  sep=","
-done
+  for ((i=0; i<$1; i++)) do
+      string_res+="########";
+  done
+}
+  
+export FILLER=""
 
 echo "$2:"
-echo "{ times: $times ], cycles: $cycles ] }" \
-  | tee $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
+
+rm -f $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
+touch $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
+
+for ((shift=0; shift<$AUTOBENCH_ITER; shift++)) do
+    times=
+    cycles=
+    sep="["
+    
+    mkstring( shift )
+    FILLER=$string_res
+    
+    env
+    
+    for ((i=0; i<$AUTOBENCH_ITER; i++)) do
+        p=`$PERF stat $TMP/$benchmark 2> $TMP/perf.run > /dev/null`
+        cy=`grep "   cycles  " $TMP/perf.run | awk '{print $1}' | sed 's/,//g'`
+        tm=`grep " seconds time elapsed" $TMP/perf.run | awk '{print $1}'`
+
+        times="$times$sep $tm"
+        cycles="$cycles$sep $cy"
+
+        sep=","
+    done
+	
+    echo "{ shift: $shift, times: $times ], cycles: $cycles ] }"
+    echo "{ shift: $shift, times: $times ], cycles: $cycles ] }" >> \
+      $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
+done
+
 
