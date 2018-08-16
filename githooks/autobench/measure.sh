@@ -26,13 +26,19 @@ rm -f $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
 touch $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
 
 for ((s=0; s<$AUTOBENCH_STACK_SHIFT; s++)) do
+    tm=
+    p=
     times=
     cycles=
     sep="["
     
     mkstring $s
 
-    /usr/bin/env
+    export -n tm
+    export -n p
+    export -n times
+    export -n cycles
+    export -n sep
     
     for ((i=0; i<$AUTOBENCH_ITER; i++)) do
         p=`$PERF stat $TMP/$benchmark 2> $TMP/perf.run > /dev/null`
