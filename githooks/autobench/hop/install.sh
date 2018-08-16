@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Aug 13 16:09:31 2018                          */
-#*    Last change :  Thu Aug 16 14:45:12 2018 (serrano)                */
+#*    Last change :  Thu Aug 16 14:49:23 2018 (serrano)                */
 #*    Copyright   :  2018 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Hop install file                                                 */
@@ -36,7 +36,7 @@ fi
 # install the current Bigloo version
 if [ ! -z "`git diff HEAD HEAD^ ./configure`" -o ! -f config.log -o ! -d $GITHOOKS_DIR/autobench/local ]; then
   echo "configuring hop..."
-  ./configure --prefix=$PWD --bigloo=$GITHOOKS_DIR/autobench/bootstrap/hop/bin/bigloo --disable-doc || exit 1
+  ./configure --prefix=$GITHOOKS_DIR/autobench/local --bigloo=$GITHOOKS_DIR/autobench/bootstrap/hop/bin/bigloo --disable-doc || exit 1
   echo "compiling and testing hop... "
   make -j || exit 1
   make install || exit 1
