@@ -7,16 +7,16 @@ benchmark=$2
 
 mkdir -p $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME
 
-string_res;
+string_res=
 
 #* TIMEFORMAT="%3R"                                                    */
 #* export TIMEFORMAT                                                   */
 
 function mkstring() {
-  string_res="";
+  string_res=""
 
   for ((i=0; i<$1; i++)) do
-      string_res+="########";
+      string_res+="########"
   done
 }
   
@@ -27,7 +27,7 @@ echo "$2:"
 rm -f $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
 touch $GITHOOKS_DIR/autobench/results/$system/$HOSTNAME/$benchmark.json
 
-for ((shift=0; shift<$AUTOBENCH_ITER; shift++)) do
+for ((shift=0; shift<$AUTOBENCH_STACK_SHIFT; shift++)) do
     times=
     cycles=
     sep="["
