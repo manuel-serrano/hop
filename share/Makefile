@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Aug  9 08:50:07 2018 (serrano)                */
+#*    Last change :  Thu Aug 16 15:09:03 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -249,7 +249,8 @@ uninstall:
 #*---------------------------------------------------------------------*/
 hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
   hop-exception.js hop-nodejs.js hop-react.js \
-  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js 
+  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js \
+  $(BGLCPP)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -264,7 +265,8 @@ hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
 
 hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
   hop-exception.js hop-debug.js hop-nodejs.js hop-react.js \
-  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js 
+  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js \
+  $(BGLCPP)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -290,7 +292,8 @@ hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
 #*---------------------------------------------------------------------*/
 hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
   hop-nodejs.js hop-react.js \
-  hop-builtin-serializers.js 
+  hop-builtin-serializers.js \
+  $(BGLCPP)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -310,27 +313,6 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
 
 hopjs_s.js: hop_s.js
 	cp $^ $@
-
-#* hopjs-serialize.js: hopscheme.js hop-builtin-serializers.js hop-serialize.js */
-#* 	echo "/* Automatically generated file (don't edit) *}" > $@    */
-#* 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file *}" >> $@ */
-#* 	date +'/* %D %I:%H *}' >> $@                                   */
-#* 	echo >> $@                                                     */
-#* 	echo "\"use strict\";" >> $@                                   */
-#* 	echo >> $@                                                     */
-#* 	if [ "$(DEBUG) " != "yes " ]; then \                           */
-#* 	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \ */
-#*                  | sed -e "s|//[^\"]*$$||g" \                       */
-#*                  | sed -e "/^[ \t]*$$/D" \                          */
-#*                  | $(BGLCPP) -DHOP_JAVASCRIPT -DHOP_MODULES -DHOP_NOBROWSER \ */
-#*                  >> $@; \                                           */
-#*         else \                                                      */
-#* 	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \ */
-#*                  | sed -e "s|//[^\"]*$$||g" \                       */
-#*                  | sed -e "/^[ \t]*$$/D" \                          */
-#*                  | $(BGLCPP) -DHOP_JAVASCRIPT -DHOP_MODULES -DHOP_NOBROWSER \ */
-#*                  >> $@; \                                           */
-#*         fi                                                          */
 
 #*---------------------------------------------------------------------*/
 #*    hop-runtime.sch ...                                              */
