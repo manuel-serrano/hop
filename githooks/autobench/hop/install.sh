@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Aug 13 16:09:31 2018                          */
-#*    Last change :  Thu Aug 16 14:41:38 2018 (serrano)                */
+#*    Last change :  Thu Aug 16 14:45:12 2018 (serrano)                */
 #*    Copyright   :  2018 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Hop install file                                                 */
@@ -13,7 +13,7 @@
 [ -z "$CC" ] && CC=gcc
 [ -z "$CFLAGS" ] && CFLAGS=-O3
 
-if [ ! -f $GITHOOKS_DIR/autobench/bootstrap/hop ]; then
+if [ ! -d $GITHOOKS_DIR/autobench/bootstrap/hop ]; then
   mkdir -p $GITHOOKS_DIR/autobench/bootstrap/hop
   mkdir -p $GITHOOKS_DIR/autobench/download
   
@@ -27,7 +27,7 @@ if [ ! -f $GITHOOKS_DIR/autobench/bootstrap/hop ]; then
    echo "Untaring bigloo..."; \
    tar xfz ../../download/bigloo-latest.tar.gz; \
    cd bigloo4.3b; \
-   ./configure --prefix=$GITHOOKS_DIR/autobench/bootstrap/hop --disable-avahi --disable-alsa --disable-gstreamer --disable-pulseaudio --disable-mpg123 --disable-flac --disable-multimedia --disable-wav --jvm=no; \
+   ./configure --prefix=$GITHOOKS_DIR/autobench/bootstrap/hop --jvm=no; \
    echo "Compiling bootstrap Bigloo $(PWD)"; \
    make -j; \
    make install)
