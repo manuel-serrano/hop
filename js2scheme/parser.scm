@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Aug 17 07:41:52 2018 (serrano)                */
+;*    Last change :  Fri Aug 17 07:57:45 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1709,7 +1709,8 @@
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
 	     (cond
-		((eq? (token-value token) 'async)
+		((and (eq? (token-value token) 'async)
+		      (eq? (peek-token-value) 'function))
 		 (async-expression token))
 		((eq? (peek-token-type) '=>)
 		 (arrow-function (list token) (token-loc token)))
