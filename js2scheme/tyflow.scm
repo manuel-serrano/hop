@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Aug 16 07:47:29 2018 (serrano)                */
+;*    Last change :  Fri Aug 17 11:08:20 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -849,7 +849,6 @@
    (with-access::J2SPostfix this (lhs rhs op)
       (multiple-value-bind (tyr envr bkr)
 	 (node-type rhs env fix)
-	 ;;(unless (type-number? tyr) (set! tyr 'number))
 	 (multiple-value-bind (tyv __ lbk)
 	    (node-type lhs env fix)
 	    (cond
@@ -882,7 +881,6 @@
    (with-access::J2SPrefix this (lhs rhs op)
       (multiple-value-bind (tyr envr bkr)
 	 (node-type rhs env fix)
-	 ;;(unless (type-number? tyr) (set! tyr 'number))
 	 (multiple-value-bind (tyv __ lbk)
 	    (node-type lhs env fix)
 	    (cond
@@ -956,7 +954,7 @@
 				(else
 				 (cons p itype)))))
 		     params)))
-	 ;; transfer all the itypes to vtypes
+	 ;; transfer all itypes to vtypes
 	 (for-each (lambda (decl)
 		      (with-access::J2SDecl decl (itype)
 			 (decl-vtype-add! decl itype fix)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Aug 13 12:01:03 2018 (serrano)                */
+;*    Last change :  Fri Aug 17 07:50:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -261,10 +261,11 @@
 		((eq? (token-value token) 'async)
 		 (let* ((token (consume-any!))
 			(next (peek-token-type)))
-		    (token-push-back! token)
 		    (if (eq? next 'function)
-			(async-declaration)
-			(statement))))
+			(async-declaration token)
+			(begin
+			   (token-push-back! token)
+			   (statement)))))
 		(else
 		 (statement)))))
 	 ((service)
@@ -300,7 +301,6 @@
       (case (peek-token-type)
 	 ((function) (function-declaration))
 	 ((service) (service-declaration))
-	 ((async) (async-declaration))
 	 ((class) (class-declaration))
 	 ((EOF) (cdr (consume-any!)))
 	 ((ERROR) (parse-token-error "Error" (consume-any!)))
@@ -329,7 +329,6 @@
 	 ;; However, it looks like main implementation do. For compatibility
 	 ;; we mimic this behavior.
 	 ((function) (function-declaration))
-	 ((async) (async-declaration))
 	 ((class) (class-declaration))
 	 ((debugger) (debugger-statement))
 	 (else (expression-statement))))
@@ -857,16 +856,18 @@
    (define (labeled-or-expr)
       (let* ((id-token (consume-token! 'ID))
 	     (next-token-type (peek-token-type)))
-	 (if (eq? next-token-type  ':)
-	     (begin
-		(consume-any!)
-		(instantiate::J2SLabel
-		   (loc (token-loc id-token))
-		   (id (cdr id-token))
-		   (body (statement))))
-	     (begin
-		(token-push-back! id-token)
-		(expression-statement)))))
+	 (cond
+	    ((eq? next-token-type  ':)
+	     (consume-any!)
+	     (instantiate::J2SLabel
+		(loc (token-loc id-token))
+		(id (cdr id-token))
+		(body (statement))))
+	    ((eq? (token-value id-token) 'async)
+	     (async-declaration id-token))
+	    (else
+	     (token-push-back! id-token)
+	     (expression-statement)))))
 
    (define (debugger-statement)
       (let ((token (consume-token! 'debugger)))
@@ -884,9 +885,8 @@
    (define (function-declaration)
       (function #t (consume-token! 'function) #f))
 
-   (define (async-declaration)
-      (let* ((tok (consume-any!))
-	     (fun (function-declaration)))
+   (define (async-declaration tok)
+      (let ((fun (function-declaration)))
 	 (if (isa? fun J2SDeclFun)
 	     (with-access::J2SDeclFun fun (val)
 		(set! val (async->generator val))
@@ -940,9 +940,8 @@
 			       (J2SHopRef '%this)))))
 		   fun))))))
       
-   (define (async-expression)
-      (let* ((tok (consume-any!))
-	     (fun (primary #f)))
+   (define (async-expression tok)
+      (let ((fun (primary #f)))
 	 (if (isa? fun J2SFun)
 	     (async->generator fun)
 	     (parse-token-error "Illegal async function expression" tok))))
@@ -1734,8 +1733,10 @@
 		(loc (token-loc ignore))
 		(clazz clazz)
 		(args args))))
-	 ((yield await)
+	 ((yield)
 	  (yield-expr))
+	 ((await)
+	  (await-expr))
 	 (else
 	  (access-or-call (primary destructuring?) loc #f))))
 
@@ -1760,6 +1761,14 @@
 		   (loc loc)
 		   (generator gen)
 		   (expr expr)))))))
+
+   (define (await-expr)
+      (let* ((loc (token-loc (consume-any!)))
+	     (expr (unary #f)))
+	 (instantiate::J2SYield
+	    (loc loc)
+	    (generator #f)
+	    (expr expr))))
    
    (define (tag-call-arguments loc)
       (let* ((exprs (template-expressions #t))
@@ -1954,8 +1963,6 @@
 	  (function-expression))
 	 ((service)
 	  (service-expression))
-	 ((async)
-	  (async-expression))
 	 ((class)
 	  (class-expression))
 	 ((this)
@@ -1973,6 +1980,9 @@
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
 	     (cond
+		((and (eq? (token-value token) 'async)
+		      (eq? (peek-token-value) 'function))
+		 (async-expression token))
 		((eq? (peek-token-type) '=>)
 		 (arrow-function (list token) (token-loc token)))
 		((and plugins (assq (token-value token) plugins))

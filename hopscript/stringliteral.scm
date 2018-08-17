@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Aug  7 10:37:56 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 16:34:44 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -342,7 +342,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Create a JsStringLiteral from a list of Scheme string literals.  */
 ;*---------------------------------------------------------------------*/
-(define (js-stringlist->jsstring  val::pair-nil)
+(define (js-stringlist->jsstring val::pair-nil)
    (cond
       ((null? val)
        (js-ascii->jsstring ""))
@@ -353,21 +353,12 @@
 	  (js-string->jsstring (car val))
 	  (js-string->jsstring (cadr val))))
       (else
-       (let* ((str (car val))
-	      (res (instantiate::JsStringLiteralUTF8
-		      (left str)
-		      (weight (string-length str)))))
-	  (let loop ((val (cdr val))
-		     (parent res))
-	     (if (null? val)
-		 res
-		 (with-access::JsStringLiteral parent (right)
-		    (let* ((str (car val))
-			   (child (instantiate::JsStringLiteralUTF8
-				     (left (car val))
-				     (weight (string-length str)))))
-		       (set! right child)
-		       (loop (cdr val) child)))))))))
+       (let ((lav (reverse! val)))
+	  (let loop ((lav (cdr lav))
+		     (acc (js-string->jsstring (car lav))))
+	     (if (null? (cdr lav))
+		 (js-jsstring-append (car lav) acc)
+		 (loop (cdr lav) (js-jsstring-append (car lav) acc))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->string ...                                          */
