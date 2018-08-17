@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Aug 17 16:58:30 2018 (serrano)                */
+;*    Last change :  Fri Aug 17 19:02:02 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -116,7 +116,7 @@
 	       (cond
 		  ((not (=fx (fix-stamp fix) ostamp))
 		   (loop (+fx i 1)))
-		  ((force-range this)
+		  ((force-int32 this)
 		   (loop (+fx i 1))))))
 	 this)))
 
@@ -2242,63 +2242,31 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    force-range ...                                                  */
+;*    force-int32 ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (force-range::bool this::J2SNode)
+(define (force-int32::bool this::J2SNode)
    (let ((cell (make-cell #f)))
-      (force-range! this cell)
+      (force-int32! this cell)
       (cell-ref cell)))
 
 ;*---------------------------------------------------------------------*/
-;*    force-range! ...                                                 */
+;*    force-int32! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-range! this::J2SNode cell::cell)
+(define-walk-method (force-int32! this::J2SNode cell::cell)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    force-range! ::J2SBinary ...                                     */
+;*    force-int32! ::J2SBinary ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-range! this::J2SBinary cell)
+(define-walk-method (force-int32! this::J2SBinary cell)
    (with-access::J2SBinary this (op range)
       (unless (interval? range)
-	 (cell-set! cell #t)
 	 (case op
 	    ((<< >> ^ BIT_OR &)
+	     (cell-set! cell #t)
 	     (set! range *int32-intv*))
-	    ((<< >>> ^ BIT_OR &)
-	     (set! range *uint32-intv*))
-	    (else
-	     (set! range *infinity-intv*)))
+	    ((>>>)
+	     (cell-set! cell #t)
+	     (set! range *uint32-intv*)))
 	 this)))
-
-;*---------------------------------------------------------------------*/
-;*    force-range! ::J2SExpr ...                                       */
-;*---------------------------------------------------------------------*/
-(define-walk-method (force-range! this::J2SExpr cell)
-   (with-access::J2SExpr this (range)
-      (unless (interval? range)
-	 (cell-set! cell #t)
-	 (set! range *infinity-intv*)
-	 this)))
-
-;*---------------------------------------------------------------------*/
-;*    force-range! ::J2SFun ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (force-range! this::J2SFun cell)
-   (with-access::J2SFun this (rrange thisp range)
-      (when (isa? thisp J2SNode)
-	 (force-range! thisp cell))
-      (unless (interval? rrange)
-	 (cell-set! cell #t) (set! rrange *infinity-intv*))
-      (call-default-walker)))
-      
-;*---------------------------------------------------------------------*/
-;*    force-range! ::J2SDecl ...                                       */
-;*---------------------------------------------------------------------*/
-(define-walk-method (force-range! this::J2SDecl cell)
-   (with-access::J2SDecl this (vrange)
-      (unless (interval? vrange)
-	 (cell-set! cell #t)
-	 (set! vrange *infinity-intv*)))
-   (call-default-walker))
    
