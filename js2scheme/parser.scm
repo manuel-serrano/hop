@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Aug 17 05:48:44 2018 (serrano)                */
+;*    Last change :  Fri Aug 17 07:41:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1421,13 +1421,13 @@
 		(clazz clazz)
 		(args args))))
 	 ((yield)
-	  (yield-await-expr (lambda () (assig-expr #f))))
+	  (yield-expr))
 	 ((await)
-	  (yield-await-expr unary))
+	  (await-expr))
 	 (else
 	  (access-or-call (primary) loc #f))))
 
-   (define (yield-await-expr expr-parser)
+   (define (yield-expr)
       (let ((loc (token-loc (consume-any!)))
 	    (gen (when (eq? (peek-token-type) '*)
 		    (consume-any!)
@@ -1443,11 +1443,19 @@
 		(expr (instantiate::J2SUndefined
 			 (loc loc)))))
 	    (else
-	     (let ((expr expr-parser))
+	     (let ((expr (assig-expr #f)))
 		(instantiate::J2SYield
 		   (loc loc)
 		   (generator gen)
 		   (expr expr)))))))
+
+   (define (await-expr)
+      (let* ((loc (token-loc (consume-any!)))
+	     (expr (unary)))
+	 (instantiate::J2SYield
+	    (loc loc)
+	    (generator #f)
+	    (expr expr))))
    
    (define (tag-call-arguments loc)
       (let* ((exprs (template-expressions #t))
