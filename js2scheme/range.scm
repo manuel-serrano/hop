@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Aug 17 19:02:02 2018 (serrano)                */
+;*    Last change :  Fri Aug 17 19:07:31 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -73,6 +73,7 @@
 	       (lambda (ip)
 		  (set! *dump-stop* (read ip)))))))
    (when (isa? this J2SProgram)
+      (j2s-range-init!)
       (let ((tymap (if (>=fx (config-get args :int-size 0) 53)
 		       typemap53 typemap32)))
 	 (if (config-get args :optim-range #f)
@@ -2267,6 +2268,6 @@
 	     (set! range *int32-intv*))
 	    ((>>>)
 	     (cell-set! cell #t)
-	     (set! range *uint32-intv*)))
-	 this)))
+	     (set! range *uint32-intv*))))
+      this))
    
