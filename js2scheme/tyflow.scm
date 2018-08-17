@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Aug 17 11:08:20 2018 (serrano)                */
+;*    Last change :  Fri Aug 17 17:36:46 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -530,6 +530,21 @@
       (multiple-value-bind (env bk)
 	 (node-type-args exprs env fix)
 	 (expr-type-add! this env fix 'array bk))))
+
+;*---------------------------------------------------------------------*/
+;*    node-type ::J2SPragma ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SPragma env::pair-nil fix::cell)
+   (with-access::J2SPragma this (lang expr type)
+      (if (eq? lang 'scheme)
+	  (if (eq? type 'unknown)
+	      (expr-type-add! this env fix 'any)
+	      (return type env '()))
+	  (multiple-value-bind (_ _ bk)
+	     (node-type expr env fix)
+	     (if (eq? type 'unknown)
+		 (expr-type-add! this env fix 'any bk)
+		 (return type env '()))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDataPropertyInit ...                              */
@@ -1195,7 +1210,7 @@
 		  (expr-type-add! this envc fix typc bk)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    type ::J2SNew ...                                                */
+;*    node-type ::J2SNew ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SNew env::pair-nil fix::cell)
 
@@ -1392,21 +1407,6 @@
 	 (expr-type-add! this envf fix 'undefined bkf))))
    
 ;*---------------------------------------------------------------------*/
-;*    node-type ::J2SPragma ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (node-type this::J2SPragma env::pair-nil fix::cell)
-   (with-access::J2SPragma this (lang expr type)
-      (if (eq? lang 'scheme)
-	  (if (eq? type 'unknown)
-	      (expr-type-add! this env fix 'any)
-	      (return type env '()))
-	  (multiple-value-bind (_ _ bk)
-	     (node-type expr env fix)
-	     (if (eq? type 'unknown)
-		 (expr-type-add! this env fix 'any bk)
-		 (return type env '()))))))
-
-;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SNop ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SNop env::pair-nil fix::cell)
@@ -1455,6 +1455,17 @@
 		  (return typ nenv (append bk bks))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    node-type ::J2SWith ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SWith env::pair-nil fix::cell)
+   (with-access::J2SWith this (obj block)
+      (multiple-value-bind (tye enve bke)
+	 (node-type obj env fix)
+	 (multiple-value-bind (tyb envb bkb)
+	    (node-type block enve fix)
+	    (return 'void envb (append bke bkb))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SReturn env::pair-nil fix::cell)
@@ -1479,17 +1490,6 @@
 	    (else
 	     (values 'void enve (list this)))))))
 
-;*---------------------------------------------------------------------*/
-;*    node-type ::J2SWith ...                                          */
-;*---------------------------------------------------------------------*/
-(define-walk-method (node-type this::J2SWith env::pair-nil fix::cell)
-   (with-access::J2SWith this (obj block)
-      (multiple-value-bind (tye enve bke)
-	 (node-type obj env fix)
-	 (multiple-value-bind (tyb envb bkb)
-	    (node-type block enve fix)
-	    (return 'void envb (append bke bkb))))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SReturnYield ...                                   */
 ;*---------------------------------------------------------------------*/
