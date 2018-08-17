@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Aug 16 05:22:11 2018 (serrano)                */
+;*    Last change :  Thu Aug 16 07:47:29 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -92,7 +92,7 @@
 		   (flush-output-port (current-error-port)))
 		(let ((ofix (cell-ref fix)))
 		   ;; type all the nodes
-		   (typing-seq (append headers decls nodes) '() fix)
+		   (node-type-seq (append headers decls nodes) '() fix)
 		   (cond
 		      ((not (=fx (cell-ref fix) ofix))
 		       (loop (+fx i 1)))
@@ -103,7 +103,7 @@
 			  ((not (=fx (cell-ref fix) ofix))
 			   (loop (+fx i 1)))
 			  ((config-get args :optim-hint #f)
-			   ;; hint typing optimization
+			   ;; hint node-type optimization
 			   (when (>=fx j2s-verbose 3)
 			      (fprintf (current-error-port) "hint"))
 			   (let ((dups (j2s-hint! this args)))
@@ -368,25 +368,25 @@
    (append right left))
 
 ;*---------------------------------------------------------------------*/
-;*    typing-args ...                                                  */
+;*    node-type-args ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type all the arguments and return a new environment. The         */
 ;*    arguments are typed as left to right sequence.                   */
 ;*---------------------------------------------------------------------*/
-(define (typing-args::pair-nil args env::pair-nil fix::cell)
+(define (node-type-args::pair-nil args env::pair-nil fix::cell)
    (let loop ((args args)
 	      (env env)
 	      (bks '()))
       (if (null? args)
 	  (values env bks)
 	  (multiple-value-bind (_ enva bk)
-	     (typing (car args) env fix)
+	     (node-type (car args) env fix)
 	     (loop (cdr args) enva (append bk bks))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing* ...                                                      */
+;*    node-type* ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (typing* nodes::pair-nil env::pair-nil fix::cell)
+(define (node-type* nodes::pair-nil env::pair-nil fix::cell)
    (let loop ((nodes nodes)
 	      (ty 'undefined)
 	      (env env)
@@ -394,17 +394,17 @@
       (if (null? nodes)
 	  (return ty env bks)
 	  (multiple-value-bind (tyn envn bk)
-	     (typing (car nodes) env fix)
+	     (node-type (car nodes) env fix)
 	     (if (pair? bk)
 		 (multiple-value-bind (tyr envr bkr)
-		    (typing-seq (cdr nodes) envn fix)
+		    (node-type-seq (cdr nodes) envn fix)
 		    (return tyr (env-merge envn envr) (append bk bk bks)))
 		 (loop (cdr nodes) tyn envn (append bk bks)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing-seq ...                                                   */
+;*    node-type-seq ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (typing-seq nodes::pair-nil env::pair-nil fix::cell)
+(define (node-type-seq nodes::pair-nil env::pair-nil fix::cell)
    (let loop ((nodes nodes)
 	      (ty 'void)
 	      (env env)
@@ -412,10 +412,10 @@
       (if (null? nodes)
 	  (return ty env bks)
 	  (multiple-value-bind (tyn envn bk)
-	     (typing (car nodes) env fix)
+	     (node-type (car nodes) env fix)
 	     (if (pair? bk)
 		 (multiple-value-bind (tyr envr bkr)
-		    (typing-seq (cdr nodes) envn fix)
+		    (node-type-seq (cdr nodes) envn fix)
 		    (return tyr (env-merge envn envr) (append bk bk bks)))
 		 (loop (cdr nodes) tyn envn (append bk bks)))))))
 
@@ -431,125 +431,125 @@
       bks))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SNode ...                                             */
+;*    node-type ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SNode env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SNode env::pair-nil fix::cell)
    (return 'any '() '()))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SExpr ...                                             */
+;*    node-type ::J2SExpr ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SExpr env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SExpr env::pair-nil fix::cell)
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SNull ...                                             */
+;*    node-type ::J2SNull ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SNull env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SNull env::pair-nil fix::cell)
    (expr-type-add! this env fix 'null))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SUndefined ...                                        */
+;*    node-type ::J2SUndefined ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SUndefined env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SUndefined env::pair-nil fix::cell)
    (expr-type-add! this env fix 'undefined))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SArrayAbsent ...                                      */
+;*    node-type ::J2SArrayAbsent ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SArrayAbsent env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SArrayAbsent env::pair-nil fix::cell)
    (expr-type-add! this env fix 'undefined))
    
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SNumber ...                                           */
+;*    node-type ::J2SNumber ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SNumber env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SNumber env::pair-nil fix::cell)
    (with-access::J2SNumber this (val type)
       (expr-type-add! this env fix
 	 (if (flonum? val) 'real 'integer))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SBool ...                                             */
+;*    node-type ::J2SBool ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SBool env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SBool env::pair-nil fix::cell)
    (expr-type-add! this env fix 'bool))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SString ...                                           */
+;*    node-type ::J2SString ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SString env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SString env::pair-nil fix::cell)
    (expr-type-add! this env fix 'string))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SNativeString ...                                     */
+;*    node-type ::J2SNativeString ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SNativeString env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SNativeString env::pair-nil fix::cell)
    (expr-type-add! this env fix 'scmstring))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SRegExp ...                                           */
+;*    node-type ::J2SRegExp ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SRegExp env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SRegExp env::pair-nil fix::cell)
    (expr-type-add! this env fix 'regexp))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SLiteralCnst ...                                      */
+;*    node-type ::J2SLiteralCnst ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SLiteralCnst env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SLiteralCnst env::pair-nil fix::cell)
    (with-access::J2SLiteralCnst this (val)
       (multiple-value-bind (tyv env bk)
-	 (typing val env fix)
+	 (node-type val env fix)
 	 (expr-type-add! this env fix tyv bk))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SCmap ...                                             */
+;*    node-type ::J2SCmap ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SCmap env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SCmap env::pair-nil fix::cell)
    (expr-type-add! this env fix 'cmap))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2STemplate ...                                         */
+;*    node-type ::J2STemplate ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2STemplate env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2STemplate env::pair-nil fix::cell)
    (with-access::J2STemplate this (exprs)
       (multiple-value-bind (env bk)
-	 (typing-args exprs env fix)
+	 (node-type-args exprs env fix)
 	 (expr-type-add! this env fix 'string bk))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2STilde ...                                            */
+;*    node-type ::J2STilde ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2STilde env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2STilde env::pair-nil fix::cell)
    (expr-type-add! this env fix 'tilde))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SArray ...                                            */
+;*    node-type ::J2SArray ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SArray env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SArray env::pair-nil fix::cell)
    (with-access::J2SArray this (exprs len)
       (multiple-value-bind (env bk)
-	 (typing-args exprs env fix)
+	 (node-type-args exprs env fix)
 	 (expr-type-add! this env fix 'array bk))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SDataPropertyInit ...                                 */
+;*    node-type ::J2SDataPropertyInit ...                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SDataPropertyInit env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SDataPropertyInit env::pair-nil fix::cell)
    (with-access::J2SDataPropertyInit this (val)
-      (typing val env fix)))
+      (node-type val env fix)))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SAccessorPropertyInit ...                             */
+;*    node-type ::J2SAccessorPropertyInit ...                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SAccessorPropertyInit env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SAccessorPropertyInit env::pair-nil fix::cell)
    (with-access::J2SAccessorPropertyInit this (get set)
       (call-default-walker)
       (return 'void env '())))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SObjInit ...                                          */
+;*    node-type ::J2SObjInit ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SObjInit env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SObjInit env::pair-nil fix::cell)
    (with-access::J2SObjInit this (inits)
       (let ((args (append-map (lambda (init)
 				 (cond
@@ -561,40 +561,47 @@
 					(list name get set)))))
 		     inits)))
 	 (multiple-value-bind (env bk)
-	    (typing-args args env fix)
+	    (node-type-args args env fix)
 	    (expr-type-add! this env fix 'object bk)))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SParen ...                                            */
+;*    node-type ::J2SParen ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SParen env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SParen env::pair-nil fix::cell)
    (with-access::J2SParen this (expr)
       (multiple-value-bind (tye enve bke)
-	 (typing expr env fix)
-	 (if tye
-	     (expr-type-add! this enve fix tye bke)
-	     (return 'unknown enve bke)))))
+	 (node-type expr env fix)
+	 (expr-type-add! this enve fix tye bke))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SSequence ...                                         */
+;*    node-type ::J2SSequence ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SSequence env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SSequence env::pair-nil fix::cell)
    (with-access::J2SSequence this (exprs)
       (multiple-value-bind (tye env bk)
-	 (typing* exprs env fix)
+	 (node-type* exprs env fix)
 	 (expr-type-add! this env fix tye bk))))
       
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SHopRef ...                                           */
+;*    node-type ::J2SBindExit ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SHopRef env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SBindExit env::pair-nil fix::cell)
+   (with-access::J2SBindExit this (stmt type)
+      (multiple-value-bind (typ env bk)
+	 (node-type stmt env fix)
+	 (expr-type-add! this env fix typ bk))))
+
+;*---------------------------------------------------------------------*/
+;*    node-type ::J2SHopRef ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SHopRef env::pair-nil fix::cell)
    (with-access::J2SHopRef this (type)
       (return type env '())))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SUnresolvedRef ...                                    */
+;*    node-type ::J2SUnresolvedRef ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SUnresolvedRef env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SUnresolvedRef env::pair-nil fix::cell)
    (with-access::J2SUnresolvedRef this (id)
       (cond
 	 ((memq id '(console))
@@ -608,9 +615,9 @@
 		 (expr-type-add! this env fix 'object)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SGlobalRef ...                                        */
+;*    node-type ::J2SGlobalRef ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SGlobalRef env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SGlobalRef env::pair-nil fix::cell)
    (with-access::J2SGlobalRef this (decl id)
       (with-access::J2SDecl decl (utype usage)
 	 (cond
@@ -644,9 +651,9 @@
 	   (not (usage? '(ref call eval) usage)))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SRef ...                                              */
+;*    node-type ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SRef env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SRef env::pair-nil fix::cell)
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (id key utype usage)
 	 (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
@@ -660,44 +667,35 @@
 	     (expr-type-add! this env fix utype)))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SWithRef ...                                          */
+;*    node-type ::J2SWithRef ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SWithRef env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SWithRef env::pair-nil fix::cell)
    (with-access::J2SWithRef this (expr)
-      (typing expr '() fix)
+      (node-type expr '() fix)
       (expr-type-add! this env fix 'any)))
    
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SBindExit ...                                         */
+;*    node-type ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SBindExit env::pair-nil fix::cell)
-   (with-access::J2SBindExit this (stmt type)
-      (multiple-value-bind (typ env bk)
-	 (typing stmt env fix)
-	 (return type env '()))))
-
-;*---------------------------------------------------------------------*/
-;*    typing ::J2SDecl ...                                             */
-;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SDecl env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SDecl env::pair-nil fix::cell)
    (decl-vtype-add! this 'undefined fix)
    (return 'void env '()))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SDeclArguments ...                                    */
+;*    node-type ::J2SDeclArguments ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SDeclArguments env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SDeclArguments env::pair-nil fix::cell)
    (decl-itype-add! this 'arguments fix)
    (decl-vtype-add! this 'arguments fix)
    (return 'void (extend-env env this 'arguments) '()))
    
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SDeclInit ...                                         */
+;*    node-type ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SDeclInit env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SDeclInit env::pair-nil fix::cell)
    (with-access::J2SDeclInit this (val utype usage id loc)
       (multiple-value-bind (ty env bk)
-	 (typing val env fix)
+	 (node-type val env fix)
 	 (cond
 	    ((not (eq? utype 'unknown))
 	     (decl-vtype-set! this utype fix)
@@ -712,17 +710,16 @@
 	     (return 'void (extend-env env this ty) bk))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SDeclFun ...                                          */
+;*    node-type ::J2SDeclFun ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SDeclFun env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SDeclFun env::pair-nil fix::cell)
 
-   (define (typing-ctor-only val)
+   (define (node-type-ctor-only val)
       (with-access::J2SFun val (generator rtype thisp)
 	 (when generator
 	    (set! rtype 'any))
 	 (when (isa? thisp J2SDecl)
-	    (with-access::J2SDecl thisp (itype)
-	       (decl-itype-add! thisp 'object fix)))))
+	    (decl-itype-add! thisp 'object fix))))
    
    (with-access::J2SDeclFun this (val ronly)
       (if ronly
@@ -735,32 +732,32 @@
 	 ((constructor-only? this)
 	  ;; a mere constructor
 	  (if (isa? val J2SFun)
-	      (typing-ctor-only val)
+	      (node-type-ctor-only val)
 	      (with-access::J2SMethod val (function method)
-		 (typing-ctor-only function)
-		 (typing-ctor-only method)))))
+		 (node-type-ctor-only function)
+		 (node-type-ctor-only method)))))
       (multiple-value-bind (tyf env _)
 	 (if (isa? val J2SMethod)
-	     (typing val env fix)
-	     (typing-fun val (typing-fun-decl val env fix) fix))
+	     (node-type val env fix)
+	     (node-type-fun val (node-type-fun-decl val env fix) fix))
 	 (return 'void (extend-env env this tyf) '()))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SDeclClass ...                                        */
+;*    node-type ::J2SDeclClass ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SDeclClass env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SDeclClass env::pair-nil fix::cell)
    (with-access::J2SDeclClass this (val ronly)
       (if ronly
 	  (decl-vtype-set! this 'class fix)
 	  (decl-vtype-add! this 'class fix))
       (multiple-value-bind (tyf env bk)
-	 (typing val env fix)
+	 (node-type val env fix)
 	 (return 'class env bk))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SAssig ...                                            */
+;*    node-type ::J2SAssig ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SAssig env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SAssig env::pair-nil fix::cell)
    
    (define (this-assig? lhs)
       (when (isa? lhs J2SAccess)
@@ -771,14 +768,14 @@
    
    (with-access::J2SAssig this (lhs rhs loc)
       (multiple-value-bind (tyv envl lbk)
-	 (typing lhs env fix)
+	 (node-type lhs env fix)
 	 (cond
 	    ;; variable assignment
 	    ((isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
 		(with-access::J2SDecl decl (writable utype id)
 		   (multiple-value-bind (tyr env rbk)
-		      (typing rhs envl fix)
+		      (node-type rhs envl fix)
 		      (cond
 			 ((and (not writable) (not (isa? this J2SInit)))
 			  (let ((nenv (extend-env env decl tyv)))
@@ -804,25 +801,25 @@
 		;; "this" property assignment
 		(let ((envt (extend-env envl decl 'object)))
 		   (multiple-value-bind (tyr nenv rbk)
-		      (typing rhs envt fix)
+		      (node-type rhs envt fix)
 		      (if tyr
 			  (expr-type-add! this nenv fix tyr (append lbk rbk))
 			  (return 'unknown envt (append lbk rbk)))))))
 	    (else
 	     ;; a non variable assignment
 	     (multiple-value-bind (tyr nenv rbk)
-		(typing rhs envl fix)
+		(node-type rhs envl fix)
 		(if tyr
 		    (expr-type-add! this nenv fix tyr (append lbk rbk))
 		    (return 'unknown env (append lbk rbk)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SAssigOp ...                                          */
+;*    node-type ::J2SAssigOp ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SAssigOp env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SAssigOp env::pair-nil fix::cell)
    (with-access::J2SAssigOp this (lhs rhs op)
       (multiple-value-bind (tyr envr bkr)
-	 (typing-binary op lhs rhs env fix)
+	 (node-type-binary op lhs rhs env fix)
 	 (cond
 	    ((isa? lhs J2SRef)
 	     ;; a variable assignment
@@ -831,7 +828,7 @@
 		   (cond
 		      ((not writable)
 		       (multiple-value-bind (tyv envl lbk)
-			  (typing lhs env fix)
+			  (node-type lhs env fix)
 			  (let ((nenv (extend-env env decl tyv)))
 			     (expr-type-add! this nenv fix tyv
 				(append lbk bkr)))))
@@ -846,15 +843,15 @@
 	     (expr-type-add! this envr fix tyr bkr))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SPostfix ...                                          */
+;*    node-type ::J2SPostfix ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SPostfix env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SPostfix env::pair-nil fix::cell)
    (with-access::J2SPostfix this (lhs rhs op)
       (multiple-value-bind (tyr envr bkr)
-	 (typing rhs env fix)
+	 (node-type rhs env fix)
 	 ;;(unless (type-number? tyr) (set! tyr 'number))
 	 (multiple-value-bind (tyv __ lbk)
-	    (typing lhs env fix)
+	    (node-type lhs env fix)
 	    (cond
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
@@ -863,7 +860,7 @@
 		      (cond
 			 ((not writable)
 			  (multiple-value-bind (tyv envl lbk)
-			     (typing lhs env fix)
+			     (node-type lhs env fix)
 			     (let ((nenv (extend-env env decl tyv)))
 				(expr-type-add! this nenv fix tyv
 				   (append lbk bkr)))))
@@ -879,15 +876,15 @@
 		(expr-type-add! this envr fix tyr bkr)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SPrefix ...                                           */
+;*    node-type ::J2SPrefix ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SPrefix env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SPrefix env::pair-nil fix::cell)
    (with-access::J2SPrefix this (lhs rhs op)
       (multiple-value-bind (tyr envr bkr)
-	 (typing rhs env fix)
+	 (node-type rhs env fix)
 	 ;;(unless (type-number? tyr) (set! tyr 'number))
 	 (multiple-value-bind (tyv __ lbk)
-	    (typing lhs env fix)
+	    (node-type lhs env fix)
 	    (cond
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
@@ -896,7 +893,7 @@
 		      (cond
 			 ((not writable)
 			  (multiple-value-bind (tyv envl lbk)
-			     (typing lhs env fix)
+			     (node-type lhs env fix)
 			     (let ((nenv (extend-env env decl tyv)))
 				(expr-type-add! this nenv fix tyv
 				   (append lbk bkr)))))
@@ -912,27 +909,27 @@
 		(expr-type-add! this envr fix tyr bkr)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SDProducer ...                                        */
+;*    node-type ::J2SDProducer ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SDProducer env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SDProducer env::pair-nil fix::cell)
    (with-access::J2SDProducer this (expr type)
       (multiple-value-bind (ty env bk)
-	 (typing expr env fix)
+	 (node-type expr env fix)
 	 (return type env bk))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SDConsumer ...                                        */
+;*    node-type ::J2SDConsumer ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SDConsumer env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SDConsumer env::pair-nil fix::cell)
    (with-access::J2SDConsumer this (expr)
       (multiple-value-bind (ty env bk)
-	 (typing expr env fix)
+	 (node-type expr env fix)
 	 (expr-type-add! this env fix ty bk))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing-fun ...                                                   */
+;*    node-type-fun ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (typing-fun this::J2SFun env::pair-nil fix::cell)
+(define (node-type-fun this::J2SFun env::pair-nil fix::cell)
    (with-access::J2SFun this (body thisp params rtype %info vararg argumentsp type)
       (let ((envp (map (lambda (p::J2SDecl)
 			  (with-access::J2SDecl p (usage utype itype)
@@ -974,14 +971,14 @@
 	       (decl-vtype-add! argumentsp 'arguments fix)
 	       (set! fenv (extend-env fenv argumentsp 'arguments)))
 	    (multiple-value-bind (_ envf _)
-	       (typing body fenv fix)
+	       (node-type body fenv fix)
 	       (set! %info fenv)))
 	 (expr-type-add! this env fix 'function))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing-fun-decl ::J2SFun ...                                     */
+;*    node-type-fun-decl ::J2SFun ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (typing-fun-decl this::J2SFun env::pair-nil fix)
+(define (node-type-fun-decl this::J2SFun env::pair-nil fix)
    (with-access::J2SFun this (body rtype decl)
       (when (isa? decl J2SDecl)
 	 (decl-vtype-set! decl 'function fix))
@@ -1020,43 +1017,43 @@
       (escape-fun method fix)))
 				  
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SFun ...                                              */
+;*    node-type ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SFun env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SFun env::pair-nil fix::cell)
    (escape-fun this fix)
-   (typing-fun this (typing-fun-decl this env fix) fix))
+   (node-type-fun this (node-type-fun-decl this env fix) fix))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SMethod ...                                           */
+;*    node-type ::J2SMethod ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SMethod env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SMethod env::pair-nil fix::cell)
    (call-default-walker)
    (expr-type-add! this env fix 'function))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SCall ...                                             */
+;*    node-type ::J2SCall ...                                          */
 ;*    -------------------------------------------------------------    */
-;*    Function calls may affect the typing environment, depending      */
+;*    Function calls may affect the node-type environment, depending   */
 ;*    on the called function. Each case comes with a special rule,     */
 ;*    detailed in the code below.                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SCall env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SCall env::pair-nil fix::cell)
    (with-access::J2SCall this ((callee fun) thisarg args)
       (multiple-value-bind (tty env bkt)
 	 (if (pair? thisarg)
-	     (typing (car thisarg) env fix)
+	     (node-type (car thisarg) env fix)
 	     (values 'unknown env '()))
 	 (multiple-value-bind (rty env bkc)
-	    (typing-call callee tty args env fix)
+	    (node-type-call callee tty args env fix)
 	    (expr-type-add! this env fix rty (append bkt bkc))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing-call ...                                                  */
+;*    node-type-call ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (typing-call callee tty args env fix)
+(define (node-type-call callee tty args env fix)
    
    (define (unknown-call-env env)
-      ;; compute a new typing environment where all mutated globals
+      ;; compute a new node-type environment where all mutated globals
       ;; and all mutated captured locals are removed
       (filter (lambda (e)
 		 (with-access::J2SDecl (car e) (ronly scope %info id)
@@ -1092,16 +1089,16 @@
    (define (type-inline-call callee args env bk)
       ;; type a direct function call: ((function (...) { ... })( ... ))
       ;; side effects are automatically handled when
-      ;; typing the function body
+      ;; node-type the function body
       (type-known-call-args callee args env bk)
       (multiple-value-bind (_ envf _)
-	 (typing-fun callee env fix)
+	 (node-type-fun callee env fix)
 	 (with-access::J2SFun callee (rtype mode)
 	    (return rtype env bk))))
    
    (define (type-known-call ref::J2SRef callee args env bk)
       ;; type a known constant function call: F( ... )
-      ;; the new typing environment is a merge of env and the environment
+      ;; the new node-type environment is a merge of env and the environment
       ;; produced by the function
       (with-access::J2SRef ref (decl)
 	 (expr-type-add! ref env fix 'function)
@@ -1139,25 +1136,25 @@
    (define (type-method-call callee args env bk)
       ;; type a method call: O.m( ... )
       (multiple-value-bind (_ env bk)
-	 (typing callee env fix)
+	 (node-type callee env fix)
 	 (with-access::J2SAccess callee (obj field)
 	    (let* ((fn (j2s-field-name field))
 		   (ty (if (string? fn)
 			   (tyflow-type (car (find-builtin-method-type obj fn)))
 			   'any)))
 	       (if (eq? ty 'any)
-		   ;; the method is unknown, filter out the typing env
+		   ;; the method is unknown, filter out the node-type env
 		   (return ty (unknown-call-env env) bk)
 		   (return ty env bk))))))
    
    (define (type-hop-call callee args env bk)
       ;; type a hop (foreign function) call: H( ... )
-      ;; hop calls have no effect on the typing env
+      ;; hop calls have no effect on the node-type env
       (with-access::J2SHopRef callee (rtype loc)
 	 (return rtype env bk)))
    
    (define (type-global-call callee args env bk)
-      (typing callee env fix)
+      (node-type callee env fix)
       (cond
 	 ((is-global? callee 'Array)
 	  (return 'array (unknown-call-env env) bk))
@@ -1168,13 +1165,13 @@
    
    (define (type-unknown-call callee env bk)
       ;; type a unknown function call: expr( ... )
-      ;; filter out the typing env
+      ;; filter out the node-type env
       (multiple-value-bind (_ env bk)
-	 (typing callee env fix)
+	 (node-type callee env fix)
 	 (return 'any (unknown-call-env env) bk)))
 
    (multiple-value-bind (env bk)
-      (typing-args args env fix)
+      (node-type-args args env fix)
       (cond
 	 ((isa? callee J2SFun) (type-inline-call callee args env bk))
 	 ((isa? callee J2SRef) (type-ref-call callee args env bk))
@@ -1184,16 +1181,16 @@
 	 (else (type-unknown-call callee env bk)))))
    
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SCond ...                                             */
+;*    node-type ::J2SCond ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SCond env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SCond env::pair-nil fix::cell)
    (with-access::J2SCond this (test then else)
       (multiple-value-bind (tyi env bki)
-	 (typing test env fix)
+	 (node-type test env fix)
 	 (multiple-value-bind (tyt envt bkt)
-	    (typing then env fix)
+	    (node-type then env fix)
 	    (multiple-value-bind (tye enve bke)
-	       (typing else env fix)
+	       (node-type else env fix)
 	       (let ((envc (env-merge envt enve))
 		     (typc (merge-types tyt tye))
 		     (bk (append bki bkt bke)))
@@ -1202,7 +1199,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SNew ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SNew env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SNew env::pair-nil fix::cell)
 
    (define (class-type clazz)
       (if (isa? clazz J2SUnresolvedRef)
@@ -1216,13 +1213,13 @@
 
    (with-access::J2SNew this (clazz args loc)
       (multiple-value-bind (_ env bk)
-	 (typing-call clazz 'object args env fix)
+	 (node-type-call clazz 'object args env fix)
 	 (expr-type-add! this env fix (class-type clazz) bk))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SUnary ...                                            */
+;*    node-type ::J2SUnary ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SUnary env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SUnary env::pair-nil fix::cell)
 
    (define (non-zero-integer? ty expr)
       (when (type-integer? ty)
@@ -1232,7 +1229,7 @@
 
    (with-access::J2SUnary this (op expr)
       (multiple-value-bind (ty env bk)
-	 (typing expr env fix)
+	 (node-type expr env fix)
 	 (let* ((tnum (if (eq? ty 'real) 'real 'number))
 		(tye (case op
 			((+) (if (non-zero-integer? ty expr) 'integer tnum))
@@ -1244,13 +1241,13 @@
 	    (expr-type-add! this env fix tye bk)))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing-binary ...                                                */
+;*    node-type-binary ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (typing-binary op lhs::J2SExpr rhs::J2SExpr env::pair-nil fix::cell)
+(define (node-type-binary op lhs::J2SExpr rhs::J2SExpr env::pair-nil fix::cell)
    (multiple-value-bind (typl envl bkl)
-      (typing lhs env fix)
+      (node-type lhs env fix)
       (multiple-value-bind (typr envr bkr)
-	 (typing rhs envl fix)
+	 (node-type rhs envl fix)
 	 (let ((typ (case op
 		       ((+)
 			(cond
@@ -1316,18 +1313,18 @@
 	       (append bkl bkr))))))
    
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SBinary ...                                           */
+;*    node-type ::J2SBinary ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SBinary env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SBinary env::pair-nil fix::cell)
    (with-access::J2SBinary this (op lhs rhs)
       (multiple-value-bind  (typ env bk)
-	 (typing-binary op lhs rhs env fix)
+	 (node-type-binary op lhs rhs env fix)
 	 (expr-type-add! this env fix typ bk))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SAccess ...                                           */
+;*    node-type ::J2SAccess ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SAccess env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SAccess env::pair-nil fix::cell)
 
    (define (is-number-ref? expr::J2SNode)
       (when (isa? expr J2SUnresolvedRef)
@@ -1336,9 +1333,9 @@
    
    (with-access::J2SAccess this (obj field)
       (multiple-value-bind (tyo envo bko)
-	 (typing obj env fix)
+	 (node-type obj env fix)
 	 (multiple-value-bind (tyf envf bkf)
-	    (typing field envo fix)
+	    (node-type field envo fix)
 	    (cond
 	       ((and (memq tyo '(array string arguments)) (j2s-field-length? field))
 		(with-access::J2SString field (val)
@@ -1379,70 +1376,70 @@
 		(expr-type-add! this envf fix 'any (append bko bkf))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SCacheCheck ...                                       */
+;*    node-type ::J2SCacheCheck ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SCacheCheck env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SCacheCheck env::pair-nil fix::cell)
    (multiple-value-bind (typf envf bkf)
       (call-default-walker)
       (with-access::J2SCacheCheck this (type)
 	 (expr-type-add! this envf fix 'bool bkf))))
    
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SCacheUpdate ...                                      */
+;*    node-type ::J2SCacheUpdate ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SCacheUpdate env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SCacheUpdate env::pair-nil fix::cell)
    (multiple-value-bind (typf envf bkf)
       (call-default-walker)
       (with-access::J2SCacheCheck this (type)
 	 (expr-type-add! this envf fix 'undefined bkf))))
    
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SPragma ...                                           */
+;*    node-type ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SPragma env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SPragma env::pair-nil fix::cell)
    (with-access::J2SPragma this (lang expr type)
       (if (eq? lang 'scheme)
 	  (if (eq? type 'unknown)
 	      (expr-type-add! this env fix 'any)
 	      (return type env '()))
 	  (multiple-value-bind (_ _ bk)
-	     (typing expr env fix)
+	     (node-type expr env fix)
 	     (if (eq? type 'unknown)
 		 (expr-type-add! this env fix 'any bk)
 		 (return type env '()))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SNop ...                                              */
+;*    node-type ::J2SNop ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SNop env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SNop env::pair-nil fix::cell)
    (return 'void env '()))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SStmtExpr ...                                         */
+;*    node-type ::J2SStmtExpr ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SStmtExpr env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SStmtExpr env::pair-nil fix::cell)
    (with-access::J2SStmtExpr this (expr)
       (multiple-value-bind (typ env bk)
-	 (typing expr env fix)
+	 (node-type expr env fix)
 	 (return typ env bk))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SSeq ...                                              */
+;*    node-type ::J2SSeq ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SSeq env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SSeq env::pair-nil fix::cell)
    (with-access::J2SSeq this (nodes)
-      (typing-seq nodes env fix)))
+      (node-type-seq nodes env fix)))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SLabel ...                                            */
+;*    node-type ::J2SLabel ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SLabel env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SLabel env::pair-nil fix::cell)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SLetBlock ...                                         */
+;*    node-type ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SLetBlock env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SLetBlock env::pair-nil fix::cell)
    (with-access::J2SLetBlock this (decls nodes)
       (let ((ienv (map (lambda (d::J2SDecl)
 			  (with-access::J2SDecl d (utype vtype)
@@ -1451,21 +1448,21 @@
 				 (cons d utype))))
 		     decls)))
 	 (multiple-value-bind (_ denv bk)
-	    (typing-seq decls (append ienv env) fix)
+	    (node-type-seq decls (append ienv env) fix)
 	    (multiple-value-bind (typ benv bks)
-	       (typing-seq nodes denv fix)
+	       (node-type-seq nodes denv fix)
 	       (let ((nenv (filter (lambda (d)
 				      (not (memq (car d) decls)))
 			      benv)))
 		  (return typ nenv (append bk bks))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SReturn ...                                           */
+;*    node-type ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SReturn env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SReturn env::pair-nil fix::cell)
    (with-access::J2SReturn this (expr from loc)
       (multiple-value-bind (tye enve bke)
-	 (typing expr env fix)
+	 (node-type expr env fix)
 	 (cond
 	    ((isa? from J2SFun)
 	     (with-access::J2SFun from (rtype)
@@ -1485,30 +1482,30 @@
 	     (values 'void enve (list this)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SWith ...                                             */
+;*    node-type ::J2SWith ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SWith env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SWith env::pair-nil fix::cell)
    (with-access::J2SWith this (obj block)
       (multiple-value-bind (tye enve bke)
-	 (typing obj env fix)
+	 (node-type obj env fix)
 	 (multiple-value-bind (tyb envb bkb)
-	    (typing block enve fix)
+	    (node-type block enve fix)
 	    (return 'void envb (append bke bkb))))))
    
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SReturnYield ...                                      */
+;*    node-type ::J2SReturnYield ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SReturnYield env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SReturnYield env::pair-nil fix::cell)
    (with-access::J2SReturnYield this (expr kont)
-      (typing kont env fix)
+      (node-type kont env fix)
       (multiple-value-bind (tye enve bke)
-	 (typing expr env fix)
+	 (node-type expr env fix)
 	 (values 'void enve (list this)))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SKont ...                                             */
+;*    node-type ::J2SKont ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SKont env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SKont env::pair-nil fix::cell)
    (with-access::J2SKont this (body exn param)
       (with-access::J2SDecl param (%info itype utype)
 	 (cond
@@ -1522,20 +1519,20 @@
 	     (decl-vtype-add! exn utype fix))
 	    ((not (eq? itype 'unknown))
 	     (decl-vtype-add! exn itype fix))))
-      (typing body env fix)
+      (node-type body env fix)
       (expr-type-add! this env fix 'procedure)))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SIf ...                                               */
+;*    node-type ::J2SIf ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SIf env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SIf env::pair-nil fix::cell)
    
    (define (isa-and? test)
       (when (isa? test J2SBinary)
 	 (with-access::J2SBinary test (op)
 	    (eq? op '&&))))
    
-   (define (typing-one-test test envt enve)
+   (define (node-type-one-test test envt enve)
       (multiple-value-bind (op decl typ ref)
 	 (j2s-expr-type-test test)
 	 (if (symbol? typ)
@@ -1547,41 +1544,41 @@
 		(else (values envt enve)))
 	     (values envt enve))))
    
-   (define (typing-test test envt enve)
+   (define (node-type-test test envt enve)
       (if (isa-and? test)
 	  (with-access::J2SBinary test (lhs rhs)
 	     (multiple-value-bind (nenvt nenve)
-		(typing-test lhs envt enve)
-		(typing-test rhs nenvt nenve)))
-	  (typing-one-test test envt enve)))
+		(node-type-test lhs envt enve)
+		(node-type-test rhs nenvt nenve)))
+	  (node-type-one-test test envt enve)))
 
    (with-access::J2SIf this (test then else)
       (multiple-value-bind (tyi env bki)
-	 (typing test env fix)
+	 (node-type test env fix)
 	 (multiple-value-bind (envt enve)
-	    (typing-test test env env)
+	    (node-type-test test env env)
 	    (multiple-value-bind (tyt envt bkt)
-	       (typing then envt fix)
+	       (node-type then envt fix)
 	       (multiple-value-bind (tye enve bke)
-		  (typing else enve fix)
+		  (node-type else enve fix)
 		  (let ((bk (append bki bke bkt)))
 		     (return (merge-types tyt tye)
 			(env-merge envt enve) bk))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SSwitch ...                                           */
+;*    node-type ::J2SSwitch ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SSwitch env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SSwitch env::pair-nil fix::cell)
    (with-access::J2SSwitch this (key cases)
       (multiple-value-bind (typk envk bk)
-	 (typing key env fix)
+	 (node-type key env fix)
 	 (let ((bks '())
 	       (typ #f))
 	    (let loop ((cases cases)
 		       (env envk))
 	       (when (pair? cases)
 		  (multiple-value-bind (t e b)
-		     (typing (car cases) env fix)
+		     (node-type (car cases) env fix)
 		     (set! bks (append b bks))
 		     (set! typ (if (not typ) t (merge-types typ t)))
 		     (with-access::J2SCase (car cases) (cascade)
@@ -1591,66 +1588,66 @@
 	    (return typ '() bks)))))
 
 ;*---------------------------------------------------------------------*/
-;*    type ::J2SCase ...                                               */
+;*    node-type ::J2SCase ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SCase env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SCase env::pair-nil fix::cell)
    (with-access::J2SCase this (expr body cascade)
       (multiple-value-bind (typx envx bk)
-	 (typing expr env fix)
+	 (node-type expr env fix)
 	 (multiple-value-bind (typb envb bkb)
-	    (typing body envx fix)
+	    (node-type body envx fix)
 	    (return typb envb (append bkb bk))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SBreak ...                                            */
+;*    node-type ::J2SBreak ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SBreak env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SBreak env::pair-nil fix::cell)
    (return 'void env (list this)))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SWhile ...                                            */
+;*    node-type ::J2SWhile ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SWhile env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SWhile env::pair-nil fix::cell)
    (with-access::J2SWhile this (test body)
       (let loop ((env env)
 		 (i 0))
 	 (let ((ofix (cell-ref fix)))
 	    (multiple-value-bind (typ envb bk)
-	       (typing-seq (list test body) env fix)
+	       (node-type-seq (list test body) env fix)
 	       (if (=fx ofix (cell-ref fix))
 		   (return typ envb (filter-breaks bk this))
 		   (loop (env-merge env envb) (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SDo ...                                               */
+;*    node-type ::J2SDo ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SDo env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SDo env::pair-nil fix::cell)
    (with-access::J2SDo this (test body)
       (let loop ((env env))
 	 (let ((ofix (cell-ref fix)))
 	    (multiple-value-bind (typ envb bk)
-	       (typing-seq (list body test) env fix)
+	       (node-type-seq (list body test) env fix)
 	       (if (=fx ofix (cell-ref fix))
 		   (return typ (env-merge env envb) (filter-breaks bk this))
 		   (loop (env-merge env envb))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SFor ...                                              */
+;*    node-type ::J2SFor ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SFor env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SFor env::pair-nil fix::cell)
    (with-access::J2SFor this (init test incr body)
       (let loop ((env env))
 	 (let ((ofix (cell-ref fix)))
 	    (multiple-value-bind (typ envb bk)
-	       (typing-seq (list init test body incr) env fix)
+	       (node-type-seq (list init test body incr) env fix)
 	       (if (=fx ofix (cell-ref fix))
 		   (return typ (env-merge env envb) (filter-breaks bk this))
 		   (loop (env-merge env envb))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SForIn ...                                            */
+;*    node-type ::J2SForIn ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SForIn env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SForIn env::pair-nil fix::cell)
    (with-access::J2SForIn this (lhs obj body op)
       (let ((decl (if (isa? lhs J2SRef)
 		      (with-access::J2SRef lhs (decl) decl)
@@ -1660,63 +1657,63 @@
 	 (let loop ((env (extend-env env decl ty)))
 	    (let ((ofix (cell-ref fix)))
 	       (multiple-value-bind (typ envb bk)
-		  (typing-seq (list obj body) env fix)
+		  (node-type-seq (list obj body) env fix)
 		  (if (=fx ofix (cell-ref fix))
 		      (return typ envb (filter-breaks bk this))
 		      (loop (env-merge env envb)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2STry ...                                              */
+;*    node-type ::J2STry ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2STry env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2STry env::pair-nil fix::cell)
    (with-access::J2STry this (body catch finally)
       (multiple-value-bind (_ envb bkb)
-	 (typing body env fix)
+	 (node-type body env fix)
 	 (multiple-value-bind (_ envc bkh)
-	    (typing catch env fix)
+	    (node-type catch env fix)
 	    (multiple-value-bind (_ envf bkf)
-	       (typing finally (env-merge envb envc) fix)
+	       (node-type finally (env-merge envb envc) fix)
 	       (return 'void envf (append bkb bkh bkf)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SCatch ...                                            */
+;*    node-type ::J2SCatch ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SCatch env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SCatch env::pair-nil fix::cell)
    (with-access::J2SCatch this (body param)
       (decl-vtype-add! param 'any fix)
-      (typing body env fix)))
+      (node-type body env fix)))
 
 ;*---------------------------------------------------------------------*/
-;*    type ::J2SThrow ...                                              */
+;*    node-type ::J2SThrow ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SThrow env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SThrow env::pair-nil fix::cell)
    (with-access::J2SThrow this (expr)
       (multiple-value-bind (_ env bk)
-	 (typing expr env fix)
+	 (node-type expr env fix)
 	 (return 'void env (cons this bk)))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SClass ...                                            */
+;*    node-type ::J2SClass ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SClass env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SClass env::pair-nil fix::cell)
    (with-access::J2SClass this (expr decl)
       (call-default-walker)
       (when decl (decl-vtype-add! decl 'function fix))
       (expr-type-add! this env fix 'class)))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SClassElement ...                                     */
+;*    node-type ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SClassElement env::pair-nil fix::cell)
+(define-walk-method (node-type this::J2SClassElement env::pair-nil fix::cell)
    (with-access::J2SClassElement this (prop)
-      (typing prop env fix)
+      (node-type prop env fix)
       (return 'void env '())))
       
 ;*---------------------------------------------------------------------*/
 ;*    j2s-resolve! ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    Resolve statically type checks using type informations           */
-;*    computed by the TYPING method.                                   */
+;*    computed by the NODE-TYPE method.                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-resolve! this::J2SProgram args fix)   
    (with-access::J2SProgram this (headers decls nodes)
@@ -2037,13 +2034,13 @@
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    force-unary-type! ...                                            */
+;*    force-unary-type! ::J2SNode ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-unary-type! this::J2SNode)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SUnary ...                                            */
+;*    force-unary-type! ::J2SUnary ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-unary-type! this::J2SUnary)
 
