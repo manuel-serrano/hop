@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue May 15 11:22:22 2018 (serrano)                */
+;*    Last change :  Fri Aug 17 05:28:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -241,7 +241,7 @@
 		     (next (peek-token-type)))
 		 (token-push-back! token)
 		 (if (eq? next 'function)
-		     (async-declaration)
+		     (async-declaration token)
 		     (statement)))
 	      (statement)))
 	 ((service)
@@ -268,7 +268,6 @@
       (case (peek-token-type)
 	 ((function) (function-declaration))
 	 ((service) (service-declaration))
-	 ((async) (async-declaration))
 	 ((EOF) (cdr (consume-any!)))
 	 ((ERROR) (parse-token-error "error" (consume-any!)))
 	 (else (statement))))
@@ -296,7 +295,6 @@
 	 ;; However, it looks like main implementation do. For compatibility
 	 ;; we mimic this behavior.
 	 ((function) (function-declaration))
-	 ((async) (async-declaration))
 	 ((debugger) (debugger-statement))
 	 (else (expression-statement))))
    
@@ -714,16 +712,18 @@
    (define (labeled-or-expr)
       (let* ((id-token (consume-token! 'ID))
 	     (next-token-type (peek-token-type)))
-	 (if (eq? next-token-type  ':)
-	     (begin
-		(consume-any!)
-		(instantiate::J2SLabel
-		   (loc (token-loc id-token))
-		   (id (cdr id-token))
-		   (body (statement))))
-	     (begin
-		(token-push-back! id-token)
-		(expression-statement)))))
+	 (cond
+	    ((eq? (token-value id-token) 'async)
+	     (async-declaration id-token))
+	    ((eq? next-token-type  ':)
+	     (consume-any!)
+	     (instantiate::J2SLabel
+		(loc (token-loc id-token))
+		(id (cdr id-token))
+		(body (statement))))
+	    (else
+	     (token-push-back! id-token)
+	     (expression-statement)))))
 
    (define (debugger-statement)
       (let ((token (consume-token! 'debugger)))
@@ -741,9 +741,8 @@
    (define (function-declaration)
       (function #t (consume-token! 'function)))
 
-   (define (async-declaration)
-      (let* ((tok (consume-any!))
-	     (fun (function-declaration)))
+   (define (async-declaration tok)
+      (let ((fun (function-declaration)))
 	 (if (isa? fun J2SDeclFun)
 	     (with-access::J2SDeclFun fun (val)
 		(set! val (async->generator val))
@@ -788,9 +787,8 @@
 			       gen (J2SThis (current-this)) (J2SHopRef '%this)))))
 		   fun))))))
       
-   (define (async-expression)
-      (let* ((tok (consume-any!))
-	     (fun (primary)))
+   (define (async-expression tok)
+      (let ((fun (primary)))
 	 (if (isa? fun J2SFun)
 	     (async->generator fun)
 	     (parse-token-error "Illegal async function expression" tok))))
@@ -1691,19 +1689,23 @@
 	  (function-expression))
 	 ((service)
 	  (service-expression))
-	 ((async)
-	  (async-expression))
 	 ((this)
 	  (instantiate::J2SThis
 	     (decl (current-this))
 	     (loc (token-loc (consume-any!)))))
+;* 	 ((async)                                                      */
+;* 	  (async-expression))                                          */
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
-	     (if (eq? (peek-token-type) '=>)
-		 (arrow-function (list token) (token-loc token))
+	     (cond
+		((eq? (token-value token) 'async)
+		 (async-expression token))
+		((eq? (peek-token-type) '=>)
+		 (arrow-function (list token) (token-loc token)))
+		(else
 		 (instantiate::J2SUnresolvedRef
 		    (loc (token-loc token))
-		    (id (token-value token))))))
+		    (id (token-value token)))))))
 	 ((HOP)
 	  (let ((token (consume-token! 'HOP)))
 	     (instantiate::J2SHopRef
