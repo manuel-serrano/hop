@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Aug 17 05:52:59 2018 (serrano)                */
+;*    Last change :  Fri Aug 17 07:50:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -856,14 +856,14 @@
       (let* ((id-token (consume-token! 'ID))
 	     (next-token-type (peek-token-type)))
 	 (cond
-	    ((eq? (token-value id-token) 'async)
-	     (async-declaration id-token))
 	    ((eq? next-token-type  ':)
 	     (consume-any!)
 	     (instantiate::J2SLabel
 		(loc (token-loc id-token))
 		(id (cdr id-token))
 		(body (statement))))
+	    ((eq? (token-value id-token) 'async)
+	     (async-declaration id-token))
 	    (else
 	     (token-push-back! id-token)
 	     (expression-statement)))))
@@ -1733,13 +1733,13 @@
 		(clazz clazz)
 		(args args))))
 	 ((yield)
-	  (yield-await-expr (lambda () (assig-expr #f #f))))
+	  (yield-expr))
 	 ((await)
-	  (yield-await-expr (lambda () (unary #f))))
+	  (await-expr))
 	 (else
 	  (access-or-call (primary destructuring?) loc #f))))
 
-   (define (yield-wait-expr expr-parser)
+   (define (yield-expr)
       (let ((loc (token-loc (consume-any!)))
 	    (gen (when (eq? (peek-token-type) '*)
 		    (consume-any!)
@@ -1755,11 +1755,19 @@
 		(expr (instantiate::J2SUndefined
 			 (loc loc)))))
 	    (else
-	     (let ((expr (expr-parser)))
+	     (let ((expr (assig-expr #f #f)))
 		(instantiate::J2SYield
 		   (loc loc)
 		   (generator gen)
 		   (expr expr)))))))
+
+   (define (await-expr)
+      (let* ((loc (token-loc (consume-any!)))
+	     (expr (unary #f)))
+	 (instantiate::J2SYield
+	    (loc loc)
+	    (generator #f)
+	    (expr expr))))
    
    (define (tag-call-arguments loc)
       (let* ((exprs (template-expressions #t))
@@ -1971,7 +1979,8 @@
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
 	     (cond
-		((eq? (token-value token) 'async)
+		((and (eq? (token-value token) 'async)
+		      (eq? (peek-token-value) 'function))
 		 (async-expression token))
 		((eq? (peek-token-type) '=>)
 		 (arrow-function (list token) (token-loc token)))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 15 11:33:27 2018                          */
-/*    Last change :  Tue May 15 11:35:03 2018 (serrano)                */
+/*    Last change :  Fri Aug 17 07:51:41 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 async functions                           */
@@ -28,3 +28,26 @@ async function async() {
 }
 
 assert.ok( async(), "async" );
+
+/*---------------------------------------------------------------------*/
+/*    await                                                            */
+/*---------------------------------------------------------------------*/
+function resolveAfter2Seconds( x ) {
+   return new Promise( resolve => {
+      setTimeout( () => { resolve( x ) }, 200 );
+   } );
+}
+
+async function asyncAwait( x ) {
+   var a = resolveAfter2Seconds( 20 );
+   return await a + 20;
+}
+
+async function asyncYield( x ) {
+   var a = resolveAfter2Seconds( 20 );
+   return yield a + 20;
+}
+
+asyncAwait( 10 ).then( v => { assert.ok( v, 40, "await parsing" ) } );
+asyncYield( 10 ).then( v => { assert.ok( typeof v, "string", "yield parsing" ) } );
+
