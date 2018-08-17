@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Aug 17 05:28:37 2018 (serrano)                */
+;*    Last change :  Fri Aug 17 05:52:59 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -260,10 +260,11 @@
 		((eq? (token-value token) 'async)
 		 (let* ((token (consume-any!))
 			(next (peek-token-type)))
-		    (token-push-back! token)
 		    (if (eq? next 'function)
 			(async-declaration token)
-			(statement))))
+			(begin
+			   (token-push-back! token)
+			   (statement)))))
 		(else
 		 (statement)))))
 	 ((service)
@@ -1731,12 +1732,14 @@
 		(loc (token-loc ignore))
 		(clazz clazz)
 		(args args))))
-	 ((yield await)
-	  (yield-expr))
+	 ((yield)
+	  (yield-await-expr (lambda () (assig-expr #f #f))))
+	 ((await)
+	  (yield-await-expr (lambda () (unary #f))))
 	 (else
 	  (access-or-call (primary destructuring?) loc #f))))
 
-   (define (yield-expr)
+   (define (yield-wait-expr expr-parser)
       (let ((loc (token-loc (consume-any!)))
 	    (gen (when (eq? (peek-token-type) '*)
 		    (consume-any!)
@@ -1752,7 +1755,7 @@
 		(expr (instantiate::J2SUndefined
 			 (loc loc)))))
 	    (else
-	     (let ((expr (assig-expr #f #f)))
+	     (let ((expr (expr-parser)))
 		(instantiate::J2SYield
 		   (loc loc)
 		   (generator gen)
