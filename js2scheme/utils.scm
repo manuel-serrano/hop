@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Aug 15 06:02:20 2018 (serrano)                */
+;*    Last change :  Sat Aug 18 06:50:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -313,8 +313,11 @@
 ;*    Return the smallest type that can represent both types.          */
 ;*---------------------------------------------------------------------*/
 (define (min-type t1 t2)
-   (if (eq? t1 t2)
-       t1
+   (cond
+      ((eq? t1 t2) t1)
+      ((eq? t1 'unknown) t2)
+      ((eq? t2 'unknown) t2)
+      (else
        (case t1
 	  ((index) t1)
 	  ((length) (if (eq? t2 'index) 'index t1))
@@ -323,7 +326,7 @@
 	  ((int53) (if (eq? t2 'int32) t2 t2))
 	  ((integer) (if (memq t2 '(int32 uint32)) t2 t1))
 	  ((number integer) t1)
-	  (else 'any))))
+	  (else 'any)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    max-type ...                                                     */
@@ -655,21 +658,21 @@
 (define (math-static-method-type name #!optional (default '(any any)))
    (assoc-method-type name default
       '(("abs" . (number undefined number))
-	("acos" . (real undefined real))
-	("asin" . (real undefined real))
+	("acos" . (real4 undefined real))
+	("asin" . (real4 undefined real))
 	("atan" . (real undefined real))
 	("atan2" . (real undefined real))
 	("ceil" . (number undefined real))
-	("cos" . (real undefined real))
+	("cos" . (real1 undefined real))
 	("exp" . (number undefined real))
 	("floor" . (number undefined real))
 	("log" . (real undefined real))
 	("max" . (number undefined number))
 	("min" . (number undefined number))
 	("pow" . (number undefined number))
-	("random" . (real undefined))
+	("random" . (ureal1 undefined))
 	("round" . (number undefined real))
-	("sin" . (real undefined real))
+	("sin" . (real1 undefined real))
 	("sqrt" . (real undefined real))
 	("tan" . (real undefined real)))))
    

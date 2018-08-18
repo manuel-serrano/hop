@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Aug 16 07:51:31 2018 (serrano)                */
+;*    Last change :  Sat Aug 18 06:42:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -99,10 +99,6 @@
 	   (final-class J2SForIn::J2SLoop
 	      ;; op: in, of
 	      (op::symbol read-only (default 'in))
-	      (lhs::J2SNode (info '("ast")))
-	      (obj::J2SExpr (info '("ast"))))
-	   
-	   (final-class J2SForOf::J2SLoop
 	      (lhs::J2SNode (info '("ast")))
 	      (obj::J2SExpr (info '("ast"))))
 	   

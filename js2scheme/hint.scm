@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Aug 15 19:01:23 2018 (serrano)                */
+;*    Last change :  Sat Aug 18 06:49:17 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -81,6 +81,7 @@
 	    cmap scmstring procedure tilde pair no-string))
        ty)
       ((memq ty '(index indexof length)) 'integer)
+      ((memq ty '(ureal1 real1 real4)) 'real)
       (else (error "js2scheme" "Illegal hint type" ty))))
 
 ;*---------------------------------------------------------------------*/

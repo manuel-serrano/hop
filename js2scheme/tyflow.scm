@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Aug 17 17:36:46 2018 (serrano)                */
+;*    Last change :  Sat Aug 18 06:48:18 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1118,9 +1118,7 @@
 	 (type-known-call-args callee args env bk)
 	 (with-access::J2SDecl decl (scope usage)
 	    (with-access::J2SFun callee (rtype %info)
-;* 	       (let ((nenv (if (env? %info) (env-override env %info) env))) */
-	       (let ((nenv env))
-		  (return rtype nenv bk))))))
+	       (return rtype env bk)))))
    
    (define (type-ref-call callee args env bk)
       ;; call a JS variable, check is it a known function
@@ -1477,14 +1475,16 @@
 	     (with-access::J2SFun from (rtype)
 		(let ((tyr (merge-types rtype tye)))
 		   (unless (eq? tyr rtype)
-		      (unfix! fix (format "J2SReturn(~a) ~a/~a" tye tyr rtype))
+		      (unfix! fix
+			 (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr rtype))
 		      (set! rtype tyr)))
 		(values 'void enve (list this))))
 	    ((isa? from J2SExpr)
 	     (with-access::J2SExpr from (type)
 		(let ((tyr (merge-types type tye)))
 		   (unless (eq? tyr type)
-		      (unfix! fix (format "J2SReturn(~a) ~a/~a" tye tyr type))
+		      (unfix! fix
+			 (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr type))
 		      (set! type tyr)))
 		(values 'void enve (list this))))
 	    (else

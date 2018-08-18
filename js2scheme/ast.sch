@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Thu Aug 16 05:08:13 2018 (serrano)                */
+;*    Last change :  Sat Aug 18 06:33:39 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    interval ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-struct interval type min max)
+(define-struct interval min max type)
 
 ;*---------------------------------------------------------------------*/
 ;*    Small macro-based API for helping creating J2SNode               */
