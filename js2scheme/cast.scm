@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Aug 20 09:11:46 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 18:50:08 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -541,6 +541,66 @@
       (set! else (type-cast! else type))
       (cast this totype)))
 
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SSwitch ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SSwitch totype)
+   
+   (define (inrange-int30? expr)
+      (if (isa? expr J2SNumber)
+	  (with-access::J2SNumber expr (val)
+	     (cond
+		((uint32? val)
+		 (<u32 val (bit-lshu32 #u32:1 29)))
+		((int32? val)
+		 (and (>=s32 val (negs32 (bit-lshs32 #u32:1 29)))
+		      (<s32 val (bit-lshs32 #s32:1 29))))
+		((fixnum? val)
+		 (and (>=fx val (negfx (bit-lsh 1 29)))
+		      (<fx val (bit-lsh 1 29))))
+		(else #f)))
+	  (with-access::J2SExpr expr (range)
+	     (when (interval? range)
+		(and (>=llong (interval-min range) (- (bit-lshllong #l1 30)))
+		     (<llong (interval-max range) (bit-lshllong #l1 30)))))))
+   
+   (define (type-cast-switch this keytype)
+      (with-access::J2SSwitch this (key cases)
+	 (set! key (type-cast! key 'uint32))
+	 (for-each (lambda (c)
+		      (with-access::J2SCase c (expr body)
+			 (unless (isa? c J2SDefault)
+			    (set! expr (type-cast! expr 'uint32)))
+			 (set! body (type-cast! body totype))))
+	    cases)
+	 this))
+   
+   (with-access::J2SSwitch this (key cases)
+      (cond
+	 ((every (lambda (c)
+		    (or (isa? c J2SDefault)
+			(with-access::J2SCase c (expr)
+			   (eq? (j2s-type expr) 'uint32))))
+	     cases)
+	  (type-cast-switch this 'string))
+	 ((every (lambda (c)
+		    (or (isa? c J2SDefault)
+			(with-access::J2SCase c (expr)
+			   (eq? (j2s-type expr) 'string))))
+	     cases)
+	  (type-cast-switch this 'string))
+	 ((every (lambda (c)
+		    (or (isa? c J2SDefault)
+			(with-access::J2SCase c (expr)
+			   (or (eq? (j2s-type expr) 'integer)
+			       (with-access::J2SExpr expr (range)
+				  (and (interval? range)
+				       (inrange-int30? expr)))))))
+	     cases)
+	  (type-cast-switch this 'integer))
+	 (else
+	  (type-cast-switch this 'any)))))
+			  
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SDataPropertyInit ...                             */
 ;*---------------------------------------------------------------------*/
