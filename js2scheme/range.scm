@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Aug 20 07:34:45 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 16:38:40 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -483,15 +483,6 @@
 	  left))))
 
 ;*---------------------------------------------------------------------*/
-;*    interval-binary ...                                              */
-;*---------------------------------------------------------------------*/
-(define (interval-binary binary::procedure left right)
-   (when (and (interval? left) (interval? right))
-      (interval
-	 (min (binary (interval-min left) (interval-min right)))
-	 (max (binary (interval-max left) (interval-max right))))))
-
-;*---------------------------------------------------------------------*/
 ;*    widening ...                                                     */
 ;*    -------------------------------------------------------------    */
 ;*    widening operator for the interval approximation.                */
@@ -758,20 +749,20 @@
    
    (define (shrink32 intv)
       (interval
-	 (max (interval-min intv) *min-int32*)
-	 (min (interval-max intv) *max-int32*)))
+	 (min (interval-min intv) *min-int32*)
+	 (max (interval-max intv) *max-int32*)))
    
    (when (and (interval? left) (interval? right))
       (if (or (>= (interval-max left) 0) (>= (interval-max right) 0))
 	  (let* ((mi (min (interval-min left) (interval-min right)))
-		 (ma (min (interval-max left) (interval-max right)))
+		 (ma (max (interval-max left) (interval-max right)))
 		 (min (if (or (>= (interval-min left) 0)
 			      (>= (interval-min right) 0))
 			  0
 			  mi))
 		 (intr (interval min ma)))
 	     (shrink32 intr))
-	  (shrink32 (interval left right)))))
+	  (shrink32 (interval-merge left right)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval-abs ...                                                 */
