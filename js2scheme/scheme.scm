@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Aug 14 15:15:01 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 08:27:41 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1644,7 +1644,11 @@
 
    (define (var++ op var tyv typ num prev loc)
       (if (type-number? typ)
-	  (J2SBinary/type op tyv (J2SHopRef/type var typ) num)
+	  (if (type-number? tyv)
+	      (J2SBinary/type op tyv (J2SHopRef/type var typ) num)
+	      `(if (fixnum? ,var)
+		   ,(J2SBinary/type op 'integer (J2SHopRef/type var 'bint) num)
+		   ,(J2SBinary/type op 'integer (J2SCast 'number (J2SHopRef/type var 'any)) num)))
 	  `(if (fixnum? ,var)
 	       ,(J2SBinary/type op 'integer (J2SHopRef/type var 'bint) num)
 	       ,(if prev

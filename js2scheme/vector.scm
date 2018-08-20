@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/vector.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/vector.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Sun Aug 12 07:15:37 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 09:47:47 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
@@ -95,7 +95,8 @@
 		   (unless (and (range? %info) (not (range-intervals %info)))
 		      (unless (range? %info) (set! %info (range '())))
 		      (with-access::J2SExpr field (range)
-			 (unless (interval? range)
+			 (unless (and (interval? range)
+				      (eq? (interval-type range) 'integer))
 			    ;; disable optimization for this array
 			    (range-intervals-set! %info #f)))))))
 	  (collect-ranges obj))

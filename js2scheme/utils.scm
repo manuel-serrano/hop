@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat Aug 18 06:50:09 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 07:43:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -321,8 +321,8 @@
        (case t1
 	  ((index) t1)
 	  ((length) (if (eq? t2 'index) 'index t1))
-	  ((int32) t1)
 	  ((uint32) (if (memq t2 '(index length)) t2 t1))
+	  ((int32) t1)
 	  ((int53) (if (eq? t2 'int32) t2 t2))
 	  ((integer) (if (memq t2 '(int32 uint32)) t2 t1))
 	  ((number integer) t1)

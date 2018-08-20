@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Aug 14 17:45:44 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 07:54:13 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -171,7 +171,7 @@
 		       `(JS-ARRAY-FIXNUM-FAST-REF ,scmobj
 			   (int32->fixnum ,scmfield)
 			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id amark)
+			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			   %this)))
 		  ((fixnum)
 		   (if amark
@@ -181,7 +181,7 @@
 			   %this)
 		       `(JS-ARRAY-FIXNUM-FAST-REF ,scmobj ,scmfield
 			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id amark)
+			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			   %this)))
 		  (else
 		   (if amark

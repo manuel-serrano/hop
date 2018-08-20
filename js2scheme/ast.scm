@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Aug 18 06:42:57 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 07:29:39 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -56,7 +56,7 @@
 	   (abstract-class J2SExpr::J2SNode
 	      (type::symbol (default 'unknown) (info '("notraverse")))
 	      (hint::pair-nil (default '()) (info '("notraverse")))
-	      (range::obj (default #f) (info '("notraverse"))))
+	      (range::obj (default #unspecified) (info '("notraverse"))))
 
 	   (class J2SCast::J2SExpr
 	      (expr::J2SExpr (info '("ast"))))
@@ -154,7 +154,7 @@
 	   
 	   (class J2SFun::J2SExpr
 	      (rtype::symbol (default 'unknown) (info '("notraverse")))
-	      (rrange::obj (default #f) (info '("notraverse")))
+	      (rrange::obj (default #unspecified) (info '("notraverse")))
 	      (idthis::obj (default 'this) (info '("notraverse")))
 	      (idgen read-only (default #f) (info '("notraverse")))
 	      (mode::symbol (default 'normal) (info '("notraverse")))
@@ -278,9 +278,9 @@
 	      ;; computed variable type value
 	      (vtype::symbol (default 'unknown) (info '("notraverse")))
 	      ;; initial parameter range
-	      (irange::obj (default #f) (info '("notraverse")))
+	      (irange::obj (default #unspecified) (info '("notraverse")))
 	      ;; computed variable range
-	      (vrange::obj (default #f) (info '("notraverse")))
+	      (vrange::obj (default #unspecified) (info '("notraverse")))
 	      ;; variable 
 	      (hint::pair-nil (default '()) (info '("notraverse"))))
 

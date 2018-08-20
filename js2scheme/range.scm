@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Aug 18 09:38:13 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 07:34:45 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -38,10 +38,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    debug control                                                    */
 ;*---------------------------------------------------------------------*/
-(define *debug-range* #t)
+(define *debug-range* #f)
 (define *debug-range-if* (and #f *debug-range*))
 (define *debug-range-call* (and #f *debug-range*))
 (define *debug-range-for* (and #t *debug-range*))
+(define *debug-range-while* (and #t *debug-range*))
 (define *debug-range-fix* (and #f *debug-range*))
 (define *debug-range-test* (and #t *debug-range*))
 
@@ -89,7 +90,7 @@
 			  (opt-range-binary! this args))
 		       ;; allocate precise variable types
 		       (type-range! this tymap)
-		       '(map-types this tymap))
+		       (map-types this tymap))
 		    (map-types this defmap)))
 	     (map-types this defmap)))
       (j2s-call-hint! this #t)
@@ -1201,7 +1202,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    escape-fun ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (escape-fun val::J2SFun fix)
+(define (escape-fun val::J2SFun fix::cell)
    (with-access::J2SFun val (params rrange thisp)
       (when thisp (decl-vrange-add! thisp *infinity-intv* fix))
       (set! rrange *infinity-intv*)
@@ -1221,7 +1222,7 @@
 ;*    node-range ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SFun env::pair-nil conf mode::symbol fix::cell)
-   (escape-fun this this)
+   (escape-fun this fix)
    (node-range-fun this (node-range-fun-decl this env conf mode fix) conf mode fix))
 
 ;*---------------------------------------------------------------------*/
@@ -1252,7 +1253,7 @@
 	 env))
    
    (define (range-known-call-args callee iargs env)
-      (with-access::J2SFun callee (rtype params vararg mode thisp mode)
+      (with-access::J2SFun callee (params vararg mode thisp mode)
 	 (when thisp (decl-irange-add! thisp *infinity-intv* fix))
 	 (let loop ((params params)
 		    (iargs iargs))
@@ -1288,8 +1289,8 @@
 	 (expr-range-add! ref env fix *infinity-intv*)
 	 (range-known-call-args callee iargs env)
 	 (with-access::J2SDecl decl (scope usage)
-	    (with-access::J2SFun callee (rtype %info)
-	       (return rtype env)))))
+	    (with-access::J2SFun callee (rrange %info)
+	       (return rrange env)))))
    
    (define (range-ref-call callee iargs env)
       ;; call a JS variable, check is it a known function
@@ -1344,8 +1345,8 @@
    (define (range-hop-call callee args env)
       ;; type a hop (foreign function) call: H( ... )
       ;; hop calls have no effect on the node-range env
-      (with-access::J2SHopRef callee (rtype loc)
-	 (return rtype env)))
+      (with-access::J2SHopRef callee (loc)
+	 (return #f env)))
    
    (define (range-global-call callee args env)
       (node-range callee env conf mode fix)
@@ -1661,7 +1662,8 @@
    (unless (or (isa? this J2SDecl)
 	       (isa? this J2SBreak)
 	       (isa? this J2SLabel)
-	       (isa? this J2SThrow))
+	       (isa? this J2SThrow)
+	       (isa? this J2SMeta))
       (tprint "not implemented " (typeof this)))
    (call-default-walker)
    (return *infinity-intv* env))
@@ -1726,6 +1728,8 @@
       (multiple-value-bind (intve enve)
 	 (node-range expr env conf mode fix)
 	 (cond
+	    ((not (interval? intve))
+	     (return #f enve))
 	    ((isa? from J2SFun)
 	     (with-access::J2SFun from (rrange)
 		(let ((tyr (interval-merge rrange intve)))
@@ -1816,24 +1820,23 @@
    (with-access::J2SWhile this (test body)
       (let ((denv (dump-env env))
 	    (ffix (cell-ref fix)))
-	 (when (pair? denv)
+	 (when *debug-range-while*
 	    (tprint ">>> while [" ffix "] test=" (j2s->list test))
 	    (tprint ">>> env=" denv))
 	 (let loop ((env env))
 	    (let ((ostamp (cell-ref fix)))
-	       (when (pair? denv)
+	       (when *debug-range-while*
 		  (tprint "--- while [" ffix "] / " ostamp)
 		  (tprint "     env=" (dump-env env)))
 	       (multiple-value-bind (testi teste)
 		  (node-range test env conf mode fix)
-		  (when (pair? denv)
+		  (when *debug-range-while*
 		     (tprint "    [" ffix "] test=" (j2s->list test))
 		     (tprint "    [" ffix "] teste=" (dump-env teste)))
 		  (multiple-value-bind (testet testef)
 		     (test-envs test env conf mode fix)
 		     (when (pair? denv)
-			(when (or (pair? (dump-env testet))
-				  (pair? (dump-env testef)))
+			(when *debug-range-while*
 			   (tprint "    [" ffix "] testet="
 			      (dump-env testet))
 			   (tprint "    [" ffix "] testef="
@@ -1844,7 +1847,7 @@
 				(eq? mode 'slow))
 			    (let ((wenv (append-env testef
 					   (env-merge bodye env))))
-			       (when (pair? denv)
+			       (when *debug-range-while*
 				  (tprint "<<< while [" ffix "] "
 				     (dump-env wenv)))
 			       (return #f wenv))
@@ -1980,10 +1983,7 @@
    (cond
       ((not (interval? intv)) 'unknown)
       ((not (eq? (interval-type intv) 'integer)) 'unknown)
-      ((interval-in? intv *int30-intv*) 'int32)
-      ((interval-in? intv *index-intv*) 'uint32)
-      ((interval-in? intv *index30-intv*) 'uint32)
-      ((interval-in? intv *length-intv*) 'uint32)
+      ((interval-in? intv *uint32-intv*) 'uint32)
       ((interval-in? intv *int32-intv*) 'int32)
       ((interval-in? intv *int53-intv*) (map-type 'int53 tymap))
       (else 'unknown)))

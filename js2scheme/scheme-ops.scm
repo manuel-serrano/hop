@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Aug 15 18:21:53 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 08:11:23 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2378,11 +2378,11 @@
 	  (binop-flip opu32 left right flip))
 	 ((real)
 	  (binop-flonum-flonum op type
-	     (asreal left 'int32) (asreal right 'int32)
+	     (asreal left 'uint32) (asreal right 'uint32)
 	     flip))
 	 ((int53)
 	  (binop-fixnum-fixnum op type
-	     (asfixnum left 'int32) (asfixnum right 'int32)
+	     (asfixnum left 'uint32) (asfixnum right 'uint32)
 	     flip))
 	 ((bool)
 	  (binop-flip opu32 left right flip))

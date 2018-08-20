@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Aug 15 18:34:02 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 09:11:46 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -224,19 +224,28 @@
 	  (cast expr totype))))
 
 ;*---------------------------------------------------------------------*/
-;*    type-cast! ::J2SCall ...                                         */
+;*    type-call-cast! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (type-cast! this::J2SCall totype)
+(define (type-call-cast! this::J2SExpr fun args totype)
    
    (define (known-fun this fun::J2SFun)
-      (with-access::J2SCall this (args type)
+      (with-access::J2SExpr this (type)
 	 (with-access::J2SFun fun (rtype params vararg)
 	    (let loop ((params params)
 		       (vals args)
 		       (nvals '()))
 	       (cond
 		  ((null? vals)
-		   (set! args (reverse! nvals))
+		   (cond
+		      ((isa? this J2SCall)
+		       (with-access::J2SCall this (args)
+			  (set! args (reverse! nvals))))
+		      ((isa? this J2SNew)
+		       (with-access::J2SNew this (args)
+			  (set! args (reverse! nvals))))
+		      (else
+		       (error "js2scheme" "internal call error"
+			  (j2s->list this))))
 		   (cast-expr this type totype))
 		  ((null? params)
 		   (loop params '()
@@ -246,7 +255,7 @@
 				    vals))
 			 nvals)))
 		  (else
-		   (with-access::J2SDecl (car params) (vtype)
+		   (with-access::J2SDecl (car params) (vtype id)
 		      (let ((ptype (if (and (eq? vtype 'array)
 					    (null? (cdr params))
 					    vararg)
@@ -257,37 +266,41 @@
 			       nvals))))))))))
    
    (define (unknown-fun this)
-      (with-access::J2SCall this (args fun)
-	 (set! fun (type-cast! fun '*))
-	 (set! args (map! (lambda (a) (type-cast! a 'any)) args))
-	 (cast-expr this 'any totype)))
+      (set! fun (type-cast! fun '*))
+      (set! args (map! (lambda (a) (type-cast! a 'any)) args))
+      (cast-expr this 'any totype))
    
-   (with-access::J2SCall this (fun)
-      (cond
-	 ((isa? fun J2SFun)
-	  (set! fun (type-cast! fun '*))
-	  (known-fun this fun))
-	 ((isa? fun J2SRef)
-	  (with-access::J2SRef fun (decl)
-	     (cond
-		((isa? decl J2SDeclFun)
-		 (with-access::J2SDeclFun decl (val)
-		    (if (isa? val J2SFun)
-			(known-fun this val)
-			(with-access::J2SMethod val (function method)
-			   (known-fun this function)))))
-		(else
-		 (unknown-fun this)))))
-	 (else
-	  (unknown-fun this)))))
+   (cond
+      ((isa? fun J2SFun)
+       (set! fun (type-cast! fun '*))
+       (known-fun this fun))
+      ((isa? fun J2SRef)
+       (with-access::J2SRef fun (decl)
+	  (cond
+	     ((isa? decl J2SDeclFun)
+	      (with-access::J2SDeclFun decl (val)
+		 (if (isa? val J2SFun)
+		     (known-fun this val)
+		     (with-access::J2SMethod val (function method)
+			(known-fun this function)))))
+	     (else
+	      (unknown-fun this)))))
+      (else
+       (unknown-fun this))))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SCall ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SCall totype)
+   (with-access::J2SCall this (fun args)
+      (type-call-cast! this fun args totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SNew ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SNew totype)
-   (with-access::J2SNew this (args)
-      (set! args (map! (lambda (a) (type-cast! a 'any)) args))
-      (cast this totype)))
+   (with-access::J2SNew this (clazz args)
+      (type-call-cast! this clazz args totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SThrow ...                                        */
