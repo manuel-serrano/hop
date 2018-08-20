@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Aug 18 06:49:17 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 16:22:27 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -748,12 +748,13 @@
    
    (define (prof val::J2SFun)
       (with-access::J2SFun val (body loc)
-	 (let ((prof (J2SStmtExpr
-			(J2SPragma
-			   `(profile-hint ,(format "~a" id) ',attr)))))
-	    (set! body
-	       (duplicate::J2SBlock body
-		  (nodes (list prof body)))))))
+	 (unless (profile-node? body)
+	    (let ((prof (J2SStmtExpr
+			   (J2SPragma
+			      `(profile-hint ,(format "~a" id) ',attr)))))
+	       (set! body
+		  (duplicate::J2SBlock body
+		     (nodes (list prof body))))))))
    
    (with-access::J2SDeclFun fun (val loc)
       (if (isa? val J2SFun)
@@ -777,13 +778,21 @@
 ;*    profile-node? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (profile-node? node)
-   (when (isa? node J2SStmtExpr)
-      (with-access::J2SStmtExpr node (expr)
-	 (when (isa? expr J2SPragma)
-	    (with-access::J2SPragma expr (expr)
-	       (match-case expr
-		  ((profile-hint . ?-) #t)
-		  (else #f)))))))
+   (let loop ((node node))
+      (cond
+	 ((isa? node J2SPragma)
+	  (with-access::J2SPragma node (expr)
+	     (match-case expr
+		((profile-hint . ?-) #t)
+		(else #f))))
+	 ((isa? node J2SStmtExpr)
+	  (with-access::J2SStmtExpr node (expr)
+	     (loop expr)))
+	 ((isa? node J2SBlock)
+	  (with-access::J2SBlock node (nodes)
+	     (loop (car nodes))))
+	 (else
+	  #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun-duplicate-untyped ...                                        */

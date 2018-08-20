@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Aug 18 06:48:18 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 16:19:28 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -539,12 +539,12 @@
       (if (eq? lang 'scheme)
 	  (if (eq? type 'unknown)
 	      (expr-type-add! this env fix 'any)
-	      (return type env '()))
+	      (return type env env))
 	  (multiple-value-bind (_ _ bk)
 	     (node-type expr env fix)
 	     (if (eq? type 'unknown)
 		 (expr-type-add! this env fix 'any bk)
-		 (return type env '()))))))
+		 (return type env env))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDataPropertyInit ...                              */
