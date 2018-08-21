@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Tue Aug 14 05:37:52 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 19:00:27 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -35,8 +35,10 @@
 	  (inline overflowfx ::long)
 	  (inline overflow53::obj ::long)
 	  
-	  (js-toint32::int32 ::obj ::JsGlobalObject)
-	  (js-touint32::uint32 ::obj ::JsGlobalObject)
+	  (inline js-toint32::int32 ::obj ::JsGlobalObject)
+	  (js-toint32-slow::int32 ::obj ::JsGlobalObject)
+	  (inline js-touint32::uint32 ::obj ::JsGlobalObject)
+	  (js-touint32-slow::uint32 obj %this)
 	  
 	  (js-number-toint32::int32 ::obj)
 	  (js-number-touint32::uint32 ::obj)
@@ -142,9 +144,19 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
 ;*---------------------------------------------------------------------*/
-(define (js-toint32::int32 obj %this)
+(define-inline (js-toint32::int32 obj %this)
+   (if (fixnum? obj)
+       (fixnum->int32 obj)
+       (js-toint32-slow obj %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toint32-slow ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-toint32-slow::int32 obj %this)
    (cond
-      ((or (fixnum? obj) (flonum? obj)) (js-number-toint32 obj))
+      ((flonum? obj) (js-number-toint32 obj))
+      ((fixnum? obj) (fixnum->int32 obj))
+      ((eq? obj (js-undefined)) 0)
       (else (js-number-toint32 (js-tonumber obj %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -152,9 +164,19 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
 ;*---------------------------------------------------------------------*/
-(define (js-touint32::uint32 obj %this)
+(define-inline (js-touint32::uint32 obj %this)
+   (if (fixnum? obj)
+       (fixnum->uint32 obj)
+       (js-touint32-slow obj %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-touint32-slow ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-touint32-slow::uint32 obj %this)
    (cond
-      ((or (fixnum? obj) (flonum? obj)) (js-number-touint32 obj))
+      ((flonum? obj) (js-number-touint32 obj))
+      ((fixnum? obj) (fixnum->uint32 obj))
+      ((eq? obj (js-undefined)) 0)
       (else (js-number-touint32 (js-tointeger obj %this)))))
 
 ;*---------------------------------------------------------------------*/
