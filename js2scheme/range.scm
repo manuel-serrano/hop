@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Aug 21 12:50:00 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 14:07:34 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -278,11 +278,11 @@
 	  (return rng env))))
 
 ;*---------------------------------------------------------------------*/
-;*    type->js-range ...                                               */
+;*    type->range ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    Type names mapped to their speicifying JS intervals.             */
 ;*---------------------------------------------------------------------*/
-(define (type->js-range type)
+(define (type->range type)
    (case type
       ((index) *index-intv*)
       ((indexof) *indexof-intv*)
@@ -291,6 +291,7 @@
       ((int32) *int32-intv*)
       ((uint32) *uint32-intv*)
       ((real1) *real1-intv*)
+      ((ureal1) *ureal1-intv*)
       ((real4) *real4-intv*)
       (else *infinity-intv*)))
 
@@ -1316,17 +1317,18 @@
 		   (intv (cond
 			    ((not (string? fn))
 			     *infinity-intv*)
-			    ((and (is-global? obj 'Math) (pair? iargs))
+			    ((is-global? obj 'Math) 
 			     (cond
-				((string=? fn "abs")
+				((and (string=? fn "abs") (pair? iargs))
 				 (interval-abs (car iargs)))
-				((member fn '("floor" "ceil" "round"))
+				((and (member fn '("floor" "ceil" "round"))
+				      (pair? iargs))
 				 (car iargs))
 				(else
-				 (type->js-range
+				 (type->range
 				    (car (find-builtin-method-type obj fn))))))
 			    (else
-			     (type->js-range
+			     (type->range
 				(car (find-builtin-method-type obj fn)))))))
 	       (if (eq? intv *infinity-intv*)
 		   ;; the method is unknown, filter out the node-range env
@@ -2153,23 +2155,30 @@
 		   (when ronly
 		      (cond
 			 ((isa? val J2SFun)
-			  (with-access::J2SFun val (rtype)
+			  (with-access::J2SFun val (rtype %info)
+			     (unless (eq? %info 'map-types)
+				(map-types val tmap))
 			     (set! type rtype)))
 			 ((isa? val J2SMethod)
 			  (with-access::J2SMethod val (function method)
-			     (with-access::J2SFun function (rtype)
+			     (with-access::J2SFun function (rtype %info)
+				(unless (eq? %info 'map-types)
+				   (map-types function tmap))
 				(set! type rtype))))))))
 	       ((isa? decl J2SDeclInit)
 		(with-access::J2SDeclInit decl (ronly val)
 		   (if (and ronly (isa? val J2SFun))
-		       (with-access::J2SFun val (rtype)
+		       (with-access::J2SFun val (rtype %info)
+			  (unless (eq? %info 'map-types)
+			     (map-types val tmap))
 			  (set! type rtype))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SFun tmap)
-   (with-access::J2SFun this (rtype rrange thisp)
+   (with-access::J2SFun this (rtype rrange thisp %info)
+      (set! %info 'map-types)
       (when (isa? thisp J2SDecl) (map-types thisp tmap))
       (when (range-type? rtype)
 	 (set! rtype (interval->type rrange tmap rtype))))

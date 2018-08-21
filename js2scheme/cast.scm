@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Aug 21 13:32:20 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 13:40:53 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -574,32 +574,38 @@
 			 (set! body (type-cast! body totype))))
 	    cases)
 	 this))
+
+   (define (expr-int? expr)
+      (or (eq? (j2s-type expr) 'integer)
+	  (with-access::J2SExpr expr (range)
+	     (and (interval? range)
+		  (inrange-int30? expr)))))
    
    (with-access::J2SSwitch this (key cases)
       (cond
-	 ((every (lambda (c)
-		    (or (isa? c J2SDefault)
-			(with-access::J2SCase c (expr)
-			   (or (eq? (j2s-type expr) 'integer)
-			       (with-access::J2SExpr expr (range)
-				  (and (interval? range)
-				       (inrange-int30? expr)))))))
-	     cases)
+	 ((and (expr-int? key)
+	       (every (lambda (c)
+			 (or (isa? c J2SDefault)
+			     (with-access::J2SCase c (expr)
+				(expr-int? expr))))
+		  cases))
 	  (type-cast-switch this 'integer))
-	 ((every (lambda (c)
-		    (or (isa? c J2SDefault)
-			(with-access::J2SCase c (expr)
-			   (eq? (j2s-type expr) 'uint32))))
-	     cases)
+	 ((and (eq? (j2s-type key) 'uint32)
+	       (every (lambda (c)
+			 (or (isa? c J2SDefault)
+			     (with-access::J2SCase c (expr)
+				(eq? (j2s-type expr) 'uint32))))
+		  cases))
 	  (type-cast-switch this 'uint32))
-	 ((every (lambda (c)
-		    (or (isa? c J2SDefault)
-			(with-access::J2SCase c (expr)
-			   (eq? (j2s-type expr) 'string))))
-	     cases)
+	 ((and (eq? (j2s-type key) 'string)
+	       (every (lambda (c)
+			 (or (isa? c J2SDefault)
+			     (with-access::J2SCase c (expr)
+				(eq? (j2s-type expr) 'string))))
+		  cases))
 	  (type-cast-switch this 'string))
 	 (else
-	  (type-cast-switch this 'any)))))
+	  (type-cast-switch this '*)))))
 			  
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SDataPropertyInit ...                             */
