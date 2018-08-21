@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Aug 21 07:53:38 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 13:32:20 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -580,6 +580,15 @@
 	 ((every (lambda (c)
 		    (or (isa? c J2SDefault)
 			(with-access::J2SCase c (expr)
+			   (or (eq? (j2s-type expr) 'integer)
+			       (with-access::J2SExpr expr (range)
+				  (and (interval? range)
+				       (inrange-int30? expr)))))))
+	     cases)
+	  (type-cast-switch this 'integer))
+	 ((every (lambda (c)
+		    (or (isa? c J2SDefault)
+			(with-access::J2SCase c (expr)
 			   (eq? (j2s-type expr) 'uint32))))
 	     cases)
 	  (type-cast-switch this 'uint32))
@@ -589,15 +598,6 @@
 			   (eq? (j2s-type expr) 'string))))
 	     cases)
 	  (type-cast-switch this 'string))
-	 ((every (lambda (c)
-		    (or (isa? c J2SDefault)
-			(with-access::J2SCase c (expr)
-			   (or (eq? (j2s-type expr) 'integer)
-			       (with-access::J2SExpr expr (range)
-				  (and (interval? range)
-				       (inrange-int30? expr)))))))
-	     cases)
-	  (type-cast-switch this 'integer))
 	 (else
 	  (type-cast-switch this 'any)))))
 			  
