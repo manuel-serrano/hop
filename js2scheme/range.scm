@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Aug 21 07:39:21 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 12:50:00 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1970,14 +1970,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    interval->type ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (interval->type intv tymap)
+(define (interval->type intv tymap default)
    (cond
-      ((not (interval? intv)) 'unknown)
-      ((not (eq? (interval-type intv) 'integer)) 'unknown)
+      ((not (interval? intv)) default)
+      ((not (eq? (interval-type intv) 'integer)) default)
       ((interval-in? intv *uint32-intv*) 'uint32)
       ((interval-in? intv *int32-intv*) 'int32)
       ((interval-in? intv *int53-intv*) (map-type 'int53 tymap))
-      (else 'unknown)))
+      (else default)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type->boxed-type ...                                             */
@@ -2015,7 +2015,7 @@
    (call-default-walker)
    (with-access::J2SDecl this (vrange vtype usage id scope usage useinfun)
       (when (range-type? vtype)
-	 (let ((ity (interval->type vrange tymap)))
+	 (let ((ity (interval->type vrange tymap vtype)))
 	    (unless (eq? ity 'unknown)
 	       (let ((rty (min-type vtype ity)))
 		  (unless (eq? rty vtype)
@@ -2038,9 +2038,8 @@
    (call-default-walker)
    (with-access::J2SExpr this (range type)
       (when (range-type? type)
-	 (let ((ity (interval->type range tymap)))
-	    (unless (eq? ity 'unknown)
-	       (set! type (min-type type ity))))))
+	 (let ((ity (interval->type range tymap 'number)))
+	    (set! type (min-type type ity)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -2135,8 +2134,9 @@
 ;*    map-types ::J2SExpr ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SExpr tmap)
-   (with-access::J2SExpr this (type)
-      (set! type (map-type type tmap)))
+   (with-access::J2SExpr this (range type)
+      (when (range-type? type)
+	 (set! type (interval->type range tmap type))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -2169,9 +2169,10 @@
 ;*    map-types ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SFun tmap)
-   (with-access::J2SFun this (rtype thisp)
+   (with-access::J2SFun this (rtype rrange thisp)
       (when (isa? thisp J2SDecl) (map-types thisp tmap))
-      (set! rtype (map-type rtype tmap)))
+      (when (range-type? rtype)
+	 (set! rtype (interval->type rrange tmap rtype))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -2187,8 +2188,9 @@
 ;*    map-types ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SDecl tmap)
-   (with-access::J2SDecl this (vtype)
-      (set! vtype (map-type vtype tmap)))
+   (with-access::J2SDecl this (vtype id vrange)
+      (when (range-type? vtype)
+	 (set! vtype (interval->type vrange tmap 'number))))
    (call-default-walker))
 	 
 ;*---------------------------------------------------------------------*/
@@ -2203,23 +2205,27 @@
 ;*    map-types ::J2SBinary ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SBinary tmap)
-   (with-access::J2SBinary this (op type)
-      (if (memq type '(index integer number))
-	  (case op
-	     ((>> << BIT_OT ^ &) (set! type 'int32))
-	     ((>>>) (set! type 'uint32))
-	     (else (set! type (map-type type tmap))))
-	  (set! type (map-type type tmap))))
+   (with-access::J2SBinary this (op type range)
+      (case op
+	 ((>> << BIT_OT ^ &)
+	  (set! type 'int32))
+	 ((>>>)
+	  (set! type 'uint32))
+	 (else
+	  (when (range-type? type)
+	     (set! type (interval->type range tmap 'number))))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SUnary ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SUnary tmap)
-   (with-access::J2SUnary this (op type)
-      (if (and (eq? op '~) (memq type '(integer index number)))
-	  (set! type 'int32)
-	  (set! type (map-type type tmap))))
+   (with-access::J2SUnary this (op type range)
+      (cond
+	 ((eq? op '~)
+	  (set! type 'int32))
+	 ((range-type? type)
+	  (set! type (interval->type range tmap 'number)))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
