@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Aug 10 07:41:23 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 19:12:28 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -511,7 +511,7 @@ ft		`(,f ,@%gen
 		  ,@self
 		  ,@(j2s-scheme args mode return conf)))
 	       ((and (config-get conf :profile-call #f) (>=fx profid 0))
-		(let ((f (gensym '%fun)))
+		(let ((f (gensym '%fun-profile)))
 		   `(let ((,f ,(j2s-scheme fun mode return conf)))
 		       ,(funcall-profile profid f
 			   `(,call ,j2s-unresolved-call-workspace
@@ -555,12 +555,27 @@ ft		`(,f ,@%gen
 	 (epairify loc
 	    (cond
 	       ((isa? fun J2SAccess)
-		(if (and (config-get conf :profile-call #f) (>=fx profid 0))
-		    (with-access::J2SAccess fun (obj)
+		(if (and (config-get conf :profile-call #f) (>=fx profid 0)
+			 (with-access::J2SAccess fun (obj loc)
+			    (not (isa? obj J2SGlobalRef)))
+			 (with-access::J2SAccess fun (obj loc)
+			    (when (isa? obj J2SRef)
+			       (with-access::J2SRef obj (decl)
+				  (with-access::J2SDecl decl (id)
+				     (when (memq id '(str))
+					(tprint "LOC=" loc))
+				     (and (memq id '(str))
+					  (or (eq? (caddr loc) 12004)
+					      (eq? (caddr loc) 9911719))))))))
+		    (with-access::J2SAccess fun (obj loc)
 		       (let ((self (if (isa? obj J2SSuper)
-				       '(this)
-				       (list (j2s-scheme obj mode return conf)))))
-			  (call-unknown-function fun self args)))
+				       'this
+				       (j2s-scheme obj mode return conf))))
+			  (let* ((s (gensym '%obj-profile))
+				 (f (duplicate::J2SAccess fun
+				       (obj (J2SHopRef s)))))
+			     `(let ((,s ,self))
+				 ,(call-unknown-function f (list s) args)))))
 		    (call-method cache cspecs fun args)))
 	       ((isa? fun J2SParen)
 		(with-access::J2SParen fun (expr)
