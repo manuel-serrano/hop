@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Aug 20 19:12:28 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 08:08:12 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -555,18 +555,7 @@ ft		`(,f ,@%gen
 	 (epairify loc
 	    (cond
 	       ((isa? fun J2SAccess)
-		(if (and (config-get conf :profile-call #f) (>=fx profid 0)
-			 (with-access::J2SAccess fun (obj loc)
-			    (not (isa? obj J2SGlobalRef)))
-			 (with-access::J2SAccess fun (obj loc)
-			    (when (isa? obj J2SRef)
-			       (with-access::J2SRef obj (decl)
-				  (with-access::J2SDecl decl (id)
-				     (when (memq id '(str))
-					(tprint "LOC=" loc))
-				     (and (memq id '(str))
-					  (or (eq? (caddr loc) 12004)
-					      (eq? (caddr loc) 9911719))))))))
+		(if (and (config-get conf :profile-call #f) (>=fx profid 0))
 		    (with-access::J2SAccess fun (obj loc)
 		       (let ((self (if (isa? obj J2SSuper)
 				       'this

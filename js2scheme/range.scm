@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Aug 20 16:38:40 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 07:39:21 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -2150,9 +2150,15 @@
 	    (cond
 	       ((isa? decl J2SDeclFun)
 		(with-access::J2SDeclFun decl (ronly val)
-		   (with-access::J2SFun val (rtype)
-		      (when ronly
-			 (set! type rtype)))))
+		   (when ronly
+		      (cond
+			 ((isa? val J2SFun)
+			  (with-access::J2SFun val (rtype)
+			     (set! type rtype)))
+			 ((isa? val J2SMethod)
+			  (with-access::J2SMethod val (function method)
+			     (with-access::J2SFun function (rtype)
+				(set! type rtype))))))))
 	       ((isa? decl J2SDeclInit)
 		(with-access::J2SDeclInit decl (ronly val)
 		   (if (and ronly (isa? val J2SFun))

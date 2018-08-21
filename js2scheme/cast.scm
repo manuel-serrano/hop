@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Aug 20 18:50:08 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 07:53:38 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -566,11 +566,11 @@
    
    (define (type-cast-switch this keytype)
       (with-access::J2SSwitch this (key cases)
-	 (set! key (type-cast! key 'uint32))
+	 (set! key (type-cast! key keytype))
 	 (for-each (lambda (c)
 		      (with-access::J2SCase c (expr body)
 			 (unless (isa? c J2SDefault)
-			    (set! expr (type-cast! expr 'uint32)))
+			    (set! expr (type-cast! expr keytype)))
 			 (set! body (type-cast! body totype))))
 	    cases)
 	 this))
@@ -582,7 +582,7 @@
 			(with-access::J2SCase c (expr)
 			   (eq? (j2s-type expr) 'uint32))))
 	     cases)
-	  (type-cast-switch this 'string))
+	  (type-cast-switch this 'uint32))
 	 ((every (lambda (c)
 		    (or (isa? c J2SDefault)
 			(with-access::J2SCase c (expr)

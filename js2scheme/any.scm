@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/any.scm                 */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/any.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Sun Aug 12 07:14:11 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 08:13:52 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An optional stage used in debug mode to assign to replace        */
@@ -105,6 +105,14 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    any-types ::J2SGlobalRef ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (any-types this::J2SGlobalRef)
+   (with-access::J2SGlobalRef this (type)
+      (set! type (map-type type)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
 ;*    any-types ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SDecl)
@@ -116,7 +124,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SDeclInit)
    (call-next-method)
-   (with-access::J2SDeclInit this (val)
+   (with-access::J2SDeclInit this (val id loc)
       (any-types val)))
 
 ;*---------------------------------------------------------------------*/

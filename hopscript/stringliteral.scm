@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/stringliteral.scm       */
+;*    .../project/hop/3.2.x-new-types/hopscript/stringliteral.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Aug 14 16:34:44 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 08:03:17 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2183,6 +2183,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-replace this::obj searchvalue replacevalue %this)
+   (js-jsstring-maybe-replace this searchvalue replacevalue %this))
+
+(define (js-jsstring-replace-TOBEREMOVED-21aug2018 this::obj searchvalue replacevalue %this)
    
    (define (digit->number c)
       (-fx (char->integer c) (char->integer #\0)))
@@ -2446,7 +2449,9 @@
 	     ((js-jsstring? searchvalue)
 	      (js-jsstring-replace-string this #t searchvalue replacevalue %this))
 	     (else
-	      (js-jsstring-replace this searchvalue replacevalue %this))))
+	      ;(js-jsstring-replace this searchvalue replacevalue %this)
+	      (js-jsstring-replace-string this #t (js-tostring searchvalue %this) replacevalue %this)
+	      )))
 	 ((isa? this JsString)
 	  (with-access::JsString this (val)
 	     (loop val)))

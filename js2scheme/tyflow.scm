@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Aug 20 16:19:28 2018 (serrano)                */
+;*    Last change :  Tue Aug 21 08:22:17 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1946,6 +1946,39 @@
 	 (cell-set! cell #t)
 	 (set! rtype to)))
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    force-type! ::J2JRef ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type! this::J2SRef from to cell)
+   (with-access::J2SRef this (decl)
+      (when (isa? decl J2SDeclArguments)
+	 (force-type! decl from to cell))
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    force-type! ::J2JHopRef ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type! this::J2SHopRef from to cell)
+   (with-access::J2SHopRef this (type)
+      (when (eq? type from)
+	 (set! type to)
+	 (cell-set! cell #t)))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    force-type! ::J2JGlobalRef ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type! this::J2SGlobalRef from to cell)
+   (with-access::J2SGlobalRef this (type loc decl)
+      (with-access::J2SDecl decl (vtype)
+	 (when (and (eq? vtype from) (not (eq? vtype to)))
+	    (set! vtype to)
+	    (cell-set! cell #t)))
+      (when (and (eq? type from) (not (eq? type to)))
+	 (set! type to)
+	 (cell-set! cell #t)))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SDecl ...                                        */
