@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Aug 22 15:53:52 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 16:29:43 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -42,9 +42,9 @@
 (define *debug-range-if* (and #f *debug-range*))
 (define *debug-range-call* (and #f *debug-range*))
 (define *debug-range-for* (and #t *debug-range*))
-(define *debug-range-while* (and #t *debug-range*))
+(define *debug-range-while* (and #f *debug-range*))
 (define *debug-range-fix* (and #f *debug-range*))
-(define *debug-range-test* (and #t *debug-range*))
+(define *debug-range-test* (and #f *debug-range*))
 
 (define *dump-stop* -1)
 (define *dump-env* '())
@@ -120,6 +120,7 @@
 		  ((not (=fx (cell-ref fix) ostamp))
 		   (loop (+fx i 1) mode))
 		  ((eq? mode 'slow)
+		   (reset-loop-range! this #f)
 		   (loop (+fx i 1) 'fast))
 		  ((force-int32 this)
 		   (loop (+fx i 1) mode)))))
@@ -150,15 +151,18 @@
 ;*    dump-env ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (dump-env env . ids)
-   (filter-map (lambda (e)
-		  (with-access::J2SDecl (car e) (id key)
-		     (let ((keys (if (pair? ids) ids *dump-env*)))
-			(when (or (symbol? keys)
-				  (memq id keys)
-				  (memq key keys)
-				  (null? keys))
-			   (cons (format "~a:~a" id key) (cdr e))))))
-      env))
+   (tprint "DUMP=-ENV env=" (typeof env))
+   (when *debug-range*
+      (filter-map (lambda (e)
+		     (with-access::J2SDecl (car e) (id key)
+			(let ((keys (if (pair? ids) ids *dump-env*)))
+			   (when (or (symbol? keys)
+				     (memq id keys)
+				     (memq key keys)
+				     (null? keys))
+			      (cons (format "~a:~a" id key)
+				 (j2s-dump-range (cdr e)))))))
+	 env)))
 
 ;*---------------------------------------------------------------------*/
 ;*    exptllong ...                                                    */
@@ -1072,7 +1076,7 @@
 ;*    node-range ::J2SAssig ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SAssig env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SAssig this (lhs rhs type)
+   (with-access::J2SAssig this (lhs rhs type loc)
       (multiple-value-bind (intv env)
 	 (node-range lhs env conf mode fix)
 	 (multiple-value-bind (intv env)
@@ -1081,7 +1085,7 @@
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
 		(with-access::J2SRef lhs (decl)
-		   (with-access::J2SDecl decl (writable)
+		   (with-access::J2SDecl decl (writable id)
 		      (cond
 			 ((and (not writable) (not (isa? this J2SInit)))
 			  (return intv env))
@@ -1835,7 +1839,7 @@
 			   (tprint "    [" ffix "] testef="
 			      (dump-env testef))))
 		     (multiple-value-bind (bodyi bodye)
-			(node-range body (append-env testet teste) conf mode fix)
+			(node-range body (append-env testet env) conf mode fix)
 			(if (or (=fx ostamp (cell-ref fix))
 				(eq? mode 'slow))
 			    (let ((wenv (append-env testef
@@ -1872,18 +1876,21 @@
 ;*    node-range ::J2SFor ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SFor env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SFor this (init test incr body)
-      (let ((denv (dump-env env))
-	    (ffix (cell-ref fix)))
+   (with-access::J2SFor this (init test incr body loc)
+      (let ((ffix (cell-ref fix)))
+	 ;; (set! *debug-range-for* (eq? (caddr loc) 1835))
 	 (when *debug-range-for*
-	    (tprint ">>> for [" ffix "/" mode "] test=" (j2s->list test))
-	    (tprint ">>> env=" denv))
+	    (tprint ">>> for " loc
+	       " [" ffix "/" mode "] test=" (j2s->list test))
+	    (tprint ">>> env=" (dump-env env)))
 	 (multiple-value-bind (initi inite)
 	    (node-range init env conf mode fix)
 	    (let loop ((env inite))
 	       (let ((ostamp (cell-ref fix)))
 		  (when *debug-range-for*
-		     (tprint "--- for [" ffix "/" mode "] / " ostamp))
+		     (tprint "--- for " loc
+			" [" ffix "/" mode "] / " ostamp)
+		     (tprint "    [" ffix "] env=" (dump-env env)))
 		  (multiple-value-bind (testi teste)
 		     (node-range test env conf mode fix)
 		     (when *debug-range-for*
@@ -1896,15 +1903,22 @@
 			   (tprint "    [" ffix "] testef=" (dump-env testef)))
 			(multiple-value-bind (bodyi bodye)
 			   (node-range-seq (list body incr)
-			      (append-env testet teste) conf mode fix)
+			      (append-env testet env) conf mode fix)
+			   (when *debug-range-for*
+			      (tprint "    [" ffix "] bodye=" (dump-env bodye)))
 			   (if (or (=fx ostamp (cell-ref fix))
 				   (eq? mode 'slow))
 			       (begin
 				  (when *debug-range-for*
-				     (tprint "<<< for [" ffix "] "
+				     (tprint "<<< for " loc
+					" [" ffix "/" mode "] "
 					(dump-env (append-env testef bodye))))
 				  (return #f (append-env testef bodye)))
-			       (loop (env-merge bodye env))))))))))))
+			       (let ((menv (env-merge bodye env)))
+				  (when *debug-range-for*
+				     (tprint "~~~ [" ffix "] merge-env"
+					(dump-env menv)))
+				  (loop menv))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SForIn ...                                        */
@@ -2266,3 +2280,25 @@
 	     (set! range *uint32-intv*))))
       this))
    
+;*---------------------------------------------------------------------*/
+;*    reset-loop-range! ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-loop-range! this::J2SNode resetp::bool)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    reset-loop-range! ::J2SExpr ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-loop-range! this::J2SExpr resetp)
+   (when resetp
+      (with-access::J2SExpr this (range)
+	 (set! range #unspecified)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    reset-loop-range! ::J2SLoop ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-loop-range! this::J2SLoop resetp)
+   (set! resetp #t)
+   (call-default-walker))
+      

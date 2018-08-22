@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-utils.scm        */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-utils.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Aug 12 07:17:23 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 17:13:43 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -655,7 +655,8 @@
 	     (else #f)))
        (with-access::J2SExpr expr (range type)
 	  (if (interval? range)
-	      (>=llong (interval-min range) #l0)
+	      (and (>=llong (interval-min range) #l0)
+		   (eq? (interval-type range) 'integer))
 	      (eq? type 'uint32)))))
 
 ;*---------------------------------------------------------------------*/
@@ -672,7 +673,8 @@
        (with-access::J2SExpr expr (range)
 	  (when (interval? range)
 	     (and (>=llong (interval-min range) #l-1)
-		  (<=llong (interval-max range) #l1))))))
+		  (<=llong (interval-max range) #l1)
+		  (eq? (interval-type range) 'integer))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-32? ...                                                  */
@@ -681,7 +683,8 @@
    (with-access::J2SExpr expr (range)
       (and (interval? range)
 	   (>= (interval-min range) #l0)
-	   (< (interval-max range) #l32))))
+	   (< (interval-max range) #l32)
+	   (eq? (interval-type range) 'integer))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-int30? ...                                               */
@@ -702,7 +705,8 @@
        (with-access::J2SExpr expr (range)
 	  (when (interval? range)
 	     (and (>=llong (interval-min range) (- (bit-lshllong #l1 30)))
-		  (<llong (interval-max range) (bit-lshllong #l1 30)))))))
+		  (<llong (interval-max range) (bit-lshllong #l1 30))
+		  (eq? (interval-type range) 'integer))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-uint30? ...                                              */
@@ -721,7 +725,8 @@
        (with-access::J2SExpr expr (range)
 	  (when (interval? range)
 	     (and (>=llong (interval-min range) 0)
-		  (<llong (interval-max range) (bit-lshllong #l1 30)))))))
+		  (<llong (interval-max range) (bit-lshllong #l1 30))
+		  (eq? (interval-type range) 'integer))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-int32? ...                                               */
@@ -740,7 +745,8 @@
        (with-access::J2SExpr expr (range type)
 	  (if (interval? range)
 	      (and (>=llong (interval-min range) (- (bit-lshllong #l1 31)))
-		   (<llong (interval-max range) (bit-lshllong #l1 31)))
+		   (<llong (interval-max range) (bit-lshllong #l1 31))
+		   (eq? (interval-type range) 'integer))
 	      (eq? type 'int32)))))
 
 ;*---------------------------------------------------------------------*/
@@ -757,7 +763,8 @@
        (with-access::J2SExpr expr (range type)
 	  (if (interval? range)
 	      (and (>=llong (interval-min range) #l0)
-		   (<llong (interval-max range) (bit-lshllong #l1 32)))
+		   (<llong (interval-max range) (bit-lshllong #l1 32))
+		   (eq? (interval-type range) 'integer))
 	      (eq? type 'uint32)))))
 
 ;*---------------------------------------------------------------------*/
@@ -779,7 +786,8 @@
        (with-access::J2SExpr expr (range type)
 	  (if (interval? range)
 	      (and (>=llong (interval-min range) (- (bit-lshllong #l1 53)))
-		   (<llong (interval-max range) (bit-lshllong #l1 53)))
+		   (<llong (interval-max range) (bit-lshllong #l1 53))
+		   (eq? (interval-type range) 'integer))
 	      (memq type '(int32 uint32 integer bint))))))
 
 ;*---------------------------------------------------------------------*/

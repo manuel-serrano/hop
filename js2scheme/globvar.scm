@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Wed Aug 22 12:24:35 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 17:40:17 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -51,7 +51,7 @@
 	    (let ((gcnsts (collect-gloconst* this)))
 	       (when (pair? gcnsts)
 		  ;; mark all the global before traversing for references
-		  (invalidate-early-decl this #f)
+		  (invalidate-early-decl this #f '())
 		  (when (find (lambda (g)
 				 (with-access::J2SDecl g (%info)
 				    (isa? %info J2SNode)))
@@ -161,13 +161,13 @@
 ;*    Scan the whole program and invalidate all global variables       */
 ;*    that can possibily be accessed before initialized.               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SNode inexpr::bool)
+(define-walk-method (invalidate-early-decl this::J2SNode inexpr::bool stack)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SRef ...                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SRef inexpr)
+(define-walk-method (invalidate-early-decl this::J2SRef inexpr stack)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (%info %%dump)
 	 (unless (and (pair? %info) (eq? (car %info) 'init))
@@ -175,14 +175,15 @@
 	    (set! %info #f))
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val)
-	       (invalidate-early-decl val #t))))))
+	       (unless (memq decl stack)
+		  (invalidate-early-decl val #t (cons decl stack))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SInit ...                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SInit inexpr)
+(define-walk-method (invalidate-early-decl this::J2SInit inexpr stack)
    (with-access::J2SInit this (lhs rhs %%dump)
-      (invalidate-early-decl rhs #t)
+      (invalidate-early-decl rhs #t stack)
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
 	    (with-access::J2SDecl decl (%info)
@@ -193,9 +194,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SDeclInit ...                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SDeclInit inexpr)
+(define-walk-method (invalidate-early-decl this::J2SDeclInit inexpr stack)
    (with-access::J2SDeclInit this (val %info %%dump)
-      (invalidate-early-decl val #t)
+      (invalidate-early-decl val #t stack)
       (when (and (pair? %info) (eq? (car %info) 'uninit))
 	 ;; for sure this can be optimized
 	 (set-car! %info 'init))))
@@ -203,7 +204,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SDeclFun ...                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SDeclFun inexpr)
+(define-walk-method (invalidate-early-decl this::J2SDeclFun inexpr stack)
    (with-access::J2SDeclInit this (val %info %%dump)
       (when (and (pair? %info) (eq? (car %info) 'uninit))
 	 ;; for sure this can be optimized
@@ -212,7 +213,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SAssig ...                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SAssig inexpr)
+(define-walk-method (invalidate-early-decl this::J2SAssig inexpr stack)
    (if inexpr
        (call-default-walker)
        (with-access::J2SAssig this (lhs rhs)
@@ -222,14 +223,15 @@
 		 (with-access::J2SAccess lhs (obj field)
 		    (loop obj)))
 		((not (isa? lhs J2SRef))
-		 (invalidate-early-decl lhs #t)
-		 (invalidate-early-decl rhs #t))
+		 (invalidate-early-decl lhs #t stack)
+		 (invalidate-early-decl rhs #t stack))
 		(else
 		 (with-access::J2SRef lhs (decl)
-		    (invalidate-early-decl lhs inexpr)
+		    (invalidate-early-decl lhs inexpr stack)
 		    (with-access::J2SDecl decl (%info %%dump)
 		       (invalidate-early-decl rhs
-			  (not (and (pair? %info) (eq? (car %info) 'init))))))))))))
+			  (not (and (pair? %info) (eq? (car %info) 'init)))
+			  stack)))))))))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    invalidate-early-decl ::J2StmtExpr ...                           *} */

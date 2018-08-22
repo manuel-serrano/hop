@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Aug 16 04:59:27 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 16:54:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -23,6 +23,7 @@
 
    (export j2s-dump-stage
 	   (j2s-dump-decls::obj ::obj)
+	   (j2s-dump-range rng)
 	   (generic j2s->list ::obj)
 	   (generic j2s-info->list ::obj)))
 
@@ -188,11 +189,11 @@
 (define *-inf.0* (negllong (exptllong #l2 54)))
 
 ;*---------------------------------------------------------------------*/
-;*    pp-range ...                                                     */
+;*    j2s-dump-range ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (pp-range rng)
+(define (j2s-dump-range rng)
 
-   (define (pp-range-int int)
+   (define (j2s-dump-range-int int)
       (cond
 	 ((=llong int *max-length*) 'length)
 	 ((=llong int *max-index*) 'index)
@@ -211,8 +212,8 @@
 
    (interval
       (interval-type rng)
-      (pp-range-int (interval-min rng))
-      (pp-range-int (interval-max rng))))
+      (j2s-dump-range-int (interval-min rng))
+      (j2s-dump-range-int (interval-max rng))))
    
 ;*---------------------------------------------------------------------*/
 ;*    dump-range ...                                                   */
@@ -227,7 +228,7 @@
 		       (with-access::J2SDecl this (vrange) vrange))
 		      (else
 		       '()))))
-	  (if (interval? range) `(:range ,(pp-range range)) '()))
+	  (if (interval? range) `(:range ,(j2s-dump-range range)) '()))
        '()))
 
 ;*---------------------------------------------------------------------*/
