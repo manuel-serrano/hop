@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Aug 17 07:57:45 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 20:35:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -785,7 +785,8 @@
 		      (J2SBlock
 			 (J2SReturn #t
 			    (J2SCall (J2SHopRef 'js-spawn)
-			       gen (J2SThis (current-this)) (J2SHopRef '%this)))))
+			       gen (J2SThis (or thisp (current-this)))
+			       (J2SHopRef '%this)))))
 		   fun))))))
       
    (define (async-expression tok)
