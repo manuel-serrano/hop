@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Aug 22 15:50:55 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 16:03:01 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -39,6 +39,7 @@
 	 (int53 int32->fixnum)
 	 (integer ,js-int32->integer)
 	 (number ,js-int32->integer)
+	 (real ,js-int32->real)
 	 (propname ,js-int32->propname)
 	 (bool ,js-int32->bool)
 	 (string ,js-int32->string)
@@ -163,6 +164,13 @@
 	   `(int32->fixnum ,v))
 	  (else
 	   `(js-int32-tointeger ,v))))))
+
+(define (js-int32->real v expr conf)
+   (cond
+      ((int32? v) 
+       (int32->flonum v))
+      (else
+       `(int32->flonum ,v))))
 
 (define (js-int32->bool v expr conf)
    (if (int32? v) (not (=s32 v #s32:0)) `(not (=s32 ,v #s32:0))))
