@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Wed Aug 22 05:45:43 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 12:24:35 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -125,7 +125,10 @@
 		(if (and (not (usage? '(assig) usage)) (constant? rhs))
 		    (if (isa? %info J2SInit)
 			;; multiple init, invalidate
-			(set! %%dump "globvar:multiple")
+			(begin
+			   (set! %%dump "globvar:multiple")
+			   (set! %info #f)
+			   '())
 			(begin
 			   (set! %info (cons 'uninit this))
 			   (list decl)))
