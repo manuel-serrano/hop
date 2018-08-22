@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Aug 13 09:24:04 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 10:25:57 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -279,6 +279,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-hintnum #t (hopc-j2s-flags))))
 	    (("-fno-hintnum" (help "Disable hintnum typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hintnum #f (hopc-j2s-flags))))
+	    (("-fmultivar" (help "Enable multivar split"))
+	     (hopc-j2s-flags-set! (cons* :optim-multivar #t (hopc-j2s-flags))))
+	    (("-fno-multivar" (help "Disable multivar split"))
+	     (hopc-j2s-flags-set! (cons* :optim-multivar #f (hopc-j2s-flags))))
 	    (("-frange" (help "Enable range optimization (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-range #t (hopc-j2s-flags))))
 	    (("-fno-range" (help "Disable range optimization"))

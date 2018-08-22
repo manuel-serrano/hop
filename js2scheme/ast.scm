@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Aug 20 07:29:39 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 09:43:14 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -52,6 +52,57 @@
 	      (globals::pair-nil (default '()) (info '("ast")))
 	      (direct-eval::bool (default #t))
 	      (source-map (default #f)))
+
+	   (class J2SDecl::J2SStmt
+	      id::symbol
+	      (_scmid (default #f) (info '("notraverse")))
+	      (key (default (ast-decl-key)) (info '("notraverse")))
+	      ;; writable=#f iff decl is const
+	      (writable (default #t) (info '("notraverse")))
+	      (immutable (default #f) (info '("notraverse")))
+	      (ronly (default #f) (info '("notraverse")))
+	      (scope::symbol (default 'local) (info '("notraverse")))
+	      (usecnt::int (default 0) (info '("notraverse")))
+	      (useinloop::bool (default #f) (info '("notraverse")))
+	      (useinfun::bool (default #f) (info '("notraverse")))
+	      ;; usage: init, new, ref, assig, get (field), set (field), call
+	      ;; delete
+	      (usage::pair-nil (default '()) (info '("notraverse")))
+	      ;; variable range
+	      (binder::symbol (default 'var) (info '("notraverse")))
+	      ;; user declared type, if set, assign will be guarded
+	      (utype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; initial parameter type
+	      (itype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; computed variable type value
+	      (vtype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; initial parameter range
+	      (irange::obj (default #unspecified) (info '("notraverse")))
+	      ;; computed variable range
+	      (vrange::obj (default #unspecified) (info '("notraverse")))
+	      ;; variable 
+	      (hint::pair-nil (default '()) (info '("notraverse"))))
+
+	   (class J2SDeclArguments::J2SDecl)
+	   
+	   (class J2SDeclInit::J2SDecl
+	      (val::J2SExpr (info '("ast"))))
+
+	   (class J2SDeclFun::J2SDeclInit
+	      (parent read-only (default #f))
+	      (expression::bool (default #f))
+	      (hintinfo::obj (default #f) (info '("notraverse"))))
+
+	   	   (class J2SDeclFunType::J2SDeclFun)
+
+	   (class J2SDeclClass::J2SDecl
+	      (val::J2SClass (info '("ast"))))
+
+	   (class J2SDeclSvc::J2SDeclFun)
+
+	   (final-class J2SDeclExtern::J2SDeclInit
+	      (bind::bool read-only (default #f))
+	      (hidden-class::bool read-only (default #t)))
 
 	   (abstract-class J2SExpr::J2SNode
 	      (type::symbol (default 'unknown) (info '("notraverse")))
@@ -233,7 +284,6 @@
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
 	      (rtype::symbol (default 'any))
-;* 	      (vtype::symbol (default 'any))                           */
 	      (module read-only (default #f)))
 
 	   (class J2SLetRef::J2SRef)
@@ -253,57 +303,6 @@
 	      (test::J2SExpr (info '("ast")))
 	      (then::J2SExpr (info '("ast")))
 	      (else::J2SExpr (info '("ast"))))
-
-	   (class J2SDecl::J2SStmt
-	      id::symbol
-	      (_scmid (default #f) (info '("notraverse")))
-	      (key (default (ast-decl-key)) (info '("notraverse")))
-	      ;; writable=#f iff decl is const
-	      (writable (default #t) (info '("notraverse")))
-	      (immutable (default #f) (info '("notraverse")))
-	      (ronly (default #f) (info '("notraverse")))
-	      (scope::symbol (default 'local) (info '("notraverse")))
-	      (usecnt::int (default 0) (info '("notraverse")))
-	      (useinloop::bool (default #f) (info '("notraverse")))
-	      (useinfun::bool (default #f) (info '("notraverse")))
-	      ;; usage: init, new, ref, assig, get (field), set (field), call
-	      ;; delete
-	      (usage::pair-nil (default '()) (info '("notraverse")))
-	      ;; variable range
-	      (binder::symbol (default 'var) (info '("notraverse")))
-	      ;; user declared type, if set, assign will be guarded
-	      (utype::symbol (default 'unknown) (info '("notraverse")))
-	      ;; initial parameter type
-	      (itype::symbol (default 'unknown) (info '("notraverse")))
-	      ;; computed variable type value
-	      (vtype::symbol (default 'unknown) (info '("notraverse")))
-	      ;; initial parameter range
-	      (irange::obj (default #unspecified) (info '("notraverse")))
-	      ;; computed variable range
-	      (vrange::obj (default #unspecified) (info '("notraverse")))
-	      ;; variable 
-	      (hint::pair-nil (default '()) (info '("notraverse"))))
-
-	   (class J2SDeclArguments::J2SDecl)
-	   
-	   (class J2SDeclInit::J2SDecl
-	      (val::J2SExpr (info '("ast"))))
-
-	   (class J2SDeclFun::J2SDeclInit
-	      (parent read-only (default #f))
-	      (expression::bool (default #f))
-	      (hintinfo::obj (default #f) (info '("notraverse"))))
-
-	   (class J2SDeclFunType::J2SDeclFun)
-
-	   (class J2SDeclClass::J2SDecl
-	      (val::J2SClass (info '("ast"))))
-
-	   (class J2SDeclSvc::J2SDeclFun)
-
-	   (final-class J2SDeclExtern::J2SDeclInit
-	      (bind::bool read-only (default #f))
-	      (hidden-class::bool read-only (default #t)))
 
 	   (abstract-class J2SLiteral::J2SExpr)
 

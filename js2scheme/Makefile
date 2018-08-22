@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/js2scheme/Makefile                */
+#*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/Makefile      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Aug  6 14:36:10 2018 (serrano)                */
+#*    Last change :  Wed Aug 22 10:23:19 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -41,7 +41,8 @@ _OBJECTS = lexer header parser html ast dump utils \
   use property bestpractice sourcemap debug stmtassign letopt unletrec \
   cps ecmascript5 narrow constant tyflow hint range cast vector \
   array alpha letfusion constrsize ctor propcce clevel sweep inline unthis \
-  instanceof hintnum pce callapply scheme scheme-utils scheme-program \
+  instanceof hintnum pce callapply multivar \
+  scheme scheme-utils scheme-program \
   scheme-fun scheme-ops scheme-test scheme-class scheme-string scheme-math \
   scheme-date scheme-array scheme-regexp scheme-cast scheme-arguments \
   scheme-call

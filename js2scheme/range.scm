@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Aug 21 14:07:34 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 12:18:34 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -630,10 +630,10 @@
 ;*---------------------------------------------------------------------*/
 (define (interval-mul left right)
    (when (and (interval? left) (interval? right))
-      (let* ((v0 (* (interval-min left) (interval-min right)))
-	     (v1 (* (interval-min left) (interval-max right)))
-	     (v2 (* (interval-max left) (interval-max right)))
-	     (v3 (* (interval-max left) (interval-min right)))
+      (let* ((v0 (*llong (interval-min left) (interval-min right)))
+	     (v1 (*llong (interval-min left) (interval-max right)))
+	     (v2 (*llong (interval-max left) (interval-max right)))
+	     (v3 (*llong (interval-max left) (interval-min right)))
 	     (mi0 (min v0 v1))
 	     (mi1 (min v2 v3))
 	     (ma0 (max v0 v1))

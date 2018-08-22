@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Aug 15 19:35:13 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 10:25:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -21,6 +21,7 @@
 	   __js2scheme_parser
 	   __js2scheme_syntax
 	   __js2scheme_symbol
+	   __js2scheme_multivar
 	   __js2scheme_header
 	   __js2scheme_resolve
 	   __js2scheme_return
@@ -169,6 +170,7 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
+      j2s-multivar-stage
       j2s-narrow-stage
       j2s-letfusion-stage
       j2s-letopt-stage
@@ -436,7 +438,9 @@
 	 (unless (memq :optim-tyflow-resolve o)
 	    (set! o (cons* :optim-tyflow-resolve #t o)))
 	 (unless (memq :optim-cinstanceof o)
-	    (set! o (cons* :optim-cinstanceof #t o))))
+	    (set! o (cons* :optim-cinstanceof #t o)))
+	 (unless (memq :optim-multivar o)
+	    (set! o (cons* :optim-multivar #t o))))
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))

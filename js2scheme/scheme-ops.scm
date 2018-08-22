@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Aug 20 08:11:23 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 05:53:17 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -779,10 +779,9 @@
 		  ((eq? op '==)
 		   `(if (fixnum? ,right)
 			(=fx ,(asfixnum left tl) ,right)
-			(js-equal?
+			(js-eqir?
 			   ,(box left tl conf)
-			   ,(box right tr conf)
-			   %this)))
+			   ,(box right tr conf))))
 		  (else
 		   `(js-eqil? ,(asfixnum left tl) ,right)))))))
 
@@ -817,10 +816,9 @@
 			     `(=fx ,(asfixnum left tl) ,right)
 			     `(and (=fx ,(asfixnum left tl) ,right)
 				   (>=fx ,right 0)))
-			(js-equal?
+			(js-eqir?
 			   ,(box left tl conf)
-			   ,(box right tr conf)
-			   %this)))
+			   ,(box right tr conf))))
 		  (else
 		   (if (inrange-int32? lhs)
 		       `(js-eqil? ,(asfixnum left tl) ,right)
@@ -911,26 +909,16 @@
 			     test)))))
 	     (else
 	      (js-cmp loc op lhs rhs mode return conf))))
-	 ((and (is-number? lhs) (is-number? rhs))
-	  (cond
-	     ((j2s-cast-aref-length? rhs)
-	      (with-access::J2SAref (cast-aref rhs) (field alen)
-		 (let ((test `(or (= %lhs ,(j2s-decl-scheme-id alen))
-				  (= %lhs ,(j2s-scheme rhs mode return conf)))))
-		    `(let ((%lhs ,(j2s-scheme lhs mode return conf)))
-			,(if (memq op '(!= !==))
-			     (js-not test)
-			     test)))))
-	     ((j2s-cast-aref-length? lhs)
-	      (with-access::J2SAref (cast-aref lhs) (field alen)
-		 (let ((test `(or (= ,(j2s-decl-scheme-id alen) %rhs)
-				  (= ,(j2s-scheme rhs mode return conf) %rhs))))
-		    `(let ((%rhs ,(j2s-scheme rhs mode return conf)))
-			,(if (memq op '(!= !==))
-			     (js-not test)
-			     test)))))
-	     (else
-	      (js-cmp loc op lhs rhs mode return conf))))
+	 ((eq? tl 'int32)
+	  (equality-int32 op lhs tl rhs tr mode return conf))
+	 ((eq? tr 'int32)
+	  (equality-int32 op rhs tr lhs tl mode return conf))
+	 ((eq? tl 'uint32)
+	  (equality-uint32 op lhs tl rhs tr mode return conf))
+	 ((eq? tr 'uint32)
+	  (equality-uint32 op rhs tr lhs tl mode return conf))
+	 ((and (memq op '(=== !==)) (or (eq? tl 'string) (eq? tr 'string)))
+	  (equality-string op rhs tr lhs tl mode return conf))
 	 ((and (eq? tl 'real) (eq? tr 'real))
 	  (with-tmp lhs rhs mode return conf 'any
 	     (lambda (left right)
@@ -955,6 +943,26 @@
 		(if (eq? op '===)
 		    `(eq? ,left ,right)
 		    `(not (eq? ,left ,right))))))
+	 ((and (is-number? lhs) (is-number? rhs))
+	  (cond
+	     ((j2s-cast-aref-length? rhs)
+	      (with-access::J2SAref (cast-aref rhs) (field alen)
+		 (let ((test `(or (= %lhs ,(j2s-decl-scheme-id alen))
+				  (= %lhs ,(j2s-scheme rhs mode return conf)))))
+		    `(let ((%lhs ,(j2s-scheme lhs mode return conf)))
+			,(if (memq op '(!= !==))
+			     (js-not test)
+			     test)))))
+	     ((j2s-cast-aref-length? lhs)
+	      (with-access::J2SAref (cast-aref lhs) (field alen)
+		 (let ((test `(or (= ,(j2s-decl-scheme-id alen) %rhs)
+				  (= ,(j2s-scheme rhs mode return conf) %rhs))))
+		    `(let ((%rhs ,(j2s-scheme rhs mode return conf)))
+			,(if (memq op '(!= !==))
+			     (js-not test)
+			     test)))))
+	     (else
+	      (js-cmp loc op lhs rhs mode return conf))))
 	 ((and (memq op '(== !=))
 	       (or (memq tl '(bool string object array))
 		   (memq tr '(bool string object array))))
@@ -981,16 +989,6 @@
 			`(not (or (eq? ,left (js-undefined)) (eq? ,left (js-null))))))
 		   (else
 		    (js-binop loc op left lhs right rhs conf))))))
-	 ((eq? tl 'int32)
-	  (equality-int32 op lhs tl rhs tr mode return conf))
-	 ((eq? tr 'int32)
-	  (equality-int32 op rhs tr lhs tl mode return conf))
-	 ((eq? tl 'uint32)
-	  (equality-uint32 op lhs tl rhs tr mode return conf))
-	 ((eq? tr 'uint32)
-	  (equality-uint32 op rhs tr lhs tl mode return conf))
-	 ((and (memq op '(=== !==)) (or (eq? tl 'string) (eq? tr 'string)))
-	  (equality-string op rhs tr lhs tl mode return conf))
 	 (else
 	  (with-tmp lhs rhs mode return conf 'any
 	     (lambda (left right)
@@ -1145,6 +1143,13 @@
 	  (str-append flip
 	     left
 	     `(js-ascii->jsstring (js-real->string ,right))))
+	 ((eq? tl 'number)
+	  (str-append flip
+	     `(js-ascii->jsstring
+		 (if (fixnum? ,left)
+		     (fixnum->string ,left)
+		     (js-real->string ,left)))
+	     right))
 	 ((eq? tr 'number)
 	  (str-append flip
 	     left
@@ -2000,7 +2005,7 @@
 	      left (asint32 right tr) flip)))
       ((integer)
        (cond
-	  ((or (inrange-int30? right) (m64? conf))
+	  ((or (inrange-int30? rhs) (m64? conf))
 	   (binop-fixnum-fixnum op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  ((inrange-int32? rhs)
