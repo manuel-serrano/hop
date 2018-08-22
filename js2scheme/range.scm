@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Aug 22 16:29:43 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 17:44:52 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -151,7 +151,6 @@
 ;*    dump-env ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (dump-env env . ids)
-   (tprint "DUMP=-ENV env=" (typeof env))
    (when *debug-range*
       (filter-map (lambda (e)
 		     (with-access::J2SDecl (car e) (id key)
