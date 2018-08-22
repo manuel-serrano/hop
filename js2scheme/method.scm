@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Aug 14 15:33:46 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 14:49:31 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -125,7 +125,7 @@
 	    (set! utype 'object)
 	    (let ((m (duplicate::J2SFun this
 			(optimize #t)
-			(name (when (symbol? name) (symbol-append name '%%%)))
+			(name (when (symbol? name) (symbol-append name '&)))
 			(params nparams)
 			(thisp nthisp)
 			(body nbody))))

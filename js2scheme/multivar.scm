@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 22 10:23:45 2018                          */
-;*    Last change :  Wed Aug 22 12:05:17 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 13:42:42 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Multiple variable declaration split optimization.                */
@@ -64,14 +64,18 @@
 	     (begin
 		(mark-captured this #f)
 		(let ((vars (filter (lambda (d)
-				       (with-access::J2SDecl d (%info) %info))
+				       (with-access::J2SDecl d (%info)
+					  (and (pair? %info) (pair? (cdr %info)))))
 			       vs)))
 		   (when (pair? vars)
 		      (when (>=fx (config-get conf :verbose 0) 3)
 			 (display " " (current-error-port))
 			 (fprintf (current-error-port) "(~(, ))"
 			    (map (lambda (g)
-				    (with-access::J2SDecl g (id) id))
+				    (with-access::J2SDecl g (id loc)
+				       (if (pair? loc)
+					   (format "~a:~a" id (caddr loc))
+					   id)))
 			       vars)))
 		      (let ((nvars '()))
 			 (for-each (lambda (decl)
@@ -115,7 +119,7 @@
 ;*    collect-multi* ::J2SDecl ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-multi* this::J2SDecl inseq decls::pair-nil)
-   (with-access::J2SDecl this (%info)
+   (with-access::J2SDecl this (%info id)
       (set! %info '()))
    '())
 
@@ -128,7 +132,7 @@
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (if (memq decl decls) 
-		 (with-access::J2SDecl decl (%info)
+		 (with-access::J2SDecl decl (%info id)
 		    (if (not inseq)
 			(begin
 			   (set! %info '())

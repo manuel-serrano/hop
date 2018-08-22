@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Tue Aug 14 10:11:13 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 14:59:12 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -118,11 +118,7 @@
       (when (and propagate (isa? this J2SRef))
 	 (with-access::J2SRef this (decl)
 	    (with-access::J2SDecl decl (hint id)
-	       (if (eq? id 'nnn)
-		   (tprint ">>> ADD NNN=" newhint " " (j2s->list this)))
-	       (set! hint (add-hint! hint newhint))
-	       (if (eq? id 'nnn)
-		   (tprint "<<< ADD NNN=" hint " " (j2s->list this))))))))
+	       (set! hint (add-hint! hint newhint)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    union-hint! ...                                                  */

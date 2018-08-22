@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Aug 21 08:08:12 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 15:21:52 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -476,7 +476,7 @@ ft		`(,f ,@%gen
    (define (typed-generator? decl::J2SDeclFun)
       (with-access::J2SDeclFun decl (parent)
 	 (when (isa? parent J2SDeclFun)
-	    (with-access::J2SDeclFun parent (val)
+	    (let ((val (j2sdeclinit-val-fun parent)))
 	       (with-access::J2SFun val (generator)
 		  generator)))))
 
