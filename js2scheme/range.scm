@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Aug 22 12:18:34 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 15:53:52 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -750,8 +750,8 @@
    
    (define (shrink32 intv)
       (interval
-	 (min (interval-min intv) *min-int32*)
-	 (max (interval-max intv) *max-int32*)))
+	 (max (interval-min intv) *min-int32*)
+	 (min (interval-max intv) *max-int32*)))
    
    (when (and (interval? left) (interval? right))
       (if (or (>= (interval-max left) 0) (>= (interval-max right) 0))
