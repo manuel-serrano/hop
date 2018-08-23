@@ -1,1 +1,1 @@
-User programmable actions after git events.
+ User programmable actions after git events.
