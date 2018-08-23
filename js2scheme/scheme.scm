@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Aug 20 18:51:04 2018 (serrano)                */
+;*    Last change :  Thu Aug 23 13:57:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1704,7 +1704,7 @@
 			      ,(j2s-unresolved-put! `',id val #t mode return)
 			      ,tmp))))))))
    
-   (define (aput-inc tyobj otmp prop op lhs field cache inc cs)
+   (define (aput-inc tyobj otmp prop op lhs field::J2SExpr cache inc cs)
       (with-access::J2SAccess lhs (loc obj cspecs (loca loc) type)
 	 (let* ((tmp (gensym 'aput))
 		(oref (instantiate::J2SHopRef
@@ -1719,7 +1719,8 @@
 			(loc loc)
 			(val inc)
 			(type 'int32)))
-		(scmlhs (j2s-scheme oacc mode return conf)))
+		(scmlhs (j2s-scheme oacc mode return conf))
+		(fexpr (j2s-scheme field mode return conf)))
 	    (cond
 	       ((type-fixnum? type)
 		(let ((tref (instantiate::J2SHopRef
@@ -1733,7 +1734,7 @@
 			   (lambda (val tmp)
 			      `(begin
 				  ,(j2s-put! loc otmp tyobj
-				      prop
+				      fexpr
 				      (j2s-vtype field)
 				      val 'number
 				      (strict-mode? mode) conf
@@ -1752,7 +1753,7 @@
 			       (lambda (val tmp)
 				  `(begin
 				      ,(j2s-put! loc otmp tyobj
-					  prop
+					  fexpr
 					  (j2s-vtype field)
 					  val 'number
 					  (strict-mode? mode) conf
@@ -1770,7 +1771,7 @@
 				    (lambda (val tmp)
 				       `(begin
 					   ,(j2s-put! loc otmp tyobj
-					       prop
+					       fexpr
 					       (j2s-vtype field)
 					       val 'number
 					       (strict-mode? mode) conf
@@ -1786,12 +1787,15 @@
 		(with-access::J2SAccess lhs (cache)
 		   cache)))))
    
-   (define (access-inc-sans-object/field otmp::symbol prop op::symbol lhs::J2SAccess rhs::J2SExpr inc::int field)
+   (define (access-inc-sans-object/field otmp::symbol prop op::symbol lhs::J2SAccess rhs::J2SExpr inc::int field::J2SExpr)
       (with-access::J2SAccess lhs (obj cspecs cache (loca loc))
 	 (cond
 	    ((eq? (j2s-type obj) 'array)
 	     (aput-inc 'array otmp prop op lhs field cache inc '()))
 	    ((not cache)
+	     (aput-inc 'object otmp prop op lhs field cache inc '()))
+	    ((or (not cache) (memq (j2s-type field) '(integer number)))
+	     (warning "js2scheme" "no cache entry should have been generated" (j2s->list this))
 	     (aput-inc 'object otmp prop op lhs field cache inc '()))
 	    (else
 	     `(with-access::JsObject ,otmp (cmap)
@@ -1819,11 +1823,11 @@
 	     (let* ((%field (gensym '%field)))
 		`(let ((,%field ,(j2s-scheme field mode return conf)))
 		    ,(access-inc-sans-object/field otmp prop op lhs rhs inc
-		       (with-access::J2SExpr field (loc)
-			  (instantiate::J2SHopRef
-			     (loc loc)
-			     (id %field)
-			     (type (j2s-type field))))))))))
+			(with-access::J2SExpr field (loc)
+			   (instantiate::J2SHopRef
+			      (loc loc)
+			      (id %field)
+			      (type (j2s-type field))))))))))
 
    (define (access-inc op lhs::J2SAccess rhs::J2SExpr inc::int)
       (with-access::J2SAccess lhs (obj field cspecs cache loc)

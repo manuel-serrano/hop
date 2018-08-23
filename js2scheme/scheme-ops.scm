@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Aug 22 13:52:16 2018 (serrano)                */
+;*    Last change :  Thu Aug 23 08:30:33 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -779,7 +779,7 @@
 		  ((eq? op '==)
 		   `(if (fixnum? ,right)
 			(=fx ,(asfixnum left tl) ,right)
-			(js-eqir?
+			(js-eqil?
 			   ,(box left tl conf)
 			   ,(box right tr conf))))
 		  (else
@@ -816,7 +816,7 @@
 			     `(=fx ,(asfixnum left tl) ,right)
 			     `(and (=fx ,(asfixnum left tl) ,right)
 				   (>=fx ,right 0)))
-			(js-eqir?
+			(js-eqil?
 			   ,(box left tl conf)
 			   ,(box right tr conf))))
 		  (else

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/property.scm            */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/property.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jul 13 09:26:07 2018 (serrano)                */
+;*    Last change :  Thu Aug 23 14:14:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -147,20 +147,22 @@
    (define (canbe-object? obj)
       (and (not (type-number? (j2s-type obj)))
 	   (not (eq? (j2s-type obj) 'pair))))
-
+   
    (if infunloop
        (with-access::J2SAccess this (cache obj field)
 	  (if (canbe-object? obj)
 	      (begin
-		 (if (and (isa? obj J2SRef) (isa? field J2SString))
+		 (cond
+		    ((and (isa? obj J2SRef) (isa? field J2SString))
 		     (with-access::J2SRef obj (decl)
 			(with-access::J2SDecl decl (ronly)
 			   (if ronly
 			       (with-access::J2SString field (val)
 				  (set! cache
 				     (decl-cache decl val count env assig shared-pcache)))
-			       (set! cache (inc! count)))))
-		     (set! cache (inc! count)))
+			       (set! cache (inc! count))))))
+		    ((not (memq (j2s-type field) '(integer number real)))
+		     (set! cache (inc! count))))
 		 (cons cache (call-default-walker)))
 	      (call-default-walker)))
        (call-default-walker)))
