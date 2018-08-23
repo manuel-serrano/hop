@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Tue May  1 18:27:09 2018 (serrano)                */
+;*    Last change :  Wed Aug 22 21:07:16 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -82,9 +82,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    call ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-macro (call fun . args)
+(define-macro (call fun this . args)
    (let ((call (string-append "js-call" (number->string (length args)))))
-      `(,(string->symbol call) %this ,fun (js-undefined) ,@args)))
+      `(,(string->symbol call) %this ,fun ,this ,@args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    invoke ...                                                       */
@@ -115,7 +115,7 @@
 	 (js-make-function %this 
 	    (lambda (this resolve reject)
 	       
-	       (define gen (invoke genF 'call self))
+	       (define gen (call genF self))
 	       
 	       (define (step nextF::procedure)
 		  (let ((next (with-handler
@@ -128,7 +128,7 @@
 			((not next)
 			 (js-undefined))
 			((js-totest (ref next 'done))
-			 (call resolve (ref next 'value))
+			 (call resolve (js-undefined) (ref next 'value))
 			 (js-undefined))
 			(else
 			 (let ((promise (invoke js-promise 'resolve

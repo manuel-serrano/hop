@@ -935,7 +935,7 @@
 		      (J2SBlock
 			 (J2SReturn #t
 			    (J2SCall (J2SHopRef 'js-spawn)
-			       gen (J2SThis (current-this))
+			       gen (J2SThis (or thisp (current-this)))
 			       (J2SHopRef '%this)))))
 		   fun))))))
       
