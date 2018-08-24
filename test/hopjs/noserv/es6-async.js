@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 15 11:33:27 2018                          */
-/*    Last change :  Thu Aug 23 04:59:41 2018 (serrano)                */
+/*    Last change :  Fri Aug 24 05:48:11 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 async functions                           */
@@ -55,13 +55,24 @@ asyncYield( 10 ).then( v => { assert.ok( typeof v, "string", "yield parsing" ) }
 /*    this                                                             */
 /*---------------------------------------------------------------------*/
 function asyncCtor() {
-  this.myvar = "hello";
+   this.myvar = "hello";
 }
 
 asyncCtor.prototype.test = async function() {
    assert.ok( this.myvar === "hello", "async this" );
-  return this.myvar;
+   return this.myvar;
 } 
 
-var ac = new asyncCtor();
-ac.test();
+new asyncCtor().test();
+
+function asyncCtorReturn( x ) {
+   if( x > 10 ) return;
+   this.myvar = "hello";
+}
+
+asyncCtorReturn.prototype.test = async function() {
+   assert.ok( this.myvar === "hello", "async this with return" );
+   return this.myvar;
+} 
+
+new asyncCtorReturn().test();
