@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Aug 22 17:44:52 2018 (serrano)                */
+;*    Last change :  Fri Aug 24 08:04:36 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1991,6 +1991,7 @@
       ((not (eq? (interval-type intv) 'integer)) default)
       ((interval-in? intv *uint32-intv*) 'uint32)
       ((interval-in? intv *int32-intv*) 'int32)
+      ((interval-in? intv *int30-intv*) 'int30)
       ((interval-in? intv *int53-intv*) (map-type 'int53 tymap))
       (else default)))
 

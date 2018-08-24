@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Aug 23 08:30:33 2018 (serrano)                */
+;*    Last change :  Fri Aug 24 07:45:34 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -231,37 +231,55 @@
 	     (else (epairify loc `(js-tonumber ,expr %this))))))
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
-       (let ((expr (j2s-scheme expr mode return conf))
+       (let ((sexpr (j2s-scheme expr mode return conf))
 	     (typ (j2s-vtype expr)))
 	  (case type
 	     ((int32)
 	      (cond
-		 ((int32? expr)
-		  (if (=s32 expr #s32:0) -0.0 (negs32 expr)))
+		 ((int32? sexpr)
+		  (if (=s32 sexpr #s32:0) -0.0 (negs32 sexpr)))
 		 ((eq? typ 'int32)
-		  (epairify loc `(negs32js ,expr)))
+		  (epairify loc `(negs32js ,sexpr)))
 		 ((eq? typ 'uint32)
-		  (epairify loc `(negs32 ,(asint32 expr 'uint32))))
+		  (epairify loc `(negs32 ,(asint32 sexpr 'uint32))))
 		 (else
-		  (epairify loc `(js-toint32 (negjs ,expr %this) %this)))))
+		  (epairify loc `(js-toint32 (negjs ,sexpr %this) %this)))))
 	     ((uint32)
 	      (cond
 		 ((eq? typ 'int32)
-		  (epairify loc `(int32->uint32 (negs32 ,expr))))
+		  (epairify loc `(int32->uint32 (negs32 ,sexpr))))
 		 (else
-		  (epairify loc `(js-touint32 (negjs ,expr %this) %this)))))
-	     ((eqv? expr 0)
+		  (epairify loc `(js-touint32 (negjs ,sexpr %this) %this)))))
+	     ((eqv? sexpr 0)
 	      -0.0)
 	     ((integer)
-	      (if (fixnum? expr)
-		  (negfx expr)
-		  (epairify loc `(negfx ,expr))))
+	      (if (fixnum? sexpr)
+		  (negfx sexpr)
+		  (epairify loc `(negfx ,sexpr))))
 	     ((real)
-	      (if (flonum? expr)
-		  (negfl expr)
-		  (epairify loc `(negfl ,expr))))
+	      (if (flonum? sexpr)
+		  (negfl sexpr)
+		  (epairify loc `(negfl ,sexpr))))
+	     ((number)
+	      (tprint "SHOULD NOT BE HERE..." type "/" typ)
+	      (cond
+		 ((int32? sexpr)
+		  (if (=s32 sexpr #s32:0)
+		      -0.0
+		      (epairify loc (tonumber `(negs32 ,sexpr) type conf))))
+		 ((eq? typ 'int32)
+		  (epairify loc
+		     (epairify loc (tonumber `(negs32 ,sexpr) type conf))))
+		 ((eq? typ 'uint32)
+		  (if (inrange-int32? expr)
+		      (epairify loc `(negs32 ,(asint32 sexpr 'uint32)))
+		      (epairify loc `(negsfl ,(uint32->flonum sexpr)))))
+		 ((eq? typ 'int53)
+		  (epairify loc `(negfx ,sexpr)))
+		 (else
+		  (epairify loc `(negjs ,sexpr %this)))))
 	     (else
-	      (epairify loc `(negjs ,expr %this))))))
+	      (epairify loc `(negjs ,sexpr %this))))))
       ((~)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
        (if (eq? type 'int32)
@@ -1768,6 +1786,14 @@
 	  ((real) val)
 	  ((number) `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))
 	  (else (error "toflonum" "Cannot convert type" type))))))
+
+;*---------------------------------------------------------------------*/
+;*    tonumber ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (tonumber val type::symbol conf)
+   (if (m64? conf)
+       (tonumber64 val type conf)
+       (tonumber32 val type conf)))
        
 ;*---------------------------------------------------------------------*/
 ;*    tonumber32 ...                                                   */
