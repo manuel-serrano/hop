@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Aug 22 09:43:14 2018 (serrano)                */
+;*    Last change :  Mon Aug 27 11:17:10 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -93,7 +93,7 @@
 	      (expression::bool (default #f))
 	      (hintinfo::obj (default #f) (info '("notraverse"))))
 
-	   	   (class J2SDeclFunType::J2SDeclFun)
+	   (class J2SDeclFunType::J2SDeclFun)
 
 	   (class J2SDeclClass::J2SDecl
 	      (val::J2SClass (info '("ast"))))
