@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Tue Aug 21 19:00:27 2018 (serrano)                */
+;*    Last change :  Mon Aug 27 08:50:24 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -397,6 +397,7 @@
       ((fixnum? x) x)
       ((int32? x) (int32->fixnum x))
       ((uint32? x) (uint32->fixnum x))
+      ((=fl x 0.0) 0)
       (else #f)))
 
 ;*---------------------------------------------------------------------*/

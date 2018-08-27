@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Mon Aug 20 07:43:24 2018 (serrano)                */
+;*    Last change :  Mon Aug 27 08:02:50 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -256,7 +256,7 @@
 ;*    type-number? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (type-number? type)
-   (or (type-integer? type) (eq? type 'number)))
+   (or (type-integer? type) (memq type '(real number))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-object? ...                                                 */

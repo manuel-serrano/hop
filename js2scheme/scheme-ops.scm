@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Aug 24 07:45:34 2018 (serrano)                */
+;*    Last change :  Mon Aug 27 08:06:00 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -261,25 +261,38 @@
 		  (negfl sexpr)
 		  (epairify loc `(negfl ,sexpr))))
 	     ((number)
-	      (tprint "SHOULD NOT BE HERE..." type "/" typ)
-	      (cond
-		 ((int32? sexpr)
-		  (if (=s32 sexpr #s32:0)
-		      -0.0
-		      (epairify loc (tonumber `(negs32 ,sexpr) type conf))))
-		 ((eq? typ 'int32)
-		  (epairify loc
-		     (epairify loc (tonumber `(negs32 ,sexpr) type conf))))
-		 ((eq? typ 'uint32)
-		  (if (inrange-int32? expr)
-		      (epairify loc `(negs32 ,(asint32 sexpr 'uint32)))
-		      (epairify loc `(negsfl ,(uint32->flonum sexpr)))))
-		 ((eq? typ 'int53)
-		  (epairify loc `(negfx ,sexpr)))
-		 (else
-		  (epairify loc `(negjs ,sexpr %this)))))
-	     (else
-	      (epairify loc `(negjs ,sexpr %this))))))
+	      (tprint "ICI (number) " typ)
+	      (epairify loc
+		 (case typ
+		    ((int32)
+		     `(if (=s32 ,sexpr #s32:0)
+			  -0.0
+			  ,(tonumber `(negs32 ,sexpr) typ conf)))
+		    ((uint32)
+		     (cond
+			((m64? conf)
+			 `(if (=u32 ,sexpr #u32:0)
+			      -0.0
+			      `(negfx ,(uint32->fixnum sexpr)) typ conf))
+			((inrange-int32? expr)
+			 `(if (=u32 ,sexpr #u32:0)
+			      -0.0
+			      ,(tonumber
+				  `(negs32 ,(uint32->int32 sexpr)) typ conf)))
+			(else
+			 `(cond
+			     ((=u32 ,sexpr #u32:0)
+			      -0.0)
+			     ((>u32 ,sexpr (fixnum->uint32 (maxvalfx)))
+			      (negfl (uint32->flonum ,sexpr)))
+			     (else
+			      (negfx (uint32->fixxnum ,sexpr)))))))
+		    ((int53)
+		     `(if (=fx ,sexpr 0)
+			  -0.0
+			  (negfx ,sexpr)))
+		    (else
+		     `(negjs ,sexpr %this))))))))
       ((~)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
        (if (eq? type 'int32)

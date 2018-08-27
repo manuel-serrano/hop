@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Aug 24 08:04:36 2018 (serrano)                */
+;*    Last change :  Mon Aug 27 07:47:49 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1407,8 +1407,11 @@
 	     (cond
 		((not (interval? intv))
 		 (return intv env))
-		((and (= (interval-max intv) 0) (= (interval-min intv) 0))
-		 (expr-range-add! this env fix (interval 0 0 'real)))
+		((and (<= (interval-min intv) 0) (>= (interval-max intv) 0))
+		 (expr-range-add! this env fix
+		    (interval
+		       (- (interval-max intv)) (- (interval-min intv))
+		       'real)))
 		(else
 		 (expr-range-add! this env fix
 		    (interval
