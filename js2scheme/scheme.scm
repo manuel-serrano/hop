@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Aug 23 13:57:18 2018 (serrano)                */
+;*    Last change :  Mon Aug 27 16:00:54 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -534,7 +534,7 @@
 	     val)))
       ((isa? this J2SString)
        (with-access::J2SString this (val)
-	  (if (string-minimal-charset val)
+	  (if (eq? (string-minimal-charset val) 'ascii)
 	      val
 	      (j2s-scheme this mode return conf))))
       (else

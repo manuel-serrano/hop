@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/constant.scm            */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/constant.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Jun 20 17:49:49 2018 (serrano)                */
+;*    Last change :  Mon Aug 27 16:02:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -154,6 +154,15 @@
       (if (=fx nesting 0)
 	  (add-literal! this env #f)
 	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    constant! ::J2SString ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2SString env nesting)
+   (with-access::J2SString this (val)
+      (if (eq? (string-minimal-charset val) 'ascii)
+	  this
+	  (add-literal! this env #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2STilde ...                                         */

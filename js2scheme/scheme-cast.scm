@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Aug 22 16:03:01 2018 (serrano)                */
+;*    Last change :  Mon Aug 27 15:23:19 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -348,9 +348,24 @@
       ((and (inrange-int32? expr) (m64? conf))
        `(fixnum->int32 ,v))
       (else
-       (if (pair? v)
-	   `(js-number-toint32 ,v)
-	   `(if (fixnum? ,v) (fixnum->int32 ,v) (js-number-toint32 ,v))))))
+       (match-case v
+	  ((if (fixnum? ?test) (-fx/overflow ?x ?y) (and ?d (-/overflow ?x ?y)))
+	   (if (m64? conf)
+	       `(if (fixnum? ,test)
+		    (fixnum->int32 (-fx ,x ,y) )
+		    (js-number-toint32 ,d))
+	       
+	       `(js-number-toint32 ,v)))
+	  ((if (fixnum? ?test) (+fx/overflow ?x ?y) (and ?d (+/overflow ?x ?y)))
+	   (if (m64? conf)
+	       `(if (fixnum? ,test)
+		    (fixnum->int32 (+fx ,x ,y) )
+		    (js-number-toint32 ,d))
+	       `(js-number-toint32 ,v)))
+	  ((?- . ?-)
+	   `(js-number-toint32 ,v))
+	  (else
+	   `(if (fixnum? ,v) (fixnum->int32 ,v) (js-number-toint32 ,v)))))))
 
 (define (js-number->uint32 v expr conf)
    (cond
