@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmetic32.scm        */
+;*    .../project/hop/3.2.x-new-types/hopscript/arithmetic32.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Aug 10 09:12:07 2018 (serrano)                */
+;*    Last change :  Mon Aug 27 09:56:24 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -344,6 +344,8 @@
    (cond
       ((fixnum? x) x)
       ((int32? x) (int32->fixnum x))
+      ((uint32? x) (uint32->fixnum x))
+      ((=fl x 0.0) 0)
       (else #f)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Aug 27 08:06:00 2018 (serrano)                */
+;*    Last change :  Mon Aug 27 09:52:57 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -261,7 +261,6 @@
 		  (negfl sexpr)
 		  (epairify loc `(negfl ,sexpr))))
 	     ((number)
-	      (tprint "ICI (number) " typ)
 	      (epairify loc
 		 (case typ
 		    ((int32)
