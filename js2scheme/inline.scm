@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Aug 14 16:24:37 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 08:03:31 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -66,7 +66,7 @@
 ;*    inline-default-factor ...                                        */
 ;*---------------------------------------------------------------------*/
 (define inline-global-expansion 3)
-(define inline-max-function-size 60)
+(define inline-max-function-size 80)
 (define inline-min-call-occurrence 100000)
 
 ;*---------------------------------------------------------------------*/
@@ -245,7 +245,7 @@
 					   (node-size (protoinfo-method p)))))
 			   b))))))
 	 (let liip ((leaf #f))
-	    (let loop ((limit 10))
+	    (let loop ((limit 20))
 	       (inline! this #f leaf limit '() pms this conf)
 	       (let ((nsize (node-size this)))
 		  (when (and (<fx limit inline-max-function-size)
@@ -491,19 +491,23 @@
       (with-access::J2SAccess fun (obj field)
 	 (when (isa? field J2SString)
 	    (with-access::J2SString field (val)
-	       (let ((mets (filter (lambda (m::struct)
-				      (let ((f (protoinfo-method m)))
-					 (and (=fx (function-arity f) arity)
-					      (function-fxarg? f)
-					      (or (not leaf) (function-leaf? f))
-					      (not (memq f stack)))))
-			      (or (hashtable-get pmethods val) '()))))
-		  (when (<fx (apply +
-				(map (lambda (m)
-					(function-size
-					   (protoinfo-method m)))
-				   mets))
-			   limit)
+	       (let* ((mets (filter (lambda (m::struct)
+				       (let ((f (protoinfo-method m)))
+					  (and (=fx (function-arity f) arity)
+					       (function-fxarg? f)
+					       (or (not leaf) (function-leaf? f))
+					       (not (memq f stack)))))
+			       (or (hashtable-get pmethods val) '())))
+		      (sz (apply +
+			     (map (lambda (m)
+				     (function-size (protoinfo-method m)))
+				mets))))
+		  (when (or (<fx sz limit)
+			    (and (<fx sz inline-max-function-size)
+				 (every (lambda (m)
+					   (let ((f (protoinfo-method m)))
+					      (function-leaf? f)))
+				    mets)))
 		     mets))))))
 
    (define (inline-access-call this::J2SCall fun::J2SAccess args loc)
@@ -551,10 +555,14 @@
    
    (with-access::J2SCall this (fun thisarg args type loc cache)
       (cond
-	 (cache (call-default-walker))
-	 ((isa? fun J2SAccess) (or (inline-access-call this fun args loc) this))
-	 ((isa? fun J2SRef) (or (inline-ref-call this fun thisarg args loc) this))
-	 ((pair? targets) (or (inline-expr-call this fun thisarg args loc) this))
+	 (cache
+	  (call-default-walker))
+	 ((isa? fun J2SAccess)
+	  (or (inline-access-call this fun args loc) this))
+	 ((isa? fun J2SRef)
+	  (or (inline-ref-call this fun thisarg args loc) this))
+	 ((pair? targets)
+	  (or (inline-expr-call this fun thisarg args loc) this))
 	 (else this))))
 
 ;*---------------------------------------------------------------------*/
@@ -684,7 +692,7 @@
 			 (loop (cdr callees)
 			    (cons (cons cache (car callees)) caches)))))))))
 
-   (define (inline-object-method-call-cache-proto fun obj args)
+   (define (inline-object-method-call-cache-proto-UNUSED fun obj args)
       (with-access::J2SAccess fun (field cspecs)
 	 (let loop ((callees callees)
 		    (caches '()))
@@ -754,8 +762,11 @@
 		    (caches '()))
 	    (if (null? callees)
 		(let* ((c (get-cache prgm))
+		       (f (duplicate::J2SAccess fun
+			     (obj obj)))
 		       (r (J2SLetOpt '(call) (gensym 'r)
-			     (J2SMethodCall/cache* fun (list obj) args '(pmap-inline vtable-inline) c))))
+			     (J2SMethodCall/cache* f (list obj) args
+				'(pmap-inline vtable-inline) c))))
 		   (J2SLetRecBlock #f (list r)
 		      (let loop ((cs caches))
 			 (if (null? cs)

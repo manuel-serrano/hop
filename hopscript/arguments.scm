@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arguments.scm           */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/arguments.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sat Mar 17 19:28:42 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:08:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -28,6 +28,7 @@
 	   __hopscript_error
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_worker
 	   __hopscript_array)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Aug 27 09:56:24 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:10:31 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -25,6 +25,7 @@
 	   __hopscript_error
 	   __hopscript_property
 	   __hopscript_private
+	   __hopscript_lib
 	   __hopscript_public)
 
    (cond-expand

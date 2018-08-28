@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/number.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/number.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Apr 28 18:12:09 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:07:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -28,6 +28,7 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_arithmetic)
    
    (export (js-init-number! ::JsGlobalObject)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/array.scm               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/array.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Aug  6 15:19:41 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:08:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -38,6 +38,7 @@
 	   __hopscript_error
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_number
 	   __hopscript_worker
 	   __hopscript_symbol
@@ -107,6 +108,12 @@
 	  (inline DEFAULT-EMPTY-ARRAY-SIZE::long)))
       (else
        (export (js-empty-vector->jsarray::JsArray ::JsGlobalObject)))))
+
+;*---------------------------------------------------------------------*/
+;*    JsArray? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (JsArray? o)
+   (and (object? o) (eq? (object-class o) JsArray)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ::JsArray ...                                    */
@@ -401,8 +408,8 @@
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.5.1
 	 (js-bind! %this js-array 'isArray
 	    :value (js-make-function %this
-		      (lambda (this arg) (isa? arg JsArray))
-		      1 'isArrayK)
+		      (lambda (this arg) (JsArray? arg))
+		      1 'isArray)
 	    :writable #t
 	    :enumerable #f
 	    :hidden-class #t)
@@ -952,7 +959,7 @@
 			 (cond
 			    ((null? l)
 			     len)
-			    ((isa? (car l) JsArray)
+			    ((JsArray? (car l))
 			     (loop (cdr l)
 				(+fx/overflow len
 				   (js-get-length (car l) %this))))
@@ -967,7 +974,7 @@
 	    (cond
 	       ((null? l)
 		arr)
-	       ((isa? (car l) JsArray)
+	       ((JsArray? (car l))
 		(loop (cdr l) (copy-array (car l) arr i)))
 	       (else
 		(js-put! arr i (car l) #f %this)
@@ -1034,7 +1041,7 @@
    ;; push
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.7
    (define (array-prototype-push this::obj . items)
-      (if (not (isa? this JsArray))
+      (if (not (JsArray? this))
 	  (let ((o (js-toobject %this this)))
 	     (let ((n (js-uint32-tointeger (js-get-lengthu32 o %this))))
 		(for-each (lambda (item)
@@ -1106,7 +1113,7 @@
 			 (js-delete! o rni #t %this)
 			 (loop ni))))))))
 
-      (if (isa? this JsArray)
+      (if (JsArray? this)
 	  (with-access::JsArray this (vec)
 	     (if (js-object-mode-inline? this)
 		 ;; fast path
@@ -1160,7 +1167,7 @@
 		      (loop (+fx i 1))))))))
       
       (let ((o (js-toobject %this this)))
-	 (if (isa? o JsArray)
+	 (if (JsArray? o)
 	     (with-access::JsArray o (vec length)
 		(cond
 		   ((=u32 length #u32:0)
@@ -1289,7 +1296,7 @@
 			   (array-slice! o start end)))))
 		   (else
 		    (array-slice! o k final)))))
-	    ((not (isa? o JsArray))
+	    ((not (JsArray? o))
 	     (array-slice! o k final))
 	    (else
 	     (with-access::JsArray o (vec ilen)
@@ -1390,7 +1397,7 @@
 	    arr))
 
       (let ((o (js-toobject %this this)))
-	 (if (not (isa? this JsArray))
+	 (if (not (JsArray? this))
 	     (array-sort this (get-compare comparefn))
 	     (with-access::JsArray this (vec)
 		(cond
@@ -1491,7 +1498,7 @@
 	     (actualstart (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
 	     (actualdeletecount (min (max (js-tointeger deletecount %this) 0)
 				   (- len actualstart))))
-	 (if (not (isa? this JsArray))
+	 (if (not (JsArray? this))
 	     (array-splice this len actualstart actualdeletecount)
 	     (with-access::JsArray this (vec)
 		(cond
@@ -1552,7 +1559,7 @@
 	    i))
       
       (let ((o (js-toobject %this this)))
-	 (if (isa? this JsArray)
+	 (if (JsArray? this)
 	     (with-access::JsArray this (length)
 		(cond
 		   ((null? items)
@@ -1632,7 +1639,7 @@
 					#u32:0
 					(-u32 len (->uint32 absn))))
 				 (->uint32 n))))
-		       (if (isa? o JsArray)
+		       (if (JsArray? o)
 			   (with-access::JsArray o (vec ilen)
 			      (cond
 				 ((js-object-mode-inline? o)
@@ -1693,7 +1700,7 @@
 		(loop (-u32 k #u32:1))))))
       
       (define (lastindexof::int o::JsObject k::uint32)
-	 (if (isa? o JsArray)
+	 (if (JsArray? o)
 	     (with-access::JsArray o (vec ilen)
 		(cond
 		   ((and (js-object-mode-inline? o) (<u32 k ilen))
@@ -3096,7 +3103,7 @@
    ;; see ch15/15.4/15.4.4/15.4.4.16/15.4.4.16-4-8.js
    (let ((o (js-toobject %this this)))
       (cond
-	 ((not (isa? o JsArray))
+	 ((not (JsArray? o))
 	  (let ((len (js-get-lengthu32 o %this)))
 	     (if (not (isa? proc JsFunction))
 		 (js-raise-type-error %this "Not a procedure ~s" proc)
@@ -3229,7 +3236,7 @@
 ;*    js-array-maybe-push ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-push this item %this)
-   (if (isa? this JsArray)
+   (if (JsArray? this)
        (js-array-push this item %this)
        (js-call1 %this
 	  (js-get-name/cache this 'push #f %this (js-pcache-ref %pcache 1))
@@ -3268,7 +3275,7 @@
 ;*    js-array-maybe-pop ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-pop this %this)
-   (if (isa? this JsArray)
+   (if (JsArray? this)
        (js-array-pop this %this)
        (js-call0 %this
 	  (js-get-name/cache this 'pop #f %this (js-pcache-ref %pcache 2))
@@ -3321,7 +3328,7 @@
 ;*    js-array-maybe-fill ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-fill this value start end %this)
-   (if (isa? this JsArray)
+   (if (JsArray? this)
        (js-array-fill this value start end %this)
        (js-call3 %this
 	  (js-get-name/cache this 'fill #f %this (js-pcache-ref %pcache 3))
@@ -3341,7 +3348,7 @@
 	     (js-undefined)))
       res)
 
-   (if (isa? value JsArray)
+   (if (JsArray? value)
        value
        (with-access::JsGlobalObject %this (js-symbol-iterator)
 	  (let ((proc (js-get value js-symbol-iterator %this)))

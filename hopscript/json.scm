@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/json.scm                */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/json.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Aug  8 09:24:18 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:08:39 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -26,6 +26,7 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_array)

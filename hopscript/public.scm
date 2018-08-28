@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/public.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/public.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jul 18 08:49:46 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 08:57:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1262,7 +1262,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.1       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-equal? o1 o2 %this::JsGlobalObject)
-   (or (and (eq? o1 o2) (not (flonum? o1))) (js-equality? o1 o2 %this)))
+   (or (and (eq? o1 o2) (not (flonum? o1)))
+       (and (not (fixnums? o1 o2)) (js-equality? o1 o2 %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equal-sans-flonum? ...                                        */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/error.scm               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/error.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jul 20 19:27:24 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:07:54 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -27,6 +27,7 @@
 	   __hopscript_array
 	   __hopscript_function
 	   __hopscript_private
+	   __hopscript_lib
 	   __hopscript_public)
 
    (static (class JsFrame::JsObject

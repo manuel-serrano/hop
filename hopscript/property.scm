@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Aug  1 14:11:16 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:57:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -111,6 +111,10 @@
 	   (generic js-object-get-name/cache-miss ::JsObject ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   (inline js-object-get-prototype/cache-miss ::JsObject ::obj ::bool
+	      ::JsGlobalObject
+	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   
 	   (js-object-get-name/cache-imap+ ::JsObject ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
@@ -123,6 +127,7 @@
 	   (js-global-object-get-name/cache ::JsObject ::symbol ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   
 	   
 	   (js-can-put o::JsObject ::obj ::JsGlobalObject)
 	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
@@ -1588,6 +1593,18 @@
 		   #!optional (point -1) (cspecs '()))
    (js-object-get-lookup obj name throw %this cache point cspecs))
 
+;*---------------------------------------------------------------------*/
+;*    js-object-get-prototype/cache-miss ...                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-get-prototype/cache-miss obj::JsObject name::obj
+		   throw::bool %this::JsGlobalObject
+		   cache::JsPropertyCache
+		   #!optional (point -1) (cspecs '()))
+   (if (eq? (object-class obj) JsFunction)
+       (with-access::JsFunction obj (%prototype)
+	  %prototype)
+       (js-object-get-name/cache-miss obj name throw %this cache point cspecs)))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-cmap+ ...                               */
 ;*    -------------------------------------------------------------    */

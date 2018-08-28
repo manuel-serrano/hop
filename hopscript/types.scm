@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/types.scm               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/types.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jun 26 18:49:24 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:06:14 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -29,7 +29,8 @@
 	__hopscript_private
 	__hopscript_function
 	__hopscript_property
-	__hopscript_public)
+	__hopscript_public
+	__hopscript_lib)
    
    (export (class WorkerHopThread::hopthread
 	      (%loop (default #f))

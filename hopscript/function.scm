@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/function.scm            */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/function.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jul 21 07:28:09 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:06:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -27,6 +27,7 @@
 	   __hopscript_error
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_worker)
    
    (export (js-init-function! ::JsGlobalObject)
@@ -73,6 +74,18 @@
 		   (js-object-mode-set! nobj (js-object-mode obj))
 		   nobj)
 		(js-undefined))))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-object-get-name/cache-miss ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-object-get-name/cache-miss o::JsFunction p::obj
+		  throw::bool %this::JsGlobalObject
+		  cache::JsPropertyCache
+		  #!optional (point -1) (cspecs '()))
+   (if (eq? p 'prototype)
+       (with-access::JsFunction o (%prototype)
+	  %prototype)
+       (call-next-method)))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */

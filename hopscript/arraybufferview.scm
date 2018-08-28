@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arraybufferview.scm     */
+;*    .../hop/3.2.x-new-types/hopscript/arraybufferview.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Jun 20 15:25:00 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:09:45 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -26,6 +26,7 @@
 	   __hopscript_error
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_number
 	   __hopscript_worker
 	   __hopscript_arraybuffer)

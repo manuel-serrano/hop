@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/regexp.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/regexp.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Feb 13 14:16:56 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:07:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -26,6 +26,7 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_string
 	   __hopscript_stringliteral
 	   __hopscript_error)
