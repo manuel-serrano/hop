@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu Aug  9 10:22:12 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 14:44:22 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -807,14 +807,10 @@
       (+llong *profile-gets* *profile-puts*))
 
    (define total
-      (begin
-	 (let ((h1 (filecaches-hits filecaches))
-	       (m1 (filecaches-misses filecaches))
-	       (u1 (total-uncaches)))
-	    (+llong (filecaches-hits filecaches)
-	       (+llong
-		  (filecaches-misses filecaches)
-		  (total-uncaches))))))
+      (let ((h1 (filecaches-hits filecaches))
+	    (m1 (filecaches-misses filecaches))
+	    (u1 (total-uncaches)))
+	 (+llong h1 (+llong m1 u1))))
 
    (define multi
       (filecaches-multis filecaches))
