@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Aug 29 08:14:30 2018 (serrano)                */
+;*    Last change :  Wed Aug 29 16:12:45 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -69,6 +69,7 @@
 	((int32 ,js-fixnum->int32)
 	 (uint32 ,js-fixnum->uint32)
 	 (string ,js-fixnum->string)
+	 (real fixnum->flonum)
 	 (int53 nop)
 	 (propname nop)
 	 (number nop)

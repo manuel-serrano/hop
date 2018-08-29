@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Aug 27 07:47:49 2018 (serrano)                */
+;*    Last change :  Wed Aug 29 16:25:52 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -963,10 +963,10 @@
 ;*    node-range ::J2SBindExit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SBindExit env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SBindExit this (stmt)
+   (with-access::J2SBindExit this (stmt range)
       (multiple-value-bind (intv env)
 	 (node-range stmt env conf mode fix)
-	 (expr-range-add! this env fix intv))))
+	 (return range env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SHopRef ...                                       */
@@ -1738,13 +1738,8 @@
 		      (set! rrange tyr)))
 		(values #f enve)))
 	    ((isa? from J2SExpr)
-	     (with-access::J2SExpr from (range)
-		(let ((tyr (interval-merge range intve)))
-		   (unless (interval-in? tyr range)
-		      (unfix! fix
-			 (format "J2SReturn(~a) e=~a ~a/~a" loc intve tyr range))
-		      (set! range tyr)))
-		(values #f enve)))
+	     (expr-range-add! from enve fix intve)
+	     (return #f enve))
 	    (else
 	     (values #f enve))))))
 
