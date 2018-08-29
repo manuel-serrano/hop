@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Aug 28 18:47:25 2018 (serrano)                */
+;*    Last change :  Wed Aug 29 07:59:43 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -604,7 +604,7 @@
    (with-access::J2SBindExit this (stmt type)
       (multiple-value-bind (typ env bk)
 	 (node-type stmt env fix)
-	 (expr-type-add! this env fix typ bk))))
+	 (return type env bk))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SHopRef ...                                        */
@@ -1170,7 +1170,7 @@
 	 ((is-global? callee 'Array)
 	  (return 'array (unknown-call-env env) bk))
 	 ((is-global? callee 'String)
-	  (return 'object (unknown-call-env env) bk))
+	  (return 'string (unknown-call-env env) bk))
 	 (else
 	  (type-unknown-call callee env bk))))
    
@@ -1480,12 +1480,8 @@
 		      (set! rtype tyr)))
 		(values 'void enve (list this))))
 	    ((isa? from J2SExpr)
-	     (with-access::J2SExpr from (type)
-		(let ((tyr (merge-types type tye)))
-		   (unless (eq? tyr type)
-		      (unfix! fix
-			 (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr type))
-		      (set! type tyr)))
+	     (with-access::J2SExpr from (type loc)
+		(expr-type-add! from env fix tye)
 		(values 'void enve (list this))))
 	    (else
 	     (values 'void enve (list this)))))))

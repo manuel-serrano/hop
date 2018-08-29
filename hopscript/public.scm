@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Aug 28 08:57:06 2018 (serrano)                */
+;*    Last change :  Wed Aug 29 08:23:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -117,6 +117,7 @@
 	   
 	   (js-raise-reference-error/loc ::JsGlobalObject loc ::bstring obj . args)
 	   (inline js-totest::bool ::obj)
+	   (inline js-totest-likely-object::bool ::obj)
 	   (js-toboolean::bool ::obj)
 	   (generic js-tonumber ::obj ::JsGlobalObject)
 	   (generic js-tointeger ::obj ::JsGlobalObject)
@@ -965,6 +966,15 @@
    (if (boolean? obj) obj (js-toboolean obj)))
       
 ;*---------------------------------------------------------------------*/
+;*    js-totest-likely-object ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.5         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-totest-likely-object obj)
+   (or (and (object? obj) (eq? (object-class obj) JsObject))
+       (js-toboolean obj)))
+      
+;*---------------------------------------------------------------------*/
 ;*    js-toboolean ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.2          */
@@ -972,11 +982,12 @@
 (define (js-toboolean obj)
    (cond
       ((eq? obj (js-null)) #f)
+      ((boolean? obj) obj)
+      ((eq? obj (js-undefined)) #f)
+      ((js-jsstring? obj) (js-jsstring->bool obj))
+      ((object? obj) #t)
       ((fixnum? obj) (not (=fx obj 0)))
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
-      ((js-jsstring? obj) (js-jsstring->bool obj))
-      ((eq? obj (js-undefined)) #f)
-      ((boolean? obj) obj)
       (else #t)))
 
 ;*---------------------------------------------------------------------*/

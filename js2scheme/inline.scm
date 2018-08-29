@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Aug 28 08:03:31 2018 (serrano)                */
+;*    Last change :  Wed Aug 29 07:40:23 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -312,6 +312,15 @@
 	 (cell-ref cell))))
 			       
 ;*---------------------------------------------------------------------*/
+;*    function-self-recursive? ...                                     */
+;*---------------------------------------------------------------------*/
+(define (function-self-recursive? fun::J2SFun)
+   (with-access::J2SFun fun (body)
+      (let ((cell (make-cell #f)))
+	 (node-self-recursive body fun cell)
+	 (cell-ref cell))))
+			       
+;*---------------------------------------------------------------------*/
 ;*    function-size ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (function-size this::J2SFun)
@@ -339,6 +348,21 @@
       ((isa? obj J2SDecl)
        (with-access::J2SDecl obj (ronly usage)
 	  (or ronly (not (usage? '(assig) usage)))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    refonly-variable? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (refonly-variable? obj)
+   (cond
+      ((isa? obj J2SRef)
+       (with-access::J2SRef obj (decl)
+	  (with-access::J2SDecl decl (ronly usage)
+	     (or ronly (only-usage? '(ref) usage)))))
+      ((isa? obj J2SDecl)
+       (with-access::J2SDecl obj (ronly usage)
+	  (or ronly (only-usage? '(ref) usage))))
       (else
        #f)))
 
@@ -414,7 +438,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline!* ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (inline!* lst targets leaf::bool limit::long stack::pair-nil pmethods prgm conf)
+(define (inline!* lst targets leaf::bool limit::long stack::pair-nil
+	   pmethods prgm conf)
    (map (lambda (o)
 	   (inline! o targets leaf limit stack pmethods prgm conf))
       lst))
@@ -423,14 +448,16 @@
 ;*    inline! ::J2SNode ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SNode
-		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil
+		       pmethods prgm conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SMeta ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SMeta
-		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil
+		       pmethods prgm conf)
    (with-access::J2SMeta this (optim debug)
       (if (or (=fx optim 0) (>fx debug 0))
 	  this
@@ -440,7 +467,8 @@
 ;*    inline! ::J2SMetaInl ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SMetaInl
-		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil
+		       pmethods prgm conf)
    (with-access::J2SMetaInl this (inlstack stmt loc)
       (set! stmt
 	 (inline! stmt
@@ -451,7 +479,8 @@
 ;*    inline! ::J2SDeclFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SDeclFun
-		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil
+		       pmethods prgm conf)
    (with-access::J2SDeclFun this (val id)
       (inline! val targets leaf limit stack pmethods prgm conf)
       this))
@@ -460,7 +489,8 @@
 ;*    inline! ::J2SFun ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SFun
-		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil
+		       pmethods prgm conf)
    (with-access::J2SFun this (optimize body)
       (when optimize
 	 (set! body
@@ -472,7 +502,8 @@
 ;*    inline! ::J2SCall ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SCall
-		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil
+		       pmethods prgm conf)
    
    (define (find-inline-decl-function this::J2SCall fun arity limit stack)
       (with-access::J2SRef fun (decl)
@@ -484,7 +515,8 @@
 			     (or (not leaf) (function-leaf? val))
 			     (not (memq val stack))
 			     (<=fx (function-size val) limit)
-			     (check-id id))
+			     (check-id id)
+			     (not (function-self-recursive? val)))
 		     val))))))
 
    (define (find-inline-methods this fun arity)
@@ -496,7 +528,8 @@
 					  (and (=fx (function-arity f) arity)
 					       (function-fxarg? f)
 					       (or (not leaf) (function-leaf? f))
-					       (not (memq f stack)))))
+					       (not (memq f stack))
+					       (not (function-self-recursive? f)))))
 			       (or (hashtable-get pmethods val) '())))
 		      (sz (apply +
 			     (map (lambda (m)
@@ -836,8 +869,6 @@
 	   (cond
 	      ((and (ronly-variable? p) (isa? a J2SLiteral))
 	       a)
-	      ((and (ronly-variable? p) (isa? a J2SRef) (ronly-variable? a))
-	       a)
 	      (else
 	       (with-access::J2SDecl p (usage id writable)
 		  (with-access::J2SNode a (loc)
@@ -1175,6 +1206,26 @@
 (define-walk-method (node-leaf node::J2SNew cell)
    (cell-set! cell #f)
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    node-self-recursive ::J2SNode ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-self-recursive node::J2SNode self cell)
+   (unless (cell-ref cell)
+      (call-default-walker))
+   (cell-ref cell))
+
+;*---------------------------------------------------------------------*/
+;*    node-self-recursive ::J2SCall ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-self-recursive node::J2SCall self cell)
+   (with-access::J2SCall node (fun)
+      (when (isa? fun J2SRef)
+	 (with-access::J2SRef fun (decl)
+	    (when (isa? decl J2SDeclInit)
+	       (with-access::J2SDeclInit decl (val)
+		  (when (eq? val self)
+		     (cell-set! cell #t))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    unmetainl! ::J2SNode ...                                         */
