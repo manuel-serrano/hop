@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/trashcan/es6-promise.js                                  */
+/*    .../prgm/project/hop/3.1.x/test/hopjs/noserv/es6-promise.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Tue Mar 21 13:34:46 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Wed Aug 29 09:32:45 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
 /*=====================================================================*/
@@ -483,3 +483,25 @@ setTimeout( function() {
    process.exit( ok === expected ? 0 : 1 )
 }, 500 );
 
+/*---------------------------------------------------------------------*/
+/*    enqueue                                                          */
+/*    -------------------------------------------------------------    */
+/*    Issue 47: https://github.com/manuel-serrano/hop/issues/47        */
+/*---------------------------------------------------------------------*/
+function enqueue() {
+   var r;
+   var t = false;
+
+   var p = new Promise( function( resolve, reject ){
+      r = resolve;
+   });
+
+   p.then( function() {
+      assert.ok( t, "promise enqueue" );
+   } );
+
+   r();
+   t = true;
+}
+
+enqueue();
