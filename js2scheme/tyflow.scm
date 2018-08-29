@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Aug 29 07:59:43 2018 (serrano)                */
+;*    Last change :  Wed Aug 29 16:24:47 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1480,9 +1480,8 @@
 		      (set! rtype tyr)))
 		(values 'void enve (list this))))
 	    ((isa? from J2SExpr)
-	     (with-access::J2SExpr from (type loc)
-		(expr-type-add! from env fix tye)
-		(values 'void enve (list this))))
+	     (expr-type-add! from env fix tye)
+	     (values 'void enve (list this)))
 	    (else
 	     (values 'void enve (list this)))))))
 
