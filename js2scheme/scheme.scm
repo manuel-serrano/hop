@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Aug 27 16:00:54 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 17:33:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1704,7 +1704,7 @@
 			      ,(j2s-unresolved-put! `',id val #t mode return)
 			      ,tmp))))))))
    
-   (define (aput-inc tyobj otmp prop op lhs field::J2SExpr cache inc cs)
+   (define (aput-inc tyobj otmp prop op lhs field::J2SExpr cache inc cs cache-missp::bool)
       (with-access::J2SAccess lhs (loc obj cspecs (loca loc) type)
 	 (let* ((tmp (gensym 'aput))
 		(oref (instantiate::J2SHopRef
@@ -1740,6 +1740,26 @@
 				      (strict-mode? mode) conf
 				      cache cs)
 				  ,tmp))))))
+	       (cache-missp
+		`(let ((,tmp ,scmlhs))
+		    ,(let* ((tmp2 (gensym 'tmp))
+			    (tref (instantiate::J2SHopRef
+				     (loc loc)
+				     (id tmp2)
+				     (type 'number))))
+			`(let ((,tmp2 (js-tonumber ,tmp %this)))
+			    ,(new-or-old tmp2
+				(js-binop2 loc '+ 'any
+				   tref rhs mode return conf)
+				(lambda (val tmp)
+				   `(begin
+				       ,(j2s-put! loc otmp tyobj
+					   fexpr
+					   (j2s-vtype field)
+					   val 'number
+					   (strict-mode? mode) conf
+					   cache cs)
+				       ,tmp2)))))))
 	       (else
 		`(let ((,tmp ,scmlhs))
 		    (if (fixnum? ,tmp)
@@ -1766,7 +1786,7 @@
 					 (type 'number))))
 			    `(let ((,tmp2 (js-tonumber ,tmp %this)))
 				,(new-or-old tmp2
-				    (js-binop2 loc '+ 'number
+				    (js-binop2 loc '+ 'any
 				       tref rhs mode return conf)
 				    (lambda (val tmp)
 				       `(begin
@@ -1791,26 +1811,26 @@
       (with-access::J2SAccess lhs (obj cspecs cache (loca loc))
 	 (cond
 	    ((eq? (j2s-type obj) 'array)
-	     (aput-inc 'array otmp prop op lhs field cache inc '()))
+	     (aput-inc 'array otmp prop op lhs field cache inc '() #f))
 	    ((not cache)
-	     (aput-inc 'object otmp prop op lhs field cache inc '()))
+	     (aput-inc 'object otmp prop op lhs field cache inc '() #f))
 	    ((or (not cache) (memq (j2s-type field) '(integer number)))
 	     (warning "js2scheme" "no cache entry should have been generated" (j2s->list this))
-	     (aput-inc 'object otmp prop op lhs field cache inc '()))
+	     (aput-inc 'object otmp prop op lhs field cache inc '() #f))
 	    (else
 	     `(with-access::JsObject ,otmp (cmap)
 		 (let ((%cmap cmap))
 		    ,(let loop ((cs cspecs))
 			(cond
 			   ((null? cs)
-			    (aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc '()))
+			    (aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc '() #t))
 			   ((or (eq? (car cs) 'imap) (eq? (car cs) 'imap-incache))
 			    `(if (eq? %cmap (js-pcache-imap (js-pcache-ref %pcache ,cache)))
-				 ,(aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc (list (car cs)))
+				 ,(aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc 'imap #f)
 				 ,(loop (cdr cs))))
 			   ((eq? (car cs) 'cmap)
 			    `(if (eq? %cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
-				 ,(aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc (list (car cs)))
+				 ,(aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc 'cmap #f)
 				 ,(loop (cdr cs))))
 			   (else
 			    (loop (cdr cs)))))))))))

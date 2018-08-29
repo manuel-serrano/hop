@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Aug 27 09:52:57 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 18:19:11 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1198,6 +1198,13 @@
 	    (let ((tl (j2s-vtype lhs))
 		  (tr (j2s-vtype rhs)))
 	       (cond
+		  ((and (eq? type 'any) (eq? tl 'number) (eq? tr 'int32))
+		   ;; type is forced to any on prefix/suffix generic increments
+		   ;; this case is used to generate smaller codes
+		   (binop-any-any '+ type
+		      (box left tl conf)
+		      (box right tr conf)
+		      #f))
 		  ((eq? tl 'string)
 		   (add-string loc type left tl lhs right tr rhs
 		      mode return conf #f))
@@ -1243,7 +1250,7 @@
 			    (box left tl conf)
 			    (box right tr conf)
 			    #f)))))))))
-   
+
    (if (type-number? type)
        (js-arithmetic-addsub loc '+ type lhs rhs mode return conf)
        (add loc type lhs rhs mode return conf)))

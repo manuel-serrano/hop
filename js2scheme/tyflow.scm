@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Aug 21 08:22:17 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 18:47:25 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1170,7 +1170,7 @@
 	 ((is-global? callee 'Array)
 	  (return 'array (unknown-call-env env) bk))
 	 ((is-global? callee 'String)
-	  (return 'string (unknown-call-env env) bk))
+	  (return 'object (unknown-call-env env) bk))
 	 (else
 	  (type-unknown-call callee env bk))))
    
