@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Aug 28 17:33:35 2018 (serrano)                */
+;*    Last change :  Wed Aug 29 09:17:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1759,7 +1759,7 @@
 					   val 'number
 					   (strict-mode? mode) conf
 					   cache cs)
-				       ,tmp2)))))))
+				       ,tmp)))))))
 	       (else
 		`(let ((,tmp ,scmlhs))
 		    (if (fixnum? ,tmp)
@@ -1796,7 +1796,7 @@
 					       val 'number
 					       (strict-mode? mode) conf
 					       cache cs)
-					   ,tmp2))))))))))))
+					   ,tmp))))))))))))
 
    (define (rhs-cache rhs)
       (if (isa? rhs J2SCast)
