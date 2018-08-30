@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Aug 22 17:13:43 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 19:11:58 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -45,6 +45,8 @@
 	   
 	   (typeof-this obj conf)
 	   (maybe-number? expr::J2SNode)
+	   (mightbe-number?::bool field::J2SExpr)
+	   
 	   (utype-ident ident utype conf #!optional compound)
 	   (vtype-ident ident vtype conf #!optional compound)
 	   (type-ident ident type conf)
@@ -68,9 +70,9 @@
 	   
 	   (js-pcache cache)
 	   
-	   (j2s-get loc obj tyobj prop typrop tyval conf cache
+	   (j2s-get loc obj field tyobj prop typrop tyval conf cache
 	      #!optional (cspecs '(cmap pmap amap vtable)))
-	   (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache
+	   (j2s-put! loc obj field tyobj prop typrop val tyval mode conf cache
 	      #!optional (cspecs '(cmap pmap amap vtable)))
 
 	   (inrange-positive?::bool ::J2SExpr)
@@ -261,6 +263,20 @@
 ;*---------------------------------------------------------------------*/
 (define (maybe-number? expr::J2SNode)
    (memq (j2s-vtype expr) '(any int32 uint32 integer number real)))
+
+;*---------------------------------------------------------------------*/
+;*    mightbe-number? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (mightbe-number?::bool field::J2SExpr)
+   (or (is-number? field)
+       (with-access::J2SExpr field (hint)
+	  (or (assq 'index hint) (assq 'number hint) (assq 'integer hint)))
+       (when (isa? field J2SBinary)
+	  (with-access::J2SBinary field (lhs rhs op)
+	     (when (eq? op '+)
+		(or (mightbe-number? lhs) (mightbe-number? rhs)))))
+       (when (eq? (j2s-type field) 'any)
+	  (or (isa? field J2SPostfix) (isa? field J2SPrefix)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    utype-ident ...                                                  */
@@ -482,7 +498,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-get loc obj tyobj prop typrop tyval conf cache
+(define (j2s-get loc obj field tyobj prop typrop tyval conf cache
 	   #!optional (cspecs '(cmap pmap amap vtable)))
 
    (define (maybe-string? prop typrop)
@@ -559,6 +575,14 @@
 		  `(js-get-lengthu32 ,obj %this #f)
 		  `(js-get-length ,obj %this #f))
 	      `(js-get ,obj ',(string->symbol prop) %this)))
+	 ((and field (mightbe-number? field))
+	  (let ((o (gensym '%obj))
+		(p (gensym '%prop)))
+	     `(let ((,o ,obj)
+		    (,p ,prop))
+		 (if (isa? ,o JsArray)
+		     (js-array-ref ,o ,p %this)
+		     (js-get ,o ,p %this)))))
 	 ((memq typrop '(int32 uint32))
 	  `(js-get ,obj ,(box prop typrop conf) %this))
 	 (else
@@ -567,7 +591,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache #!optional (cspecs '(cmap pmap amap vtable)))
+(define (j2s-put! loc obj field tyobj prop typrop val tyval mode conf cache #!optional (cspecs '(cmap pmap amap vtable)))
+
+   (define (maybe-array-set! prop val)
+      (let ((o (gensym '%obj))
+	    (p (gensym '%prop))
+	    (v (gensym '%val)))
+	 `(let ((,o ,obj)
+		(,p ,prop)
+		(,v ,val))
+	     (if (isa? ,o JsArray)
+		 (js-array-set! ,o ,p ,v ,mode %this)
+		 (js-put! ,o ,p ,v ,mode %this)))))
+   
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
 		  ((js-ascii->jsstring ?str) str)
@@ -611,21 +647,22 @@
 			     ,mode %this
 			     ,(js-pcache cache) ,(loc->point loc) ',cspecs))))))
 	     ((memq typrop '(int32 uint32))
-	      `(js-put! ,obj ,(box prop typrop conf)
+	      `(maybe-array-set! ,obj ,(box prop typrop conf)
 		  ,(box val tyval conf) ,mode %this))
 	     ((or (number? prop) (null? cspecs))
-	      `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))
+	      (maybe-array-set! prop (box val tyval conf)))
 	     (else
-	      `(js-put/cache! ,obj , prop
+	      `(js-put/cache! ,obj ,prop
 		  ,(box val tyval conf) ,mode %this ,(js-pcache cache)))))
+	 ((and field (mightbe-number? field))
+	  (maybe-array-set! (box prop typrop conf) (box val tyval conf)))
 	 (else
 	  (cond
 	     ((string? prop)
 	      `(js-put! ,obj ',(string->symbol prop)
 		  ,(box val tyval conf) ,mode %this))
 	     ((memq typrop '(int32 uint32))
-	      `(js-put! ,obj ,(box prop typrop conf)
-		  ,(box val tyval conf) ,mode %this))
+	      (maybe-array-set! (box prop typrop conf) (box val tyval conf)))
 	     (else
 	      `(js-put! ,obj ,(box prop typrop conf)
 		  ,(box val tyval conf) ,mode %this)))))))
@@ -877,3 +914,4 @@
        (with-access::J2SCast expr (expr)
 	  (uncast expr))
        expr))
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Aug 22 15:21:52 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 19:39:35 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -465,7 +465,7 @@ ft		`(,f ,@%gen
 		(call-unknown-function fun '((js-undefined)) args)
 		`(if ,(j2s-in? loc `',id (car withs))
 		     ,(call-unknown-function
-			 (j2s-get loc (car withs) 'object `',id 'string 'any conf #f)
+			 (j2s-get loc (car withs) #f 'object `',id 'string 'any conf #f)
 			(list (car withs)) args)
 		     ,(loop (cdr withs)))))))
 

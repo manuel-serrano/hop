@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Aug 30 14:23:44 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 18:13:50 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -303,7 +303,7 @@
 	     (cond
 		((and (memq scope '(global %scope)) (in-eval? return))
 		 `(begin
-		     ,(j2s-put! loc '%scope (j2s-vtype lhs)
+		     ,(j2s-put! loc '%scope #f (j2s-vtype lhs)
 			 `',id 'propname
 			 val tyval (strict-mode? mode) conf #f)
 		     ,result))
@@ -399,7 +399,7 @@
 	    (if (null? withs)
 		(j2s-scheme expr mode return conf)
 		`(if ,(j2s-in? loc `',id (car withs))
-		     ,(j2s-get loc (car withs) 'object `',id 'string 'any conf #f)
+		     ,(j2s-get loc (car withs) #f 'object `',id 'string 'any conf #f)
 		     ,(loop (cdr withs))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1277,6 +1277,7 @@
 	     (with-access::J2SAccess lhs (obj field loc)
 		(epairify loc
 		   (j2s-put! loc (j2s-scheme obj mode return conf)
+		      field
 		      (typeof-this obj conf)
 		      (j2s-scheme field mode return conf)
 		      (j2s-vtype field)
@@ -1288,7 +1289,7 @@
 		      (if (null? withs)
 			  (loop expr)
 			  `(if ,(j2s-in? loc `',id (car withs))
-			       ,(j2s-put! loc (car withs)
+			       ,(j2s-put! loc (car withs) #f
 				   'object
 				   (symbol->string id) 'propname
 				   name 'any #f conf #f)
@@ -1546,6 +1547,7 @@
 	     `(if (isa? ,(j2s-scheme obj mode return conf) JsArray)
 		  ,(j2s-array-set! this mode return conf)
 		  ,(j2s-put! loc (j2s-scheme obj mode return conf)
+		      field
 		      (typeof-this obj conf)
 		      (j2s-scheme field mode return conf)
 		      (j2s-vtype field)
@@ -1560,6 +1562,7 @@
 		    (if (isa? ,tmp JsArray)
 			,(j2s-array-set! this mode return conf)
 			,(j2s-put! loc tmp
+			    field
 			    (typeof-this obj conf)
 			    (j2s-scheme field mode return conf)
 			    (j2s-vtype field)
@@ -1584,6 +1587,7 @@
 		       (maybe-array-set lhs rhs))
 		      (else
 		       (j2s-put! loca (j2s-scheme obj mode return conf)
+			  field
 			  (typeof-this obj conf)
 			  (j2s-scheme field mode return conf)
 			  (j2s-vtype field)
@@ -1620,7 +1624,7 @@
 		      (if (null? withs)
 			  (loop expr)
 			  `(if ,(j2s-in? loc `',id (car withs))
-			       ,(j2s-put! loc (car withs) 'object
+			       ,(j2s-put! loc (car withs) #f 'object
 				   (symbol->string id) 'propname
 				   (j2s-scheme rhs mode return conf)
 				   (j2s-vtype rhs)
@@ -1742,7 +1746,7 @@
 			      tref rhs mode return conf)
 			   (lambda (val tmp)
 			      `(begin
-				  ,(j2s-put! loc otmp tyobj
+				  ,(j2s-put! loc otmp #f tyobj
 				      fexpr
 				      (j2s-vtype field)
 				      val 'number
@@ -1762,7 +1766,7 @@
 				   tref rhs mode return conf)
 				(lambda (val tmp)
 				   `(begin
-				       ,(j2s-put! loc otmp tyobj
+				       ,(j2s-put! loc otmp #f tyobj
 					   fexpr
 					   (j2s-vtype field)
 					   val 'number
@@ -1781,7 +1785,7 @@
 				  tref rhs mode return conf)
 			       (lambda (val tmp)
 				  `(begin
-				      ,(j2s-put! loc otmp tyobj
+				      ,(j2s-put! loc otmp #f tyobj
 					  fexpr
 					  (j2s-vtype field)
 					  val 'number
@@ -1799,7 +1803,7 @@
 				       tref rhs mode return conf)
 				    (lambda (val tmp)
 				       `(begin
-					   ,(j2s-put! loc otmp tyobj
+					   ,(j2s-put! loc otmp #f tyobj
 					       fexpr
 					       (j2s-vtype field)
 					       val 'number
@@ -1875,7 +1879,7 @@
 				  (lambda ()
 				     (access-inc-sans-object otmp
 					prop op lhs rhs inc)))
-			      ,(j2s-put! loc otmp 'any prop 'any 1 'any
+			      ,(j2s-put! loc otmp field 'any prop 'any 1 'any
 				  (strict-mode? mode) conf cache '()))))
 		     (let* ((ptmp (gensym 'iprop))
 			    (pvar (J2SHopRef ptmp)))
@@ -1888,7 +1892,7 @@
 					  (lambda ()
 					     (access-inc-sans-object otmp
 						pvar op lhs rhs inc)))
-				      ,(j2s-put! loc otmp 'any pvar 'any 1 'any
+				      ,(j2s-put! loc otmp field 'any pvar 'any 1 'any
 					  (strict-mode? mode)
 					  conf cache '()))))))))))
 
@@ -1952,7 +1956,7 @@
 	  #f)))
    
    (define (aput-assigop otmp::symbol pro prov op
-	      tl::symbol lhs::J2SAccess rhs::J2SExpr cslhs cs)
+	      tl::symbol lhs::J2SAccess rhs::J2SExpr cslhs cs field)
       (with-access::J2SAssigOp this ((typea type))
 	 (with-access::J2SAccess lhs (obj field loc cache cspecs (typel type))
 	    (with-access::J2SExpr obj ((typeo type) loc)
@@ -1972,7 +1976,7 @@
 		  `(let ((,(type-ident vtmp typea conf)
 			  ,(js-binop2 loc op typea
 			      lhs rhs mode return conf)))
-		      ,(j2s-put! loc otmp (typeof-this obj conf)
+		      ,(j2s-put! loc otmp field (typeof-this obj conf)
 			  (or pro prov) (j2s-vtype field)
 			  (j2s-cast vtmp #f typea typel conf) typel
 			  (strict-mode? mode) conf
@@ -1985,27 +1989,25 @@
 		(pro (when (pair? prov) (gensym 'aprop))))
 	    `(let* (,@(if pro (list `(,pro ,prov)) '()))
 		,(cond
-;* 		    ((memq 'cmap cspecs)                               */
-;* 		     (aput-assigop otmp pro prov op                    */
-;* 			tl lhs rhs cspecs))                            */
 		    ((or (not cache) (is-integer? field))
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs '() '()))
+			tl lhs rhs '() '() field))
 		    ((and (or (equal? cspecs '(imap-incache))
 			      (equal? cspecs '(cmap-incache)))
 			  (eq? (j2s-type obj) 'object))
 		     ;; see the PCE optimization
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs '(imap-incache) cspecs))
+			tl lhs rhs '(imap-incache) cspecs field))
 		    ((memq (typeof-this obj conf) '(object this global))
 		     `(with-access::JsObject ,otmp (cmap)
 			 (let ((%omap cmap))
 			    (if (eq? (js-pcache-cmap ,(js-pcache cache)) %omap)
 				,(aput-assigop otmp pro prov op
 				    tl lhs rhs '(cmap-incache)
-				    (if (nocall? rhs) '(cmap-incache) cspecs))
+				    (if (nocall? rhs) '(cmap-incache) cspecs)
+				    field)
 				,(aput-assigop otmp pro prov op
-				    tl lhs rhs '(cmap+) '(cmap+))))))
+				    tl lhs rhs '(cmap+) '(cmap+) field)))))
 		    (else
 		      `(if (js-object? ,otmp)
 			   ,(with-object obj
@@ -2018,12 +2020,14 @@
 					       tl lhs rhs '(cmap-incache)
 					       (if (nocall? rhs)
 						   '(cmap-incache)
-						   cspecs))
+						   cspecs)
+					       field)
 					   ,(aput-assigop otmp pro prov op
-					       tl lhs rhs '(cmap+) '(cmap+)))))))
+					       tl lhs rhs '(cmap+) '(cmap+)
+					       field))))))
 			  (let ((%omap (js-not-a-cmap)))
 			     ,(aput-assigop otmp pro prov op
-				 tl lhs rhs '() '())))))))))
+				 tl lhs rhs '() '() field)))))))))
 
    (define (access-assigop op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache)
@@ -2063,21 +2067,13 @@
 		      (j2s->list this)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    mightbe-number? ...                                              */
-;*---------------------------------------------------------------------*/
-(define (mightbe-number? field)
-   (or (is-number? field)
-       (with-access::J2SExpr field (hint)
-	  (or (assq 'index hint) (assq 'number hint) (assq 'integer hint)))))
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAccess ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAccess mode return conf)
    
    (define (get obj tmp field cache cspecs loc)
       (let ((tyo (typeof-this obj conf)))
-	 (j2s-get loc tmp tyo
+	 (j2s-get loc tmp field tyo
 	    (j2s-property-scheme field mode return conf)
 	    (j2s-vtype field) (j2s-vtype this) conf cache cspecs)))
 
@@ -2355,7 +2351,7 @@
 				     ;; __proto__ field is special during
 				     ;; initialization, it must be assigned
 				     ;; using the generic js-put! function
-				     (j2s-put! loc tmp 'obj
+				     (j2s-put! loc tmp #f 'obj
 					"__proto__" 'propname
 					(j2s-scheme val mode return conf)
 					(j2s-vtype val)

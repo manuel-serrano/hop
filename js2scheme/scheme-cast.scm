@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Aug 29 16:12:45 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 18:45:21 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -140,6 +140,7 @@
 	 (int32 ,js->int32)
 	 (real ,js-any->real)
 	 (uint32 ,js->uint32)
+	 (integer ,js-any->integer)
 	 (number ,js->number)
 	 (object ,js->object)))))
 
@@ -413,6 +414,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-any->real v expr conf)
    (js->real v expr conf #t))
+
+;*---------------------------------------------------------------------*/
+;*    js-any->integer ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-any->integer v expr conf)
+   `(js-tointeger ,v %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number->real ...                                              */
