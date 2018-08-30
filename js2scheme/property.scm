@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Aug 23 14:14:18 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 18:03:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -162,6 +162,9 @@
 				     (decl-cache decl val count env assig shared-pcache)))
 			       (set! cache (inc! count))))))
 		    ((not (memq (j2s-type field) '(integer number real)))
+		     (set! cache (inc! count)))
+		    (else
+		     (tprint "PAS BON ICI " (j2s->list this))
 		     (set! cache (inc! count))))
 		 (cons cache (call-default-walker)))
 	      (call-default-walker)))
