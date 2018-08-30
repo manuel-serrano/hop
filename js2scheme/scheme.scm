@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Aug 29 09:17:52 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 07:29:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1643,6 +1643,7 @@
 	  (comp val tmp)))
 
    (define (var++ op var tyv typ num prev loc)
+      (tprint "var++ tyv=" tyv " num=" (j2s->list num))
       (if (type-number? typ)
 	  (if (type-number? tyv)
 	      (J2SBinary/type op tyv (J2SHopRef/type var typ) num)
@@ -1655,9 +1656,9 @@
 		    `(begin
 			(set! ,prev
 			   ,(J2SCast 'number (J2SHopRef/type var 'any)))
-			,(J2SBinary/type op 'number
+			,(J2SBinary/type op 'any
 			    (J2SHopRef/type prev 'number) num))
-		    (J2SBinary/type op 'number
+		    (J2SBinary/type op 'any
 		       (J2SCast 'number (J2SHopRef/type var 'any))
 		       num)))))
       
@@ -1866,7 +1867,7 @@
 					prop op lhs rhs inc)))
 			      ,(j2s-put! loc otmp 'any prop 'any 1 'any
 				  (strict-mode? mode) conf cache '()))))
-		     (let* ((ptmp (gensym 'prop))
+		     (let* ((ptmp (gensym 'iprop))
 			    (pvar (J2SHopRef ptmp)))
 			`(let ((,ptmp ,(j2s-scheme field mode return conf)))
 			    ,(if (type-object? (j2s-type obj))
@@ -1954,7 +1955,8 @@
 				 (cspecs cslhs)
 				 (obj oref)
 				 (field (if pro
-					    (J2SHopRef/type pro (j2s-type field))
+					    (J2SHopRef/type pro
+					       (j2s-vtype field))
 					    field)))))
 		      (vtmp (gensym 'tmp)))
 		  `(let ((,(type-ident vtmp typea conf)
@@ -1970,7 +1972,7 @@
    (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache cspecs)
 	 (let* ((prov (j2s-property-scheme field mode return conf))
-		(pro (when (pair? prov) (gensym 'prop))))
+		(pro (when (pair? prov) (gensym 'aprop))))
 	    `(let* (,@(if pro (list `(,pro ,prov)) '()))
 		,(cond
 ;* 		    ((memq 'cmap cspecs)                               */
