@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Aug 28 17:38:51 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 14:25:51 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -512,7 +512,7 @@
 	  (let ((tmp (gensym 'v)))
 	     `(let ((,tmp ,(e val e)))
 		 ,(e (proc tmp) e)))))
-      
+
    (define (expand-cache-specs cspecs obj prop tmp throw %this cache loc)
       `(with-access::JsObject ,obj (cmap elements)
 	  (let ((%cmap cmap))
@@ -892,5 +892,20 @@
 	  (else
 	   (error "js-call/cache" "wrong form" x))))))
 
-
-
+;*---------------------------------------------------------------------*/
+;*    js-pcache-prefetch-index-expander ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-prefetch-index-expander x olde)
+   (match-case x
+      ((?- (and ?cache (js-pcache-ref %pcache ?idx)) ?body)
+       (let* ((id (gensym '%idx))
+	      (ne (lambda (x e)
+		     (match-case x
+			((js-pcache-index (js-pcache-ref %pcache (? (lambda (i) (eq? i idx)))))
+			 id)
+			(else
+			 (olde x e))))))
+	  `(let ((,id ,(olde `(js-pcache-index ,cache) olde)))
+	      ,(ne body ne))))
+      (else
+       (error "js-pcache-prefetch-index" "wrong form" x))))

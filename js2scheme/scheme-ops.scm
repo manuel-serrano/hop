@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Aug 30 07:41:06 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 09:34:48 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1957,11 +1957,14 @@
 ;*    fixnums? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (fixnums? left tl right tr)
+   (define (type-fixnum? type)
+      (memq type '(int30 int53 bint)))
+   
    (cond
       ((or (flonum? left) (flonum? right))
        #f)
-      ((eq? tl 'integer) (if (eq? tr 'integer) #t `(fixnum? ,right)))
-      ((eq? tr 'integer) `(fixnum? ,left))
+      ((type-fixnum? tl) (if (type-fixnum? tr) #t `(fixnum? ,right)))
+      ((type-fixnum? tr) `(fixnum? ,left))
       ((and (memq tl '(int53 integer number any unknown))
 	    (memq tr '(int53 integer number any unknown)))
        (cond
@@ -2182,6 +2185,9 @@
 	  ((and (inrange-int32? lhs) (inrange-int32? rhs))
 	   (binop-int32-int32 op type
 	      (asint32 left tl) (coerceint32 right tr conf) flip))
+	  ((inrange-int30? lhs)
+	   (binop-bint-xxx op type lhs 'bint (asfixnum left tl)
+	      rhs tr right conf flip))
 	  (else
 	   (binop-number-number op type
 	      (box left tl conf) right flip))))
@@ -2335,11 +2341,11 @@
 		(binop-number-number op type
 		   left right flip)))
 	  ((integer)
-	   `(if (and (fixnum? ,left) (fixnum? ,right))
-		,(binop-fixnum-fixnum op type
-		   left right flip)
-		,(binop-number-number op type
-		   left right flip)))
+	   (if-fixnums? left tl right tr
+	      (binop-fixnum-fixnum op type
+		 left right flip)
+	      (binop-number-number op type
+		 left right flip)))
 	  ((real)
 	   (binop-flonum-flonum op type 
 	      (coercereal left tl conf) right flip))

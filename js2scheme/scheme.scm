@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Aug 30 09:10:52 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 14:23:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1835,11 +1835,13 @@
 			    (aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc '() #t))
 			   ((or (eq? (car cs) 'imap) (eq? (car cs) 'imap-incache))
 			    `(if (eq? %cmap (js-pcache-imap (js-pcache-ref %pcache ,cache)))
-				 ,(aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc 'imap #f)
+				 (js-pcache-prefetch-index (js-pcache-ref %pcache ,cache)
+				    ,(aput-inc 'object otmp prop op lhs field cache inc 'imap #f))
 				 ,(loop (cdr cs))))
 			   ((eq? (car cs) 'cmap)
 			    `(if (eq? %cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
-				 ,(aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc 'cmap #f)
+				 (js-pcache-prefetch-index (js-pcache-ref %pcache ,cache)
+				    ,(aput-inc 'object otmp prop op lhs field cache inc 'cmap #f))
 				 ,(loop (cdr cs))))
 			   (else
 			    (loop (cdr cs)))))))))))

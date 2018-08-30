@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/property.sch            */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/property.sch      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Jul 13 08:09:36 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 14:40:15 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -57,6 +57,9 @@
    js-pcache-owner-expander)
 (define-expander js-pcache-method
    js-pcache-method-expander)
+
+(define-expander js-pcache-prefetch-index
+   js-pcache-prefetch-index-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-XXX ...                                                   */
