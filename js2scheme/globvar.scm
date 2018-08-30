@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Aug 30 08:22:13 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 09:15:25 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -35,11 +35,6 @@
       (comment "Global variable initialization optimization")
       (proc (lambda (n args) (j2s-globvar! n args)))
       (optional 2)))
-
-;*---------------------------------------------------------------------*/
-;*    globcnst ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-struct globcnst expr)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-globvar! ::J2SProgram ...                                    */
@@ -252,7 +247,7 @@
 		;; copy the value
 		(j2s-alpha (propagate-constant! val) '() '())))
 	    ((and (pair? %info) (isa? (cdr %info) J2SInit))
-	     (with-access::J2SInit %info (rhs)
+	     (with-access::J2SInit (cdr %info) (rhs)
 		;; copy the value
 		(j2s-alpha (propagate-constant! rhs) '() '())))
 	    (else
@@ -266,193 +261,6 @@
       (if (and (isa? lhs J2SRef)
 		   (with-access::J2SRef lhs (decl)
 		      (with-access::J2SDecl decl (%info)
-			 (isa? %info J2SInit))))
-	  (J2SNop)
+			 (and (pair? %info) (isa? (cdr %info) J2SInit)))))
+	  (J2SUndefined)
 	  (call-default-walker))))
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SNode ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SNode closures::cell exec)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SFun ...                                            */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SFun closures::cell exec)
-   (cell-set! closures (cons this (cell-ref closures)))
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SRef ...                                            */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SRef closures::cell exec)
-   
-   (define (constant? expr::J2SExpr)
-      (cond
-	 ((or (isa? expr J2SLiteralCnst)
-	      (isa? expr J2SNativeString)
-	      (isa? expr J2SString)
-	      (isa? expr J2SNumber))
-	  #t)
-	 ((isa? expr J2SRef)
-	  (with-access::J2SRef expr (decl)
-	     (with-access::J2SDecl decl (ronly writable)
-		(or ronly (not writable)))))
-	 ((isa? expr J2SUnary)
-	  (with-access::J2SUnary expr (expr)
-	     (constant? expr)))
-	 ((isa? expr J2SBinary)
-	  (with-access::J2SBinary expr (lhs rhs)
-	     (and (constant? lhs) (constant? rhs))))
-	 (else
-	  #f)))
-   
-   (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (scope %info id)
-	 (when (isa? decl J2SDeclFun)
-	    (cell-set! closures (cons decl (cell-ref closures)))
-	    (with-access::J2SDeclFun decl (val)
-	       (globvar! val closures exec)))
-	 (cond
-	    ((not (or (eq? scope 'global) (eq? scope '%scope)))
-	     (call-default-walker))
-	    ((not (globcnst? %info))
-	     (set! %info 'noglobcnst)
-	     (call-default-walker))
-	    (else
-	     (let ((expr (globcnst-expr %info)))
-		(if (constant? expr)
-		    (j2s-alpha expr '() '())
-		    (call-default-walker))))))))
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SCall ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SCall closures::cell exec)
-   
-   (define (flush-function! this exec)
-      (with-access::J2SFun this (%info body)
-	 (if (eq? %info 'globvar-fun)
-	     this
-	     (begin
-		(set! %info 'globvar-fun)
-		(set! body (globvar! body closures exec))))))
-   
-   (define (flush-closures! closures)
-      (let loop ()
-	 (let ((cs (cell-ref closures)))
-	    (cell-set! closures '())
-	    (when (pair? cs)
-	       (for-each (lambda (c)
-			    (cond
-			       ((isa? c J2SFun)
-				(flush-function! c #f))
-			       ((isa? c J2SDeclFun)
-				(with-access::J2SDeclFun c (val)
-				   (flush-function! val #f)))))
-		  cs)
-	       (loop)))))
-
-   (with-access::J2SCall this (fun args)
-      ;; follow static functions
-      (if (isa? fun J2SRef)
-	  (with-access::J2SRef fun (decl)
-	     (if (isa? decl J2SDeclFun)
-		 (with-access::J2SDeclFun decl (val id)
-		    (flush-function! val #t))
-		 (with-access::J2SDecl decl (id)
-		    (flush-closures! closures))))
-	  (flush-closures! closures))
-      (set! args (map! (lambda (a) (globvar! a closures #f)) args))
-      this))
-      
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SInit ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SInit closures::cell exec)
-   (with-access::J2SInit this (lhs rhs)
-      (set! rhs (globvar! rhs closures exec))
-      (when (and exec (isa? lhs J2SRef))
-	 (with-access::J2SRef lhs (decl)
-	    (with-access::J2SDecl decl (scope usage %info id)
-	       (when (or (eq? scope 'global) (eq? scope '%scope))
-		  (unless (or (eq? %info 'noglobcnst)
-			      (memq 'assig usage)
-			      (memq 'delete usage))
-		     (set! %info (globcnst rhs)))))))
-      this))
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SDeclInit ...                                       */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SDeclInit closures::cell exec)
-   (let ((init (call-default-walker)))
-      (when exec
-	 (with-access::J2SDeclInit this (val scope usage %info)
-	    (when (or (eq? scope 'global) (eq? scope '%scope))
-	       (unless (or (eq? %info 'noglobcnst)
-			   (memq 'assig usage)
-			   (memq 'delete usage))
-		  (set! %info (globcnst val))))))
-      init))
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SCond ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SCond closures::cell exec)
-   (with-access::J2SCond this (test then else)
-      (set! test (globvar! test closures exec))
-      (set! then (globvar! then closures #f))
-      (set! else (globvar! else closures #f))
-      this))
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SIf ...                                             */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SIf closures::cell exec)
-   (with-access::J2SIf this (test then else)
-      (set! test (globvar! test closures exec))
-      (set! then (globvar! then closures #f))
-      (set! else (globvar! else closures #f))
-      this))
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SSwitch ...                                         */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SSwitch closures::cell exec)
-   (with-access::J2SSwitch this (key cases)
-      (set! key (globvar! key closures exec))
-      (set! cases (map! (lambda (c) (globvar! c closures #f)) cases))
-      this))
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SFor ...                                            */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SFor closures::cell exec)
-   (with-access::J2SFor this (init test incr body)
-      (set! init (globvar! init closures exec))
-      (set! test (globvar! test closures exec))
-      (set! incr (globvar! incr closures #f))
-      (set! body (globvar! body closures #f))
-      this))
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SForIn ...                                          */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SForIn closures::cell exec)
-   (with-access::J2SForIn this (lhs obj body)
-      (set! lhs (globvar! lhs closures exec))
-      (set! obj (globvar! obj closures exec))
-      (set! body (globvar! body closures #f))
-      this))
-
-;*---------------------------------------------------------------------*/
-;*    globvar! ::J2SWhile ...                                          */
-;*---------------------------------------------------------------------*/
-(define-walk-method (globvar! this::J2SWhile closures::cell exec)
-   (with-access::J2SWhile this (test body)
-      (set! test (globvar! test closures exec))
-      (set! body (globvar! body closures #f))
-      this))
-

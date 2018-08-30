@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Aug 30 08:42:55 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 09:10:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1652,7 +1652,6 @@
 	  (comp val tmp)))
 
    (define (var++ op var tyv typ num prev loc)
-      (tprint "var++ tyv=" tyv " num=" (j2s->list num))
       (if (type-number? typ)
 	  (if (type-number? tyv)
 	      (J2SBinary/type op tyv (J2SHopRef/type var typ) num)
