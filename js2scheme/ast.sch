@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Mon Aug 27 12:34:36 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 16:48:03 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -283,9 +283,21 @@
        (loc loc)
        (exprs ,(if (pair? exprs) `(list ,@exprs) ''()))))
 
+(define-macro (J2SSequence/type type . exprs)
+   `(instantiate::J2SSequence
+       (loc loc)
+       (type ,type)
+       (exprs ,(if (pair? exprs) `(list ,@exprs) ''()))))
+
 (define-macro (J2SSequence* exprs)
    `(instantiate::J2SSequence
        (loc loc)
+       (exprs ,exprs)))
+
+(define-macro (J2SSequence/type* type exprs)
+   `(instantiate::J2SSequence
+       (loc loc)
+       (type ,type)
        (exprs ,exprs)))
 
 (define-macro (J2SLetBlock decls . nodes)

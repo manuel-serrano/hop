@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Aug 30 09:29:19 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 15:44:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -23,7 +23,7 @@
 
    (export j2s-dump-stage
 	   (j2s-dump-decls::obj ::obj)
-	   (j2s-dump-range rng)
+	   (j2s-dump-range ::obj)
 	   (generic j2s->list ::obj)
 	   (generic j2s-info->list ::obj)))
 
@@ -780,8 +780,9 @@
 ;*    j2s->list ::J2SFor ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFor)
-   (with-access::J2SFor this (init test incr body)
+   (with-access::J2SFor this (init test incr body loc)
       `(,@(call-next-method) ,@(dump-info this)
+	  ,@(dump-loc loc)
 	  ,(j2s->list init)
 	  ,(j2s->list test)
 	  ,(j2s->list incr)

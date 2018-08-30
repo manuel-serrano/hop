@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Aug 29 16:25:52 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 15:38:05 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -46,6 +46,8 @@
 (define *debug-range-fix* (and #f *debug-range*))
 (define *debug-range-test* (and #f *debug-range*))
 
+(define *indebug* #f)
+
 (define *dump-stop* -1)
 (define *dump-env* '())
 (define *dump-unfix* #f)
@@ -75,7 +77,10 @@
 	       (lambda (ip)
 		  (set! *dump-stop* (read ip)))))))
    (when (isa? this J2SProgram)
+      ;; init range intervals
       (j2s-range-init!)
+      ;; mark local captured variables
+      (program-capture! this)
       (let ((tymap (if (>=fx (config-get args :int-size 0) 53)
 		       typemap53 typemap32)))
 	 (if (config-get args :optim-range #f)
@@ -155,10 +160,11 @@
       (filter-map (lambda (e)
 		     (with-access::J2SDecl (car e) (id key)
 			(let ((keys (if (pair? ids) ids *dump-env*)))
-			   (when (or (symbol? keys)
-				     (memq id keys)
-				     (memq key keys)
-				     (null? keys))
+			   (when (and (or (symbol? keys)
+					  (memq id keys)
+					  (memq key keys)
+					  (null? keys))
+				     (interval? (cdr e)))
 			      (cons (format "~a:~a" id key)
 				 (j2s-dump-range (cdr e)))))))
 	 env)))
@@ -1018,8 +1024,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SDeclInit env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SDeclInit this (val range vtype id usage)
+      (when *indebug*
+	 (tprint "\\\\\\ J2SDeclInit.1 " id " env=" (dump-env env)))
       (multiple-value-bind (intv env)
 	 (node-range val env conf mode fix)
+	 (when *indebug*
+	    (tprint "\\\\\\ J2SDeclInit.2 " id " env=" (dump-env env)))
 	 (cond
 	    ((usage? '(eval) usage)
 	     (decl-vrange-add! this *infinity-intv* fix)
@@ -1111,7 +1121,7 @@
 	    ((isa? lhs J2SRef)
 	     ;; a variable assignment
 	     (with-access::J2SRef lhs (decl)
-		(with-access::J2SDecl decl (writable)
+		(with-access::J2SDecl decl (writable id)
 		   (cond
 		      ((not writable)
 		       (return intv env))
@@ -1387,8 +1397,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SNew env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SNew this (clazz args loc)
+      (when *indebug*
+	    (tprint "... J2SCall.1 env=" (dump-env env)))
       (multiple-value-bind (_ env)
 	 (node-range-call clazz args env conf mode fix)
+	 (when *indebug*
+	    (tprint "... J2SCall.2 env=" (dump-env env)))
 	 (expr-range-add! this env fix *infinity-intv*))))
 
 ;*---------------------------------------------------------------------*/
@@ -1458,7 +1472,7 @@
 	    ((&)
 	     (expr-range-add! this env fix (interval-bitand intl intr)))
 	    (else
-	     (expr-range-add! this env fix *infinity-intv*))))))
+	     (return #unspecified env))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SBinary ...                                       */
@@ -1699,8 +1713,12 @@
 				    (when vrange
 				       (cons d vrange))))
 		     decls)))
+	 (when *indebug*
+	    (tprint "/// J2SLetBlock.1 env=" (dump-env env)))
 	 (multiple-value-bind (_ denv)
 	    (node-range-seq decls (append ienv env) conf mode fix)
+	    (when *indebug*
+	       (tprint "/// J2SLetBlock.2 denv=" (dump-env denv)))
 	    (multiple-value-bind (intv benv)
 	       (node-range-seq nodes denv conf mode fix)
 	       (let ((nenv (filter (lambda (d)
@@ -1873,46 +1891,55 @@
 ;*    node-range ::J2SFor ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SFor env::pair-nil conf mode::symbol fix::cell)
+   (define (debug-for loc)
+      (if (and *debug-range-for* (equal? loc '(at "crypto-aes.js" 2062)))
+	  (begin
+	     (set! *indebug* #t)
+	     #t)
+	  (begin
+	     (set! *indebug* #f)
+	     #f)))
+
    (with-access::J2SFor this (init test incr body loc)
       (let ((ffix (cell-ref fix)))
 	 ;; (set! *debug-range-for* (eq? (caddr loc) 1835))
-	 (when *debug-range-for*
+	 (when (debug-for loc)
 	    (tprint ">>> for " loc
 	       " [" ffix "/" mode "] test=" (j2s->list test))
-	    (tprint ">>> env=" (dump-env env)))
+	       (tprint ">>> env=" (dump-env env)))
 	 (multiple-value-bind (initi inite)
 	    (node-range init env conf mode fix)
 	    (let loop ((env inite))
 	       (let ((ostamp (cell-ref fix)))
-		  (when *debug-range-for*
+		  (when (debug-for loc)
 		     (tprint "--- for " loc
 			" [" ffix "/" mode "] / " ostamp)
 		     (tprint "    [" ffix "] env=" (dump-env env)))
 		  (multiple-value-bind (testi teste)
 		     (node-range test env conf mode fix)
-		     (when *debug-range-for*
+		     (when (debug-for loc)
 			(tprint "    [" ffix "] test=" (j2s->list test))
 			(tprint "    [" ffix "] testenv=" (dump-env teste)))
 		     (multiple-value-bind (testet testef)
 			(test-envs test env conf mode fix)
-			(when *debug-range-for*
+			(when (debug-for loc)
 			   (tprint "    [" ffix "] testet=" (dump-env testet))
 			   (tprint "    [" ffix "] testef=" (dump-env testef)))
 			(multiple-value-bind (bodyi bodye)
 			   (node-range-seq (list body incr)
 			      (append-env testet env) conf mode fix)
-			   (when *debug-range-for*
+			   (when (debug-for loc)
 			      (tprint "    [" ffix "] bodye=" (dump-env bodye)))
 			   (if (or (=fx ostamp (cell-ref fix))
 				   (eq? mode 'slow))
 			       (begin
-				  (when *debug-range-for*
+				  (when (debug-for loc)
 				     (tprint "<<< for " loc
 					" [" ffix "/" mode "] "
 					(dump-env (append-env testef bodye))))
 				  (return #f (append-env testef bodye)))
 			       (let ((menv (env-merge bodye env)))
-				  (when *debug-range-for*
+				  (when (debug-for loc)
 				     (tprint "~~~ [" ffix "] merge-env"
 					(dump-env menv)))
 				  (loop menv))))))))))))
@@ -2300,3 +2327,63 @@
    (set! resetp #t)
    (call-default-walker))
       
+;*---------------------------------------------------------------------*/
+;*    program-capture! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (program-capture! this::J2SProgram)
+   (with-access::J2SProgram this (decls nodes direct-eval)
+      (unless direct-eval
+	 (for-each (lambda (d) (mark-capture d '())) decls)
+	 (for-each (lambda (n) (mark-capture n '())) nodes))))
+
+;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SNode ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SNode env::pair-nil)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SRef ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SRef env::pair-nil)
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (scope ronly %info vtype)
+	 (when (not ronly)
+	    (unless (memq decl env)
+	       (set! %info 'capture))))))
+
+;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SFun ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SFun env::pair-nil)
+   (with-access::J2SFun this (params body)
+      (for-each (lambda (p::J2SDecl)
+		   (with-access::J2SDecl p (%info)
+		      (set! %info 'nocapture)))
+	 params)
+      (mark-capture body params)))
+
+;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SKont ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SKont env::pair-nil)
+   (with-access::J2SKont this (param exn body)
+      (with-access::J2SDecl param (%info)
+	 (set! %info 'nocapture))
+      (with-access::J2SDecl exn (%info)
+	 (set! %info 'nocapture))
+      (mark-capture body (list param exn))))
+      
+;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SLetBlock ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SLetBlock env::pair-nil)
+   (with-access::J2SLetBlock this (decls nodes)
+      (for-each (lambda (p::J2SDecl)
+		   (with-access::J2SDecl p (%info)
+		      (set! %info 'nocapture)))
+	 decls)
+      (let ((nenv (append decls env)))
+	 (for-each (lambda (d) (mark-capture d nenv)) decls)
+	 (for-each (lambda (n) (mark-capture n nenv)) nodes))))
+   
