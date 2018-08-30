@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Wed Aug 22 17:40:17 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 08:22:13 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -54,7 +54,7 @@
 		  (invalidate-early-decl this #f '())
 		  (when (find (lambda (g)
 				 (with-access::J2SDecl g (%info)
-				    (isa? %info J2SNode)))
+				    (pair? %info)))
 			   gcnsts)
 		     ;; propagate the constants
 		     (propagate-constant! this)))
@@ -233,93 +233,6 @@
 			  (not (and (pair? %info) (eq? (car %info) 'init)))
 			  stack)))))))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    invalidate-early-decl ::J2StmtExpr ...                           *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (invalidate-early-decl this::J2StmtExpr inexpr) */
-;*    (with-access::J2SStmtExpr this (expr)                            */
-;*       (if (and (not inexpr) (isa? expr J2Assig))                    */
-;* 	  (invalidate-early-decl expr #f)                              */
-;* 	  (call-default-walker))))                                     */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    invalidate-early-decl ::J2SSeq ...                               *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (invalidate-early-decl this::J2SSeq inexpr)     */
-;*    'TODO)                                                           */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    invalidate-early-decl ::J2SCall ...                              *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (invalidate-early-decl this::J2SCall gcnsts flag) */
-;*                                                                     */
-;*    (define (invalidate-all! gcnsts)                                 */
-;*       (for-each (lambda (g)                                         */
-;* 		   (with-access::J2SDecl g (%info %%dump)              */
-;* 		      (when (eq? %info #unspecified)                   */
-;* 			 (set! %%dump "globvar:closure")               */
-;* 			 (set! %info #f))))                            */
-;* 	 gcnsts))                                                      */
-;*                                                                     */
-;*    (define (invalidate-function! this::J2SFun gcnsts flag)          */
-;*       (with-access::J2SFun this (%info body)                        */
-;* 	 (unless (eq? %info 'globvar-invalidation-done)                */
-;* 	    (set! %info 'globvar-invalidation-done)                    */
-;* 	    (invalidate-early-decl body gcnsts flag))))                */
-;*                                                                     */
-;*    (with-access::J2SCall this (fun args)                            */
-;*       ;; follow the function                                        */
-;*       (unless (isa? fun J2SFun)                                     */
-;* 	 (invalidate-early-decl fun gcnsts flag))                      */
-;*       ;; follow the arg                                             */
-;*       (for-each (lambda (a)                                         */
-;* 		   (invalidate-early-decl a gcnsts flag))              */
-;* 	 args)                                                         */
-;*       ;; follow static functions                                    */
-;*       (cond                                                         */
-;* 	 ((isa? fun J2SRef)                                            */
-;* 	  (with-access::J2SRef fun (decl)                              */
-;* 	     (if (isa? decl J2SDeclFun)                                */
-;* 		 (with-access::J2SDeclFun decl (val)                   */
-;* 		    (invalidate-function! val gcnsts flag))            */
-;* 		 (invalidate-all! gcnsts))))                           */
-;* 	 ((isa? fun J2SFun)                                            */
-;* 	  (invalidate-function! fun gcnsts flag))                      */
-;* 	 (else                                                         */
-;* 	  (invalidate-all! gcnsts)))))                                 */
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    invalidate-early-decl-condition ...                              *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (invalidate-early-decl-condition test then else gcnsts flag) */
-;*    (invalidate-early-decl test gcnsts flag)                         */
-;*    (invalidate-early-decl then gcnsts #f)                           */
-;*    (invalidate-early-decl else gcnsts #f))                          */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    invalidate-early-decl ::J2SIf ...                                *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (invalidate-early-decl this::J2SIf gcnsts flag) */
-;*    (with-access::J2SIf this (test then else)                        */
-;*       (invalidate-early-decl-condition test then else gcnsts flag))) */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    invalidate-early-decl ::J2SCond ...                              *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (invalidate-early-decl this::J2SCond gcnsts flag) */
-;*    (with-access::J2SCond this (test then else)                      */
-;*       (invalidate-early-decl-condition test then else gcnsts flag))) */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    invalidate-early-decl ::J2SLoop ...                              *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (invalidate-early-decl this::J2SLoop gcnsts flag) */
-;*    (with-access::J2SLoop this (body)                                */
-;*       ;; invalidate the body first                                  */
-;*       (invalidate-early-decl body gcnsts #f)                        */
-;*       ;; and invoke the default walker for loop test and increment  */
-;*       (call-default-walker)))                                       */
-
 ;*---------------------------------------------------------------------*/
 ;*    propagate-constant! ::J2SNode ...                                */
 ;*---------------------------------------------------------------------*/
@@ -344,20 +257,6 @@
 		(j2s-alpha (propagate-constant! rhs) '() '())))
 	    (else
 	     (call-default-walker))))))
-
-(define (j2s-globvar-old! this::J2SProgram args)
-   (when (isa? this J2SProgram)
-      (with-access::J2SProgram this (nodes decls direct-eval)
-	 (unless direct-eval
-	    (let ((closures (make-cell '())))
-	       (for-each (lambda (d)
-			    (cond
-			       ((isa? d J2SDeclSvc) (globvar! d closures #t))
-			       ((isa? d J2SDeclFun) #unspecified)
-			       ((isa? d J2SDeclInit) (globvar! d closures #t))))
-		  decls)
-	       (map! (lambda (n) (globvar! n closures #t)) nodes)))))
-   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    propagate-constant! ::J2SInit ...                                */

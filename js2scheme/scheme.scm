@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Aug 30 07:29:11 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 08:42:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1461,14 +1461,23 @@
       
       (define (scheme-case? key cases)
 	 (let ((t (j2s-vtype key)))
-	    (when (or (memq t '(integer index uint32 uint29))
+	    (when (or (memq t '(integer index uint32 int32))
 		      (and (eq? t 'int53) (m64? conf)))
 	       (every (lambda (c)
 			 (or (isa? c J2SDefault)
 			     (with-access::J2SCase c (expr)
-				(when (isa? expr J2SNumber)
+				(cond
+				   ((isa? expr J2SNumber)
 				   (with-access::J2SNumber expr (val)
-				      (fixnum? val))))))
+				      (fixnum? val)))
+				   ((isa? expr J2SCast)
+				    (with-access::J2SCast expr (type expr)
+				       (when (and (eq? type t)
+						  (isa? expr J2SNumber))
+					  (with-access::J2SNumber expr (val)
+					     (fixnum? val)))))
+				   (else
+				    #f)))))
 		  cases))))
       
       (define (comp-switch)
