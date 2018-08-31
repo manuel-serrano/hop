@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Aug 29 16:24:47 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 09:09:03 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -675,7 +675,7 @@
 	    (with-access::J2SDeclFun decl (val)
 	       (if (isa? val J2SMethod)
 		   (escape-method val fix)
-		   (escape-fun val fix))))
+		   (escape-fun val fix #f))))
 	 (if (eq? utype 'unknown)
 	     (let ((ty (env-lookup env decl)))
 		(expr-type-add! this env fix ty))
@@ -743,7 +743,7 @@
       (cond
 	 ((isa? this J2SDeclSvc)
 	  ;; services are as escaping function, the arguments are "any"
-	  (escape-fun val fix))
+	  (escape-fun val fix #f))
 	 ((constructor-only? this)
 	  ;; a mere constructor
 	  (if (isa? val J2SFun)
@@ -976,8 +976,10 @@
 	    params)
 	 (let ((fenv (append envp env)))
 	    (when thisp
-	       (with-access::J2SDecl thisp (itype loc)
-		  (decl-vtype-add! thisp itype fix)
+	       (with-access::J2SDecl thisp (utype itype loc)
+		  (if (eq? utype 'object)
+		      (decl-vtype-add! thisp utype fix)
+		      (decl-vtype-add! thisp itype fix))
 		  (set! fenv (extend-env fenv thisp itype))))
 	    (when argumentsp
 	       (decl-itype-add! argumentsp 'arguments fix)
@@ -1005,7 +1007,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    escape-fun ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (escape-fun val::J2SFun fix)
+(define (escape-fun val::J2SFun fix met::bool)
    
    (define (escape-type rtype)
       (case rtype
@@ -1013,7 +1015,8 @@
 	 (else 'any)))
 
    (with-access::J2SFun val (params rtype thisp)
-      (when thisp (decl-vtype-add! thisp 'any fix))
+      (when (and (not met) thisp)
+	 (decl-vtype-add! thisp 'any fix))
       (set! rtype (tyflow-type (escape-type rtype)))
       (for-each (lambda (p::J2SDecl)
 		   (with-access::J2SDecl p (utype itype)
@@ -1026,22 +1029,30 @@
 ;*---------------------------------------------------------------------*/
 (define (escape-method fun::J2SMethod fix)
    (with-access::J2SMethod fun (method function)
-      (escape-fun function fix)
-      (escape-fun method fix)))
-				  
+      (escape-fun function fix #f)
+      (escape-fun method fix #t)))
+
+;*---------------------------------------------------------------------*/
+;*    node-type-fun-or-method ...                                      */
+;*---------------------------------------------------------------------*/
+(define (node-type-fun-or-method this::J2SFun env::pair-nil fix::cell met::bool)
+   (escape-fun this fix met)
+   (node-type-fun this (node-type-fun-decl this env fix) fix))
+
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SFun env::pair-nil fix::cell)
-   (escape-fun this fix)
-   (node-type-fun this (node-type-fun-decl this env fix) fix))
+   (node-type-fun-or-method this env fix #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SMethod ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SMethod env::pair-nil fix::cell)
-   (call-default-walker)
-   (expr-type-add! this env fix 'function))
+   (with-access::J2SMethod this (method function)
+      (node-type-fun-or-method function env fix #f)
+      (node-type-fun-or-method method env fix #t)
+      (expr-type-add! this env fix 'function)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SCall ...                                          */
@@ -1051,13 +1062,13 @@
 ;*    detailed in the code below.                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SCall env::pair-nil fix::cell)
-   (with-access::J2SCall this ((callee fun) thisarg args)
+   (with-access::J2SCall this (fun thisarg args)
       (multiple-value-bind (tty env bkt)
 	 (if (pair? thisarg)
 	     (node-type (car thisarg) env fix)
 	     (values 'unknown env '()))
 	 (multiple-value-bind (rty env bkc)
-	    (node-type-call callee tty args env fix)
+	    (node-type-call fun tty args env fix)
 	    (expr-type-add! this env fix rty (append bkt bkc))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1074,8 +1085,8 @@
 			(and (eq? scope 'local) (eq? %info 'nocapture)))))
 	 env))
    
-   (define (type-known-call-args callee args env bk)
-      (with-access::J2SFun callee (rtype params vararg mode thisp mode)
+   (define (type-known-call-args fun::J2SFun args env bk)
+      (with-access::J2SFun fun (rtype params vararg mode thisp mode)
 	 (when thisp
 	    (decl-itype-add! thisp
 	       (cond
@@ -1099,25 +1110,25 @@
 		      (decl-itype-add! (car params) (j2s-type (car args)) fix)
 		      (loop (cdr params) (cdr args)))))))))
    
-   (define (type-inline-call callee args env bk)
+   (define (type-inline-call fun::J2SFun args env bk)
       ;; type a direct function call: ((function (...) { ... })( ... ))
       ;; side effects are automatically handled when
       ;; node-type the function body
-      (type-known-call-args callee args env bk)
+      (type-known-call-args fun args env bk)
       (multiple-value-bind (_ envf _)
 	 (node-type-fun callee env fix)
-	 (with-access::J2SFun callee (rtype mode)
+	 (with-access::J2SFun fun (rtype mode)
 	    (return rtype env bk))))
    
-   (define (type-known-call ref::J2SRef callee args env bk)
+   (define (type-known-call ref::J2SRef fun::J2SFun args env bk)
       ;; type a known constant function call: F( ... )
       ;; the new node-type environment is a merge of env and the environment
       ;; produced by the function
       (with-access::J2SRef ref (decl)
 	 (expr-type-add! ref env fix 'function)
-	 (type-known-call-args callee args env bk)
+	 (type-known-call-args fun args env bk)
 	 (with-access::J2SDecl decl (scope usage)
-	    (with-access::J2SFun callee (rtype %info)
+	    (with-access::J2SFun fun (rtype %info)
 	       (return rtype env bk)))))
    
    (define (type-ref-call callee args env bk)
@@ -1127,13 +1138,25 @@
 	    ((isa? decl J2SDeclFun)
 	     (with-access::J2SDeclFun decl (ronly val)
 		(if ronly
-		    (type-known-call callee val args env bk)
+		    (if (isa? val J2SMethod)
+			(with-access::J2SMethod val (function method)
+			   (if (eq? tty 'object)
+			       (type-known-call callee method args env bk)
+			       (type-known-call callee function args env bk)))
+			(type-known-call callee val args env bk))
 		    (type-unknown-call callee env bk))))
 	    ((isa? decl J2SDeclInit)
 	     (with-access::J2SDeclInit decl (ronly val)
-		(if (and ronly (isa? val J2SFun))
-		    (type-known-call callee val args env bk)
-		    (type-unknown-call callee env bk))))
+		(cond
+		   ((and ronly (isa? val J2SFun))
+		    (type-known-call callee val args env bk))
+		   ((and ronly (isa? val J2SMethod))
+		    (with-access::J2SMethod val (function method)
+		       (if (eq? tty 'object)
+			   (type-known-call callee method args env bk)
+			   (type-known-call callee function args env bk))))
+		   (else
+		    (type-unknown-call callee env bk)))))
 	    (else
 	     (type-unknown-call callee env bk)))))
    

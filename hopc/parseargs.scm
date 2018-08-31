@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Aug 22 10:25:57 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 13:14:42 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -339,6 +339,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-vector #t (hopc-j2s-flags))))
 	    (("-fno-vector" (help "Disable array-to-vector optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-vector #f (hopc-j2s-flags))))
+	    (("-fmethod" (help "Enable array-to-method optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-method #t (hopc-j2s-flags))))
+	    (("-fno-method" (help "Disable array-to-method optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-method #f (hopc-j2s-flags))))
 	    (("-fprofile" ?log (help "Profile log file optimization"))
 	     (hopc-j2s-flags-set! (cons* :profile-log log (hopc-j2s-flags)))
 	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
@@ -352,6 +356,8 @@
 	     (hopc-j2s-flags-set! (cons* :profile-hint #t (hopc-j2s-flags))))
 	    (("--profile-call" (help "Call profiling mode (see HOPTRACE)"))
 	     (hopc-j2s-flags-set! (cons* :profile-call #t (hopc-j2s-flags))))
+	    (("--profile-method" (help "Method profiling mode (see HOPTRACE)"))
+	     (hopc-j2s-flags-set! (cons* :profile-method #t (hopc-j2s-flags))))
 	    (("--profile-alloc" (help "Alloc profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile-alloc #t (hopc-j2s-flags))))

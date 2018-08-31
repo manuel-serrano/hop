@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Aug 28 09:57:47 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 08:22:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1381,11 +1381,6 @@
 ;*    to keep the base object (the actual receiver) available.         */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject o::JsObject base prop %this)
-   (cond
-      ((symbol? prop)
-       (js-profile-log-get prop))
-      ((string? prop)
-       (js-profile-log-get (string->symbol prop))))
    (let ((pval (js-get-property-value o base prop %this)))
       (if (eq? pval (js-absent))
 	  (js-undefined)
@@ -1398,6 +1393,13 @@
 ;*    potential type errors.                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-get/debug _o prop %this::JsGlobalObject loc)
+   (cond
+      ((symbol? prop)
+       (js-profile-log-get prop loc))
+      ((string? prop)
+       (js-profile-log-get (string->symbol prop) loc))
+      ((number? prop)
+       (js-profile-log-get (string->symbol (number->string prop)) loc)))
    (cond
       ((pair? _o)
        (js-get-pair _o (js-toname prop %this) %this))
@@ -2001,9 +2003,6 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
 
-   (when (symbol? name)
-      (js-profile-log-put name))
-
    (let loop ((obj o))
       (jsobject-find obj name
 	 update-mapped-object!
@@ -2015,6 +2014,13 @@
 ;*    js-put/debug! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-put/debug! _o prop v::obj throw::bool %this::JsGlobalObject loc)
+   (cond
+      ((symbol? prop)
+       (js-profile-log-put prop loc))
+      ((string? prop)
+       (js-profile-log-put (string->symbol prop) loc))
+      ((number? prop)
+       (js-profile-log-put (string->symbol (number->string prop)) loc)))
    (cond
       ((pair? _o)
        (js-put-pair! _o (js-toname prop %this) v throw %this))
@@ -3028,7 +3034,7 @@
 	 (else
 	  #f)))
 
-   (js-profile-log-method name)
+   (js-profile-log-method name point)
 
    (let loop ((obj o))
       (jsobject-find obj name

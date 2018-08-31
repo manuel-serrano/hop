@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Aug 22 10:25:26 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 13:15:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -404,7 +404,9 @@
 	 (unless (memq :profile-cache o)
 	    (set! o (cons* :profile-cache #t o)))
 	 (unless (memq :profile-hint o)
-	    (set! o (cons* :profile-hint #t o))))
+	    (set! o (cons* :profile-hint #t o)))
+	 (unless (memq :profile-method o)
+	    (set! o (cons* :profile-method #t o))))
       ;; optimization
       (when (>=fx l 900)
 	 (unless (memq :optim-integer o)
@@ -431,6 +433,8 @@
 	 (unless (memq :optim-pce o)
 	    (set! o (cons* :optim-pce #t o))))
       (when (>=fx l 2)
+	 (unless (memq :optim-method o)
+	    (set! o (cons* :optim-method #t o)))
 	 (unless (memq :optim-letopt o)
 	    (set! o (cons* :optim-letopt #t o)))
 	 (unless (memq :optim-unletrec o)

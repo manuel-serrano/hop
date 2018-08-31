@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Aug 29 08:23:57 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 13:23:20 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -633,16 +633,17 @@
 	  (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))))
 
 (define (js-calln% %this fun this args)
-   (with-access::JsFunction fun (procedure arity minlen rest len)
-      (let ((n (+fx 1 (length args))))
+   (with-access::JsFunction fun (procedure method arity minlen rest len)
+      (let ((n (+fx 1 (length args)))
+	    (proc (if (and method (js-object? this)) method procedure)))
 	 (cond
 	    ((=fx arity n)
-	     (apply procedure this args))
+	     (apply proc this args))
 	    ((>fx arity n)
 	     (if (>fx minlen 0)
 		 (js-raise-type-error %this
 		    "wrong number of arguments" (cons (length args) minlen))
-		 (apply procedure this
+		 (apply proc this
 		    (append args
 		       (make-list (-fx arity n)
 			  (js-undefined))))))
@@ -650,7 +651,7 @@
 	     (if (>fx minlen 0)
 		 (js-raise-type-error %this
 		    "wrong number of arguments" (cons (length args) minlen))
-		 (apply procedure this (take args (-fx arity 1)))))
+		 (apply proc this (take args (-fx arity 1)))))
 	    (else
 	     (cond
 		((and (<=fx (-fx n 1) minlen) (>fx minlen 0))
@@ -658,14 +659,14 @@
 		    "wrong number of arguments" (cons (length args) minlen)))
 		((<=fx (-fx n 1) len)
 		 (if (not rest)
-		     (apply procedure this
+		     (apply proc this
 			(append args (make-list (-fx (negfx arity) (+fx n 1)))))
-		     (apply procedure this
+		     (apply proc this
 			(append args (js-rest-args %this (-fx (+fx len 1) n))))))
 		((not rest)
-		 (apply procedure this args))
+		 (apply proc this args))
 		(else
-		 (apply procedure this
+		 (apply proc this
 		    (append (take args len)
 		       (list
 			  (js-vector->jsarray

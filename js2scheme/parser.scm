@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Aug 17 07:50:07 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 08:56:43 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -915,7 +915,7 @@
       ;; function NAME( a0, ... ) { return spawn( function*() { BODY }, this); }
       ;; For additional details, see:
       ;;   https://tc39.github.io/ecmascript-asyncawait
-      (with-access::J2SFun fun (generator body mode thisp)
+      (with-access::J2SFun fun (generator body mode thisp name)
 	 (cond
 	    ((and (not (config-get conf :es2017-async))
 		  (not (string=? lang "hopscript")))
@@ -930,6 +930,7 @@
 			      (thisp thisp)
 			      (loc loc)
 			      (generator #t)
+			      (name (symbol-append name '*))
 			      (mode 'strict)
 			      (body body))))
 		   (set! body
@@ -1020,6 +1021,9 @@
 	 (with-access::J2SDecl (car (last-pair params)) (usage)
 	    (when (equal? usage '(rest)) 'rest))))
 
+   (define (loc->funname pref loc)
+      (string->symbol (format "~a@~a:~a" pref (cadr loc) (caddr loc))))
+   
    (define (function declaration? token #!optional methodof)
       (let ((loc (token-loc token)))
 	 (with-this 'this loc
@@ -1076,7 +1080,7 @@
 			(else
 			 (instantiate::J2SFun
 			    (loc loc)
-			    (name '||)
+			    (name (loc->funname "fun" loc))
 			    (mode mode)
 			    (generator gen)
 			    (thisp (current-this))
@@ -1438,6 +1442,7 @@
 				  (thisp (current-this))
 				  (params params)
 				  (mode 'strict)
+				  (name (loc->funname "met" loc))
 				  (generator gen)
 				  (body body)
 				  (ismethodof super?)
@@ -1459,6 +1464,7 @@
 				     (thisp (current-this))
 				     (params params)
 				     (mode 'strict)
+				     (name (loc->funname "met" loc))
 				     (generator gen)
 				     (body body)
 				     (vararg (rest-params params))))
@@ -2288,6 +2294,7 @@
 				 (loc loc)
 				 (thisp (current-this))
 				 (params params)
+				 (name (loc->funname "get" loc))
 				 (vararg (rest-params params))
 				 (body body)))
 			 (oprop (find-prop (symbol->string! (cdr id)) props))
@@ -2321,6 +2328,7 @@
 	       (let* ((body (fun-body params args current-mode))
 		      (mode (or (javascript-mode body) current-mode))
 		      (fun (instantiate::J2SFun
+			      (name (loc->funname "dyn" loc))
 			      (mode mode)
 			      (loc loc)
 			      (thisp (current-this))

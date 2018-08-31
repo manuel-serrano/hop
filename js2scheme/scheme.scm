@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Aug 30 18:13:50 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 13:58:10 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1544,7 +1544,7 @@
    (define (maybe-array-set lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache loc)
 	 (if (isa? lhs J2SRef)
-	     `(if (isa? ,(j2s-scheme obj mode return conf) JsArray)
+	     `(if (js-array? ,(j2s-scheme obj mode return conf))
 		  ,(j2s-array-set! this mode return conf)
 		  ,(j2s-put! loc (j2s-scheme obj mode return conf)
 		      field
@@ -1559,7 +1559,7 @@
 	     (let* ((tmp (gensym 'tmp))
 		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp)))))
 		`(let ((,tmp ,(j2s-scheme obj mode return conf)))
-		    (if (isa? ,tmp JsArray)
+		    (if (js-array? ,tmp)
 			,(j2s-array-set! this mode return conf)
 			,(j2s-put! loc tmp
 			    field
@@ -2111,7 +2111,7 @@
       (let ((tmp (j2s-scheme obj mode return conf)))
 	 `(cond
 	     ,@(if (canbe-array? obj)
-		`(((isa? ,tmp JsArray)
+		`(((js-array? ,tmp)
 		   ,(or (j2s-array-ref this mode return conf)
 			(get obj tmp field cache cspecs loc))))
 		'())

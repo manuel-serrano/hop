@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Thu Aug 30 16:48:03 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 13:12:39 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -85,6 +85,12 @@
 (define-macro (J2SPragma expr)
    `(instantiate::J2SPragma
        (loc loc)
+       (expr ,expr)))
+
+(define-macro (J2SPragma/type type expr)
+   `(instantiate::J2SPragma
+       (loc loc)
+       (type ,type)
        (expr ,expr)))
 
 (define-macro (J2SPragma/bindings type vars vals expr)

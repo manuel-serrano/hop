@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Thu Aug 30 19:11:58 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 08:36:15 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -501,6 +501,11 @@
 (define (j2s-get loc obj field tyobj prop typrop tyval conf cache
 	   #!optional (cspecs '(cmap pmap amap vtable)))
 
+   (define (js-get obj prop %this)
+      (if (config-get conf :profile-cache #f)
+	  `(js-get/debug ,obj ,prop %this ',loc)
+	  `(js-get ,obj ,prop %this)))
+   
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
 	   (not (type-number? typrop))
@@ -563,12 +568,12 @@
 			  ',(string->symbol prop) #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs)))))
 	     ((memq typrop '(int32 uint32))
-	      `(js-get ,obj ,(box prop typrop conf) %this))
+	      (js-get obj (box prop typrop conf) '%this))
 	     ((maybe-string? prop typrop)
 	      `(js-get/cache ,obj ,prop %this
 		  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 	     (else
-	      `(js-get ,obj ,prop %this))))
+	      (js-get obj prop '%this))))
 	 ((string? prop)
 	  (if (string=? prop "length")
 	      (if (eq? tyval 'uint32)
@@ -582,17 +587,22 @@
 		    (,p ,prop))
 		 (if (isa? ,o JsArray)
 		     (js-array-ref ,o ,p %this)
-		     (js-get ,o ,p %this)))))
+		     ,(js-get o p '%this)))))
 	 ((memq typrop '(int32 uint32))
-	  `(js-get ,obj ,(box prop typrop conf) %this))
+	  (js-get obj (box prop typrop conf) '%this))
 	 (else
-	  `(js-get ,obj ,prop %this)))))
+	  (js-get obj prop '%this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-put! loc obj field tyobj prop typrop val tyval mode conf cache #!optional (cspecs '(cmap pmap amap vtable)))
 
+   (define (js-put! o p v mode %this)
+      (if (config-get conf :profile-cache #f)
+	  `(js-put/debug! ,o ,p ,v ,mode %this ',loc)
+	  `(js-put! ,o ,p ,v ,mode %this)))
+   
    (define (maybe-array-set! prop val)
       (let ((o (gensym '%obj))
 	    (p (gensym '%prop))
@@ -602,7 +612,7 @@
 		(,v ,val))
 	     (if (isa? ,o JsArray)
 		 (js-array-set! ,o ,p ,v ,mode %this)
-		 (js-put! ,o ,p ,v ,mode %this)))))
+		 ,(js-put! o p v mode '%this)))))
    
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
@@ -659,13 +669,13 @@
 	 (else
 	  (cond
 	     ((string? prop)
-	      `(js-put! ,obj ',(string->symbol prop)
-		  ,(box val tyval conf) ,mode %this))
+	      (js-put! obj `',(string->symbol prop)
+		  (box val tyval conf) mode '%this))
 	     ((memq typrop '(int32 uint32))
 	      (maybe-array-set! (box prop typrop conf) (box val tyval conf)))
 	     (else
-	      `(js-put! ,obj ,(box prop typrop conf)
-		  ,(box val tyval conf) ,mode %this)))))))
+	      (js-put! obj (box prop typrop conf)
+		  (box val tyval conf) mode '%this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ranges                                                           */

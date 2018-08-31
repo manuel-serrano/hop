@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Aug 30 15:38:05 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 09:10:19 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1007,7 +1007,7 @@
 	    (with-access::J2SDeclFun decl (val)
 	       (if (isa? val J2SMethod)
 		   (escape-method val fix)
-		   (escape-fun val fix))))
+		   (escape-fun val fix #t))))
 	 (with-access::J2SDecl decl (range key)
 	    (let ((intv (env-lookup env decl)))
 	       (expr-range-add! this env fix intv))))))
@@ -1057,7 +1057,7 @@
       (cond
 	 ((isa? this J2SDeclSvc)
 	  ;; services are as escaping function, the arguments are "any"
-	  (escape-fun val fix))
+	  (escape-fun val fix #t))
 	 ((constructor-only? this)
 	  ;; a mere constructor
 	  (if (isa? val J2SFun)
@@ -1207,9 +1207,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    escape-fun ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (escape-fun val::J2SFun fix::cell)
+(define (escape-fun val::J2SFun fix::cell met::bool)
    (with-access::J2SFun val (params rrange thisp)
-      (when thisp (decl-vrange-add! thisp *infinity-intv* fix))
+      (when (and (not met) thisp)
+	 (decl-vrange-add! thisp *infinity-intv* fix))
       (set! rrange *infinity-intv*)
       (for-each (lambda (p::J2SDecl)
 		   (decl-irange-add! p *infinity-intv* fix))
@@ -1220,15 +1221,29 @@
 ;*---------------------------------------------------------------------*/
 (define (escape-method fun::J2SMethod fix)
    (with-access::J2SMethod fun (method function)
-      (escape-fun function fix)
-      (escape-fun method fix)))
-				  
+      (escape-fun function fix #f)
+      (escape-fun method fix #t)))
+
+;*---------------------------------------------------------------------*/
+;*    node-range-function-or-method ...                                */
+;*---------------------------------------------------------------------*/
+(define (node-range-function-or-method this::J2SFun env::pair-nil conf mode::symbol fix::cell met::bool)
+   (escape-fun this fix met)
+   (node-range-fun this (node-range-fun-decl this env conf mode fix) conf mode fix))
+   
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SFun env::pair-nil conf mode::symbol fix::cell)
-   (escape-fun this fix)
-   (node-range-fun this (node-range-fun-decl this env conf mode fix) conf mode fix))
+   (node-range-function-or-method this env conf mode fix #f))
+
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SMethod ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SMethod env::pair-nil conf mode::symbol fix::cell)
+   (with-access::J2SMethod this (function method)
+      (node-range-function-or-method function env conf mode fix #f)
+      (node-range-function-or-method method env conf mode fix #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SCall ...                                         */
@@ -1257,8 +1272,8 @@
 			(and (eq? scope 'local) (eq? %info 'nocapture)))))
 	 env))
    
-   (define (range-known-call-args callee iargs env)
-      (with-access::J2SFun callee (params vararg mode thisp mode)
+   (define (range-known-call-args fun::J2SFun iargs env)
+      (with-access::J2SFun fun (params vararg mode thisp mode)
 	 (when thisp (decl-irange-add! thisp *infinity-intv* fix))
 	 (let loop ((params params)
 		    (iargs iargs))
@@ -1276,25 +1291,25 @@
 		      (decl-irange-add! (car params) (car iargs) fix)
 		      (loop (cdr params) (cdr iargs)))))))))
    
-   (define (range-inline-call callee iargs env)
+   (define (range-inline-call fun::J2SFun iargs env)
       ;; type a direct function call: ((function (...) { ... })( ... ))
       ;; side effects are automatically handled when
       ;; node-range the function body
-      (range-known-call-args callee iargs env)
+      (range-known-call-args fun iargs env)
       (multiple-value-bind (_ envf)
 	 (node-range-fun callee env conf mode fix)
-	 (with-access::J2SFun callee (rrange mode)
+	 (with-access::J2SFun fun (rrange mode)
 	    (return rrange env))))
    
-   (define (range-known-call ref::J2SRef callee iargs env)
+   (define (range-known-call ref::J2SRef fun::J2SFun iargs env)
       ;; type a known constant function call: F( ... )
       ;; the new node-range environment is a merge of env and the environment
       ;; produced by the function
       (with-access::J2SRef ref (decl)
 	 (expr-range-add! ref env fix *infinity-intv*)
-	 (range-known-call-args callee iargs env)
+	 (range-known-call-args fun iargs env)
 	 (with-access::J2SDecl decl (scope usage)
-	    (with-access::J2SFun callee (rrange %info)
+	    (with-access::J2SFun fun (rrange %info)
 	       (return rrange env)))))
    
    (define (range-ref-call callee iargs env)
@@ -1304,13 +1319,23 @@
 	    ((isa? decl J2SDeclFun)
 	     (with-access::J2SDeclFun decl (ronly val)
 		(if ronly
-		    (range-known-call callee val iargs env)
+		    (if (isa? val J2SMethod)
+			(with-access::J2SMethod val (function method)
+			   (range-known-call callee function iargs env)
+			   (range-known-call callee method iargs env))
+			(range-known-call callee val iargs env))
 		    (range-unknown-call callee env))))
 	    ((isa? decl J2SDeclInit)
 	     (with-access::J2SDeclInit decl (ronly val)
-		(if (and ronly (isa? val J2SFun))
-		    (range-known-call callee val iargs env)
-		    (range-unknown-call callee env))))
+		(cond
+		   ((and ronly (isa? val J2SFun))
+		    (range-known-call callee val iargs env))
+		   ((and ronly (isa? val J2SMethod))
+		    (with-access::J2SMethod val (function method)
+		       (range-known-call callee function iargs env)
+		       (range-known-call callee method iargs env)))
+		   (else
+		    (range-unknown-call callee env)))))
 	    (else
 	     (range-unknown-call callee env)))))
    
