@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Aug 31 09:10:19 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 15:53:23 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -693,22 +693,24 @@
       (compiler-low
 	 (op (compiler-high x) (compiler-high y) (compiler-high def))))
 
-   (define (int32 n)
-      (cond
-	 ((<llong n *min-int32*) *min-int32*)
-	 ((>llong n *max-int32*) *max-int32*)
-	 (else n)))
+   (define (minov u l)
+      (if (or (>llong u *max-int32*) (>llong l *max-int32*))
+	  *min-int32*
+	  (max (min u l) *min-int32*)))
+
+   (define (maxov u l)
+      (if (or (<llong u *min-int32*) (<llong l *min-int32*))
+	  *max-int32*
+	  (min (max u l) *max-int32*)))
    
    (when (and (interval? left) (interval? right))
-      (let ((u (int32
-		  (max (interval-max left)
-		     (bitop (interval-max left) (interval-max right)
-			*max-int32*))))
-	    (l (int32
-		  (min (interval-min left)
-		     (bitop (interval-min left) (interval-min right)
-			*min-int32*)))))
-	 (interval (min u l) (max u l)))))
+      (let ((u (max (interval-max left)
+		  (bitop (interval-max left) (interval-max right)
+		     *max-int32*)))
+	    (l (min (interval-min left)
+		  (bitop (interval-min left) (interval-min right)
+		     *min-int32*))))
+	 (interval (minov u l) (maxov u l)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval-shiftl ...                                              */
@@ -721,7 +723,7 @@
 	       (<llong s #l32))
 	  (elong->llong (bit-lshelong (llong->elong n) (llong->fixnum s)))
 	  def))
-   
+
    (interval-bitop lsh left right))
    
 ;*---------------------------------------------------------------------*/

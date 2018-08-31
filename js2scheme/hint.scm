@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Aug 22 14:53:04 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 14:50:00 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -288,6 +288,8 @@
 			(j2s-hint obj '((array . 5) (string . 5) (object . 2)))
 			(j2s-hint obj '((array . 5) (no-string . 0) (object . 2))))
 		    (j2s-hint obj '((object . 5))))))
+	    ((isa? val J2SNumber)
+	     (j2s-hint obj '((array . 5) (string . 5))))
 	    ((isa? field J2SLiteralCnst)
 	     (with-access::J2SLiteralCnst field (val)
 		(loop val)))

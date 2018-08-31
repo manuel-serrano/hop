@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Aug 29 07:40:23 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 14:59:28 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -330,6 +330,13 @@
       (inlinfo-size %info)))
 
 ;*---------------------------------------------------------------------*/
+;*    function-generator? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (function-generator? this::J2SFun)
+   (with-access::J2SFun this (generator)
+      generator))
+
+;*---------------------------------------------------------------------*/
 ;*    invalidate-function-size! ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (invalidate-function-size! this::J2SFun)
@@ -512,6 +519,7 @@
 	       (let ((val (j2sdeclinit-val-fun decl)))
 		  (when (and (=fx (function-arity val) arity)
 			     (function-fxarg? val)
+			     (not (function-generator? val))
 			     (or (not leaf) (function-leaf? val))
 			     (not (memq val stack))
 			     (<=fx (function-size val) limit)

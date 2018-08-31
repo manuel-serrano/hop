@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Aug 30 08:40:23 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 16:09:47 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -439,9 +439,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SAccess totype)
    (with-access::J2SAccess this (obj field)
-      (set! obj (type-cast! obj '*))
-      (set! field (type-cast! field '*))
-      (cast this totype)))
+      (let ((otype (if (memq (j2s-type obj) '(int32 uint32)) 'any '*)))
+	 ;; the int32/uint32 rule is required to avoid sending int32/uint32
+	 ;; to the js-tonumber function (see to-string in scheme-call.scm
+	 ;; for instance)
+	 (set! obj (type-cast! obj otype))
+	 (set! field (type-cast! field '*))
+	 (cast this totype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SUnary ...                                        */
@@ -512,6 +516,15 @@
       (set! init (type-cast! init '*))
       (set! test (type-cast! test 'bool))
       (set! incr (type-cast! incr '*))
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SForIn ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SForIn totype)
+   (with-access::J2SForIn this (lhs obj body)
+      (set! lhs (type-cast! lhs '*))
+      (set! obj (type-cast! obj '*))
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/

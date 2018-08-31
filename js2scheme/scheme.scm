@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Aug 31 13:58:10 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 14:43:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1739,7 +1739,7 @@
 		(let ((tref (instantiate::J2SHopRef
 			       (loc loc)
 			       (id tmp)
-			       (type 'bint))))
+			       (type (j2s-type lhs)))))
 		   `(let ((,tmp ,scmlhs))
 		       ,(new-or-old tmp
 			   (js-binop2 loc '+ 'number

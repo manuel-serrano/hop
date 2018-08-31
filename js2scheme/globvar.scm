@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Aug 30 09:15:25 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 15:40:41 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -127,20 +127,24 @@
 			(begin
 			   (set! %info (cons 'uninit this))
 			   (list decl)))
-		    '())))
+		    (begin
+		       (set! %%dump "globvar:not constant")
+		       (set! %info #f)
+		       '()))))
 	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-gloconst* ::J2SDeclInit ...                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-gloconst* this::J2SDeclInit)
-   (with-access::J2SDeclInit this (usage ronly val %info %%dump)
+   (with-access::J2SDeclInit this (usage ronly val %info %%dump id)
       (if (and ronly (not (usage? '(assig) usage)) (constant? val))
 	  (begin
 	     (set! %%dump this)
 	     (set! %info (cons 'uninit this))
 	     (list this))
 	  (begin
+	     (set! %%dump "globvar:read-write")
 	     (set! %info #unspecified)
 	     '()))))
 
@@ -239,17 +243,18 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-constant! this::J2SRef)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (%info)
+      (with-access::J2SDecl decl (%info id)
 	 (cond
+	    ((and (pair? %info) (isa? (cdr %info) J2SInit))
+	     (with-access::J2SInit (cdr %info) (rhs)
+		;; copy the value
+		(j2s-alpha (propagate-constant! rhs) '() '())))
 	    ((and (pair? %info) (eq? (car %info) 'init) (isa? decl J2SDeclInit))
 	     (with-access::J2SDeclInit decl (val usecnt)
 		(set! usecnt (-fx usecnt 1))
 		;; copy the value
 		(j2s-alpha (propagate-constant! val) '() '())))
-	    ((and (pair? %info) (isa? (cdr %info) J2SInit))
-	     (with-access::J2SInit (cdr %info) (rhs)
-		;; copy the value
-		(j2s-alpha (propagate-constant! rhs) '() '())))
+	    
 	    (else
 	     (call-default-walker))))))
 
@@ -259,8 +264,8 @@
 (define-walk-method (propagate-constant! this::J2SInit)
    (with-access::J2SInit this (lhs rhs loc)
       (if (and (isa? lhs J2SRef)
-		   (with-access::J2SRef lhs (decl)
-		      (with-access::J2SDecl decl (%info)
-			 (and (pair? %info) (isa? (cdr %info) J2SInit)))))
+	       (with-access::J2SRef lhs (decl)
+		  (with-access::J2SDecl decl (%info)
+		     (and (pair? %info) (isa? (cdr %info) J2SInit)))))
 	  (J2SUndefined)
 	  (call-default-walker))))

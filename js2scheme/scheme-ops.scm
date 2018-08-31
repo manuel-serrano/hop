@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Aug 30 09:34:48 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 15:14:00 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2113,11 +2113,8 @@
 	   `(if (fixnum? ,right)
 		,(binop-fixnum-fixnum op type
 		    (asfixnum left tl) right flip)
-		,(if (memq type '(int32 uint32 integer bint real number))
-		     (binop-number-number op type
-			(box left tl conf) (box right tr conf) flip)
-		     (binop-any-any op type
-			(box left tl conf) (box right tr conf) flip))))))))
+		,(binop-any-any op type
+		   (box left tl conf) (box right tr conf) flip)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop-uint32-xxx ...                                             */
@@ -2215,11 +2212,8 @@
 	   `(if (fixnum? ,right)
 		,(binop-fixnum-fixnum op type
 		    (asfixnum left tl) right flip)
-		,(if (memq type '(int32 uint32 integer bint real number))
-		     (binop-number-number op type
-			(box left tl conf) (box right tr conf) flip)
-		     (binop-any-any op type
-			(box left tl conf) (box right tr conf) flip))))))))
+		,(binop-any-any op type
+		    (box left tl conf) (box right tr conf) flip)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop-int53-xxx ...                                              */
@@ -2370,11 +2364,8 @@
 	       `(if (fixnum? ,right)
 		    ,(binop-fixnum-fixnum op type
 			left right flip)
-		    ,(if (memq type '(int32 uint32 integer bint real number))
-			 (binop-number-number op type
-			    left (box right tr conf) flip)
-			 (binop-any-any op type
-			    left (box right tr conf) flip)))))))))
+		    ,(binop-any-any op type
+			left (box right tr conf) flip))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop-real-xxx ...                                               */

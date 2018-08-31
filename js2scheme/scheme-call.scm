@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Aug 30 19:39:35 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 15:32:00 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -305,7 +305,7 @@
 	       (case id
 		  ((Math)
 		   (j2s-math-builtin-method fun args
-		      mode return conf))
+		      this mode return conf))
 		  (else
 		   #f))))))
 
