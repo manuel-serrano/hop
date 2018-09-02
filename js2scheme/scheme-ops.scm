@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Sep  2 07:27:05 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 09:48:39 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1080,6 +1080,7 @@
 	     ((int32) `(bit-and ,(asfixnum sexpr 'int32) 31))
 	     ((uint32) `(bit-and ,(asfixnum sexpr 'uint32) 31))
 	     ((integer int53) `(bit-and ,sexpr 31))
+	     ((real) `(bit-and (flonum->fixnum ,sexpr) 31))
 	     (else `(bit-and (js-tointeger ,sexpr %this) 31))))))
    
    (with-tmp lhs rhs mode return conf '*

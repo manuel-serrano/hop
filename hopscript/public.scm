@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Aug 31 13:23:20 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 09:45:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1033,7 +1033,7 @@
 	  ((nanfl? obj) 0)
 	  ((or (=fl obj +inf.0) (=fl obj -inf.0))
 	   obj)
-	  ((<fl obj 0.)
+	  ((=fx (signbitfl obj) 1)
 	   (*fl -1. (floor (abs obj))))
 	  (else
 	   (floor obj))))
