@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Sep  1 10:21:17 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 19:25:43 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -286,7 +286,8 @@
 					'js-method-call-name/cache)))
 			   `(,call
 			       ,j2s-unresolved-call-workspace
-			       ,(j2s-scheme obj mode return conf)
+			       ,(box (j2s-scheme obj mode return conf)
+				   (j2s-type obj) conf)
 			       ',(string->symbol val)
 			       ,(js-pcache ccache)
 			       ,(js-pcache ocache)
@@ -300,11 +301,13 @@
 				    args))))))
 		(else
 		 (call-unknown-function fun
-		    (list (j2s-scheme obj mode return conf))
+		    (list (box (j2s-scheme obj mode return conf)
+			     (j2s-type obj) conf))
 		    args))))
 	    (else
 	     (call-unknown-function fun
-		(list (j2s-scheme obj mode return conf))
+		(list
+		   (box (j2s-scheme obj mode return conf) (j2s-type obj) conf))
 		args)))))
 
    (define (call-globalref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
@@ -347,7 +350,7 @@
 				   acache acspecs)))
 		       `(let ((,tmp ,(j2s-scheme obj mode return conf)))
 			   ,(call-ref-method obj ccache acache
-			      ccspecs fun (J2SHopRef tmp) args)))))
+			       ccspecs fun (J2SHopRef tmp) args)))))
 	       ((isa? obj J2SParen)
 		(with-access::J2SParen obj (expr)
 		   (loop expr)))
@@ -356,9 +359,9 @@
 		=>
 		(lambda (sexp) sexp))
 	       (else
-		(let* ((tmp (gensym 'obj))
-		       (ttmp (type-ident tmp (j2s-vtype obj) conf)))
-		   `(let ((,ttmp ,(j2s-scheme obj mode return conf)))
+		(let* ((tmp (gensym 'obj)))
+		   `(let ((,tmp ,(box (j2s-scheme obj mode return conf)
+				    (j2s-vtype obj) conf)))
 		       ,(call-ref-method obj
 			   ccache acache ccspecs
 			   (duplicate::J2SAccess fun
@@ -366,7 +369,7 @@
 				      (loc loc)
 				      (expr tmp))))
 			   (instantiate::J2SHopRef
-			      (type (j2s-vtype obj))
+			      (type 'any)
 			      (loc loc)
 			      (id tmp))
 			   args))))))))
@@ -612,7 +615,8 @@ ft		`(,f ,@%gen
       (with-access::J2SAccess fun (obj)
 	 (case (j2s-type obj)
 	    ((number)
-	     `(js-jsnumber-tostring ,(j2s-scheme obj mode return conf)
+	     `(js-jsnumber-tostring
+		 ,(j2s-scheme obj mode return conf)
 		 ,(if (pair? args)
 		      (j2s-scheme (car args) mode return conf)
 		      10) %this))
