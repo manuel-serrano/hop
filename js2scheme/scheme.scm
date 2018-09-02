@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Sep  2 17:22:30 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 20:55:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -515,7 +515,7 @@
 	     (format "bad number type ~a/~a" type (typeof val))
 	     (j2s->list this)))
 	 ((and (flonum? val) (nanfl? val))
-	  "NaN")
+	  +nan.0)
 	 (else
 	  (cond
 	     ((flonum? val) val)

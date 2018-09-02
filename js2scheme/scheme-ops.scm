@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Sep  2 19:58:53 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 20:44:36 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -846,7 +846,6 @@
       ;; tl == uint32, tr = ???
       (with-tmp-flip flip lhs rhs mode return conf 'any
 	 (lambda (left right)
-	       (tprint "left=" left " right=" right)
 	    (let loop ((op op))
 	       (cond
 		  ((eq? op '!=)
