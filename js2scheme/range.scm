@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Sep  1 07:13:28 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 07:04:39 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -685,9 +685,11 @@
 ;*---------------------------------------------------------------------*/
 (define (interval-div left right)
    (when (and (interval? left) (interval? right))
-      (unless (or (= (interval-max right) 0) (= (interval-min right) 0))
-	 ;; MS: 22 May 2017, don't know how to ensure that the result is
-	 ;; an integer
+      ;; MS: 22 May 2017, don't know how to ensure that the result is
+      ;; an integer
+      (with-handler
+	 ;; ignore floating point exceptions
+	 (lambda (e) #f)
 	 (let ((min (/ (interval-min left) (interval-max right)))
 	       (max (/ (interval-max left) (interval-min right))))
 	    (when (and (integer? min) (integer? max))

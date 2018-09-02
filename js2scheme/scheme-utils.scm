@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Aug 31 08:36:15 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 06:50:21 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -33,6 +33,7 @@
 	   (epairify-deep loc expr)
 	   (strict-mode? mode)
 	   (j2s-fast-id id)
+	   (j2s-fast-constructor-id id)
 	   (j2s-scheme-id id pref)
 	   (j2s-decl-scheme-id ::J2SDecl)
 	   (js-need-global? ::J2SDecl scope mode)
@@ -136,6 +137,12 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-fast-id id)
    (symbol-append '@ id))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-fast-constructor-id ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-fast-constructor-id id)
+   (symbol-append '@new- id))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-id ...                                                */
