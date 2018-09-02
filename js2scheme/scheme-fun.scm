@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Aug 15 09:01:58 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 06:55:03 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -195,6 +195,12 @@
 				  ,(jsfun->lambda val mode return conf
 				      (j2s-declfun-prototype this)
 				      (constructor-only? this))))
+			  ,@(if (usage? '(new) usage)
+				`(,(beautiful-define
+				      `(define ,(j2s-fast-constructor-id id)
+					  ,(j2sfun->ctor val mode return conf
+					     (j2s-declfun-prototype this)))))
+				'())
 			  ,@(if (no-closure? this)
 				'()
 				`((define ,scmid #unspecified)))))
@@ -205,6 +211,12 @@
 				  ,(jsfun->lambda val mode return conf
 				      (j2s-declfun-prototype this)
 				      (constructor-only? this))))
+			  ,@(if (usage? '(new) usage)
+				`(,(beautiful-define
+				      `(define ,(j2s-fast-constructor-id id)
+					  ,(j2sfun->ctor val mode return conf
+					     (j2s-declfun-prototype this)))))
+				'())
 			  ,@(if (no-closure? this)
 				'()
 				`((define ,scmid 
@@ -364,6 +376,80 @@
 		    (define ,scmid ,fastid)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    jsfun->lambda/body ...                                           */
+;*---------------------------------------------------------------------*/
+(define (jsfun->lambda/body this::J2SFun mode return conf proto body)
+
+   (define (type-this idthis thisp)
+      (if (and idthis (isa? thisp J2SDecl))
+	  (with-access::J2SDecl thisp (vtype)
+	     (type-ident idthis vtype conf))
+	  idthis))
+   
+   (define (lambda-or-labels rtype %gen this id args body)
+      ;; in addition to the user explicit arguments, this and %gen
+      ;; are treated as:
+      ;;   - some typed functions are optimized and they don't expect a this
+      ;;     argument
+      ;;   - some typed functions implement a generator body and they take
+      ;;     as extra argument the generator
+      (let* ((targs (if this (cons this args) args))
+	     (gtargs (if %gen (cons '%gen targs) targs)))
+	 (if id
+	     (let ((%id (j2s-fast-id id)))
+		`(labels ((,%id ,gtargs ,body)) ,%id))
+	     `(,(type-ident 'lambda rtype conf) ,gtargs ,body))))
+
+   (define (j2s-type-scheme p)
+      (let ((a (j2s-scheme p mode return conf)))
+	 (with-access::J2SDecl p (vtype)
+	    (type-ident a vtype conf))))
+		    
+   (define (fixarg-lambda fun id body)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype)
+	 (let ((args (map j2s-type-scheme params)))
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id args body))))
+   
+   (define (rest-lambda fun id body)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype)
+	 (let ((args (j2s-scheme params mode return conf)))
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id args body))))
+   
+   (define (normal-vararg-lambda fun id body)
+      ;; normal mode: arguments is an alias
+      (let ((id (or id (gensym 'fun)))
+	    (rest (gensym 'arguments)))
+	 (with-access::J2SFun fun (idgen idthis thisp rtype)
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id rest
+	       (jsfun-normal-vararg-body fun body id rest)))))
+   
+   (define (strict-vararg-lambda fun id body)
+      ;; strict mode: arguments is initialized on entrance
+      (let ((rest (gensym 'arguments)))
+	 (with-access::J2SFun fun (idgen idthis thisp rtype)
+	    (lambda-or-labels rtype idgen (type-this idthis thisp) id rest
+	       (jsfun-strict-vararg-body fun body id rest)))))
+
+   (with-access::J2SFun this (loc vararg mode params generator)
+      (let* ((id (j2sfun-id this))
+	     (fun (cond
+		     ((not vararg)
+		      (fixarg-lambda this id body))
+		     ((eq? vararg 'rest)
+		      (rest-lambda this id body))
+		     ((eq? mode 'normal)
+		      (normal-vararg-lambda this id body))
+		     (else
+		      (strict-vararg-lambda this id body)))))
+	 (epairify-deep loc fun))))
+
+;*---------------------------------------------------------------------*/
 ;*    jsfun->lambda ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (jsfun->lambda this::J2SFun mode return conf proto ctor-only::bool)
@@ -454,31 +540,29 @@
 	  (flatten-stmt (j2s-scheme body mode return conf))))
 
    (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator thisp)
-      (let* ((id (j2sfun-id this))
-	     (body (cond
-		      (generator
-		       (with-access::J2SNode body (loc)
-			  (epairify loc
-			     (generator-body (this-body thisp body mode)))))
-		      (need-bind-exit-return
-		       (with-access::J2SNode body (loc)
-			  (epairify loc
-			     (return-body (this-body thisp body mode)))))
-		      (else
-		       (let ((bd (this-body thisp body mode)))
-			  (with-access::J2SNode body (loc)
-			     (epairify loc
-				(if (pair? bd) bd `(begin ,bd))))))))
-	     (fun (cond
-		     ((not vararg)
-		      (fixarg-lambda this id body))
-		     ((eq? vararg 'rest)
-		      (rest-lambda this id body))
-		     ((eq? mode 'normal)
-		      (normal-vararg-lambda this id body))
+      (let ((body (cond
+		     (generator
+		      (with-access::J2SNode body (loc)
+			 (epairify loc
+			    (generator-body (this-body thisp body mode)))))
+		     (need-bind-exit-return
+		      (with-access::J2SNode body (loc)
+			 (epairify loc
+			    (return-body (this-body thisp body mode)))))
 		     (else
-		      (strict-vararg-lambda this id body)))))
-	 (epairify-deep loc fun))))
+		      (let ((bd (this-body thisp body mode)))
+			 (with-access::J2SNode body (loc)
+			    (epairify loc
+			       (if (pair? bd) bd `(begin ,bd)))))))))
+	 (jsfun->lambda/body this mode return conf proto body))))
+
+;*---------------------------------------------------------------------*/
+;*    j2sfun->ctor ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2sfun->ctor this::J2SFun mode return conf proto)
+   (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator thisp)
+      (let ((body #unspecified))
+	 (jsfun->lambda/body this mode return conf proto body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-body ...                                                  */

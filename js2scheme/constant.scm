@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Aug 27 16:02:35 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 09:18:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -253,17 +253,25 @@
 	    ((flonum? l) (J2SNumber/type 'real (op l (fixnum->flonum r))))
 	    ((flonum? r) (J2SNumber/type 'real (op (fixnum->flonum l) r)))
 	    (else this))))
-   
+
+   (define (unparen expr)
+      (if (isa? expr J2SParen)
+	  (with-access::J2SParen expr (expr) (unparen expr))
+	  expr))
+
    (call-default-walker)
    (with-access::J2SBinary this (op expr lhs rhs loc type)
-      (if (and (isa? lhs J2SNumber) (isa? rhs J2SNumber))
-	  (with-access::J2SNumber lhs ((lval val))
-	     (with-access::J2SNumber rhs ((rval val))
+      (if (and (isa? (unparen lhs) J2SNumber) (isa? (unparen rhs) J2SNumber))
+	  (with-access::J2SNumber (unparen lhs) ((lval val))
+	     (with-access::J2SNumber (unparen rhs) ((rval val))
 		(case op
 		   ((+) (evaluate this + lval rval))
 		   ((-) (evaluate this - lval rval))
 		   ((*) (evaluate this * lval rval))
-		   ((/) (evaluate this / lval rval))
+		   ((/)
+		    (if (= rval 0)
+			(J2SNumber +inf.0)
+			(evaluate this / lval rval)))
 		   ((BIT_OR & ^)
 		    (if (and (fixnum? lval) (fixnum? rval))
 			(let* ((x (fixnum->int32 lval))
@@ -274,7 +282,7 @@
 				     (else (bit-xors32 x y)))))
 			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
 				    (<=s32 (fixnum->int32 (maxvalfx)) r))
-			       (J2SNumber (int32->fixnum r))
+			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
 		   ((<<)
@@ -284,7 +292,7 @@
 			       (r (bit-lshu32 x (uint32->fixnum y))))
 			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
 				    (<=s32 (fixnum->int32 (maxvalfx)) r))
-			       (J2SNumber (int32->fixnum r))
+			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
 		   ((>>)
@@ -294,7 +302,7 @@
 			       (r (bit-rshs32 x (uint32->fixnum y))))
 			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
 				    (<=s32 (fixnum->int32 (maxvalfx)) r))
-			       (J2SNumber (int32->fixnum r))
+			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
 		   ((>>>)
@@ -303,12 +311,14 @@
 			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-rshu32 x (uint32->fixnum y))))
 			   (if (<=u32 r (fixnum->uint32 (maxvalfx)))
-			       (J2SNumber (uint32->fixnum r))
+			       (J2SNumber/type 'integer (uint32->fixnum r))
 			       this))
 			this))
 		   ((%)
-		    (tprint "TODO.constant! " (j2s->list this))
-		    this)
+		    (if (and (fixnum? lval) (fixnum? rval)
+			     (>=fx lval 0) (>fx rval 0))
+			(J2SNumber/type 'integer (remainder lval rval))
+			this))
 		   (else this))))
 	  this)))
        

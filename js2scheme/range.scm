@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Sep  2 07:04:39 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 09:01:32 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -91,7 +91,7 @@
 		(if (config-get args :optim-integer #f)
 		    (begin
 		       ;; optimize operators (modulo) according to ranges
-		       (when (>=fx (config-get args :optim 0) 2)
+		       '(when (>=fx (config-get args :optim 0) 2)
 			  (opt-range-binary! this args))
 		       ;; allocate precise variable types
 		       (type-range! this tymap)
@@ -1526,7 +1526,9 @@
 	     (expr-range-add! this env fix (interval-div intl intr)))
 	    ((%)
 	     (if (and (interval? intl) (interval? intr))
-		 (if (> (interval-min intr) 0)
+		 (if (and (> (interval-min intr) 0)
+			  (>= (interval-min intl) 0))
+		     ;; a negative divided may produce -0.0
 		     (expr-range-add! this env fix intl)
 		     (expr-range-add! this env fix *infinity-intv*))))
 	    ((<<)
