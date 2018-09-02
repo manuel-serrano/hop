@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Sep  2 06:50:21 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 18:30:01 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -510,8 +510,8 @@
 
    (define (js-get obj prop %this)
       (if (config-get conf :profile-cache #f)
-	  `(js-get/debug ,obj ,prop %this ',loc)
-	  `(js-get ,obj ,prop %this)))
+	  `(js-get/debug ,(box obj tyobj conf) ,prop %this ',loc)
+	  `(js-get ,(box obj tyobj conf) ,prop %this)))
    
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
@@ -586,7 +586,7 @@
 	      (if (eq? tyval 'uint32)
 		  `(js-get-lengthu32 ,obj %this #f)
 		  `(js-get-length ,obj %this #f))
-	      `(js-get ,obj ',(string->symbol prop) %this)))
+	      `(js-get ,(box obj tyobj conf) ',(string->symbol prop) %this)))
 	 ((and field (mightbe-number? field))
 	  (let ((o (gensym '%obj))
 		(p (gensym '%prop)))

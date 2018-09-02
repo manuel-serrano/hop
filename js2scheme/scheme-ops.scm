@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Sep  2 17:40:53 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 18:06:17 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1744,7 +1744,7 @@
 				#f (number type) type conf)))))
 		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
 		   (cond
-		      ((not (u32? right))
+		      ((not (uint32? right))
 		       `(if (=u32 ,(asuint32 right trv) #u32:0)
 			    +nan.0
 			    ,(j2s-cast `(remainderu32
