@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Aug 31 09:09:03 2018 (serrano)                */
+;*    Last change :  Sat Sep  1 18:08:54 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -161,15 +161,28 @@
 (define-walk-method (mark-capture this::J2SNode env::pair-nil)
    (call-default-walker))
 
+;* {*---------------------------------------------------------------------*} */
+;* {*    mark-capture ::J2SRef ...                                        *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (mark-capture this::J2SRef env::pair-nil)       */
+;*    (with-access::J2SRef this (decl)                                 */
+;*       (with-access::J2SDecl decl (scope ronly %info vtype)          */
+;* 	 (when (not ronly)                                             */
+;* 	    (unless (memq decl env)                                    */
+;* 	       (set! %info 'capture))))))                              */
+
 ;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SRef ...                                        */
+;*    mark-capture ::J2SAssig ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SRef env::pair-nil)
-   (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (scope ronly %info)
-	 (when (not ronly)
-	    (unless (memq decl env)
-	       (set! %info 'capture))))))
+(define-walk-method (mark-capture this::J2SAssig env::pair-nil)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SRef)
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (scope ronly %info)
+		(unless (memq decl env)
+		   (set! %info 'capture))))
+	  (mark-capture lhs env))
+      (mark-capture rhs env)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-capture ::J2SFun ...                                        */
@@ -342,6 +355,17 @@
 	  (cdr c)
 	  (with-access::J2SDecl decl (vtype) vtype))))
 
+;*---------------------------------------------------------------------*/
+;*    env-nocapture ...                                                */
+;*---------------------------------------------------------------------*/
+(define (env-nocapture env::pair-nil)
+   (map (lambda (c)
+	   (with-access::J2SDecl (car c) (%info)
+	      (if (eq? %info 'capture)
+		  (cons (car c) 'any)
+		  c)))
+      env))
+   
 ;*---------------------------------------------------------------------*/
 ;*    env-merge ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -586,6 +610,7 @@
    (with-access::J2SParen this (expr)
       (multiple-value-bind (tye enve bke)
 	 (node-type expr env fix)
+	 (unless tye (tprint "EXPR=" (j2s->list expr)))
 	 (expr-type-add! this enve fix tye bke))))
 
 ;*---------------------------------------------------------------------*/
@@ -671,15 +696,17 @@
 (define-walk-method (node-type this::J2SRef env::pair-nil fix::cell)
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (id key utype usage)
-	 (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
-	    (with-access::J2SDeclFun decl (val)
-	       (if (isa? val J2SMethod)
-		   (escape-method val fix)
-		   (escape-fun val fix #f))))
-	 (if (eq? utype 'unknown)
-	     (let ((ty (env-lookup env decl)))
-		(expr-type-add! this env fix ty))
-	     (expr-type-add! this env fix utype)))))
+	 (let ((nenv env))
+	    (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
+	       (set! nenv (env-nocapture env))
+	       (with-access::J2SDeclFun decl (val)
+		  (if (isa? val J2SMethod)
+		      (escape-method val fix)
+		      (escape-fun val fix #f))))
+	    (if (eq? utype 'unknown)
+		(let ((ty (env-lookup env decl)))
+		   (expr-type-add! this nenv fix ty))
+		(expr-type-add! this nenv fix utype))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SWithRef ...                                       */
@@ -987,7 +1014,7 @@
 	       (set! fenv (extend-env fenv argumentsp 'arguments)))
 	    (multiple-value-bind (_ envf _)
 	       (node-type body fenv fix)
-	       (set! %info fenv)))
+	       (set! %info envf)))
 	 (expr-type-add! this env fix 'function))))
 
 ;*---------------------------------------------------------------------*/
@@ -1037,7 +1064,7 @@
 ;*---------------------------------------------------------------------*/
 (define (node-type-fun-or-method this::J2SFun env::pair-nil fix::cell met::bool)
    (escape-fun this fix met)
-   (node-type-fun this (node-type-fun-decl this env fix) fix))
+   (node-type-fun this (node-type-fun-decl this (env-nocapture env) fix) fix))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SFun ...                                           */
@@ -1117,8 +1144,9 @@
       (type-known-call-args fun args env bk)
       (multiple-value-bind (_ envf _)
 	 (node-type-fun callee env fix)
-	 (with-access::J2SFun fun (rtype mode)
-	    (return rtype env bk))))
+	 (with-access::J2SFun fun (rtype mode %info)
+	    (let ((nenv (if (env? %info) (env-override envf %info) env)))
+	       (return rtype nenv bk)))))
    
    (define (type-known-call ref::J2SRef fun::J2SFun args env bk)
       ;; type a known constant function call: F( ... )
@@ -1129,7 +1157,8 @@
 	 (type-known-call-args fun args env bk)
 	 (with-access::J2SDecl decl (scope usage)
 	    (with-access::J2SFun fun (rtype %info)
-	       (return rtype env bk)))))
+	       (let ((nenv (if (env? %info) (env-override env %info) env)))
+		  (return rtype nenv bk))))))
    
    (define (type-ref-call callee args env bk)
       ;; call a JS variable, check is it a known function

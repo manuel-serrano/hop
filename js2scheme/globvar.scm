@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Aug 31 15:40:41 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 18:49:59 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -116,9 +116,9 @@
       ;; no need to scan rhs as we are only looking for variable decls/inits
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (usage ronly val %info %%dump)
+	     (with-access::J2SDecl decl (usage ronly val %info %%dump id)
 		(if (and (not (usage? '(assig) usage)) (constant? rhs))
-		    (if (isa? %info J2SInit)
+		    (if (and (pair? %info) (eq? (car %info) 'uninit))
 			;; multiple init, invalidate
 			(begin
 			   (set! %%dump "globvar:multiple")
@@ -141,7 +141,7 @@
       (if (and ronly (not (usage? '(assig) usage)) (constant? val))
 	  (begin
 	     (set! %%dump this)
-	     (set! %info (cons 'uninit this))
+	     (set! %info (cons 'undecl this))
 	     (list this))
 	  (begin
 	     (set! %%dump "globvar:read-write")

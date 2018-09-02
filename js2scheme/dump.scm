@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Aug 30 15:44:35 2018 (serrano)                */
+;*    Last change :  Sat Sep  1 07:09:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -721,6 +721,7 @@
    (with-access::J2SParen this (expr)
       `(,@(call-next-method)
 	  ,@(dump-type this)
+	  ,@(dump-range this)
 	  ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Aug 31 14:50:00 2018 (serrano)                */
+;*    Last change :  Sat Sep  1 18:38:14 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -82,7 +82,7 @@
        ty)
       ((memq ty '(index indexof length)) 'integer)
       ((memq ty '(ureal1 real1 real4)) 'real)
-      (else (error "js2scheme" "Illegal hint type" ty))))
+      (else (error "js2scheme" "Illegal tyflow/hint type" ty))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-reset-hint ::J2SNode ...                                     */

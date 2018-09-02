@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Aug 31 15:53:23 2018 (serrano)                */
+;*    Last change :  Sat Sep  1 07:13:28 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -317,6 +317,16 @@
    '())
 
 ;*---------------------------------------------------------------------*/
+;*    env? ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (env? o)
+   ;; heuristic check (not very precise but should be enough)
+   (or (null? o)
+       (and (pair? o)
+	    (isa? (caar o) J2SDecl)
+	    (interval? (cdar o)))))
+
+;*---------------------------------------------------------------------*/
 ;*    extend-env ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (extend-env::pair-nil env::pair-nil decl::J2SDecl intv)
@@ -357,6 +367,12 @@
    (merge2 right (merge2 left right)))
 
 ;*---------------------------------------------------------------------*/
+;*    env-override ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (env-override left::pair-nil right::pair-nil)
+   (append right left))
+
+;*---------------------------------------------------------------------*/
 ;*    env-lookup ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (env-lookup::obj env::pair-nil decl::J2SDecl)
@@ -365,6 +381,17 @@
 	  (cdr c)
 	  (with-access::J2SDecl decl (vrange) vrange))))
 
+;*---------------------------------------------------------------------*/
+;*    env-nocapture ...                                                */
+;*---------------------------------------------------------------------*/
+(define (env-nocapture env::pair-nil)
+   (map (lambda (c)
+	   (with-access::J2SDecl (car c) (%info)
+	      (if (eq? %info 'capture)
+		  (cons (car c) 'any)
+		  c)))
+      env))
+   
 ;*---------------------------------------------------------------------*/
 ;*    interval-equal? ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -678,20 +705,6 @@
 ;*    interval-bitop ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (interval-bitop op::procedure left right)
-   
-   (define (compiler-high::long val)
-      (cond-expand
-	 ((or bit61 bit63) (bit-lsh val 32))
-	 (else val)))
-
-   (define (compiler-low::long val)
-      (cond-expand
-	 ((or bit61 bit63) (bit-rsh val 32))
-	 (else val)))
-
-   (define (bitop x y def)
-      (compiler-low
-	 (op (compiler-high x) (compiler-high y) (compiler-high def))))
 
    (define (minov u l)
       (if (or (>llong u *max-int32*) (>llong l *max-int32*))
@@ -705,11 +718,35 @@
    
    (when (and (interval? left) (interval? right))
       (let ((u (max (interval-max left)
-		  (bitop (interval-max left) (interval-max right)
+		  (op (interval-max left) (interval-max right)
 		     *max-int32*)))
 	    (l (min (interval-min left)
-		  (bitop (interval-min left) (interval-min right)
+		  (op (interval-min left) (interval-min right)
 		     *min-int32*))))
+	 (interval (minov u l) (maxov u l)))))
+
+;*---------------------------------------------------------------------*/
+;*    interval-bitopu32 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (interval-bitopu32 op::procedure left right)
+   
+   (define (minov u l)
+      (if (or (>llong u *max-uint32*) (>llong l *max-uint32*))
+	  #l0
+	  (max (min u l) #l0)))
+
+   (define (maxov u l)
+      (if (or (<llong u #l0) (<llong l #l0))
+	  *max-uint32*
+	  (min (max u l) *max-uint32*)))
+   
+   (when (and (interval? left) (interval? right))
+      (let ((u (max (interval-max left)
+		  (op (interval-max left) (interval-max right)
+		     *max-uint32*)))
+	    (l (min (interval-min left)
+		  (op (interval-min left) (interval-min right)
+		     #l0))))
 	 (interval (minov u l) (maxov u l)))))
 
 ;*---------------------------------------------------------------------*/
@@ -746,13 +783,11 @@
 (define (interval-ushiftr left right)
 
    (define (ursh n s def)
-      (if (and (llong? s)
-	       (=llong (elong->llong (llong->elong s)) s)
-	       (<llong s #l33))
-	  (elong->llong (bit-urshelong (llong->elong n) (llong->fixnum s)))
+      (if (and (llong? s) (<llong s #l33))
+	  (uint32->llong (bit-urshu32 (llong->uint32 n) (llong->fixnum s)))
 	  def))
    
-   (interval-bitop ursh left right))
+   (interval-bitopu32 ursh left right))
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-bitand ...                                              */
@@ -1005,14 +1040,16 @@
 (define-walk-method (node-range this::J2SRef env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (id key utype usage)
-	 (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
-	    (with-access::J2SDeclFun decl (val)
-	       (if (isa? val J2SMethod)
-		   (escape-method val fix)
-		   (escape-fun val fix #t))))
-	 (with-access::J2SDecl decl (range key)
-	    (let ((intv (env-lookup env decl)))
-	       (expr-range-add! this env fix intv))))))
+	 (let ((nenv env))
+	    (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
+	       (set! nenv (env-nocapture env))
+	       (with-access::J2SDeclFun decl (val)
+		  (if (isa? val J2SMethod)
+		      (escape-method val fix)
+		      (escape-fun val fix #t))))
+	    (with-access::J2SDecl decl (range key)
+	       (let ((intv (env-lookup nenv decl)))
+		  (expr-range-add! this nenv fix intv)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SDecl ...                                         */
@@ -1189,7 +1226,7 @@
 	       (set! fenv (extend-env fenv argumentsp *infinity-intv*)))
 	    (multiple-value-bind (_ envf _)
 	       (node-range body fenv conf mode fix)
-	       (set! %info fenv)))
+	       (set! %info envf)))
 	 (expr-range-add! this env fix *infinity-intv*))))
 
 ;*---------------------------------------------------------------------*/
@@ -1231,7 +1268,7 @@
 ;*---------------------------------------------------------------------*/
 (define (node-range-function-or-method this::J2SFun env::pair-nil conf mode::symbol fix::cell met::bool)
    (escape-fun this fix met)
-   (node-range-fun this (node-range-fun-decl this env conf mode fix) conf mode fix))
+   (node-range-fun this (node-range-fun-decl this (env-nocapture env) conf mode fix) conf mode fix))
    
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SFun ...                                          */
@@ -1300,8 +1337,9 @@
       (range-known-call-args fun iargs env)
       (multiple-value-bind (_ envf)
 	 (node-range-fun callee env conf mode fix)
-	 (with-access::J2SFun fun (rrange mode)
-	    (return rrange env))))
+	 (with-access::J2SFun fun (rrange mode %info)
+	    (let ((nenv (if (env? %info) (env-override envf %info) env)))
+	       (return rrange nenv)))))
    
    (define (range-known-call ref::J2SRef fun::J2SFun iargs env)
       ;; type a known constant function call: F( ... )
@@ -1312,7 +1350,8 @@
 	 (range-known-call-args fun iargs env)
 	 (with-access::J2SDecl decl (scope usage)
 	    (with-access::J2SFun fun (rrange %info)
-	       (return rrange env)))))
+	       (let ((nenv (if (env? %info) (env-override env %info) env)))
+		  (return rrange nenv))))))
    
    (define (range-ref-call callee iargs env)
       ;; call a JS variable, check is it a known function
@@ -2369,15 +2408,28 @@
 (define-walk-method (mark-capture this::J2SNode env::pair-nil)
    (call-default-walker))
 
+;* {*---------------------------------------------------------------------*} */
+;* {*    mark-capture ::J2SRef ...                                        *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (mark-capture this::J2SRef env::pair-nil)       */
+;*    (with-access::J2SRef this (decl)                                 */
+;*       (with-access::J2SDecl decl (scope ronly %info vtype)          */
+;* 	 (when (not ronly)                                             */
+;* 	    (unless (memq decl env)                                    */
+;* 	       (set! %info 'capture))))))                              */
+
 ;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SRef ...                                        */
+;*    mark-capture ::J2SAssig ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SRef env::pair-nil)
-   (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (scope ronly %info vtype)
-	 (when (not ronly)
-	    (unless (memq decl env)
-	       (set! %info 'capture))))))
+(define-walk-method (mark-capture this::J2SAssig env::pair-nil)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SRef)
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (scope ronly %info)
+		(unless (memq decl env)
+		   (set! %info 'capture))))
+	  (mark-capture lhs env))
+      (mark-capture rhs env)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-capture ::J2SFun ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Aug 31 15:14:00 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 18:37:51 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -223,12 +223,12 @@
 	  (delete->scheme expr)))
       ((+)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
-       (let ((expr (j2s-scheme expr mode return conf))
+       (let ((sexpr (j2s-scheme expr mode return conf))
 	     (typ (j2s-vtype expr)))
 	  (cond
-	     ((eqv? expr 0) +0.0)
-	     ((memq typ '(int32 uint32 int53 integer number)) expr)
-	     (else (epairify loc `(js-tonumber ,expr %this))))))
+	     ((eqv? sexpr 0) +0.0)
+	     ((memq typ '(int32 uint32 int53 integer number)) sexpr)
+	     (else (epairify loc `(js-tonumber ,sexpr %this))))))
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
        (let ((sexpr (j2s-scheme expr mode return conf))
@@ -239,7 +239,7 @@
 		 ((int32? sexpr)
 		  (if (=s32 sexpr #s32:0) -0.0 (negs32 sexpr)))
 		 ((eq? typ 'int32)
-		  (epairify loc `(negs32js ,sexpr)))
+		  (epairify loc `(negs32 ,sexpr)))
 		 ((eq? typ 'uint32)
 		  (epairify loc `(negs32 ,(asint32 sexpr 'uint32))))
 		 (else
@@ -291,7 +291,9 @@
 			  -0.0
 			  (negfx ,sexpr)))
 		    (else
-		     `(negjs ,sexpr %this))))))))
+		     `(negjs ,sexpr %this)))))
+	     (else
+	      (epairify loc `(negjs ,sexpr %this))))))
       ((~)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
        (if (eq? type 'int32)
@@ -806,14 +808,16 @@
 		   `(=fx ,(asfixnum left tl) ,right))
 		  ((eq? tr 'real)
 		   `(=fl ,(asreal left tl) ,right))
-		  ((eq? op '==)
+		  ((eq? op '===)
 		   `(if (fixnum? ,right)
 			(=fx ,(asfixnum left tl) ,right)
 			(js-eqil?
 			   ,(box left tl conf)
 			   ,(box right tr conf))))
+		  ((not (eq? tr 'any))
+		   `(js-equal-sans-flonum? ,(asfixnum left tl) ,right))
 		  (else
-		   `(js-eqil? ,(asfixnum left tl) ,right)))))))
+		   `(js-equal? ,(asfixnum left tl) ,right %this)))))))
 
    (define (equality-uint32 op lhs tl rhs tr mode return conf)
       ;; tl == uint32, tr = ???
@@ -840,7 +844,7 @@
 		   `(=fx ,(asfixnum left tl) ,right))
 		  ((eq? tr 'real)
 		   `(=fl ,(asreal left tl) ,right))
-		  ((eq? op '==)
+		  ((eq? op '===)
 		   `(if (fixnum? ,right)
 			,(if (inrange-int32? lhs)
 			     `(=fx ,(asfixnum left tl) ,right)
@@ -851,13 +855,14 @@
 			   ,(box right tr conf))))
 		  (else
 		   (if (inrange-int32? lhs)
-		       `(js-eqil? ,(asfixnum left tl) ,right)
+		       `(js-equal? ,(asfixnum left tl) ,right %this)
 		       `(if (fixnum? ,right)
 			     (and (=fx ,(asfixnum left tl) ,right)
 				  (>=fx ,right 0))
-			     (=fl
+			     (js-equal? 
 				,(asreal left tl)
-				,(box right tr conf))))))))))
+				,(box right tr conf)
+				%this)))))))))
 
    (define (equality-string op lhs tl rhs tr mode return conf)
       (with-tmp lhs rhs mode return conf 'any
@@ -1706,7 +1711,9 @@
 		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
 		   `(if (=u32 ,(asuint32 right trv) #u32:0)
 			+nan.0
-			(j2s-cast (remainderu32 ,(asuint32 left tlv) ,(asuint32 right trv))
+			,(j2s-cast `(remainderu32
+				      ,(asuint32 left tlv)
+				      ,(asuint32 right trv))
 			   #f 'uint32 type conf)))
 		  (else
 		   (if (m64? conf)
@@ -1862,6 +1869,8 @@
        (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
       ((int53)
        (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
+      ((real)
+       (if (flonum? val) (flonum->uint32 val) `(flonum->uint32 ,val)))
       (else
        (if (fixnum? val)
 	   (fixnum->uint32 val)

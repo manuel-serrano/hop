@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Aug 31 08:22:16 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 19:25:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1393,13 +1393,14 @@
 ;*    potential type errors.                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-get/debug _o prop %this::JsGlobalObject loc)
-   (cond
-      ((symbol? prop)
-       (js-profile-log-get prop loc))
-      ((string? prop)
-       (js-profile-log-get (string->symbol prop) loc))
-      ((number? prop)
-       (js-profile-log-get (string->symbol (number->string prop)) loc)))
+   (when *profile-cache*
+      (cond
+	 ((symbol? prop)
+	  (js-profile-log-get prop loc))
+	 ((string? prop)
+	  (js-profile-log-get (string->symbol prop) loc))
+	 ((number? prop)
+	  (js-profile-log-get (string->symbol (number->string prop)) loc))))
    (cond
       ((pair? _o)
        (js-get-pair _o (js-toname prop %this) %this))
@@ -2014,13 +2015,14 @@
 ;*    js-put/debug! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-put/debug! _o prop v::obj throw::bool %this::JsGlobalObject loc)
-   (cond
-      ((symbol? prop)
-       (js-profile-log-put prop loc))
-      ((string? prop)
-       (js-profile-log-put (string->symbol prop) loc))
-      ((number? prop)
-       (js-profile-log-put (string->symbol (number->string prop)) loc)))
+   (when *profile-cache*
+      (cond
+	 ((symbol? prop)
+	  (js-profile-log-put prop loc))
+	 ((string? prop)
+	  (js-profile-log-put (string->symbol prop) loc))
+	 ((number? prop)
+	  (js-profile-log-put (string->symbol (number->string prop)) loc))))
    (cond
       ((pair? _o)
        (js-put-pair! _o (js-toname prop %this) v throw %this))

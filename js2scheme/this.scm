@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/this.scm                */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/this.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Aug 12 07:13:59 2018 (serrano)                */
+;*    Last change :  Sat Sep  1 19:56:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all functions in non-strict mode.      */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_this
 
+   (include "ast.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
@@ -54,22 +56,22 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (this! this::J2SFun)
 
-   (define (init-this loc)
-      (let ((prag (instantiate::J2SPragma
-		     (loc loc)
-		     (type 'any)
-		     (expr `(cond
-			       ((or (eq? this (js-undefined))
-				    (eq? this (js-null)))
-				;; use to be
-				;; (set! this %scope)
-				;; but it breaks nodejs/test/simple/test-fs-fstat.js
-				(set! this %this))
-			       ((not (js-object? this))
-				(set! this (js-toobject %this this))))))))
-      (instantiate::J2SStmtExpr
-	 (loc loc)
-	 (expr prag))))
+   (define (init-this thisp loc)
+      (with-access::J2SDecl thisp (id)
+	 (J2SIf (J2SPragma/bindings 'bool
+		   '(^this) (list (J2SThis thisp))
+		   '(or (eq? ^this (js-undefined)) (eq? ^this (js-null))))
+	    (J2SStmtExpr
+	       (J2SAssig (J2SThis thisp) (J2SPragma/type 'object '%this)))
+	    (J2SIf (J2SPragma/bindings 'bool
+		      '(^this) (list (J2SThis thisp))
+		      '(not (js-object? ^this)))
+	       (J2SStmtExpr
+		  (J2SAssig (J2SThis thisp)
+		     (J2SPragma/bindings 'object
+			'(^this) (list (J2SThis thisp))
+			'(js-toobject %this ^this))))
+	       (J2SNop)))))
    
    (with-access::J2SFun this (mode body params id loc thisp)
       (when (eq? mode 'normal)
@@ -82,5 +84,5 @@
 		     (instantiate::J2SBlock
 			(loc loc)
 			(endloc endloc)
-			(nodes (list (init-this loc) nbody)))))))))
+			(nodes (list (init-this thisp loc) nbody)))))))))
    this)

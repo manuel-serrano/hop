@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Aug 31 08:24:11 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 19:26:32 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -27,6 +27,7 @@
 	   __hopscript_property)
 
    (export (js-profile-init conf calltable)
+	   *profile-cache*
 
 	   (js-profile-log-cache ::JsPropertyCache
 	      #!key imap emap cmap pmap amap vtable)

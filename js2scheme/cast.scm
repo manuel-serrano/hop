@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Aug 31 16:09:47 2018 (serrano)                */
+;*    Last change :  Sat Sep  1 07:30:15 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -166,7 +166,18 @@
 ;*    type-cast! ::J2SRef ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SRef totype)
-   (cast this totype))
+   (with-access::J2SRef this (decl type loc)
+      (with-access::J2SDecl decl (vtype)
+	 (cond
+	    ((eq? vtype type)
+	     (cast this totype))
+	    ((memq type '(int32 uint32))
+	     ;; variable unboxing (see J2SAssig)
+	     (cast-expr
+		(cast-expr (J2SRef decl :type vtype) vtype type)
+		type totype))
+	    (else
+	     (cast this totype))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SParen ...                                        */
@@ -214,7 +225,9 @@
 (define-method (type-cast! this::J2SCast totype)
    
    (define (optimize-cast? totype type)
-      (or (and (eq? totype 'bool) (memq type '(int32 uint32 integer number)))))
+      (unless (eq? totype '*)
+	 (or (and (eq? totype 'bool)
+		  (memq type '(int32 uint32 integer number))))))
 
    (with-access::J2SCast this (expr type)
       (if (optimize-cast? totype type)
@@ -292,7 +305,9 @@
 ;*    type-cast! ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SCall totype)
-   (with-access::J2SCall this (fun args)
+   (with-access::J2SCall this (fun args thisarg)
+      (when (pair? thisarg)
+	 (set-car! thisarg (type-cast! (car thisarg) 'any)))
       (type-call-cast! this fun args totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -361,8 +376,13 @@
 	 ((and (isa? lhs J2SRef)
 	       (with-access::J2SRef lhs (decl)
 		  (with-access::J2SDecl decl (vtype utype)
-		     (not (memq utype '(unknown any))))))
+		     (and (not (memq utype '(unknown any)))
+			  (not (eq? vtype (j2s-type rhs)))))))
 	  (error "type-cast!" "not implemented yet" (j2s->list this)))
+	 ((isa? lhs J2SRef)
+	  ;; variable boxing (see J2SRef)
+	  (set! rhs (type-cast! rhs (j2s-vtype lhs)))
+	  (cast-expr this (j2s-vtype lhs) totype))
 	 ((eq? (j2s-vtype lhs) type)
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs type))

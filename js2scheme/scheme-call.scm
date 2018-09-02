@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Aug 31 15:32:00 2018 (serrano)                */
+;*    Last change :  Sat Sep  1 10:21:17 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -48,7 +48,7 @@
    (map (lambda (e)
 	   (apply builtin-method e))
       `(;; string methods
-	("fromCharCode" js-jsstring-fromcharcode String (any) %this)
+	("fromCharCode" ,js-jsstring-fromcharcode String (any) %this)
 	("charAt" js-jsstring-charat string (any) %this)
 	("charAt" js-jsstring-maybe-charat any (any) %this)
 	("charCodeAt" ,j2s-jsstring-charcodeat string (any) %this)
@@ -120,6 +120,15 @@
 				     (cdr args)
 				     (list (J2SUndefined))))
 		     mode return conf)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-fromcharcode ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-fromcharcode obj args mode return conf)
+   `(js-jsstring-fromcharcode
+       ;; direct access to String, skip lookup
+       (with-access::JsGlobalObject %this (js-string) js-string)
+       ,@(map (lambda (arg) (j2s-scheme arg mode return conf)) args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function ...                                           */

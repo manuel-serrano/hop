@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Aug 31 08:56:43 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 20:03:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -35,6 +35,7 @@
    
    (define tilde-level (config-get conf :tilde-level 0))
    (define lang (config-get conf :language "hopscript"))
+   (define debug-function (>= (bigloo-debug) 2))
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
 
@@ -1022,7 +1023,9 @@
 	    (when (equal? usage '(rest)) 'rest))))
 
    (define (loc->funname pref loc)
-      (string->symbol (format "~a@~a:~a" pref (cadr loc) (caddr loc))))
+      (if debug-function
+	  (string->symbol (format "~a@~a:~a" pref (cadr loc) (caddr loc)))
+	  '||))
    
    (define (function declaration? token #!optional methodof)
       (let ((loc (token-loc token)))
