@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Sep  1 18:38:14 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 09:31:05 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -711,6 +711,7 @@
       ((undefined) 'js-undefined?)
       ((null) 'js-null?)
       ((regexp) 'js-regexp?)
+      ((real) 'flonum?)
       (else (error "hint-type-predicate" "Unknown hint type predicate" type))))
 
 ;*---------------------------------------------------------------------*/
