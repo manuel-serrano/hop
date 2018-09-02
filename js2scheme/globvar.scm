@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Sep  2 16:07:27 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 16:15:45 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -131,7 +131,7 @@
 			'()))
 		    (begin
 		       (set! %%dump "globvar:not constant")
-		       (set! %info #f)
+		       (set! %info 'noconstant)
 		       '()))))
 	  '())))
 

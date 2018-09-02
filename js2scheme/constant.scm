@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Sep  2 16:11:17 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 16:13:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -322,7 +322,8 @@
 		    (if (and (fixnum? lval) (fixnum? rval)
 			     (>=fx lval 0) (>fx rval 0))
 			(J2SNumber/type 'integer (remainder lval rval))
-			this))))))
+			this))
+		   (else this)))))
 	 ((and (isa? (unparen lhs) J2SBool) (isa? (unparen rhs) J2SBool))
 	  (with-access::J2SBool (unparen lhs) ((lval val))
 	     (with-access::J2SBool (unparen rhs) ((rval val))
