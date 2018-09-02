@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Aug 31 18:49:59 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 16:07:27 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -118,15 +118,17 @@
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (usage ronly val %info %%dump id)
 		(if (and (not (usage? '(assig) usage)) (constant? rhs))
-		    (if (and (pair? %info) (eq? (car %info) 'uninit))
+		    (cond
+		       ((and (pair? %info) (eq? (car %info) 'uninit))
 			;; multiple init, invalidate
-			(begin
 			   (set! %%dump "globvar:multiple")
-			   (set! %info #f)
-			   '())
-			(begin
-			   (set! %info (cons 'uninit this))
-			   (list decl)))
+			   (set! %info 'multi)
+			'())
+		       ((not %info)
+			(set! %info (cons 'uninit this))
+			(list decl))
+		       (else
+			'()))
 		    (begin
 		       (set! %%dump "globvar:not constant")
 		       (set! %info #f)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Sep  2 09:48:39 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 15:33:43 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -544,16 +544,16 @@
 	  (error "js-binop-arihmetic" "should not be here" op)))))
 
 ;*---------------------------------------------------------------------*/
-;*    binop ...                                                        */
+;*    with-tmp-flip ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (with-tmp lhs rhs mode return conf optype gen::procedure)
-
+(define (with-tmp-flip flip lhs rhs mode return conf optype gen::procedure)
+   
    (define (simple? expr)
       (cond
 	 ((isa? expr J2SRef)
 	  #t)
 	 ((isa? expr J2SGlobalRef)
-	  #t)
+	  #f)
 	 ((isa? expr J2SHopRef)
 	  #t)
 	 ((isa? expr J2SLiteral)
@@ -602,9 +602,19 @@
 	 (else
 	  (let ((left (gensym 'lhs))
 		(right (gensym 'rhs)))
-	     `(let* ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs)
-		     (,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
-		 ,(gen left right)))))))
+	     (if flip 
+		 `(let* ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs)
+			 (,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+		     ,(gen left right))
+		 `(let* ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs)
+			 (,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+		     ,(gen left right))))))))
+
+;*---------------------------------------------------------------------*/
+;*    with-tmp ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (with-tmp lhs rhs mode return conf optype gen::procedure)
+   (with-tmp-flip #f lhs rhs mode return conf optype gen))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-cmp ...                                                       */
@@ -783,9 +793,9 @@
 			((string=? val "symbol") 'js-symbol?)
 			(else (tprint "TYPEOF PAS OPT " val) #f))))))))
 
-   (define (equality-int32 op lhs tl rhs tr mode return conf)
+   (define (equality-int32 op lhs tl rhs tr mode return conf flip::bool)
       ;; tl == int32, tr = ???
-      (with-tmp lhs rhs mode return conf 'any
+      (with-tmp-flip flip lhs rhs mode return conf 'any
 	 (lambda (left right)
 	    (let loop ((op op))
 	       (cond
@@ -815,13 +825,13 @@
 			   ,(box left tl conf)
 			   ,(box right tr conf))))
 		  ((not (eq? tr 'any))
-		   `(js-equal-sans-flonum? ,(asfixnum left tl) ,right))
+		   `(js-equal-sans-flonum? ,(asfixnum left tl) ,right %this))
 		  (else
 		   `(js-equal? ,(asfixnum left tl) ,right %this)))))))
 
-   (define (equality-uint32 op lhs tl rhs tr mode return conf)
+   (define (equality-uint32 op lhs tl rhs tr mode return conf flip::bool)
       ;; tl == uint32, tr = ???
-      (with-tmp lhs rhs mode return conf 'any
+      (with-tmp-flip flip lhs rhs mode return conf 'any
 	 (lambda (left right)
 	    (let loop ((op op))
 	       (cond
@@ -864,8 +874,8 @@
 				,(box right tr conf)
 				%this)))))))))
 
-   (define (equality-string op lhs tl rhs tr mode return conf)
-      (with-tmp lhs rhs mode return conf 'any
+   (define (equality-string op lhs tl rhs tr mode return conf flip)
+      (with-tmp-flip flip lhs rhs mode return conf 'any
 	 (lambda (left right)
 	    (if (eq? op '!==)
 		`(not (js-eqstring? ,left ,right))
@@ -945,15 +955,17 @@
 	     (else
 	      (js-cmp loc op lhs rhs mode return conf))))
 	 ((eq? tl 'int32)
-	  (equality-int32 op lhs tl rhs tr mode return conf))
+	  (equality-int32 op lhs tl rhs tr mode return conf #f))
 	 ((eq? tr 'int32)
-	  (equality-int32 op rhs tr lhs tl mode return conf))
+	  (equality-int32 op rhs tr lhs tl mode return conf #t))
 	 ((eq? tl 'uint32)
-	  (equality-uint32 op lhs tl rhs tr mode return conf))
+	  (equality-uint32 op lhs tl rhs tr mode return conf #f))
 	 ((eq? tr 'uint32)
-	  (equality-uint32 op rhs tr lhs tl mode return conf))
-	 ((and (memq op '(=== !==)) (or (eq? tl 'string) (eq? tr 'string)))
-	  (equality-string op rhs tr lhs tl mode return conf))
+	  (equality-uint32 op rhs tr lhs tl mode return conf #t))
+	 ((and (memq op '(=== !==)) (eq? tl 'string))
+	  (equality-string op rhs tr lhs tl mode return conf #f))
+	 ((and (memq op '(=== !==)) (eq? tr 'string))
+	  (equality-string op rhs tr lhs tl mode return conf #t))
 	 ((and (eq? tl 'real) (eq? tr 'real))
 	  (with-tmp lhs rhs mode return conf 'any
 	     (lambda (left right)

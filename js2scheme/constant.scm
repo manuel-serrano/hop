@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Sep  2 09:34:33 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 16:11:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -253,15 +253,16 @@
 	    ((flonum? l) (J2SNumber/type 'real (op l (fixnum->flonum r))))
 	    ((flonum? r) (J2SNumber/type 'real (op (fixnum->flonum l) r)))
 	    (else this))))
-
+   
    (define (unparen expr)
       (if (isa? expr J2SParen)
 	  (with-access::J2SParen expr (expr) (unparen expr))
 	  expr))
-
+   
    (call-default-walker)
    (with-access::J2SBinary this (op expr lhs rhs loc type)
-      (if (and (isa? (unparen lhs) J2SNumber) (isa? (unparen rhs) J2SNumber))
+      (cond
+	 ((and (isa? (unparen lhs) J2SNumber) (isa? (unparen rhs) J2SNumber))
 	  (with-access::J2SNumber (unparen lhs) ((lval val))
 	     (with-access::J2SNumber (unparen rhs) ((rval val))
 		(case op
@@ -321,9 +322,16 @@
 		    (if (and (fixnum? lval) (fixnum? rval)
 			     (>=fx lval 0) (>fx rval 0))
 			(J2SNumber/type 'integer (remainder lval rval))
-			this))
-		   (else this))))
-	  this)))
+			this))))))
+	 ((and (isa? (unparen lhs) J2SBool) (isa? (unparen rhs) J2SBool))
+	  (with-access::J2SBool (unparen lhs) ((lval val))
+	     (with-access::J2SBool (unparen rhs) ((rval val))
+		(case op
+		   ((&&) (J2SBool (and lval rval)))
+		   ((OR) (J2SBool (or lval rval)))
+		   (else this)))))
+	 (else
+	  this))))
        
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SDeclFun ...                                       */
