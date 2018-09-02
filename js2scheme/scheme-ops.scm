@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Sep  2 15:33:43 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 17:40:53 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1491,7 +1491,10 @@
 		     (/fl (int32->flonum ,n) (fixnum->flonum ,(bit-lsh 1 k))))))
 	    (else
 	     `(let ((,n ,(j2s-scheme lhs mode return conf)))
-		 (if (and (fixnum? ,n) (=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0))
+		 (if ,(if (memq (j2s-type lhs) '(int32 uint32))
+			  `(=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0)
+			  `(and (fixnum? ,n)
+				(=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0)))
 		     ,(if (positive? lhs)
 			  `(bit-rsh ,n ,k)
 			  `(/pow2fx ,n ,k))

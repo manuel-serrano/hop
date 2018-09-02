@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Sep  2 10:02:56 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 16:23:15 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -166,18 +166,7 @@
 ;*    type-cast! ::J2SRef ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SRef totype)
-   (with-access::J2SRef this (decl type loc)
-      (with-access::J2SDecl decl (vtype)
-	 (cond
-	    ((eq? vtype type)
-	     (cast this totype))
-	    ((memq type '(int32 uint32))
-	     ;; variable unboxing (see J2SAssig)
-	     (cast-expr
-		(cast-expr (J2SRef decl :type vtype) vtype type)
-		type totype))
-	    (else
-	     (cast this totype))))))
+   (cast this totype))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SParen ...                                        */
@@ -379,10 +368,6 @@
 		     (and (not (memq utype '(unknown any)))
 			  (not (eq? vtype (j2s-type rhs)))))))
 	  (error "type-cast!" "not implemented yet" (j2s->list this)))
-	 ((isa? lhs J2SRef)
-	  ;; variable boxing (see J2SRef)
-	  (set! rhs (type-cast! rhs (j2s-vtype lhs)))
-	  (cast-expr this (j2s-vtype lhs) totype))
 	 ((eq? (j2s-vtype lhs) type)
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs type))
@@ -433,7 +418,10 @@
 ;*    type-cast! ::J2SAssigOp ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SAssigOp totype)
-   (with-access::J2SAssigOp this (op lhs rhs)
+   (with-access::J2SAssigOp this (op lhs rhs type)
+      (tprint "ASSIGOP=" (j2s->list this) " type=" type)
+      (tprint "lhs=" (j2s->list lhs))
+      (tprint "rhs=" (j2s->list rhs))
       (case op
 	 ((>> <<)
 	  (set! lhs (type-cast! lhs '*))
@@ -459,13 +447,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SAccess totype)
    (with-access::J2SAccess this (obj field)
-      (let ((otype (if (memq (j2s-type obj) '(int32 uint32)) 'any '*)))
-	 ;; the int32/uint32 rule is required to avoid sending int32/uint32
-	 ;; to the js-tonumber function (see to-string in scheme-call.scm
-	 ;; for instance)
-	 (set! obj (type-cast! obj otype))
-	 (set! field (type-cast! field '*))
-	 (cast this totype))))
+      (set! obj (type-cast! obj '*))
+      (set! field (type-cast! field '*))
+      (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SUnary ...                                        */

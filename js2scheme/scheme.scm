@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Sep  1 09:27:01 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 17:22:30 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -43,7 +43,7 @@
 	   j2s-scheme-eval-stage
 	   (generic j2s-scheme ::obj ::symbol ::procedure ::obj)))
 
-(define (J2S-VTYPE expr) (j2s-type expr))
+(define (J2S-VTYPE expr) (j2s-vtype expr))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-stage ...                                             */
@@ -440,11 +440,9 @@
       ((and (in-eval? return)
 	    (not (eq? j2s-unresolved-put-workspace
 		    j2s-unresolved-get-workspace)))
-       `(js-unresolved-eval-put! %scope ,field
-	   ,expr ,(strict-mode? mode) %this))
+       `(js-unresolved-eval-put! %scope ,field ,expr ,(strict-mode? mode) %this))
       ((strict-mode? mode)
-       `(js-unresolved-put! ,j2s-unresolved-put-workspace ,field
-	   ,expr #t %this))
+       `(js-unresolved-put! ,j2s-unresolved-put-workspace ,field ,expr #t %this))
       (else
        `(js-put! ,j2s-unresolved-put-workspace ,field ,expr ,throw %this))))
 
@@ -1615,7 +1613,8 @@
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(epairify loc
 		   (j2s-unresolved-put! `',id
-		      (j2s-scheme rhs mode return conf) #f mode return))))
+		      (box (j2s-scheme rhs mode return conf) (j2s-type rhs) conf)
+		      #f mode return))))
 	    ((isa? lhs J2SHopRef)
 	     (with-access::J2SHopRef lhs (id)
 		(epairify loc
@@ -1712,12 +1711,16 @@
 		    ,(new-or-old tmp `(+fx/overflow ,tmp ,inc)
 		       (lambda (val tmp)
 			  `(begin
-			      ,(j2s-unresolved-put! `',id val #t mode return)
+			      ,(j2s-unresolved-put! `',id
+				  (box val (j2s-type lhs) conf)
+				  #t mode return)
 			      ,tmp)))
 		    ,(new-or-old tmp `(js+ ,tmp ,inc %this)
 		       (lambda (val tmp)
 			  `(let ((,tmp (js-tonumber ,tmp %this)))
-			      ,(j2s-unresolved-put! `',id val #t mode return)
+			      ,(j2s-unresolved-put! `',id
+				  (box val (j2s-type lhs) conf)
+				  #t mode return)
 			      ,tmp))))))))
    
    (define (aput-inc tyobj otmp prop op lhs field::J2SExpr cache inc cs cache-missp::bool)
@@ -2045,6 +2048,7 @@
    (with-access::J2SAssigOp this (loc lhs rhs op type)
       (epairify-deep loc
 	 (let ((tl (J2S-VTYPE lhs)))
+	    (tprint "ASSIGOP lhs=" (j2s->list lhs) " rhs=" (j2s->list rhs) " tl=" tl)
 	    (let loop ((lhs lhs))
 	       (cond
 		  ((isa? lhs J2SAccess)
@@ -2060,7 +2064,8 @@
 		  ((isa? lhs J2SUnresolvedRef)
 		   (with-access::J2SUnresolvedRef lhs (id)
 		      (j2s-unresolved-put! `',id
-			 (js-binop2 loc op type lhs rhs mode return conf)
+			 (box (js-binop2 loc op type lhs rhs mode return conf)
+			    type conf)
 			 #t mode return)))
 		  ((isa? lhs J2SCast)
 		   (with-access::J2SCast lhs (expr type)
