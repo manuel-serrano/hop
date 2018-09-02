@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Sep  2 18:06:17 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 19:58:53 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -224,30 +224,41 @@
       ((+)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
        (let ((sexpr (j2s-scheme expr mode return conf))
-	     (typ (j2s-vtype expr)))
+	     (typ (j2s-type expr))
+	     (vtyp (j2s-vtype expr)))
 	  (cond
-	     ((eqv? sexpr 0) +0.0)
-	     ((memq typ '(int32 uint32 int53 integer number)) sexpr)
-	     (else (epairify loc `(js-tonumber ,sexpr %this))))))
+	     ((eqv? sexpr 0)
+	      +0.0)
+	     ((memq vtyp '(int32 uint32 int53 integer number))
+	      sexpr)
+	     ((memq typ '(int32 uint32 int53 integer number))
+	      (j2s-cast sexpr expr vtyp typ conf))
+	     (else
+	      (epairify loc `(js-tonumber ,sexpr %this))))))
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
        (let ((sexpr (j2s-scheme expr mode return conf))
-	     (typ (j2s-vtype expr)))
+	     (vtyp (j2s-vtype expr))
+	     (typ (j2s-type expr)))
 	  (case type
 	     ((int32)
 	      (cond
 		 ((int32? sexpr)
 		  (if (=s32 sexpr #s32:0) -0.0 (negs32 sexpr)))
-		 ((eq? typ 'int32)
+		 ((eq? vtyp 'int32)
 		  (epairify loc `(negs32 ,sexpr)))
-		 ((eq? typ 'uint32)
+		 ((eq? vtyp 'uint32)
 		  (epairify loc `(negs32 ,(asint32 sexpr 'uint32))))
+		 ((memq typ '(int32 uint32))
+		  (epairify loc `(js-toint32 (negfx ,sexpr) %this)))
 		 (else
 		  (epairify loc `(js-toint32 (negjs ,sexpr %this) %this)))))
 	     ((uint32)
 	      (cond
-		 ((eq? typ 'int32)
+		 ((eq? vtyp 'int32)
 		  (epairify loc `(int32->uint32 (negs32 ,sexpr))))
+		 ((memq type '(int32 uint32))
+		  (epairify loc `(js-touint32 (negfx ,sexpr) %this)))
 		 (else
 		  (epairify loc `(js-touint32 (negjs ,sexpr %this) %this)))))
 	     ((eqv? sexpr 0)
@@ -262,22 +273,22 @@
 		  (epairify loc `(negfl ,sexpr))))
 	     ((number)
 	      (epairify loc
-		 (case typ
+		 (case vtyp
 		    ((int32)
 		     `(if (=s32 ,sexpr #s32:0)
 			  -0.0
-			  ,(tonumber `(negs32 ,sexpr) typ conf)))
+			  ,(tonumber `(negs32 ,sexpr) vtyp conf)))
 		    ((uint32)
 		     (cond
 			((m64? conf)
 			 `(if (=u32 ,sexpr #u32:0)
 			      -0.0
-			      `(negfx ,(uint32->fixnum sexpr)) typ conf))
+			      `(negfx ,(uint32->fixnum sexpr)) vtyp conf))
 			((inrange-int32? expr)
 			 `(if (=u32 ,sexpr #u32:0)
 			      -0.0
 			      ,(tonumber
-				  `(negs32 ,(uint32->int32 sexpr)) typ conf)))
+				  `(negs32 ,(uint32->int32 sexpr)) vtyp conf)))
 			(else
 			 `(cond
 			     ((=u32 ,sexpr #u32:0)
@@ -819,11 +830,13 @@
 		  ((eq? tr 'real)
 		   `(=fl ,(asreal left tl) ,right))
 		  ((eq? op '===)
-		   `(if (fixnum? ,right)
-			(=fx ,(asfixnum left tl) ,right)
-			(js-eqil?
-			   ,(box left tl conf)
-			   ,(box right tr conf))))
+		   (if (memq (j2s-type rhs) '(int32 uint32))
+		       `(=fx ,(asfixnum left tl) ,right)
+		       `(if (fixnum? ,right)
+			    (=fx ,(asfixnum left tl) ,right)
+			    (js-eqil?
+			       ,(box left tl conf)
+			       ,(box right tr conf)))))
 		  ((not (eq? tr 'any))
 		   `(js-equal-sans-flonum? ,(asfixnum left tl) ,right %this))
 		  (else
@@ -833,6 +846,7 @@
       ;; tl == uint32, tr = ???
       (with-tmp-flip flip lhs rhs mode return conf 'any
 	 (lambda (left right)
+	       (tprint "left=" left " right=" right)
 	    (let loop ((op op))
 	       (cond
 		  ((eq? op '!=)
@@ -855,24 +869,32 @@
 		  ((eq? tr 'real)
 		   `(=fl ,(asreal left tl) ,right))
 		  ((eq? op '===)
-		   `(if (fixnum? ,right)
-			,(if (inrange-int32? lhs)
-			     `(=fx ,(asfixnum left tl) ,right)
-			     `(and (=fx ,(asfixnum left tl) ,right)
-				   (>=fx ,right 0)))
-			(js-eqil?
-			   ,(box left tl conf)
-			   ,(box right tr conf))))
+		   (if (memq (j2s-type rhs) '(int32 uint32))
+		       (if (inrange-int32? lhs)
+			   `(=fx ,(asfixnum left tl) ,right)
+			   `(and (=fx ,(asfixnum left tl) ,right)
+				 (>=fx ,right 0)))
+		       `(if (fixnum? ,right)
+			    ,(if (inrange-int32? lhs)
+				 `(=fx ,(asfixnum left tl) ,right)
+				 `(and (=fx ,(asfixnum left tl) ,right)
+				       (>=fx ,right 0)))
+			    (js-eqil?
+			       ,(box left tl conf)
+			       ,(box right tr conf)))))
 		  (else
 		   (if (inrange-int32? lhs)
 		       `(js-equal? ,(asfixnum left tl) ,right %this)
-		       `(if (fixnum? ,right)
-			     (and (=fx ,(asfixnum left tl) ,right)
+		       (if (memq (j2s-type rhs) '(int32 uint32))
+			   `(and (=fx ,(asfixnum left tl) ,right)
 				  (>=fx ,right 0))
-			     (js-equal? 
-				,(asreal left tl)
-				,(box right tr conf)
-				%this)))))))))
+			   `(if (fixnum? ,right)
+				(and (=fx ,(asfixnum left tl) ,right)
+				     (>=fx ,right 0))
+				(js-equal? 
+				   ,(asreal left tl)
+				   ,(box right tr conf)
+				   %this))))))))))
 
    (define (equality-string op lhs tl rhs tr mode return conf flip)
       (with-tmp-flip flip lhs rhs mode return conf 'any
