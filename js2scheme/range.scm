@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Sep  2 09:01:32 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 10:08:50 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -821,7 +821,8 @@
       (interval #l0
 	 (maxllong
 	    (absllong (interval-min intv))
-	    (absllong (interval-max intv))))))
+	    (absllong (interval-max intv)))
+	 (interval-type intv))))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    node-interval-set! ...                                           *} */
@@ -925,7 +926,7 @@
 
    (with-access::J2SNumber this (val type)
       (cond
-	 ((and (type-number? type) (integer? val))
+	 ((and (type-number? type) (not (flonum? val)))
 	  (let ((intv (interval (integer->llong val) (integer->llong val))))
 	     (expr-range-add! this env fix intv)))
 	 ((and (type-number? type) (real? val))
