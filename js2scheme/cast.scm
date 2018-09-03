@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Sep  2 16:23:15 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 05:38:05 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -167,6 +167,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SRef totype)
    (cast this totype))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SWithRef ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SWithRef totype)
+   (with-access::J2SWithRef this (expr)
+      (set! expr (type-cast! expr totype))
+      (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SParen ...                                        */
