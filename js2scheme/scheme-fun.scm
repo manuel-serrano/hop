@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Sep  3 08:28:53 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 12:46:16 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -166,7 +166,7 @@
 	  `(define ,(cons (type-lambda lambd id) args) ,@body))
 	 (else
 	  expr)))
-   
+
    (with-access::J2SDeclFun this (loc id scope val usage ronly)
       (let ((val (declfun-fun this)))
 	 (with-access::J2SFun val (params mode vararg body name generator)
@@ -195,7 +195,7 @@
 				  ,(jsfun->lambda val mode return conf
 				      (j2s-declfun-prototype this)
 				      (constructor-only? this))))
-			  ,@(if (usage? '(new) usage)
+			  ,@(if (optimized-ctor this)
 				`(,(beautiful-define
 				      `(define ,(j2s-fast-constructor-id id)
 					  ,(j2sfun->ctor val mode return conf
@@ -211,7 +211,7 @@
 				  ,(jsfun->lambda val mode return conf
 				      (j2s-declfun-prototype this)
 				      (constructor-only? this))))
-			  ,@(if (usage? '(new) usage)
+			  ,@(if (optimized-ctor this)
 				`(,(beautiful-define
 				      `(define ,(j2s-fast-constructor-id id)
 					  ,(j2sfun->ctor val mode return conf
@@ -539,18 +539,27 @@
 		     ,(flatten-stmt stmt)))))
 	  (flatten-stmt (j2s-scheme body mode return conf))))
 
+   (define (unctor-body body)
+      (if ctor-only
+	  (begin
+	     (tprint "UNCTOR-BODY...")
+	     (unctor-body! body))
+	  body))
+
    (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator thisp)
       (let ((body (cond
 		     (generator
 		      (with-access::J2SNode body (loc)
 			 (epairify loc
-			    (generator-body (this-body thisp body mode)))))
+			    (generator-body
+			       (this-body thisp (unctor-body body) mode)))))
 		     (need-bind-exit-return
 		      (with-access::J2SNode body (loc)
 			 (epairify loc
-			    (return-body (this-body thisp body mode)))))
+			    (return-body
+			       (this-body thisp (unctor-body body) mode)))))
 		     (else
-		      (let ((bd (this-body thisp body mode)))
+		      (let ((bd (this-body thisp (unctor-body body) mode)))
 			 (with-access::J2SNode body (loc)
 			    (epairify loc
 			       (if (pair? bd) bd `(begin ,bd)))))))))
@@ -563,7 +572,7 @@
    
    (define (object-alloc this::J2SFun)
       (with-access::J2SFun this (body)
-	 (let ((f (j2s-scheme decl mode return conf)))
+	 (let ((f (j2s-decl-scheme-id decl)))
 	    (if (cancall? body)
 		`(js-object-alloc-fast ,f)
 		`(js-object-alloc-super-fast ,f)))))
@@ -571,12 +580,16 @@
    (with-access::J2SFun this (loc body vararg mode params generator thisp)
       (with-access::J2SDecl thisp (id)
 	 (let ((nfun (duplicate::J2SFun this
+			(rtype 'object)
 			(idthis #f)
 			(thisp #f)))
-	       (body `(let ((,id '(object-alloc this)))
-			 #unspecified)))
-	    (let ((proto (j2s-declfun-prototype decl)))
-	       (jsfun->lambda/body nfun mode return conf proto body))))))
+	       (id (j2s-decl-scheme-id thisp))
+	       (body `(let ((,id ,(object-alloc this)))
+			 ,(j2s-scheme (ctor-body! body)
+			     mode return conf)
+			,id))
+	       (proto (j2s-declfun-prototype decl)))
+	    (jsfun->lambda/body nfun mode return conf proto body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-body ...                                                  */
@@ -992,3 +1005,54 @@
       (let* ((decl (if parent parent this))
 	     (scmid (j2s-decl-scheme-id decl)))
 	 `(js-get ,scmid 'prototype %this))))
+
+;*---------------------------------------------------------------------*/
+;*    ctor-body! ::J2SNode ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ctor-body! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    ctor-body! ::J2SReturn ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ctor-body! this::J2SReturn)
+   (with-access::J2SReturn this (tail exit expr)
+      (if (or tail exit)
+	  (ctor-body! expr)
+	  expr)))
+
+;*---------------------------------------------------------------------*/
+;*    ctor-body! ::J2SFun ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ctor-body! this::J2SFun)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    ctor-body! ::J2SOPTInitSeq ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ctor-body! this::J2SOPTInitSeq)
+   (with-access::J2SOPTInitSeq this (nodes)
+      (duplicate::J2SOPTInitSeq this
+	 (cmap0 #f)
+	 (nodes (map ctor-body! nodes)))))
+
+;*---------------------------------------------------------------------*/
+;*    unctor-body! ::J2SNode ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unctor-body! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    unctor-body! ::J2SFun ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unctor-body! this::J2SFun)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    unctor-body! ::J2SOPTInitSeq ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unctor-body! this::J2SOPTInitSeq)
+   (with-access::J2SOPTInitSeq this (nodes)
+      (duplicate::J2SOPTInitSeq this
+	 (cmap1 #f)
+	 (nodes (map ctor-body! nodes)))))

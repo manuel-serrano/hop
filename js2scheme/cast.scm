@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Sep  3 05:45:24 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 15:52:57 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -74,9 +74,10 @@
 ;*    need-cast? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (need-cast? type totype)
-   (not (or (eq? type totype)
-	    (eq? totype '*)
-	    (and (eq? totype 'any) (memq type *any-types*)))))
+   (or (and (eq? totype 'any) (memq type '(int32 uint32)))
+       (not (or (eq? type totype)
+		(eq? totype '*)
+		(and (eq? totype 'any) (memq type *any-types*))))))
 
 (define *any-types*
    '(undefined null bool integer number object function string real))
@@ -271,9 +272,10 @@
 					    vararg)
 				       'any
 				       vtype)))
-			 (loop (cdr params) (cdr vals)
-			    (cons (type-cast! (car vals) ptype)
-			       nvals))))))))))
+			 (let ((pt (type-cast! (car vals) ptype)))
+			    (loop (cdr params) (cdr vals)
+			       (cons pt
+				  nvals)))))))))))
    
    (define (unknown-fun this)
       (set! fun (type-cast! fun '*))

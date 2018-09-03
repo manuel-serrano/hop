@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Sep  2 09:31:05 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 16:00:35 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -31,7 +31,7 @@
 	      types::pair-nil))
 
    (export (j2s-hint!::pair-nil ::J2SProgram ::obj)
-	   (generic j2s-call-hint!::J2SNode ::J2SNode ::bool)
+	   (generic j2s-call-hint!::J2SNode ::J2SNode ::bool conf)
 	   (j2s-hint-meta-noopt! ::J2SDecl)
 	   (j2s-hint-type::symbol ::symbol)))
 
@@ -58,8 +58,8 @@
 					 (>fx usecnt 0)))
 			      dups)
 		      decls)))
-	     (for-each (lambda (n) (j2s-call-hint! n #f)) decls)
-	     (for-each (lambda (n) (j2s-call-hint! n #f)) nodes)
+	     (for-each (lambda (n) (j2s-call-hint! n #f conf)) decls)
+	     (for-each (lambda (n) (j2s-call-hint! n #f conf)) nodes)
 	     (when (config-get conf :optim-hint-loop #f)
 		(for-each (lambda (n) (j2s-hint-loop! n #f 0)) decls)
 		(for-each (lambda (n) (j2s-hint-loop! n #f 0)) nodes))
@@ -932,24 +932,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-call-hint! ::J2SNode ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-call-hint! this::J2SNode concrete-type::bool)
+(define-walk-method (j2s-call-hint! this::J2SNode concrete-type::bool conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-call-hint! ::J2SProgram ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-call-hint! this::J2SProgram concrete-type::bool)
+(define-walk-method (j2s-call-hint! this::J2SProgram concrete-type::bool conf)
    (with-access::J2SProgram this (decls nodes)
       ;; the range has improved type precision that might have created
       ;; new hint call opportunities
-      (for-each (lambda (n) (j2s-call-hint! n concrete-type)) decls)
-      (for-each (lambda (n) (j2s-call-hint! n concrete-type)) nodes)
+      (for-each (lambda (n) (j2s-call-hint! n concrete-type conf)) decls)
+      (for-each (lambda (n) (j2s-call-hint! n concrete-type conf)) nodes)
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-call-hint! ::J2SCall ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-call-hint! this::J2SCall concrete-type)
+(define-walk-method (j2s-call-hint! this::J2SCall concrete-type conf)
 
    (define (type-number? t)
       (memq t '(integer real number)))
@@ -978,8 +978,8 @@
 				  hintinfo)))))))))))
    
    (with-access::J2SCall this (fun args thisarg)
-      (set! args (map! (lambda (n) (j2s-call-hint! n concrete-type)) args))
-      (set! fun (j2s-call-hint! fun concrete-type))
+      (set! args (map! (lambda (n) (j2s-call-hint! n concrete-type conf)) args))
+      (set! fun (j2s-call-hint! fun concrete-type conf))
       (let ((hinfo (fun-hint-info fun)))
 	 (if hinfo
 	     (with-access::J2SRef fun (decl)
@@ -1001,7 +1001,10 @@
 					   (let ((tya (j2s-type a)))
 					      (or (and (eq? t 'number)
 						       (type-number? tya))
-						  (eq? tya t)))))
+						  (eq? tya t)
+						  (and (m64? conf)
+						       (eq? t 'integer)
+						       (memq tya '(uint32 int32)))))))
 				args types)
 			     (with-access::J2SFun val (idthis)
 				;; adjust the usecnt count
@@ -1022,7 +1025,10 @@
 					      (or (memq tya '(any unknown))
 						  (eq? tya t)
 						  (and (type-number? tya)
-						       (type-number? t))))))
+						       (type-number? t))
+						  (and (m64? conf)
+						       (eq? t 'integer)
+						       (memq tya '(uint32 int32)))))))
 				args types)
 			     this)
 			    (else

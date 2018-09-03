@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Sep  3 08:03:38 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 13:55:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2415,7 +2415,7 @@
 	    (eq? id 'Array))))
 
    (define (constructor-no-return? decl)
-      ;; does this constructor never return something else than UNDEF?
+      ;; does this constructor ever return something else than UNDEF?
       (let ((fun (j2sdeclinit-val-fun decl)))
 	 (when (isa? fun J2SFun)
 	    (with-access::J2SFun fun (rtype)
@@ -2446,8 +2446,6 @@
 		(args (map (lambda (a)
 			      (j2s-scheme a mode return conf))
 			 args))
-		(proto `(js-object-get-name/cache ,fun 'prototype
-			   %this ,(js-pcache cache) ,(loc->point loc) '(cmap)))
 		(obj (gensym '%obj)))
 	    `(let ((,obj ,(object-alloc clazz fun)))
 		,(if (constructor-no-return? decl)
@@ -2457,6 +2455,23 @@
 			      obj
 			      `(js-new-return-fast ,fun ,obj)))
 		     `(js-new-return ,fun (,fid ,obj ,@args) ,obj))))))
+
+   (define (j2s-new-opt decl::J2SDecl clazz::J2SExpr args)
+      (let* ((len (length args))
+	     (fun (j2s-scheme clazz mode return conf))
+	     (fid (with-access::J2SDecl decl (id)
+		     (j2s-fast-constructor-id id)))
+	     (args (map (lambda (a)
+			   (j2s-scheme a mode return conf))
+		      args))
+	     (obj (gensym '%obj)))
+	 (if (constructor-no-return? decl)
+	     (if (constructor-no-call? decl)
+		 `(,fid ,@args)
+		 `(let ((,obj (,fid ,@args)))
+		     (js-new-return-fast ,fun ,obj)))
+	     `(let ((,obj (,fid ,@args)))
+		 `(js-new-return ,fun ,obj ,obj)))))
    
    (with-access::J2SNew this (loc cache clazz args type)
       (cond
@@ -2464,6 +2479,11 @@
 	       (or (=fx (bigloo-debug) 0) (eq? type 'vector)))
 	  (epairify loc
 	     (j2s-new-array this mode return conf)))
+	 ((optimized-ctor clazz)
+	   =>
+	   (lambda (decl)
+	      (epairify loc
+		 (j2s-new-opt decl clazz args))))
 	 ((and (=fx (bigloo-debug) 0) cache)
 	  (epairify loc
 	     (j2s-new-fast cache clazz args)))
@@ -2622,40 +2642,55 @@
 		(error "j2s-scheme" "wrong init expr"
 		   (j2s->list node)))))))
    
-   (with-access::J2SOPTInitSeq this (loc ref nodes cmap0 cmap1 offset)
+   (define (vector-inits %ref elements i offset nodes cmap1)
+      `(let* ((,elements elements)
+	      (,i ,offset))
+	  ,@(map (lambda (init offset)
+		    (j2s-scheme 
+		       (init-expr init
+			  (lambda (e)
+			     (with-access::J2SExpr e (loc)
+				`(vector-set! ,elements (+fx ,i ,offset) ,e))))	
+		       mode return conf))
+	       nodes (iota (length nodes)))
+	  (with-access::JsObject ,%ref ((omap cmap))
+	     (set! omap ,cmap1))))
+   
+   (define (elements-init offset nodes cmap cmap0 cmap1)
+      `(with-access::JsConstructMap ,cmap (props)
+	  (let ((len0 (vector-length props)))
+	     ,@(map (lambda (n)
+		       (j2s-scheme n mode return conf))
+		  nodes)
+	     (with-access::JsConstructMap cmap (props)
+		(when (=fx (+fx len0 ,(length nodes))
+			 (vector-length props))
+		   (set! ,offset len0)
+		   (set! ,cmap0 ,cmap)
+		   (set! ,cmap1 cmap))))))
+   
+   (with-access::J2SOPTInitSeq this (loc ref nodes cmap0 cmap1 cmap2 offset)
       (let ((%ref (gensym '%ref))
 	    (cmap (gensym '%cmap0))
 	    (i (gensym '%i))
 	    (elements (gensym '%elements)))
 	 `(let ((,%ref ,(j2s-scheme ref mode return conf)))
 	     (with-access::JsObject ,%ref (cmap elements)
-		(let ((,cmap cmap))
-		   (if (or (eq? ,cmap ,cmap0) (eq? ,cmap ,cmap1))
-		       ;; cache hit
-		       (let* ((,elements elements)
-			      (,i ,offset))
-			  ,@(map (lambda (init offset)
-				    (j2s-scheme 
-				       (init-expr init
-					  (lambda (e)
-					     (with-access::J2SExpr e (loc)
-						`(vector-set! ,elements (+fx ,i ,offset) ,e))))	
-				       mode return conf))
-			       nodes (iota (length nodes)))
-			  (with-access::JsObject ,%ref ((omap cmap))
-			     (set! omap ,cmap1)))
-		       ;; cache miss
-		       (with-access::JsConstructMap ,cmap (props)
-			  (let ((len0 (vector-length props)))
-			     ,@(map (lambda (n)
-				       (j2s-scheme n mode return conf))
-				  nodes)
-			     (with-access::JsConstructMap cmap (props)
-				(when (=fx (+fx len0 ,(length nodes))
-					 (vector-length props))
-				   (set! ,offset len0)
-				   (set! ,cmap0 ,cmap)
-				   (set! ,cmap1 cmap))))))))))))
+		,(cond
+		    ((not cmap0)
+		     (vector-inits %ref elements i 0 nodes cmap2))
+		    ((not cmap1)
+		     `(begin
+			 ,@(map (lambda (n)
+				   (j2s-scheme n mode return conf))
+			      nodes)))
+		    (else
+		     `(let ((,cmap cmap))
+			 (if (or (eq? ,cmap ,cmap0) (eq? ,cmap ,cmap1))
+			     ;; cache hit
+			     ,(vector-inits %ref elements i offset nodes cmap1)
+			     ;; cache miss
+			     ,(elements-init offset nodes cmap cmap0 cmap1))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDProducer ...                                    */

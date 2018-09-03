@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Sep  3 10:08:50 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 15:48:04 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -58,7 +58,7 @@
 ;*    Use as:                                                          */
 ;*      HOPTRACE="j2s:info j2s:key j2s:dump 25" hopc -Ox foo.js -g     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-range! this args)
+(define (j2s-range! this conf)
    ;; debug mode
    (let ((env (or (getenv "HOPTRACE") "")))
       (when (string-contains env "j2s:dump")
@@ -81,24 +81,24 @@
       (j2s-range-init!)
       ;; mark local captured variables
       (program-capture! this)
-      (let ((tymap (if (>=fx (config-get args :int-size 0) 53)
+      (let ((tymap (if (>=fx (config-get conf :int-size 0) 53)
 		       typemap53 typemap32)))
-	 (if (config-get args :optim-range #f)
+	 (if (config-get conf :optim-range #f)
 	     (begin
 		;; compute the integer value ranges,
-		(j2s-range-program! this args)
+		(j2s-range-program! this conf)
 		;; allocate precise types according to the ranges
-		(if (config-get args :optim-integer #f)
+		(if (config-get conf :optim-integer #f)
 		    (begin
 		       ;; optimize operators (modulo) according to ranges
-		       '(when (>=fx (config-get args :optim 0) 2)
-			  (opt-range-binary! this args))
+		       '(when (>=fx (config-get conf :optim 0) 2)
+			  (opt-range-binary! this conf))
 		       ;; allocate precise variable types
 		       (type-range! this tymap)
 		       (map-types this tymap))
 		    (map-types this defmap)))
 	     (map-types this defmap)))
-      (j2s-call-hint! this #t)
+      (j2s-call-hint! this #t conf)
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -1230,7 +1230,7 @@
 	    (multiple-value-bind (_ envf _)
 	       (node-range body fenv conf mode fix)
 	       (set! %info envf)))
-	 (expr-range-add! this env fix *infinity-intv*))))
+	 (expr-range-add! this env fix #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range-fun-decl ::J2SFun ...                                 */
@@ -1530,7 +1530,7 @@
 		 (if (and (> (interval-min intr) 0)
 			  (>= (interval-min intl) 0))
 		     ;; a negative divided may produce -0.0
-		     (expr-range-add! this env fix intl)
+		     (expr-range-add! this env fix intr)
 		     (expr-range-add! this env fix *infinity-intv*))))
 	    ((<<)
 	     (expr-range-add! this env fix (interval-shiftl intl intr)))

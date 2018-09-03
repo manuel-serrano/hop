@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Sep  2 20:44:36 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 16:23:39 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1779,6 +1779,32 @@
 				     ,(asuint32 left tlv)
 				     ,(asuint32 right trv))
 			  lhs 'uint32 type conf))))
+		  ((and (eq? tr 'uint32) (inrange-positive? rhs))
+		   (cond
+		      ((inrange-int32? rhs)
+		       `(if (fixnum? ,left)
+			    ,(j2s-cast `(remainderfx ,left
+					  ,(asfixnum right 'uint32))
+			       lhs (number type) type conf)
+			    ,(if (m64? conf)
+				 (j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
+					       ,(tonumber64 right trv conf))
+				    lhs (number type) type conf)
+				 (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
+					       ,(tonumber32 right trv conf))
+				    lhs (number type) type conf))))
+		      ((m64? conf)
+		       `(if (fixnum? ,left)
+			    ,(j2s-cast `(remainderfx ,left
+					  ,(asfixnum right 'uint32))
+			       lhs (number type) type conf)
+			    ,(j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
+					  ,(tonumber64 right trv conf))
+			       lhs (number type) type conf)))
+		      (else
+		       (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
+				     ,(tonumber32 right trv conf))
+			  lhs (number type) type conf))))
 		  (else
 		   (if (m64? conf)
 		       (if (and (number? right) (not (= right 0)))
