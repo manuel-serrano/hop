@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Aug 31 08:38:57 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 08:12:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -677,10 +677,16 @@
 (define-inline (js-array-fixnum-ref arr::JsArray idx::long %this)
    (with-access::JsArray arr (vec ilen)
       (cond
-	 ((<u32 (fixnum->uint32 idx) ilen)
+	 ((and (<u32 (fixnum->uint32 idx) ilen)
+	       (cond-expand
+		  ((or bint30 bint32) #t)
+		  (else (<fx idx (-fx (bit-lsh 1 32) 1)))))
 	  (vector-ref vec idx))
 	 ((and (js-object-mode-holey? arr)
-	       (<fx idx (vector-length vec)))
+	       (<fx idx (vector-length vec))
+	       (cond-expand
+		  ((or bint30 bint32) #t)
+		  (else (<fx idx (-fx (bit-lsh 1 32) 1)))))
 	  (let ((v (vector-ref vec idx)))
 	     (if (js-absent? v)
 		 (js-get arr idx %this)
@@ -776,11 +782,14 @@
 (define-inline (js-array-fixnum-set! arr::JsArray idx::long val throw %this)
    (with-access::JsArray arr (vec ilen)
       (cond
-	 ((<u32 (fixnum->uint32 idx) ilen)
+	 ((and (<u32 (fixnum->uint32 idx) ilen)
+	       (cond-expand
+		  ((or bint30 bint32) #t)
+		  (else (<fx idx (-fx (bit-lsh 1 32) 1)))))
 	  (vector-set! vec idx val)
 	  val)
 	 (else
-	  (js-array-set-ur! arr (fixnum->uint32 idx) val throw %this)))))
+	  (js-array-put! arr idx val throw %this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-index-inl-set! ...                                      */

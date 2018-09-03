@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Sep  3 05:48:45 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 08:03:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1556,19 +1556,21 @@
 		      cache))
 	     (let* ((tmp (gensym 'tmp))
 		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp)))))
-		`(let ((,tmp ,(j2s-scheme obj mode return conf)))
-		    (if (js-array? ,tmp)
-			,(j2s-array-set! this mode return conf)
-			,(j2s-put! loc tmp
-			    field
-			    (typeof-this obj conf)
-			    (j2s-scheme field mode return conf)
-			    (j2s-vtype field)
-			    (j2s-scheme rhs mode return conf)
-			    (j2s-vtype rhs)
-			    (strict-mode? mode)
-			    conf
-			    cache)))))))
+		(if (eq? (j2s-vtype obj) 'array)
+		    (j2s-array-set! this mode return conf)
+		    `(let ((,tmp ,(j2s-scheme obj mode return conf)))
+			(if (js-array? ,tmp)
+			    ,(j2s-array-set! this mode return conf)
+			    ,(j2s-put! loc tmp
+				field
+				(typeof-this obj conf)
+				(j2s-scheme field mode return conf)
+				(j2s-vtype field)
+				(j2s-scheme rhs mode return conf)
+				(j2s-vtype rhs)
+				(strict-mode? mode)
+				conf
+				cache))))))))
 
    (with-access::J2SAssig this (loc lhs rhs)
       (let loop ((lhs lhs))
@@ -2046,7 +2048,6 @@
    (with-access::J2SAssigOp this (loc lhs rhs op type)
       (epairify-deep loc
 	 (let ((tl (j2s-vtype lhs)))
-	    (tprint "ASSIGOP lhs=" (j2s->list lhs) " rhs=" (j2s->list rhs) " tl=" tl)
 	    (let loop ((lhs lhs))
 	       (cond
 		  ((isa? lhs J2SAccess)

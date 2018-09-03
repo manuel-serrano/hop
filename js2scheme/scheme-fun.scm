@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Sep  3 05:44:55 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 08:28:53 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -215,7 +215,7 @@
 				`(,(beautiful-define
 				      `(define ,(j2s-fast-constructor-id id)
 					  ,(j2sfun->ctor val mode return conf
-					     (j2s-declfun-prototype this)))))
+					     this))))
 				'())
 			  ,@(if (no-closure? this)
 				'()
@@ -559,7 +559,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun->ctor ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (j2sfun->ctor this::J2SFun mode return conf decl)
+(define (j2sfun->ctor this::J2SFun mode return conf decl::J2SDecl)
    
    (define (object-alloc this::J2SFun)
       (with-access::J2SFun this (body)
@@ -573,7 +573,7 @@
 	 (let ((nfun (duplicate::J2SFun this
 			(idthis #f)
 			(thisp #f)))
-	       (body `(let ((,id ,(object-alloc this)))
+	       (body `(let ((,id '(object-alloc this)))
 			 #unspecified)))
 	    (let ((proto (j2s-declfun-prototype decl)))
 	       (jsfun->lambda/body nfun mode return conf proto body))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Sep  3 05:48:29 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 08:00:13 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -271,7 +271,7 @@
 ;*    maybe-number? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (maybe-number? expr::J2SNode)
-   (memq (j2s-vtype expr) '(any int32 uint32 integer number real)))
+   (memq (j2s-vtype expr) '(any int32 uint32 int53 integer number real)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mightbe-number? ...                                              */
