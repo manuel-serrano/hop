@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Sep  2 20:51:52 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 09:19:33 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -276,7 +276,7 @@
 			    ;; get the correct infinity sign
 			    (J2SNumber (/ lval rval)))
 			   (else
-			    (J2SNumber +inf.0)))
+			    (J2SNumber (/ lval 0.0))))
 			(evaluate this / lval rval)))
 		   ((BIT_OR & ^)
 		    (if (and (fixnum? lval) (fixnum? rval))

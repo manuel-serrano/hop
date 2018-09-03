@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Mon Aug 27 08:02:50 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 09:33:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -634,7 +634,7 @@
 	("localeCompare" . (integer string (string)))
 	("naturalCompare" . (integer string (string)))
 	("replace" . (string string (string regexp) (string function)))
-	("search" . (index string regexp))
+	("search" . (indexof string regexp))
 	("slice" . (string string index index))
 	("split" . (array string (string regexp) index))
 	("substr" . (string string index index))
