@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Sep  2 18:30:01 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 05:48:29 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -90,7 +90,9 @@
 	   (box64 ::obj ::symbol ::pair-nil #!optional proc::obj)
 
 	   (expr-asuint32 expr::J2SExpr)
-	   (uncast::J2SExpr ::J2SExpr)))
+	   (uncast::J2SExpr ::J2SExpr)
+
+	   (cancall?::bool ::J2SNode)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -931,4 +933,44 @@
        (with-access::J2SCast expr (expr)
 	  (uncast expr))
        expr))
+
+;*---------------------------------------------------------------------*/
+;*    cancall? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (cancall? node)
+   (let ((cell (make-cell #f)))
+      (cancall node cell)
+      (cell-ref cell)))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SNode ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SNode cell)
+   (or (cell-ref cell) (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SCall ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SCall cell)
+   (cell-set! cell #t))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SNew ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SNew cell)
+   (cell-set! cell #t))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SAssig ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SAssig cell)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SAccess)
+	  (with-access::J2SAccess lhs (obj field)
+	     (unless (isa? obj J2SThis)
+		(cancall field cell)
+		(cancall rhs cell)))
+	  (begin
+	     (cancall lhs cell)
+	     (cancall rhs cell)))))
 

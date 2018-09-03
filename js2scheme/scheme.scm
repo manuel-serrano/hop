@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Sep  2 20:55:40 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 05:48:45 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -43,8 +43,6 @@
 	   j2s-scheme-eval-stage
 	   (generic j2s-scheme ::obj ::symbol ::procedure ::obj)))
 
-(define (J2S-VTYPE expr) (j2s-vtype expr))
-   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-stage ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -305,7 +303,7 @@
 	     (cond
 		((and (memq scope '(global %scope)) (in-eval? return))
 		 `(begin
-		     ,(j2s-put! loc '%scope #f (J2S-VTYPE lhs)
+		     ,(j2s-put! loc '%scope #f (j2s-vtype lhs)
 			 `',id 'propname
 			 val tyval (strict-mode? mode) conf #f)
 		     ,result))
@@ -355,14 +353,14 @@
 	 ((isa? expr J2SBinary)
 	  (or (j2s-scheme-binary-as expr mode return conf type)
 	      (j2s-cast (j2s-scheme expr mode return conf)
-		 expr (J2S-VTYPE expr) type conf)))
+		 expr (j2s-vtype expr) type conf)))
 	 ((isa? expr J2SUnary)
 	  (or (j2s-scheme-unary-as expr mode return conf type)
 	      (j2s-cast (j2s-scheme expr mode return conf)
-		 expr (J2S-VTYPE expr) type conf)))
+		 expr (j2s-vtype expr) type conf)))
 	 (else
 	  (j2s-cast (j2s-scheme expr mode return conf)
-	     expr (J2S-VTYPE expr) type conf)))))
+	     expr (j2s-vtype expr) type conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRef ...                                          */
@@ -1280,7 +1278,7 @@
 		      field
 		      (typeof-this obj conf)
 		      (j2s-scheme field mode return conf)
-		      (J2S-VTYPE field)
+		      (j2s-vtype field)
 		      name 'any (strict-mode? mode) conf #f))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
@@ -1437,9 +1435,9 @@
 		
       (define (comp-switch-cond key cases)
 	 (let ((tmp (gensym 'tmp))
-	       (ttmp (J2S-VTYPE key))
+	       (ttmp (j2s-vtype key))
 	       (funs (map (lambda (c) (gensym 'fun)) cases))
-	       (tleft (J2S-VTYPE key)))
+	       (tleft (j2s-vtype key)))
 	    (multiple-value-bind (bindings bodies)
 	       (comp-switch-clause-bodies cases funs)
 	       `(let* ((,tmp ,(j2s-scheme key mode return conf))
@@ -1451,7 +1449,7 @@
 
       (define (comp-switch-case key cases)
 	 (let ((funs (map (lambda (c) (gensym 'fun)) cases))
-	       (tleft (J2S-VTYPE key)))
+	       (tleft (j2s-vtype key)))
 	    (multiple-value-bind (bindings bodies)
 	       (comp-switch-clause-bodies cases funs)
 	       `(let* ,bindings
@@ -1461,7 +1459,7 @@
 			 cases bodies))))))
       
       (define (scheme-case? key cases)
-	 (let ((t (J2S-VTYPE key)))
+	 (let ((t (j2s-vtype key)))
 	    (when (or (memq t '(integer index uint32 int32))
 		      (and (eq? t 'int53) (m64? conf)))
 	       (every (lambda (c)
@@ -1550,9 +1548,9 @@
 		      field
 		      (typeof-this obj conf)
 		      (j2s-scheme field mode return conf)
-		      (J2S-VTYPE field)
+		      (j2s-vtype field)
 		      (j2s-scheme rhs mode return conf)
-		      (J2S-VTYPE rhs)
+		      (j2s-vtype rhs)
 		      (strict-mode? mode)
 		      conf
 		      cache))
@@ -1565,9 +1563,9 @@
 			    field
 			    (typeof-this obj conf)
 			    (j2s-scheme field mode return conf)
-			    (J2S-VTYPE field)
+			    (j2s-vtype field)
 			    (j2s-scheme rhs mode return conf)
-			    (J2S-VTYPE rhs)
+			    (j2s-vtype rhs)
 			    (strict-mode? mode)
 			    conf
 			    cache)))))))
@@ -1579,9 +1577,9 @@
 	     (with-access::J2SAccess lhs (obj field cache cspecs (loca loc))
 		(epairify loc
 		   (cond
-		      ((eq? (J2S-VTYPE obj) 'vector)
+		      ((eq? (j2s-vtype obj) 'vector)
 		       (j2s-vector-set! this mode return conf))
-		      ((and (eq? (J2S-VTYPE obj) 'array) (maybe-number? field))
+		      ((and (eq? (j2s-vtype obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return conf))
 		      ((mightbe-number? field)
 		       (maybe-array-set lhs rhs))
@@ -1590,9 +1588,9 @@
 			  field
 			  (typeof-this obj conf)
 			  (j2s-scheme field mode return conf)
-			  (J2S-VTYPE field)
+			  (j2s-vtype field)
 			  (j2s-scheme rhs mode return conf)
-			  (J2S-VTYPE rhs)
+			  (j2s-vtype rhs)
 			  (strict-mode? mode)
 			  conf
 			  cache
@@ -1603,7 +1601,7 @@
 		(with-access::J2SDecl decl (hint vtype)
 		   (let ((assig (j2s-scheme-set! lhs
 				   (j2s-scheme rhs mode return conf)
-				   (J2S-VTYPE rhs)
+				   (j2s-vtype rhs)
 				   (j2s-scheme lhs mode return conf)
 				   mode return conf #f loc)))
 		      (if (pair? assig)
@@ -1629,7 +1627,7 @@
 			       ,(j2s-put! loc (car withs) #f 'object
 				   (symbol->string id) 'propname
 				   (j2s-scheme rhs mode return conf)
-				   (J2S-VTYPE rhs)
+				   (j2s-vtype rhs)
 				   #f conf #f)
 			       ,(liip (cdr withs))))))))
 	    ((isa? lhs J2SUndefined)
@@ -1678,7 +1676,7 @@
       
    (define (ref++ op lhs::J2SRef num prev loc mode return conf)
       (let ((var (j2s-scheme lhs mode return conf))
-	    (vty (J2S-VTYPE lhs))
+	    (vty (j2s-vtype lhs))
 	    (ty (j2s-type lhs)))
 	 (if (symbol? var)
 	     (var++ op var vty ty num prev loc)
@@ -1687,7 +1685,7 @@
 		    ,(var++ op tmp vty ty num prev loc))))))
    
    (define (ref-inc op lhs::J2SRef inc::int type loc)
-      (let* ((vty (J2S-VTYPE lhs))
+      (let* ((vty (j2s-vtype lhs))
 	     (num (J2SNumber/type 'uint32 1))
 	     (op (if (=fx inc 1) '+ '-))
 	     (prev (when (eq? retval 'old) (gensym 'prev)))
@@ -1754,7 +1752,7 @@
 			      `(begin
 				  ,(j2s-put! loc otmp #f tyobj
 				      fexpr
-				      (J2S-VTYPE field)
+				      (j2s-vtype field)
 				      val 'number
 				      (strict-mode? mode) conf
 				      cache cs)
@@ -1774,7 +1772,7 @@
 				   `(begin
 				       ,(j2s-put! loc otmp #f tyobj
 					   fexpr
-					   (J2S-VTYPE field)
+					   (j2s-vtype field)
 					   val 'number
 					   (strict-mode? mode) conf
 					   cache cs)
@@ -1793,7 +1791,7 @@
 				  `(begin
 				      ,(j2s-put! loc otmp #f tyobj
 					  fexpr
-					  (J2S-VTYPE field)
+					  (j2s-vtype field)
 					  val 'number
 					  (strict-mode? mode) conf
 					  cache cs)
@@ -1811,7 +1809,7 @@
 				       `(begin
 					   ,(j2s-put! loc otmp #f tyobj
 					       fexpr
-					       (J2S-VTYPE field)
+					       (j2s-vtype field)
 					       val 'number
 					       (strict-mode? mode) conf
 					       cache cs)
@@ -1976,14 +1974,14 @@
 				 (obj oref)
 				 (field (if pro
 					    (J2SHopRef/type pro
-					       (J2S-VTYPE field))
+					       (j2s-vtype field))
 					    field)))))
 		      (vtmp (gensym 'tmp)))
 		  `(let ((,(type-ident vtmp typea conf)
 			  ,(js-binop2 loc op typea
 			      lhs rhs mode return conf)))
 		      ,(j2s-put! loc otmp field (typeof-this obj conf)
-			  (or pro prov) (J2S-VTYPE field)
+			  (or pro prov) (j2s-vtype field)
 			  (j2s-cast vtmp #f typea typel conf) typel
 			  (strict-mode? mode) conf
 			  cache (if (mightbe-number? field) '() cs))
@@ -2047,7 +2045,7 @@
       
    (with-access::J2SAssigOp this (loc lhs rhs op type)
       (epairify-deep loc
-	 (let ((tl (J2S-VTYPE lhs)))
+	 (let ((tl (j2s-vtype lhs)))
 	    (tprint "ASSIGOP lhs=" (j2s->list lhs) " rhs=" (j2s->list rhs) " tl=" tl)
 	    (let loop ((lhs lhs))
 	       (cond
@@ -2083,7 +2081,7 @@
       (let ((tyo (typeof-this obj conf)))
 	 (j2s-get loc tmp field tyo
 	    (j2s-property-scheme field mode return conf)
-	    (J2S-VTYPE field) (J2S-VTYPE this) conf cache cspecs)))
+	    (j2s-vtype field) (j2s-vtype this) conf cache cspecs)))
 
    (define (canbe-array? obj)
       (memq (j2s-type obj) '(any undefined unknown object array)))
@@ -2216,7 +2214,7 @@
 ;*    maybe-function? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (maybe-function? expr::J2SNode)
-   (memq (J2S-VTYPE expr) '(function any)))
+   (memq (j2s-vtype expr) '(function any)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SInit ...                                         */
@@ -2230,7 +2228,7 @@
 		   `(begin
 		       ,(j2s-scheme-set! lhs
 			   (j2s-scheme rhs mode return conf)
-			   (J2S-VTYPE rhs)
+			   (j2s-vtype rhs)
 			   #f mode return conf #t loc)
 		       (js-undefined)))))
 	  (call-next-method))))
@@ -2362,7 +2360,7 @@
 				     (j2s-put! loc tmp #f 'obj
 					"__proto__" 'propname
 					(j2s-scheme val mode return conf)
-					(J2S-VTYPE val)
+					(j2s-vtype val)
 					(strict-mode? mode) conf #f)
 				     (epairify loc
 					`(js-bind! %this ,tmp
@@ -2723,46 +2721,6 @@
 		       (with-access::J2SFun val (body)
 			  (canthrow val (cons decl stack) cell))))))))))
 	  
-;*---------------------------------------------------------------------*/
-;*    cancall? ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (cancall? node)
-   (let ((cell (make-cell #f)))
-      (cancall node cell)
-      (cell-ref cell)))
-
-;*---------------------------------------------------------------------*/
-;*    cancall ::J2SNode ...                                            */
-;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SNode cell)
-   (or (cell-ref cell) (call-default-walker)))
-
-;*---------------------------------------------------------------------*/
-;*    cancall ::J2SCall ...                                            */
-;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SCall cell)
-   (cell-set! cell #t))
-
-;*---------------------------------------------------------------------*/
-;*    cancall ::J2SNew ...                                             */
-;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SNew cell)
-   (cell-set! cell #t))
-
-;*---------------------------------------------------------------------*/
-;*    cancall ::J2SAssig ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SAssig cell)
-   (with-access::J2SAssig this (lhs rhs)
-      (if (isa? lhs J2SAccess)
-	  (with-access::J2SAccess lhs (obj field)
-	     (unless (isa? obj J2SThis)
-		(cancall field cell)
-		(cancall rhs cell)))
-	  (begin
-	     (cancall lhs cell)
-	     (cancall rhs cell)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    with-object ...                                                  */
 ;*---------------------------------------------------------------------*/

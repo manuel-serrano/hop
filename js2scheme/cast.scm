@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Sep  3 05:38:05 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 05:45:24 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -427,9 +427,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SAssigOp totype)
    (with-access::J2SAssigOp this (op lhs rhs type)
-      (tprint "ASSIGOP=" (j2s->list this) " type=" type)
-      (tprint "lhs=" (j2s->list lhs))
-      (tprint "rhs=" (j2s->list rhs))
       (case op
 	 ((>> <<)
 	  (set! lhs (type-cast! lhs '*))

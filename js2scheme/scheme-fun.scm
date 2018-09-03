@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Sep  2 06:55:03 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 05:44:55 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -199,7 +199,7 @@
 				`(,(beautiful-define
 				      `(define ,(j2s-fast-constructor-id id)
 					  ,(j2sfun->ctor val mode return conf
-					     (j2s-declfun-prototype this)))))
+					     this))))
 				'())
 			  ,@(if (no-closure? this)
 				'()
@@ -559,10 +559,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun->ctor ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (j2sfun->ctor this::J2SFun mode return conf proto)
-   (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator thisp)
-      (let ((body #unspecified))
-	 (jsfun->lambda/body this mode return conf proto body))))
+(define (j2sfun->ctor this::J2SFun mode return conf decl)
+   
+   (define (object-alloc this::J2SFun)
+      (with-access::J2SFun this (body)
+	 (let ((f (j2s-scheme decl mode return conf)))
+	    (if (cancall? body)
+		`(js-object-alloc-fast ,f)
+		`(js-object-alloc-super-fast ,f)))))
+   
+   (with-access::J2SFun this (loc body vararg mode params generator thisp)
+      (with-access::J2SDecl thisp (id)
+	 (let ((nfun (duplicate::J2SFun this
+			(idthis #f)
+			(thisp #f)))
+	       (body `(let ((,id ,(object-alloc this)))
+			 #unspecified)))
+	    (let ((proto (j2s-declfun-prototype decl)))
+	       (jsfun->lambda/body nfun mode return conf proto body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-body ...                                                  */
