@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Sep  4 08:05:51 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 12:46:28 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -998,19 +998,18 @@
 ;*    optimized-ctor ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (optimized-ctor this::J2SNode)
-   (when #f
-      (let loop ((this this))
-	 (cond
-	    ((isa? this J2SRef)
-	     (with-access::J2SRef this (decl)
-		(loop decl)))
-	    ((isa? this J2SParen)
-	     (with-access::J2SParen this (expr)
-		(loop expr)))
-	    ((isa? this J2SDeclFun)
-	     (with-access::J2SDeclFun this (scope usage)
-		(unless (memq scope '(none letblock))
-		   (when (and (usage? '(new) usage) (not (usage? '(call) usage)))
-		      this))))
-	    (else
-	     #f)))))
+   (let loop ((this this))
+      (cond
+	 ((isa? this J2SRef)
+	  (with-access::J2SRef this (decl)
+	     (loop decl)))
+	 ((isa? this J2SParen)
+	  (with-access::J2SParen this (expr)
+	     (loop expr)))
+	 ((isa? this J2SDeclFun)
+	  (with-access::J2SDeclFun this (scope usage)
+	     (unless (memq scope '(none letblock))
+		(when (and (usage? '(new) usage) (not (usage? '(call) usage)))
+		   this))))
+	 (else
+	  #f))))

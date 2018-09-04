@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Sep  4 07:28:16 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 12:51:00 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -139,13 +139,14 @@
 
    (define (constructor-only? this::J2SDeclFun)
       (with-access::J2SDeclFun this (usage ronly val)
-	 (when ronly
-	    (when (isa? val J2SFun)
-	       (with-access::J2SFun val (generator)
-		  (unless generator
-		     (and (memq 'new usage)
-			  (not (memq 'ref usage))
-			  (not (memq 'call usage)))))))))
+	 (and #f
+	      (when ronly
+		 (when (isa? val J2SFun)
+		    (with-access::J2SFun val (generator)
+		       (unless generator
+			  (and (memq 'new usage)
+			       (not (memq 'ref usage))
+			       (not (memq 'call usage))))))))))
 
    (define (lambda? id)
       (or (memq id '(lambda lambda::obj))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Sep  1 18:08:54 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 12:50:07 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -687,7 +687,8 @@
 ;*---------------------------------------------------------------------*/
 (define (constructor-only?::bool decl::J2SDeclFun)
    (with-access::J2SDeclFun decl (usage)
-      (and (usage? '(new) usage)
+      (and #f
+	   (usage? '(new) usage)
 	   (not (usage? '(ref call eval) usage)))))
 
 ;*---------------------------------------------------------------------*/

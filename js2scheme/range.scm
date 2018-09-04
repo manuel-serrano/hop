@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Sep  3 15:48:04 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 12:50:21 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1034,8 +1034,9 @@
 ;*---------------------------------------------------------------------*/
 (define (constructor-only?::bool decl::J2SDeclFun)
    (with-access::J2SDeclFun decl (usage)
-      (and (usage? '(new) usage)
-	   (not (usage? '(ref call eval) usage)))))
+      (and #f
+	   (and (usage? '(new) usage)
+		(not (usage? '(ref call eval) usage))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SRef ...                                          */
