@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Sep  4 12:51:00 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 14:23:24 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -541,7 +541,7 @@
 	  (flatten-stmt (j2s-scheme body mode return conf))))
 
    (define (unctor-body body)
-      (if (and ctor-only (optimized-ctor body))
+      (if (optimized-ctor body)
 	  (begin
 	     (tprint "GLOP")
 	     (unctor-body! body))
@@ -1017,10 +1017,14 @@
 ;*    ctor-body! ::J2SReturn ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ctor-body! this::J2SReturn)
-   (with-access::J2SReturn this (tail exit expr)
-      (if (or tail exit)
-	  (ctor-body! expr)
-	  expr)))
+   (with-access::J2SReturn this (tail exit expr loc)
+      (cond
+	 ((or tail exit)
+	  (ctor-body! expr))
+	 ((isa? expr J2SUndefined)
+	  (J2SNop))
+	 (else
+	  (J2SStmtExpr expr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ctor-body! ::J2SFun ...                                          */

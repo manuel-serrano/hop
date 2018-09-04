@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Sep  4 13:56:46 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 14:29:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2456,15 +2456,11 @@
 			      `(js-new-return-fast ,fun ,obj)))
 		     `(js-new-return ,fun (,fid ,obj ,@args) ,obj))))))
 
-   (define (j2s-new-opt decl::J2SDecl clazz::J2SExpr args)
-      (let* ((len (length args))
-	     (fun (j2s-scheme clazz mode return conf))
-	     (fid (with-access::J2SDecl decl (id)
-		     (j2s-fast-constructor-id id)))
-	     (args (map (lambda (a)
-			   (j2s-scheme a mode return conf))
-		      args))
-	     (obj (gensym '%obj)))
+   (define (j2s-new-opt/args decl clazz args)
+      (let ((fid (with-access::J2SDeclFun decl (id)
+		    (j2s-fast-constructor-id id)))
+	    (fun (j2s-scheme clazz mode return conf))
+	    (obj (gensym '%obj)))
 	 (if (constructor-no-return? decl)
 	     (if (constructor-no-call? decl)
 		 `(,fid ,@args)
@@ -2473,6 +2469,24 @@
 	     `(let ((,obj (,fid ,@args)))
 		 (js-new-return ,fun ,obj ,obj)))))
    
+   (define (j2s-new-opt decl::J2SDeclFun clazz::J2SExpr args)
+      (with-access::J2SDeclFun decl (val)
+	 (with-access::J2SFun val (params)
+	    (let* ((args (map (lambda (a) (j2s-scheme a mode return conf)) args))
+		   (largs (length args))
+		   (lparams (length params)))
+	       (cond
+		  ((>fx largs lparams)
+		   (let ((tmps (map (lambda (a) (gensym '%a)) largs)))
+		      `(let* ,(map (lambda (tmp arg) `(,tmp ,arg)) tmps args)
+			  ,(j2s-new-opt/args decl clazz (take tmps lparams)))))
+		  ((=fx largs lparams)
+		   (j2s-new-opt/args decl clazz args))
+		  (else
+		   (j2s-new-opt/args decl clazz
+		      (append args
+			 (make-list (-fx lparams largs) #unspecified)))))))))
+	     
    (with-access::J2SNew this (loc cache clazz args type)
       (cond
 	 ((and (new-array? clazz)

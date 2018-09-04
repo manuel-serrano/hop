@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Sep  4 12:50:21 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 14:21:39 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -370,7 +370,10 @@
 ;*    env-override ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (env-override left::pair-nil right::pair-nil)
-   (append right left))
+   (append right
+      (filter (lambda (l)
+		 (not (assq (car l) right)))
+	 left)))
 
 ;*---------------------------------------------------------------------*/
 ;*    env-lookup ...                                                   */

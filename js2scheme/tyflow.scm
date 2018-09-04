@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Sep  4 12:50:07 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 14:14:32 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -389,7 +389,10 @@
 ;*    env-override ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (env-override left::pair-nil right::pair-nil)
-   (append right left))
+   (append right
+      (filter (lambda (l)
+		 (not (assq (car l) right)))
+	 left)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type-args ...                                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Sep  4 14:02:57 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 14:48:33 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -1009,7 +1009,9 @@
 	 ((isa? this J2SDeclFun)
 	  (with-access::J2SDeclFun this (scope usage val)
 	     (unless (memq scope '(none letblock))
-		(when (and (usage? '(new) usage) (not (usage? '(call) usage)))
+		(when (and (usage? '(new) usage)
+			   (not (usage? '(call) usage))
+			   (not (usage? '(assig) usage)))
 		   (with-access::J2SFun val (rtype)
 		      (when (eq? rtype 'undefined)
 			 this))))))
