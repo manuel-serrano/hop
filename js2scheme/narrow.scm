@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Tue Sep  4 12:08:08 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 12:45:02 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -320,8 +320,7 @@
 (define-walk-method (j2s-mark-narrowable this::J2SFun blocks inloop fun yield)
    (with-access::J2SFun this (body)
       ;; MS: 4sep2018, should not traverse function body
-      ;; (j2s-mark-narrowable body blocks inloop this yield)
-      this))
+      (j2s-mark-narrowable body blocks inloop this yield)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-mark-narrowable ::J2SLoop ...                                */
@@ -363,7 +362,6 @@
 ;*    j2s-narrow-body! ::J2SFun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow-body! this::J2SFun)
-   ;;(call-default-walker)
    (j2s-narrow-fun! this)
    this)
 
