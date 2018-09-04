@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Sep  4 11:39:10 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 13:47:09 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -346,6 +346,11 @@
 	   (js-arithmetic-div loc type lhs rhs mode return conf)))
 ;*       ((remainder)                                                  */
 ;*        (js-arithmetic-remainder loc type lhs rhs mode return conf)) */
+      ((remainderfx remainder)
+       (with-tmp lhs rhs mode return conf 'any
+	  (lambda (left right)
+	     `(,op ,left ,right))))
+      
       ((%)
        (js-arithmetic-% loc type lhs rhs mode return conf))
       ((eq?)
@@ -370,11 +375,6 @@
 	      (lambda (left right)
 		 (js-binop-arithmetic loc op left lhs right rhs conf)))
 	   (js-bitop loc op type lhs rhs mode return conf)))
-      ((remainderfx remainder)
-       (with-tmp lhs rhs mode return conf 'any
-	  (lambda (left right)
-	     `(,op ,left ,right))))
-      
       ((OR)
        (let ((lhsv (gensym 'lhs)))
 	  `(let ((,(type-ident lhsv (j2s-vtype lhs) conf)
@@ -1786,7 +1786,7 @@
 		      ((inrange-int32? rhs)
 		       `(if (fixnum? ,left)
 			    ,(j2s-cast `(remainderfx ,left
-					  ,(asfixnum right 'uint32))
+					  ,(asfixnum right trv))
 			       lhs (number type) type conf)
 			    ,(if (m64? conf)
 				 (j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
@@ -1798,7 +1798,7 @@
 		      ((m64? conf)
 		       `(if (fixnum? ,left)
 			    ,(j2s-cast `(remainderfx ,left
-					  ,(asfixnum right 'uint32))
+					  ,(asfixnum right trv))
 			       lhs (number type) type conf)
 			    ,(j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
 					  ,(tonumber64 right trv conf))
