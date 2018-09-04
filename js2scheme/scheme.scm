@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Sep  4 14:29:09 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 15:10:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2477,7 +2477,7 @@
 		   (lparams (length params)))
 	       (cond
 		  ((>fx largs lparams)
-		   (let ((tmps (map (lambda (a) (gensym '%a)) largs)))
+		   (let ((tmps (map (lambda (a) (gensym '%a)) args)))
 		      `(let* ,(map (lambda (tmp arg) `(,tmp ,arg)) tmps args)
 			  ,(j2s-new-opt/args decl clazz (take tmps lparams)))))
 		  ((=fx largs lparams)

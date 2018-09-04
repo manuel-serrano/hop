@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Sep  4 14:23:24 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 15:09:44 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -1020,7 +1020,7 @@
    (with-access::J2SReturn this (tail exit expr loc)
       (cond
 	 ((or tail exit)
-	  (ctor-body! expr))
+	  (J2SStmtExpr (ctor-body! expr)))
 	 ((isa? expr J2SUndefined)
 	  (J2SNop))
 	 (else
