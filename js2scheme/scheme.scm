@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Sep  3 13:55:52 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 13:56:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2471,7 +2471,7 @@
 		 `(let ((,obj (,fid ,@args)))
 		     (js-new-return-fast ,fun ,obj)))
 	     `(let ((,obj (,fid ,@args)))
-		 `(js-new-return ,fun ,obj ,obj)))))
+		 (js-new-return ,fun ,obj ,obj)))))
    
    (with-access::J2SNew this (loc cache clazz args type)
       (cond
