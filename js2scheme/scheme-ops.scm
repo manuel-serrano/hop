@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Sep  3 16:23:39 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 11:39:10 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -863,7 +863,7 @@
 		      (else
 		       `(and (=s32 ,(asint32 left tl) ,right)
 			     (>=s32 ,right #s32:0)))))
-		  ((eq? tr 'integer)
+		  ((or (eq? tr 'integer) (eq? tr 'int53))
 		   `(=fx ,(asfixnum left tl) ,right))
 		  ((eq? tr 'real)
 		   `(=fl ,(asreal left tl) ,right))
@@ -883,7 +883,9 @@
 			       ,(box right tr conf)))))
 		  (else
 		   (if (inrange-int32? lhs)
-		       `(js-equal? ,(asfixnum left tl) ,right %this)
+		       `(if (fixnum? ,right)
+			    (=fx ,(asfixnum left tl) ,right)
+			    (js-equal? ,(asfixnum left tl) ,right %this))
 		       (if (memq (j2s-type rhs) '(int32 uint32))
 			   `(and (=fx ,(asfixnum left tl) ,right)
 				  (>=fx ,right 0))

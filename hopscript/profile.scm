@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Aug 31 19:26:32 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 11:35:12 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -209,14 +209,14 @@
 ;*    js-profile-log-method-method ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-method-method name loc)
-   (tprint "METHOD " name)
+   ;; (tprint "METHOD " name)
    #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-method-function ...                               */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-method-function name loc)
-   (tprint "FUNCTION " name)
+   ;; (tprint "FUNCTION " name)
    #f)
 
 ;*---------------------------------------------------------------------*/
