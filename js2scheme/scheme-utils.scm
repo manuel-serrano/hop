@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Sep  4 14:48:33 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 16:20:10 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -1012,8 +1012,8 @@
 		(when (and (usage? '(new) usage)
 			   (not (usage? '(call) usage))
 			   (not (usage? '(assig) usage)))
-		   (with-access::J2SFun val (rtype)
-		      (when (eq? rtype 'undefined)
+		   (with-access::J2SFun val (rtype vararg)
+		      (when (and (eq? rtype 'undefined) (not vararg))
 			 this))))))
 	 (else
 	  #f))))

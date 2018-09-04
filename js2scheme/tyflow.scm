@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Sep  4 14:14:32 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 15:20:57 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -613,7 +613,6 @@
    (with-access::J2SParen this (expr)
       (multiple-value-bind (tye enve bke)
 	 (node-type expr env fix)
-	 (unless tye (tprint "EXPR=" (j2s->list expr)))
 	 (expr-type-add! this enve fix tye bke))))
 
 ;*---------------------------------------------------------------------*/
