@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Sep  2 16:15:45 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 07:49:13 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -121,8 +121,8 @@
 		    (cond
 		       ((and (pair? %info) (eq? (car %info) 'uninit))
 			;; multiple init, invalidate
-			   (set! %%dump "globvar:multiple")
-			   (set! %info 'multi)
+			(set! %%dump "globvar:multiple")
+			(set! %info 'multi)
 			'())
 		       ((not %info)
 			(set! %info (cons 'uninit this))
@@ -143,7 +143,7 @@
       (if (and ronly (not (usage? '(assig) usage)) (constant? val))
 	  (begin
 	     (set! %%dump this)
-	     (set! %info (cons 'undecl this))
+	     (set! %info (cons 'init this))
 	     (list this))
 	  (begin
 	     (set! %%dump "globvar:read-write")

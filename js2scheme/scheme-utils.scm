@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Sep  3 14:38:38 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 08:05:51 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -77,12 +77,14 @@
 	      #!optional (cspecs '(cmap pmap amap vtable)))
 
 	   (inrange-positive?::bool ::J2SExpr)
+	   (inrange-positive-number?::bool ::J2SExpr)
 	   (inrange-one?::bool ::J2SExpr)
 	   (inrange-32?::bool ::J2SExpr)
 	   (inrange-int30?::bool ::J2SExpr)
 	   (inrange-uint30?::bool ::J2SExpr)
 	   (inrange-int32?::bool ::J2SExpr)
 	   (inrange-uint32?::bool ::J2SExpr)
+	   (inrange-uint32-number?::bool ::J2SExpr)
 	   (inrange-int53?::bool ::J2SExpr)
 
 	   (box ::obj ::symbol ::pair-nil #!optional proc::obj)
@@ -717,6 +719,15 @@
 	      (eq? type 'uint32)))))
 
 ;*---------------------------------------------------------------------*/
+;*    inrange-positive-number? ...                                     */
+;*---------------------------------------------------------------------*/
+(define (inrange-positive-number? expr)
+   (when (memq (j2s-type expr) '(integer number real int32 uint32))
+      (with-access::J2SExpr expr (range)
+	 (when (interval? range)
+	    (>=llong (interval-min range) #l0)))))
+
+;*---------------------------------------------------------------------*/
 ;*    inrange-one? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (inrange-one? expr)
@@ -823,6 +834,14 @@
 		   (<llong (interval-max range) (bit-lshllong #l1 32))
 		   (eq? (interval-type range) 'integer))
 	      (eq? type 'uint32)))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-uint32-number? ...                                       */
+;*---------------------------------------------------------------------*/
+(define (inrange-uint32-number? expr)
+   (with-access::J2SExpr expr (range)
+      (when (inrange-positive-number? expr)
+	 (<llong (interval-max range) (bit-lshllong #l1 32)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-int53? ...                                               */

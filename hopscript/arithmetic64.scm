@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Tue Aug 28 09:10:42 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 07:23:39 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -48,8 +48,8 @@
 	  (inline js-uint32-tointeger::obj ::uint32)
 	  
 	  (inline js-int53-tointeger::bint ::obj)
-	  (js-int53-toint32::int32 ::obj)
-	  (js-int53-touint32::uint32 ::obj)
+	  (inline js-int53-toint32::int32 ::obj)
+	  (inline js-int53-touint32::uint32 ::obj)
 	  
 	  (inline +fx/overflow::obj ::long ::long)
 	  (inline +s32/overflow::obj ::int32 ::int32)
@@ -298,8 +298,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
 ;*---------------------------------------------------------------------*/
-(define (js-int53-touint32 i)
+(define-inline (js-int53-touint32 i)
+   (fixnum->uint32 i))
    
+(define (js-int53-touint32-TOBEREMOVED-4sep2018 i)
    (define 2^32 (exptfl 2. 32.))
    
    (define (positive-double->uint32::uint32 i::double)
@@ -339,7 +341,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
 ;*---------------------------------------------------------------------*/
-(define (js-int53-toint32 i)
+(define-inline (js-int53-toint32 i)
+   (fixnum->int32 i))
+
+(define (js-int53-toint32-TOBEREMOVED-4sep2018 i)
    
    (define (int64->int32::int32 i::int64)
       (let* ((i::elong (int64->elong i))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Sep  3 12:46:16 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 07:28:16 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -540,9 +540,9 @@
 	  (flatten-stmt (j2s-scheme body mode return conf))))
 
    (define (unctor-body body)
-      (if ctor-only
+      (if (and ctor-only (optimized-ctor body))
 	  (begin
-	     (tprint "UNCTOR-BODY...")
+	     (tprint "GLOP")
 	     (unctor-body! body))
 	  body))
 
