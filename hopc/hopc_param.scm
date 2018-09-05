@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Apr 22 09:04:45 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 10:49:21 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -100,6 +100,9 @@
 	    
 	    (hopc-js-module-main::obj)
 	    (hopc-js-module-main-set! ::obj)
+
+	    (hopc-source-ast::obj)
+	    (hopc-source-ast-set! ::obj)
 	    
 	    (hopc-js-header::obj)
 	    (hopc-js-header-set! ::obj)
@@ -310,6 +313,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-js-module-main
    #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-source-ast ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-source-ast
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-header ...                                               */

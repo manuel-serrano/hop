@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sat Apr 14 19:46:30 2018 (serrano)                */
+/*    Last change :  Sat Sep  1 07:43:52 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -316,6 +316,29 @@ assert.ok( o.e === 5, "ctor" );
 assert.ok( o.f === o.a, "ctor" );
 
 /*---------------------------------------------------------------------*/
+/*    constructor ...                                                  */
+/*---------------------------------------------------------------------*/
+function CTOR( x ) {
+   this.x = x;
+   this.y = x;
+   this.z = x;
+}
+
+const o = new CTOR( 1 );
+const ctor = o.constructor;
+
+function ctorcall( n ) {
+   try {
+      ctor.call( undefined, n );
+      return false;
+   } catch( e ) {
+      return e instanceof TypeError;
+   }
+}
+
+assert.ok( ctorcall( 2 ), "ctor sans object" );
+
+/*---------------------------------------------------------------------*/
 /*    assignop                                                         */
 /*---------------------------------------------------------------------*/
 var x = 0;
@@ -399,3 +422,4 @@ function illmet() {
    }
 }
 assert.ok( illmet(), "illegal method" );
+

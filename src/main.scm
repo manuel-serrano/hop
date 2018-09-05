@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jul 17 18:30:47 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 07:53:21 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -182,7 +182,7 @@
 	 ;; set a dummy request
 	 (thread-request-set! #unspecified req)
 	 ;; preload the user files
-	 (for-each (lambda (f) (load-command-line-weblet f #f)) files)
+	 (for-each (lambda (f) (load-command-line-weblet f #f #f #f)) files)
 	 ;; unset the dummy request
 	 (thread-request-set! #unspecified #unspecified)))
    ;; evaluate the user expressions
@@ -208,22 +208,23 @@
 	  (%worker (js-init-main-worker! %global
 		      ;; keep-alive
 		      (or (hop-run-server) (eq? (hop-enable-repl) 'js))
-		      nodejs-new-global-object)))
+		      nodejs-new-global-object))
+	  (%module (nodejs-new-module "." "" %worker %global)))
       ;; js loader
       (hop-loader-add! "js"
-	 (lambda (path . test) (nodejs-load path path %worker)))
+	 (lambda (path . test) (nodejs-load path path %global %module %worker)))
       ;; profiling
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f))
       ;; rc.js file
       (when (string? (hop-rc-loaded))
-	 (javascript-rc %worker %global))
+	 (javascript-rc %global %module %worker))
       ;; hss extension
       (when (hop-javascript) (javascript-init-hss %worker %global))
       ;; create the repl JS module
       (let ((path (file-name-canonicalize!
 		     (make-file-name (pwd) (car args)))))
-	 (nodejs-module "repl" path %worker %global))
+	 (nodejs-new-module "<repl>" path %worker %global))
       ;; push the user expressions
       (when (pair? exprs)
 	 (js-worker-push-thunk! %worker "cmdline"
@@ -248,7 +249,9 @@
 	    ;; set a dummy request
 	    (thread-request-set! #unspecified req)
 	    ;; preload the user files
-	    (for-each (lambda (f) (load-command-line-weblet f %worker)) files)
+	    (for-each (lambda (f)
+			 (load-command-line-weblet f %global %module %worker))
+	       files)
 	    ;; unset the dummy request
 	    (thread-request-set! #unspecified #unspecified)))
       ;; install the hopscript expanders
@@ -266,7 +269,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Load the hoprc.js in a sandboxed environment.                    */
 ;*---------------------------------------------------------------------*/
-(define (javascript-rc %worker %global)
+(define (javascript-rc %global %module %worker)
    
    (define (load-rc path)
       (hop-rc-file-set! path)
@@ -285,7 +288,7 @@
 	       (let ((oldload (hop-rc-loaded)))
 		  (hop-rc-loaded! #f)
 		  (unwind-protect
-		     (nodejs-load path path %worker)
+		     (nodejs-load path path %global %module %worker)
 		     (hop-rc-loaded! oldload)))))))
 
    (let ((path (string-append (prefix (hop-rc-loaded)) ".js")))
@@ -299,7 +302,7 @@
 ;*    javascript-init-hss ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init-hss %worker %global)
-   (let ((mod (nodejs-module "hss" "hss" %worker %global))
+   (let ((mod (nodejs-new-module "hss" "hss" %worker %global))
 	 (scope (nodejs-new-scope-object %global))
 	 (exp (call-with-input-string "false"
 		 (lambda (in)
@@ -355,7 +358,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    load-command-line-weblet ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (load-command-line-weblet f %worker)
+(define (load-command-line-weblet f %global %module %worker)
 
    (define (load-hop-directory path)
       (let ((src (string-append (basename path) ".hop")))
@@ -375,7 +378,8 @@
 		   (cmain (assq 'main obj)))
 	       (when (pair? cmain)
 		  (load-command-line-weblet
-		     (make-file-name (dirname pkg) (cdr cmain)) %worker)
+		     (make-file-name (dirname pkg) (cdr cmain))
+		     %global %module %worker)
 		  #t)))))
 
    (let ((path (cond
@@ -406,7 +410,7 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
-		      (nodejs-load path path %worker))))))
+		      (nodejs-load path path %global %module %worker))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))
 	 (else

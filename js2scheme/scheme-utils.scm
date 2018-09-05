@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Jun  6 07:30:02 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 14:18:21 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -508,7 +508,7 @@
 	      `(js-jsstring-length ,obj))
 	     (else
 	      `(js-get-string ,obj ,prop %this))))
-	 (cache
+	 ((and cache cspecs)
 	  (cond
 	     ((string? prop)
 	      (if (string=? prop "length")
@@ -573,7 +573,7 @@
 	     (else
 	      `(js-array-set! ,obj ,prop ,(box val tyval conf)
 		  ,(strict-mode? mode) %this))))
-	 (cache
+	 ((and cache cspecs)
 	  (cond
 	     ((string? prop)
 	      (if (string=? prop "length")

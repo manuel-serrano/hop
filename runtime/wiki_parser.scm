@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Jul  3 11:08:05 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 12:52:11 2018 (serrano)                */
 ;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -1208,7 +1208,7 @@
 	       (exception-notify e)
 	       (add-expr! (<SPAN> :hssclass "hop-parse-error"
 			     (string (the-failure)))))
-	    (let ((expr (hop-read (the-port) :charset charset)))
+	    (let ((expr (hop-read (the-port) charset)))
 	       (with-handler
 		  (lambda (e)
 		     (exception-notify e)

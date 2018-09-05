@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Jun  7 18:15:09 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 10:50:06 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -136,10 +136,9 @@
 ;*---------------------------------------------------------------------*/
 (define (compile-sources::int)
    
-   (define (input-file->module-name in)
-      (let* ((path (input-port-name in))
-	     (dir (dirname path))
-	     (mod (prefix (basename (input-port-name in)))))
+   (define (input-file->module-name path)
+      (let* ((dir (dirname path))
+	     (mod (prefix (basename path))))
 	 (if (string=? dir ".")
 	     mod
 	     (format "%%~a_~a" dir mod))))
@@ -147,7 +146,7 @@
    (define (compile-javascript p)
       (if (string-suffix? ".js" p)
 	  (call-with-input-file p
-	     (lambda (in) (compile in (language p))))
+	     (lambda (in) (compile p in (language p))))
 	  (hopscheme-compile-file p
 	     (cond
 		((string? (hopc-destination)) (hopc-destination))
@@ -170,7 +169,7 @@
 	 (else
 	  (error "hopc" "Illegal module" exp))))
    
-   (define (generate-bigloo::int in lang)
+   (define (generate-bigloo::int fname in lang)
       
       (define (generate-hop out::output-port)
 	 (let loop ()
@@ -184,9 +183,8 @@
 		  (loop)))))
       
       (define (generate-hopscript out::output-port)
-	 (let* ((fname (input-port-name in))
-		(mmap (when (and (string? fname) (file-exists? fname))
-			 (open-mmap fname :read #t :write #f))))
+	 (let ((mmap (when (and (string? fname) (file-exists? fname))
+			(open-mmap fname :read #t :write #f))))
 	    (for-each (lambda (exp) (pp exp out))
 	       (apply j2s-compile in
 		  :return-as-exit (hopc-js-return-as-exit)
@@ -199,8 +197,8 @@
 		  :module-main (if (boolean? (hopc-js-module-main))
 				   (hopc-js-module-main)
 				   (not (memq (hopc-pass) '(object so))))
-		  :module-name (or (hopc-js-module-name)
-				   (input-file->module-name in))
+		  :module-name (or (hopc-js-module-name) 
+				   (input-file->module-name fname))
 		  :module-path (hopc-js-module-path)
 		  :hopscript-header (hopc-js-header)
 		  :type-annotations (hopc-js-type-annotations)
@@ -212,9 +210,8 @@
 		  (hopc-j2s-flags)))))
       
       (define (generate-js out::output-port)
-	 (let* ((fname (input-port-name in))
-		(mmap (when (and (string? fname) (file-exists? fname))
-			 (open-mmap fname :read #t :write #f))))
+	 (let ((mmap (when (and (string? fname) (file-exists? fname))
+			(open-mmap fname :read #t :write #f))))
 	    (for-each (lambda (exp)
 			 (unless (isa? exp J2SNode)
 			    (display exp out)))
@@ -230,7 +227,7 @@
 				   (hopc-js-module-main)
 				   (not (memq (hopc-pass) '(object so))))
 		  :module-name (or (hopc-js-module-name)
-				   (input-file->module-name in))
+				   (input-file->module-name fname))
 		  :module-path (hopc-js-module-path)
 		  :hopscript-header (hopc-js-header)
 		  :type-annotations (hopc-js-type-annotations)
@@ -253,14 +250,14 @@
 	  (generate (current-output-port) lang))
       0)
    
-   (define (compile-bigloo::int in lang)
+   (define (compile-bigloo::int fname in lang)
       
       (define (srfi-opts)
 	 (cond-expand
 	    (enable-libuv '("-srfi" "enable-libuv" "-srfi" "hopc"))
 	    (else '("-srfi" "hopc"))))
       
-      (define (compile-temp in opts comp file temp)
+      (define (compile-temp opts comp file temp)
 	 (call-with-output-file temp comp)
          (let* ((opts (cons temp (append (srfi-opts) opts)))
                 (proc (apply run-process (hopc-bigloo) opts))
@@ -273,7 +270,7 @@
 	    (process-wait proc)
             (process-exit-status proc)))
 
-      (define (compile-pipe in opts comp file)
+      (define (compile-pipe opts comp file)
          (let* ((baseopts (cons "-fread-internal-src"
 			     (append (srfi-opts) opts)))
                 (opts (if (string? file)
@@ -294,15 +291,17 @@
                   (hop-verb 4 cmd "\n")
                   (close-output-port out)))
             (process-wait proc)
-            (process-exit-status proc)))
+            (let ((r (process-exit-status proc)))
+	       (tprint "RRRRRR=" r " " opts)
+	       r)))
 
-      (define (compile in opts comp file temp)
+      (define (compiler opts comp file temp)
 	 (if (string? temp)
-	     (compile-temp in opts comp file temp)
-	     (compile-pipe in opts comp file)))
+	     (compile-temp opts comp file temp)
+	     (compile-pipe opts comp file)))
       
       (define (compile-hop in opts file temp)
-	 (compile in
+	 (compiler
 	    (append `("--force-cc-o"
 			"-library" "hop"
 			"-library" "hopscheme"
@@ -324,10 +323,9 @@
 	    temp))
       
       (define (compile-hopscript in opts file exec temp)
-	 (let* ((fname (input-port-name in))
-		(mmap (when (and (string? fname) (file-exists? fname))
-			 (open-mmap fname :read #t :write #f))))
-	    (compile in
+	 (let ((mmap (when (and (string? fname) (file-exists? fname))
+			(open-mmap fname :read #t :write #f))))
+	    (compiler
 	       (append (hopc-js-libraries)
 		  `("--force-cc-o"
 		      "-rpath" ,(make-file-path (hop-lib-directory)
@@ -355,7 +353,7 @@
 					 (hopc-js-module-main)
 					 (not (memq (hopc-pass) '(object so))))
 			:module-name (or (hopc-js-module-name)
-					 (input-file->module-name in))
+					 (input-file->module-name fname))
 			:module-path (hopc-js-module-path)
 			:hopscript-header (hopc-js-header)
 			:type-annotations (hopc-js-type-annotations)
@@ -439,14 +437,14 @@
 		  (when (file-exists? obj)
 		     (delete-file obj)))))))
    
-   (define (compile::int in lang::symbol)
+   (define (compile::int filename::obj in::obj lang::symbol)
       (cond
 	 ((eq? (hopc-pass) 'client-js)
-	  (generate-bigloo in 'js))
+	  (generate-bigloo filename in 'js))
 	 ((eq? (hopc-pass) 'bigloo)
-	  (generate-bigloo in lang))
+	  (generate-bigloo filename in lang))
 	 (else
-	  (compile-bigloo in lang))))
+	  (compile-bigloo filename in lang))))
 
    (define (language src)
       (if (eq? (hopc-source-language) 'auto)
@@ -460,20 +458,25 @@
       ((eq? (hopc-pass) 'client-js)
        (for-each compile-javascript (hopc-sources))
        0)
-      ((pair? (hopc-sources))
+      ((and (hopc-source-ast) (pair? (hopc-sources)))
+       (compile (car (hopc-sources))
+	  (string->obj (string-as-read (hopc-source-ast)))
+	  (language (car (hopc-sources)))))
+      ((not (pair? (hopc-sources)))
+       (compile #f (current-input-port)
+	  (if (eq? (hopc-source-language) 'auto)
+	      'hop
+	      (hopc-source-language))))
+      (else
        (let loop ((srcs (hopc-sources)))
 	  (if (null? srcs)
 	      0
 	      (let ((r (call-with-input-file (car srcs)
-			  (lambda (in) (compile in (language (car srcs)))))))
+			  (lambda (in)
+			     (compile (car srcs) in (language (car srcs)))))))
 		 (if (=fx r 0)
 		     (loop (cdr srcs))
-		     r)))))
-      (else
-       (compile (current-input-port)
-	  (if (eq? (hopc-source-language) 'auto)
-	      'hop
-	      (hopc-source-language))))))
+		     r)))))))
 				 
 ;*---------------------------------------------------------------------*/
 ;*    jsheap ...                                                       */

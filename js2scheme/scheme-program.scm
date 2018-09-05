@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Jul 11 16:51:52 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 08:21:08 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -110,7 +110,7 @@
 			    (with-access::JsGlobalObject %this (js-object)
 			       (js-new0 %this js-object)))
 			 (define %module
-			    (nodejs-module ,(basename path) ,path %worker %this))
+			    (nodejs-new-module ,(basename path) ,path %worker %this))
 			 (define %cnsts ,scmcnsts)
 			 ,@globals
 			 ,@(exit-body body conf)))
@@ -197,7 +197,7 @@
 	     (define %worker
 		(js-init-main-worker! %this #f nodejs-new-global-object))
 	     (define %module
-		(nodejs-module ,(basename path) ,path %worker %this))
+		(nodejs-new-module ,(basename path) ,path %worker %this))
 	     (define %cnsts ,scmcnsts)
 	     ,@globals
 	     ,@toplevel

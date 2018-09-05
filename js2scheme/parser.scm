@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Aug 17 07:50:07 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 15:03:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -221,6 +221,13 @@
 		      'strict
 		      (javascript-mode node))))
 	 (when mode (set! current-mode mode))))
+
+   (define (source-element-plugins node::J2SNode config)
+      (let ((lang (javascript-language node)))
+	 (when lang
+	    (let ((ploader (config-get config :plugins-loader #f)))
+	       (when (procedure? ploader)
+		  (ploader lang config))))))
    
    (define (source-elements::J2SBlock)
       (let loop ((rev-ses '())
@@ -243,7 +250,10 @@
 		(if (eq? el 'source-map)
 		    (loop rev-ses #f)
 		    (begin
-		       (when first (source-element-mode! el))
+		       (when first
+			  (source-element-mode! el)
+			  (let ((ps (source-element-plugins el conf)))
+			     (when ps (set! plugins (append ps plugins)))))
 		       (loop (cons el rev-ses) #f)))))))
    
    (define (source-element)
@@ -1327,7 +1337,8 @@
       (filter-map param-defval params))
 
    (define (fun-body params::pair-nil args mode::symbol)
-      (let ((cmode current-mode))
+      (let ((cmode current-mode)
+	    (cplugins plugins))
 	 (set! current-mode mode)
 	 (unwind-protect
 	    (let ((token (push-open-token (consume-token! 'LBRACE))))
@@ -1344,9 +1355,14 @@
 				  (nodes (append (fun-body-params-defval params)
 					    (reverse! rev-ses))))))
 			 (let ((el (source-element)))
-			    (source-element-mode! el)
+			    (when first
+			       (source-element-mode! el)
+			       (let ((ps (source-element-plugins el conf)))
+				  (when ps (set! plugins (append ps plugins)))))
 			    (loop (cons el rev-ses) #f))))))
-	    (set! current-mode cmode))))
+	    (begin
+	       (set! current-mode cmode)
+	       (set! plugins cplugins)))))
 
    (define (clazz declaration?)
       (let* ((loc (current-loc))
@@ -2818,6 +2834,35 @@
 	       (else #f))))))
    
 ;*---------------------------------------------------------------------*/
+;*    javascript-language ...                                          */
+;*---------------------------------------------------------------------*/
+(define-generic (javascript-language node::J2SNode)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    javascript-language ::J2SSeq ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-language node::J2SSeq)
+   (with-access::J2SSeq node (nodes)
+      (when (pair? nodes)
+	 (javascript-language (car nodes)))))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-language ::J2SStmtExpr ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-language node::J2SStmtExpr)
+   (with-access::J2SStmtExpr node (expr)
+      (when (isa? expr J2SString)
+	 (with-access::J2SString expr (val escape)
+	    (cond
+	       ((string=? val "use strict")
+		#f)
+	       ((string=? val "use hopscript")
+		#f)
+	       ((string-prefix? "use " val)
+		(substring val 4)))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    javascript-module-nodes ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (javascript-module-nodes nnodes::pair-nil)
@@ -3065,3 +3110,9 @@
 			       (parse-error "Duplicate parameter name not allowed in this context" d))))
 	       (cdr l)))
 	 (loop (cdr l)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-parser-plugins-loader ...                                    */
+;*---------------------------------------------------------------------*/
+(define j2s-parser-plugins
+   (lambda (name conf) '()))

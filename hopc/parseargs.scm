@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Aug  9 10:50:20 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 10:48:53 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -141,6 +141,8 @@
 	     (hopc-pass-set! 'so))
 	    ((("-j" "--client-js") (help "Generate a client-side JavaScript file"))
 	     (hopc-pass-set! 'client-js))
+	    (("--ast" ?ast (help "The source abstract syntax tree"))
+	     (hopc-source-ast-set! ast))
 	    (section "Configuration and devkit")
 	    (("--safe" (help "Compile and link in safe mode"))
 	     (hopc-bigloo-safe-option-set! '("-unsafe" "-safel")))

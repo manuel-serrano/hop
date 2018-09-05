@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Wed Feb  7 11:26:39 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 08:29:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
@@ -34,7 +34,7 @@
    ;; start executing the nodejs header
    (let ((old-intrhdl (get-signal-handler sigint))
 	 (mod (eval-module))
-	 (module (nodejs-module "repl" (make-file-name (pwd) "repl.js")
+	 (module (nodejs-new-module "<repl>" (make-file-name (pwd) "repl.js")
 		    %worker %this)))
       ;; force the module initialization
       (let ((exp (call-with-input-string "false"

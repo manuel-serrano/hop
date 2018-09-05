@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Jul 17 09:24:33 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 12:23:05 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -890,7 +890,9 @@
        (error "hop-read" "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
-	  (let* ((cset (charset-converter! charset (hop-charset)))
+	  (let* ((cset (if (procedure? charset)
+			   charset
+			   (charset-converter! charset (hop-charset))))
 		 (menv (or menv
 			   (if (isa? (hop-clientc) clientc)
 			       (with-access::clientc (hop-clientc) (macroe)
@@ -1067,6 +1069,7 @@
 			((more-recent? path)
 			 path)
 			((more-recent? (errfile path))
+			 (tprint "ERRFILE1=" (errfile path))
 			 'error)
 			(else
 			 (loop (cdr paths))))))))))
@@ -1087,6 +1090,7 @@
 	    ((more-recent? sopath)
 	     sopath)
 	    ((more-recent? (errfile sopath))
+	     (tprint "ERRFILE2=" (errfile sopath))
 	     'error)
 	    (else
 	     ;; if not found check the user global libs repository
@@ -1095,6 +1099,10 @@
 		   ((more-recent? sopath)
 		    sopath)
 		   ((more-recent? (errfile sopath))
+		    (tprint "ERRFILE3=" (errfile sopath))
+		    (call-with-input-file (errfile sopath)
+		       (lambda (in)
+			  (tprint "ERRSTR=" (read-string in))))
 		    'error)
 		   (else
 		    (or (find-in-unix-path (hop-soname path))
