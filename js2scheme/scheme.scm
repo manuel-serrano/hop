@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Sep  5 15:20:14 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 15:52:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -305,7 +305,7 @@
 		 `(begin
 		     ,(j2s-put! loc '%scope #f (j2s-vtype lhs)
 			 `',id 'propname
-			 val tyval (strict-mode? mode) conf #f)
+			 val tyval (strict-mode? mode) conf #f #f)
 		     ,result))
 		(result
 		 `(begin
@@ -399,7 +399,7 @@
 	    (if (null? withs)
 		(j2s-scheme expr mode return conf)
 		`(if ,(j2s-in? loc `',id (car withs))
-		     ,(j2s-get loc (car withs) #f 'object `',id 'string 'any conf #f)
+		     ,(j2s-get loc (car withs) #f 'object `',id 'string 'any conf #f #f)
 		     ,(loop (cdr withs))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1279,7 +1279,7 @@
 		      (typeof-this obj conf)
 		      (j2s-scheme field mode return conf)
 		      (j2s-vtype field)
-		      name 'any (strict-mode? mode) conf #f))))
+		      name 'any (strict-mode? mode) conf #t #f))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
 		(epairify loc
@@ -1290,7 +1290,7 @@
 			       ,(j2s-put! loc (car withs) #f
 				   'object
 				   (symbol->string id) 'propname
-				   name 'any #f conf #f)
+				   name 'any #f conf #t #f)
 			       ,(liip (cdr withs))))))))
 	    (else
 	     (j2s-error "js2scheme" "Illegal lhs" this)))))
@@ -1553,6 +1553,7 @@
 		      (j2s-vtype rhs)
 		      (strict-mode? mode)
 		      conf
+		      #f
 		      cache))
 	     (let* ((tmp (gensym 'tmp))
 		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp)))))
@@ -1570,6 +1571,7 @@
 				(j2s-vtype rhs)
 				(strict-mode? mode)
 				conf
+				#f
 				cache))))))))
 
    (with-access::J2SAssig this (loc lhs rhs)
@@ -1596,6 +1598,7 @@
 			  (strict-mode? mode)
 			  conf
 			  cache
+			  #f
 			  cspecs))))))
 	    ((and (isa? lhs J2SRef)
 		  (or (not (isa? lhs J2SThis)) (isa? rhs J2SPragma)))
@@ -1630,7 +1633,7 @@
 				   (symbol->string id) 'propname
 				   (j2s-scheme rhs mode return conf)
 				   (j2s-vtype rhs)
-				   #f conf #f)
+				   #f conf #f #f)
 			       ,(liip (cdr withs))))))))
 	    ((isa? lhs J2SUndefined)
 	     (j2s-scheme rhs mode return conf))
@@ -1757,7 +1760,7 @@
 				      (j2s-vtype field)
 				      val 'number
 				      (strict-mode? mode) conf
-				      cache cs)
+				      cache #t cs)
 				  ,tmp))))))
 	       (cache-missp
 		`(let ((,tmp ,scmlhs))
@@ -1777,7 +1780,7 @@
 					   (j2s-vtype field)
 					   val 'number
 					   (strict-mode? mode) conf
-					   cache cs)
+					   cache #t cs)
 				       ,tmp)))))))
 	       (else
 		`(let ((,tmp ,scmlhs))
@@ -1796,7 +1799,7 @@
 					  (j2s-vtype field)
 					  val 'number
 					  (strict-mode? mode) conf
-					  cache cs)
+					  cache #t cs)
 				      ,tmp))))
 			,(let* ((tmp2 (gensym 'tmp))
 				(tref (instantiate::J2SHopRef
@@ -1814,7 +1817,7 @@
 					       (j2s-vtype field)
 					       val 'number
 					       (strict-mode? mode) conf
-					       cache cs)
+					       cache #t cs)
 					   ,tmp))))))))))))
 
    (define (rhs-cache rhs)
@@ -1886,7 +1889,7 @@
 				     (access-inc-sans-object otmp
 					prop op lhs rhs inc)))
 			      ,(j2s-put! loc otmp field 'any prop 'any 1 'any
-				  (strict-mode? mode) conf cache '()))))
+				  (strict-mode? mode) conf cache #t '()))))
 		     (let* ((ptmp (gensym 'iprop))
 			    (pvar (J2SHopRef ptmp)))
 			`(let ((,ptmp ,(j2s-scheme field mode return conf)))
@@ -1900,7 +1903,7 @@
 						pvar op lhs rhs inc)))
 				      ,(j2s-put! loc otmp field 'any pvar 'any 1 'any
 					  (strict-mode? mode)
-					  conf cache '()))))))))))
+					  conf cache #t '()))))))))))
 
    (with-access::J2SAssig this (loc lhs rhs type)
       (epairify-deep loc
@@ -1986,7 +1989,7 @@
 			  (or pro prov) (j2s-vtype field)
 			  (j2s-cast vtmp #f typea typel conf) typel
 			  (strict-mode? mode) conf
-			  cache (if (mightbe-number? field) '() cs))
+			  cache #t (if (mightbe-number? field) '() cs))
 		      ,vtmp))))))
 
    (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
@@ -2082,7 +2085,7 @@
       (let ((tyo (typeof-this obj conf)))
 	 (j2s-get loc tmp field tyo
 	    (j2s-property-scheme field mode return conf)
-	    (j2s-vtype field) (j2s-vtype this) conf cache cspecs)))
+	    (j2s-vtype field) (j2s-vtype this) conf cache #f cspecs)))
 
    (define (canbe-array? obj)
       (memq (j2s-type obj) '(any undefined unknown object array)))
@@ -2362,7 +2365,7 @@
 					"__proto__" 'propname
 					(j2s-scheme val mode return conf)
 					(j2s-vtype val)
-					(strict-mode? mode) conf #f)
+					(strict-mode? mode) conf #f #f)
 				     (epairify loc
 					`(js-bind! %this ,tmp
 					    ,(j2s-propname name)
