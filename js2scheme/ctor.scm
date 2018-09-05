@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Wed Sep  5 14:37:38 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 14:52:30 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -140,7 +140,6 @@
       (let ((val (j2sdeclinit-val-fun this)))
 	 (when (isa? val J2SFun)
 	    (with-access::J2SFun val (optimize)
-	       (tprint "constrinit optimize=" optimize " " id)
 	       (when optimize
 		  (constrinit-ctor! val prog))))))
    this)
@@ -226,7 +225,6 @@
 	 (if (or (null? nodes) (null? (cdr nodes)))
 	     (values '() nodes #f)
 	     (let ((ref (obj-assign (car nodes) #f)))
-		(tprint "REF=" (j2s->list ref))
 		(if (not ref)
 		    (values '() nodes #f)
 		    (let loop ((ns (cdr nodes))

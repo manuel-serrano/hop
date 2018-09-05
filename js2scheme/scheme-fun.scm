@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Sep  5 14:33:49 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 14:52:15 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -542,9 +542,7 @@
 
    (define (unctor-body body)
       (if (optimized-ctor body)
-	  (begin
-	     (tprint "GLOP")
-	     (unctor-body! body))
+	  (unctor-body! body)
 	  body))
 
    (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator thisp)
@@ -585,7 +583,6 @@
 			(idthis #f)
 			(thisp #f)))
 	       (id (j2s-decl-scheme-id thisp))
-	       (_ (tprint "BODY=" (j2s->list body)))
 	       (body `(let ((,id ,(object-alloc this)))
 			 ,(j2s-scheme (ctor-body! body)
 			     mode return conf)

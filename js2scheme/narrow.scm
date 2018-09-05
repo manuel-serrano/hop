@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Tue Sep  4 12:45:02 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 14:54:12 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -305,13 +305,6 @@
 			 (not (eq? fun usefun))
 			 (and inloop
 			      (or (not (eq? fun deffun)) (cell-ref yield))))
-		  (when (eq? id 'dummy)
-		     (tprint "PAS NARROW " id " " loc 
-			" memq=" (not (memq defblock blocks))
-			" eq=" (not (eq? fun usefun))
-			" inloop=" inloop
-			" or=" (or (not (eq? fun deffun)) (cell-ref yield)))
-		     (tprint (j2s-info->list %info)))
 		  (set! narrowable #f)))))))
 
 ;*---------------------------------------------------------------------*/
