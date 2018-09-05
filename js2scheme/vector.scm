@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/vector.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/vector.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Wed Dec 20 17:49:39 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Thu Aug 30 16:27:35 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
 ;*    -------------------------------------------------------------    */
@@ -36,7 +36,7 @@
 (define j2s-vector-stage
    (instantiate::J2SStageProc
       (name "vector")
-      (comment "Array-to-Vector optimiziation")
+      (comment "Array-to-Vector optimization")
       (optional :optim-vector)
       (proc j2s-vector!)))
 
@@ -87,7 +87,7 @@
 ;*    collect-ranges ::J2SAccess ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-ranges this::J2SAccess)
-   (with-access::J2SAccess this (obj field)
+   (with-access::J2SAccess this (obj field loc)
       (if (isa? obj J2SRef)
 	  (with-access::J2SRef obj (decl)
 	     (with-access::J2SDecl decl (vtype %info)
@@ -95,7 +95,8 @@
 		   (unless (and (range? %info) (not (range-intervals %info)))
 		      (unless (range? %info) (set! %info (range '())))
 		      (with-access::J2SExpr field (range)
-			 (unless (interval? range)
+			 (unless (and (interval? range)
+				      (eq? (interval-type range) 'integer))
 			    ;; disable optimization for this array
 			    (range-intervals-set! %info #f)))))))
 	  (collect-ranges obj))
@@ -210,7 +211,15 @@
    (define (in-range? sz intv)
       (and (>= (interval-min intv) 0) (< (interval-max intv) sz)))
 
-   (with-access::J2SDeclInit this (vtype itype id %info val usage hint loc)
+   (define (set-expr-type-vector! val::J2SExpr)
+      (with-access::J2SExpr val (type)
+	 (set! type 'vector)
+	 (when (isa? val J2SCast)
+	    (with-access::J2SCast val (expr)
+	       (set-expr-type-vector! expr)))))
+
+   (with-access::J2SDeclInit this (vtype id %info val usage hint loc)
+      
       (when (and (eq? vtype 'array)
 		 (only-usage? '(init get set) usage)
 		 (range? %info)
@@ -222,10 +231,8 @@
 			  (range-intervals %info)))
 	       ;; optimize this array by turning it into a vector
 	       (set! vtype 'vector)
-	       (set! itype 'vector)
 	       (set! hint (list size))
-	       (with-access::J2SExpr val (type)
-		  (set! type 'vector))
+	       (set-expr-type-vector! val)
 	       (cell-set! verb (cons loc (cell-ref verb)))
 	       (when (and inloop hook scope (not (capture? scope this)))
 		  (set-car! (cell-ref verb) (make-cell (car (cell-ref verb))))
@@ -272,6 +279,13 @@
       (length exprs)))
 
 ;*---------------------------------------------------------------------*/
+;*    vector-init-size ::J2SCast ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (vector-init-size this::J2SCast)
+   (with-access::J2SCast this (expr)
+      (vector-init-size expr)))
+
+;*---------------------------------------------------------------------*/
 ;*    init-array! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (init-array! this::J2SExpr decl size))
@@ -281,19 +295,19 @@
 ;*---------------------------------------------------------------------*/
 (define-method (init-array! this::J2SNew decl size)
    (with-access::J2SNew this (loc)
-      (J2SSequence
-	 (J2SCall (J2SHopRef 'vector-fill!)
-	    (J2SRef decl)
+      (J2SSequence/type 'vector
+	 (J2SHopCall/type 'any (J2SHopRef 'vector-fill!)
+	    (J2SRef decl :type 'vector)
 	    (J2SUndefined)
 	    (J2SNumber 0) (J2SNumber size))
-	 (J2SRef decl))))
+	 (J2SRef decl :type 'vector))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-array! ::J2SArray ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (init-array! this::J2SArray decl size)
    (with-access::J2SArray this (exprs loc)
-      (J2SSequence*
+      (J2SSequence/type* 'vector
 	 (append 
 	    (map (lambda (e i)
 		    (let ((ref (J2SRef decl :type 'vector)))
@@ -301,7 +315,16 @@
 			  (J2SAccess (J2SRef decl) (J2SNumber i))
 			  e)))
 	       exprs (iota size))
-	    (list (J2SRef decl))))))
+	    (list (J2SRef decl :type 'vector))))))
+   
+;*---------------------------------------------------------------------*/
+;*    init-array! ::J2SCast ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (init-array! this::J2SCast decl size)
+   (with-access::J2SCast this (expr type)
+      (set! type 'vector)
+      (set! expr (init-array! expr decl size))
+      this))
    
 ;*---------------------------------------------------------------------*/
 ;*    patch-vector ::J2SNode ...                                       */
@@ -362,13 +385,10 @@
 	  (val (J2SNew
 		  (J2SGlobalRef 'Array)
 		  (J2SNumber size)))
-	  (decl (J2SLetOptUtype 'vector '(init ref) id val)))
+	  (decl (J2SLetOptVtype 'vector '(init ref) id val)))
       (with-access::J2SExpr val (type)
 	 (set! type 'vector))
-      (with-access::J2SDecl decl (itype vtype)
-	 (set! itype 'vector)
-	 (set! vtype 'vector)
-	 decl)))
+      decl))
 
 ;*---------------------------------------------------------------------*/
 ;*    hook-alloc! ...                                                  */

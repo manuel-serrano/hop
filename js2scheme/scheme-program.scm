@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-program.scm      */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-program.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
@@ -122,13 +122,13 @@
    (with-access::J2SProgram this (module main nodes headers decls
 					 mode name pcache-size call-size
 					 cnsts globals)
-      (let ((scmheaders (j2s-scheme headers mode return conf))
-	    (scmdecls (j2s-scheme decls mode return conf))
-	    (scmclos (filter-map (lambda (d)
-				   (j2s-scheme-closure d mode return conf))
-		       decls))
-	    (scmnodes (j2s-scheme nodes mode return conf))
-	    (scmcnsts (%cnsts cnsts mode return conf)))
+      (let* ((scmheaders (j2s-scheme headers mode return conf))
+	     (scmdecls (j2s-scheme decls mode return conf))
+	     (scmclos (filter-map (lambda (d)
+				     (j2s-scheme-closure d mode return conf))
+			 decls))
+	     (scmnodes (j2s-scheme nodes mode return conf))
+	     (scmcnsts (%cnsts cnsts mode return conf)))
 	 (if (and main (not (config-get conf :worker #t)))
 	     (j2s-main-sans-worker-module this name
 		scmcnsts

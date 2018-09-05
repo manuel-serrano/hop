@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-test.scm         */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-test.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Tue May  1 15:48:26 2018 (serrano)                */
+;*    Last change :  Wed Aug 29 08:21:30 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
@@ -50,7 +50,10 @@
 	 ((notbool-expr? test)
 	  `(js-toboolean ,(j2s-scheme test mode return conf)))
 	 (else
-	  `(js-totest ,(j2s-scheme test mode return conf))))))
+	  (with-access::J2SExpr test (hint)
+	     (if (pair? (assq 'object hint))
+		 `(js-totest-likely-object ,(j2s-scheme test mode return conf))
+		 `(js-totest ,(j2s-scheme test mode return conf))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SNode ...                                      */

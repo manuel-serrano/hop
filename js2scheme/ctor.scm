@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/ctor.scm                */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/ctor.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Tue Apr  3 18:12:14 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 14:52:30 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -140,7 +140,7 @@
       (let ((val (j2sdeclinit-val-fun this)))
 	 (when (isa? val J2SFun)
 	    (with-access::J2SFun val (optimize)
-	       (when (or #t optimize)
+	       (when optimize
 		  (constrinit-ctor! val prog))))))
    this)
 
@@ -164,7 +164,7 @@
 
    (define (simple-expr? expr obj)
       ;; is the expr simple enough so we are certain that there is no
-      ;; occurrent of decl involved
+      ;; occurrence of decl involved
       (cond
 	 ((isa? expr J2SArray)
 	  (with-access::J2SArray expr (exprs)
@@ -204,16 +204,21 @@
 			(when (isa? field J2SString)
 			   (when (isa? obj J2SRef)
 			      (with-access::J2SRef obj (decl)
-				 (if ref-or-bool
+				 (cond
+				    ((isa? ref-or-bool J2SRef)
 				     (with-access::J2SRef ref-or-bool ((rd decl))
 					(when (eq? rd decl)
-					   (simple-expr? rhs decl)))
-				     (with-access::J2SDecl decl (itype)
-					(when (eq? itype 'object)
-					   obj)))))))))))))
+					   (when (simple-expr? rhs decl)
+					      obj))))
+				    ((isa? obj J2SThis)
+				     obj)
+				    (else
+				     (with-access::J2SDecl decl (vtype)
+					(when (eq? vtype 'object)
+					   obj))))))))))))))
    
    (define (split-init-sequence this)
-      ;; split a block in two part
+      ;; split a block in two parts
       ;;   1- the "ref" assignments
       ;;   2- the other statements
       (with-access::J2SBlock this (nodes)
@@ -233,6 +238,21 @@
 			   (set-cdr! prev '())
 			   (values nodes ns ref)))))))))
 
+   (define (init-names inits)
+      `,(list->vector
+	   (filter-map (lambda (n)
+			  (when (isa? n J2SStmtExpr)
+			     (with-access::J2SStmtExpr n (expr)
+				(when (isa? expr J2SAssig)
+				   (with-access::J2SAssig expr (lhs)
+				      (when (isa? lhs J2SAccess)
+					 (with-access::J2SAccess lhs (obj field)
+					    (when (and (isa? obj J2SThis)
+						       (isa? field J2SString))
+					       (with-access::J2SString field (val)
+						  (string->symbol val))))))))))
+	      inits)))
+
    (multiple-value-bind (init rest ref)
       (split-init-sequence this)
       (cond
@@ -247,22 +267,26 @@
 	  ;; optimize the init sequence, first create two program globals
 	  (let ((cmap0 (gensym '%cmap0))
 		(cmap1 (gensym '%cmap1))
+		(cmap2 (gensym '%cmap2))
 		(offset (gensym '%offset)))
 	     (with-access::J2SProgram prog (globals)
 		(set! globals
 		   (cons* `(define ,cmap0 #f)
 		      `(define ,cmap1 #f)
+		      `(define ,cmap2 (js-names->cmap ',(init-names init)))
 		      `(define ,offset -1)
 		      globals)))
 	     ;; then split the init sequence
 	     (with-access::J2SBlock this (nodes loc)
-		(set! nodes 
+		(tprint "CREATING>>>> " (j2s->list ref))
+		(set! nodes
 		   (cons (instantiate::J2SOPTInitSeq
 			    (loc loc)
 			    (ref ref)
 			    (nodes (map adjust-cspecs! init))
 			    (cmap0 cmap0)
 			    (cmap1 cmap1)
+			    (cmap2 cmap2)
 			    (offset offset))
 		      (map! (lambda (n) (constrinit-seq! n prog)) rest))))
 	     this)))))

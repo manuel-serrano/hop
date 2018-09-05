@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.sch                 */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/ast.sch       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    interval ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-struct interval min max)
+(define-struct interval min max type)
 
 ;*---------------------------------------------------------------------*/
 ;*    Small macro-based API for helping creating J2SNode               */
@@ -85,6 +85,12 @@
 (define-macro (J2SPragma expr)
    `(instantiate::J2SPragma
        (loc loc)
+       (expr ,expr)))
+
+(define-macro (J2SPragma/type type expr)
+   `(instantiate::J2SPragma
+       (loc loc)
+       (type ,type)
        (expr ,expr)))
 
 (define-macro (J2SPragma/bindings type vars vals expr)
@@ -200,22 +206,22 @@
    `(instantiate::J2SHopRef
        (loc loc)
        (id ,id)
+       (type 'any)
        (module ,(when (pair? module) (car module)))))
 
-(define-macro (J2SHopRef/type id vtype type . module)
+(define-macro (J2SHopRef/type id type . module)
    `(instantiate::J2SHopRef
        (loc loc)
        (id ,id)
        (type ,type)
-       (vtype ,vtype)
        (module ,(when (pair? module) (car module)))))
 
 (define-macro (J2SHopRef/rtype id rtype . module)
    `(instantiate::J2SHopRef
        (loc loc)
        (id ,id)
+       (type 'function)
        (rtype ,rtype)
-       (type ,rtype)
        (module ,(when (pair? module) (car module)))))
 
 (define-macro (J2SRef decl . opts)
@@ -291,9 +297,21 @@
        (loc loc)
        (exprs ,(if (pair? exprs) `(list ,@exprs) ''()))))
 
+(define-macro (J2SSequence/type type . exprs)
+   `(instantiate::J2SSequence
+       (loc loc)
+       (type ,type)
+       (exprs ,(if (pair? exprs) `(list ,@exprs) ''()))))
+
 (define-macro (J2SSequence* exprs)
    `(instantiate::J2SSequence
        (loc loc)
+       (exprs ,exprs)))
+
+(define-macro (J2SSequence/type* type exprs)
+   `(instantiate::J2SSequence
+       (loc loc)
+       (type ,type)
        (exprs ,exprs)))
 
 (define-macro (J2SLetBlock decls . nodes)
@@ -376,9 +394,13 @@
        (loc loc)
        (binder 'param)
        (usage ,usage)
-       (utype ,(let ((c (memq :type opts))) (if (pair? c) (cadr c) ''unknown)))
-       (vtype ,(let ((c (memq :vtype opts))) (if (pair? c) (cadr c) ''unknown)))
-       (itype ,(let ((c (memq :vtype opts))) (if (pair? c) (cadr c) ''unknown)))
+       (itype ,(let ((c (memq :type opts)))
+		  (if (pair? c)
+		      (cadr c)
+		      (let ((c (memq :vtype opts)))
+			 (if (pair? c) (cadr c) ''unknown)))))
+       (vtype ,(let ((c (memq :vtype opts)))
+		  (if (pair? c) (cadr c) ''unknown)))
        (id ,id)))
 
 (define-macro (J2SDeclInit usage id val)
@@ -410,18 +432,6 @@
        (ronly #t)
        (vtype ,typ)
        (usecnt 1)
-       (binder 'let-opt)
-       (usage ,usage)
-       (val ,val)
-       (id ,id)))
-
-(define-macro (J2SLetOptUtype utype usage id val)
-   `(instantiate::J2SDeclInit
-       (loc loc)
-       (writable #f)
-       (ronly #t)
-       (usecnt 1)
-       (utype ,utype)
        (binder 'let-opt)
        (usage ,usage)
        (val ,val)

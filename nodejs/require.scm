@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Sep  4 18:23:29 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 17:56:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -127,9 +127,7 @@
 	    (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 	       (let* ((exp (nodejs-require-module lang worker %ctxthis %ctxmodule))
 		      (key (js-get js-symbol 'compiler %ctxthis))
-		      (comp (let ((o (js-get exp key %ctxthis)))
-			       (when (isa? o JsObject)
-				  (js-get o 'compiler %ctxthis)))))
+		      (comp (js-get exp key %ctxthis)))
 		  (if (isa? comp JsFunction)
 		      (let ((obj (js-call1 %ctxthis comp (js-undefined)
 				    (js-string->jsstring ifile))))
@@ -498,9 +496,7 @@
 		     ((isa? lang JsObject)
 		      (with-access::JsGlobalObject this (js-symbol)
 			 (let* ((key (js-get js-symbol 'compiler this))
-				(comp (let ((o (js-get lang key this)))
-					 (when (isa? o JsObject)
-					    (js-get o 'compiler this)))))
+				(comp (js-get lang key this)))
 			    (if (isa? comp JsFunction)
 				comp
 				(js-raise-error (js-new-global-object)
@@ -855,7 +851,6 @@
 	    (debug-compile-trace path)
 	    (let ((m (when (file-exists? path)
 			(open-mmap filename read: #t :write #f))))
-	       (tprint "COMPILE AST..." filename)
 	       (unwind-protect
 		  (j2s-compile ast
 			      :driver (nodejs-driver)
@@ -1338,15 +1333,12 @@
 	   #!optional lang srcalias)
 
    (define (loadso-or-compile filename lang worker-slave)
-      (tprint "NODEJS-LOAD.1 " filename)
       (if worker-slave
 	  (nodejs-compile src filename %ctxthis %ctxmodule
 	     :lang lang :worker-slave #t)
 	  (let loop ((sopath (hop-find-sofile filename)))
-      (tprint "NODEJS-LOAD.2 " filename " sopath=" sopath)
 	     (cond
 		((string? sopath)
-		 (tprint "NODEJS-LOAD.2 " filename)
 		 (let ((p (hop-dynamic-load sopath)))
 		    (if (and (procedure? p) (=fx (procedure-arity p) 4))
 			p
@@ -1354,7 +1346,6 @@
 			   (format "Wrong compiled file format ~s" sopath)
 			   sopath))))
 		((and (not (eq? sopath 'error)) (hop-sofile-enable))
-		 (tprint "NODEJS-LOAD.3 " filename)
 		 (case (hop-sofile-compile-policy)
 		    ((aot)
 		     (loop (nodejs-socompile src filename lang)))
@@ -1368,12 +1359,10 @@
 		(else
 		 (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
 		    (nodejs-socompile-queue-push filename lang))
-		 (tprint "NODEJS-LOAD.4 " filename)
 		 (nodejs-compile src filename %ctxthis %ctxmodule
 		    :lang lang))))))
 
    (define (load-module-js)
-      (tprint "LOAD-MODULE-JS@NODEJS-LOAD src=" (typeof src) " filename=" filename " lang-" lang)
       (with-trace 'require "require@load-module-js"
 	 (with-access::WorkerHopThread worker (%this prehook parent)
 	    (with-access::JsGlobalObject %this (js-object js-main)

@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopc/parseargs.scm                */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopc/parseargs.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
@@ -42,7 +42,7 @@
    (newline)
    (print "Shell Variables:")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
-   (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:range, j2s:usage, j2s:key,")
+   (print "      j2s:info, j2s:type, j2s:type+, j2s:hint, j2s:range, j2s:usage, j2s:key,")
    (print "      j2s:loc, j2s:cache, j2s:dump, j2s:size")
    (print "      nodejs:compile,")
    (print "      hopscript:cache[num] (*), hopscript:hint[num] (*),")
@@ -281,6 +281,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-hintnum #t (hopc-j2s-flags))))
 	    (("-fno-hintnum" (help "Disable hintnum typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hintnum #f (hopc-j2s-flags))))
+	    (("-fmultivar" (help "Enable multivar split"))
+	     (hopc-j2s-flags-set! (cons* :optim-multivar #t (hopc-j2s-flags))))
+	    (("-fno-multivar" (help "Disable multivar split"))
+	     (hopc-j2s-flags-set! (cons* :optim-multivar #f (hopc-j2s-flags))))
 	    (("-frange" (help "Enable range optimization (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-range #t (hopc-j2s-flags))))
 	    (("-fno-range" (help "Disable range optimization"))
@@ -337,6 +341,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-vector #t (hopc-j2s-flags))))
 	    (("-fno-vector" (help "Disable array-to-vector optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-vector #f (hopc-j2s-flags))))
+	    (("-fmethod" (help "Enable array-to-method optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-method #t (hopc-j2s-flags))))
+	    (("-fno-method" (help "Disable array-to-method optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-method #f (hopc-j2s-flags))))
 	    (("-fprofile" ?log (help "Profile log file optimization"))
 	     (hopc-j2s-flags-set! (cons* :profile-log log (hopc-j2s-flags)))
 	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
@@ -350,6 +358,8 @@
 	     (hopc-j2s-flags-set! (cons* :profile-hint #t (hopc-j2s-flags))))
 	    (("--profile-call" (help "Call profiling mode (see HOPTRACE)"))
 	     (hopc-j2s-flags-set! (cons* :profile-call #t (hopc-j2s-flags))))
+	    (("--profile-method" (help "Method profiling mode (see HOPTRACE)"))
+	     (hopc-j2s-flags-set! (cons* :profile-method #t (hopc-j2s-flags))))
 	    (("--profile-alloc" (help "Alloc profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile-alloc #t (hopc-j2s-flags))))

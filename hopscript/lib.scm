@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/lib.scm                 */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/lib.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Apr  4 13:08:14 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:05:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -43,7 +43,8 @@
 	   (js-jsobject->keyword-plist ::JsObject ::JsGlobalObject)
 	   (js-jsobject->alist ::JsObject ::JsGlobalObject)
 	   (js-dsssl-args->jsargs ::pair ::JsGlobalObject)
-	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)))
+	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)
+	   (inline fixnums?::bool ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-constant-init ...                                             */
@@ -368,3 +369,12 @@
 (define (js-procedure->jsobject obj %this)
    (js-make-function %this obj (procedure-arity obj) 'native))
       
+;*---------------------------------------------------------------------*/
+;*    fixnums? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (fixnums? a b)
+   (cond-expand
+      ((and bigloo-c (config nan-tagging #f))
+       (pragma::bool "INTEGERP( TAG_INT == 0 ? ((long)$1 | (long)$2) : ((long)$1 & (long)$2) )" a b))
+      (else
+       (and (fixnum? a) (fixnum? b)))))

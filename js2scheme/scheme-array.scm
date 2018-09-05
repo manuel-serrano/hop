@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-array.scm        */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-array.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue May  1 15:31:38 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 07:38:35 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -84,23 +84,32 @@
       (if (isa? o J2SNumber)
 	  (with-access::J2SNumber o (val)
 	     (cond
-		((fixnum? val) (>=fx val 0) (<fx val k))
-		((int32? val) (>=s32 val #s32:0) (<s32 val (fixnum->int32 k)))
-		((uint32? val) (<u32 val (fixnum->uint32 k)))
-		(else #f)))
+		((fixnum? val)
+		 (and (>=fx val 0) (<fx val k)))
+		((int32? val)
+		 (and (>=s32 val #s32:0) (<s32 val (fixnum->int32 k))))
+		((uint32? val)
+		 (<u32 val (fixnum->uint32 k)))
+		(else
+		 #f)))
 	  (with-access::J2SExpr o (range)
 	     (when (interval? range)
 		(and (>=llong (interval-min range) 0)
 		     (<=llong (interval-max range) (fixnum->llong k)))))))
-   
+
    (define (alloc-length arg k)
-      (if (smaller-than? arg 16)
+      (cond
+	 ((smaller-than? arg 16)
 	  `(js-array-construct-alloc-small %this 
-	      ,(k (j2s-scheme arg mode return conf)))
-	  
+	      ,(k (j2s-scheme arg mode return conf))))
+	 ((smaller-than? arg (bit-lsh 1 29))
 	  `(js-array-construct/lengthu32 %this
 	      (js-array-alloc %this)
-	      ,(k (j2s-scheme arg mode return conf)))))
+	      ,(k (j2s-scheme arg mode return conf))))
+	 (else
+	  `(js-array-construct %this (js-array-alloc %this)
+	      (list ,(box (j2s-scheme arg mode return conf)
+			(j2s-vtype arg) conf))))))
    
    (with-access::J2SNew this (loc cache clazz args type)
       (cond
@@ -171,7 +180,7 @@
 		       `(JS-ARRAY-FIXNUM-FAST-REF ,scmobj
 			   (int32->fixnum ,scmfield)
 			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id amark)
+			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			   %this)))
 		  ((fixnum)
 		   (if amark
@@ -181,7 +190,7 @@
 			   %this)
 		       `(JS-ARRAY-FIXNUM-FAST-REF ,scmobj ,scmfield
 			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id amark)
+			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			   %this)))
 		  (else
 		   (if amark
@@ -295,7 +304,7 @@
 			   ,(j2s-decl-scheme-id amark)
 			   ,(strict-mode? mode)
 			   %this)
-		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj
+		       `(JS-ARRAY-FIXNUM-FAST-SET! ,scmobj
 			   (int32->fixnum ,scmfield) ,scmrhs
 			   ,scmarray ,scmalen
 			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
@@ -308,7 +317,7 @@
 			   ,(j2s-decl-scheme-id amark)
 			   ,(strict-mode? mode)
 			   %this)
-		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj ,scmfield ,scmrhs
+		       `(JS-ARRAY-FIXNUM-FAST-SET! ,scmobj ,scmfield ,scmrhs
 			   ,scmarray ,scmalen
 			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			   ,(strict-mode? mode)

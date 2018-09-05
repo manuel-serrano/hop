@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-ops.scm          */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-ops.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Jun 24 20:00:01 2018 (serrano)                */
+;*    Last change :  Tue Sep  4 13:47:09 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -223,45 +223,88 @@
 	  (delete->scheme expr)))
       ((+)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
-       (let ((expr (j2s-scheme expr mode return conf))
-	     (typ (j2s-vtype expr)))
+       (let ((sexpr (j2s-scheme expr mode return conf))
+	     (typ (j2s-type expr))
+	     (vtyp (j2s-vtype expr)))
 	  (cond
-	     ((eqv? expr 0) +0.0)
-	     ((memq typ '(int32 uint32 int53 integer number)) expr)
-	     (else (epairify loc `(js-tonumber ,expr %this))))))
+	     ((eqv? sexpr 0)
+	      +0.0)
+	     ((memq vtyp '(int32 uint32 int53 integer number))
+	      sexpr)
+	     ((memq typ '(int32 uint32 int53 integer number))
+	      (j2s-cast sexpr expr vtyp typ conf))
+	     (else
+	      (epairify loc `(js-tonumber ,sexpr %this))))))
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
-       (let ((expr (j2s-scheme expr mode return conf))
-	     (typ (j2s-vtype expr)))
+       (let ((sexpr (j2s-scheme expr mode return conf))
+	     (vtyp (j2s-vtype expr))
+	     (typ (j2s-type expr)))
 	  (case type
 	     ((int32)
 	      (cond
-		 ((int32? expr)
-		  (if (=s32 expr #s32:0) -0.0 (negs32 expr)))
-		 ((eq? typ 'int32)
-		  (epairify loc `(negs32js ,expr)))
-		 ((eq? typ 'uint32)
-		  (epairify loc `(negs32 ,(asint32 expr 'uint32))))
+		 ((int32? sexpr)
+		  (if (=s32 sexpr #s32:0) -0.0 (negs32 sexpr)))
+		 ((eq? vtyp 'int32)
+		  (epairify loc `(negs32 ,sexpr)))
+		 ((eq? vtyp 'uint32)
+		  (epairify loc `(negs32 ,(asint32 sexpr 'uint32))))
+		 ((memq typ '(int32 uint32))
+		  (epairify loc `(js-toint32 (negfx ,sexpr) %this)))
 		 (else
-		  (epairify loc `(js-toint32 (negjs ,expr %this) %this)))))
+		  (epairify loc `(js-toint32 (negjs ,sexpr %this) %this)))))
 	     ((uint32)
 	      (cond
-		 ((eq? typ 'int32)
-		  (epairify loc `(int32->uint32 (negs32 ,expr))))
+		 ((eq? vtyp 'int32)
+		  (epairify loc `(int32->uint32 (negs32 ,sexpr))))
+		 ((memq type '(int32 uint32))
+		  (epairify loc `(js-touint32 (negfx ,sexpr) %this)))
 		 (else
-		  (epairify loc `(js-touint32 (negjs ,expr %this) %this)))))
-	     ((eqv? expr 0)
+		  (epairify loc `(js-touint32 (negjs ,sexpr %this) %this)))))
+	     ((eqv? sexpr 0)
 	      -0.0)
 	     ((integer)
-	      (if (fixnum? expr)
-		  (negfx expr)
-		  (epairify loc `(negfx ,expr))))
+	      (if (fixnum? sexpr)
+		  (negfx sexpr)
+		  (epairify loc `(negfx ,sexpr))))
 	     ((real)
-	      (if (flonum? expr)
-		  (negfl expr)
-		  (epairify loc `(negfl ,expr))))
+	      (if (flonum? sexpr)
+		  (negfl sexpr)
+		  (epairify loc `(negfl ,sexpr))))
+	     ((number)
+	      (epairify loc
+		 (case vtyp
+		    ((int32)
+		     `(if (=s32 ,sexpr #s32:0)
+			  -0.0
+			  ,(tonumber `(negs32 ,sexpr) vtyp conf)))
+		    ((uint32)
+		     (cond
+			((m64? conf)
+			 `(if (=u32 ,sexpr #u32:0)
+			      -0.0
+			      `(negfx ,(uint32->fixnum sexpr)) vtyp conf))
+			((inrange-int32? expr)
+			 `(if (=u32 ,sexpr #u32:0)
+			      -0.0
+			      ,(tonumber
+				  `(negs32 ,(uint32->int32 sexpr)) vtyp conf)))
+			(else
+			 `(cond
+			     ((=u32 ,sexpr #u32:0)
+			      -0.0)
+			     ((>u32 ,sexpr (fixnum->uint32 (maxvalfx)))
+			      (negfl (uint32->flonum ,sexpr)))
+			     (else
+			      (negfx (uint32->fixxnum ,sexpr)))))))
+		    ((int53)
+		     `(if (=fx ,sexpr 0)
+			  -0.0
+			  (negfx ,sexpr)))
+		    (else
+		     `(negjs ,sexpr %this)))))
 	     (else
-	      (epairify loc `(negjs ,expr %this))))))
+	      (epairify loc `(negjs ,sexpr %this))))))
       ((~)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
        (if (eq? type 'int32)
@@ -301,8 +344,13 @@
 	      (lambda (left right)
 		 (js-binop-arithmetic loc op left lhs right rhs conf)))
 	   (js-arithmetic-div loc type lhs rhs mode return conf)))
-      ((remainder)
-       (js-arithmetic-remainder loc type lhs rhs mode return conf))
+;*       ((remainder)                                                  */
+;*        (js-arithmetic-remainder loc type lhs rhs mode return conf)) */
+      ((remainderfx remainder)
+       (with-tmp lhs rhs mode return conf 'any
+	  (lambda (left right)
+	     `(,op ,left ,right))))
+      
       ((%)
        (js-arithmetic-% loc type lhs rhs mode return conf))
       ((eq?)
@@ -327,14 +375,9 @@
 	      (lambda (left right)
 		 (js-binop-arithmetic loc op left lhs right rhs conf)))
 	   (js-bitop loc op type lhs rhs mode return conf)))
-      ((remainderfx remainder)
-       (with-tmp lhs rhs mode return conf 'any
-	  (lambda (left right)
-	     `(,op ,left ,right))))
-      
       ((OR)
        (let ((lhsv (gensym 'lhs)))
-	  `(let ((,(type-ident lhsv (j2s-vtype lhs))
+	  `(let ((,(type-ident lhsv (j2s-vtype lhs) conf)
 		  ,(j2s-scheme lhs mode return conf)))
 	      (if ,(if (eq? (j2s-vtype lhs) 'bool)
 		       lhsv
@@ -344,7 +387,7 @@
 		      (j2s-vtype rhs) type conf)))))
       ((&&)
        (let ((lhsv (gensym 'lhs)))
-	  `(let ((,(type-ident lhsv (j2s-vtype lhs))
+	  `(let ((,(type-ident lhsv (j2s-vtype lhs) conf)
 		  ,(j2s-scheme lhs mode return conf)))
 	      (if ,(if (eq? (j2s-vtype lhs) 'bool)
 		       lhsv
@@ -512,16 +555,16 @@
 	  (error "js-binop-arihmetic" "should not be here" op)))))
 
 ;*---------------------------------------------------------------------*/
-;*    binop ...                                                        */
+;*    with-tmp-flip ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (with-tmp lhs rhs mode return conf optype gen::procedure)
-
+(define (with-tmp-flip flip lhs rhs mode return conf optype gen::procedure)
+   
    (define (simple? expr)
       (cond
 	 ((isa? expr J2SRef)
 	  #t)
 	 ((isa? expr J2SGlobalRef)
-	  #t)
+	  #f)
 	 ((isa? expr J2SHopRef)
 	  #t)
 	 ((isa? expr J2SLiteral)
@@ -561,18 +604,28 @@
 	  (gen scmlhs scmrhs))
 	 (testl
 	  (let ((right (gensym 'rhs)))
-	     `(let ((,(type-ident right (j2s-vtype rhs)) ,scmrhs))
+	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
 		 ,(gen scmlhs right))))
 	 (testr
 	  (let ((left (gensym 'lhs)))
-	     `(let ((,(type-ident left (j2s-vtype lhs)) ,scmlhs))
+	     `(let ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
 		 ,(gen left scmrhs))))
 	 (else
 	  (let ((left (gensym 'lhs))
 		(right (gensym 'rhs)))
-	     `(let* ((,(type-ident left (j2s-vtype lhs)) ,scmlhs)
-		     (,(type-ident right (j2s-vtype rhs)) ,scmrhs))
-		 ,(gen left right)))))))
+	     (if flip 
+		 `(let* ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs)
+			 (,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+		     ,(gen left right))
+		 `(let* ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs)
+			 (,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+		     ,(gen left right))))))))
+
+;*---------------------------------------------------------------------*/
+;*    with-tmp ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (with-tmp lhs rhs mode return conf optype gen::procedure)
+   (with-tmp-flip #f lhs rhs mode return conf optype gen))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-cmp ...                                                       */
@@ -611,6 +664,12 @@
 			 lhs tl left rhs tr right conf #f))
 		     ((eq? tr 'uint32)
 		      (binop-uint32-xxx op 'bool
+			 rhs tr right lhs tl left conf #t))
+		     ((eq? tl 'int53)
+		      (binop-int53-xxx op 'bool
+			 lhs tl left rhs tr right conf #f))
+		     ((eq? tr 'int53)
+		      (binop-int53-xxx op 'bool
 			 rhs tr right lhs tl left conf #t))
 		     ((eq? tl 'integer)
 		      (binop-integer-xxx op 'bool
@@ -745,9 +804,9 @@
 			((string=? val "symbol") 'js-symbol?)
 			(else (tprint "TYPEOF PAS OPT " val) #f))))))))
 
-   (define (equality-int32 op lhs tl rhs tr mode return conf)
+   (define (equality-int32 op lhs tl rhs tr mode return conf flip::bool)
       ;; tl == int32, tr = ???
-      (with-tmp lhs rhs mode return conf 'any
+      (with-tmp-flip flip lhs rhs mode return conf 'any
 	 (lambda (left right)
 	    (let loop ((op op))
 	       (cond
@@ -770,19 +829,22 @@
 		   `(=fx ,(asfixnum left tl) ,right))
 		  ((eq? tr 'real)
 		   `(=fl ,(asreal left tl) ,right))
-		  ((eq? op '==)
-		   `(if (fixnum? ,right)
-			(=fx ,(asfixnum left tl) ,right)
-			(js-equal?
-			   ,(box left tl conf)
-			   ,(box right tr conf)
-			   %this)))
+		  ((eq? op '===)
+		   (if (memq (j2s-type rhs) '(int32 uint32))
+		       `(=fx ,(asfixnum left tl) ,right)
+		       `(if (fixnum? ,right)
+			    (=fx ,(asfixnum left tl) ,right)
+			    (js-eqil?
+			       ,(box left tl conf)
+			       ,(box right tr conf)))))
+		  ((not (eq? tr 'any))
+		   `(js-equal-sans-flonum? ,(asfixnum left tl) ,right %this))
 		  (else
-		   `(js-eqil? ,(asfixnum left tl) ,right)))))))
+		   `(js-equal? ,(asfixnum left tl) ,right %this)))))))
 
-   (define (equality-uint32 op lhs tl rhs tr mode return conf)
+   (define (equality-uint32 op lhs tl rhs tr mode return conf flip::bool)
       ;; tl == uint32, tr = ???
-      (with-tmp lhs rhs mode return conf 'any
+      (with-tmp-flip flip lhs rhs mode return conf 'any
 	 (lambda (left right)
 	    (let loop ((op op))
 	       (cond
@@ -801,32 +863,42 @@
 		      (else
 		       `(and (=s32 ,(asint32 left tl) ,right)
 			     (>=s32 ,right #s32:0)))))
-		  ((eq? tr 'integer)
+		  ((or (eq? tr 'integer) (eq? tr 'int53))
 		   `(=fx ,(asfixnum left tl) ,right))
 		  ((eq? tr 'real)
 		   `(=fl ,(asreal left tl) ,right))
-		  ((eq? op '==)
-		   `(if (fixnum? ,right)
-			,(if (inrange-int32? lhs)
-			     `(=fx ,(asfixnum left tl) ,right)
-			     `(and (=fx ,(asfixnum left tl) ,right)
-				   (>=fx ,right 0)))
-			(js-equal?
-			   ,(box left tl conf)
-			   ,(box right tr conf)
-			   %this)))
+		  ((eq? op '===)
+		   (if (memq (j2s-type rhs) '(int32 uint32))
+		       (if (inrange-int32? lhs)
+			   `(=fx ,(asfixnum left tl) ,right)
+			   `(and (=fx ,(asfixnum left tl) ,right)
+				 (>=fx ,right 0)))
+		       `(if (fixnum? ,right)
+			    ,(if (inrange-int32? lhs)
+				 `(=fx ,(asfixnum left tl) ,right)
+				 `(and (=fx ,(asfixnum left tl) ,right)
+				       (>=fx ,right 0)))
+			    (js-eqil?
+			       ,(box left tl conf)
+			       ,(box right tr conf)))))
 		  (else
 		   (if (inrange-int32? lhs)
-		       `(js-eqil? ,(asfixnum left tl) ,right)
 		       `(if (fixnum? ,right)
-			     (and (=fx ,(asfixnum left tl) ,right)
+			    (=fx ,(asfixnum left tl) ,right)
+			    (js-equal? ,(asfixnum left tl) ,right %this))
+		       (if (memq (j2s-type rhs) '(int32 uint32))
+			   `(and (=fx ,(asfixnum left tl) ,right)
 				  (>=fx ,right 0))
-			     (=fl
-				,(asreal left tl)
-				,(box right tr conf))))))))))
+			   `(if (fixnum? ,right)
+				(and (=fx ,(asfixnum left tl) ,right)
+				     (>=fx ,right 0))
+				(js-equal? 
+				   ,(asreal left tl)
+				   ,(box right tr conf)
+				   %this))))))))))
 
-   (define (equality-string op lhs tl rhs tr mode return conf)
-      (with-tmp lhs rhs mode return conf 'any
+   (define (equality-string op lhs tl rhs tr mode return conf flip)
+      (with-tmp-flip flip lhs rhs mode return conf 'any
 	 (lambda (left right)
 	    (if (eq? op '!==)
 		`(not (js-eqstring? ,left ,right))
@@ -905,26 +977,18 @@
 			     test)))))
 	     (else
 	      (js-cmp loc op lhs rhs mode return conf))))
-	 ((and (is-number? lhs) (is-number? rhs))
-	  (cond
-	     ((j2s-cast-aref-length? rhs)
-	      (with-access::J2SAref (cast-aref rhs) (field alen)
-		 (let ((test `(or (= %lhs ,(j2s-decl-scheme-id alen))
-				  (= %lhs ,(j2s-scheme rhs mode return conf)))))
-		    `(let ((%lhs ,(j2s-scheme lhs mode return conf)))
-			,(if (memq op '(!= !==))
-			     (js-not test)
-			     test)))))
-	     ((j2s-cast-aref-length? lhs)
-	      (with-access::J2SAref (cast-aref lhs) (field alen)
-		 (let ((test `(or (= ,(j2s-decl-scheme-id alen) %rhs)
-				  (= ,(j2s-scheme rhs mode return conf) %rhs))))
-		    `(let ((%rhs ,(j2s-scheme rhs mode return conf)))
-			,(if (memq op '(!= !==))
-			     (js-not test)
-			     test)))))
-	     (else
-	      (js-cmp loc op lhs rhs mode return conf))))
+	 ((eq? tl 'int32)
+	  (equality-int32 op lhs tl rhs tr mode return conf #f))
+	 ((eq? tr 'int32)
+	  (equality-int32 op rhs tr lhs tl mode return conf #t))
+	 ((eq? tl 'uint32)
+	  (equality-uint32 op lhs tl rhs tr mode return conf #f))
+	 ((eq? tr 'uint32)
+	  (equality-uint32 op rhs tr lhs tl mode return conf #t))
+	 ((and (memq op '(=== !==)) (eq? tl 'string))
+	  (equality-string op rhs tr lhs tl mode return conf #f))
+	 ((and (memq op '(=== !==)) (eq? tr 'string))
+	  (equality-string op rhs tr lhs tl mode return conf #t))
 	 ((and (eq? tl 'real) (eq? tr 'real))
 	  (with-tmp lhs rhs mode return conf 'any
 	     (lambda (left right)
@@ -949,6 +1013,26 @@
 		(if (eq? op '===)
 		    `(eq? ,left ,right)
 		    `(not (eq? ,left ,right))))))
+	 ((and (is-number? lhs) (is-number? rhs))
+	  (cond
+	     ((j2s-cast-aref-length? rhs)
+	      (with-access::J2SAref (cast-aref rhs) (field alen)
+		 (let ((test `(or (= %lhs ,(j2s-decl-scheme-id alen))
+				  (= %lhs ,(j2s-scheme rhs mode return conf)))))
+		    `(let ((%lhs ,(j2s-scheme lhs mode return conf)))
+			,(if (memq op '(!= !==))
+			     (js-not test)
+			     test)))))
+	     ((j2s-cast-aref-length? lhs)
+	      (with-access::J2SAref (cast-aref lhs) (field alen)
+		 (let ((test `(or (= ,(j2s-decl-scheme-id alen) %rhs)
+				  (= ,(j2s-scheme rhs mode return conf) %rhs))))
+		    `(let ((%rhs ,(j2s-scheme rhs mode return conf)))
+			,(if (memq op '(!= !==))
+			     (js-not test)
+			     test)))))
+	     (else
+	      (js-cmp loc op lhs rhs mode return conf))))
 	 ((and (memq op '(== !=))
 	       (or (memq tl '(bool string object array))
 		   (memq tr '(bool string object array))))
@@ -975,16 +1059,6 @@
 			`(not (or (eq? ,left (js-undefined)) (eq? ,left (js-null))))))
 		   (else
 		    (js-binop loc op left lhs right rhs conf))))))
-	 ((eq? tl 'int32)
-	  (equality-int32 op lhs tl rhs tr mode return conf))
-	 ((eq? tr 'int32)
-	  (equality-int32 op rhs tr lhs tl mode return conf))
-	 ((eq? tl 'uint32)
-	  (equality-uint32 op lhs tl rhs tr mode return conf))
-	 ((eq? tr 'uint32)
-	  (equality-uint32 op rhs tr lhs tl mode return conf))
-	 ((and (memq op '(=== !==)) (or (eq? tl 'string) (eq? tr 'string)))
-	  (equality-string op rhs tr lhs tl mode return conf))
 	 (else
 	  (with-tmp lhs rhs mode return conf 'any
 	     (lambda (left right)
@@ -1033,14 +1107,15 @@
 	  (int32->fixnum (bit-ands32 sexpr #s32:31)))
 	 ((inrange-32? expr)
 	  (case (j2s-vtype expr)
-	     ((int32) (asfixnum sexpr 'int32))
-	     ((uint32) (asfixnum sexpr 'uint32))
-	     (else sexpr)))
+	     ((int32) `(bit-and ,(asfixnum sexpr 'int32) 31))
+	     ((uint32) `(bit-and ,(asfixnum sexpr 'uint32) 31))
+	     (else `(bit-and ,sexpr 31))))
 	 (else
 	  (case (j2s-vtype expr)
-	     ((int32) (asfixnum sexpr 'int32))
-	     ((uint32) (asfixnum sexpr 'uint32))
-	     ((integer) sexpr)
+	     ((int32) `(bit-and ,(asfixnum sexpr 'int32) 31))
+	     ((uint32) `(bit-and ,(asfixnum sexpr 'uint32) 31))
+	     ((integer int53) `(bit-and ,sexpr 31))
+	     ((real) `(bit-and (flonum->fixnum ,sexpr) 31))
 	     (else `(bit-and (js-tointeger ,sexpr %this) 31))))))
    
    (with-tmp lhs rhs mode return conf '*
@@ -1139,6 +1214,13 @@
 	  (str-append flip
 	     left
 	     `(js-ascii->jsstring (js-real->string ,right))))
+	 ((eq? tl 'number)
+	  (str-append flip
+	     `(js-ascii->jsstring
+		 (if (fixnum? ,left)
+		     (fixnum->string ,left)
+		     (js-real->string ,left)))
+	     right))
 	 ((eq? tr 'number)
 	  (str-append flip
 	     left
@@ -1157,6 +1239,15 @@
 	    (let ((tl (j2s-vtype lhs))
 		  (tr (j2s-vtype rhs)))
 	       (cond
+		  ((and (eq? type 'any)
+			(or (and (eq? tl 'number) (memq tr '(int32 uint32)))
+			    (and (memq tl '(int32 uint32)) (eq? tr 'number))))
+		   ;; type is forced to any on prefix/suffix generic increments
+		   ;; this case is used to generate smaller codes
+		   (binop-any-any '+ type
+		      (box left tl conf)
+		      (box right tr conf)
+		      #f))
 		  ((eq? tl 'string)
 		   (add-string loc type left tl lhs right tr rhs
 		      mode return conf #f))
@@ -1178,6 +1269,10 @@
 		  ((eq? tl 'bint)
 		   (binop-bint-xxx '+ type lhs tl left rhs tr right conf #f))
 		  ((eq? tr 'bint)
+		   (binop-int53-xxx '+ type rhs tr right lhs tl left conf #t))
+		  ((eq? tl 'int53)
+		   (binop-int53-xxx '+ type lhs tl left rhs tr right conf #f))
+		  ((eq? tr 'int53)
 		   (binop-bint-xxx '+ type rhs tr right lhs tl left conf #t))
 		  ((eq? tl 'real)
 		   (binop-real-xxx '+ type lhs tl left rhs tr right conf #f))
@@ -1198,7 +1293,7 @@
 			    (box left tl conf)
 			    (box right tr conf)
 			    #f)))))))))
-   
+
    (if (type-number? type)
        (js-arithmetic-addsub loc '+ type lhs rhs mode return conf)
        (add loc type lhs rhs mode return conf)))
@@ -1214,6 +1309,15 @@
 	       (tr (j2s-vtype rhs)))
 	    (epairify loc
 	       (cond
+		  ((and (eq? type 'any)
+			(or (and (eq? tl 'number) (memq tr '(int32 uint32)))
+			    (and (memq tl '(int32 uint32)) (eq? tr 'number))))
+		   ;; type is forced to any on prefix/suffix generic increments
+		   ;; this case is used to generate smaller codes
+		   (binop-any-any op type
+		      (box left tl conf)
+		      (box right tr conf)
+		      #f))
 		  ((eq? tl 'int32)
 		   (binop-int32-xxx op type lhs tl left rhs tr right conf #f))
 		  ((eq? tr 'int32)
@@ -1410,7 +1514,10 @@
 		     (/fl (int32->flonum ,n) (fixnum->flonum ,(bit-lsh 1 k))))))
 	    (else
 	     `(let ((,n ,(j2s-scheme lhs mode return conf)))
-		 (if (and (fixnum? ,n) (=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0))
+		 (if ,(if (memq (j2s-type lhs) '(int32 uint32))
+			  `(=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0)
+			  `(and (fixnum? ,n)
+				(=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0)))
 		     ,(if (positive? lhs)
 			  `(bit-rsh ,n ,k)
 			  `(/pow2fx ,n ,k))
@@ -1511,102 +1618,118 @@
 			 ((uint32) (divu32 left right tl tr))
 			 (else (divjs left right tl tr))))))))))
 
-;*---------------------------------------------------------------------*/
-;*    js-arithmetic-remainder ...                                      */
-;*---------------------------------------------------------------------*/
-(define (js-arithmetic-remainder loc type lhs rhs mode return conf)
-   
-   (define (remainderjs left right tl tr)
-      (cond
-	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
-	  `(remainderu32 ,left ,right))
-	 ((and (eq? tl 'int32) (eq? tr 'int32))
-	  `(remainders32 ,left ,right))
-	 ((and (eq? tl 'uint32) (eq? tr 'int32) (inrange-int32? lhs))
-	  `(remainders32 (uint32->int32 ,left) ,right))
-	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))
-	  `(remainders32 ,left (uint32->int32 ,right)))
-	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
-	  `(if (fixnum? ,left)
-	       (remainderfx ,left ,(asfixnum right tr))
-	       (remainder ,left ,(todouble right tr conf))))
-	 ((eq? tr 'int32)
-	  `(if (fixnum? ,left)
-	       (remainderfx ,left ,(asfixnum right tr))
-	       (remainder ,left ,(todouble right tr conf))))
-	 ((eq? tr 'uint32)
-	  `(if (fixnum? ,left)
-	       (remainderfx ,left ,(asfixnum right tr))
-	       (remainderfl ,(todouble left tl conf) ,(todouble right tr conf))))
-	 (else
-	  `(if (fixnums? ,left ,right)
-	       (remainderfx ,left ,right)
-	       (remainderfl ,(todouble left tl conf) ,(todouble right tr conf))))))
-   
-   (define (remainders32 left right tl tr)
-      (cond
-	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
-	  `(uint32->int32 (remainderu32 ,left ,right)))
-	 ((and (eq? tl 'int32) (eq? tr 'int32))
-	  `(remainders32 ,left ,right))
-	 ((and (eq? tl 'uint32) (eq? tr 'int32) (inrange-int32? lhs))
-	  `(remainders32 (uint32->int32 ,left) ,right))
-	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))
-	  `(remainders32 ,left (uint32->int32 ,right)))
-	 ((and (eq? tl 'int53) (eq? tr 'uint32))
-	  `(remainderfx ,left ,(asfixnum right tr)))
-	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
-	  `(if (fixnum? ,left)
-	       (fixnum->int32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr conf))))
-		  (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n)))))
-	 ((eq? tr 'int32)
-	  `(if (fixnum? ,left)
-	       (fixnum->int32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr conf))))
-		  (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n)))))
-	 (else
-	  `(let ((n (remainder ,(todouble left tl conf) ,(todouble right tr conf))))
-	      (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n))))))
-   
-   (define (remainderu32 left right tl tr)
-      (cond
-	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
-	  `(remainderu32 ,left ,right))
-	 ((and (eq? tl 'int32) (eq? tr 'int32))
-	  `(int32->uint32 (remainders32 ,left ,right)))
-	 ((and (eq? tl 'uint32) (eq? tr 'int32) (inrange-int32? lhs))
-	  `(int32->uint32 (remainders32 (uint32->int32 ,left) ,right)))
-	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))
-	  `(int32->uint32 (remainders32 ,left (uint32->int32 ,right))))
-	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
-	  `(if (fixnum? ,left)
-	       (fixnum->uint32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr conf))))
-		  (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n)))))
-	 ((eq? tr 'int32)
-	  `(if (fixnum? ,left)
-	       (fixnum->uint32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr conf))))
-		  (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n)))))
-	 (else
-	  `(let ((n (remainder ,(todouble left tl conf) ,(todouble right tr conf))))
-	      (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n))))))
-   
-   (with-tmp lhs rhs mode return conf '*
-      (lambda (left right)
-	 (let ((tl (j2s-vtype lhs))
-	       (tr (j2s-vtype rhs)))
-	    (epairify loc
-	       (case type
-		  ((int32) (remainders32 left right tl tr))
-		  ((uint32) (remainderu32 left right tl tr))
-		  (else (remainderjs left right tl tr))))))))
-
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-arithmetic-remainder ...                                      *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (js-arithmetic-remainder loc type lhs rhs mode return conf) */
+;*                                                                     */
+;*    (define (remainderjs left right tl tr)                           */
+;*       (cond                                                         */
+;* 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))                      */
+;* 	  `(remainderu32 ,left ,right))                                */
+;* 	 ((and (eq? tl 'int32) (eq? tr 'int32))                        */
+;* 	  (remainders32-minus-zero left right                          */
+;* 	     type lhs rhs mode return conf))                           */
+;* 	 ((and (eq? tl 'uint32) (eq? tr 'int32) (inrange-int32? lhs))  */
+;* 	  `(remainders32 (uint32->int32 ,left) ,right))                */
+;* 	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))  */
+;* 	  (remainders32-minus-zero left `(uint32->int32 ,right)        */
+;* 	     type lhs rhs mode return conf))                           */
+;* 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))                  */
+;* 	  `(if (fixnum? ,left)                                         */
+;* 	       (remainderfx ,left ,(asfixnum right tr))                */
+;* 	       (remainderfl ,left ,(todouble right tr conf))))         */
+;* 	 ((eq? tr 'int32)                                              */
+;* 	  `(if (fixnum? ,left)                                         */
+;* 	       (remainderfx ,left ,(asfixnum right tr))                */
+;* 	       (remainderfl ,left ,(todouble right tr conf))))         */
+;* 	 ((eq? tr 'uint32)                                             */
+;* 	  `(if (fixnum? ,left)                                         */
+;* 	       (remainderfx ,left ,(asfixnum right tr))                */
+;* 	       (remainderfl ,(todouble left tl conf) ,(todouble right tr conf)))) */
+;* 	 (else                                                         */
+;* 	  `(if (fixnums? ,left ,right)                                 */
+;* 	       (remainderfx ,left ,right)                              */
+;* 	       (remainderfl ,(todouble left tl conf) ,(todouble right tr conf)))))) */
+;*                                                                     */
+;*    (define (remainders32 left right tl tr)                          */
+;*       (cond                                                         */
+;* 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))                      */
+;* 	  `(uint32->int32 (remainderu32 ,left ,right)))                */
+;* 	 ((and (eq? tl 'int32) (eq? tr 'int32))                        */
+;* 	  (remainders32-minus-zero left right                          */
+;* 	     type lhs rhs mode return conf))                           */
+;* 	 ((and (eq? tl 'uint32) (eq? tr 'int32) (inrange-int32? lhs))  */
+;* 	  `(remainders32 (uint32->int32 ,left) ,right))                */
+;* 	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))  */
+;* 	  (remainders32-minus-zero left `(uint32->int32 ,right)        */
+;* 	     type lhs rhs mode return conf))                           */
+;* 	 ((and (eq? tl 'int53) (eq? tr 'uint32))                       */
+;* 	  `(fixnum->int32 (remainderfx ,left ,(asfixnum right tr))))   */
+;* 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))                  */
+;* 	  `(if (fixnum? ,left)                                         */
+;* 	       (fixnum->int32 (remainderfx ,left ,(asfixnum right tr))) */
+;* 	       (let ((n (remainderfl ,left ,(todouble right tr conf)))) */
+;* 		  (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n))))) */
+;* 	 ((eq? tr 'int32)                                              */
+;* 	  `(if (fixnum? ,left)                                         */
+;* 	       (fixnum->int32 (remainderfx ,left ,(asfixnum right tr))) */
+;* 	       (let ((n (remainderfl ,left ,(todouble right tr conf)))) */
+;* 		  (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n))))) */
+;* 	 (else                                                         */
+;* 	  `(let ((n (remainderfl ,(todouble left tl conf) ,(todouble right tr conf)))) */
+;* 	      (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n)))))) */
+;*                                                                     */
+;*    (define (remainderu32 left right tl tr)                          */
+;*       (cond                                                         */
+;* 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))                      */
+;* 	  `(remainderu32 ,left ,right))                                */
+;* 	 ((and (eq? tl 'int32) (eq? tr 'int32))                        */
+;* 	  `(int32->uint32                                              */
+;* 	      ,(remainders32-minus-zero left right                     */
+;* 		  type lhs rhs mode return conf)))                     */
+;* 	 ((and (eq? tl 'uint32) (eq? tr 'int32) (inrange-int32? lhs))  */
+;* 	  `(int32->uint32 (remainders32 (uint32->int32 ,left) ,right))) */
+;* 	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))  */
+;* 	  `(int32->uint32                                              */
+;* 	      ,(remainders32-minus-zero left `(uint32->int32 ,right)   */
+;* 		  type lhs rhs mode return conf)))                     */
+;* 	 ((and (eq? tl 'int53) (eq? tr 'uint32))                       */
+;* 	  `(fixnum->uint32 (remainderfx ,left ,(asfixnum right tr))))  */
+;* 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))                  */
+;* 	  `(if (fixnum? ,left)                                         */
+;* 	       (fixnum->uint32 (remainderfx ,left ,(asfixnum right tr))) */
+;* 	       (let ((n (remainderfl ,left ,(todouble right tr conf)))) */
+;* 		  (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n))))) */
+;* 	 ((eq? tr 'int32)                                              */
+;* 	  `(if (fixnum? ,left)                                         */
+;* 	       (fixnum->uint32 (remainderfx ,left ,(asfixnum right tr))) */
+;* 	       (let ((n (remainderfl ,left ,(todouble right tr conf)))) */
+;* 		  (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n))))) */
+;* 	 (else                                                         */
+;* 	  `(let ((n (remainderfl ,(todouble left tl conf) ,(todouble right tr conf)))) */
+;* 	      (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n)))))) */
+;*                                                                     */
+;*    (with-tmp lhs rhs mode return conf '*                            */
+;*       (lambda (left right)                                          */
+;* 	 (let ((tl (j2s-vtype lhs))                                    */
+;* 	       (tr (j2s-vtype rhs)))                                   */
+;* 	    (epairify loc                                              */
+;* 	       (case type                                              */
+;* 		  ((int32) (remainders32 left right tl tr))            */
+;* 		  ((uint32) (remainderu32 left right tl tr))           */
+;* 		  (else (remainderjs left right tl tr))))))))          */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    js-arithmetic-% ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-arithmetic-% loc type lhs rhs mode return conf)
+
+   (define (number totype)
+      ;; if the range analysis has shown that the result is an uint, then
+      ;; the library function will always return an int
+      (if (eq? totype 'uint32) 'integer 'number))
+
    (with-tmp lhs rhs mode return conf '*
       (lambda (left right)
 	 (let ((tlv (j2s-vtype lhs))
@@ -1616,36 +1739,105 @@
 	    (epairify loc
 	       (cond
 		  ((and (eq? tlv 'int32) (eq? trv 'int32))
-		   `(if (=s32 ,right #s32:0)
-			+nan.0
-			(js-int32-tointeger (remainders32 ,left ,right))))
+		   (cond
+		      ((inrange-positive? rhs)
+		       (j2s-cast `(remainders32 ,left ,right)
+			  rhs 'int32 type conf))
+		      ((=s32 right #s32:0)
+		       +nan.0)
+		      (else
+		       (remainders32-minus-zero left right
+			  type lhs rhs mode return conf))))
 		  ((and (eq? tlv 'uint32) (eq? trv 'uint32))
-		   `(if (=u32 ,right #u32:0)
-			+nan.0
-			(js-uint32-tointeger (remainders32 ,left ,right))))
+		   (cond
+		      ((inrange-positive? rhs)
+		       (j2s-cast `(remainderu32 ,left ,right)
+			  lhs 'uint32 type conf))
+		      (else
+		       `(if (=u32 ,right #u32:0)
+			    +nan.0
+			    ,(j2s-cast `(remainderu32 ,left ,right)
+				lhs 'uint32 type conf)))))
 		  ((and (eq? tlv 'integer) (eq? trv 'integer))
 		   (with-tmp lhs rhs mode return conf 'any
 		      (lambda (left right)
 			 (if (and (number? right) (= right 0))
 			     +nan.0
-			     `(%$$NN ,left ,right)))))
+			     (j2s-cast `(%$$NN ,left ,right)
+				#f (number type) type conf)))))
 		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
-		   `(if (=u32 ,(asuint32 right trv) #u32:0)
-			+nan.0
-			(js-uint32-tointeger
-			   (remainderu32 ,(asuint32 left tlv) ,(asuint32 right trv)))))
+		   (cond
+		      ((not (uint32? right))
+		       `(if (=u32 ,(asuint32 right trv) #u32:0)
+			    +nan.0
+			    ,(j2s-cast `(remainderu32
+					   ,(asuint32 left tlv)
+					   ,(asuint32 right trv))
+				lhs 'uint32 type conf)))
+		      ((=u32 right #u32:0)
+		       +nan.0)
+		      (else
+		       (j2s-cast `(remainderu32
+				     ,(asuint32 left tlv)
+				     ,(asuint32 right trv))
+			  lhs 'uint32 type conf))))
+		  ((and (eq? tr 'uint32) (inrange-positive? rhs))
+		   (cond
+		      ((inrange-int32? rhs)
+		       `(if (fixnum? ,left)
+			    ,(j2s-cast `(remainderfx ,left
+					  ,(asfixnum right trv))
+			       lhs (number type) type conf)
+			    ,(if (m64? conf)
+				 (j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
+					       ,(tonumber64 right trv conf))
+				    lhs (number type) type conf)
+				 (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
+					       ,(tonumber32 right trv conf))
+				    lhs (number type) type conf))))
+		      ((m64? conf)
+		       `(if (fixnum? ,left)
+			    ,(j2s-cast `(remainderfx ,left
+					  ,(asfixnum right trv))
+			       lhs (number type) type conf)
+			    ,(j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
+					  ,(tonumber64 right trv conf))
+			       lhs (number type) type conf)))
+		      (else
+		       (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
+				     ,(tonumber32 right trv conf))
+			  lhs (number type) type conf))))
 		  (else
 		   (if (m64? conf)
 		       (if (and (number? right) (not (= right 0)))
-			   `(%$$NZ ,(tonumber64 left tlv conf)
-			       ,(tonumber64 right trv conf))
-			   `(%$$NN ,(tonumber64 left tlv conf)
-			       ,(tonumber64 right trv conf)))
+			   (j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
+					 ,(tonumber64 right trv conf))
+			      lhs (number type) type conf)
+			   (j2s-cast `(%$$NN ,(tonumber64 left tlv conf)
+					 ,(tonumber64 right trv conf))
+			      lhs (number type) type conf))
 		       (if (and (number? right) (not (= right 0)))
-			   `(%$$NZ ,(tonumber32 left tlv conf)
-			       ,(tonumber32 right trv conf))
-			   `(%$$NN ,(tonumber32 left tlv conf)
-			       ,(tonumber32 right trv conf)))))))))))
+			   (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
+					 ,(tonumber32 right trv conf))
+			      lhs (number type) type conf)
+			   (j2s-cast `(%$$NN ,(tonumber32 left tlv conf)
+					 ,(tonumber32 right trv conf))
+			      lhs (number type) type conf))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    remainders32-minus-zero ...                                      */
+;*    -------------------------------------------------------------    */
+;*    -1 % -1 must produce -0.0                                        */
+;*---------------------------------------------------------------------*/
+(define (remainders32-minus-zero left right type lhs rhs mode return conf)
+   (let ((tmp (gensym 'tmp)))
+      `(if (=s32 ,right #s32:0)
+	   +nan.0
+	   (let ((,tmp ,(j2s-cast `(remainders32 ,left ,right)
+			   lhs 'int32 type conf)))
+	      (if (and (=s32 ,tmp #s32:0) (<s32 ,left #s32:0))
+		  -0.0
+		  ,tmp)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    asint32 ...                                                      */
@@ -1703,25 +1895,19 @@
 ;*    known to fit the types but the static type is not known.         */
 ;*---------------------------------------------------------------------*/
 (define (coerceint32 val type::symbol conf)
-   (if (m64? conf)
-       (asint32 val type)
-       `(if (fixnum? ,val) ,(asint32 val type) (flonum->int32 ,val))))
+   `(if (fixnum? ,val) ,(asint32 val type) (flonum->int32 ,val)))
    
 ;*---------------------------------------------------------------------*/
 ;*    coerceuint32 ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (coerceuint32 val type::symbol conf)
-   (if (m64? conf)
-       (asuint32 val type)
-       `(if (fixnum? ,val) ,(asuint32 val type) (flonum->uint32 ,val))))
+   `(if (fixnum? ,val) ,(asuint32 val type) (flonum->uint32 ,val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    coercereal ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (coercereal val type::symbol conf)
-   (if (m64? conf)
-       `(fixnum->flonum ,val)
-       `(if (fixnum? ,val) (fixnum->flonum ,val) ,val)))
+   `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))
 
 ;*---------------------------------------------------------------------*/
 ;*    toflonum ...                                                     */
@@ -1744,6 +1930,14 @@
 	  ((real) val)
 	  ((number) `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))
 	  (else (error "toflonum" "Cannot convert type" type))))))
+
+;*---------------------------------------------------------------------*/
+;*    tonumber ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (tonumber val type::symbol conf)
+   (if (m64? conf)
+       (tonumber64 val type conf)
+       (tonumber32 val type conf)))
        
 ;*---------------------------------------------------------------------*/
 ;*    tonumber32 ...                                                   */
@@ -1762,6 +1956,8 @@
        (if (and (uint32? val) (<u32 val (bit-lshu32 #u32:1 30)))
 	   (uint32->int32 val)
 	   `(uint32->int32 ,val)))
+      ((int53)
+       (if (fixnum? val) (fixnum->int32 val) `(fixnum->int32 ,val)))
       (else
        (if (fixnum? val)
 	   (fixnum->int32 val)
@@ -1778,6 +1974,10 @@
        val)
       ((integer)
        (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
+      ((int53)
+       (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
+      ((real)
+       (if (flonum? val) (flonum->uint32 val) `(flonum->uint32 ,val)))
       (else
        (if (fixnum? val)
 	   (fixnum->uint32 val)
@@ -1873,11 +2073,14 @@
 ;*    fixnums? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (fixnums? left tl right tr)
+   (define (type-fixnum? type)
+      (memq type '(int30 int53 bint)))
+   
    (cond
       ((or (flonum? left) (flonum? right))
        #f)
-      ((eq? tl 'integer) (if (eq? tr 'integer) #t `(fixnum? ,right)))
-      ((eq? tr 'integer) `(fixnum? ,left))
+      ((type-fixnum? tl) (if (type-fixnum? tr) #t `(fixnum? ,right)))
+      ((type-fixnum? tr) `(fixnum? ,left))
       ((and (memq tl '(int53 integer number any unknown))
 	    (memq tr '(int53 integer number any unknown)))
        (cond
@@ -1990,7 +2193,7 @@
 	      left (asint32 right tr) flip)))
       ((integer)
        (cond
-	  ((or (inrange-int30? right) (m64? conf))
+	  ((or (inrange-int30? rhs) (m64? conf))
 	   (binop-fixnum-fixnum op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  ((inrange-int32? rhs)
@@ -2005,6 +2208,9 @@
       ((real)
        (binop-flonum-flonum op type
 	  (asreal left tl) right flip))
+      ((int53)
+       (binop-fixnum-fixnum op type
+	  (asfixnum left tl) right flip))
       (else
        (cond
 	  ((inrange-int30? rhs)
@@ -2023,11 +2229,8 @@
 	   `(if (fixnum? ,right)
 		,(binop-fixnum-fixnum op type
 		    (asfixnum left tl) right flip)
-		,(if (memq type '(int32 uint32 integer bint real number))
-		     (binop-number-number op type
-			(box left tl conf) (box right tr conf) flip)
-		     (binop-any-any op type
-			(box left tl conf) (box right tr conf) flip))))))))
+		,(binop-any-any op type
+		   (box left tl conf) (box right tr conf) flip)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop-uint32-xxx ...                                             */
@@ -2095,12 +2298,18 @@
 	  ((and (inrange-int32? lhs) (inrange-int32? rhs))
 	   (binop-int32-int32 op type
 	      (asint32 left tl) (coerceint32 right tr conf) flip))
+	  ((inrange-int30? lhs)
+	   (binop-bint-xxx op type lhs 'bint (asfixnum left tl)
+	      rhs tr right conf flip))
 	  (else
 	   (binop-number-number op type
 	      (box left tl conf) right flip))))
       ((real)
        (binop-flonum-flonum op type
 	  (asreal left tl) right flip))
+      ((int53)
+       (binop-fixnum-fixnum op type
+	  (asfixnum left tl) right flip))
       (else
        (cond
 	  ((inrange-uint30? rhs)
@@ -2119,11 +2328,30 @@
 	   `(if (fixnum? ,right)
 		,(binop-fixnum-fixnum op type
 		    (asfixnum left tl) right flip)
-		,(if (memq type '(int32 uint32 integer bint real number))
-		     (binop-number-number op type
-			(box left tl conf) (box right tr conf) flip)
-		     (binop-any-any op type
-			(box left tl conf) (box right tr conf) flip))))))))
+		,(binop-any-any op type
+		    (box left tl conf) (box right tr conf) flip)))))))
+
+;*---------------------------------------------------------------------*/
+;*    binop-int53-xxx ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Only used on 64-bit platforms.                                   */
+;*---------------------------------------------------------------------*/
+(define (binop-int53-xxx op type lhs tl left rhs tr right conf flip)
+   (case tr
+      ((int32)
+       (binop-fixnum-fixnum op type left (asfixnum right tr) flip))
+      ((uint32)
+       (binop-fixnum-fixnum op type left (asfixnum right tr) flip))
+      ((int53)
+       (binop-fixnum-fixnum op type left right flip))
+      (else
+       `(if (fixnum? ,right)
+	    ,(binop-fixnum-fixnum op type left right flip)
+	    ,(if (memq type '(int32 uint32 integer bint real number))
+		 (binop-number-number op type
+		    (box left tl conf) (box right tr conf) flip)
+		 (binop-any-any op type
+		    (box left tl conf) (box right tr conf) flip))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop-bint-xxx ...                                               */
@@ -2223,11 +2451,11 @@
 		(binop-number-number op type
 		   left right flip)))
 	  ((integer)
-	   `(if (and (fixnum? ,left) (fixnum? ,right))
-		,(binop-fixnum-fixnum op type
-		   left right flip)
-		,(binop-number-number op type
-		   left right flip)))
+	   (if-fixnums? left tl right tr
+	      (binop-fixnum-fixnum op type
+		 left right flip)
+	      (binop-number-number op type
+		 left right flip)))
 	  ((real)
 	   (binop-flonum-flonum op type 
 	      (coercereal left tl conf) right flip))
@@ -2252,11 +2480,8 @@
 	       `(if (fixnum? ,right)
 		    ,(binop-fixnum-fixnum op type
 			left right flip)
-		    ,(if (memq type '(int32 uint32 integer bint real number))
-			 (binop-number-number op type
-			    left (box right tr conf) flip)
-			 (binop-any-any op type
-			    left (box right tr conf) flip)))))))))
+		    ,(binop-any-any op type
+			left (box right tr conf) flip))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop-real-xxx ...                                               */
@@ -2304,40 +2529,52 @@
    (if flip `(,op ,right ,left) `(,op ,left ,right)))
    
 (define (binop-int32-int32 op type left right flip)
-   (let ((op (cond
-		((memq op '(== ===)) '=s32)
-		((eq? op '<<=) '<=s32)
-		((eq? op '>>=) '>=s32)
-		(else (symbol-append op 's32)))))
+   (let ((ops32 (cond
+		   ((memq op '(== ===)) '=s32)
+		   ((eq? op '<<=) '<=s32)
+		   ((eq? op '>>=) '>=s32)
+		   (else (symbol-append op 's32)))))
       (case type
 	 ((int32)
-	  (binop-flip op left right flip))
+	  (binop-flip ops32 left right flip))
 	 ((uint32)
-	  `(int32->uint32 ,(binop-flip op left right flip)))
+	  `(int32->uint32 ,(binop-flip ops32 left right flip)))
 	 ((real)
-	  `(int32->flonum ,(binop-flip op left right flip)))
+	  (binop-flonum-flonum op type
+	     (asreal left 'int32) (asreal right 'int32)
+	     flip))
+	 ((int53)
+	  (binop-fixnum-fixnum op type
+	     (asfixnum left 'int32) (asfixnum right 'int32)
+	     flip))
 	 ((bool)
-	  (binop-flip op left right flip))
+	  (binop-flip ops32 left right flip))
 	 (else
-	  (binop-flip (symbol-append op '/overflow) left right flip)))))
+	  (binop-flip (symbol-append ops32 '/overflow) left right flip)))))
    
 (define (binop-uint32-uint32 op type left right flip)
-   (let ((op (cond
-		((memq op '(== ===)) '=u32)
-		((eq? op '<<=) '<=u32)
-		((eq? op '>>=) '>=u32)
-		(else (symbol-append op 'u32)))))
+   (let ((opu32 (cond
+		   ((memq op '(== ===)) '=u32)
+		   ((eq? op '<<=) '<=u32)
+		   ((eq? op '>>=) '>=u32)
+		   (else (symbol-append op 'u32)))))
       (case type
 	 ((int32)
-	  `(uint32->int32 ,(binop-flip op left right flip)))
+	  `(uint32->int32 ,(binop-flip opu32 left right flip)))
 	 ((uint32)
-	  (binop-flip op left right flip))
+	  (binop-flip opu32 left right flip))
 	 ((real)
-	  `(uint32->flonum ,(binop-flip op left right flip)))
+	  (binop-flonum-flonum op type
+	     (asreal left 'uint32) (asreal right 'uint32)
+	     flip))
+	 ((int53)
+	  (binop-fixnum-fixnum op type
+	     (asfixnum left 'uint32) (asfixnum right 'uint32)
+	     flip))
 	 ((bool)
-	  (binop-flip op left right flip))
+	  (binop-flip opu32 left right flip))
 	 (else
-	  (binop-flip (symbol-append op '/overflow) left right flip)))))
+	  (binop-flip (symbol-append opu32 '/overflow) left right flip)))))
    
 (define (binop-fixnum-fixnum op type left right flip)
    (let ((op (cond
@@ -2350,6 +2587,8 @@
 	  `(fixnum->int32 ,(binop-flip op left right flip)))
 	 ((uint32)
 	  `(fixnum->uint32 ,(binop-flip op left right flip)))
+	 ((int53)
+	  (binop-flip op left right flip))
 	 ((real)
 	  `(fixnum->flonum ,(binop-flip op left right flip)))
 	 ((bool)

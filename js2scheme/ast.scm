@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/ast.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Aug  6 15:37:29 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 13:59:50 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -53,6 +53,57 @@
 	      (direct-eval::bool (default #t))
 	      (source-map (default #f)))
 
+	   (class J2SDecl::J2SStmt
+	      id::symbol
+	      (_scmid (default #f) (info '("notraverse")))
+	      (key (default (ast-decl-key)) (info '("notraverse")))
+	      ;; writable=#f iff decl is const
+	      (writable (default #t) (info '("notraverse")))
+	      (immutable (default #f) (info '("notraverse")))
+	      (ronly (default #f) (info '("notraverse")))
+	      (scope::symbol (default 'local) (info '("notraverse")))
+	      (usecnt::int (default 0) (info '("notraverse")))
+	      (useinloop::bool (default #f) (info '("notraverse")))
+	      (useinfun::bool (default #f) (info '("notraverse")))
+	      ;; usage: init, new, ref, assig, get (field), set (field), call
+	      ;; delete
+	      (usage::pair-nil (default '()) (info '("notraverse")))
+	      ;; variable range
+	      (binder::symbol (default 'var) (info '("notraverse")))
+	      ;; user declared type, if set, assign will be guarded
+	      (utype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; initial parameter type
+	      (itype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; computed variable type value
+	      (vtype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; initial parameter range
+	      (irange::obj (default #unspecified) (info '("notraverse")))
+	      ;; computed variable range
+	      (vrange::obj (default #unspecified) (info '("notraverse")))
+	      ;; variable 
+	      (hint::pair-nil (default '()) (info '("notraverse"))))
+
+	   (class J2SDeclArguments::J2SDecl)
+	   
+	   (class J2SDeclInit::J2SDecl
+	      (val::J2SExpr (info '("ast"))))
+
+	   (class J2SDeclFun::J2SDeclInit
+	      (parent read-only (default #f))
+	      (expression::bool (default #f))
+	      (hintinfo::obj (default #f) (info '("notraverse"))))
+
+	   (class J2SDeclFunType::J2SDeclFun)
+
+	   (class J2SDeclClass::J2SDecl
+	      (val::J2SClass (info '("ast"))))
+
+	   (class J2SDeclSvc::J2SDeclFun)
+
+	   (final-class J2SDeclExtern::J2SDeclInit
+	      (bind::bool read-only (default #f))
+	      (hidden-class::bool read-only (default #t)))
+
 	   (abstract-class J2SExpr::J2SNode
 	      (type::symbol (default 'unknown) (info '("notraverse")))
 	      (hint::pair-nil (default '()) (info '("notraverse")))
@@ -99,10 +150,6 @@
 	   (final-class J2SForIn::J2SLoop
 	      ;; op: in, of
 	      (op::symbol read-only (default 'in))
-	      (lhs::J2SNode (info '("ast")))
-	      (obj::J2SExpr (info '("ast"))))
-	   
-	   (final-class J2SForOf::J2SLoop
 	      (lhs::J2SNode (info '("ast")))
 	      (obj::J2SExpr (info '("ast"))))
 	   
@@ -158,6 +205,7 @@
 	   
 	   (class J2SFun::J2SExpr
 	      (rtype::symbol (default 'unknown) (info '("notraverse")))
+	      (rrange::obj (default #unspecified) (info '("notraverse")))
 	      (idthis::obj (default 'this) (info '("notraverse")))
 	      (idgen read-only (default #f) (info '("notraverse")))
 	      (mode::symbol (default 'normal) (info '("notraverse")))
@@ -168,6 +216,7 @@
 	      (generator::bool (default #f) (info '("notraverse")))
 	      (optimize (default #t) (info '("notraverse")))
 	      (thisp (default #f) (info '("notraverse")))
+	      (argumentsp (default #f) (info '("notraverse")))
 	      (params::pair-nil (default '()))
 	      (constrsize::int (default 3) (info '("notraverse")))
 	      (src::bool (default #t) (info '("notraverse")))
@@ -234,9 +283,7 @@
 
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
-	      (itype::symbol (default 'any))
 	      (rtype::symbol (default 'any))
-	      (vtype::symbol (default 'any))
 	      (module read-only (default #f)))
 
 	   (class J2SLetRef::J2SRef)
@@ -256,47 +303,6 @@
 	      (test::J2SExpr (info '("ast")))
 	      (then::J2SExpr (info '("ast")))
 	      (else::J2SExpr (info '("ast"))))
-
-	   (class J2SDecl::J2SStmt
-	      id::symbol
-	      (_scmid (default #f) (info '("notraverse")))
-	      (key (default (ast-decl-key)) (info '("notraverse")))
-	      ;; writable=#f iff decl is const
-	      (writable (default #t) (info '("notraverse")))
-	      (immutable (default #f) (info '("notraverse")))
-	      (ronly (default #f) (info '("notraverse")))
-	      (scope::symbol (default 'local) (info '("notraverse")))
-	      (usecnt::int (default 0) (info '("notraverse")))
-	      (useinloop::bool (default #f) (info '("notraverse")))
-	      (useinfun::bool (default #f) (info '("notraverse")))
-	      ;; usage: init, new, ref, assig, get (field), set (field), call
-	      ;; delete
-	      (usage::pair-nil (default '()) (info '("notraverse")))
-	      (utype::symbol (default 'unknown) (info '("notraverse")))
-	      (itype::symbol (default 'unknown) (info '("notraverse")))
-	      (vtype::symbol (default 'unknown) (info '("notraverse")))
-	      (hint::pair-nil (default '()) (info '("notraverse")))
-	      (range::obj (default #unspecified) (info '("notraverse")))
-	      (binder::symbol (default 'var) (info '("notraverse"))))
-	   
-	   (class J2SDeclInit::J2SDecl
-	      (val::J2SExpr (info '("ast"))))
-
-	   (class J2SDeclFun::J2SDeclInit
-	      (parent read-only (default #f))
-	      (expression::bool (default #f))
-	      (hintinfo::obj (default #f) (info '("notraverse"))))
-
-	   (class J2SDeclFunType::J2SDeclFun)
-
-	   (class J2SDeclClass::J2SDecl
-	      (val::J2SClass (info '("ast"))))
-
-	   (class J2SDeclSvc::J2SDeclFun)
-
-	   (final-class J2SDeclExtern::J2SDeclInit
-	      (bind::bool read-only (default #f))
-	      (hidden-class::bool read-only (default #t)))
 
 	   (abstract-class J2SLiteral::J2SExpr)
 
@@ -421,8 +427,9 @@
 
 	   (final-class J2SOPTInitSeq::J2SSeq
 	      ref::J2SRef
-	      (cmap0::symbol read-only)
-	      (cmap1::symbol read-only)
+	      (cmap0 read-only)
+	      (cmap1 read-only)
+	      (cmap2 read-only)
 	      (offset::symbol read-only))
 
 	   (final-class J2SDProducer::J2SExpr

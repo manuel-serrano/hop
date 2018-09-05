@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/public.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/public.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jul 18 08:49:46 2018 (serrano)                */
+;*    Last change :  Sun Sep  2 09:45:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -117,6 +117,7 @@
 	   
 	   (js-raise-reference-error/loc ::JsGlobalObject loc ::bstring obj . args)
 	   (inline js-totest::bool ::obj)
+	   (inline js-totest-likely-object::bool ::obj)
 	   (js-toboolean::bool ::obj)
 	   (generic js-tonumber ::obj ::JsGlobalObject)
 	   (generic js-tointeger ::obj ::JsGlobalObject)
@@ -632,16 +633,17 @@
 	  (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))))
 
 (define (js-calln% %this fun this args)
-   (with-access::JsFunction fun (procedure arity minlen rest len)
-      (let ((n (+fx 1 (length args))))
+   (with-access::JsFunction fun (procedure method arity minlen rest len)
+      (let ((n (+fx 1 (length args)))
+	    (proc (if (and method (js-object? this)) method procedure)))
 	 (cond
 	    ((=fx arity n)
-	     (apply procedure this args))
+	     (apply proc this args))
 	    ((>fx arity n)
 	     (if (>fx minlen 0)
 		 (js-raise-type-error %this
 		    "wrong number of arguments" (cons (length args) minlen))
-		 (apply procedure this
+		 (apply proc this
 		    (append args
 		       (make-list (-fx arity n)
 			  (js-undefined))))))
@@ -649,7 +651,7 @@
 	     (if (>fx minlen 0)
 		 (js-raise-type-error %this
 		    "wrong number of arguments" (cons (length args) minlen))
-		 (apply procedure this (take args (-fx arity 1)))))
+		 (apply proc this (take args (-fx arity 1)))))
 	    (else
 	     (cond
 		((and (<=fx (-fx n 1) minlen) (>fx minlen 0))
@@ -657,14 +659,14 @@
 		    "wrong number of arguments" (cons (length args) minlen)))
 		((<=fx (-fx n 1) len)
 		 (if (not rest)
-		     (apply procedure this
+		     (apply proc this
 			(append args (make-list (-fx (negfx arity) (+fx n 1)))))
-		     (apply procedure this
+		     (apply proc this
 			(append args (js-rest-args %this (-fx (+fx len 1) n))))))
 		((not rest)
-		 (apply procedure this args))
+		 (apply proc this args))
 		(else
-		 (apply procedure this
+		 (apply proc this
 		    (append (take args len)
 		       (list
 			  (js-vector->jsarray
@@ -965,6 +967,15 @@
    (if (boolean? obj) obj (js-toboolean obj)))
       
 ;*---------------------------------------------------------------------*/
+;*    js-totest-likely-object ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.5         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-totest-likely-object obj)
+   (or (and (object? obj) (eq? (object-class obj) JsObject))
+       (js-toboolean obj)))
+      
+;*---------------------------------------------------------------------*/
 ;*    js-toboolean ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.2          */
@@ -972,11 +983,12 @@
 (define (js-toboolean obj)
    (cond
       ((eq? obj (js-null)) #f)
+      ((boolean? obj) obj)
+      ((eq? obj (js-undefined)) #f)
+      ((js-jsstring? obj) (js-jsstring->bool obj))
+      ((object? obj) #t)
       ((fixnum? obj) (not (=fx obj 0)))
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
-      ((js-jsstring? obj) (js-jsstring->bool obj))
-      ((eq? obj (js-undefined)) #f)
-      ((boolean? obj) obj)
       (else #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -1021,7 +1033,7 @@
 	  ((nanfl? obj) 0)
 	  ((or (=fl obj +inf.0) (=fl obj -inf.0))
 	   obj)
-	  ((<fl obj 0.)
+	  ((=fx (signbitfl obj) 1)
 	   (*fl -1. (floor (abs obj))))
 	  (else
 	   (floor obj))))
@@ -1262,7 +1274,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.1       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-equal? o1 o2 %this::JsGlobalObject)
-   (or (and (eq? o1 o2) (not (flonum? o1))) (js-equality? o1 o2 %this)))
+   (or (and (eq? o1 o2) (not (flonum? o1)))
+       (and (not (fixnums? o1 o2)) (js-equality? o1 o2 %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equal-sans-flonum? ...                                        */

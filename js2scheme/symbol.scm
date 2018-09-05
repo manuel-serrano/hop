@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/symbol.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/symbol.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Aug  5 19:53:09 2018 (serrano)                */
+;*    Last change :  Mon Aug 13 18:44:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -25,8 +25,6 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_lexer)
-
-   (static (class J2SDeclArguments::J2SDecl))
 
    (export j2s-symbol-stage))
 
@@ -274,9 +272,7 @@
 			  (collect* body)))
 		(arguments (instantiate::J2SDeclArguments
 			      (id 'arguments)
-			      (itype 'arguments)
-			      (utype 'arguments)
-			      (vtype (if (eq? fmode 'normal) 'any 'arguments))
+			      (utype (if (eq? fmode 'normal) 'any 'arguments))
 			      (loc loc)))
 		(envl (append decls params))
 		(env1 (append envl env0))
@@ -306,7 +302,7 @@
 		(set! body (walk! body nenv fmode withs nwenv genv ctx conf)))
 	    (with-access::J2SDeclArguments arguments (usecnt)
 	       (when (>fx usecnt 0)
-		  (with-access::J2SFun this (vararg params)
+		  (with-access::J2SFun this (vararg argumentsp params)
 		     (if vararg
 			 (with-access::J2SDecl (car (last-pair params)) (id loc)
 			    (raise
@@ -316,7 +312,9 @@
 				  (obj id)
 				  (fname (cadr loc))
 				  (location (caddr loc)))))
-			 (set! vararg 'arguments))))))))
+			 (begin
+			    (set! argumentsp arguments)
+			    (set! vararg 'arguments)))))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -588,7 +586,7 @@
 	    (else
 	     (let ((decl (instantiate::J2SDecl
 			    (ronly #t)
-			    (vtype 'any)
+			    (utype 'any)
 			    (loc loc)
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))

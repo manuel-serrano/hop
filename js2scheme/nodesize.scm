@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/nodesize.scm            */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/nodesize.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 24 07:26:29 2017                          */
-;*    Last change :  Sun Jun  3 07:22:52 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 08:09:12 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Compute an AST size (used when inlining)                         */
@@ -82,7 +82,7 @@
 (define-method (node-size this::J2SReturn)
    (with-access::J2SReturn this (expr)
       ;; an extra weight as be counter when declarting the function
-      (+fx 1 (node-size expr))))
+      (+fx 3 (node-size expr))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SLetBLock ...                                      */

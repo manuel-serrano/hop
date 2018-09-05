@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Sep  5 14:06:20 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 19:22:47 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -48,7 +48,7 @@
    (map (lambda (e)
 	   (apply builtin-method e))
       `(;; string methods
-	("fromCharCode" js-jsstring-fromcharcode String (any) %this)
+	("fromCharCode" ,js-jsstring-fromcharcode String (any) %this)
 	("charAt" js-jsstring-charat string (any) %this)
 	("charAt" js-jsstring-maybe-charat any (any) %this)
 	("charCodeAt" ,j2s-jsstring-charcodeat string (any) %this)
@@ -60,6 +60,7 @@
 	("substring" js-jsstring-substring string (any any) %this)
 	("substring" js-jsstring-maybe-substring any (any any) %this)
 	("substr" js-jsstring-substr string (any any) %this)
+	("substr" ,js-jsstring-substr string (any) %this)
 	("substr" js-jsstring-maybe-substr any (any any) %this)
 	("toUpperCase" js-jsstring-touppercase string () #f)
 	("toUpperCase" js-jsstring-maybe-touppercase any () %this)
@@ -120,6 +121,25 @@
 				     (cdr args)
 				     (list (J2SUndefined))))
 		     mode return conf)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-fromcharcode ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-fromcharcode obj args mode return conf)
+   `(js-jsstring-fromcharcode
+       ;; direct access to String, skip lookup
+       (with-access::JsGlobalObject %this (js-string) js-string)
+       ,@(map (lambda (arg) (j2s-scheme arg mode return conf)) args)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-substr ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-substr obj args mode return conf)
+   `(js-jsstring-substr
+       ,(j2s-scheme obj mode return conf)
+       ,(j2s-scheme (car args) mode return conf)
+       (js-undefined)
+       %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function ...                                           */
@@ -277,7 +297,8 @@
 					'js-method-call-name/cache)))
 			   `(,call
 			       ,j2s-unresolved-call-workspace
-			       ,(j2s-scheme obj mode return conf)
+			       ,(box (j2s-scheme obj mode return conf)
+				   (j2s-type obj) conf)
 			       ',(string->symbol val)
 			       ,(js-pcache ccache)
 			       ,(js-pcache ocache)
@@ -291,11 +312,13 @@
 				    args))))))
 		(else
 		 (call-unknown-function fun
-		    (list (j2s-scheme obj mode return conf))
+		    (list (box (j2s-scheme obj mode return conf)
+			     (j2s-type obj) conf))
 		    args))))
 	    (else
 	     (call-unknown-function fun
-		(list (j2s-scheme obj mode return conf))
+		(list
+		   (box (j2s-scheme obj mode return conf) (j2s-type obj) conf))
 		args)))))
 
    (define (call-globalref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
@@ -305,7 +328,7 @@
 	       (case id
 		  ((Math)
 		   (j2s-math-builtin-method fun args
-		      mode return conf))
+		      this mode return conf))
 		  (else
 		   #f))))))
 
@@ -338,7 +361,7 @@
 				   acache acspecs)))
 		       `(let ((,tmp ,(j2s-scheme obj mode return conf)))
 			   ,(call-ref-method obj ccache acache
-			      ccspecs fun (J2SHopRef tmp) args)))))
+			       ccspecs fun (J2SHopRef tmp) args)))))
 	       ((isa? obj J2SParen)
 		(with-access::J2SParen obj (expr)
 		   (loop expr)))
@@ -347,9 +370,9 @@
 		=>
 		(lambda (sexp) sexp))
 	       (else
-		(let* ((tmp (gensym 'obj))
-		       (ttmp (type-ident tmp (j2s-vtype obj))))
-		   `(let ((,ttmp ,(j2s-scheme obj mode return conf)))
+		(let* ((tmp (gensym 'obj)))
+		   `(let ((,tmp ,(box (j2s-scheme obj mode return conf)
+				    (j2s-vtype obj) conf)))
 		       ,(call-ref-method obj
 			   ccache acache ccspecs
 			   (duplicate::J2SAccess fun
@@ -357,7 +380,7 @@
 				      (loc loc)
 				      (expr tmp))))
 			   (instantiate::J2SHopRef
-			      (type (j2s-vtype obj))
+			      (type 'any)
 			      (loc loc)
 			      (id tmp))
 			   args))))))))
@@ -465,7 +488,7 @@ ft		`(,f ,@%gen
 		(call-unknown-function fun '((js-undefined)) args)
 		`(if ,(j2s-in? loc `',id (car withs))
 		     ,(call-unknown-function
-			 (j2s-get loc (car withs) 'object `',id 'string 'any conf #f)
+			 (j2s-get loc (car withs) #f 'object `',id 'string 'any conf #f #f)
 			(list (car withs)) args)
 		     ,(loop (cdr withs)))))))
 
@@ -476,7 +499,7 @@ ft		`(,f ,@%gen
    (define (typed-generator? decl::J2SDeclFun)
       (with-access::J2SDeclFun decl (parent)
 	 (when (isa? parent J2SDeclFun)
-	    (with-access::J2SDeclFun parent (val)
+	    (let ((val (j2sdeclinit-val-fun parent)))
 	       (with-access::J2SFun val (generator)
 		  generator)))))
 
@@ -511,7 +534,7 @@ ft		`(,f ,@%gen
 		  ,@self
 		  ,@(j2s-scheme args mode return conf)))
 	       ((and (config-get conf :profile-call #f) (>=fx profid 0))
-		(let ((f (gensym '%fun)))
+		(let ((f (gensym '%fun-profile)))
 		   `(let ((,f ,(j2s-scheme fun mode return conf)))
 		       ,(funcall-profile profid f
 			   `(,call ,j2s-unresolved-call-workspace
@@ -556,11 +579,15 @@ ft		`(,f ,@%gen
 	    (cond
 	       ((isa? fun J2SAccess)
 		(if (and (config-get conf :profile-call #f) (>=fx profid 0))
-		    (with-access::J2SAccess fun (obj)
+		    (with-access::J2SAccess fun (obj loc)
 		       (let ((self (if (isa? obj J2SSuper)
-				       '(this)
-				       (list (j2s-scheme obj mode return conf)))))
-			  (call-unknown-function fun self args)))
+				       'this
+				       (j2s-scheme obj mode return conf))))
+			  (let* ((s (gensym '%obj-profile))
+				 (f (duplicate::J2SAccess fun
+				       (obj (J2SHopRef s)))))
+			     `(let ((,s ,self))
+				 ,(call-unknown-function f (list s) args)))))
 		    (call-method cache cspecs fun args)))
 	       ((isa? fun J2SParen)
 		(with-access::J2SParen fun (expr)
@@ -599,7 +626,8 @@ ft		`(,f ,@%gen
       (with-access::J2SAccess fun (obj)
 	 (case (j2s-type obj)
 	    ((number)
-	     `(js-jsnumber-tostring ,(j2s-scheme obj mode return conf)
+	     `(js-jsnumber-tostring
+		 ,(j2s-scheme obj mode return conf)
 		 ,(if (pair? args)
 		      (j2s-scheme (car args) mode return conf)
 		      10) %this))

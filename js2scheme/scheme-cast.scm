@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-cast.scm         */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-cast.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Aug  7 11:33:12 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 18:45:21 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -39,6 +39,7 @@
 	 (int53 int32->fixnum)
 	 (integer ,js-int32->integer)
 	 (number ,js-int32->integer)
+	 (real ,js-int32->real)
 	 (propname ,js-int32->propname)
 	 (bool ,js-int32->bool)
 	 (string ,js-int32->string)
@@ -60,13 +61,15 @@
 	((int30 nop)
 	 (int32 js-int53-toint32)
 	 (uint32 js-int53-touint32)
-	 (number js-int53-tointeger)
+	 (integer nop)
+	 (number nop)
 	 (object ,js-number->jsobject)
-	 (any js-int53-tointeger)))
+	 (any nop)))
      (integer
 	((int32 ,js-fixnum->int32)
 	 (uint32 ,js-fixnum->uint32)
 	 (string ,js-fixnum->string)
+	 (real fixnum->flonum)
 	 (int53 nop)
 	 (propname nop)
 	 (number nop)
@@ -132,11 +135,12 @@
 	 (array nop)
 	 (null nop)
 	 (int53 nop)
-	 (bool js-totest)
+	 (bool ,js-any->bool)
 	 (string ,js->string)
 	 (int32 ,js->int32)
 	 (real ,js-any->real)
 	 (uint32 ,js->uint32)
+	 (integer ,js-any->integer)
 	 (number ,js->number)
 	 (object ,js->object)))))
 
@@ -148,16 +152,27 @@
    (if (int32? v) (int32->uint32 v) `(int32->uint32 ,v)))
 
 (define (js-int32->integer v expr conf)
-   (cond
-      ((and (int32? v)
-	    (or (and (<s32 v (-s32 (bit-lshs32 #s32:1 29) #s32:1))
-		     (>=s32 v (-s32 #s32:0 (bit-lshs32 #s32:1 29))))
-		(m64? conf)))
-       (int32->fixnum v))
-      ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
-       `(int32->fixnum ,v))
+   (match-case v
+      ((fixnum->int32 ?x)
+       x)
       (else
-       `(js-int32-tointeger ,v))))
+       (cond
+	  ((and (int32? v)
+		(or (and (<s32 v (-s32 (bit-lshs32 #s32:1 29) #s32:1))
+			 (>=s32 v (-s32 #s32:0 (bit-lshs32 #s32:1 29))))
+		    (m64? conf)))
+	   (int32->fixnum v))
+	  ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
+	   `(int32->fixnum ,v))
+	  (else
+	   `(js-int32-tointeger ,v))))))
+
+(define (js-int32->real v expr conf)
+   (cond
+      ((int32? v) 
+       (int32->flonum v))
+      (else
+       `(int32->flonum ,v))))
 
 (define (js-int32->bool v expr conf)
    (if (int32? v) (not (=s32 v #s32:0)) `(not (=s32 ,v #s32:0))))
@@ -206,7 +221,7 @@
 
 ;; fixnum
 (define (js-fixnum->int32 v expr conf)
-   (if (fixnum? v) (fixnum->int32 v) `(fixnum->uint32 ,v)))
+   (if (fixnum? v) (fixnum->int32 v) `(fixnum->int32 ,v)))
 
 (define (js-fixnum->uint32 v expr conf)
    (if (fixnum? v) (fixnum->uint32 v) `(fixnum->uint32 ,v)))
@@ -243,6 +258,9 @@
    (if (eq? (j2s-type expr) 'object)
        v
        `(js-toobject %this ,v)))
+
+(define (js-any->bool v expr conf)
+   `(js-totest ,v))
 
 (define (js->number v expr conf)
    (if (memq (j2s-type expr) '(uint32 int32 integer bint number))
@@ -301,7 +319,9 @@
 		  v)
 	       `(js-toint32 ,v %this)))
 	  (else
-	   `(js-toint32 ,v %this))))))
+	   (if (symbol? v)
+	       `(if (fixnum? ,v) (fixnum->int32 ,v) (js-toint32 ,v %this))
+	       `(js-toint32 ,v %this)))))))
 
 (define (js->uint32 v expr conf)
    (cond
@@ -318,7 +338,9 @@
       ((eq? (j2s-type expr) 'uint32)
        `(fixnum->uint32 ,v))
       (else
-       `(js-touint32 ,v %this))))
+       (if (symbol? v)
+	   `(if (fixnum? ,v) (fixnum->uint32 ,v) (js-touint32 ,v %this))
+	   `(js-touint32 ,v %this)))))
 
 (define (js-number->int32 v expr conf)
    (cond
@@ -331,9 +353,24 @@
       ((and (inrange-int32? expr) (m64? conf))
        `(fixnum->int32 ,v))
       (else
-       (if (pair? v)
-	   `(js-number-toint32 ,v)
-	   `(if (fixnum? ,v) (fixnum->int32 ,v) (js-number-toint32 ,v))))))
+       (match-case v
+	  ((if (fixnum? ?test) (-fx/overflow ?x ?y) (and ?d (-/overflow ?x ?y)))
+	   (if (m64? conf)
+	       `(if (fixnum? ,test)
+		    (fixnum->int32 (-fx ,x ,y) )
+		    (js-number-toint32 ,d))
+	       
+	       `(js-number-toint32 ,v)))
+	  ((if (fixnum? ?test) (+fx/overflow ?x ?y) (and ?d (+/overflow ?x ?y)))
+	   (if (m64? conf)
+	       `(if (fixnum? ,test)
+		    (fixnum->int32 (+fx ,x ,y) )
+		    (js-number-toint32 ,d))
+	       `(js-number-toint32 ,v)))
+	  ((?- . ?-)
+	   `(js-number-toint32 ,v))
+	  (else
+	   `(if (fixnum? ,v) (fixnum->int32 ,v) (js-number-toint32 ,v)))))))
 
 (define (js-number->uint32 v expr conf)
    (cond
@@ -377,6 +414,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-any->real v expr conf)
    (js->real v expr conf #t))
+
+;*---------------------------------------------------------------------*/
+;*    js-any->integer ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-any->integer v expr conf)
+   `(js-tointeger ,v %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number->real ...                                              */

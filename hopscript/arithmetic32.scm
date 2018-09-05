@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmetic32.scm        */
+;*    .../project/hop/3.2.x-new-types/hopscript/arithmetic32.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Jul 30 12:12:10 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:10:31 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -25,6 +25,7 @@
 	   __hopscript_error
 	   __hopscript_property
 	   __hopscript_private
+	   __hopscript_lib
 	   __hopscript_public)
 
    (cond-expand
@@ -344,6 +345,8 @@
    (cond
       ((fixnum? x) x)
       ((int32? x) (int32->fixnum x))
+      ((uint32? x) (uint32->fixnum x))
+      ((=fl x 0.0) 0)
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -359,7 +362,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    +fx/overflow ...                                                 */
 ;*    -------------------------------------------------------------    */
-;*    The argument are 30bit integers encoded into long values.        */
+;*    The arguments are 30bit integers encoded into long values.       */
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow x::obj y::obj)
    (cond-expand

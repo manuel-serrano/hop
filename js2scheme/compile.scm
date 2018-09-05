@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/compile.scm             */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/compile.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Aug  6 14:29:56 2018 (serrano)                */
+;*    Last change :  Fri Aug 31 13:15:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -21,6 +21,7 @@
 	   __js2scheme_parser
 	   __js2scheme_syntax
 	   __js2scheme_symbol
+	   __js2scheme_multivar
 	   __js2scheme_header
 	   __js2scheme_resolve
 	   __js2scheme_return
@@ -169,6 +170,7 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
+      j2s-multivar-stage
       j2s-narrow-stage
       j2s-letfusion-stage
       j2s-letopt-stage
@@ -187,11 +189,13 @@
       j2s-constant-stage
       j2s-varpreinit-stage
       j2s-tyflow-stage
+      j2s-sweep-stage
       j2s-hintnum-stage
       j2s-property-stage
       j2s-instanceof-stage
       j2s-propcce-stage
       j2s-range-stage
+      j2s-sweep-stage
       j2s-ctor-stage
       j2s-pce-stage
       j2s-cast-stage
@@ -400,7 +404,9 @@
 	 (unless (memq :profile-cache o)
 	    (set! o (cons* :profile-cache #t o)))
 	 (unless (memq :profile-hint o)
-	    (set! o (cons* :profile-hint #t o))))
+	    (set! o (cons* :profile-hint #t o)))
+	 (unless (memq :profile-method o)
+	    (set! o (cons* :profile-method #t o))))
       ;; optimization
       (when (>=fx l 900)
 	 (unless (memq :optim-integer o)
@@ -427,6 +433,8 @@
 	 (unless (memq :optim-pce o)
 	    (set! o (cons* :optim-pce #t o))))
       (when (>=fx l 2)
+	 (unless (memq :optim-method o)
+	    (set! o (cons* :optim-method #t o)))
 	 (unless (memq :optim-letopt o)
 	    (set! o (cons* :optim-letopt #t o)))
 	 (unless (memq :optim-unletrec o)
@@ -434,7 +442,9 @@
 	 (unless (memq :optim-tyflow-resolve o)
 	    (set! o (cons* :optim-tyflow-resolve #t o)))
 	 (unless (memq :optim-cinstanceof o)
-	    (set! o (cons* :optim-cinstanceof #t o))))
+	    (set! o (cons* :optim-cinstanceof #t o)))
+	 (unless (memq :optim-multivar o)
+	    (set! o (cons* :optim-multivar #t o))))
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))

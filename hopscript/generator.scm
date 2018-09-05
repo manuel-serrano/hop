@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/generator.scm           */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/generator.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Thu Mar 29 08:40:00 2018 (serrano)                */
+;*    Last change :  Tue Aug 14 15:10:01 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -223,7 +223,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-make-generator ...                                            */
 ;*    -------------------------------------------------------------    */
-;*    Generator use a special encoding. They directly points to the    */
+;*    Generators use a special encoding. They directly point to the    */
 ;*    elements and cmap of their prototype. This optimizes "next"      */
 ;*    and "throw" access. To preserve the semantics, JS-PUT! is        */
 ;*    overriden for that class.                                        */

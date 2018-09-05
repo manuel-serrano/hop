@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/private.scm             */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/private.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue May  1 18:26:26 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:09:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -22,6 +22,7 @@
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_property
 	   __hopscript_worker
 	   __hopscript_json

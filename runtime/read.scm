@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Sep  5 12:23:05 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 18:17:33 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1069,7 +1069,6 @@
 			((more-recent? path)
 			 path)
 			((more-recent? (errfile path))
-			 (tprint "ERRFILE1=" (errfile path))
 			 'error)
 			(else
 			 (loop (cdr paths))))))))))
@@ -1090,7 +1089,6 @@
 	    ((more-recent? sopath)
 	     sopath)
 	    ((more-recent? (errfile sopath))
-	     (tprint "ERRFILE2=" (errfile sopath))
 	     'error)
 	    (else
 	     ;; if not found check the user global libs repository
@@ -1099,10 +1097,6 @@
 		   ((more-recent? sopath)
 		    sopath)
 		   ((more-recent? (errfile sopath))
-		    (tprint "ERRFILE3=" (errfile sopath))
-		    (call-with-input-file (errfile sopath)
-		       (lambda (in)
-			  (tprint "ERRSTR=" (read-string in))))
 		    'error)
 		   (else
 		    (or (find-in-unix-path (hop-soname path))

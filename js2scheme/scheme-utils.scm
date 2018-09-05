@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-utils.scm        */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-utils.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
@@ -33,6 +33,7 @@
 	   (epairify-deep loc expr)
 	   (strict-mode? mode)
 	   (j2s-fast-id id)
+	   (j2s-fast-constructor-id id)
 	   (j2s-scheme-id id pref)
 	   (j2s-decl-scheme-id ::J2SDecl)
 	   (js-need-global? ::J2SDecl scope mode)
@@ -45,8 +46,11 @@
 	   
 	   (typeof-this obj conf)
 	   (maybe-number? expr::J2SNode)
+	   (mightbe-number?::bool field::J2SExpr)
+	   
 	   (utype-ident ident utype conf #!optional compound)
-	   (type-ident ident type)
+	   (vtype-ident ident vtype conf #!optional compound)
+	   (type-ident ident type conf)
 	   (j2s-number val conf)
 	   (j2s-error proc msg obj #!optional str)
 	   (is-fixnum? expr::J2SExpr conf)
@@ -67,18 +71,21 @@
 	   
 	   (js-pcache cache)
 	   
-	   (j2s-get loc obj tyobj prop typrop tyval conf cache
+	   (j2s-get loc obj field tyobj prop typrop tyval conf cache optimp
 	      #!optional (cspecs '(cmap pmap amap vtable)))
-	   (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache
+	   (j2s-put! loc obj field tyobj prop typrop val tyval mode conf
+	      cache optimp
 	      #!optional (cspecs '(cmap pmap amap vtable)))
 
 	   (inrange-positive?::bool ::J2SExpr)
+	   (inrange-positive-number?::bool ::J2SExpr)
 	   (inrange-one?::bool ::J2SExpr)
 	   (inrange-32?::bool ::J2SExpr)
 	   (inrange-int30?::bool ::J2SExpr)
 	   (inrange-uint30?::bool ::J2SExpr)
 	   (inrange-int32?::bool ::J2SExpr)
 	   (inrange-uint32?::bool ::J2SExpr)
+	   (inrange-uint32-number?::bool ::J2SExpr)
 	   (inrange-int53?::bool ::J2SExpr)
 
 	   (box ::obj ::symbol ::pair-nil #!optional proc::obj)
@@ -86,7 +93,10 @@
 	   (box64 ::obj ::symbol ::pair-nil #!optional proc::obj)
 
 	   (expr-asuint32 expr::J2SExpr)
-	   (uncast::J2SExpr ::J2SExpr)))
+	   (uncast::J2SExpr ::J2SExpr)
+
+	   (cancall?::bool ::J2SNode)
+	   (optimized-ctor ::J2SNode)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -133,6 +143,12 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-fast-id id)
    (symbol-append '@ id))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-fast-constructor-id ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-fast-constructor-id id)
+   (symbol-append '@new- id))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-id ...                                                */
@@ -259,7 +275,21 @@
 ;*    maybe-number? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (maybe-number? expr::J2SNode)
-   (memq (j2s-vtype expr) '(any int32 uint32 integer number real)))
+   (memq (j2s-vtype expr) '(any int32 uint32 int53 integer number real)))
+
+;*---------------------------------------------------------------------*/
+;*    mightbe-number? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (mightbe-number?::bool field::J2SExpr)
+   (or (is-number? field)
+       (with-access::J2SExpr field (hint)
+	  (or (assq 'index hint) (assq 'number hint) (assq 'integer hint)))
+       (when (isa? field J2SBinary)
+	  (with-access::J2SBinary field (lhs rhs op)
+	     (when (eq? op '+)
+		(or (mightbe-number? lhs) (mightbe-number? rhs)))))
+       (when (eq? (j2s-type field) 'any)
+	  (or (isa? field J2SPostfix) (isa? field J2SPrefix)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    utype-ident ...                                                  */
@@ -279,14 +309,31 @@
        ident)))
 
 ;*---------------------------------------------------------------------*/
+;*    vtype-ident ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (vtype-ident ident utype conf #!optional compound)
+
+   (define (atomic-type? typ)
+      (memq typ '(int32 uint32 number integer bint
+		  int53 fixnum undefined bool null)))
+
+   (cond
+      ((or (eq? utype 'any) (eq? utype 'unknown))
+       ident)
+      (compound
+       (symbol-append ident '|::| (type-name utype conf)))
+      (else
+       ident)))
+
+;*---------------------------------------------------------------------*/
 ;*    type-ident ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (type-ident ident type)
+(define (type-ident ident type conf)
    (cond
       ((memq type '(int32 uint32)) (symbol-append ident '|::| type))
       ((memq type '(bint)) (symbol-append ident '|::bint|))
       ((eq? type 'any) (symbol-append ident '|::obj|))
-      ((type-name type '())
+      ((type-name type conf)
        =>
        (lambda (tname) (symbol-append ident '|::| tname)))
       (else ident)))
@@ -464,9 +511,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-get loc obj tyobj prop typrop tyval conf cache
-	   #!optional (cspecs '(cmap pmap amap vtable)))
+(define (j2s-get loc obj field tyobj prop typrop tyval conf cache
+	   optim-arrayp #!optional (cspecs '(cmap pmap amap vtable)))
 
+   (define (js-get obj prop %this)
+      (if (config-get conf :profile-cache #f)
+	  `(js-get/debug ,(box obj tyobj conf) ,prop %this ',loc)
+	  `(js-get ,(box obj tyobj conf) ,prop %this)))
+   
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
 	   (not (type-number? typrop))
@@ -529,27 +581,53 @@
 			  ',(string->symbol prop) #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs)))))
 	     ((memq typrop '(int32 uint32))
-	      `(js-get ,obj ,(box prop typrop conf) %this))
+	      (js-get obj (box prop typrop conf) '%this))
 	     ((maybe-string? prop typrop)
 	      `(js-get/cache ,obj ,prop %this
 		  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 	     (else
-	      `(js-get ,obj ,prop %this))))
+	      (js-get obj prop '%this))))
 	 ((string? prop)
 	  (if (string=? prop "length")
 	      (if (eq? tyval 'uint32)
 		  `(js-get-lengthu32 ,obj %this #f)
 		  `(js-get-length ,obj %this #f))
-	      `(js-get ,obj ',(string->symbol prop) %this)))
+	      `(js-get ,(box obj tyobj conf) ',(string->symbol prop) %this)))
+	 ((and field optim-arrayp (mightbe-number? field))
+	  (let ((o (gensym '%obj))
+		(p (gensym '%prop)))
+	     `(let ((,o ,obj)
+		    (,p ,prop))
+		 (if (js-array? ,o)
+		     (js-array-ref ,o ,p %this)
+		     ,(js-get o p '%this)))))
 	 ((memq typrop '(int32 uint32))
-	  `(js-get ,obj ,(box prop typrop conf) %this))
+	  (js-get obj (box prop typrop conf) '%this))
 	 (else
-	  `(js-get ,obj ,prop %this)))))
+	  (js-get obj prop '%this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache #!optional (cspecs '(cmap pmap amap vtable)))
+(define (j2s-put! loc obj field tyobj prop typrop val tyval mode conf cache
+	   optim-arrayp #!optional (cspecs '(cmap pmap amap vtable)))
+
+   (define (js-put! o p v mode %this)
+      (if (config-get conf :profile-cache #f)
+	  `(js-put/debug! ,o ,p ,v ,mode %this ',loc)
+	  `(js-put! ,o ,p ,v ,mode %this)))
+   
+   (define (maybe-array-set! prop val)
+      (let ((o (gensym '%obj))
+	    (p (gensym '%prop))
+	    (v (gensym '%val)))
+	 `(let ((,o ,obj)
+		(,p ,prop)
+		(,v ,val))
+	     (if (js-array? ,o)
+		 (js-array-set! ,o ,p ,v ,mode %this)
+		 ,(js-put! o p v mode '%this)))))
+   
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
 		  ((js-ascii->jsstring ?str) str)
@@ -593,24 +671,25 @@
 			     ,mode %this
 			     ,(js-pcache cache) ,(loc->point loc) ',cspecs))))))
 	     ((memq typrop '(int32 uint32))
-	      `(js-put! ,obj ,(box prop typrop conf)
+	      `(maybe-array-set! ,obj ,(box prop typrop conf)
 		  ,(box val tyval conf) ,mode %this))
 	     ((or (number? prop) (null? cspecs))
-	      `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))
+	      (maybe-array-set! prop (box val tyval conf)))
 	     (else
-	      `(js-put/cache! ,obj , prop
+	      `(js-put/cache! ,obj ,prop
 		  ,(box val tyval conf) ,mode %this ,(js-pcache cache)))))
+	 ((and field optim-arrayp (mightbe-number? field))
+	  (maybe-array-set! (box prop typrop conf) (box val tyval conf)))
 	 (else
 	  (cond
 	     ((string? prop)
-	      `(js-put! ,obj ',(string->symbol prop)
-		  ,(box val tyval conf) ,mode %this))
-	     ((memq typrop '(int32 uint32))
-	      `(js-put! ,obj ,(box prop typrop conf)
-		  ,(box val tyval conf) ,mode %this))
+	      (js-put! obj `',(string->symbol prop)
+		  (box val tyval conf) mode '%this))
+	     ((and optim-arrayp (memq typrop '(int32 uint32)))
+	      (maybe-array-set! (box prop typrop conf) (box val tyval conf)))
 	     (else
-	      `(js-put! ,obj ,(box prop typrop conf)
-		  ,(box val tyval conf) ,mode %this)))))))
+	      (js-put! obj (box prop typrop conf)
+		  (box val tyval conf) mode '%this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ranges                                                           */
@@ -637,8 +716,18 @@
 	     (else #f)))
        (with-access::J2SExpr expr (range type)
 	  (if (interval? range)
-	      (>=llong (interval-min range) #l0)
+	      (and (>=llong (interval-min range) #l0)
+		   (eq? (interval-type range) 'integer))
 	      (eq? type 'uint32)))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-positive-number? ...                                     */
+;*---------------------------------------------------------------------*/
+(define (inrange-positive-number? expr)
+   (when (memq (j2s-type expr) '(integer number real int32 uint32))
+      (with-access::J2SExpr expr (range)
+	 (when (interval? range)
+	    (>=llong (interval-min range) #l0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-one? ...                                                 */
@@ -654,7 +743,8 @@
        (with-access::J2SExpr expr (range)
 	  (when (interval? range)
 	     (and (>=llong (interval-min range) #l-1)
-		  (<=llong (interval-max range) #l1))))))
+		  (<=llong (interval-max range) #l1)
+		  (eq? (interval-type range) 'integer))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-32? ...                                                  */
@@ -663,7 +753,8 @@
    (with-access::J2SExpr expr (range)
       (and (interval? range)
 	   (>= (interval-min range) #l0)
-	   (< (interval-max range) #l32))))
+	   (< (interval-max range) #l32)
+	   (eq? (interval-type range) 'integer))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-int30? ...                                               */
@@ -684,7 +775,8 @@
        (with-access::J2SExpr expr (range)
 	  (when (interval? range)
 	     (and (>=llong (interval-min range) (- (bit-lshllong #l1 30)))
-		  (<llong (interval-max range) (bit-lshllong #l1 30)))))))
+		  (<llong (interval-max range) (bit-lshllong #l1 30))
+		  (eq? (interval-type range) 'integer))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-uint30? ...                                              */
@@ -703,7 +795,8 @@
        (with-access::J2SExpr expr (range)
 	  (when (interval? range)
 	     (and (>=llong (interval-min range) 0)
-		  (<llong (interval-max range) (bit-lshllong #l1 30)))))))
+		  (<llong (interval-max range) (bit-lshllong #l1 30))
+		  (eq? (interval-type range) 'integer))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-int32? ...                                               */
@@ -722,7 +815,8 @@
        (with-access::J2SExpr expr (range type)
 	  (if (interval? range)
 	      (and (>=llong (interval-min range) (- (bit-lshllong #l1 31)))
-		   (<llong (interval-max range) (bit-lshllong #l1 31)))
+		   (<llong (interval-max range) (bit-lshllong #l1 31))
+		   (eq? (interval-type range) 'integer))
 	      (eq? type 'int32)))))
 
 ;*---------------------------------------------------------------------*/
@@ -739,8 +833,17 @@
        (with-access::J2SExpr expr (range type)
 	  (if (interval? range)
 	      (and (>=llong (interval-min range) #l0)
-		   (<llong (interval-max range) (bit-lshllong #l1 32)))
+		   (<llong (interval-max range) (bit-lshllong #l1 32))
+		   (eq? (interval-type range) 'integer))
 	      (eq? type 'uint32)))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-uint32-number? ...                                       */
+;*---------------------------------------------------------------------*/
+(define (inrange-uint32-number? expr)
+   (with-access::J2SExpr expr (range)
+      (when (inrange-positive-number? expr)
+	 (<llong (interval-max range) (bit-lshllong #l1 32)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-int53? ...                                               */
@@ -761,7 +864,8 @@
        (with-access::J2SExpr expr (range type)
 	  (if (interval? range)
 	      (and (>=llong (interval-min range) (- (bit-lshllong #l1 53)))
-		   (<llong (interval-max range) (bit-lshllong #l1 53)))
+		   (<llong (interval-max range) (bit-lshllong #l1 53))
+		   (eq? (interval-type range) 'integer))
 	      (memq type '(int32 uint32 integer bint))))))
 
 ;*---------------------------------------------------------------------*/
@@ -851,3 +955,67 @@
        (with-access::J2SCast expr (expr)
 	  (uncast expr))
        expr))
+
+;*---------------------------------------------------------------------*/
+;*    cancall? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (cancall? node)
+   (let ((cell (make-cell #f)))
+      (cancall node cell)
+      (cell-ref cell)))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SNode ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SNode cell)
+   (or (cell-ref cell) (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SCall ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SCall cell)
+   (cell-set! cell #t))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SNew ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SNew cell)
+   (cell-set! cell #t))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SAssig ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SAssig cell)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SAccess)
+	  (with-access::J2SAccess lhs (obj field)
+	     (unless (isa? obj J2SThis)
+		(cancall field cell)
+		(cancall rhs cell)))
+	  (begin
+	     (cancall lhs cell)
+	     (cancall rhs cell)))))
+
+;*---------------------------------------------------------------------*/
+;*    optimized-ctor ...                                               */
+;*---------------------------------------------------------------------*/
+(define (optimized-ctor this::J2SNode)
+   (let loop ((this this))
+      (cond
+	 ((isa? this J2SRef)
+	  (with-access::J2SRef this (decl)
+	     (loop decl)))
+	 ((isa? this J2SParen)
+	  (with-access::J2SParen this (expr)
+	     (loop expr)))
+	 ((isa? this J2SDeclFun)
+	  (with-access::J2SDeclFun this (scope usage val)
+	     (unless (memq scope '(none letblock))
+		(when (and (usage? '(new) usage)
+			   (not (usage? '(call) usage))
+			   (not (usage? '(assig) usage)))
+		   (with-access::J2SFun val (rtype vararg)
+		      (when (and (eq? rtype 'undefined) (not vararg))
+			 this))))))
+	 (else
+	  #f))))

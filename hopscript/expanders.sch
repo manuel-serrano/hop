@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/expanders.sch           */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/expanders.sch     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Fri Jul 13 08:18:11 2018 (serrano)                */
+;*    Last change :  Thu Aug 30 14:38:50 2018 (serrano)                */
 ;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -47,6 +47,9 @@
    (eval `(define-expander js-get-name/cache
 	     ,js-get-name/cache-expander))
 
+   (eval `(define-expander js-pcache-prefetch-index
+	     ,js-pcache-prefetch-index-expander))
+   
    (eval `(define-expander js-profile-log-cache
 	     ,js-profile-log-cache-expander))
    (eval `(define-expander js-profile-log-index

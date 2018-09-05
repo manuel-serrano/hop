@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Sep  5 10:50:06 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 19:11:53 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -291,9 +291,7 @@
                   (hop-verb 4 cmd "\n")
                   (close-output-port out)))
             (process-wait proc)
-            (let ((r (process-exit-status proc)))
-	       (tprint "RRRRRR=" r " " opts)
-	       r)))
+	    (process-exit-status proc)))
 
       (define (compiler opts comp file temp)
 	 (if (string? temp)

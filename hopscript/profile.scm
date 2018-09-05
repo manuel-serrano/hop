@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/profile.scm             */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/profile.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
@@ -27,17 +27,21 @@
 	   __hopscript_property)
 
    (export (js-profile-init conf calltable)
+	   *profile-cache*
 
 	   (js-profile-log-cache ::JsPropertyCache
 	      #!key imap emap cmap pmap amap vtable)
 	   (js-profile-log-index ::long)
 	   
-	   (js-profile-log-get ::symbol)
-	   (js-profile-log-put ::symbol)
-	   (js-profile-log-method ::symbol)
+	   (js-profile-log-get ::symbol loc)
+	   (js-profile-log-put ::symbol loc)
+	   (js-profile-log-method ::symbol point)
 
 	   (inline js-profile-log-call ::vector ::long)
 	   (js-profile-log-funcall ::vector ::long ::obj ::obj)
+
+	   (js-profile-log-method-function ::symbol ::obj)
+	   (js-profile-log-method-method ::symbol ::obj)
 	   
 	   (log-cache-miss!)
 	   (log-pmap-invalidation! ::obj)
@@ -149,7 +153,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-get ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-profile-log-get prop)
+(define (js-profile-log-get prop loc)
    (set! *profile-gets* (+llong #l1 *profile-gets*))
    (when *profile-gets-props*
       (let ((c (assq prop *profile-gets-props*)))
@@ -160,7 +164,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-put ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-profile-log-put prop)
+(define (js-profile-log-put prop loc)
    (set! *profile-puts* (+llong #l1 *profile-puts*))
    (when *profile-puts-props*
       (let ((c (assq prop *profile-puts-props*)))
@@ -171,7 +175,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-method ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-profile-log-method prop)
+(define (js-profile-log-method prop point)
    (set! *profile-methods* (+llong #l1 *profile-methods*))
    (when *profile-methods-props*
       (let ((c (assq prop *profile-methods-props*)))
@@ -200,6 +204,20 @@
 			  (set-cdr! c (+llong (cdr c) #l1))
 			  (vector-set! table idx (cons (cons id #l1) bucket))))
 		   (vector-set! table idx (list (cons id #l1)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-log-method-method ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-profile-log-method-method name loc)
+   ;; (tprint "METHOD " name)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-log-method-function ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-profile-log-method-function name loc)
+   ;; (tprint "FUNCTION " name)
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    *misses* ...                                                     */
@@ -1088,7 +1106,7 @@
 		 filecaches)
 	      (profile-pcache (car filecaches))))
 
-       (if (pair? *profile-gets-props*)
+       (if (string-contains trc "hopscript:uncache")
 	   (let ((gets (sort (lambda (x y) (>= (cdr x) (cdr y)))
 			  *profile-gets-props*))
 		 (puts (sort (lambda (x y) (>= (cdr x) (cdr y)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Aug  5 19:41:17 2018 (serrano)                */
+;*    Last change :  Fri Aug 10 16:21:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -22,6 +22,7 @@
 
    (export j2s-use-stage
 	   j2s-dead-stage
+	   (generic reinit-use-count! ::J2SNode)
 	   (generic reset-use-count ::J2SNode)
 	   (generic use-count ::J2SNode inc::int inloop::bool)
 	   (filter-dead-declarations::pair-nil ::pair-nil)))
@@ -47,11 +48,7 @@
    (instantiate::J2SStageProc
       (name "dead")
       (comment "Removed dead variables")
-      (proc (lambda (n args)
-	       (unless (isa? n J2SProgram)
-		  (tprint "dead n=" (typeof n))
-		  (tprint (j2s->list n)))
-	       (j2s-dead! n args)))))
+      (proc j2s-dead!)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use! ::J2SProgram ...                                        */
@@ -186,7 +183,28 @@
    (with-access::J2SWhile this (test body)
       (use-count test inc #t)
       (use-count body inc #t)))
-      
+
+;*---------------------------------------------------------------------*/
+;*    reinit-use-count! ::J2SNode ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reinit-use-count! this::J2SNode)
+   (reset-use-count this)
+   (use-count this +1 #f)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    reinit-use-count! ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reinit-use-count! this::J2SProgram)
+   (with-access::J2SProgram this (headers decls nodes)
+      (for-each reset-use-count headers)
+      (for-each reset-use-count decls)
+      (for-each reset-use-count nodes)
+      (for-each (lambda (n) (use-count n +1 #f)) headers)
+      (for-each (lambda (n) (use-count n +1 #f)) decls)
+      (for-each (lambda (n) (use-count n +1 #f)) nodes)
+      this))
+
 ;*---------------------------------------------------------------------*/
 ;*    reset-use-count ::J2SNode ...                                    */
 ;*---------------------------------------------------------------------*/

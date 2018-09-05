@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/parser.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/parser.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
@@ -35,6 +35,7 @@
    
    (define tilde-level (config-get conf :tilde-level 0))
    (define lang (config-get conf :language "hopscript"))
+   (define debug-function (>= (bigloo-debug) 2))
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
 
@@ -53,6 +54,7 @@
    (define _this
       (instantiate::J2SDecl
 	 (loc `(at ,(input-port-name input-port) 0))
+	 (utype 'object)
 	 (vtype 'object)
 	 (id '%this)
 	 (_scmid '%this)))
@@ -924,7 +926,7 @@
       ;; function NAME( a0, ... ) { return spawn( function*() { BODY }, this); }
       ;; For additional details, see:
       ;;   https://tc39.github.io/ecmascript-asyncawait
-      (with-access::J2SFun fun (generator body mode thisp)
+      (with-access::J2SFun fun (generator body mode thisp name)
 	 (cond
 	    ((and (not (config-get conf :es2017-async))
 		  (not (string=? lang "hopscript")))
@@ -939,6 +941,7 @@
 			      (thisp thisp)
 			      (loc loc)
 			      (generator #t)
+			      (name (symbol-append name '*))
 			      (mode 'strict)
 			      (body body))))
 		   (set! body
@@ -1029,6 +1032,11 @@
 	 (with-access::J2SDecl (car (last-pair params)) (usage)
 	    (when (equal? usage '(rest)) 'rest))))
 
+   (define (loc->funname pref loc)
+      (if debug-function
+	  (string->symbol (format "~a@~a:~a" pref (cadr loc) (caddr loc)))
+	  '||))
+   
    (define (function declaration? token #!optional methodof)
       (let ((loc (token-loc token)))
 	 (with-this 'this loc
@@ -1085,7 +1093,7 @@
 			(else
 			 (instantiate::J2SFun
 			    (loc loc)
-			    (name '||)
+			    (name (loc->funname "fun" loc))
 			    (mode mode)
 			    (generator gen)
 			    (thisp (current-this))
@@ -1453,6 +1461,7 @@
 				  (thisp (current-this))
 				  (params params)
 				  (mode 'strict)
+				  (name (loc->funname "met" loc))
 				  (generator gen)
 				  (body body)
 				  (ismethodof super?)
@@ -1474,6 +1483,7 @@
 				     (thisp (current-this))
 				     (params params)
 				     (mode 'strict)
+				     (name (loc->funname "met" loc))
 				     (generator gen)
 				     (body body)
 				     (vararg (rest-params params))))
@@ -2303,6 +2313,7 @@
 				 (loc loc)
 				 (thisp (current-this))
 				 (params params)
+				 (name (loc->funname "get" loc))
 				 (vararg (rest-params params))
 				 (body body)))
 			 (oprop (find-prop (symbol->string! (cdr id)) props))
@@ -2336,6 +2347,7 @@
 	       (let* ((body (fun-body params args current-mode))
 		      (mode (or (javascript-mode body) current-mode))
 		      (fun (instantiate::J2SFun
+			      (name (loc->funname "dyn" loc))
 			      (mode mode)
 			      (loc loc)
 			      (thisp (current-this))

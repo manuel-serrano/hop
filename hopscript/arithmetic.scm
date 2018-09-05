@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmetic.scm          */
+;*    .../project/hop/3.2.x-new-types/hopscript/arithmetic.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sun Jun  3 06:33:59 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:05:42 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -26,6 +26,7 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_arithmetic32
 	   __hopscript_arithmetic64)
 
@@ -68,7 +69,7 @@
 	   (>>=fl::bool ::double ::double)
 	   (<<=fl::bool ::double ::double)
 	   
-	   (inline fixnums?::bool ::obj ::obj)))
+	   ))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toflonum ...                                                  */
@@ -414,12 +415,3 @@
       ((not (=fl right right)) #f)
       (else (<=fl left right))))
 
-;*---------------------------------------------------------------------*/
-;*    fixnums? ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-inline (fixnums? a b)
-   (cond-expand
-      ((and bigloo-c (config nan-tagging #f))
-       (pragma::bool "INTEGERP( TAG_INT == 0 ? ((long)$1 | (long)$2) : ((long)$1 & (long)$2) )" a b))
-      (else
-       (and (fixnum? a) (fixnum? b)))))

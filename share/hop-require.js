@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/share/hop-require.js              */
+/*    .../prgm/project/hop/3.2.x-new-types/share/hop-require.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Mon Jan 18 14:47:03 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Mon Sep  3 09:48:35 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
 /*=====================================================================*/
@@ -28,7 +28,7 @@ function require( url ) {
       if( window.hop[ '%requires' ][ path ] ) {
 	 return window.hop[ '%requires' ][ path ]();
       } else {
-	 throw new Error( "Client-side module \"" + url + "\" not requirable" );
+	 throw new Error( "Client-side module \"" + url + "\" not requirable (check the server console for details)" );
       }
    }
 }

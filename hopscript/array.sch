@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/array.sch               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/array.sch     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Sat Mar 24 07:20:16 2018 (serrano)                */
+;*    Last change :  Mon Aug 20 07:53:31 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
@@ -137,7 +137,7 @@
 
    (%make-set idx val set))
 
-(define-macro (JS-ARRAY-FIXNUM-FAST-REF arr idx avec alen mark %this)
+(define-macro (JS-ARRAY-FIXNUM-FAST-REF arr idx avec alen deps %this)
    
    (define (ref i)
       (let ((tmp (gensym 'tmp)))

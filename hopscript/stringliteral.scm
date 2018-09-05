@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/stringliteral.scm       */
+;*    .../project/hop/3.2.x-new-types/hopscript/stringliteral.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Aug 14 16:34:44 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:09:58 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -21,6 +21,7 @@
    (import __hopscript_types
 	   __hopscript_arithmetic
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_private
 	   __hopscript_property)
 
@@ -364,13 +365,14 @@
 ;*    js-jsstring->string ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring->string::bstring js::obj)
-   (cond
-      ((string? js) js)
-      ((isa? js JsStringLiteralASCII) (js-jsstring-normalize-ASCII! js))
-      ((isa? js JsStringLiteralUTF8) (js-jsstring-normalize-UTF8! js))
-      (else
-       (js-jsstring-normalize! js)
-       (with-access::JsStringLiteral js (left) left))))
+   (if (string? js)
+       js
+       (with-access::JsStringLiteral js (left right)
+	  (if (not right)
+	      left
+	      (begin
+		 (js-jsstring-normalize! js)
+		 left)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-ASCII! ...                                 */
@@ -513,47 +515,6 @@
 			      (loop i left nstack))))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize-UTF8!-toberemoved ...                      */
-;*---------------------------------------------------------------------*/
-(define (js-jsstring-normalize-UTF8!-toberemoved js::JsStringLiteral)
-   (with-access::JsStringLiteralUTF8 js (left right weight %idxutf8 %idxstr)
-      (if (and (string? left) (not right))
-	  left
-	  (let ((buffer (make-string
-			   (uint32->fixnum (js-string-literal-length js)))))
-	     (let loop ((i 0)
-			(stack (list js)))
-		(cond
-		   ((null? stack)
-		    (set! weight i)
-		    (set! left (string-shrink! buffer i))
-		    (set! right #f)
-		    (set! %idxutf8 0)
-		    (set! %idxstr 0)
-		    left)
-		   ((string? (car stack))
-		    (let ((len (string-length (car stack))))
-		       (blit-string! (car stack) 0 buffer i len)
-		       (loop (+fx i len) (cdr stack))))
-		   ((isa? (car stack) JsStringLiteralASCII)
-		    (with-access::JsStringLiteralASCII (car stack) (left right)
-		       (if right
-			   (loop i (cons* left right (cdr stack)))
-			   (loop i (cons left (cdr stack))))))
-		   (else
-		    (with-access::JsStringLiteral (car stack) (left right)
-		       (cond
-			  ((string? left)
-			   (let ((ni (utf8-string-append-fill! buffer i left)))
-			      (if right
-				  (loop ni (cons right (cdr stack)))
-				  (loop ni (cdr stack)))))
-			  (right
-			   (loop i (cons* left right (cdr stack))))
-			  (else
-			   (loop i (cons left (cdr stack)))))))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize! ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    Tailrec normalization (with explicit stack management).          */
@@ -677,7 +638,8 @@
 ;*    js-jsstring=? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring=?::bool left right)
-   (string=? (js-jsstring->string left) (js-jsstring->string right)))
+   (or (eq? left right)
+       (string=? (js-jsstring->string left) (js-jsstring->string right))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring>? ...                                                */
@@ -2183,6 +2145,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-replace this::obj searchvalue replacevalue %this)
+   (js-jsstring-maybe-replace this searchvalue replacevalue %this))
+
+(define (js-jsstring-replace-TOBEREMOVED-21aug2018 this::obj searchvalue replacevalue %this)
    
    (define (digit->number c)
       (-fx (char->integer c) (char->integer #\0)))
@@ -2446,7 +2411,9 @@
 	     ((js-jsstring? searchvalue)
 	      (js-jsstring-replace-string this #t searchvalue replacevalue %this))
 	     (else
-	      (js-jsstring-replace this searchvalue replacevalue %this))))
+	      ;(js-jsstring-replace this searchvalue replacevalue %this)
+	      (js-jsstring-replace-string this #t (js-tostring searchvalue %this) replacevalue %this)
+	      )))
 	 ((isa? this JsString)
 	  (with-access::JsString this (val)
 	     (loop val)))

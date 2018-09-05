@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-fun.scm          */
+;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-fun.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Jul 11 17:13:45 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 14:52:15 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -139,13 +139,14 @@
 
    (define (constructor-only? this::J2SDeclFun)
       (with-access::J2SDeclFun this (usage ronly val)
-	 (when ronly
-	    (when (isa? val J2SFun)
-	       (with-access::J2SFun val (generator)
-		  (unless generator
-		     (and (memq 'new usage)
-			  (not (memq 'ref usage))
-			  (not (memq 'call usage)))))))))
+	 (and #f
+	      (when ronly
+		 (when (isa? val J2SFun)
+		    (with-access::J2SFun val (generator)
+		       (unless generator
+			  (and (memq 'new usage)
+			       (not (memq 'ref usage))
+			       (not (memq 'call usage))))))))))
 
    (define (lambda? id)
       (or (memq id '(lambda lambda::obj))
@@ -166,7 +167,7 @@
 	  `(define ,(cons (type-lambda lambd id) args) ,@body))
 	 (else
 	  expr)))
-   
+
    (with-access::J2SDeclFun this (loc id scope val usage ronly)
       (let ((val (declfun-fun this)))
 	 (with-access::J2SFun val (params mode vararg body name generator)
@@ -195,6 +196,12 @@
 				  ,(jsfun->lambda val mode return conf
 				      (j2s-declfun-prototype this)
 				      (constructor-only? this))))
+			  ,@(if (optimized-ctor this)
+				`(,(beautiful-define
+				      `(define ,(j2s-fast-constructor-id id)
+					  ,(j2sfun->ctor val mode return conf
+					     this))))
+				'())
 			  ,@(if (no-closure? this)
 				'()
 				`((define ,scmid #unspecified)))))
@@ -205,6 +212,12 @@
 				  ,(jsfun->lambda val mode return conf
 				      (j2s-declfun-prototype this)
 				      (constructor-only? this))))
+			  ,@(if (optimized-ctor this)
+				`(,(beautiful-define
+				      `(define ,(j2s-fast-constructor-id id)
+					  ,(j2sfun->ctor val mode return conf
+					     this))))
+				'())
 			  ,@(if (no-closure? this)
 				'()
 				`((define ,scmid 
@@ -344,6 +357,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclSvc mode return conf)
    (with-access::J2SDeclSvc this (loc id val scope)
+      (unless (isa? val J2SSvc)
+	 (tprint "PAS BON " (j2s->list this)))
       (let ((scmid (j2s-decl-scheme-id this))
 	    (fastid (j2s-fast-id id)))
 	 (epairify-deep loc
@@ -362,10 +377,16 @@
 		    (define ,scmid ,fastid)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    jsfun->lambda ...                                                */
+;*    jsfun->lambda/body ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (jsfun->lambda this::J2SFun mode return conf proto ctor-only::bool)
+(define (jsfun->lambda/body this::J2SFun mode return conf proto body)
 
+   (define (type-this idthis thisp)
+      (if (and idthis (isa? thisp J2SDecl))
+	  (with-access::J2SDecl thisp (vtype)
+	     (type-ident idthis vtype conf))
+	  idthis))
+   
    (define (lambda-or-labels rtype %gen this id args body)
       ;; in addition to the user explicit arguments, this and %gen
       ;; are treated as:
@@ -378,43 +399,120 @@
 	 (if id
 	     (let ((%id (j2s-fast-id id)))
 		`(labels ((,%id ,gtargs ,body)) ,%id))
-	     `(,(type-ident 'lambda rtype) ,gtargs ,body))))
+	     `(,(type-ident 'lambda rtype conf) ,gtargs ,body))))
 
    (define (j2s-type-scheme p)
       (let ((a (j2s-scheme p mode return conf)))
 	 (with-access::J2SDecl p (vtype)
-	    (type-ident a vtype))))
+	    (type-ident a vtype conf))))
 		    
    (define (fixarg-lambda fun id body)
-      (with-access::J2SFun fun (idgen idthis params rtype)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype)
 	 (let ((args (map j2s-type-scheme params)))
-	    (lambda-or-labels rtype idgen idthis id args body))))
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id args body))))
    
    (define (rest-lambda fun id body)
-      (with-access::J2SFun fun (idgen idthis params rtype)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype)
 	 (let ((args (j2s-scheme params mode return conf)))
-	    (lambda-or-labels rtype idgen idthis id args body))))
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id args body))))
    
    (define (normal-vararg-lambda fun id body)
       ;; normal mode: arguments is an alias
       (let ((id (or id (gensym 'fun)))
 	    (rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idgen idthis rtype)
-	    (lambda-or-labels rtype idgen idthis id rest
+	 (with-access::J2SFun fun (idgen idthis thisp rtype)
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id rest
 	       (jsfun-normal-vararg-body fun body id rest)))))
    
    (define (strict-vararg-lambda fun id body)
       ;; strict mode: arguments is initialized on entrance
       (let ((rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idgen idthis rtype)
-	    (lambda-or-labels rtype idgen idthis id rest
+	 (with-access::J2SFun fun (idgen idthis thisp rtype)
+	    (lambda-or-labels rtype idgen (type-this idthis thisp) id rest
+	       (jsfun-strict-vararg-body fun body id rest)))))
+
+   (with-access::J2SFun this (loc vararg mode params generator)
+      (let* ((id (j2sfun-id this))
+	     (fun (cond
+		     ((not vararg)
+		      (fixarg-lambda this id body))
+		     ((eq? vararg 'rest)
+		      (rest-lambda this id body))
+		     ((eq? mode 'normal)
+		      (normal-vararg-lambda this id body))
+		     (else
+		      (strict-vararg-lambda this id body)))))
+	 (epairify-deep loc fun))))
+
+;*---------------------------------------------------------------------*/
+;*    jsfun->lambda ...                                                */
+;*---------------------------------------------------------------------*/
+(define (jsfun->lambda this::J2SFun mode return conf proto ctor-only::bool)
+
+   (define (type-this idthis thisp)
+      (if (and idthis (isa? thisp J2SDecl))
+	  (with-access::J2SDecl thisp (vtype)
+	     (type-ident idthis vtype conf))
+	  idthis))
+   
+   (define (lambda-or-labels rtype %gen this id args body)
+      ;; in addition to the user explicit arguments, this and %gen
+      ;; are treated as:
+      ;;   - some typed functions are optimized and they don't expect a this
+      ;;     argument
+      ;;   - some typed functions implement a generator body and they take
+      ;;     as extra argument the generator
+      (let* ((targs (if this (cons this args) args))
+	     (gtargs (if %gen (cons '%gen targs) targs)))
+	 (if id
+	     (let ((%id (j2s-fast-id id)))
+		`(labels ((,%id ,gtargs ,body)) ,%id))
+	     `(,(type-ident 'lambda rtype conf) ,gtargs ,body))))
+
+   (define (j2s-type-scheme p)
+      (let ((a (j2s-scheme p mode return conf)))
+	 (with-access::J2SDecl p (vtype)
+	    (type-ident a vtype conf))))
+		    
+   (define (fixarg-lambda fun id body)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype)
+	 (let ((args (map j2s-type-scheme params)))
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id args body))))
+   
+   (define (rest-lambda fun id body)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype)
+	 (let ((args (j2s-scheme params mode return conf)))
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id args body))))
+   
+   (define (normal-vararg-lambda fun id body)
+      ;; normal mode: arguments is an alias
+      (let ((id (or id (gensym 'fun)))
+	    (rest (gensym 'arguments)))
+	 (with-access::J2SFun fun (idgen idthis thisp rtype)
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       id rest
+	       (jsfun-normal-vararg-body fun body id rest)))))
+   
+   (define (strict-vararg-lambda fun id body)
+      ;; strict mode: arguments is initialized on entrance
+      (let ((rest (gensym 'arguments)))
+	 (with-access::J2SFun fun (idgen idthis thisp rtype)
+	    (lambda-or-labels rtype idgen (type-this idthis thisp) id rest
 	       (jsfun-strict-vararg-body fun body id rest)))))
 
    (define (generator-body body)
-      `(letrec ((%gen (js-make-generator
-			 (lambda (%v %e) ,body)
-			 ,proto
-			 %this)))
+      `(letrec ((%gen (js-make-generator (lambda (%v %e) ,body) ,proto %this)))
 	  %gen))
 
    (define (this-body thisp body mode)
@@ -442,32 +540,55 @@
 		     ,(flatten-stmt stmt)))))
 	  (flatten-stmt (j2s-scheme body mode return conf))))
 
+   (define (unctor-body body)
+      (if (optimized-ctor body)
+	  (unctor-body! body)
+	  body))
+
    (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator thisp)
-      (let* ((id (j2sfun-id this))
-	     (body (cond
-		      (generator
-		       (with-access::J2SNode body (loc)
-			  (epairify loc
-			     (generator-body (this-body thisp body mode)))))
-		      (need-bind-exit-return
-		       (with-access::J2SNode body (loc)
-			  (epairify loc
-			     (return-body (this-body thisp body mode)))))
-		      (else
-		       (let ((bd (this-body thisp body mode)))
-			  (with-access::J2SNode body (loc)
-			     (epairify loc
-				(if (pair? bd) bd `(begin ,bd))))))))
-	     (fun (cond
-		     ((not vararg)
-		      (fixarg-lambda this id body))
-		     ((eq? vararg 'rest)
-		      (rest-lambda this id body))
-		     ((eq? mode 'normal)
-		      (normal-vararg-lambda this id body))
+      (let ((body (cond
+		     (generator
+		      (with-access::J2SNode body (loc)
+			 (epairify loc
+			    (generator-body
+			       (this-body thisp (unctor-body body) mode)))))
+		     (need-bind-exit-return
+		      (with-access::J2SNode body (loc)
+			 (epairify loc
+			    (return-body
+			       (this-body thisp (unctor-body body) mode)))))
 		     (else
-		      (strict-vararg-lambda this id body)))))
-	 (epairify-deep loc fun))))
+		      (let ((bd (this-body thisp (unctor-body body) mode)))
+			 (with-access::J2SNode body (loc)
+			    (epairify loc
+			       (if (pair? bd) bd `(begin ,bd)))))))))
+	 (jsfun->lambda/body this mode return conf proto body))))
+
+;*---------------------------------------------------------------------*/
+;*    j2sfun->ctor ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2sfun->ctor this::J2SFun mode return conf decl::J2SDecl)
+   
+   (define (object-alloc this::J2SFun)
+      (with-access::J2SFun this (body)
+	 (let ((f (j2s-decl-scheme-id decl)))
+	    (if (cancall? body)
+		`(js-object-alloc-fast ,f)
+		`(js-object-alloc-super-fast ,f)))))
+   
+   (with-access::J2SFun this (loc body vararg mode params generator thisp)
+      (with-access::J2SDecl thisp (id)
+	 (let ((nfun (duplicate::J2SFun this
+			(rtype 'object)
+			(idthis #f)
+			(thisp #f)))
+	       (id (j2s-decl-scheme-id thisp))
+	       (body `(let ((,id ,(object-alloc this)))
+			 ,(j2s-scheme (ctor-body! body)
+			     mode return conf)
+			,id))
+	       (proto (j2s-declfun-prototype decl)))
+	    (jsfun->lambda/body nfun mode return conf proto body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-body ...                                                  */
@@ -883,3 +1004,59 @@
       (let* ((decl (if parent parent this))
 	     (scmid (j2s-decl-scheme-id decl)))
 	 `(js-get ,scmid 'prototype %this))))
+
+;*---------------------------------------------------------------------*/
+;*    ctor-body! ::J2SNode ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ctor-body! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    ctor-body! ::J2SReturn ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ctor-body! this::J2SReturn)
+   (with-access::J2SReturn this (tail exit expr loc)
+      (cond
+	 ((or tail exit)
+	  (J2SStmtExpr (ctor-body! expr)))
+	 ((isa? expr J2SUndefined)
+	  (J2SNop))
+	 (else
+	  (J2SStmtExpr expr)))))
+
+;*---------------------------------------------------------------------*/
+;*    ctor-body! ::J2SFun ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ctor-body! this::J2SFun)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    ctor-body! ::J2SOPTInitSeq ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ctor-body! this::J2SOPTInitSeq)
+   (with-access::J2SOPTInitSeq this (nodes)
+      (duplicate::J2SOPTInitSeq this
+	 (cmap0 #f)
+	 (cmap1 #f)
+	 (nodes (map ctor-body! nodes)))))
+
+;*---------------------------------------------------------------------*/
+;*    unctor-body! ::J2SNode ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unctor-body! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    unctor-body! ::J2SFun ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unctor-body! this::J2SFun)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    unctor-body! ::J2SOPTInitSeq ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unctor-body! this::J2SOPTInitSeq)
+   (with-access::J2SOPTInitSeq this (nodes)
+      (duplicate::J2SOPTInitSeq this
+	 (cmap1 #f)
+	 (nodes (map ctor-body! nodes)))))

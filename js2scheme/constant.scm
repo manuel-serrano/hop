@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/constant.scm            */
+;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/constant.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Jun 20 17:49:49 2018 (serrano)                */
+;*    Last change :  Mon Sep  3 09:19:33 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -156,6 +156,15 @@
 	  this)))
 
 ;*---------------------------------------------------------------------*/
+;*    constant! ::J2SString ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2SString env nesting)
+   (with-access::J2SString this (val)
+      (if (eq? (string-minimal-charset val) 'ascii)
+	  this
+	  (add-literal! this env #f))))
+
+;*---------------------------------------------------------------------*/
 ;*    constant! ::J2STilde ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constant! this::J2STilde env nesting)
@@ -245,16 +254,30 @@
 	    ((flonum? r) (J2SNumber/type 'real (op (fixnum->flonum l) r)))
 	    (else this))))
    
+   (define (unparen expr)
+      (if (isa? expr J2SParen)
+	  (with-access::J2SParen expr (expr) (unparen expr))
+	  expr))
+   
    (call-default-walker)
    (with-access::J2SBinary this (op expr lhs rhs loc type)
-      (if (and (isa? lhs J2SNumber) (isa? rhs J2SNumber))
-	  (with-access::J2SNumber lhs ((lval val))
-	     (with-access::J2SNumber rhs ((rval val))
+      (cond
+	 ((and (isa? (unparen lhs) J2SNumber) (isa? (unparen rhs) J2SNumber))
+	  (with-access::J2SNumber (unparen lhs) ((lval val))
+	     (with-access::J2SNumber (unparen rhs) ((rval val))
 		(case op
 		   ((+) (evaluate this + lval rval))
 		   ((-) (evaluate this - lval rval))
 		   ((*) (evaluate this * lval rval))
-		   ((/) (evaluate this / lval rval))
+		   ((/)
+		    (if (= rval 0)
+			(cond
+			   ((flonum? rval)
+			    ;; get the correct infinity sign
+			    (J2SNumber (/ lval rval)))
+			   (else
+			    (J2SNumber (/ lval 0.0))))
+			(evaluate this / lval rval)))
 		   ((BIT_OR & ^)
 		    (if (and (fixnum? lval) (fixnum? rval))
 			(let* ((x (fixnum->int32 lval))
@@ -265,7 +288,7 @@
 				     (else (bit-xors32 x y)))))
 			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
 				    (<=s32 (fixnum->int32 (maxvalfx)) r))
-			       (J2SNumber (int32->fixnum r))
+			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
 		   ((<<)
@@ -275,7 +298,7 @@
 			       (r (bit-lshu32 x (uint32->fixnum y))))
 			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
 				    (<=s32 (fixnum->int32 (maxvalfx)) r))
-			       (J2SNumber (int32->fixnum r))
+			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
 		   ((>>)
@@ -285,7 +308,7 @@
 			       (r (bit-rshs32 x (uint32->fixnum y))))
 			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
 				    (<=s32 (fixnum->int32 (maxvalfx)) r))
-			       (J2SNumber (int32->fixnum r))
+			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
 		   ((>>>)
@@ -294,14 +317,24 @@
 			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-rshu32 x (uint32->fixnum y))))
 			   (if (<=u32 r (fixnum->uint32 (maxvalfx)))
-			       (J2SNumber (uint32->fixnum r))
+			       (J2SNumber/type 'integer (uint32->fixnum r))
 			       this))
 			this))
 		   ((%)
-		    (tprint "TODO.constant! " (j2s->list this))
-		    this)
-		   (else this))))
-	  this)))
+		    (if (and (fixnum? lval) (fixnum? rval)
+			     (>=fx lval 0) (>fx rval 0))
+			(J2SNumber/type 'integer (remainder lval rval))
+			this))
+		   (else this)))))
+	 ((and (isa? (unparen lhs) J2SBool) (isa? (unparen rhs) J2SBool))
+	  (with-access::J2SBool (unparen lhs) ((lval val))
+	     (with-access::J2SBool (unparen rhs) ((rval val))
+		(case op
+		   ((&&) (J2SBool (and lval rval)))
+		   ((OR) (J2SBool (or lval rval)))
+		   (else this)))))
+	 (else
+	  this))))
        
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SDeclFun ...                                       */
