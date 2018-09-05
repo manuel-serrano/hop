@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Mon Sep  3 14:20:17 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 14:37:38 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -140,7 +140,8 @@
       (let ((val (j2sdeclinit-val-fun this)))
 	 (when (isa? val J2SFun)
 	    (with-access::J2SFun val (optimize)
-	       (when (or #t optimize)
+	       (tprint "constrinit optimize=" optimize " " id)
+	       (when optimize
 		  (constrinit-ctor! val prog))))))
    this)
 
@@ -164,7 +165,7 @@
 
    (define (simple-expr? expr obj)
       ;; is the expr simple enough so we are certain that there is no
-      ;; occurrent of decl involved
+      ;; occurrence of decl involved
       (cond
 	 ((isa? expr J2SArray)
 	  (with-access::J2SArray expr (exprs)
@@ -204,13 +205,18 @@
 			(when (isa? field J2SString)
 			   (when (isa? obj J2SRef)
 			      (with-access::J2SRef obj (decl)
-				 (if ref-or-bool
+				 (cond
+				    ((isa? ref-or-bool J2SRef)
 				     (with-access::J2SRef ref-or-bool ((rd decl))
 					(when (eq? rd decl)
-					   (simple-expr? rhs decl)))
+					   (when (simple-expr? rhs decl)
+					      obj))))
+				    ((isa? obj J2SThis)
+				     obj)
+				    (else
 				     (with-access::J2SDecl decl (vtype)
 					(when (eq? vtype 'object)
-					   obj)))))))))))))
+					   obj))))))))))))))
    
    (define (split-init-sequence this)
       ;; split a block in two parts
@@ -220,6 +226,7 @@
 	 (if (or (null? nodes) (null? (cdr nodes)))
 	     (values '() nodes #f)
 	     (let ((ref (obj-assign (car nodes) #f)))
+		(tprint "REF=" (j2s->list ref))
 		(if (not ref)
 		    (values '() nodes #f)
 		    (let loop ((ns (cdr nodes))
@@ -273,7 +280,8 @@
 		      globals)))
 	     ;; then split the init sequence
 	     (with-access::J2SBlock this (nodes loc)
-		(set! nodes 
+		(tprint "CREATING>>>> " (j2s->list ref))
+		(set! nodes
 		   (cons (instantiate::J2SOPTInitSeq
 			    (loc loc)
 			    (ref ref)

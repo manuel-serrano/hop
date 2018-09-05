@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Sep  4 15:09:44 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 14:33:49 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -585,6 +585,7 @@
 			(idthis #f)
 			(thisp #f)))
 	       (id (j2s-decl-scheme-id thisp))
+	       (_ (tprint "BODY=" (j2s->list body)))
 	       (body `(let ((,id ,(object-alloc this)))
 			 ,(j2s-scheme (ctor-body! body)
 			     mode return conf)
@@ -1039,6 +1040,7 @@
    (with-access::J2SOPTInitSeq this (nodes)
       (duplicate::J2SOPTInitSeq this
 	 (cmap0 #f)
+	 (cmap1 #f)
 	 (nodes (map ctor-body! nodes)))))
 
 ;*---------------------------------------------------------------------*/

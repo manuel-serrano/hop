@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Sep  4 15:10:18 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 14:50:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2693,7 +2693,7 @@
 		,(cond
 		    ((not cmap0)
 		     (vector-inits %ref elements i 0 nodes cmap2))
-		    ((not cmap1)
+		    ((or (not cmap1) (not (eq? (j2s-type ref) 'object)))
 		     `(begin
 			 ,@(map (lambda (n)
 				   (j2s-scheme n mode return conf))
