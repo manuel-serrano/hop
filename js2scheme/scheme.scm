@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Sep  5 16:03:26 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 16:29:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2446,9 +2446,6 @@
 	 (let* ((len (length args))
 		(fun (j2s-scheme clazz mode return conf))
 		(fid (with-access::J2SDecl decl (id) (j2s-fast-id id)))
-		(args (map (lambda (a)
-			      (j2s-scheme a mode return conf))
-			 args))
 		(obj (gensym '%obj)))
 	    `(let ((,obj ,(object-alloc clazz fun)))
 		,(if (constructor-no-return? decl)
@@ -2475,8 +2472,7 @@
    (define (j2s-new-opt decl::J2SDeclFun clazz::J2SExpr args)
       (with-access::J2SDeclFun decl (val)
 	 (with-access::J2SFun val (params)
-	    (let* ((args (map (lambda (a) (j2s-scheme a mode return conf)) args))
-		   (largs (length args))
+	    (let* ((largs (length args))
 		   (lparams (length params)))
 	       (cond
 		  ((>fx largs lparams)

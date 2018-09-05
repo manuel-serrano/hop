@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Wed Sep  5 14:54:12 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 16:39:41 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -193,7 +193,7 @@
       ;; find the declaring block of all declarations
       (j2s-find-init-blocks body body o)
       ;; find the variables used but not initialized
-      (when (j2s-narrow-fun/w-init! o)
+      (when (and #f (j2s-narrow-fun/w-init! o))
 	 (set! body (j2s-blockify! body)))
       ;; get the set of narrowable declarations
       (j2s-mark-narrowable body '() #f o (make-cell #f))
