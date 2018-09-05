@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Sep  4 15:20:57 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 15:10:59 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -702,7 +702,7 @@
 	 (let ((nenv env))
 	    (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
 	       (set! nenv (env-nocapture env))
-	       (with-access::J2SDeclFun decl (val)
+	       (with-access::J2SDeclFun decl (val id usage)
 		  (if (isa? val J2SMethod)
 		      (escape-method val fix)
 		      (escape-fun val fix #f))))
@@ -1266,7 +1266,7 @@
 ;*    node-type ::J2SNew ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SNew env::pair-nil fix::cell)
-
+   
    (define (class-type clazz)
       (if (isa? clazz J2SUnresolvedRef)
 	  (with-access::J2SUnresolvedRef clazz (id)
@@ -1276,11 +1276,13 @@
 		((RegExp) 'regexp)
 		(else 'object)))
 	  'object))
-
+   
    (with-access::J2SNew this (clazz args loc)
       (multiple-value-bind (_ env bk)
-	 (node-type-call clazz 'object args env fix)
-	 (expr-type-add! this env fix (class-type clazz) bk))))
+	 (node-type clazz env fix)
+	 (multiple-value-bind (_ env bk)
+	    (node-type-call clazz 'object args env fix)
+	    (expr-type-add! this env fix (class-type clazz) bk)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SUnary ...                                         */

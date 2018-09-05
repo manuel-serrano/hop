@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Sep  5 14:50:29 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 15:04:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2500,11 +2500,16 @@
 		 (j2s-new-opt decl clazz args))))
 	 ((and (=fx (bigloo-debug) 0) cache)
 	  (epairify loc
-	     (j2s-new-fast cache clazz args)))
+	     (j2s-new-fast cache clazz
+		(map (lambda (a)
+			(box (j2s-scheme a mode return conf) (j2s-type a) conf))
+		   args))))
 	 (else
 	  (epairify loc
 	     (j2s-new loc (j2s-scheme clazz mode return conf)
-		(j2s-scheme args mode return conf)))))))
+		(map (lambda (a)
+			(box (j2s-scheme a mode return conf) (j2s-type a) conf))
+		   args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SReturnYield ...                                  */
