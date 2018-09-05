@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Sep  5 15:52:40 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 16:03:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2081,11 +2081,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAccess mode return conf)
    
-   (define (get obj tmp field cache cspecs loc)
+   (define (get obj tmp field cache cspecs optim loc)
       (let ((tyo (typeof-this obj conf)))
 	 (j2s-get loc tmp field tyo
 	    (j2s-property-scheme field mode return conf)
-	    (j2s-vtype field) (j2s-vtype this) conf cache #f cspecs)))
+	    (j2s-vtype field) (j2s-vtype this) conf cache optim cspecs)))
 
    (define (canbe-array? obj)
       (memq (j2s-type obj) '(any undefined unknown object array)))
@@ -2123,15 +2123,15 @@
 	     ,@(if (canbe-array? obj)
 		`(((js-array? ,tmp)
 		   ,(or (j2s-array-ref this mode return conf)
-			(get obj tmp field cache cspecs loc))))
+			(get obj tmp field cache cspecs #f loc))))
 		'())
 	     ,@(if (and (canbe-string? obj) (maybe-string? obj))
 		`(((js-jsstring? ,tmp)
 		   ,(or (j2s-string-ref this mode return conf)
-			(get obj tmp field cache cspecs loc))))
+			(get obj tmp field cache cspecs #f loc))))
 		'())
 	     (else
-	      ,(get obj tmp field cache cspecs loc)))))
+	      ,(get obj tmp field cache cspecs #f loc)))))
    
    (define (index-obj-ref this obj field cache cspecs loc)
       (if (or (isa? field J2SRef) (isa? field J2SHopRef) (isa? field J2SLiteral))
@@ -2159,20 +2159,20 @@
 	    ((eq? (j2s-type obj) 'array)
 	     (or (j2s-array-ref this mode return conf)
 		 (get obj (j2s-scheme obj mode return conf)
-		    field cache cspecs loc)))
+		    field cache cspecs #f loc)))
  	    ((eq? (j2s-type obj) 'string)
 	     (or (j2s-string-ref this mode return conf)
 		 (get obj (j2s-scheme obj mode return conf)
-		    field cache cspecs loc)))
+		    field cache cspecs #f loc)))
 	    ((eq? (j2s-type obj) 'arguments)
 	     (or (j2s-arguments-ref this mode return conf)
 		 (get obj (j2s-scheme obj mode return conf)
-		    field cache cspecs loc)))
+		    field cache cspecs #f loc)))
 	    ((mightbe-number? field)
 	     (index-ref obj field cache cspecs loc))
 	    (else
 	     (get obj (j2s-scheme obj mode return conf)
-		field cache cspecs loc))))))
+		field cache cspecs #t loc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SCacheCheck ...                                   */

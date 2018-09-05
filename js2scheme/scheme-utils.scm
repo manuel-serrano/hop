@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Sep  5 15:34:22 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 16:04:40 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -512,7 +512,7 @@
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-get loc obj field tyobj prop typrop tyval conf cache
-	   optim-arrayp::bool #!optional (cspecs '(cmap pmap amap vtable)))
+	   optim-arrayp #!optional (cspecs '(cmap pmap amap vtable)))
 
    (define (js-get obj prop %this)
       (if (config-get conf :profile-cache #f)
