@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Sep  5 15:14:33 2018 (serrano)                */
+;*    Last change :  Wed Sep  5 15:15:45 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1472,7 +1472,7 @@
    (with-access::J2SNew this (clazz args loc)
       (when *indebug*
 	 (tprint "... J2SCall.1 env=" (dump-env env)))
-      (multiple-valud-bind (_ env)
+      (multiple-value-bind (_ env)
 	 (node-range clazz env conf mode fix)
 	 (multiple-value-bind (_ env)
 	    (node-range-call clazz args env conf mode fix)
