@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/hint.scm      */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/hint.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Sep  3 16:00:35 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 07:35:17 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -263,7 +263,6 @@
 				      ((string) #unspecified)
 				      (else (set! ty #f)))))))))
 	    cases)
-	 (tprint "SWITCH " ty " " (j2s->list this))
 	 (if (and ty (not (memq ty '(unknown any))))
 	     `((,ty . 5))
 	     `((integer . 4) (string . 3)))))
