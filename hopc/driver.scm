@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Sep  6 07:44:04 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 13:55:27 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -546,9 +546,13 @@
 	    (oldd (bigloo-debug)))
 	 (bigloo-warning-set! 0)
 	 (bigloo-debug-set! 0)
+	 (hop-sofile-compile-policy-set! 'none)
 	 (unwind-protect
 	    (when (library-load-init 'nodejs (hop-library-path))
+	       (library-load-init 'hopscript (hop-library-path))
+	       (library-load 'hopscript)
 	       (library-load 'nodejs)
+	       (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
 	       (eval '((@ nodejs-plugins-toplevel-loader __nodejs_require))))
 	    (begin
 	       (bigloo-warning-set! oldw)

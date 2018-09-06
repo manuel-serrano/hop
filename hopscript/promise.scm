@@ -42,16 +42,6 @@
 	   (js-promise-then-catch ::JsGlobalObject ::JsPromise proc fail np)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-push-thunk! ...                                        */
-;*---------------------------------------------------------------------*/
-(define-macro (js-worker-push-thunk! worker name fun)
-   (match-case fun
-      ((lambda () . ?body)
-       `(begin ,@body))
-      (else
-       `((@ js-worker-push-thunk! __hopscript_worker) ,worker ,name ,fun))))
-
-;*---------------------------------------------------------------------*/
 ;*    Jsstringliteral begin                                            */
 ;*---------------------------------------------------------------------*/
 (%js-jsstringliteral-begin!)

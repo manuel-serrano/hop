@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Sep  6 12:21:10 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 13:59:31 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -30,6 +30,9 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; not debug by default
+   (bigloo-warning-set! 0)
+   (bigloo-debug-set! 0)
    ;; set the Hop cond-expand identification
    (register-srfi! 'hopc)
    (for-each register-eval-srfi! (hop-srfis))
