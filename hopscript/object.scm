@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Apr  5 10:05:34 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 18:32:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -137,7 +137,9 @@
 ;*    object. This method is then invoked from Scheme code.            */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-to-errstring o::JsObject)
-   (js-tostring o (js-initial-global-object)))
+   (format
+      (format "~a `~a'" (js-tostring o (js-initial-global-object))
+	 (typeof o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-fields ...                                              */

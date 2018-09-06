@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/array.scm     */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/array.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Sep  3 08:12:09 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 18:35:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -259,6 +259,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-body-element obj::JsArray)
    (xml-unpack obj))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ::JsArray ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::JsArray p backend)
+   (for-each (lambda (el) (xml-write el p backend))
+      (xml-unpack obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */
