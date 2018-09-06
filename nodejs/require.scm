@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Sep  6 07:42:07 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 12:00:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -21,7 +21,7 @@
 	   __nodejs_process
 	   __nodejs_syncg)
 
-   (export (nodejs-new-module::JsObject ::bstring ::bstring ::obj ::JsGlobalObject)
+   (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
@@ -333,7 +333,7 @@
 			  "j2s-javascript-debug-driver")
 	 :language lang
 	 :site 'client
-	 :plugins-loader (make-plugins-loader %ctxthis %ctxmodule)
+	 :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 	 :debug (if esplainp 0 (bigloo-debug))))
    
    (define (compile obj header offset esplainp worker this)
@@ -442,7 +442,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-module ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-new-module::JsObject id filename worker::obj %this::JsGlobalObject)
+(define (nodejs-new-module::JsObject id filename worker::WorkerHopThread %this::JsGlobalObject)
 
    (define (module-init! m)
       (with-access::JsGlobalObject %this (js-object)
@@ -472,9 +472,8 @@
 	    ;; module properties
 	    (module-init! m)
 	    ;; register the module in the current worker thread
-	    (when (isa? worker WorkerHopThread)
-	       (with-access::WorkerHopThread worker (module-cache)
-		  (js-put! module-cache filename m #f %this)))
+	    (with-access::WorkerHopThread worker (module-cache)
+	       (js-put! module-cache filename m #f %this))
 	    ;; return the newly allocated module
 	    (trace-item "module=" (typeof m))
 	    m))))
@@ -822,7 +821,7 @@
 			:module-name (symbol->string mod)
 			:worker-slave worker-slave
 			:verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
-			:plugins-loader (make-plugins-loader %ctxthis %ctxmodule)
+			:plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 			:debug (bigloo-debug))
 		     (close-mmap m)))))))
    
@@ -843,7 +842,7 @@
 		  :module-name (symbol->string mod)
 		  :worker-slave worker-slave
 		  :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
-		  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule)
+		  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 		  :debug (bigloo-debug))))))
 
    (define (compile-ast ast::J2SProgram mod)
@@ -864,7 +863,7 @@
 			      :module-name (symbol->string mod)
 			      :worker-slave worker-slave
 			      :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
-			      :plugins-loader (make-plugins-loader %ctxthis %ctxmodule)
+			      :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 			      :debug (bigloo-debug))
 		  (when (mmap? m)
 		     (close-mmap m)))))))
@@ -1998,11 +1997,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-plugins-loader ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (make-plugins-loader %ctxthis %ctxmodule)
+(define (make-plugins-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang conf)
 	 (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
-	    (let* ((langmode (nodejs-require-module lang (js-current-worker)
+	    (let* ((langmode (nodejs-require-module lang worker
 				%ctxthis %ctxmodule))
 		   (key (js-get js-symbol 'compiler %ctxthis))
 		   (parser (let ((o (js-get langmode key %ctxthis)))
@@ -2022,9 +2021,11 @@
 ;*    (e.g., hopc).                                                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-plugins-toplevel-loader)
-   (let* ((this (nodejs-new-global-object))
-	  (mod (nodejs-new-module "hopc" "." #f this)))
-      (make-plugins-loader this mod)))
+   (let ((this (nodejs-new-global-object)))
+      (with-access::JsGlobalObject this (js-object)
+	 (let* ((worker (js-init-main-worker! this #f nodejs-new-global-object))
+		(mod (nodejs-new-module "hopc" "." worker this)))
+	    (make-plugins-loader this mod worker)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */

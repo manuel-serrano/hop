@@ -6,13 +6,16 @@ Language definition
 ===================
 
 A Hop.js language is a DSL or a complete language that can be used to
-implement an entire module. That is, one module cannot mix several
-languages, but a module implemented in a language L1 can import
-modules implemented in other languages. It belongs to the client
-module when it imports (or /requires/) a module to specify the
-language this imported module is implemented into. See chapter
-[HopScript modules](01-module.html). for details on module
-importations.
+implement an whole module content or a function body. There are two
+possibility for using a module MOD implemented in a language LANG.
+
+  1. When MOD is required, LANG is passed as a second argument to
+ `require`. See chapter [HopScript modules](01-module.html). for details
+ on module importations.
+  2. The MOD header contains a `"use LANG"` declaration.
+ This second form is possible only when the LANG is an extension of JavaScript,
+ that is to be parsed by the Hop compiler parser.
+
 
 Language implementation
 =======================
@@ -29,6 +32,8 @@ system. A compilation result must be an object with two properties:
     * `filename`: denoting that the compilation result as been stored in
  a file;
     * `json`: denoting that the compilation result is a json;
+    * `ast`: denoting that the compilation result is an internal form, directly
+ suitable to the Hop compiler;
     * `value`: denoting that the compilation result is an arbitrary
  JavaScript value convertible into json;
     * `error`: denoting a compilation failure.
@@ -87,3 +92,10 @@ ${ doc.include( doc.EXAMPLES_DIR + "/lang/csv.hop", 15 ) }
 ```
 
 
+Hopc parser plugins
+===================
+
+The hopc parser can be extended with _plugins_ that can be used to extend
+the syntax it analyses. This feature is still experimental and will be
+described when stabiliez. In the meantime, an example can be found in
+the implementation of the HipHop language.
