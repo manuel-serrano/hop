@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/hopc/parseargs.scm      */
+;*    serrano/prgm/project/hop/3.2.x/hopc/parseargs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Sep  5 10:48:53 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 07:51:58 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -191,7 +191,6 @@
 	     (unless (member lang '("hop" "hopscript"))
 		(error "hopc" "Unknown language, see -help" lang))
 	     (hopc-source-language-set! (string->symbol lang)))
-	    
 	    (section "JavaScript dialect and features")
 	    (("--js-worker" (help "Enable JavaScript workers"))
 	     (hopc-js-worker-set! #t))
@@ -253,10 +252,10 @@
 	     (j2s-compile-options-set!
 		(append (call-with-input-string conf read)
 		   (j2s-compile-options))))
-	    (("--no-server" (help "Hop compatibility, ignored"))
-	     #unspecified)
-	    (("-p" ?port (help "Hop compatibility, ignored"))
-	     #unspecified)
+	    (("--js-plugins" (help "Enables JavaScript plugins"))
+	     (hopc-j2s-plugins-set! #t))
+	    
+	    (section "Optimization, profiling, and Debugging")
 	    (("-ftyflow" (help "Enable tyflow typing (-O)"))
 	     (hopc-j2s-flags-set! (cons* :optim-tyflow #t (hopc-j2s-flags))))
 	    (("-fno-tyflow" (help "Disable tyflow typing"))
@@ -363,6 +362,11 @@
 	    (("--profile-alloc" (help "Alloc profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile-alloc #t (hopc-j2s-flags))))
+	    (section "Dummy option for Hop command line similarity")
+	    (("--no-server" (help "Hop compatibility, ignored"))
+	     #unspecified)
+	    (("-p" ?port (help "Hop compatibility, ignored"))
+	     #unspecified)
 	    (section "Experimental features")
 	    (("--js-cspecs" ?cspecs (help "force default cache specs"))
 	     (call-with-input-string cspecs

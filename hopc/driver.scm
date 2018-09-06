@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Sep  5 19:11:53 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 07:44:04 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -206,6 +206,7 @@
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
 		  :int-size (hopc-int-size)
+		  :plugins-loader (hopc-plugins-loader)
 		  :debug (bigloo-debug)
 		  (hopc-j2s-flags)))))
       
@@ -235,6 +236,7 @@
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
 		  :int-size (hopc-int-size)
+		  :plugins-loader (hopc-plugins-loader)
 		  :debug (bigloo-debug)
 		  (hopc-j2s-flags)))))
       
@@ -359,6 +361,7 @@
 			:verbose (hop-verbose)
 			:long-size (hopc-long-size)
 			:int-size (hopc-int-size)
+			:plugins-loader (hopc-plugins-loader)
 			:debug (bigloo-debug)
 			(hopc-j2s-flags))))
 	       file
@@ -533,5 +536,21 @@
    (if (string? (hopc-destination))
        (with-output-to-file (hopc-destination) generate)
        (generate)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hopc-plugins-loader ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hopc-plugins-loader)
+   (when (hopc-j2s-plugins)
+      (let ((oldw (bigloo-warning))
+	    (oldd (bigloo-debug)))
+	 (bigloo-warning-set! 0)
+	 (bigloo-debug-set! 0)
+	 (unwind-protect
+	    (when (library-load-init 'nodejs (hop-library-path))
+	       (library-load 'nodejs)
+	       (eval '((@ nodejs-plugins-toplevel-loader __nodejs_require))))
+	    (begin
+	       (bigloo-warning-set! oldw)
+	       (bigloo-debug-set! oldd))))))
 

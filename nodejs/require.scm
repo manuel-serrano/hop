@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Sep  5 17:56:08 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 07:42:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -21,7 +21,7 @@
 	   __nodejs_process
 	   __nodejs_syncg)
 
-   (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
+   (export (nodejs-new-module::JsObject ::bstring ::bstring ::obj ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
@@ -42,7 +42,8 @@
 	   (nodejs-new-scope-object ::JsGlobalObject)
 	   (nodejs-eval ::JsGlobalObject ::JsObject)
 	   (nodejs-function ::JsGlobalObject ::JsObject)
-	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)))
+	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)
+	   (nodejs-plugins-toplevel-loader)))
 
 ;;(define-macro (bigloo-debug) 0)
 
@@ -441,7 +442,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-module ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-new-module::JsObject id filename worker::WorkerHopThread %this::JsGlobalObject)
+(define (nodejs-new-module::JsObject id filename worker::obj %this::JsGlobalObject)
 
    (define (module-init! m)
       (with-access::JsGlobalObject %this (js-object)
@@ -471,8 +472,9 @@
 	    ;; module properties
 	    (module-init! m)
 	    ;; register the module in the current worker thread
-	    (with-access::WorkerHopThread worker (module-cache)
-	       (js-put! module-cache filename m #f %this))
+	    (when (isa? worker WorkerHopThread)
+	       (with-access::WorkerHopThread worker (module-cache)
+		  (js-put! module-cache filename m #f %this)))
 	    ;; return the newly allocated module
 	    (trace-item "module=" (typeof m))
 	    m))))
@@ -1268,6 +1270,8 @@
 					   (format "bad source format `~a'" (typeof src)) filename)))
 				  ;; target
 				  "-y" "--js-no-module-main" "-o" ,sopathtmp
+				  ;; js plugins
+				  "--js-plugins"
 				  ;; profiling
 				  ,@(if (hop-profile) '("--profile") '())
 				  ;; debug
@@ -2010,7 +2014,18 @@
 			  ps
 			  '()))
 		   '()))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-plugins-toplevel-loader ...                               */
+;*    -------------------------------------------------------------    */
+;*    This function is intended to be used by external tools only      */
+;*    (e.g., hopc).                                                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-plugins-toplevel-loader)
+   (let* ((this (nodejs-new-global-object))
+	  (mod (nodejs-new-module "hopc" "." #f this)))
+      (make-plugins-loader this mod)))
+
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */
 ;*---------------------------------------------------------------------*/

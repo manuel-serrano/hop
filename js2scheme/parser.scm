@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/parser.scm        */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/parser.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Sep  4 15:03:17 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 08:55:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -255,7 +255,7 @@
 		       (when first
 			  (source-element-mode! el)
 			  (let ((ps (source-element-plugins el conf)))
-			     (when ps (set! plugins (append ps plugins)))))
+			     (when ps (set! plugins ps))))
 		       (loop (cons el rev-ses) #f)))))))
    
    (define (source-element)
@@ -1366,7 +1366,7 @@
 			    (when first
 			       (source-element-mode! el)
 			       (let ((ps (source-element-plugins el conf)))
-				  (when ps (set! plugins (append ps plugins)))))
+				  (when ps (set! plugins ps))))
 			    (loop (cons el rev-ses) #f))))))
 	    (begin
 	       (set! current-mode cmode)
@@ -3122,9 +3122,3 @@
 			       (parse-error "Duplicate parameter name not allowed in this context" d))))
 	       (cdr l)))
 	 (loop (cdr l)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-parser-plugins-loader ...                                    */
-;*---------------------------------------------------------------------*/
-(define j2s-parser-plugins
-   (lambda (name conf) '()))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Sep  5 10:49:21 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 07:48:46 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -121,6 +121,9 @@
 
 	    (hopc-j2s-flags::pair-nil)
 	    (hopc-j2s-flags-set! ::pair-nil)
+
+	    (hopc-j2s-plugins::bool)
+	    (hopc-j2s-plugins-set! ::bool)
 
 	    (hop-max-threads::int))
 	    
@@ -364,6 +367,14 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-j2s-flags
    '())
+
+;*---------------------------------------------------------------------*/
+;*    hopc-j2s-plugins ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Enable/disable j2s plugins                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-j2s-plugins
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-max-threads ...                                              */
