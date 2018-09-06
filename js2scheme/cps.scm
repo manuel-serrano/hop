@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/cps.scm       */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/cps.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Aug 24 07:24:17 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 13:44:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -403,7 +403,7 @@
 	     pack kbreaks kcontinues ktry fun)
 	  (if ktry
 	      (%J2STail
-		 (J2SCall (J2SRef ktry fun) (J2SBool #t) (cps-fun! expr))
+		 (J2SCall (J2SRef ktry) (J2SBool #t) (cps-fun! expr))
 		 fun)
 	      (J2SReturnYield (cps-fun! expr) (J2SUndefined) #f)))))
 
