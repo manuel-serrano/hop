@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Tue Jul 17 09:45:52 2018 (serrano)                */
+/*    Last change :  Thu Sep  6 15:33:53 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -210,6 +210,7 @@ exports.markdown = hop.modulesDir + "/markdown";
 exports.syslog = hop.modulesDir + "/syslog";
 exports.systime = hop.modulesDir + "/systime";
 exports.hopc = hop.modulesDir + "/hopc";
+exports.feed = hop.modulesDir + "/feed";
 
 Object.seal( exports );
 Object.freeze( exports );
