@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Jun  4 19:22:39 2018 (serrano)                */
+;*    Last change :  Fri Sep  7 08:57:48 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -373,10 +373,20 @@
 		     (js-string->jsstring
 			(url-path-encode (js-tostring path %this)))))
 	       
+	       (define-js decodeURIComponent 1
+		  (lambda (this path)
+		     (js-string->jsstring
+			(uri-decode-component (js-tostring path %this)))))
+	       
 	       (define-js encodeHTML 1
 		  (lambda (this path)
 		     (js-string->jsstring
 			(html-string-encode (js-tostring path %this)))))
+
+	       (define-js decodeHTML 1
+		  (lambda (this path)
+		     (js-string->jsstring
+			(html-string-decode (js-tostring path %this)))))
 	       
 	       (define-js md5sum 1
 		  (lambda (this path)

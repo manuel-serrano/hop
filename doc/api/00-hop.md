@@ -504,6 +504,36 @@ ${ <span class="label label-info">url/url.js</span> }
 ${ doc.include( doc.BUILDDIR + "/examples/url/url.js", 14 ) }
 ```
 
+### hop.decodeHTML( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Decodes an encoded HTML string.
+
+```hopscript
+hop.decodeHTML( 'jean &lt;dupont&gt;' );
+// "jean <dupont>"
+```
+
+### hop.decodeURIComponent( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Decodes an encoded URI component.
+
+```hopscript
+hop.encodeURIComponent( 'jean dupont' );
+// "jean%20dupont"
+```
+
+### hop.encodeHTML( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Encodes an HTML string into a textual string.
+
+```hopscript
+hop.encodeHTML( 'jean <dupont>' );
+// "jean &lt;upont&gt;"
+```
+
 ### hop.encodeURIComponent( string ) ###
 [:@glyphicon glyphicon-tag function]
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Thu Sep  6 15:33:53 2018 (serrano)                */
+/*    Last change :  Fri Sep  7 09:02:36 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -75,6 +75,8 @@ exports.createElement = hop.createElement;
 /*---------------------------------------------------------------------*/
 exports.encodeURIComponent = hop.encodeURIComponent;
 exports.encodeHTML = hop.encodeHTML;
+exports.decodeURIComponent = hop.decodeURIComponent;
+exports.decodeHTML = hop.decodeHTML;
 exports.md5sum = hop.md5sum;
 exports.sha1sum = hop.sha1sum;
 
