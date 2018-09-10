@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue May  1 15:46:21 2018 (serrano)                */
+;*    Last change :  Mon Sep 10 12:01:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -217,6 +217,7 @@
       ((const const-opt) "const ")
       ((var) "var ")
       ((param) "")
+      ((class) "const ")
       (else (error "js" "Illegal binder" binder))))
 
 ;*---------------------------------------------------------------------*/
