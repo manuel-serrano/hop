@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/dump.scm      */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/dump.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Sep  1 07:09:21 2018 (serrano)                */
+;*    Last change :  Sun Sep  9 07:23:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1065,3 +1065,10 @@
    (with-access::J2SCacheCheck this (prop cache obj fields)
       `(,@(call-next-method) :cache ,cache ,prop ,(j2s->list obj)
 	  ,@(map j2s->list fields))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SOptInitSeq ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SOPTInitSeq)
+   (with-access::J2SOPTInitSeq this (ref offset)
+      `(,@(call-next-method) :ref ,(j2s->list ref) :offset ,offset)))

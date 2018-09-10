@@ -1,14 +1,14 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/pce.scm       */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/pce.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Tue Aug 14 09:53:27 2018 (serrano)                */
+;*    Last change :  Sun Sep  9 08:23:54 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
 ;*    -------------------------------------------------------------    */
-;*    This optimization eliminate redundant cache checks.              */
+;*    This optimization eliminates redundant cache checks.             */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -160,6 +160,17 @@
    '())
 
 ;*---------------------------------------------------------------------*/
+;*    get-accesses* ::J2SGlobalRef ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (get-accesses* this::J2SGlobalRef)
+   (with-access::J2SGlobalRef this (decl)
+      (with-access::J2SDecl decl (id)
+	 ;; handle a special case for undefined
+	 (if (eq? id 'undefined)
+	     '()
+	     stop))))
+
+;*---------------------------------------------------------------------*/
 ;*    get-accesses* ::J2SDecl ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (get-accesses* this::J2SDecl)
@@ -295,7 +306,7 @@
 ;*    insert-pce! ::J2SBlock ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (insert-pce! this::J2SBlock)
-   (with-access::J2SBlock this (nodes)
+   (with-access::J2SBlock this (nodes loc)
       (let ((newnodes (insert-pce-nodes! nodes)))
 	 (if (and (pair? newnodes)
 		  (null? (cdr newnodes))
@@ -477,16 +488,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (expand-pce! this::J2SBlockPCE counter expandp::bool)
    (if expandp
-       (with-access::J2SBlockPCE this (ainfos loc endloc)
+       (with-access::J2SBlockPCE this (ainfos loc endloc nodes)
 	  (let ((ncaches (get-caches ainfos counter))
 		(dupblock (j2s-alpha (duplicate::J2SBlock this) '() '())))
 	     (J2SBlock
 		(J2SIf (expand-pce-pretest ncaches loc)
 		   (expand-pce!
-		      (update-cache! (duplicate::J2SBlock this) ncaches ainfos)
+		      (update-cache! dupblock ncaches ainfos)
 		      counter #t)
 		   (J2SBlock
-		      (expand-pce! dupblock counter #f)
+		      (expand-pce! (duplicate::J2SBlock this) counter #f)
 		      (J2SIf (expand-pce-posttest ncaches loc)
 			 (J2SStmtExpr (J2SUndefined))
 			 ;;(enable-pce-cache ncaches loc)
@@ -503,7 +514,7 @@
 	 (with-access::J2SRef obj (decl type)
 	    (let ((tmp (gensym 'tmp)))
 	       (J2SPragma/bindings 'bool
-		  (list tmp) (list (J2SRef decl))
+		  (list tmp) (list (J2SRef decl :type type))
 		  (if (eq? type 'object)
 		      `(with-access::JsObject ,tmp (cmap)
 			  (eq? cmap (js-pcache-imap (js-pcache-ref %pcache ,(cdr entry)))))
@@ -538,7 +549,7 @@
 	 (with-access::J2SRef obj (decl type)
 	    (let ((tmp (gensym 'tmp)))
 	       (J2SPragma/bindings 'bool
-		  (list tmp) (list (J2SRef decl))
+		  (list tmp) (list (J2SRef decl :type type))
 		  (if (eq? type 'object)
 		      (test/w-object tmp entry cache)
 		      `(and (js-object? ,tmp)
@@ -558,11 +569,11 @@
    (J2SSeq*
       (map (lambda (entry)
 	      (with-access::J2SAccess (car entry) (obj)
-		 (with-access::J2SRef obj (decl loc)
+		 (with-access::J2SRef obj (decl loc type)
 		    (let ((tmp (gensym 'tmp)))
 		       (J2SStmtExpr
 			  (J2SPragma/bindings 'undefined
-			     (list tmp) (list (J2SRef decl))
+			     (list tmp) (list (J2SRef decl :type type))
 			     `(with-access::JsPropertyCache (js-pcache-ref %pcache ,(cdr entry))
 				    (imap)
 				 (with-access::JsObject ,tmp (cmap)

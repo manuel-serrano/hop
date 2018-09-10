@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/hopscript/public.scm        */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/public.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Sep  2 09:45:35 2018 (serrano)                */
+;*    Last change :  Sun Sep  9 09:22:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -540,7 +540,7 @@
 	      (cond
 		 ((<fx arity 0)
 		  (let ((min (-fx (negfx arity) 1)))
-		     (apply proc this ,@args
+		     (apply proc this ,@args 
 			(make-list (-fx min ,n) (js-undefined)))))
 		 ((=fx arity ,n)
 		  (proc this ,@args))
