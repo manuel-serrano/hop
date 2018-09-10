@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Mar  9 07:06:38 2018 (serrano)                */
+;*    Last change :  Sat Sep  8 20:19:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -156,6 +156,11 @@
    (create-hashtable :eqtest string=? :hash string-hash))   
 
 ;*---------------------------------------------------------------------*/
+;*    symbols ...                                                      */
+;*---------------------------------------------------------------------*/
+(define symbols '())
+
+;*---------------------------------------------------------------------*/
 ;*    js-init-symbol! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-symbol! %this::JsGlobalObject)
@@ -199,16 +204,21 @@
 	    :hidden-class #t)
 
 	 (define (bind-symbol! s)
-	    (let ((sym (instantiate::JsSymbolLiteral
-			  (val (string-append "Symbol."
-				  (symbol->string! s))))))
+	    (let ((o (assq s symbols)))
+	       (let ((v (if (pair? o)
+			    (cdr o)
+			    (let ((sym (instantiate::JsSymbolLiteral
+					  (val (string-append "Symbol."
+						  (symbol->string! s))))))
+			       (set! symbols (cons (cons s sym) symbols))
+			       sym))))
 	       (js-bind! %this js-symbol s
-		  :value sym
+		  :value v
 		  :writable #f
 		  :enumerable #f
 		  :configurable #f
 		  :hidden-class #f)
-	       sym))
+	       v)))
 	 
 	 ;; for
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-symbol.for
