@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-class.scm       */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-class.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Tue May  1 15:48:59 2018 (serrano)                */
+;*    Last change :  Sun Sep  9 10:02:05 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -148,6 +148,7 @@
 			       :alloc js-instance-alloc
 			       :construct ,ctor
 			       :prototype  ,proto
+			       :arity ,(+fx 1 length)
 			       :__proto__ ,(if (null? super)
 					       '(with-access::JsGlobalObject %this (js-function-prototype)
 						 js-function-prototype)
