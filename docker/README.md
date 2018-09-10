@@ -2,6 +2,12 @@
 Building and exporting the docker image
 =======================================
 
+If Bigloo is to be downloaded from local host.
+
+  hop -p 8888
+
+Then
+
   (cd docker; docker build -t hop .)
   docker image save -o "/tmp/hop-docker-image-`date '+%d%b%y'`-`(git rev-parse --short HEAD)`.tgz" hop
   docker export -o "/tmp/hop-docker-`date '+%d%b%y'`-`(git rev-parse --short HEAD)`.tgz"
@@ -14,6 +20,11 @@ to get the Hop docker <image-id>, and then:
 
   docker rmi <image-id>
 
+It might be needed to kill running processes in that image first:
+
+  docker ps -a
+  docker rm <container-id>
+  
 
 Importing a docker image
 ========================

@@ -27,7 +27,7 @@ RUN wget http://redrock.inria.fr:8888/home/serrano/prgm/distrib/bigloo4.3b.tar.g
     && tar -xzf bigloo*.tar.gz && cd bigloo* \
     && ./configure && make -j$(nproc) && make install
 
-RUN wget http://redrock.inria.fr:8888/home/serrano/prgm/distrib/hop-3.2.0-pre1.tar.gz \
+RUN wget http://redrock.inria.fr:8888/home/serrano/prgm/distrib/hop-3.2.0.tar.gz \
     && tar -xzf hop* && cd hop* \
     && ./configure && make -j$(nproc) && make install \
     && cd ..; rm -rf hop-3.2.0/hopc
