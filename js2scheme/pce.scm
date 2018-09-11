@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Sun Sep  9 08:23:54 2018 (serrano)                */
+;*    Last change :  Mon Sep 10 19:48:22 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -27,6 +27,10 @@
 
    (static (class J2SBlockPCE::J2SBlock
 	      (ainfos::pair read-only))
+
+	   (class J2SLetBlockPCE::J2SBlock
+	      (ainfos::pair read-only))
+	   
 	   (class AInfo
 	      access::J2SAccess
 	      field::bstring))
@@ -374,7 +378,7 @@
 		      (decls collect)
 		      (nodes nodes))))
 	 (if (>=fx (length xs) pce-duplicate-threshold)
-	     (instantiate::J2SBlockPCE
+	     (instantiate::J2SLetBlockPCE
 		(endloc (node-endloc (car (last-pair nodes))))
 		(loc (node-loc (car nodes)))
 		(ainfos xs)
@@ -394,7 +398,7 @@
 				    (endloc endloc)
 				    (decls collect)
 				    (nodes ncollect))))
-		       (instantiate::J2SBlockPCE
+		       (instantiate::J2SLetBlockPCE
 			  (endloc endloc)
 			  (loc (node-loc (car nodes)))
 			  (ainfos xs)
@@ -411,7 +415,7 @@
 					(decls collect)
 					(nodes (append ncollect
 						  (list (insert-pce! block)))))))
-		       (instantiate::J2SBlockPCE
+		       (instantiate::J2SLetBlockPCE
 			  (endloc endloc)
 			  (loc (node-loc (car nodes)))
 			  (ainfos xs)
@@ -460,6 +464,9 @@
 			  (duplicate::J2SLetBlock this
 			     (decls skip)
 			     (nodes (list (pce-letblock-nonext collect xs nodes)))))
+			 ((null? skip)
+			  (let ((nodes (list (next-letblock next nodes))))
+			     (pce-letblock collect xs nodes)))
 			 (else
 			  (let ((nodes (list (next-letblock next nodes))))
 			     (duplicate::J2SLetBlock this
@@ -476,7 +483,7 @@
       (if rec
 	  (insert-rec-pce! this)
 	  (insert-norec-pce! this))))
-      
+
 ;*---------------------------------------------------------------------*/
 ;*    expand-pce! ::J2SNode ...                                        */
 ;*---------------------------------------------------------------------*/
@@ -500,8 +507,57 @@
 		      (expand-pce! (duplicate::J2SBlock this) counter #f)
 		      (J2SIf (expand-pce-posttest ncaches loc)
 			 (J2SStmtExpr (J2SUndefined))
-			 ;;(enable-pce-cache ncaches loc)
 			 (disable-pce-cache ncaches loc)))))))
+       (duplicate::J2SBlock this)))
+
+;*---------------------------------------------------------------------*/
+;*    expand-pce! ::J2SLetBlockPCE ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (expand-pce! this::J2SLetBlockPCE counter expandp::bool)
+
+   (define (neutral type loc)
+      (case type
+	 ((uint32)
+	  (J2SNumber/type type #u32:0))
+	 ((int32)
+	  (J2SNumber/type type #s32:0))
+	 ((array)
+	  (J2SArray))
+	 ((string)
+	  (J2SString ""))
+	 (else
+	  (J2SUndefined))))
+   
+   (if expandp
+       (with-access::J2SLetBlockPCE this (ainfos loc endloc nodes)
+	  (let* ((lblock (car nodes))
+		 (ncaches (get-caches ainfos counter))
+		 (posttest (expand-pce-posttest ncaches loc))
+		 (pretest (expand-pce-pretest ncaches loc)))
+	     (with-access::J2SLetBlock lblock (decls nodes)
+		(let* ((ndecls (map (lambda (d)
+				       (with-access::J2SDeclInit d (vtype loc)
+					  (duplicate::J2SDeclInit d
+					     (val (neutral vtype loc)))))
+				  decls))
+		       (assig+ (map (lambda (d)
+				       (with-access::J2SDeclInit d (vtype loc val)
+					  (J2SAssig (J2SRef d) val)))
+				  decls))
+		       (assig- (map (lambda (a)
+				       (duplicate::J2SAssig a))
+				  assig+)))
+		   (J2SLetBlock ndecls
+		      (J2SIf pretest
+			 (expand-pce!
+			    (update-cache! (J2SSeq* assig+) ncaches ainfos)
+			    counter #t)
+			 (J2SBlock
+			    (expand-pce! (J2SSeq* assig-) counter #f)
+			    (J2SIf posttest
+			       (J2SStmtExpr (J2SUndefined))
+			       (disable-pce-cache ncaches loc))))
+		      (J2SSeq* nodes))))))
        (duplicate::J2SBlock this)))
 
 ;*---------------------------------------------------------------------*/
