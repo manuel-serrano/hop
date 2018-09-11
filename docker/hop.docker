@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May  4 07:52:08 2018                          */
-#*    Last change :  Tue Sep 11 16:55:12 2018 (serrano)                */
+#*    Last change :  Tue Sep 11 18:01:07 2018 (serrano)                */
 #*    Copyright   :  2018 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Run Hop thru a docker container                                  */
@@ -57,10 +57,14 @@ while : ; do
       shift
       mntdirs="$1 $mntdirs ";;
       
+    -v*)
+      opts="$opts $1";
+      shift;;
+    
     -*)
       rest="$rest $1";
       shift;;
-      
+    
     *)
       if [ "$appdir " = " " ]; then
         appdir=`dirname $1`
