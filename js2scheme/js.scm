@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Sep 10 12:01:37 2018 (serrano)                */
+;*    Last change :  Tue Sep 11 09:54:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -217,23 +217,28 @@
       ((const const-opt) "const ")
       ((var) "var ")
       ((param) "")
-      ((class) "const ")
       (else (error "js" "Illegal binder" binder))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDecl ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDecl tildec dollarc mode evalp conf)
-   (with-access::J2SDecl this (binder writable)
-      (if (j2s-param? this)
-	  (list this (j2s-binder binder #t) (j2s-js-id this))
-	  (list this (j2s-binder binder #t) (j2s-js-id this) ";"))))
+   (with-access::J2SDecl this (binder writable id loc)
+      (cond
+	 ((eq? binder 'class)
+	  '())
+	 ((j2s-param? this)
+	  (list this (j2s-binder binder #t) (j2s-js-id this)))
+	 (else
+	  (list this (j2s-binder binder #t) (j2s-js-id this) ";")))))
                                              
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDeclInit tildec dollarc mode evalp conf)
-   (with-access::J2SDeclInit this (val binder writable scope)
+   (with-access::J2SDeclInit this (val binder writable scope id loc)
+      (when (memq id '(LogicalNet RegisterNet))
+	 (tprint "DECLINIT id=" id " " (typeof this) " " loc))
       (cond
 	 ((and (eq? scope 'global)
 	       (> (config-get conf :debug-client 0) 0)
@@ -252,7 +257,16 @@
 		(if (j2s-param? this) '() '(";")))))
 	 (else
 	  (list this (j2s-binder binder #t) (j2s-js-id this) ";")))))
-                                             
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SDeclClass ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SDeclClass tildec dollarc mode evalp conf)
+   (with-access::J2SDeclClass this (val binder writable scope id)
+      (tprint "DECLCLASS=" id)
+      (append (j2s-js val tildec dollarc mode evalp conf)
+	 (if (j2s-param? this) '() '(";")))))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SReturn ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -693,6 +707,12 @@
       (list this (j2s-js-id decl))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SSuper ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SSuper tildec dollarc mode evalp conf)
+   (list this "super"))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SUnresolvedRef ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SUnresolvedRef tildec dollarc mode evalp conf)
@@ -1026,10 +1046,25 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SAssig tildec dollarc mode evalp conf)
    (with-access::J2SAssig this (lhs rhs)
+      (if (isa? rhs J2SClass)
+	  (tprint "ICI " (j2s->list this)))
       (cons this
 	 (append (j2s-js lhs tildec dollarc mode evalp conf)
 	    '("=")
 	    (j2s-js rhs tildec dollarc mode evalp conf)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SInit ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SInit tildec dollarc mode evalp conf)
+   (with-access::J2SInit this (lhs rhs)
+      (if (and (isa? rhs J2SClass) (isa? lhs J2SRef))
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (binder)
+		(if (eq? binder 'class)
+		    (j2s-js rhs tildec dollarc mode evalp conf)
+		    (call-next-method))))
+	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SAssigOp ...                                          */
@@ -1138,9 +1173,12 @@
 ;*    j2s-js ::J2SClass ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SClass tildec dollarc mode evalp conf)
-   (with-access::J2SClass this (name extends elements)
+   (with-access::J2SClass this (name super elements)
       (cons* this "class "
 	 (append (if name (list name " ") '())
+	    (if (isa? super J2SUndefined)
+		'()
+		(cons "extends " (j2s-js super tildec dollarc mode evalp conf)))
 	    (j2s-js* this "{\n" "}\n" ""
 	       elements tildec dollarc mode evalp conf)))))
 
