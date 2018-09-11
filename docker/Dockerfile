@@ -33,8 +33,9 @@ RUN wget http://redrock.inria.fr:8888/home/serrano/prgm/distrib/hop-3.2.0.tar.gz
     && cd ..; rm -rf hop-3.2.0/hopc
 
 RUN git clone http://redrock.inria.fr:8888/home/serrano/prgm/project/hiphop/hiphop.git \
-    && (cd hiphop; git checkout master) \
-    && mv hiphop /usr/local/lib/hop/3.2.0/node_modules/
+    && (cd hiphop; git checkout master; cd doc; make ) \
+    && (cp -r hiphop/doc /usr/local/share/doc/hiphop) \
+    && mv hiphop /usr/local/lib/hop/3.2.0/node_modules
 
 RUN useradd --no-log-init -d /home/hop -s /bin/bash hop
 

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May  4 07:52:08 2018                          */
-#*    Last change :  Tue Sep 11 15:18:36 2018 (serrano)                */
+#*    Last change :  Tue Sep 11 16:55:12 2018 (serrano)                */
 #*    Copyright   :  2018 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Run Hop thru a docker container                                  */
@@ -106,6 +106,12 @@ if [ "$HOST " = " " ]; then
   HOST=`hostname`
 fi
 
+if [ "$appfile " != " " ]; then
+  src=/hoproot/$appfile
+else
+  src=
+fi
+
 docker run --tty --rm=true --name hop \
   -h $HOST \
   -p $port:$port \
@@ -116,4 +122,4 @@ docker run --tty --rm=true --name hop \
       --libs-dir /hoproot/libs \
       --rc-dir /hoproot/rcdir \
       --cache-dir /hoproot/cache \
-      /hoproot/$appfile $opts
+      $src $opts

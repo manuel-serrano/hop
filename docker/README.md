@@ -4,31 +4,42 @@ Building and exporting the docker image
 
 If Bigloo is to be downloaded from local host.
 
-  hop -p 8888
+```shell
+hop -p 8888
+```
 
 Then
 
-  (cd docker; docker build -t hop .)
-  docker image save -o "/tmp/hop-docker-image-`date '+%d%b%y'`-`(git rev-parse --short HEAD)`.tgz" hop
-  docker export -o "/tmp/hop-docker-`date '+%d%b%y'`-`(git rev-parse --short HEAD)`.tgz"
+```shell
+$ (cd docker; docker build -t hop .)
+$ docker image save -o "/tmp/hop-docker-image-`date '+%d%b%y'`-`(git rev-parse --short HEAD)`.tgz" hop
+$ docker export -o "/tmp/hop-docker-`date '+%d%b%y'`-`(git rev-parse --short HEAD)`.tgz"
+```
 
 It might be needed to first remove an existing Hop image with:
 
-  docker images
+```shell
+$ docker images
+```
 
 to get the Hop docker <image-id>, and then:
 
-  docker rmi <image-id>
+```shell
+$ docker rmi <image-id>
+```
 
 It might be needed to kill running processes in that image first:
 
-  docker ps -a
-  docker rm <container-id>
-  
+```shell
+$ docker ps -a
+$ docker rm <container-id>
+```
+
 or
 
-  docker container prune
-
+```shell
+$ docker container prune
+```
 
 Importing a docker image
 ========================
@@ -36,42 +47,57 @@ Importing a docker image
 The Hop web site contains a pre-built docker image. To import it, use
 the following:
 
-  docker load < hop-docker-image-4may2018.tgz
-  docker import hop-docker-4may2018.tgz -- hop
-  
+```shell
+$ docker load < hop-docker-image-4may2018.tgz
+$ docker import hop-docker-4may2018.tgz -- hop
+```  
 
 Running the image
 =================
 
 Run as deamon
 -------------
-  docker run -d -p 8080:8080 -v /tmp/hopdocker:/hoproot hop /hoproot/app.js --libs-dir /hoproot/libs
+
+```shell
+$ docker run -d -p 8080:8080 -v /tmp/hopdocker:/hoproot hop /hoproot/app.js --libs-dir /hoproot/libs
+```
 
 Run in the console
 ------------------
-  docker run -a STDIN -a STDERR -a STDOUT --tty -p 8080:8080 -v /tmp/hopdocker:/hoproot hop /hoproot/app.js --libs-dir /hoproot/libs
+
+```shell
+$ docker run -a STDIN -a STDERR -a STDOUT --tty -p 8080:8080 -v /tmp/hopdocker:/hoproot hop /hoproot/app.js --libs-dir /hoproot/libs
+```
 
 Run a shell
 ----------
-  docker run -t -i --entrypoint=/bin/bash -v /tmp/hopdocker:/hoproot hop
+
+```shell
+$ docker run -t -i --entrypoint=/bin/bash -v /tmp/hopdocker:/hoproot hop
+```
 
 Extract the documentation
 -------------------------
 
 Run a Hop container image and execute:
 
-  docker cp hop:/usr/local/share/doc/hop/3.2.0 .
+```shell
+$ docker cp hop:/usr/local/share/doc/hop/3.2.0 .
+```
 
 Extract the hop.docker
 ----------------------
 
 Run a Hop container image and execute:
 
-  docker cp hop:/tmp/hop/3.2.0/docker/hop.docker .
+```shell
+$ docker cp hop:/tmp/hop/3.2.0/docker/hop.docker .
+```
 
 Example with hop.docker
 =======================
 
+```shell
 $ mkdir -p $HOME/.config/hop
 $ cat > $HOME/.config/hop/hoprc.js << EOF
 hop = require( "hop" );
@@ -87,10 +113,31 @@ service hello() {
 EOF
 $ hop.docker /tmp/hello.js
 $ firefox http://localhost:8080/hop/hello
+```
 
 Example without hop.docker
 ==========================
 
+```shell
 $ mkdir /tmp/hopdocker
 $ cp -r examples /tmp/hopdocker
 $ docker run -d -p 8080:8080 -v /tmp/hopdocker:/hoproot hop /hoproot/examples/examples/examples.js --libs-dir /hoproot/libs
+```
+
+Accessing the documentation
+===========================
+
+Run the Hop docker and browse the documentation located in the file:
+
+  /usr/local/share/doc/hop/3.2.0/index.html
+
+Example:
+
+```shell
+$ hop.docker -p 9999
+$ firefox http://localhost:9999/usr/local/share/doc/hop/3.2.0/index.html
+```
+
+The HipHop documentation is located at:
+
+  /usr/local/share/doc/hiphop/index.html
