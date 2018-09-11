@@ -4,14 +4,24 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May  4 07:52:08 2018                          */
-#*    Last change :  Fri Aug 10 18:35:38 2018 (serrano)                */
+#*    Last change :  Tue Sep 11 15:18:36 2018 (serrano)                */
 #*    Copyright   :  2018 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Run Hop thru a docker container                                  */
 #*=====================================================================*/
 
-libsdir=/tmp/$USER/hopdocker/libs
-cachedir=/tmp/$USER/hopdocker/cache
+if [ "$WINDIR " != " " ]; then
+  window=true
+  USER=hop
+  tmp=$PWD/tmp
+  dockermountpasswd=
+else
+  tmp=/tmp
+  dockermountpasswd="-v /etc/passwd:/etc/passwd"
+fi
+
+libsdir=$tmp/$USER/hopdocker/libs
+cachedir=$tmp/$USER/hopdocker/cache
 rcdir=$HOME/.config/hop
 
 port=8080
@@ -67,10 +77,10 @@ while : ; do
   shift
 done
 
-mkdir -p /tmp/$USER/hopdocker
-mkdir -p /tmp/$USER/hopdocker/libs && chmod a+rw /tmp/$USER/hopdocker/libs
-mkdir -p /tmp/$USER/hopdocker/cache && chmod a+rw /tmp/$USER/hopdocker/cache
-mkdir -p /tmp/$USER/hopdocker/hop && chmod a+rw /tmp/$USER/hopdocker/hop
+mkdir -p $tmp/$USER/hopdocker
+mkdir -p $tmp/$USER/hopdocker/libs && chmod a+rw $tmp/$USER/hopdocker/libs
+mkdir -p $tmp/$USER/hopdocker/cache && chmod a+rw $tmp/$USER/hopdocker/cache
+mkdir -p $tmp/$USER/hopdocker/hop && chmod a+rw $tmp/$USER/hopdocker/hop
 
 dockermounts=
 
@@ -99,7 +109,7 @@ fi
 docker run --tty --rm=true --name hop \
   -h $HOST \
   -p $port:$port \
-  -v /etc/passwd:/etc/passwd \
+  $dockermountpasswd \
   $dockermounts \
   -u `id -u`:`id -g` \
   hop -p $port \

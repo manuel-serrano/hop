@@ -25,6 +25,10 @@ It might be needed to kill running processes in that image first:
   docker ps -a
   docker rm <container-id>
   
+or
+
+  docker container prune
+
 
 Importing a docker image
 ========================
