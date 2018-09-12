@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Sep 12 09:29:09 2018 (serrano)                */
+#*    Last change :  Wed Sep 12 10:51:30 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -412,16 +412,16 @@ distrib-native: distrib-tmp
            ./configure && \
            $(MAKE) predistrib && \
            $(MAKE) distclean) && \
-          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .git -C $(HOPTMPDIR) hop-$$distrib && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
+          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .git -C $(HOPTMPDIR) hop-$$distrib; \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
               $(RM) -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
               mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR) && \
-              cp $(HOPTMPDIR)/hop-$$distrib/Docker/Dockerfile \
-                $(HOPDISTRIBDIR)/hop-$(HOPRELEASE).dockerfile && \
-              cp $(HOPTMPDIR)/hop-$$distrib/Docker/hop.docker \
-                $(HOPDISTRIBDIR)/hop-$(HOPRELEASE).docker; \
+              cp $(HOPTMPDIR)/hop-$$distrib/docker/Dockerfile \
+                $(HOPDISTRIBDIR)/hop-$$distrib.dockerfile && \
+              cp $(HOPTMPDIR)/hop-$$distrib/docker/hop.docker \
+                $(HOPDISTRIBDIR)/hop-$$distrib.docker && \
+              $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
             fi \
           fi) || exit 1
 

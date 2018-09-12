@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Sep 12 08:49:42 2018 (serrano)                */
+;*    Last change :  Wed Sep 12 10:34:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -208,7 +208,7 @@
 	  j2s-unthis-stage
 	  j2s-scheme-stage))
       (else
-       (js-plain-driver))))
+       (j2s-plain-driver))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-plain-driver ...                                             */
