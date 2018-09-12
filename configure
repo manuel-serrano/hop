@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May  7 11:27:27 2018 (serrano)                */
+#*    Last change :  Wed Sep 12 07:54:15 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -16,6 +16,10 @@
 prefix=/usr/local
 
 bigloo=bigloo
+if [ "$HOPBIGLOO " != " " ]; then
+  bigloo=$HOPBIGLOO
+fi
+
 afile=bglafile
 jfile=bgljfile
 btags=bgltags
@@ -72,7 +76,12 @@ hostbigloo=bigloo
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="3.2.0"
-devel=
+devel=pre
+license=free
+licenseforced=false
+if [ "$HOPLICENSE " != " " ]; then
+  license=$HOPLICENSE
+fi
 
 hopc=$PWD/bin/hopc
 hop=$PWD/bin/hop
@@ -101,7 +110,7 @@ buildbindir=$PWD/bin
 buildspecific=
 installspecific=
 
-bigloorequired=4.3b
+bigloorequired=4.3c
 bigloourl=http://www-sop.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
@@ -151,7 +160,7 @@ while : ; do
   case $1 in
     "")
       break;;
-
+      
     --prefix=*)
       prefix="`echo $1 | sed 's/^[^=]*=//'`";
       bindir=$prefix/bin;
@@ -399,6 +408,18 @@ while : ; do
       closure="`echo $1 | sed 's/^[^=]*=//'`";
       ;;
 
+    --license=free)
+      license=free;;
+      
+    --license=commercial)
+      license=commercial;;
+      
+    --license=academic)
+      license=academic;;
+
+    --force-license)
+      licenseforced=true;;
+      
     -*)
       if [ "$1" != "--help" ]; then
         echo "*** Configure error, unknown option $1" >&2;
@@ -472,6 +493,9 @@ while : ; do
       echo "   --profile................... enables Bigloo profiling mode" >&2;
       echo "   --optimize.................. enables Bigloo optimization mode (default)" >&2;
       echo "   --closure=comp.............. path to closure compiler" >&2;
+      echo "" >&2;
+      echo "License:" >&2;
+      echo "   --license=[license]......... select Hop license (see LICENSE)" >&2;
       exit 255;
   esac
   shift
@@ -527,6 +551,24 @@ EOF
   chmod a+rx .hoprelease
 fi
 
+if [ "$state " != " " ]; then
+  minorversion=-$state$minor
+else
+  minorversion=
+fi
+
+#*---------------------------------------------------------------------*/
+#*    license                                                          */
+#*---------------------------------------------------------------------*/
+hopsrfis="$hopsrfis license-$license"
+
+if [ "$license " = "commercial " ]; then
+  echo "*** LICENSE ERROR:configure. Aborging!" >&2
+  echo "You have choseen the commercial license." >&2
+  echo "This license requires Inria approval first." >&2
+  echo "Please contact Inria first." &2
+fi  
+  
 #*---------------------------------------------------------------------*/
 #*    First check that bigloo exists and is recent enough              */
 #*---------------------------------------------------------------------*/
@@ -1362,9 +1404,18 @@ cat etc/hopshrc.hop.in \
 docjson=doc/doc.json
 rm -f $docjson 2> /dev/null
 cat $docjson.in \
-  | sed -e "s|@VERSION@|$version $state$minor|" \
+  | sed -e "s|@VERSION@|$version$minorversion|" \
 	-e "s|@BIGLOOVERSION@|$bglversion|" \
     >> $docjson
+
+# docker/Dockerfile.in
+docker=docker/Dockerfile
+rm -f $docker 2> /dev/null
+cat $docker.in \
+  | sed -e "s|@VERSION@|$version|" \
+	-e "s|@MINORVERSION@|$minorversion|" \
+	-e "s|@BIGLOOVERSION@|$bglversion|" \
+    >> $docker
 
 # lib/hop.init
 init=lib/hop/$version/hop.init
@@ -1587,12 +1638,6 @@ done
 #*---------------------------------------------------------------------*/
 #*    Debian script                                                    */
 #*---------------------------------------------------------------------*/
-if [ "$state " != " " ]; then
-  minorversion=-$state$minor
-else
-  minorversion=
-fi
-
 # debian
 deb=arch/debian/makedeb.sh
 rm -f $deb 2> /dev/null
@@ -1632,7 +1677,7 @@ echo "configuration completed" > config.status
 echo "** Configuration summary **"
 echo 
 echo "Release:"
-echo "  hop release number.................... $version $state$minor"
+echo "  hop release number.................... $version$minorversion ($license)"
 echo "  hop build id.......................... $buildid"
 echo "  hop build tag......................... $buildtag"
 echo "  bigloo................................ $bigloo ($bglversion)"

@@ -97,12 +97,12 @@ accordingly.
 
 Hop.js requires that bigloo (a scheme compiler and runtime) is
 installed on the target machine. bigloo can be downloaded from
-<ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo4.3a.tar.gz> (or a newer
+<ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo4.3c.tar.gz> (or a newer
 version).
 
-    tar xvf bigloo4.3a.tar.gz
+    tar xvf bigloo4.3c.tar.gz
 
-and cd to the build directory (bigloo4.3a) .
+and cd to the build directory (bigloo4.3c) .
 
 Run the configure script:
 

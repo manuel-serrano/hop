@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri May  4 10:27:35 2018 (serrano)                */
+#*    Last change :  Wed Sep 12 09:29:09 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -374,7 +374,7 @@ distrib-inc-version:
 	  $(MAKE) revision LOGMSG="New distrib $$version-$$devel$$min"; \
         fi
 
-distrib-sans-version: distrib-native # distrib-jvm
+distrib-sans-version: distrib-native
 
 distrib-pre:
 	(version=$(HOPRELEASE); \
@@ -417,7 +417,11 @@ distrib-native: distrib-tmp
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
               $(RM) -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
-              mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
+              mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR) && \
+              cp $(HOPTMPDIR)/hop-$$distrib/Docker/Dockerfile \
+                $(HOPDISTRIBDIR)/hop-$(HOPRELEASE).dockerfile && \
+              cp $(HOPTMPDIR)/hop-$$distrib/Docker/hop.docker \
+                $(HOPDISTRIBDIR)/hop-$(HOPRELEASE).docker; \
             fi \
           fi) || exit 1
 

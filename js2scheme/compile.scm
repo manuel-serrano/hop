@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/compile.scm       */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/compile.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Aug 31 13:15:09 2018 (serrano)                */
+;*    Last change :  Wed Sep 12 08:49:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -163,48 +163,52 @@
 ;*    j2s-optim-driver ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (j2s-optim-driver)
-   (list
-      j2s-syntax-stage
-      j2s-sourcemap-stage
-      j2s-hopscript-stage
-      j2s-loopexit-stage
-      j2s-bestpractice-stage
-      j2s-symbol-stage
-      j2s-multivar-stage
-      j2s-narrow-stage
-      j2s-letfusion-stage
-      j2s-letopt-stage
-      j2s-unletrec-stage
-      j2s-this-stage
-      j2s-callapply-stage
-      j2s-use-stage
-      j2s-sweep-stage
-      j2s-ronly-stage
-      j2s-globvar-stage
-      j2s-clevel-stage
-      j2s-method-stage
-      j2s-return-stage
-      j2s-inline-stage
-      j2s-cps-stage
-      j2s-constant-stage
-      j2s-varpreinit-stage
-      j2s-tyflow-stage
-      j2s-sweep-stage
-      j2s-hintnum-stage
-      j2s-property-stage
-      j2s-instanceof-stage
-      j2s-propcce-stage
-      j2s-range-stage
-      j2s-sweep-stage
-      j2s-ctor-stage
-      j2s-pce-stage
-      j2s-cast-stage
-      j2s-vector-stage
-      j2s-array-stage
-      j2s-dead-stage
-      j2s-constrsize-stage
-      j2s-unthis-stage
-      j2s-scheme-stage))
+   (cond-expand
+      ((or license-academic license-commercial)
+       (list
+	  j2s-syntax-stage
+	  j2s-sourcemap-stage
+	  j2s-hopscript-stage
+	  j2s-loopexit-stage
+	  j2s-bestpractice-stage
+	  j2s-symbol-stage
+	  j2s-multivar-stage
+	  j2s-narrow-stage
+	  j2s-letfusion-stage
+	  j2s-letopt-stage
+	  j2s-unletrec-stage
+	  j2s-this-stage
+	  j2s-callapply-stage
+	  j2s-use-stage
+	  j2s-sweep-stage
+	  j2s-ronly-stage
+	  j2s-globvar-stage
+	  j2s-clevel-stage
+	  j2s-method-stage
+	  j2s-return-stage
+	  j2s-inline-stage
+	  j2s-cps-stage
+	  j2s-constant-stage
+	  j2s-varpreinit-stage
+	  j2s-tyflow-stage
+	  j2s-sweep-stage
+	  j2s-hintnum-stage
+	  j2s-property-stage
+	  j2s-instanceof-stage
+	  j2s-propcce-stage
+	  j2s-range-stage
+	  j2s-sweep-stage
+	  j2s-ctor-stage
+	  j2s-pce-stage
+	  j2s-cast-stage
+	  j2s-vector-stage
+	  j2s-array-stage
+	  j2s-dead-stage
+	  j2s-constrsize-stage
+	  j2s-unthis-stage
+	  j2s-scheme-stage))
+      (else
+       (js-plain-driver))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-plain-driver ...                                             */
