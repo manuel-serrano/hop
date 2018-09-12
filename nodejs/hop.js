@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Sep  7 09:02:36 2018 (serrano)                */
+/*    Last change :  Wed Sep 12 11:51:32 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -19,6 +19,13 @@ exports.hostname = hop.hostname;
 exports.version = hop.version;
 exports.__defineGetter__( 'port', function() { return hop.port(); } );
 exports.standalone = hop.standalone;
+
+/*---------------------------------------------------------------------*/
+/*    Server configuration                                             */
+/*---------------------------------------------------------------------*/
+exports.__defineGetter__( 'httpAuthenticationMethod',
+			  hop.httpAuthenticationMethodGet,
+			  hop.httpAuthenticationMethodSet );
 
 /*---------------------------------------------------------------------*/
 /*    Services                                                         */

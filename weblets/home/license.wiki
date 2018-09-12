@@ -1,12 +1,9 @@
 
     HOP, a web development kit - copyright (c) 2006-2018 INRIA
                                                                      
-    Bug descriptions, user reports, comments or suggestions are      
-    welcome. Send them to                                           
-       hop@lists-sophia.inria.fr 
-
-    or submit them to:
-       http://hop.inria.fr/
+    Bug descriptions, user reports, comments, suggestions and
+    pull requests are welcome. Send them to
+       https://github.com/manuel-serrano/hop.git
 
     Hop comes with three different license versions, which should be
     specified when configuring Hop and that come with three different

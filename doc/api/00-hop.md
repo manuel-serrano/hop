@@ -44,7 +44,37 @@ The Hop version.
 ```hopscript
 console.log( "Hop version:", hop.version );
 ```
- 
+
+Server Configuration
+--------------------
+
+### hop.httpAuthenticationMethod ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop HTTP authentication method. Can either be `"basic"` or `"digest"`.
+
+```hopscript
+console.log( "method:", hop.httpAuthenticationMethod );
+```
+
+### hop.useProxy ###
+[:@glyphicon glyphicon-tag parameter]  
+
+Proxy to be used to access internet resources.
+
+```hopscript
+hop.useProxy = "192.168.3.4";
+```
+
+### hop.enableProxying ###
+[:@glyphicon glyphicon-tag parameter]  
+
+Enable/disable Hop to act as an HTTP proxy.
+
+```hopscript
+hop.enableProxying = false;
+```
+
+
 Responses
 ---------
 [:responses]

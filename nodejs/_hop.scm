@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Sep  7 08:57:48 2018 (serrano)                */
+;*    Last change :  Wed Sep 12 11:52:43 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -267,6 +267,16 @@
 	       `(buildid . ,(hop-build-id))
 	       `(buildtag . ,(hop-build-tag))
 	       `(standalone . ,hopjs-standalone)
+
+	       ;; server configuration
+	       (define-js httpAuthenticationMethodGet 0
+		  (lambda (this)
+		     (js-string->jsstring
+			(symbol->string (hop-http-authentication)))))
+	       (define-js httpAuthenticationMethodSet 1
+		  (lambda (this v)
+		     (hop-http-authentication-set!
+			(string->symbol (js-tostring v %this)))))
 
 	       ;; port
 	       (define-js port 0 (lambda (this) (hop-port)))
