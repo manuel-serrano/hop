@@ -13,7 +13,7 @@ ${<div class="row">
   <div class="col-xs-8">
 The recommanded way to install and run Hop is to use
 <a href="https://docs.docker.com/install/">Docker</a>. Download the
-`${"hop-" + cfg.version + ".dockerfile"}` script and execute the
+<tt>${"hop-" + cfg.version + ".dockerfile"}</tt> script and execute the
 following command to generate the Docker image:
   </div>
   <div class="col-xs-4">
@@ -27,6 +27,15 @@ following command to generate the Docker image:
 
 
 `docker build -f hop-${cfg.version}.dockerfile -t hop .`
+
+${ <span class="label label-warning">Note:</span> } If you already have
+installed Hop within docker, you might find useful to remove the old
+image first. This can be achieved with:
+
+```shell
+$ docker container prune
+$ docker rmi `docker images | grep hop | awk '{print $3}'`
+```
 
 
 ### Running Hop with Docker ###

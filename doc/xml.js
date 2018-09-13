@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Sun Aug  5 18:46:59 2018 (serrano)                */
+/*    Last change :  Thu Sep 13 09:01:21 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -164,11 +164,11 @@ function docfooter( attrs ) {
        </div>
        <div class="copyright col-md-8 copyright-middle">
          <a class="iddn" href="http://app.legalis.net/">
-           IDDN.FR.001.260002.000.S.P.2006.000.10400
+           IDDN.FR.001.310007.000.S.P.2018.000.31235
 	 </a>
          - 
          <a class="iddn" href="http://app.legalis.net/">
-           IDDN.FR.001.260002.001.S.A.2006.000.10600
+	   IDDN.FR.001.310008.000.S.P.2018.000.31235
 	 </a>
        </div>
        <div class="copyright copyright-right col-md-2">

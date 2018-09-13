@@ -24,17 +24,18 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /tmp
 
 RUN wget ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo-latest.tar.gz \
-    && tar -xzf bigloo*.tar.gz && cd bigloo* \
+    && tar -xzf bigloo*.tar.gz && cd bigloo*/ \
     && ./configure && make -j$(nproc) && make install
 
 RUN wget ftp://ftp-sop.inria.fr/indes/fp/Hop/hop-3.2.0-pre1.tar.gz \
     && tar -xzf hop* && cd hop* \
-    && ./configure --license=academic && make -j$(nproc) && make install \
-    && cd ..; rm -rf hop-3.2.0/hopc
+    && ./configure --license=academic && make -j$(nproc) && make install
 
 RUN useradd --no-log-init -d /home/hop -s /bin/bash hop
 
-COPY hoprc.hop /home/hop/.config/hop/hoprc.hop
+RUN mkdir -p /home/hop/.config/hop && \
+    echo "(add-user! \"anonymous\" :directories '* :services '*)" \
+      > /home/hop/.config/hop/hoprc.hop
 
 RUN rm -rf /tmp/*
 
