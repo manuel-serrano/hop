@@ -28,7 +28,7 @@ RUN wget ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo-latest.tar.gz \
     && ./configure && make -j$(nproc) && make install
 
 RUN wget ftp://ftp-sop.inria.fr/indes/fp/Hop/hop-3.2.0-pre1.tar.gz \
-    && tar -xzf hop* && cd hop* \
+    && tar -xzf hop* && cd hop*/ \
     && ./configure --license=academic && make -j$(nproc) && make install
 
 RUN useradd --no-log-init -d /home/hop -s /bin/bash hop
