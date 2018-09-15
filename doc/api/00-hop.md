@@ -401,8 +401,11 @@ notified of the message.
 Web Service
 -----------
 
-WebService is a set of API that let you invoke third party WebServices
-the same way you invoke Hop services.
+A WebService reifies an API, i.e., a set of services, that let you
+invoke third party WebServices the same way you invoke Hop services
+(see [Interoperable WebServices](01-service.html#interop) for
+interoperability notes).
+
 
 ```hopscript
 var hop = require( 'hop' );
