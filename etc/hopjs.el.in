@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sat Mar 31 10:07:57 2018 (serrano)                */
+;*    Last change :  Sat Sep 15 10:29:19 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -33,6 +33,12 @@
 
 (defcustom hopjs-doc-dir "@DOCDIR@"
   "The main directory containing the documentation indexes"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-official-doc-url "@DOCURL@"
+  "The remote URL documentation"
   :type 'string
   :safe 'stringp
   :group 'hopjs)
@@ -1431,6 +1437,10 @@ usage: (js-return)  -- [RET]"
 (defun hopjs-doc-entry (point)
   (interactive "d")
   (let* ((url (cond
+	       ((eq point 0)
+		hopjs-official-doc-url)
+	       ((not hopjs-doc-url)
+		(format "file://%s/lang.html" hopjs-doc-dir))
 	       ((posix-string-match "http[s]?://" hopjs-doc-url)
 		hopjs-doc-url)
 	       ((eq (aref hopjs-doc-url 0) ?/)
@@ -1440,6 +1450,66 @@ usage: (js-return)  -- [RET]"
 	 (cmd (concat hopjs-navigator " " url)))
     (message cmd)
     (start-process "system" nil "sh" "-c" cmd)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs modeline                                                   */
+;*---------------------------------------------------------------------*/
+(setq mode-line-format
+      (let* ((help-echo
+	      "mouse-1: select window, mouse-2: delete others, mouse-3: delete ...")
+	     (dashes (propertize "--" 'help-echo help-echo)))
+	(list
+	 
+	 (propertize "-" 'help-echo help-echo)
+	 'mode-line-modified
+	 dashes
+	 
+	 (propertize "%12b"
+		     'help-echo "Buffer name"
+		     'face
+		     '(:foreground "darkmagenta" :weight bold))
+	 (propertize "   " 'help-echo help-echo)
+	 (propertize "   %[(" 'help-echo help-echo)
+	 '(:eval (propertize (symbol-name major-mode)
+			     'face
+			     '(:foreground "orange" :weight bold)))
+	 'mode-line-process 'minor-mode-alist
+	 (propertize "%n" 'help-echo "mouse-2: widen"
+		     'local-map (make-mode-line-mouse-map
+				 'mouse-2 #'mode-line-widen))
+	 (propertize ")%]--" 'help-echo help-echo)
+	 `(which-func-mode ("" which-func-format ,dashes))
+	 `(line-number-mode
+	   (,(propertize "L%l" 'help-echo help-echo) ,dashes))
+	 
+	 `(column-number-mode
+	   (,(propertize "C%c" 'help-echo help-echo) ,dashes))
+	 
+	 `(-3 . ,(propertize "%p" 'help-echo help-echo))
+	 "-"
+	 (propertize
+	  " doc " 'help-echo "mouse-1: Official Documentation, mouse-2 Local documentation"
+	  'face '(:background "orange"
+			      :foreground "lightgrey"
+			      :weight bold)
+	  'mouse-face '(:background "orange"
+				    :foreground "white"
+				    :weight bold)
+	  'keymap (let ((map (make-sparse-keymap)))
+		    (define-key map [mode-line mouse-1]
+		      (lambda (_e)
+			(interactive "e")
+			(hopjs-doc-entry 0)))
+		    (define-key map [mode-line mouse-2]
+		      (lambda (_e)
+			(interactive "e")
+			(hopjs-doc-at-point (point))
+			(hopjs-doc-entry (point))))
+		    map))
+	 "-"
+	 (propertize "-%-" 'help-echo help-echo)
+	 )))
+(force-mode-line-update t)
 
 ;*---------------------------------------------------------------------*/
 ;*    init                                                             */
