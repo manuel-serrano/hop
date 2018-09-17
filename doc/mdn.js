@@ -1,12 +1,12 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/doc/mdn.js                        */
+/*    serrano/prgm/project/hop/3.2.x/doc/mdn.js                        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  4 17:59:11 2016                          */
-/*    Last change :  Wed Oct  5 17:54:30 2016 (serrano)                */
-/*    Copyright   :  2016 Manuel Serrano                               */
+/*    Last change :  Mon Sep 17 10:06:28 2018 (serrano)                */
+/*    Copyright   :  2016-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
-/*    Generate MDN index                                               */
+/*    Generate the MDN index                                           */
 /*=====================================================================*/
 "use hopscript";
 

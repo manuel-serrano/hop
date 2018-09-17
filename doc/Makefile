@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Sep  6 09:11:51 2018 (serrano)                */
+#*    Last change :  Mon Sep 17 11:04:51 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -53,7 +53,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   intf/20-language.md license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
-  html-idx.json mdn-idx.json mdn.js
+  html-idx.json mdn-idx.json mdn.js node-idx.json node.js
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
   hss.html config.html user.html 01-html.html markdown.html syslog.html \
@@ -97,7 +97,8 @@ build:
 	$(MAKE) builddoc HOPFLAGS="$(HOPFLAGS) $(HOPBOOTFLAGS)"
 
 builddoc: $(ALL_TARGETS) \
-  hss/markdown.css hss/fontifier.css hss/doc.css html-idx.json mdn-idx.json \
+  hss/markdown.css hss/fontifier.css hss/doc.css \
+  html-idx.json mdn-idx.json node-idx.json \
   favicon.png
 
 #*---------------------------------------------------------------------*/
@@ -147,6 +148,7 @@ install:
 	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/css/*
 	$(INSTALL) html-idx.json $(DESTDIR)$(HOPDOCDIR)
 	$(INSTALL) mdn-idx.json $(DESTDIR)$(HOPDOCDIR)
+	$(INSTALL) node-idx.json $(DESTDIR)$(HOPDOCDIR)
 
 uninstall:
 
@@ -210,6 +212,14 @@ html-idx.json:
 mdn-idx.json:
 	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
           $(BUILDDIR)/doc/mdn.js > $@ \
+          || ($(RM) $@; exit 1)
+
+#*---------------------------------------------------------------------*/
+#*    node-idx.json ...                                                */
+#*---------------------------------------------------------------------*/
+node-idx.json: node.js
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
+          $(BUILDDIR)/doc/node.js > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/

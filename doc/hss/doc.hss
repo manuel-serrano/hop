@@ -254,6 +254,7 @@ h3.glyphicon:before,
 h4.glyphicon:before {
   font-size: 65%;
   margin-right: 0.4em;
+  margin-left: 2px;
   font-family: 'Glyphicons Halflings';
   font-style: normal;
   font-weight: 400;

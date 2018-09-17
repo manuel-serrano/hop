@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Sep  6 18:32:08 2018 (serrano)                */
+;*    Last change :  Mon Sep 17 10:32:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -213,6 +213,22 @@
    `(begin
        ,@(map (lambda (tag)
 		 `(js-bind-tag! ,%this ,obj ,tag))
+	    tags)))
+   
+;*---------------------------------------------------------------------*/
+;*    js-bind-svg-tags! ...                                            */
+;*---------------------------------------------------------------------*/
+(define-macro (js-bind-svg-tags! %this obj . tags)
+   `(begin
+       ,@(map (lambda (tag)
+		 (let* ((s (symbol->string tag))
+			(i (string-index s #\:)))
+		    (if i
+			`(begin
+			    (js-bind-tag! ,%this ,obj ,tag)
+			    (js-bind-tag! ,%this ,obj ,tag
+			       ,(string->symbol (substring s (+fx i 1)))))
+			`(js-bind-tag! ,%this ,obj ,tag))))
 	    tags)))
    
 ;*---------------------------------------------------------------------*/
@@ -445,13 +461,14 @@
 	       A ABBR ACRONYM ADDRESS APPLET AREA ARTICLE B BASE
 	       BASEFONT BDI BDO BIG BLOCKQUOTE BODY BR BUTTON
 	       CANVAS CAPTION CENTER CITE CODE COL COLGROUP
-	       DATALIST DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET FIGURE
-	       FIGCAPTION FONT FOOTER FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
+	       DATALIST DD DEL DETAILS DFN DIR DIV DL DT EM EMBED FIELDSET
+	       FIGURE FIGCAPTION FONT FOOTER FORM FRAME FRAMESET
+	       H1 H2 H3 H4 H5 H6
 	       HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
 	       LI MAIN MAP MARQUEE MENU MENUITEM META METER NAV NOFRAMES NOSCRIPT
 	       OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
 	       Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
-	       STRONG SUB SUP TABLE TBODY TD TEXTAREA TFOOT TH
+	       STRONG SUB SUMMARY SUP TABLE TBODY TD TEXTAREA TFOOT TH
 	       THEAD TIME TITLE TR TT U UL VAR REACT)
 
 	    ;; html5
@@ -487,7 +504,7 @@
 	    (js-bind-tags! %this %this IMG)
 
 	    ;; svg
-	    (js-bind-tags! %this %this
+	    (js-bind-svg-tags! %this %this
 	       SVG SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
 	       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
 	       SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
