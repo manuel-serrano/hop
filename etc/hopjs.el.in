@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Sep 17 12:02:49 2018 (serrano)                */
+;*    Last change :  Mon Sep 17 17:41:20 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -212,8 +212,9 @@
 ;*    hopjs-load-indexes ...                                           */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-load-indexes ()
-  (hopjs-load-index
-   (concat hopjs-doc-dir "/idx.json") nil hopjs-doc-index-table)
+  (let ((hopjs-doc-url (concat "file://" hopjs-doc-dir)))
+    (hopjs-load-index
+     (concat hopjs-doc-dir "/idx.json") hopjs-doc-url hopjs-doc-index-table))
   (hopjs-load-index
    (concat hopjs-doc-dir "/html-idx.json") hopjs-html-doc-url hopjs-doc-index-table)
   (hopjs-load-index
@@ -534,7 +535,6 @@ usage: (js-return)  -- [RET]"
       (newline)
     (progn
       (newline)
-      (message "ctx=%S" (hopjs-context))
       (case (hopjs-context)
 	((js) (hopjs-indent-js))
 	((html) (hopjs-indent-html))
@@ -545,27 +545,30 @@ usage: (js-return)  -- [RET]"
 ;*    hopjs-indent-js ...                                              */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-indent-js ()
-  (message "hopjs-indent-js...")
-  (indent-for-tab-command))
+  (js-indent-line))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-html ...                                            */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-indent-html ()
-  (indent-to
-   (save-excursion
-     (previous-line 1)
-     (let ((end (progn (beginning-of-line) (point))))
-       (end-of-line)
-       (cond
-	((re-search-backward "/>[ \t]*$" end t)
-	 (hopjs-goto-open-tag)
-	 (current-column))
-	(t
-	 (hopjs-goto-open-tag)
-	 (if (looking-at "</")
-	     (- (current-column) hopjs-indent-level-html)
-	   (+ (current-column) hopjs-indent-level-html))))))))
+  (let ((col (save-excursion
+	       (previous-line 1)
+	       (let ((end (progn (beginning-of-line) (point))))
+		 (end-of-line)
+		 (let ((neutral (if (re-search-backward "/>[ \t]*$" end t) 0 1)))
+		   (hopjs-goto-open-tag)
+		   (let* ((end (point))
+			  (sign (if (looking-at "</") -1 1)))
+		     (beginning-of-line)
+		     (if (and (looking-at "[ \t]*") (= (match-end 0) end))
+			 (progn
+			   (goto-char end)
+			   (+ (current-column) 
+			      (* sign neutral hopjs-indent-level-html)))
+		       nil)))))))
+    (if col
+	(indent-to col)
+      (js-indent-line))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-goto-open-tag ...                                          */
@@ -656,7 +659,7 @@ usage: (js-return)  -- [RET]"
 	  ">[ \t]*$"))
 
 (defconst hopjs-re-open-html-attr-tag
-  (concat hopjs-re-html-attr "[ \t]*>$"))
+  (concat "\\(?:" hopjs-re-html-attr "\\|}\\)" "[ \t]*>$"))
 
 (defconst hopjs-re-standalone-html-tag
   "<\\([^>/\n]\\|/[^>]\\)*/>[ \t]*$")
@@ -1553,7 +1556,7 @@ usage: (js-return)  -- [RET]"
 	    ;; a tag
 	    (setq y "tag")
 	    (setq word (downcase word)))
-	   ((progn (goto-char (1+ end)) (looking-at "[ \t\n]*[=,;})]"))
+	   ((progn (goto-char (1+ end)) (looking-at "[ \t\n]*[=,;}]"))
 	    (setq y "parameter"))
 	   ((progn (goto-char (- beg 4)) (looking-at "new "))
 	    ;; a constructor
@@ -1578,7 +1581,9 @@ usage: (js-return)  -- [RET]"
 		    (if (or (not (consp type))
 			    (string-equal (cdr type) y)
 			    (and (not (string-equal (cdr type) "tag"))
-				 (string-equal y "*")))
+				 (string-equal y "*"))
+			    (and (string-equal (cdr type) "function")
+				 (string-equal y "constructor")))
 			(let ((url (assq 'url en)))
 			  (when url
 			    (let* ((proto (assq 'proto en))
@@ -1590,9 +1595,8 @@ usage: (js-return)  -- [RET]"
 			      (setq tooltip
 				    (if tooltip
 					(concat tip "\n" tooltip)
-					tip))))))))
+				      tip))))))))
 		(when (consp urls)
-		  (message "%s: %s" word tooltip)
 		  (if (consp (cdr urls))
 		      (setq hopjs-doc-url urls)
 		    (setq hopjs-doc-url (cdr (car urls))))
@@ -1663,8 +1667,7 @@ usage: (js-return)  -- [RET]"
 		  "--single-line"
 		  (mapcar #'(lambda (e)
 			      (vector (car e)
-				      (list 'hopjs-browse-url
-					    (cdr e))
+				      (list 'hopjs-browse-url (cdr e))
 				      :help
 				      (cdr e)))
 			  hopjs-doc-url)))))
