@@ -90,7 +90,7 @@ copied to the local disk with:
 `docker cp hop:/usr/local/src/hop/${cfg.version}/Docker/hop.hop${cfg.version}.docker`
 
 
-### Accessing the documentation ###
+### Accessing the documentation and the Emacs mode ###
 
 The complete Hop documentation is embedded inside the Docker image in the
 directory:
@@ -109,6 +109,10 @@ is executed with
 the documentation could be access at the URL:
 
 `http://localhost:9999/usr/local/share/doc/hop/${cfg.version}/index.html`
+
+The Emacs mode can be copied to the host disk with:
+
+`docker cp hop:/usr/local/share/site-lisp/hopjs.el`
 
 
 ## Binary distributions ##
