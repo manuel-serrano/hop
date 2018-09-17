@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Sep 17 07:36:45 2018 (serrano)                */
+;*    Last change :  Mon Sep 17 12:02:49 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -527,12 +527,199 @@
 ;*    hopjs-return ...                                                 */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-return (&optional dummy)
-   "On indent automatiquement sur un RET.
+  "On indent automatiquement sur un RET.
 usage: (js-return)  -- [RET]"
-   (interactive)
-   (if (= (point) 1)
-       (newline)
-     (newline-and-indent)))
+  (interactive)
+  (if (= (point) 1)
+      (newline)
+    (progn
+      (newline)
+      (message "ctx=%S" (hopjs-context))
+      (case (hopjs-context)
+	((js) (hopjs-indent-js))
+	((html) (hopjs-indent-html))
+	((html-attr) (hopjs-indent-html-attr))
+	((js-attr) (hopjs-indent-js-attr))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-js ...                                              */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-js ()
+  (message "hopjs-indent-js...")
+  (indent-for-tab-command))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-html ...                                            */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-html ()
+  (indent-to
+   (save-excursion
+     (previous-line 1)
+     (let ((end (progn (beginning-of-line) (point))))
+       (end-of-line)
+       (cond
+	((re-search-backward "/>[ \t]*$" end t)
+	 (hopjs-goto-open-tag)
+	 (current-column))
+	(t
+	 (hopjs-goto-open-tag)
+	 (if (looking-at "</")
+	     (- (current-column) hopjs-indent-level-html)
+	   (+ (current-column) hopjs-indent-level-html))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-goto-open-tag ...                                          */
+;*---------------------------------------------------------------------*/
+(defun hopjs-goto-open-tag ()
+  (interactive)
+  (re-search-backward (concat "<[/]?" hopjs-re-tag-ident))
+  (goto-char (match-beginning 0)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-html-attr ...                                       */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-html-attr ()
+  (indent-to
+   (save-excursion
+     (previous-line 1)
+     (let ((end (progn (beginning-of-line) (point))))
+       (end-of-line)
+       (cond
+	((re-search-backward (concat "<" hopjs-re-tag-ident " ") end t)
+	 (goto-char (match-end 0))
+	 (current-column))
+	((re-search-backward (concat "<" hopjs-re-tag-ident) end t)
+	 (goto-char (match-beginning 0))
+	 (+ (current-column) js-indent-level)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-js-attr ...                                         */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-js-attr ()
+  (indent-to
+   (save-excursion
+     (previous-line 1)
+     (let ((end (progn (beginning-of-line) (point))))
+       (end-of-line)
+       (re-search-backward hopjs-re-ctx-js-attr end t)
+       (goto-char (match-beginning 0))
+       (+ (current-column) js-indent-level)))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs programming contexts ...                                   */
+;*---------------------------------------------------------------------*/
+(defconst hopjs-re-js-ident
+  "[a-zA-Z_$][a-zA-Z0-9_$]*(?:[.][a-zA-Z0-9_$]+)*")
+
+(defconst hopjs-re-tag-ident
+  "[a-zA-Z_$][a-zA-Z0-9_.:$!-]*")
+
+;; html attr
+(defconst hopjs-re-html-attr-val-string
+  "\"[^\"]*\"")
+
+(defconst hopjs-re-html-attr-val-number
+  "[0-9]+\\|[0-9]*[.][0-9]*")
+
+(defconst hopjs-re-html-attr-val-tilde
+  "~{[^}]+}")
+
+(defconst hopjs-re-html-attr-val
+  (concat "\\(?:" hopjs-re-html-attr-val-string
+	  "\\|" hopjs-re-html-attr-val-number
+	  "\\|" hopjs-re-html-attr-val-tilde
+	  "\\)"))
+
+(defconst hopjs-re-html-attr-assig
+  (concat hopjs-re-tag-ident "=" hopjs-re-html-attr-val))
+
+(defconst hopjs-re-html-attr
+  (concat "\\(?:" hopjs-re-tag-ident "\\|" hopjs-re-html-attr-assig "\\)"))
+
+;; html-attr
+(defconst hopjs-re-ctx-js-attr
+  (concat "<" hopjs-re-tag-ident
+	  "\\(?:[ \t]+" hopjs-re-html-attr "\\)*"
+	  "\\(?:[ \t]+" hopjs-re-tag-ident "=~{\\)"
+	  "[ \t]*$"))
+
+;; js-attr
+(defconst hopjs-re-ctx-html-attr
+  (concat "<" hopjs-re-tag-ident
+	  "\\(?:[ \t]+" hopjs-re-html-attr "\\)*"
+	  "[ \t]*$"))
+
+;; html
+(defconst hopjs-re-open-html-tag
+  (concat "<" hopjs-re-tag-ident
+	  "\\(?:[ \t]+" hopjs-re-html-attr "\\)*"
+	  ">[ \t]*$"))
+
+(defconst hopjs-re-open-html-attr-tag
+  (concat hopjs-re-html-attr "[ \t]*>$"))
+
+(defconst hopjs-re-standalone-html-tag
+  "<\\([^>/\n]\\|/[^>]\\)*/>[ \t]*$")
+
+(defconst hopjs-re-close-html-tag
+  "</\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*\\)[ \t]*>[ \t]*$")
+
+(defconst hopjs-re-ctx-html
+  (concat hopjs-re-open-html-tag
+	  "\\|" hopjs-re-open-html-attr-tag
+	  "\\|" hopjs-re-standalone-html-tag
+	  "\\|" hopjs-re-close-html-tag))
+
+;* (defconst hopjs-re-html                                             */
+;*   (concat hopjs-re-html-standalone-tag                              */
+;* 	  "\\|" hopjs-re-html-close-tag                                */
+;* 	  "\\|" hopjs-re-html-open-tag))                               */
+;*                                                                     */
+;* (defconst hopjs-re-js+html                                          */
+;*   (concat "(?:" hopjs-re-js-ident "=" hopjs-re-html-attr-val "[ \t]*)+$")) */
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-line-context ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Returns the programming contextuage of the POINT line.           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-line-context ()
+  "Current line context."
+  (interactive)
+  (save-excursion
+    (beginning-of-line)
+    (if (= (point) 1)
+	'js
+      (let ((end (save-excursion (end-of-line) (point))))
+	(cond
+	 ((re-search-forward "^[\t ]+$" end t) 'unknown)
+	 ((re-search-forward hopjs-re-ctx-html end t) 'html)
+	 ((re-search-forward hopjs-re-ctx-html-attr end t) 'html-attr)
+	 ((re-search-forward hopjs-re-ctx-js-attr end t) 'js-attr)
+	 (t 'js))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-context ...                                                */
+;*---------------------------------------------------------------------*/
+(defun hopjs-context ()
+  "Current programming language context."
+  (interactive)
+  (save-excursion
+    (let ((ctx 'unknown))
+      (while (eq ctx 'unknown)
+	(beginning-of-line)
+	(if (= (point) 1)
+	    (setq ctx 'js)
+	  (progn
+	    (previous-line 1)
+	    (setq ctx (hopjs-line-context)))))
+      ctx)))
+
+(define-key (current-local-map)
+  "\C-x\C-x"
+  '(lambda ()
+     (interactive)
+     (message "%S" (hopjs-context))))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    hopjs-beginning-of-defun ...                                     *} */
@@ -985,11 +1172,6 @@ usage: (js-return)  -- [RET]"
 	     (t (setq col (progn (back-to-indentation) (current-column)))))))
 	(hopjs-debug "<<< hopjs-indent-new-line point=%s --> col=%s" pinit col)
 	col))))
-
-(defun hopjs-inl ()
-  (interactive)
-  (let ((pmin (save-excursion (hopjs-beginning-of-defun) (point))))
-    (hopjs-debug "%s" (hopjs-indent-new-line pmin nil 0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-search-code-regexp ...                                     */
