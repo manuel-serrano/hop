@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Sep 17 10:32:06 2018 (serrano)                */
+;*    Last change :  Tue Sep 18 07:59:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -509,7 +509,9 @@
 	       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
 	       SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
 	       SVG:TEXTPATH SVG:TREF SVG:TSPAN
-	       SVG:RADIALGRADIENT SVG:LINEARGRADIENT SVG:IMG)
+	       SVG:RADIALGRADIENT SVG:LINEARGRADIENT)
+
+	    (js-bind-tag! %this %this SVG:IMG)
 
 	    ;; mathml
 	    (js-bind-tags! %this %this
