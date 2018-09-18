@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Sep 17 17:41:20 2018 (serrano)                */
+;*    Last change :  Tue Sep 18 14:37:08 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -186,13 +186,80 @@
   ;; custom beginning of defun
   ;; (setq beginning-of-defun-function 'hopjs-beginning-of-defun)      */
   ;; (setq end-of-defun-function 'hopjs-end-of-defun)
-  ;; index
+  ;; dls init
+  (hopjs-dls-init)
+  ;; doc index
   (run-at-time "1 sec" nil 'hopjs-load-indexes)
-  (run-at-time "1 sec" nil 'hopjs-load-node-modules-indexes)
+  (run-at-time "2 sec" nil 'hopjs-load-node-modules-indexes)
   ;; tag matching
   (add-hook 'post-command-hook (function hopjs-post-command-hook) t t)
   ;; user hooks
   (run-hooks 'hopjs-mode-hook))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-dls-init ...                                               */
+;*---------------------------------------------------------------------*/
+(defun hopjs-dls-init ()
+  (goto-char (point-min))
+  (while (looking-at "^[\"']use[ \t]+\\([^\"']+\\)[\"'][;]?$")
+    (let ((lang (buffer-substring-no-properties
+		 (match-beginning 1) (match-end 1))))
+      (hopjs-load-node-modules-dls lang)
+      (next-line 1)
+      (beginning-of-line))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-load-dls-dir ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-load-dls-dir (lang base)
+  (let ((res nil))
+    ;; check emacs file
+    (let ((el (concat base "/" lang "/etc/hopjs-" lang ".el")))
+      (message "el=%S" el)
+      (when (file-exists-p el) (load-library el) (setq res t)))
+    ;; check documentation file
+    (let ((doc (concat base "/" lang "/doc/index.html")))
+      (when (file-exists-p doc)
+	(setq hopjs-external-docs
+	      (append hopjs-external-docs
+		      (list (cons lang (concat "file://" doc)))))
+	(setq res t)))
+    res))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-load-node-modules-dls ...                                  */
+;*---------------------------------------------------------------------*/
+(defun hopjs-load-node-modules-dls (lang)
+  (let ((dir default-directory)
+	(count 5))
+    (while (and (file-directory-p dir) (not (equal dir "//")) (> count 0))
+      (if (hopjs-load-dls-dir lang (concat dir "node_modules"))
+	  (setq count -10))
+      (progn
+	(setq dir (expand-file-name (concat dir "../")))
+	(setq count (1- count))))
+    (message "count=%S" count)
+    (when (= count 0)
+      (hopjs-load-dls-dir lang (expand-file-name (concat "~/.node_modules"))))))
+  
+;*---------------------------------------------------------------------*/
+;*    hopjs-load-indexes ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-load-indexes ()
+  (let ((hopjs-doc-url (concat "file://" hopjs-doc-dir)))
+    (hopjs-load-index
+     (concat hopjs-doc-dir "/idx.json")
+     hopjs-doc-url hopjs-doc-index-table))
+  (hopjs-load-index
+   (concat hopjs-doc-dir "/html-idx.json")
+   hopjs-html-doc-url hopjs-doc-index-table)
+  (hopjs-load-index
+   (concat hopjs-doc-dir "/mdn-idx.json")
+   hopjs-mdn-doc-url hopjs-doc-index-table)
+  (hopjs-load-index
+   (concat hopjs-doc-dir "/node-idx.json")
+   hopjs-node-doc-url hopjs-doc-index-table)
+  (mapc 'hopjs-load-repo-indexes hopjs-doc-extra-dir))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-load-repo-indexes ...                                      */
@@ -207,21 +274,6 @@
 		  (when (file-exists-p idx)
 		    (hopjs-load-index idx dir hopjs-doc-index-table))))
 	    (directory-files path)))))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-load-indexes ...                                           */
-;*---------------------------------------------------------------------*/
-(defun hopjs-load-indexes ()
-  (let ((hopjs-doc-url (concat "file://" hopjs-doc-dir)))
-    (hopjs-load-index
-     (concat hopjs-doc-dir "/idx.json") hopjs-doc-url hopjs-doc-index-table))
-  (hopjs-load-index
-   (concat hopjs-doc-dir "/html-idx.json") hopjs-html-doc-url hopjs-doc-index-table)
-  (hopjs-load-index
-   (concat hopjs-doc-dir "/mdn-idx.json") hopjs-mdn-doc-url hopjs-doc-index-table)
-  (hopjs-load-index
-   (concat hopjs-doc-dir "/node-idx.json") hopjs-node-doc-url hopjs-doc-index-table)
-  (mapc 'hopjs-load-repo-indexes hopjs-doc-extra-dir))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-load-node-modules-indexes ...                              */
