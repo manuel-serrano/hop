@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/hopscript/property.scm      */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/property.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Aug 31 19:25:29 2018 (serrano)                */
+;*    Last change :  Tue Sep 18 09:10:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2777,8 +2777,8 @@
 	 (with-access::JsPropertyDescriptor p (name enumerable)
 	    (when (symbol? name)
 	       (unless (memq name env)
+		  (set! env (cons name env))
 		  (when (eq? enumerable #t)
-		     (set! env (cons name env))
 		     (proc (js-string->jsstring (symbol->string! name)))))))))
 
    (let loop ((o obj))

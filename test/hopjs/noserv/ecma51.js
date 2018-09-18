@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sat Sep  1 07:43:52 2018 (serrano)                */
+/*    Last change :  Tue Sep 18 08:52:46 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -40,13 +40,11 @@ for( var k in o ) {
    no[ k ] = o[ k ];
 }
 
-assert.equal( count, 5 );
-assert.deepEqual( no, { foo_a: o.foo_a,
+assert.equal( count, 4 );
+assert.deepEqual( no, { foo_a: o.foo_a, 
 			foo_b: o.foo_b,
-			foo_nonenum: o.foo_nonenum,
 			gee_a: o.gee_a,
 			gee_b: o.gee_b } );
-assert.equal( no.foo_nonenum, 50, "defineProperty" );
 
 /*---------------------------------------------------------------------*/
 /*    value of an assignment                                           */
@@ -324,19 +322,27 @@ function CTOR( x ) {
    this.z = x;
 }
 
-const o = new CTOR( 1 );
-const ctor = o.constructor;
+const oo = new CTOR( 1 );
+const ctotor = oo.constructor;
 
-function ctorcall( n ) {
+function ctotorcall( n ) {
    try {
-      ctor.call( undefined, n );
+      ctotor.call( undefined, n );
       return false;
    } catch( e ) {
       return e instanceof TypeError;
    }
 }
 
-assert.ok( ctorcall( 2 ), "ctor sans object" );
+assert.ok( !ctotorcall( 2 ), "ctotor sans object" );
+
+/*---------------------------------------------------------------------*/
+/*    Function properties                                              */
+/*---------------------------------------------------------------------*/
+var p1 = Object.getOwnPropertyDescriptor( ctotor, "length" );
+var p2 = Object.getOwnPropertyDescriptor( ctotor, "name" );
+
+assert.ok( !p2.writable && !p2.enumerable && !p2.configurable );
 
 /*---------------------------------------------------------------------*/
 /*    assignop                                                         */
@@ -390,14 +396,6 @@ assert.ok( protoLit( 20000, 1 ) === 12345, "literal with __proto__" );
    foo();
    var myVar = "foo";
 })();
-
-/*---------------------------------------------------------------------*/
-/*    Function properties                                              */
-/*---------------------------------------------------------------------*/
-var p1 = Object.getOwnPropertyDescriptor( ctor, "length" );
-var p2 = Object.getOwnPropertyDescriptor( ctor, "name" );
-
-assert.ok( !p2.writable && !p2.enumerable && !p2.configurable );
 
 /*---------------------------------------------------------------------*/
 /*    binding                                                          */
