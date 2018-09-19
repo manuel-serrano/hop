@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Sun Aug  5 18:54:50 2018 (serrano)                */
+/*    Last change :  Tue Sep 18 18:33:42 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -287,9 +287,9 @@ h4.scheme:before {
   color: #720bc3;
 }
 
-h3.keyword:before,
-h4.keyword:before {
-  color: #1437b6;
+h3.syntax:before,
+h4.syntax:before {
+  color: #555555;
 }
 
 /*---------------------------------------------------------------------*/
