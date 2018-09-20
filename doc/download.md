@@ -112,7 +112,7 @@ the documentation could be access at the URL:
 
 The Emacs mode can be copied to the host disk with:
 
-`docker cp hop:/usr/local/share/site-lisp/hopjs.el .`
+`docker cp hop:/usr/local/share/hop/site-lisp/hopjs.el .`
 
 
 ## Binary distributions ##
