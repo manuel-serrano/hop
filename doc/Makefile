@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Sep 17 11:04:51 2018 (serrano)                */
+#*    Last change :  Thu Sep 20 08:06:54 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -99,7 +99,7 @@ build:
 builddoc: $(ALL_TARGETS) \
   hss/markdown.css hss/fontifier.css hss/doc.css \
   html-idx.json mdn-idx.json node-idx.json \
-  favicon.png
+  favicon.png LICENSE.academic
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -112,6 +112,7 @@ clean:
 	$(RM) idx.json idx.html
 	$(RM) -f hss/markdown.hss hss/fontifier.hss
 	$(RM) -f favicon.png
+	$(RM) -f LICENSE.academic
 
 devclean: clean
 
@@ -238,4 +239,7 @@ hss/doc.css: hss/doc.hss
 	cp $< $@
 
 favicon.png: ../share/icons/hop/favicon-16x16.png
+	cp $< $@
+
+LICENSE.academic: ../LICENSE.academic
 	cp $< $@
