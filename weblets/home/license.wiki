@@ -11,6 +11,7 @@
     
      - free: no restriction of any kind.
      - academic: reserved exclusively to academic use (research and teaching).
+       (see LICSENSE.academic for details).
      - commercial: no restriction but needs the Inria approval first.
      
     The optimizing compiler is only availabe with academic and commercial

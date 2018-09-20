@@ -87,7 +87,7 @@ The `hop${cfg.version}.docker` file is shipped with the Docker image.
 In addition to be downloaded from the Hop ftp repository, it can be
 copied to the local disk with:
 
-`docker cp hop:/usr/local/src/hop/${cfg.version}/Docker/hop.hop${cfg.version}.docker`
+`docker cp hop:/usr/local/share/hop${cfg.version}/Docker/hop${cfg.version}.docker`
 
 
 ### Accessing the documentation and the Emacs mode ###
