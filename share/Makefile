@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Aug 16 17:14:22 2018 (serrano)                */
+#*    Last change :  Thu Sep 20 18:53:11 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -226,6 +226,10 @@ install:
           $(INSTALL) $$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor && \
           chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor/`basename $$p`; \
         done
+	$(INSTALL) ../docker/Dockerfile $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/Dockerfile.hop
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/Dockerfile.hop
+	$(INSTALL) ../docker/hop.docker $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop.docker
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop.docker
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -243,6 +247,8 @@ uninstall:
 	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
 	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p.gz; \
         done
+	$(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/Dockerfile.hop
+	$(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop.docker
 
 #*---------------------------------------------------------------------*/
 #*    hop.js ...                                                       */
