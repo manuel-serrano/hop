@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May  4 07:52:08 2018                          */
-#*    Last change :  Tue Sep 11 18:01:07 2018 (serrano)                */
+#*    Last change :  Thu Sep 20 18:16:30 2018 (serrano)                */
 #*    Copyright   :  2018 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Run Hop thru a docker container                                  */
@@ -13,16 +13,19 @@
 if [ "$WINDIR " != " " ]; then
   window=true
   USER=hop
-  tmp=$PWD/tmp
   dockermountpasswd=
+  home=`echo $HOME | sed 's|^/\([a-z]\)/|\1:|'`
+  pwd=`echo $PWD | sed 's|^/\([a-z]\)/|\1:|'`
+  tmp=$pwd/tmp
 else
   tmp=/tmp
+  home=$HOME
   dockermountpasswd="-v /etc/passwd:/etc/passwd"
 fi
 
 libsdir=$tmp/$USER/hopdocker/libs
 cachedir=$tmp/$USER/hopdocker/cache
-rcdir=$HOME/.config/hop
+rcdir=$home/.config/hop
 
 port=8080
 opts=
@@ -57,6 +60,10 @@ while : ; do
       shift
       mntdirs="$1 $mntdirs ";;
       
+    -v)
+      opts="$opts $1";
+      shift;;
+    
     -v*)
       opts="$opts $1";
       shift;;

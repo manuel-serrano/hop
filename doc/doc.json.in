@@ -1,6 +1,7 @@
 {
    "title": "Hop.js",
    "version": "@VERSION@",
+   "branch": "@BRANCH@",
    "bglversion": "@BIGLOOVERSION@",
    "urlbase": "ftp://ftp-sop.inria.fr/indes/fp/Hop",
    "github": "https://github.com/manuel-serrano/hop.git",
