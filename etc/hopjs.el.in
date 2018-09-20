@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Sep 19 10:54:55 2018 (serrano)                */
+;*    Last change :  Thu Sep 20 19:30:31 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1096,7 +1096,8 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 (defun js--html-statement-indentation ()
   (when (and (call-sans-debug 'hopjs-html-p (point))
-	     (eq (hopjs-context) 'html))
+	     (or (eq (hopjs-context) 'html)
+		 (eq (hopjs-context) 'html-attr)))
     (hopjs-debug "> js--html-statement-indentation point=%s" (point))
     (let ((pmin (save-excursion (hopjs-beginning-of-defun) (point))))
       (let ((col (save-excursion
