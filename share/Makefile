@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Sep 20 18:53:11 2018 (serrano)                */
+#*    Last change :  Thu Sep 20 19:17:42 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -227,7 +227,7 @@ install:
           chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor/`basename $$p`; \
         done
 	$(INSTALL) ../docker/Dockerfile $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/Dockerfile.hop
-	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/Dockerfile.hop
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/Dockerfile.hop
 	$(INSTALL) ../docker/hop.docker $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop.docker
 	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop.docker
 
