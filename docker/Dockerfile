@@ -33,11 +33,12 @@ RUN wget ftp://ftp-sop.inria.fr/indes/fp/Hop/hop-3.2.0-pre1.tar.gz \
 
 RUN useradd --no-log-init -d /home/hop -s /bin/bash hop
 
+RUN rm -rf /tmp/*
+
 RUN mkdir -p /home/hop/.config/hop && \
     echo "(add-user! \"anonymous\" :directories '* :services '*)" \
-      > /home/hop/.config/hop/hoprc.hop
-
-RUN rm -rf /tmp/*
+      > /home/hop/.config/hop/hoprc.hop && \
+    chown -R hop /home/hop
 
 USER hop
 ENV HOME /home/hop
