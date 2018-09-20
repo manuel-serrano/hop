@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Sep 20 13:13:49 2018 (serrano)                */
+#*    Last change :  Thu Sep 20 19:06:11 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -58,10 +58,6 @@ install:
 	fi
 	$(INSTALL) hopjs.el $(DESTDIR)$(HOPSHAREDIR)/site-lisp
 	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/site-lisp/hopjs.el
-	$(INSTALL) ../docker/Dockerfile $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/Dockerfile.hop
-	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/Dockerfile.hop
-	$(INSTALL) ../docker/hop.docker $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop.docker
-	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/hop.docker
 
 uninstall:
 	$(RM) -f $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
@@ -69,7 +65,6 @@ uninstall:
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hop.1
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopsh.1
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopreplay.1
-	$(RM) -f $(DESTDIR)$(HOPSHAREDIR)/Dockerfile.hop.$(HOPRELEASE)
 
 clean:
 
