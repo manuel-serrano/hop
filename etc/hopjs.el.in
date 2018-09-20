@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Sep 20 19:30:31 2018 (serrano)                */
+;*    Last change :  Thu Sep 20 19:35:38 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -649,9 +649,14 @@ usage: (js-return)  -- [RET]"
 	((re-search-backward (concat "<" hopjs-re-tag-ident " ") end t)
 	 (goto-char (match-end 0))
 	 (current-column))
+	((re-search-backward hopjs-re-html-attr)
+	 (goto-char (match-beginning 0))
+	 (current-column))
 	((re-search-backward (concat "<" hopjs-re-tag-ident) end t)
 	 (goto-char (match-beginning 0))
-	 (+ (current-column) js-indent-level)))))))
+	 (+ (current-column) js-indent-level))
+	(else
+	 0))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-js-attr ...                                         */
@@ -706,7 +711,7 @@ usage: (js-return)  -- [RET]"
 
 ;; js-attr
 (defconst hopjs-re-ctx-html-attr
-  (concat "<" hopjs-re-tag-ident
+  (concat "\\(?:<" hopjs-re-tag-ident "\\)?"
 	  "\\(?:[ \t]+" hopjs-re-html-attr "\\)*"
 	  "[ \t]*$"))
 
