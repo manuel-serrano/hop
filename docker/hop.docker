@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May  4 07:52:08 2018                          */
-#*    Last change :  Thu Sep 20 18:16:30 2018 (serrano)                */
+#*    Last change :  Fri Sep 21 09:20:09 2018 (serrano)                */
 #*    Copyright   :  2018 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Run Hop thru a docker container                                  */
@@ -14,8 +14,8 @@ if [ "$WINDIR " != " " ]; then
   window=true
   USER=hop
   dockermountpasswd=
-  home=`echo $HOME | sed 's|^/\([a-z]\)/|\1:|'`
-  pwd=`echo $PWD | sed 's|^/\([a-z]\)/|\1:|'`
+  home=`echo $HOME | sed 's|^/\([a-z]\)/|\1:/|'`
+  pwd=`echo $PWD | sed 's|^/\([a-z]\)/|\1:/|'`
   tmp=$pwd/tmp
 else
   tmp=/tmp
@@ -96,6 +96,9 @@ mkdir -p $tmp/$USER/hopdocker/hop && chmod a+rw $tmp/$USER/hopdocker/hop
 dockermounts=
 
 if [ "$appdir " != " " ]; then
+  if [ "$WINDIR " != " " ]; then
+    appdir=`echo $appdir | sed 's|^/\([a-z]\)/|\1:/|'`
+  fi
   dockermounts="-v $appdir:/hoproot $dockermounts"
 fi
 
