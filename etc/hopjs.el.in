@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Sep 20 19:35:38 2018 (serrano)                */
+;*    Last change :  Fri Sep 21 07:36:05 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -87,6 +87,43 @@
   "List of available documentations"
   :type '(repeat (cons string string))
   :group 'hopjs)
+
+;*---------------------------------------------------------------------*/
+;*    font-lock ...                                                    */
+;*---------------------------------------------------------------------*/
+(defconst hopjs-font-lock-keywords
+  (list (list "\\s-*\\(service\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
+	(list ".\\(\\(?:post\\|then\\|catch\\)\\(?:Sync\\|Message\\)?\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-face-hopjs2)
+	(cons "</?[a-zA-Z0-9_.-]+[ ]*>\\|[ ]*/>\\|<[^ /]*/>" 'font-lock-face-hopjs9)
+	(list "\\(</?[a-zA-Z0-9_.:-]+\\)[ ]+[a-zA-Z0-9_]" 1 'font-lock-face-hopjs9)
+	(cons "<!--\\([^-]\\|-[^-]\\|--[^>]\\)+-[-]+>" 'font-lock-comment-face)
+	(list "[}\"][ ]*\\(>\\)" 1 'font-lock-face-hopjs9)
+	(cons "$\{[^ \t\r\n{}]*\}" 'font-lock-face-hopjs2)
+	(list "\\([$]\\){" 1 'font-lock-face-hopjs2)
+	(list "\\([~]\\){" 1 'font-lock-face-hopjs3)
+	(cons "[0-9a-zA-Z_-]+:" 'font-lock-face-hopjs10)
+	(cons "https?://[^ \t]*" 'font-lock-string-face)
+	(cons "\\<\\(?:async\\|yield\\|await\\)\\>" 'font-lock-face-hopjs3)
+	(list "#:\\([^ \t\r\n{}(),;=[]*\\)" 1 'font-lock-face-hopjs3)
+	(cons "exports." 'font-lock-keyword-face)
+	(list (concat "^\\s-*\\(?:service\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-key-bindings ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-key-bindings ()
+  (let ((map (current-local-map)))
+    (define-key map "\C-m" 'hopjs-return)
+    (define-key map "\e\C-m" 'newline)
+    (local-unset-key "\ee")
+    (define-key map "\e\C-q" 'hopjs-indent-statement)
+    (local-unset-key "}")
+    (define-key map "}" 'hopjs-electric-brace)
+    (local-unset-key ")")
+    (define-key map ")" 'hopjs-electric-paren)
+    (local-unset-key ">")
+    (define-key map ">" 'hopjs-electric-abra)
+    (define-key map "\C-c\C-c" 'hopjs-close-paren-tag)))
 
 ;*---------------------------------------------------------------------*/
 ;*    font-lock-make-face ...                                          */
@@ -339,42 +376,6 @@
     table))
 
 ;*---------------------------------------------------------------------*/
-;*    font-lock ...                                                    */
-;*---------------------------------------------------------------------*/
-(defconst hopjs-font-lock-keywords
-  (list (list "\\s-*\\(service\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
-	(list ".\\(\\(?:post\\|then\\|catch\\)\\(?:Sync\\|Message\\)?\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-face-hopjs2)
-	(cons "</?[a-zA-Z0-9_.-]+[ ]*>\\|[ ]*/>\\|<[^ /]*/>" 'font-lock-face-hopjs9)
-	(list "\\(</?[a-zA-Z0-9_.:-]+\\)[ ]+[a-zA-Z0-9_]" 1 'font-lock-face-hopjs9)
-	(cons "<!--\\([^-]\\|-[^-]\\|--[^>]\\)+-[-]+>" 'font-lock-comment-face)
-	(list "[}\"][ ]*\\(>\\)" 1 'font-lock-face-hopjs9)
-	(cons "$\{[^ \t\r\n{}]*\}" 'font-lock-face-hopjs2)
-	(list "\\([$]\\){" 1 'font-lock-face-hopjs2)
-	(list "\\([~]\\){" 1 'font-lock-face-hopjs3)
-	(cons "[0-9a-zA-Z_-]+:" 'font-lock-face-hopjs10)
-	(cons "\\<\\(?:async\\|yield\\|await\\)\\>" 'font-lock-face-hopjs3)
-	(list "#:\\([^ \t\r\n{}(),;=[]*\\)" 1 'font-lock-face-hopjs3)
-	(cons "exports." 'font-lock-keyword-face)
-	(list (concat "^\\s-*\\(?:service\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-key-bindings ...                                           */
-;*---------------------------------------------------------------------*/
-(defun hopjs-key-bindings ()
-  (let ((map (current-local-map)))
-    (define-key map "\C-m" 'hopjs-return)
-    (define-key map "\e\C-m" 'newline)
-    (local-unset-key "\ee")
-    (define-key map "\e\C-q" 'hopjs-indent-statement)
-    (local-unset-key "}")
-    (define-key map "}" 'hopjs-electric-brace)
-    (local-unset-key ")")
-    (define-key map ")" 'hopjs-electric-paren)
-    (local-unset-key ">")
-    (define-key map ">" 'hopjs-electric-abra)
-    (define-key map "\C-c\C-c" 'hopjs-close-paren-tag)))
-
-;*---------------------------------------------------------------------*/
 ;*    hopjs-re-open-tag ...                                            */
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-re-open-tag
@@ -401,7 +402,7 @@
   (concat hopjs-re-entering-var "\\|" hopjs-re-entering-return))
 
 (defconst hopjs-re-entering-html
-  "\\(?:\\(?:var\\|let\\|const\\)[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\|[^/]>\\)")
+  "\\(\\(?:\\(?:var\\|let\\|const\\)[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*\\)<\\(?:[^> \n/]+\\|[^/]>\\)")
 
 (defconst hopjs-re-entering-attr-html
   "\\(?:\\(?:var\\|let\\|const\\)[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\)[ \t]+\\([^\n<>]+\\)$")
@@ -427,7 +428,7 @@
 (defun hopjs-debug (fmt &rest l)
   (when hopjs-debug (apply 'message fmt l)))
 
-(defconst hopjs-debug t)
+(defconst hopjs-debug (getenv "EMACSDEBUG"))
 
 ;*---------------------------------------------------------------------*/
 ;*    call-sans-debug ...                                              */
@@ -916,53 +917,56 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-html-token ()
   ;; parse the HTML token at point
-  (cond
-   ((looking-at hopjs-re-open-tag-attr)
-    (let* ((tagname (buffer-substring-no-properties
-		     (match-beginning 1) (match-end 1)))
-	   (type (if (member tagname hopjs-special-tags)
-		     'tag
-		   'otag)))
-      (vector type
-	      (match-beginning 0) (1- (match-end 0))
-	      (match-beginning 1) (match-end 1))))
-   ((looking-at hopjs-re-open-tag)
-    (let* ((tagname (buffer-substring-no-properties
-		     (match-beginning 1) (match-end 1)))
-	   (type (if (member tagname hopjs-special-tags)
-		     'tag
-		   'otag)))
-      (vector type
-	      (match-beginning 0) (match-end 0)
-	      (match-beginning 1) (match-end 1))))
-   ((looking-at hopjs-re-close-tag)
-    (vector 'ctag
-	    (match-beginning 0) (match-end 0)))
-   ((looking-at hopjs-re-entering-html)
-    (vector 'entering
-	    (match-beginning 0) (match-end 0)))
-   ((looking-at hopjs-re-attribute)
-    (vector 'attribute
-	    (match-beginning 0) (match-end 0)))
-   ((looking-at hopjs-re-end-tag)
-    (vector 'end-tag
-	    (match-beginning 0) (match-end 0)))
-   ((looking-at hopjs-re-standalone-tag)
-    (vector 'tag
-	    (match-beginning 0) (match-end 0)))
-   ((looking-at ">")
-    (vector 'end-otag
-	    (match-beginning 0) (match-end 0)))
-   (t
-    (let ((eol (hopjs-eol-pos))
-	  (beg (point)))
-      (cond
-       ((or (re-search-forward hopjs-re-open-tag eol t)
-	    (re-search-forward hopjs-re-close-tag eol t)
-	    (re-search-forward hopjs-re-end-tag eol t))
-	(vector 'blob beg (match-beginning 0)))
-       (t
-	nil))))))
+  (let* ((pos (point))
+	 (tok (cond
+	       ((looking-at hopjs-re-open-tag-attr)
+		(let* ((tagname (buffer-substring-no-properties
+				 (match-beginning 1) (match-end 1)))
+		       (type (if (member tagname hopjs-special-tags)
+				 'tag
+			       'otag)))
+		  (vector type
+			  (match-beginning 0) (1- (match-end 0))
+			  (match-beginning 1) (match-end 1))))
+	       ((looking-at hopjs-re-open-tag)
+		(let* ((tagname (buffer-substring-no-properties
+				 (match-beginning 1) (match-end 1)))
+		       (type (if (member tagname hopjs-special-tags)
+				 'tag
+			       'otag)))
+		  (vector type
+			  (match-beginning 0) (match-end 0)
+			  (match-beginning 1) (match-end 1))))
+	       ((looking-at hopjs-re-close-tag)
+		(vector 'ctag
+			(match-beginning 0) (match-end 0)))
+	       ((looking-at hopjs-re-entering-html)
+		(vector 'entering
+			(match-beginning 1) (match-end 1)))
+	       ((looking-at hopjs-re-attribute)
+		(vector 'attribute
+			(match-beginning 0) (match-end 0)))
+	       ((looking-at hopjs-re-end-tag)
+		(vector 'end-tag
+			(match-beginning 0) (match-end 0)))
+	       ((looking-at hopjs-re-standalone-tag)
+		(vector 'tag
+			(match-beginning 0) (match-end 0)))
+	       ((looking-at ">")
+		(vector 'end-otag
+			(match-beginning 0) (match-end 0)))
+	       (t
+		(let ((eol (hopjs-eol-pos))
+		      (beg (point)))
+		  (cond
+		   ((or (re-search-forward hopjs-re-open-tag eol t)
+			(re-search-forward hopjs-re-close-tag eol t)
+			(re-search-forward hopjs-re-end-tag eol t))
+		    (vector 'blob beg (match-beginning 0)))
+		   (t
+		    nil)))))))
+    (hopjs-debug "******* hopjs-parse-html-token pos=%d tok=%S" pos tok)
+    tok))
     
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-html-attribute-value ...                             */
@@ -1101,8 +1105,7 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 (defun js--html-statement-indentation ()
   (when (and (call-sans-debug 'hopjs-html-p (point))
-	     (or (eq (hopjs-context) 'html)
-		 (eq (hopjs-context) 'html-attr)))
+	     (memq (hopjs-context) '(html html-attr)))
     (hopjs-debug "> js--html-statement-indentation point=%s" (point))
     (let ((pmin (save-excursion (hopjs-beginning-of-defun) (point))))
       (let ((col (save-excursion
@@ -1162,12 +1165,13 @@ usage: (js-return)  -- [RET]"
 	(while (not col)
 	  (if (consp tokens)
 	      (let ((tok (car tokens)))
-		(hopjs-debug ">>>>> hopjs-indent-new-line tok=%s intag=%s"
-			 tok intag)
+		(hopjs-debug ">>>>> hopjs-indent-new-line tok=%s intag=%s depth=%s"
+			 tok intag depth)
 		(cl-case (aref tok 0)
 		  ((entering)
-		   (let ((ocol (hopjs-column-at (aref tok 1))))
-		     (setq col (+ ocol hopjs-indent-level-html))))
+		   (if (>= depth 0)
+		       (setq col (hopjs-column-at (aref tok 1)))
+		     (setq tokens (cdr tokens))))
 		  ((end-otag)
 		   (setq intag t)
 		   (setq tokens (cdr tokens)))
@@ -1190,10 +1194,15 @@ usage: (js-return)  -- [RET]"
 			 (setq tokens (cdr tokens))
 		       (setq col (hopjs-column-at (aref tok 1))))))
 		  ((otag)
-		   (let ((c (if (= depth 0)
-				(+ (hopjs-column-at (aref tok 1))
-				   hopjs-indent-level-html)
-			      (hopjs-column-at (aref tok 1)))))
+		   (setq depth (+ depth 1))
+		   (let ((c (cond
+			     ((= depth 0)
+			      (hopjs-column-at (aref tok 1)))
+			     ((> depth 0)
+			      (+ (hopjs-column-at (aref tok 1))
+				 hopjs-indent-level-html))
+			     (t
+			      (hopjs-column-at (aref tok 1))))))
 		     (setq intag nil)
 		     (if (consp (cdr tokens))
 			 (progn
@@ -1769,14 +1778,19 @@ usage: (js-return)  -- [RET]"
 ;*    hopjs modeline                                                   */
 ;*---------------------------------------------------------------------*/
 (setq mode-line-format
-      (let ((l mode-line-format))
+      (let* ((l mode-line-format)
+	     (mlf (cons 'head '()))
+	     (prev mlf))
 	(while (consp l)
 	  (if (not (cdr l))
 	      (progn
-		(rplaca l (list "-" (doc-mode-line) "-" (car l)))
+		(rplacd prev (list "-" (doc-mode-line) "-" (car l)))
 		(setq l '()))
-	    (setq l (cdr l))))
-	mode-line-format))
+	    (progn
+	      (rplacd prev (cons (car l) '()))
+	      (setq prev (cdr prev))
+	      (setq l (cdr l)))))
+	(setq mode-line-format (cdr mlf))))
 
 (force-mode-line-update t)
 
