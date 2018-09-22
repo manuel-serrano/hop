@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Sep 21 07:36:05 2018 (serrano)                */
+;*    Last change :  Sat Sep 22 07:33:25 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -713,7 +713,7 @@ usage: (js-return)  -- [RET]"
 ;; js-attr
 (defconst hopjs-re-ctx-html-attr
   (concat "\\(?:<" hopjs-re-tag-ident "\\)?"
-	  "\\(?:[ \t]+" hopjs-re-html-attr "\\)*"
+	  "\\(?:[ \t]+" hopjs-re-html-attr "\\)+"
 	  "[ \t]*$"))
 
 ;; html

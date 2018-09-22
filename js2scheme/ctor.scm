@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/ctor.scm      */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/ctor.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Wed Sep  5 14:52:30 2018 (serrano)                */
+;*    Last change :  Sat Sep 22 08:15:10 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -278,7 +278,6 @@
 		      globals)))
 	     ;; then split the init sequence
 	     (with-access::J2SBlock this (nodes loc)
-		(tprint "CREATING>>>> " (j2s->list ref))
 		(set! nodes
 		   (cons (instantiate::J2SOPTInitSeq
 			    (loc loc)
