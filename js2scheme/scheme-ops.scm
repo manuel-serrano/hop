@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-ops.scm         */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-ops.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Sep  4 13:47:09 2018 (serrano)                */
+;*    Last change :  Sat Sep 22 15:30:49 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1051,12 +1051,16 @@
 		    `(eq? ,left ,right))
 		   ((==)
 		    (if (memq (j2s-vtype lhs) '(undefined null))
-			`(or (eq? (js-undefined) ,right) (eq? (js-null) ,right))
-			`(or (eq? ,left (js-undefined)) (eq? ,left (js-null)))))
+			`(js-null-or-undefined? ,right)
+			`(js-null-or-undefined? ,left)))
+;* 			`(or (eq? (js-undefined) ,right) (eq? (js-null) ,right)) */
+;* 			`(or (eq? ,left (js-undefined)) (eq? ,left (js-null))))) */
 		   ((!=)
 		    (if (memq (j2s-vtype lhs) '(undefined null))
-			`(not (or (eq? (js-undefined) ,right) (eq? (js-null) ,right)))
-			`(not (or (eq? ,left (js-undefined)) (eq? ,left (js-null))))))
+			`(not (js-null-or-undefined? ,right))
+			`(not (js-null-or-undefined? ,left))))
+;* 			`(not (or (eq? (js-undefined) ,right) (eq? (js-null) ,right))) */
+;* 			`(not (or (eq? ,left (js-undefined)) (eq? ,left (js-null)))))) */
 		   (else
 		    (js-binop loc op left lhs right rhs conf))))))
 	 (else

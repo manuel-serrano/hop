@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Sep  9 09:22:26 2018 (serrano)                */
+;*    Last change :  Sat Sep 22 15:30:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -146,6 +146,7 @@
 	   (inline js-eqstring?::bool ::obj ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
+	   (inline js-null-or-undefined?::bool ::obj)
 
 	   (js-check-class-instance ::obj ::obj ::JsGlobalObject)
 	   (js-super ::obj ::obj ::JsGlobalObject)
@@ -1415,6 +1416,16 @@
    (cond
       ((fixnum? x) (=fx x y))
       ((flonum? x) (=fl x (fixnum->flonum y)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-null-or-undefined? ...                                        */
+;*    -------------------------------------------------------------    */
+;*    This inline function is override by a macro that checks the      */
+;*    implementation of JS-NULL and JS-UNDEFINED in order to           */
+;*    avoid the double test when possible.                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-null-or-undefined? obj)
+   (or (eq? obj (js-undefined)) (eq? obj (js-null))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-check-class-instance ...                                      */
