@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Sep  9 09:22:26 2018 (serrano)                */
+;*    Last change :  Sat Sep 22 15:30:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -137,6 +137,7 @@
 	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
 	   
 	   (inline js-equal?::bool ::obj ::obj ::JsGlobalObject)
+	   (inline js-equal-fixnum?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-equal-sans-flonum?::bool ::obj ::obj ::JsGlobalObject)
 	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
@@ -146,6 +147,7 @@
 	   (inline js-eqstring?::bool ::obj ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
+	   (inline js-null-or-undefined?::bool ::obj)
 
 	   (js-check-class-instance ::obj ::obj ::JsGlobalObject)
 	   (js-super ::obj ::obj ::JsGlobalObject)
@@ -1278,6 +1280,14 @@
        (and (not (fixnums? o1 o2)) (js-equality? o1 o2 %this))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-equal-fixnum? ...                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.1       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-equal-fixnum? o1 o2 %this::JsGlobalObject)
+   (or (eq? o1 o2) (if (fixnum? o2) #f (js-equality? o1 o2 %this))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-equal-sans-flonum? ...                                        */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.1       */
@@ -1415,6 +1425,16 @@
    (cond
       ((fixnum? x) (=fx x y))
       ((flonum? x) (=fl x (fixnum->flonum y)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-null-or-undefined? ...                                        */
+;*    -------------------------------------------------------------    */
+;*    This inline function is override by a macro that checks the      */
+;*    implementation of JS-NULL and JS-UNDEFINED in order to           */
+;*    avoid the double test when possible.                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-null-or-undefined? obj)
+   (or (eq? obj (js-undefined)) (eq? obj (js-null))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-check-class-instance ...                                      */

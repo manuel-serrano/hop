@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Sep  5 18:17:33 2018 (serrano)                */
+;*    Last change :  Sat Sep 22 15:38:29 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -363,68 +363,6 @@
 	  (if (char? c)
 	      (read-error "Illegal token" (string #\# c) (the-port))
 	      (read-error "Illegal char" c (the-port)))))))
-
-;* (define *sharp-grammar*                                             */
-;*    (regular-grammar ()                                              */
-;*                                                                     */
-;*       ;; characters                                                 */
-;*       ((: (uncase "a") (= 3 digit))                                 */
-;*        (let ((string (the-string)))                                 */
-;* 	  (if (not (=fx (the-length) 4))                               */
-;* 	      (read-error "Illegal ascii character" string (the-port)) */
-;* 	      (integer->char (string->integer (the-substring 1 4)))))) */
-;*                                                                     */
-;*       ;; ucs-2 characters                                           */
-;*       ((: "u" (= 4 xdigit))                                         */
-;*        (integer->ucs2 (string->integer (the-substring 1 5) 16)))    */
-;*                                                                     */
-;*       ;; ucs2 strings                                               */
-;*       ((: "u\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")      */
-;*        (let ((str (the-escape-substring 2 (-fx (the-length) 1) #f))) */
-;*   	  (utf8-string->ucs2-string str)))                             */
-;*                                                                     */
-;*       ;; fixnums                                                    */
-;*       ((: "b" (? (in "-+")) (+ (in ("01"))))                        */
-;*        (string->integer (the-substring 1 (the-length)) 2))          */
-;*       ((: "o" (? (in "-+")) (+ (in ("07"))))                        */
-;*        (string->integer (the-substring 1 (the-length)) 8))          */
-;*       ((: "d" (? (in "-+")) (+ (in ("09"))))                        */
-;*        (string->integer (the-substring 1 (the-length)) 10))         */
-;*       ((: "e" (? (in "-+")) (+ digit))                              */
-;*        (string->elong (the-substring 1 (the-length)) 10))           */
-;*       ((: "ex" (+ xdigit))                                          */
-;*        ($strtoeul (the-substring 2 (the-length)) 0 16))             */
-;*       ((: "l" (? (in "-+")) (+ digit))                              */
-;*        (string->llong (the-substring 1 (the-length)) 10))           */
-;*       ((: "lx" (+ xdigit))                                          */
-;*        ($strtoull (the-substring 2 (the-length)) 0 16))             */
-;*       ((: "x" (? (in "-+")) (+ (in (uncase (in ("09af"))))))        */
-;*        (string->integer (the-substring 1 (the-length)) 16))         */
-;*                                                                     */
-;*       ;; unspecified and eof-object                                 */
-;*       ((: (in "ue") (+ (in "nspecified-objt")))                     */
-;*        (let ((symbol (string->symbol (string-upcase! (the-string))))) */
-;* 	  (cond                                                        */
-;* 	     ((eq? symbol 'UNSPECIFIED)                                */
-;* 	      unspec)                                                  */
-;* 	     ((eq? symbol 'EOF-OBJECT)                                 */
-;* 	      beof)                                                    */
-;* 	     (else                                                     */
-;* 	      (read-error "Illegal identifier"                         */
-;* 			  (string-append "#" (symbol->string symbol))  */
-;* 			  (the-port))))))                              */
-;*                                                                     */
-;*       ;; constants                                                  */
-;*       ((: "<" (+ (or digit (uncase (in "afAF")))) ">")              */
-;*        (if (not (=fx (the-length) 6))                               */
-;* 	   (read-error "Illegal constant" (the-string) (the-port))     */
-;* 	   (make-cnst (string->integer (the-substring 1 5) 16))))      */
-;*                                                                     */
-;*       (else                                                         */
-;*        (let ((c (the-failure)))                                     */
-;* 	  (if (char? c)                                                */
-;* 	      (read-error "Illegal char" c (the-port))                 */
-;* 	      (read-error "Illegal token" (string #\# c) (the-port))))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    *hop-grammar* ...                                                */
