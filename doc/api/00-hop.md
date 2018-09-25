@@ -417,7 +417,7 @@ mymemory( {q: 'My tailor is rich.', langpair: 'en|fr' } ).post( function( result
 } });
 ```
 
-###hop.webService( url ) ###
+### hop.webService( url ) ###
 [:@glyphicon glyphicon-tag function]
 
 Use this method to declare a remote WebService,that can later be
@@ -427,7 +427,7 @@ named arguments you want to send to the WebService. The returned value
 is a WebServiceFrame (very similar in use to Service Frames).
 
 
-###WebServiceFrame.post([ success [, fail-or-options]] ) ###
+### WebServiceFrame.post([ success [, fail-or-options]] ) ###
 [:@glyphicon glyphicon-tag function]
 
 Invokes asynchronously the webService. The optional `success`argument,
@@ -465,7 +465,7 @@ ws()
     body: "grant_type=password&client_id=android&client_secret=SomeRandomCharsAndNumbers&username=myapi&password=abc1234" } );
 ```
 
-###WebServiceFrame.postSync([ success [, fail-or-option]] ) ###
+### WebServiceFrame.postSync([ success [, fail-or-option]] ) ###
 [:@glyphicon glyphicon-tag function]
 
 The synchronous version of `post`. Returns the value returned by the

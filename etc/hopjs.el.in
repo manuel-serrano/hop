@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sat Sep 22 07:33:25 2018 (serrano)                */
+;*    Last change :  Tue Sep 25 17:37:28 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -80,7 +80,8 @@
   :group 'hopjs)
 
 (defcustom hopjs-external-docs
-  (list (cons "hop" hopjs-official-doc-url)
+  (list (cons "hop" (concat hopjs-doc-dir "/index.html"))
+	(cons "hop official" hopjs-official-doc-url)
 	(cons "mdn" hopjs-mdn-doc-url)
 	(cons "html4.01" hopjs-html-doc-url)
 	(cons "nodejs" "https://nodejs.org/api/"))
@@ -230,6 +231,9 @@
   (run-at-time "2 sec" nil 'hopjs-load-node-modules-indexes)
   ;; tag matching
   (add-hook 'post-command-hook (function hopjs-post-command-hook) t t)
+  ;; mode line format for on-line documentations
+  (setq mode-line-format (hopjs-mode-line-format))
+  (force-mode-line-update t)
   ;; user hooks
   (run-hooks 'hopjs-mode-hook))
 
@@ -1773,26 +1777,24 @@ usage: (js-return)  -- [RET]"
      'face '(:background "orange" :foreground "lightgrey" :weight bold)
      'mouse-face '(:background "orange" :foreground "white" :weight bold)
      'keymap keymap)))
-  
-;*---------------------------------------------------------------------*/
-;*    hopjs modeline                                                   */
-;*---------------------------------------------------------------------*/
-(setq mode-line-format
-      (let* ((l mode-line-format)
-	     (mlf (cons 'head '()))
-	     (prev mlf))
-	(while (consp l)
-	  (if (not (cdr l))
-	      (progn
-		(rplacd prev (list "-" (doc-mode-line) "-" (car l)))
-		(setq l '()))
-	    (progn
-	      (rplacd prev (cons (car l) '()))
-	      (setq prev (cdr prev))
-	      (setq l (cdr l)))))
-	(setq mode-line-format (cdr mlf))))
 
-(force-mode-line-update t)
+;*---------------------------------------------------------------------*/
+;*    hopjs-mode-line-format ...                                       */
+;*---------------------------------------------------------------------*/
+(defun hopjs-mode-line-format ()
+  (let* ((l mode-line-format)
+	 (mlf (cons 'head '()))
+	 (prev mlf))
+    (while (consp l)
+      (if (not (cdr l))
+	  (progn
+	    (rplacd prev (list "-" (doc-mode-line) "-" (car l)))
+	    (setq l '()))
+	(progn
+	  (rplacd prev (cons (car l) '()))
+	  (setq prev (cdr prev))
+	  (setq l (cdr l)))))
+    (setq mode-line-format (cdr mlf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init                                                             */
