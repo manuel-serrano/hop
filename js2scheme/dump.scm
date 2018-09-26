@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Sep  9 07:23:18 2018 (serrano)                */
+;*    Last change :  Tue Sep 25 17:57:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -254,9 +254,6 @@
 	  ((isa? this J2SNew)
 	   (with-access::J2SNew this (cache)
 	      (if cache `(:cache ,cache) '())))
-	  ((isa? this J2SAssig)
-	   (with-access::J2SAssig this (lhs rhs)
-	      (append (dump-cache lhs) (dump-cache rhs))))
 	  (else
 	   '()))
        '()))

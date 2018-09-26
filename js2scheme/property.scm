@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/property.scm      */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/property.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Aug 30 18:09:53 2018 (serrano)                */
+;*    Last change :  Tue Sep 25 17:54:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Add a cache to each object property lookup                       */
+;*    Add caches to object property lookups                            */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
