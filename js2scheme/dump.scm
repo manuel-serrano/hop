@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Sep 25 17:57:24 2018 (serrano)                */
+;*    Last change :  Wed Sep 26 14:34:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1069,3 +1069,10 @@
 (define-method (j2s->list this::J2SOPTInitSeq)
    (with-access::J2SOPTInitSeq this (ref offset)
       `(,@(call-next-method) :ref ,(j2s->list ref) :offset ,offset)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2STemplate ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2STemplate)
+   (with-access::J2STemplate this (exprs)
+      `(,@(call-next-method) ,@(map j2s->list exprs))))

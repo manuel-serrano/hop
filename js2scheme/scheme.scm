@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/scheme.scm        */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Sep  5 16:29:36 2018 (serrano)                */
+;*    Last change :  Wed Sep 26 14:38:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -558,6 +558,11 @@
 ;*    j2s-scheme ::J2STemplate ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2STemplate mode return conf)
+   
+   (define (j2s-tostring expr mode return conf)
+      (let ((sexp (j2s-scheme expr mode return conf)))
+	 (j2s-cast sexp expr (j2s-type expr) 'string conf)))
+
    (with-access::J2STemplate this (loc exprs)
       (epairify loc
 	 `(js-stringlist->jsstring
@@ -568,9 +573,7 @@
 				 val)
 			      (with-access::J2SNode expr (loc)
 				 (epairify loc
-				    `(js-tostring
-					,(j2s-scheme expr mode return conf)
-					%this)))))
+				    (j2s-tostring expr mode return conf)))))
 		     exprs))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2498,19 +2501,19 @@
 	     (epairify loc
 		(j2s-new-opt decl clazz
 		   (map (lambda (a)
-			   (box (j2s-scheme a mode return conf) (j2s-type a) conf))
+			   (box (j2s-scheme a mode return conf) (j2s-vtype a) conf))
 		      args)))))
 	 ((and (=fx (bigloo-debug) 0) cache)
 	  (epairify loc
 	     (j2s-new-fast cache clazz
 		(map (lambda (a)
-			(box (j2s-scheme a mode return conf) (j2s-type a) conf))
+			(box (j2s-scheme a mode return conf) (j2s-vtype a) conf))
 		   args))))
 	 (else
 	  (epairify loc
 	     (j2s-new loc (j2s-scheme clazz mode return conf)
 		(map (lambda (a)
-			(box (j2s-scheme a mode return conf) (j2s-type a) conf))
+			(box (j2s-scheme a mode return conf) (j2s-vtype a) conf))
 		   args)))))))
 
 ;*---------------------------------------------------------------------*/

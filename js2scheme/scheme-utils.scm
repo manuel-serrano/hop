@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-utils.scm       */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-utils.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Sep  5 14:18:21 2018 (serrano)                */
+;*    Last change :  Wed Sep 26 14:13:51 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -774,8 +774,8 @@
 	     (else #f)))
        (with-access::J2SExpr expr (range)
 	  (when (interval? range)
-	     (and (>=llong (interval-min range) (- (bit-lshllong #l1 30)))
-		  (<llong (interval-max range) (bit-lshllong #l1 30))
+	     (and (>=llong (interval-min range) (- (bit-lshllong #l1 29)))
+		  (<llong (interval-max range) (bit-lshllong #l1 29))
 		  (eq? (interval-type range) 'integer))))))
 
 ;*---------------------------------------------------------------------*/

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/constant.scm      */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/constant.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Sep  3 09:19:33 2018 (serrano)                */
+;*    Last change :  Wed Sep 26 14:17:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -286,8 +286,8 @@
 				     ((BIT_OR) (bit-ors32 x y))
 				     ((&) (bit-ands32 x y))
 				     (else (bit-xors32 x y)))))
-			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
-				    (<=s32 (fixnum->int32 (maxvalfx)) r))
+			   (if (and (>=s32 r (fixnum->int32 (minvalfx)))
+				    (<=s32 r (fixnum->int32 (maxvalfx))))
 			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
@@ -296,8 +296,8 @@
 			(let* ((x (fixnum->int32 lval))
 			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-lshu32 x (uint32->fixnum y))))
-			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
-				    (<=s32 (fixnum->int32 (maxvalfx)) r))
+			   (if (and (>=s32 r (fixnum->int32 (minvalfx)))
+				    (<=s32 r (fixnum->int32 (maxvalfx))))
 			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
@@ -306,8 +306,8 @@
 			(let* ((x (fixnum->int32 lval))
 			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-rshs32 x (uint32->fixnum y))))
-			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
-				    (<=s32 (fixnum->int32 (maxvalfx)) r))
+			   (if (and (>=s32 r (fixnum->int32 (minvalfx)))
+				    (<=s32 r (fixnum->int32 (maxvalfx))))
 			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
