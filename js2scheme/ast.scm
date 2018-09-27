@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/ast.scm       */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Sep  3 13:59:50 2018 (serrano)                */
+;*    Last change :  Thu Sep 27 11:38:30 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -337,7 +337,7 @@
 	      (exprs::pair-nil (info '("ast"))))
 	   
 	   (final-class J2STemplate::J2SExpr
-	      (exprs::pair read-only (info '("ast"))))
+	      (exprs::pair (info '("ast"))))
 	   
 	   (final-class J2SParen::J2SExpr
 	      (expr::J2SExpr (info '("ast"))))

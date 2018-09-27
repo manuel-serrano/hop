@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-fun.scm         */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-fun.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
