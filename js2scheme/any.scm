@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Thu Sep 27 14:02:28 2018 (serrano)                */
+;*    Last change :  Thu Sep 27 14:35:52 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An optional stage used in debug mode to replace UNKNOWN type     */
@@ -91,8 +91,9 @@
 ;*    any-types ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SFun)
-   (with-access::J2SFun this (rtype thisp)
+   (with-access::J2SFun this (rtype thisp argumentsp)
       (when (isa? thisp J2SDecl) (any-types thisp))
+      (when (isa? argumentsp J2SDecl) (any-types argumentsp))
       (set! rtype (map-type rtype)))
    (call-default-walker)
    (call-next-method))
