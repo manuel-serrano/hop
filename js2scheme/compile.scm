@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Sep 12 10:34:31 2018 (serrano)                */
+;*    Last change :  Thu Sep 27 13:39:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -225,10 +225,11 @@
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
-      j2s-any-stage
       j2s-return-stage
+      j2s-any-stage
       j2s-cps-stage
       j2s-constant-stage
+      j2s-cast-stage
       j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/
@@ -247,9 +248,10 @@
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
-      j2s-any-stage
       j2s-return-stage
+      j2s-any-stage
       j2s-cps-stage
+      j2s-cast-stage
       j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/
@@ -267,8 +269,8 @@
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
-      j2s-any-stage
       j2s-return-stage
+      j2s-any-stage
       j2s-cps-stage
       j2s-constant-stage
       j2s-scheme-eval-stage))
@@ -375,7 +377,8 @@
 			  filename))))
 	  (opts (compile-opts filename in args))
 	  (conf (cons* :mmaps '() :tmp tmp opts)))
-      (when (>=fx (bigloo-debug) 1) (make-directories tmp))
+      (when (config-get opts :debug-stage)
+	 (make-directories tmp))
       (unwind-protect
 	 (let ((ast (cond
 		       ((input-port? in)
@@ -401,6 +404,11 @@
 (define (compile-opts filename in args)
    (let ((o (append args (j2s-compile-options)))
 	 (l (config-get args :optim 0)))
+      ;; debugging
+      (when (or (>= (bigloo-debug) 2)
+		(string-contains (or (getenv "HOPTRACE") "") "j2s:stage"))
+	 (unless (memq :debug-stage o)
+	    (set! o (cons* :debug-stage #t o))))
       ;; profiling
       (when (config-get args :profile #f)
 	 (unless (memq :profile-call o)
@@ -474,7 +482,7 @@
 			 (set! o (cons* k #t o))))
 	    '(:es6-let :es6-default-value :es6-arrow-function
 	      :es6-rest-argument :es2017-async)))
-
+      
       (let ((v (getenv "HOPCFLAGS")))
 	 (when (string? v)
 	    (cond

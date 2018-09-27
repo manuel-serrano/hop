@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Sep 26 23:43:55 2018 (serrano)                */
+;*    Last change :  Thu Sep 27 14:14:36 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -242,14 +242,24 @@
 ;*    hopjs-dls-init ...                                               */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-dls-init ()
-  (goto-char (point-min))
-  (while (looking-at "^[\"']use[ \t]+\\([^\"']+\\)[\"'][;]?$")
-    (let ((lang (buffer-substring-no-properties
-		 (match-beginning 1) (match-end 1))))
-      (hopjs-load-node-modules-dls lang)
-      (next-line 1)
-      (beginning-of-line))))
+  (save-excursion
+    (goto-char (point-min))
+    (while (progn
+	     (hopjs-skip-comment)
+	     (looking-at "^[\"']use[ \t]+\\([^\"']+\\)[\"'][;]?$"))
+      (let ((lang (buffer-substring-no-properties
+		   (match-beginning 1) (match-end 1))))
+	(hopjs-load-node-modules-dls lang)
+	(next-line 1)
+	(beginning-of-line)))))
 
+;*---------------------------------------------------------------------*/
+;*    hopjs-skip-comment ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-skip-comment ()
+  (while (looking-at "//.*$\\|/[*]\\(?:[^*]\\|[*][^/]\\)*[*]/")
+    (goto-char (min (point-max) (1+ (match-end 0))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-load-dls-dir ...                                           */
 ;*---------------------------------------------------------------------*/

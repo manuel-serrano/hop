@@ -1,13 +1,13 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/any.scm       */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/any.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Tue Aug 21 08:13:52 2018 (serrano)                */
+;*    Last change :  Thu Sep 27 14:02:28 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    An optional stage used in debug mode to assign to replace        */
-;*    all UNKNOWN type occurrences with ANY.                           */
+;*    An optional stage used in debug mode to replace UNKNOWN type     */
+;*    occurrences with ANY.                                            */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -75,7 +75,8 @@
 ;*    any-types ::J2SArray ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SArray)
-   (with-access::J2SExpr this (type)
+   (with-access::J2SArray this (type exprs)
+      (for-each any-types exprs)
       (set! type 'array)))
 
 ;*---------------------------------------------------------------------*/
@@ -108,7 +109,9 @@
 ;*    any-types ::J2SGlobalRef ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SGlobalRef)
-   (with-access::J2SGlobalRef this (type)
+   (with-access::J2SGlobalRef this (type decl)
+      (with-access::J2SDecl decl (vtype)
+	 (set! vtype (map-type vtype)))
       (set! type (map-type type)))
    (call-default-walker))
 

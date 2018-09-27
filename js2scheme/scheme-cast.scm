@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-cast.scm        */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-cast.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Thu Aug 30 18:45:21 2018 (serrano)                */
+;*    Last change :  Thu Sep 27 13:14:11 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -43,6 +43,7 @@
 	 (propname ,js-int32->propname)
 	 (bool ,js-int32->bool)
 	 (string ,js-int32->string)
+	 (scmstring number->string)
 	 (object ,js-int32->jsobject)
 	 (any ,js-int32->integer)))
      (uint32
@@ -55,6 +56,7 @@
 	 (propname ,js-uint32->propname)
 	 (bool ,js-uint32->bool)
 	 (string ,js-uint32->string)
+	 (scmstring number->string)
 	 (object ,js-uint32->jsobject)
 	 (any ,js-uint32->integer)))
      (int53
@@ -63,12 +65,15 @@
 	 (uint32 js-int53-touint32)
 	 (integer nop)
 	 (number nop)
+	 (string ,js-fixnum->string)
+	 (scmstring fixnum->string)
 	 (object ,js-number->jsobject)
 	 (any nop)))
      (integer
 	((int32 ,js-fixnum->int32)
 	 (uint32 ,js-fixnum->uint32)
 	 (string ,js-fixnum->string)
+	 (scmstring number->string)
 	 (real fixnum->flonum)
 	 (int53 nop)
 	 (propname nop)
@@ -78,10 +83,11 @@
 	((bool js-totest)
 	 (int32 ,js-number->int32)
 	 (uint32 ,js-number->uint32)
-	 (string ,js-number->string)
 	 (int53 nop)
 	 (integer nop)
 	 (real ,js-number->real)
+	 (string ,js-number->string)
+	 (scmstring number->string)
 	 (propname nop)
 	 (object ,js-number->jsobject)
 	 (any nop)))
@@ -89,45 +95,59 @@
 	((propname nop)
 	 (bool ,js-string->bool)
 	 (object ,js-string->jsobject)
+	 (scmstring js-jsstring->string)
 	 (any nop)))
      (function
-	((any nop)))
+	((scmstring js-jsstring->string)
+	 (any nop)))
      (object
 	((bool ,(lambda (v expr conf) #t))
 	 (array nop)
+	 (scmstring ,js->scmstring)
 	 (any nop)))
      (bool
 	((int32 ,js-bool->int32)
 	 (uint32 ,js-bool->uint32)
 	 (object ,js-bool->jsobject)
+	 (scmstring ,js->scmstring)
 	 (any nop)))
      (null
 	((object ,js-toobject)
+	 (scmstring ,js->scmstring)
 	 (any nop)))
      (undefined
 	((object ,js-toobject)
 	 (bool ,(lambda (v expr conf) #f))
+	 (scmstring ,js->scmstring)
 	 (any nop)))
      (regexp
-	((any nop)))
+	((scmstring ,js->scmstring)
+	 (any nop)))
      (array
-	((any nop)))
+	((scmstring ,js->scmstring)
+	 (any nop)))
      (arguments
-	((any nop)))
+	((scmstring ,js->scmstring)
+	 (any nop)))
      (date
-	((any nop)))
+	((scmstring ,js->scmstring)
+	 (any nop)))
      (tilde
-	((any nop)))
+	((scmstring ,js->scmstring)
+	 (any nop)))
      (scmstring
-	((any nop)))
+	((any js-string->jssstring)))
      (real
 	((uint32 js-number-touint32)
 	 (int32 js-number-toint32)
 	 (object ,js-number->jsobject)
 	 (number nop)
+	 (string ,js-number->string)
+	 (scmstring ,number->string)
 	 (any nop)))
      (class
-	((any nop)))
+	 ((scmstring ,js->scmstring)
+	  (any nop)))
      (any
 	((propname nop)
 	 (undefined nop)
@@ -137,6 +157,7 @@
 	 (int53 nop)
 	 (bool ,js-any->bool)
 	 (string ,js->string)
+	 (scmstring ,js->scmstring)
 	 (int32 ,js->int32)
 	 (real ,js-any->real)
 	 (uint32 ,js->uint32)
@@ -277,6 +298,9 @@
        v)
       (else
        `(js-tojsstring ,v %this))))
+
+(define (js->scmstring v expr conf)
+   `(js-tostring ,v %this))
 
 ;; bool
 (define (js-bool->int32 v expr conf)

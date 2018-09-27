@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Sep 27 11:36:45 2018 (serrano)                */
+;*    Last change :  Thu Sep 27 13:13:24 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -663,11 +663,12 @@
 	  (set! expr (type-cast! expr totype))
 	  (set! expr (type-cast! expr '*)))
       this))
+
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2STemplate ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2STemplate totype)
    (with-access::J2STemplate this (loc exprs)
-      (set! exprs (map! (lambda (e) (type-cast! e 'string)) exprs))
+      (set! exprs (map! (lambda (e) (type-cast! e 'scmstring)) exprs))
       (cast this totype)))
 
