@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Sep 27 00:34:19 2018 (serrano)                */
+;*    Last change :  Thu Sep 27 12:17:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -553,6 +553,22 @@
 		    (list-copy (js-object-properties rx)))
 		 nrx))
 	  `(vector-ref-ur %cnsts ,index))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2STemplate ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2STemplate mode return conf)
+   (with-access::J2STemplate this (loc exprs)
+      (epairify loc
+	 `(js-stringlist->jsstring
+	     (list
+		,@(map (lambda (expr)
+			  (if (isa? expr J2SString)
+			      (with-access::J2SString expr (val)
+				 val)
+			      (with-access::J2SNode expr (loc)
+				 (j2s-scheme expr mode return conf))))
+		     exprs))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNativeString ...                                 */

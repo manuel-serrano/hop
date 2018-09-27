@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Sep 20 18:30:18 2018 (serrano)                */
+#*    Last change :  Thu Sep 27 12:57:13 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1588,7 +1588,7 @@ cat etc/nodejs.init.in \
 echo "" >> $init
 chmod a-w $init
 
-# share/hop-autoconf.js
+# share/hop-autoconf.js, share/hop-boot.js
 for init in hop-autoconf.js hop-boot.js; do
   rm -f share/$init 2> /dev/null
   echo "/* Automatically generated file (don't edit) */" > share/$init

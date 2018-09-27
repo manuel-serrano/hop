@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Jul 17 09:38:42 2018 (serrano)                */
+;*    Last change :  Thu Sep 27 11:58:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the js2scheme heap file.                */
@@ -51,6 +51,7 @@
 	   (class J2SNop)
 	   (class J2SCase)
 	   (class J2SDefault)
+	   (class J2STemplate)
 	   (class J2SReturn)
 	   (class J2SWith)
 	   (class J2SThrow)
