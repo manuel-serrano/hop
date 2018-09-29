@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Sep 29 03:50:03 2018 (serrano)                */
+;*    Last change :  Sat Sep 29 04:29:12 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -536,7 +536,6 @@
 	 ((>=)
 	  `(>=js ,(box left tl conf) ,(box right tr conf) %this))
 	 ((&)
-	  (tprint "left=" left " " tl " right=" right " " tr)
 	  `(bit-andjs ,(box left tl conf) ,(box right tr conf) %this))
 	 ((BIT_OR)
 	  `(bit-orjs ,(box left tl conf) ,(box right tr conf) %this))
@@ -915,7 +914,6 @@
 
    (let ((tl (j2s-vtype lhs))
 	 (tr (j2s-vtype rhs)))
-      (tprint "EQ tl=" tl " tr=" tr)
       (cond
 	 ((j2s-typeof-predicate lhs rhs)
 	  =>
