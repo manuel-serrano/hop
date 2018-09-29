@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Wed Sep 12 18:12:06 2018 (serrano)                */
+/*    Last change :  Fri Sep 28 11:12:25 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
@@ -28,6 +28,7 @@ function require( url ) {
       if( window.hop[ '%requires' ][ path ] ) {
 	 return window.hop[ '%requires' ][ path ]();
       } else {
+	 console.log( "*** REQUIRE ERROR" );
 	 console.log( "url=", url );
 	 console.log( "path=", path );
 	 console.log( "defined requires: ", window.hop[ '%requires' ] );
@@ -35,7 +36,7 @@ function require( url ) {
 	 if( !hop[ '%root' ] ) {
 	    throw new Error( "Client-side program lacks a HEAD section" );
 	 } else {
-	    throw new Error( "Client-side module \"" + url + "\" not requirable (check the server console for details)" );
+	    throw new Error( "Client-side module \"" + url + "\" is unbound or not requirable (check the server console for details)" );
 	 }
       }
    }

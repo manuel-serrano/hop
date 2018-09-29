@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Thu Sep 27 14:35:52 2018 (serrano)                */
+;*    Last change :  Fri Sep 28 01:13:44 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An optional stage used in debug mode to replace UNKNOWN type     */
@@ -154,3 +154,11 @@
 	  (set! type (map-type type))))
    (call-default-walker))
 
+;*---------------------------------------------------------------------*/
+;*    any-types ::J2SCatch ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (any-types this::J2SCatch)
+   (with-access::J2SCatch this (param)
+      (any-types param)
+      (call-default-walker)))
+   

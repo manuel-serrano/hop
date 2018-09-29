@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Sep 22 15:30:49 2018 (serrano)                */
+;*    Last change :  Sat Sep 29 03:50:03 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -370,11 +370,7 @@
 		 (js-binop loc op left lhs right rhs conf)))
 	   (js-cmp loc op lhs rhs mode return conf)))
       ((& ^ BIT_OR >> >>> <<)
-       (if (=fx (config-get conf :optim 0) 0)
-	   (with-tmp lhs rhs mode return conf 'any
-	      (lambda (left right)
-		 (js-binop-arithmetic loc op left lhs right rhs conf)))
-	   (js-bitop loc op type lhs rhs mode return conf)))
+       (js-bitop loc op type lhs rhs mode return conf))
       ((OR)
        (let ((lhsv (gensym 'lhs)))
 	  `(let ((,(type-ident lhsv (j2s-vtype lhs) conf)
@@ -540,6 +536,7 @@
 	 ((>=)
 	  `(>=js ,(box left tl conf) ,(box right tr conf) %this))
 	 ((&)
+	  (tprint "left=" left " " tl " right=" right " " tr)
 	  `(bit-andjs ,(box left tl conf) ,(box right tr conf) %this))
 	 ((BIT_OR)
 	  `(bit-orjs ,(box left tl conf) ,(box right tr conf) %this))
@@ -815,7 +812,7 @@
 		  ((eq? op '!==)
 		   `(not ,(loop '===)))
 		  ((eq? tr 'int32)
-		   `(=s32 ,left right))
+		   `(=s32 ,left ,right))
 		  ((eq? tr 'uint32)
 		   (cond
 		      ((inrange-int32? rhs)
@@ -918,6 +915,7 @@
 
    (let ((tl (j2s-vtype lhs))
 	 (tr (j2s-vtype rhs)))
+      (tprint "EQ tl=" tl " tr=" tr)
       (cond
 	 ((j2s-typeof-predicate lhs rhs)
 	  =>
