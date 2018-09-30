@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Sep 30 11:25:05 2018 (serrano)                */
+;*    Last change :  Sun Sep 30 14:47:30 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -354,7 +354,10 @@
 	    (vty (j2s-vtype expr)))
 	 ;; MS: should always be TY so this test is probably useless
 	 ;; it should then be removed and everything tested
-	 (if (memq ty '(uint32 int32)) vty ty)))
+	 (cond
+	    ((memq ty '(uint32 int32)) vty)
+	    ((eq? ty 'unknown) vty)
+	    (else ty))))
    
    (with-access::J2SCast this (expr type)
       (cond

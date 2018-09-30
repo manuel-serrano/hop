@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/tyflow.scm        */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/tyflow.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Sep  5 15:10:59 2018 (serrano)                */
+;*    Last change :  Sun Sep 30 14:42:59 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1704,6 +1704,7 @@
 		      (with-access::J2SGlobalRef lhs (decl) decl)))
 	    (ty (if (eq? op 'in) 'string 'any)))
 	 (decl-vtype-add! decl ty fix)
+	 (expr-type-add! lhs env fix ty '())
 	 (let loop ((env (extend-env env decl ty)))
 	    (let ((ofix (cell-ref fix)))
 	       (multiple-value-bind (typ envb bk)
@@ -2003,9 +2004,12 @@
 ;*    force-type! ::J2JRef ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SRef from to cell)
-   (with-access::J2SRef this (decl)
+   (with-access::J2SRef this (decl type)
       (when (isa? decl J2SDeclArguments)
 	 (force-type! decl from to cell))
+      (when (eq? type from)
+	 (set! type to)
+	 (cell-set! cell #t))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -2065,6 +2069,14 @@
    (with-access::J2SCatch this (param)
       (force-type! param from to cell)
       (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    force-type! ::J2SClass ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type! this::J2SClass from to cell)
+   (with-access::J2SClass this (decl)
+      (force-type! decl from to cell))
+   (call-next-method))
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-type! ::J2SNode ...                                        */

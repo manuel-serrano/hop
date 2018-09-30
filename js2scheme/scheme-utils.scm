@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Sep 30 11:20:36 2018 (serrano)                */
+;*    Last change :  Sun Sep 30 16:45:59 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -543,7 +543,7 @@
 	     ((string)
 	      `(js-array-string-ref ,obj ,prop %this))
 	     (else
-	      `(js-array-string-ref ,obj ,prop %this))))
+	      `(js-array-ref ,obj ,prop %this))))
 	 ((eq? tyobj 'string)
 	  (cond
 	     ((type-uint32? typrop)

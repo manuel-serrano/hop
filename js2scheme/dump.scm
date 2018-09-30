@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Sep 26 14:34:42 2018 (serrano)                */
+;*    Last change :  Sun Sep 30 15:21:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1016,9 +1016,10 @@
 ;*    j2s->list ::J2SClass ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SClass)
-   (with-access::J2SClass this (name super elements decl)
+   (with-access::J2SClass this (name super elements decl loc)
       `(J2SClass ,@(if name (list :name name) '())
 	  :super ,(j2s->list super)
+	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(if (isa? decl J2SDecl)
 		(with-access::J2SDecl decl (key)
