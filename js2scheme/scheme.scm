@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Sep 27 13:21:19 2018 (serrano)                */
+;*    Last change :  Sun Sep 30 11:25:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -348,19 +348,27 @@
 ;*    j2s-scheme ::J2SCast ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCast mode return conf)
+
+   (define (src-type expr)
+      (let ((ty (j2s-type expr))
+	    (vty (j2s-vtype expr)))
+	 ;; MS: should always be TY so this test is probably useless
+	 ;; it should then be removed and everything tested
+	 (if (memq ty '(uint32 int32)) vty ty)))
+   
    (with-access::J2SCast this (expr type)
       (cond
 	 ((isa? expr J2SBinary)
 	  (or (j2s-scheme-binary-as expr mode return conf type)
 	      (j2s-cast (j2s-scheme expr mode return conf)
-		 expr (j2s-vtype expr) type conf)))
+		 expr (src-type expr) type conf)))
 	 ((isa? expr J2SUnary)
 	  (or (j2s-scheme-unary-as expr mode return conf type)
 	      (j2s-cast (j2s-scheme expr mode return conf)
-		 expr (j2s-vtype expr) type conf)))
+		 expr (src-type expr) type conf)))
 	 (else
 	  (j2s-cast (j2s-scheme expr mode return conf)
-	     expr (j2s-vtype expr) type conf)))))
+	     expr (src-type expr) type conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRef ...                                          */

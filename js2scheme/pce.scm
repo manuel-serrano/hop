@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Mon Sep 10 19:48:22 2018 (serrano)                */
+;*    Last change :  Sun Sep 30 11:12:03 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -53,7 +53,7 @@
 (define (j2s-pce! this args)
    (if (isa? this J2SProgram)
        (let ((nthis (insert-pce! this)))
-	  (when (>=fx (bigloo-debug) 1)
+	  (when (config-get args :debug-stage)
 	     (let* ((tmp (config-get args :tmp "/tmp"))
 		    (f (make-file-path tmp
 			  (string-replace "pce-" (file-separator) #\_))))

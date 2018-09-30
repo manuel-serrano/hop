@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Sep 27 20:28:56 2018 (serrano)                */
+;*    Last change :  Sat Sep 22 07:33:25 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -80,8 +80,7 @@
   :group 'hopjs)
 
 (defcustom hopjs-external-docs
-  (list (cons "hop" (concat hopjs-doc-dir "/index.html"))
-	(cons "hop official" hopjs-official-doc-url)
+  (list (cons "hop" hopjs-official-doc-url)
 	(cons "mdn" hopjs-mdn-doc-url)
 	(cons "html4.01" hopjs-html-doc-url)
 	(cons "nodejs" "https://nodejs.org/api/"))
@@ -107,7 +106,6 @@
 	(cons "\\<\\(?:async\\|yield\\|await\\)\\>" 'font-lock-face-hopjs3)
 	(list "#:\\([^ \t\r\n{}(),;=[]*\\)" 1 'font-lock-face-hopjs3)
 	(cons "exports." 'font-lock-keyword-face)
-	(list "\\(require\\)(" 1 'font-lock-keyword-face)
 	(list (concat "^\\s-*\\(?:service\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
 
 ;*---------------------------------------------------------------------*/
@@ -147,51 +145,30 @@
 ;*---------------------------------------------------------------------*/
 ;*    My personal faces                                                */
 ;*---------------------------------------------------------------------*/
-(defun font-lock-make-face (l)
-  (let ((fname (car l))
-	(color (car (cdr l)))
-	(bgcolor (car (cdr (cdr l))))
-	(italic (car (cdr (cdr (cdr l)))))
-	(bold (car (cdr (cdr (cdr (cdr l)))))))
-    (let ((face (copy-face 'default fname)))
-      (when color
-	(set-face-foreground face color))
-      (when bgcolor
-	(set-face-background face bgcolor))
-      (when italic
-	(make-face-italic face))
-      (when bold
-	(make-face-bold face))
-      face)))
-
 (defvar font-lock-face-hopjs0
-  (font-lock-make-face (list 'font-lock-face-hopjs0 "gray50" nil nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs0 "gray50" nil t)))
 (defvar font-lock-face-hopjs1
-  (font-lock-make-face (list 'font-lock-face-hopjs1 "slateblue3" nil nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs1 "slateblue3" nil t)))
 (defvar font-lock-face-hopjs2
-  (font-lock-make-face (list 'font-lock-face-hopjs2 "blue" nil nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs2 "blue" nil t)))
 (defvar font-lock-face-hopjs3
-  (font-lock-make-face (list 'font-lock-face-hopjs3 "tomato2" nil nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs3 "tomato2" nil t)))
 (defvar font-lock-face-hopjs4
-  (font-lock-make-face (list 'font-lock-face-hopjs4 "green3" nil nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs4 "green3" nil t)))
 (defvar font-lock-face-hopjs5
-  (font-lock-make-face (list 'font-lock-face-hopjs5 "red" nil nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs5 "red" nil t)))
 (defvar font-lock-face-hopjs6
-  (font-lock-make-face (list 'font-lock-face-hopjs6 "BlueViolet" nil nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs6 "BlueViolet" nil t)))
 (defvar font-lock-face-hopjs7
-  (font-lock-make-face (list 'font-lock-face-hopjs7 "green3" nil nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs7 "green3" nil t)))
 (defvar font-lock-face-hopjs8
-  (font-lock-make-face (list 'font-lock-face-hopjs8 "Goldenrod" nil nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs8 "Goldenrod" nil t)))
 (defvar font-lock-face-hopjs9
-  (font-lock-make-face (list 'font-lock-face-hopjs9 "#87910F" nil nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs9 "#87910F" nil t)))
 (defvar font-lock-face-hopjs10
   (font-lock-make-face (list 'font-lock-face-hopjs10 "lightslateblue" nil nil)))
 (defvar font-lock-face-hopjs11
-  (font-lock-make-face (list 'font-lock-face-hopjs11 "Orchid" nil nil t)))
-(defvar font-lock-face-hopjs12
-  (font-lock-make-face (list 'font-lock-face-hopjs12 "white" "gray50" nil t)))
-(defvar font-lock-face-hopjs13
-  (font-lock-make-face (list 'font-lock-face-hopjs13 "white" "tomato2" nil t)))
+  (font-lock-make-face (list 'font-lock-face-hopjs11 "Orchid" nil t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Highlighting                                                     */
@@ -253,9 +230,6 @@
   (run-at-time "2 sec" nil 'hopjs-load-node-modules-indexes)
   ;; tag matching
   (add-hook 'post-command-hook (function hopjs-post-command-hook) t t)
-  ;; mode line format for on-line documentations
-  (setq mode-line-format (hopjs-mode-line-format))
-  (force-mode-line-update t)
   ;; user hooks
   (run-hooks 'hopjs-mode-hook))
 
@@ -263,24 +237,14 @@
 ;*    hopjs-dls-init ...                                               */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-dls-init ()
-  (save-excursion
-    (goto-char (point-min))
-    (while (progn
-	     (hopjs-skip-comment)
-	     (looking-at "^[\"']use[ \t]+\\([^\"']+\\)[\"'][;]?$"))
-      (let ((lang (buffer-substring-no-properties
-		   (match-beginning 1) (match-end 1))))
-	(hopjs-load-node-modules-dls lang)
-	(next-line 1)
-	(beginning-of-line)))))
+  (goto-char (point-min))
+  (while (looking-at "^[\"']use[ \t]+\\([^\"']+\\)[\"'][;]?$")
+    (let ((lang (buffer-substring-no-properties
+		 (match-beginning 1) (match-end 1))))
+      (hopjs-load-node-modules-dls lang)
+      (next-line 1)
+      (beginning-of-line))))
 
-;*---------------------------------------------------------------------*/
-;*    hopjs-skip-comment ...                                           */
-;*---------------------------------------------------------------------*/
-(defun hopjs-skip-comment ()
-  (while (looking-at "//.*$\\|/[*]\\(?:[^*]\\|[*][^/]\\)*[*]/")
-    (goto-char (min (point-max) (1+ (match-end 0))))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-load-dls-dir ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -725,7 +689,7 @@ usage: (js-return)  -- [RET]"
   "[0-9]+\\|[0-9]*[.][0-9]*")
 
 (defconst hopjs-re-html-attr-val-tilde
-  "~{\\(:?[^`\"}]\\|`[^`]*`\\|\"[^\"]*\"\\)+}")
+  "~{[^}]+}")
 
 (defconst hopjs-re-html-attr-val
   (concat "\\(?:" hopjs-re-html-attr-val-string
@@ -866,7 +830,6 @@ usage: (js-return)  -- [RET]"
 
 (defun js--proper-indentation (parse-status)
   "Return the proper indentation for the current line."
-  (hopjs-debug "~~~ js--proper-indent pos=%s ps=%s" (point) parse-status)
   (save-excursion
     (back-to-indentation)
     (cond ((nth 4 parse-status)		; inside comment
@@ -1207,9 +1170,7 @@ usage: (js-return)  -- [RET]"
 		(cl-case (aref tok 0)
 		  ((entering)
 		   (if (>= depth 0)
-		       (setq col
-			     (+ hopjs-indent-level-html
-				(hopjs-column-at (aref tok 1))))
+		       (setq col (hopjs-column-at (aref tok 1)))
 		     (setq tokens (cdr tokens))))
 		  ((end-otag)
 		   (setq intag t)
@@ -1812,24 +1773,26 @@ usage: (js-return)  -- [RET]"
      'face '(:background "orange" :foreground "lightgrey" :weight bold)
      'mouse-face '(:background "orange" :foreground "white" :weight bold)
      'keymap keymap)))
+  
+;*---------------------------------------------------------------------*/
+;*    hopjs modeline                                                   */
+;*---------------------------------------------------------------------*/
+(setq mode-line-format
+      (let* ((l mode-line-format)
+	     (mlf (cons 'head '()))
+	     (prev mlf))
+	(while (consp l)
+	  (if (not (cdr l))
+	      (progn
+		(rplacd prev (list "-" (doc-mode-line) "-" (car l)))
+		(setq l '()))
+	    (progn
+	      (rplacd prev (cons (car l) '()))
+	      (setq prev (cdr prev))
+	      (setq l (cdr l)))))
+	(setq mode-line-format (cdr mlf))))
 
-;*---------------------------------------------------------------------*/
-;*    hopjs-mode-line-format ...                                       */
-;*---------------------------------------------------------------------*/
-(defun hopjs-mode-line-format ()
-  (let* ((l mode-line-format)
-	 (mlf (cons 'head '()))
-	 (prev mlf))
-    (while (consp l)
-      (if (not (cdr l))
-	  (progn
-	    (rplacd prev (list "-" (doc-mode-line) "-" (car l)))
-	    (setq l '()))
-	(progn
-	  (rplacd prev (cons (car l) '()))
-	  (setq prev (cdr prev))
-	  (setq l (cdr l)))))
-    (setq mode-line-format (cdr mlf))))
+(force-mode-line-update t)
 
 ;*---------------------------------------------------------------------*/
 ;*    init                                                             */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-array.scm       */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-array.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon Sep  3 07:38:35 2018 (serrano)                */
+;*    Last change :  Sun Sep 30 11:33:41 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -215,14 +215,24 @@
 		 (int32->fixnum
 		    ,(j2s-scheme field mode return conf))
 		 %this))
-	    ((fixnum)
+	    ((fixnum int53)
 	     `(js-array-fixnum-ref ,(j2s-scheme obj mode return conf)
 		 ,(j2s-scheme field mode return conf)
 		 %this))
 	    (else
-	     `(js-array-ref ,(j2s-scheme obj mode return conf)
-		 ,(j2s-scheme field mode return conf)
-		 %this)))))
+	     (case (j2s-type field)
+		((string)
+		 `(js-array-string-ref ,(j2s-scheme obj mode return conf)
+		     ,(j2s-scheme field mode return conf)
+		     %this))
+		((fixnum int53)
+		 `(js-array-fixnum-ref ,(j2s-scheme obj mode return conf)
+		     ,(j2s-scheme field mode return conf)
+		     %this))
+		(else
+		 `(js-array-ref ,(j2s-scheme obj mode return conf)
+		     ,(j2s-scheme field mode return conf)
+		     %this)))))))
 
    (define (aref this::J2SAccess)
       (if *j2s-array-cache*
@@ -230,23 +240,9 @@
 	  (aref/w-cache this)))
 
    (with-access::J2SAccess this (obj field)
-      (cond
-	 ((isa? obj J2SAref)
-	  (aref this))
-	 ((is-fixnum? field conf)
-	  (aref/w-cache this))
-	 ((eq? (j2s-vtype field) 'uint32)
-	  `(js-array-index-ref ,(j2s-scheme obj mode return conf)
-	      ,(j2s-scheme field mode return conf)
-	      %this))
-	 ((eq? (j2s-vtype field) 'int32)
-	  `(js-array-ref ,(j2s-scheme obj mode return conf)
-	      (int32->fixnum ,(j2s-scheme field mode return conf))
-	      %this))
-	 (else
-	  `(js-array-ref ,(j2s-scheme obj mode return conf)
-	      ,(j2s-scheme field mode return conf)
-	      %this)))))
+      (if (isa? obj J2SAref)
+	  (aref this)
+	  (aref/w-cache this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-ref ...                                                */
@@ -270,139 +266,128 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-set! this::J2SAssig mode return conf)
 
-   (define (aset/cache lhs rhs)
-      ;; an optimized array set in a loop (see array.scm)
-      (with-access::J2SAccess lhs (obj field)
-	 (with-access::J2SAref obj (array alen amark deps)
-	    (let ((scmarray (j2s-decl-scheme-id array))
-		  (scmalen (j2s-decl-scheme-id alen))
-		  (scmfield (j2s-scheme field mode return conf))
-		  (scmobj (j2s-scheme obj mode return conf))
-		  (scmrhs (j2s-scheme rhs mode return conf))
-		  (tyfield (j2s-vtype field)))
-	       (case tyfield
-		  ((uint32)
-		   (let ((idx (j2s-scheme field mode return conf)))
+   (define (aset/cache this)
+      (with-access::J2SAssig this (lhs rhs)
+	 ;; an optimized array set in a loop (see array.scm)
+	 (with-access::J2SAccess lhs (obj field)
+	    (with-access::J2SAref obj (array alen amark deps)
+	       (let ((scmarray (j2s-decl-scheme-id array))
+		     (scmalen (j2s-decl-scheme-id alen))
+		     (scmfield (j2s-scheme field mode return conf))
+		     (scmobj (j2s-scheme obj mode return conf))
+		     (scmrhs (j2s-scheme rhs mode return conf))
+		     (tyfield (j2s-vtype field)))
+		  (case tyfield
+		     ((uint32)
+		      (let ((idx (j2s-scheme field mode return conf)))
+			 (if amark
+			     `(JS-ARRAY-INDEX-MARK-SET! ,scmobj
+				 ,idx ,scmrhs
+				 ,scmarray ,scmalen
+				 ,(j2s-decl-scheme-id amark)
+				 ,(strict-mode? mode)
+				 %this)
+			     `(JS-ARRAY-INDEX-FAST-SET! ,scmobj
+				 ,idx ,scmrhs
+				 ,scmarray ,scmalen
+				 ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
+				 ,(strict-mode? mode)
+				 %this))))
+		     ((int32)
 		      (if amark
-			  `(JS-ARRAY-INDEX-MARK-SET! ,scmobj
-			      ,idx ,scmrhs
+			  `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj
+			      (int32->fixnum ,scmfield) ,scmrhs
 			      ,scmarray ,scmalen
 			      ,(j2s-decl-scheme-id amark)
 			      ,(strict-mode? mode)
 			      %this)
-			  `(JS-ARRAY-INDEX-FAST-SET! ,scmobj
-			      ,idx ,scmrhs
+			  `(JS-ARRAY-FIXNUM-FAST-SET! ,scmobj
+			      (int32->fixnum ,scmfield) ,scmrhs
 			      ,scmarray ,scmalen
 			      ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			      ,(strict-mode? mode)
-			      %this))))
-		  ((int32)
-		   (if amark
-		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj
-			   (int32->fixnum ,scmfield) ,scmrhs
-			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id amark)
-			   ,(strict-mode? mode)
-			   %this)
-		       `(JS-ARRAY-FIXNUM-FAST-SET! ,scmobj
-			   (int32->fixnum ,scmfield) ,scmrhs
-			   ,scmarray ,scmalen
-			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
-			   ,(strict-mode? mode)
-			   %this)))
-		  ((int53)
-		   (if amark
-		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj ,scmfield ,scmrhs
-			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id amark)
-			   ,(strict-mode? mode)
-			   %this)
-		       `(JS-ARRAY-FIXNUM-FAST-SET! ,scmobj ,scmfield ,scmrhs
-			   ,scmarray ,scmalen
-			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
-			   ,(strict-mode? mode)
-			   %this)))
-		  (else
-		   (if amark
-		       `(JS-ARRAY-MARK-SET! ,scmobj ,scmfield ,scmrhs
-			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id amark)
-			   ,(strict-mode? mode)
-			   %this)
-		       `(JS-ARRAY-FAST-SET! ,scmobj ,scmfield ,scmrhs
-			   ,scmarray ,scmalen
-			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
-			   ,(strict-mode? mode)
-			   %this))))))))
+			      %this)))
+		     ((int53)
+		      (if amark
+			  `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj ,scmfield ,scmrhs
+			      ,scmarray ,scmalen
+			      ,(j2s-decl-scheme-id amark)
+			      ,(strict-mode? mode)
+			      %this)
+			  `(JS-ARRAY-FIXNUM-FAST-SET! ,scmobj ,scmfield ,scmrhs
+			      ,scmarray ,scmalen
+			      ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
+			      ,(strict-mode? mode)
+			      %this)))
+		     (else
+		      (if amark
+			  `(JS-ARRAY-MARK-SET! ,scmobj ,scmfield ,scmrhs
+			      ,scmarray ,scmalen
+			      ,(j2s-decl-scheme-id amark)
+			      ,(strict-mode? mode)
+			      %this)
+			  `(JS-ARRAY-FAST-SET! ,scmobj ,scmfield ,scmrhs
+			      ,scmarray ,scmalen
+			      ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
+			      ,(strict-mode? mode)
+			      %this)))))))))
 
-   (define (aset/w-cache lhs rhs)
-      ;; an optimized array set in a loop (see array.scm)
-      (with-access::J2SAccess lhs (obj field)
-	 (with-access::J2SAref obj (array alen)
-	    (case (j2s-vtype field)
-	       ((uint32)
-		`(js-array-index-set! ,(j2s-scheme obj mode return conf)
-		    ,(j2s-scheme field mode return conf)
-		    ,(j2s-scheme rhs mode return conf)
-		    ,(strict-mode? mode)
-		    %this))
-	       ((int32)
-		`(js-array-fixnum-set! ,(j2s-scheme obj mode return conf)
-		    (int32->fixnum
-		       ,(j2s-scheme field mode return conf))
-		    ,(j2s-scheme rhs mode return conf)
-		    ,(strict-mode? mode)
-		    %this))
-	       ((fixnum)
-		`(js-array-fixnum-set! ,(j2s-scheme obj mode return conf)
-		    ,(j2s-scheme field mode return conf)
-		    ,(j2s-scheme rhs mode return conf)
-		    ,(strict-mode? mode)
-		    %this))
-	       (else
-		`(js-array-set! ,(j2s-scheme obj mode return conf)
-		    ,(j2s-scheme field mode return conf)
-		    ,(j2s-scheme rhs mode return conf)
-		    ,(strict-mode? mode)
-		    %this))))))
+   (define (aset/w-cache this)
+      (with-access::J2SAssig this (lhs rhs)
+	 ;; an optimized array set in a loop (see array.scm)
+	 (with-access::J2SAccess lhs (obj field)
+	    (with-access::J2SAref obj (array alen)
+	       (case (j2s-vtype field)
+		  ((uint32)
+		   `(js-array-index-set! ,(j2s-scheme obj mode return conf)
+		       ,(j2s-scheme field mode return conf)
+		       ,(j2s-scheme rhs mode return conf)
+		       ,(strict-mode? mode)
+		       %this))
+		  ((int32)
+		   `(js-array-fixnum-set! ,(j2s-scheme obj mode return conf)
+		       (int32->fixnum
+			  ,(j2s-scheme field mode return conf))
+		       ,(j2s-scheme rhs mode return conf)
+		       ,(strict-mode? mode)
+		       %this))
+		  ((fixnum int53)
+		   `(js-array-fixnum-set! ,(j2s-scheme obj mode return conf)
+		       ,(j2s-scheme field mode return conf)
+		       ,(j2s-scheme rhs mode return conf)
+		       ,(strict-mode? mode)
+		       %this))
+		  (else
+		   (case (j2s-type field)
+		      ((string)
+		       `(js-array-string-set! ,(j2s-scheme obj mode return conf)
+			   ,(j2s-scheme field mode return conf)
+			   ,(j2s-scheme rhs mode return conf)
+			   ,(strict-mode? mode)
+			   %this))
+		      ((fixnum int53)
+		       `(js-array-fixnum-set! ,(j2s-scheme obj mode return conf)
+			   ,(j2s-scheme field mode return conf)
+			   ,(j2s-scheme rhs mode return conf)
+			   ,(strict-mode? mode)
+			   %this))
+		      (else
+		       `(js-array-set! ,(j2s-scheme obj mode return conf)
+			   ,(j2s-scheme field mode return conf)
+			   ,(j2s-scheme rhs mode return conf)
+			   ,(strict-mode? mode)
+			   %this)))))))))
+
+   (define (aset this::J2SAssig)
+      (if *j2s-array-cache*
+	  (aset/cache this)
+	  (aset/w-cache this)))
    
    (with-access::J2SAssig this (lhs rhs)
       (with-access::J2SAccess lhs (obj field cache (loca loc))
-	 (let ((tyf (j2s-vtype field)))
-	    (cond
-	       ((isa? obj J2SAref)
-		(if *j2s-array-cache*
-		    (aset/cache lhs rhs)
-		    (aset/w-cache lhs rhs)))
-	       ((eq? tyf 'int53)
-		`(js-array-fixnum-set!
-		    ,(j2s-scheme obj mode return conf)
-		    ,(j2s-scheme field mode return conf)
-		    ,(j2s-scheme rhs mode return conf)
-		    ,(strict-mode? mode)
-		    %this))
-	       ((eq? tyf 'uint32)
-		`(js-array-index-set!
-		    ,(j2s-scheme obj mode return conf)
-		    ,(j2s-scheme field mode return conf)
-		    ,(j2s-scheme rhs mode return conf)
-		    ,(strict-mode? mode)
-		    %this))
-	       ((eq? tyf 'int32)
-		`(js-array-fixnum-set!
-		    ,(j2s-scheme obj mode return conf)
-		    (int32->fixnum
-		       ,(j2s-scheme field mode return conf))
-		    ,(j2s-scheme rhs mode return conf)
-		    ,(strict-mode? mode)
-		    %this))
-	       (else
-		`(js-array-set!
-		    ,(j2s-scheme obj mode return conf)
-		    ,(j2s-scheme field mode return conf)
-		    ,(j2s-scheme rhs mode return conf)
-		    ,(strict-mode? mode)
-		    %this)))))))
+	 (if (isa? obj J2SAref)
+	     (aset this)
+	     (aset/w-cache this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-vector-ref ...                                               */

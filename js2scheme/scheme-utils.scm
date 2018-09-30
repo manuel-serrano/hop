@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Sep 26 14:13:51 2018 (serrano)                */
+;*    Last change :  Sun Sep 30 11:20:36 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -163,7 +163,7 @@
 ;*    j2s-decl-scheme-id ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-decl-scheme-id decl::J2SDecl)
-   (with-access::J2SDecl decl (_scmid id scope)
+   (with-access::J2SDecl decl (_scmid id scope key)
       (if _scmid
 	  _scmid
 	  (let ((sid (j2s-scheme-id id (if (eq? scope '%scope) '! '^))))
@@ -540,8 +540,10 @@
 	      `(js-array-index-ref ,obj ,prop %this))
 	     ((int32)
 	      `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
+	     ((string)
+	      `(js-array-string-ref ,obj ,prop %this))
 	     (else
-	      `(js-array-ref ,obj ,prop %this))))
+	      `(js-array-string-ref ,obj ,prop %this))))
 	 ((eq? tyobj 'string)
 	  (cond
 	     ((type-uint32? typrop)
@@ -647,6 +649,9 @@
 		  ,(box val tyval conf) ,(strict-mode? mode) %this))
 	     ((int32)
 	      `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
+		  ,(box val tyval conf) ,(strict-mode? mode) %this))
+	     ((string)
+	      `(js-array-string-set! ,obj ,prop
 		  ,(box val tyval conf) ,(strict-mode? mode) %this))
 	     (else
 	      `(js-array-set! ,obj ,prop ,(box val tyval conf)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Sep  6 18:35:26 2018 (serrano)                */
+;*    Last change :  Sun Sep 30 11:57:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -69,6 +69,7 @@
 	   (inline js-array-fixnum-ref ::JsArray ::long ::JsGlobalObject)
 	   (inline js-array-fixnum-inl-ref ::JsArray ::long
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
+	   (inline js-array-string-ref ::JsArray ::obj ::JsGlobalObject)
 	   
 	   (inline js-array-set! ::JsArray idx ::obj ::bool ::JsGlobalObject)
 	   (inline js-array-inl-set! ::JsArray ::obj ::obj
@@ -80,6 +81,9 @@
 	      ::bool ::JsGlobalObject)
 	   (inline js-array-fixnum-inl-set! ::JsArray ::long ::obj
 	      ::vector ::uint32 ::obj ::bool ::JsGlobalObject)
+	   (inline js-array-string-set! ::JsArray ::obj ::obj
+	      ::bool ::JsGlobalObject)
+
 	   (js-array-put! ::JsArray p ::obj ::bool ::JsGlobalObject)
 	   
 	   (js-array-set-ur! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
@@ -713,6 +717,15 @@
        (js-array-ref arr (fixnum->uint32 idx) %this)))
    
 ;*---------------------------------------------------------------------*/
+;*    js-array-string-ref ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-string-ref arr::JsArray idx::obj %this)
+   (let ((n (string->integer idx)))
+      (if (or (>fx n 0) (eq? idx (js-integer->jsstring 0)))
+	  (js-array-fixnum-ref arr n %this)
+	  (js-get arr idx %this))))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-array-ref-ur ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-array-ref-ur arr::JsArray idx::uint32 %this)
@@ -817,6 +830,17 @@
        (vector-set! avec idx val)
        (js-array-index-set! arr (fixnum->uint32 idx) val throw %this)))
    
+;*---------------------------------------------------------------------*/
+;*    js-array-string-set! ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-string-set! arr::JsArray idx::obj val throw %this)
+   (with-access::JsArray arr (vec ilen)
+      (js-array-fixnum-set! arr 0 val throw %this)
+      (let ((n (string->integer idx)))
+	 (if (or (>fx n 0) (eq? idx (js-integer->jsstring 0)))
+	     (js-array-fixnum-set! arr n val throw %this)
+	     (js-array-put! arr idx val throw %this)))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    js-array-set-ur! ...                                             */
 ;*---------------------------------------------------------------------*/
