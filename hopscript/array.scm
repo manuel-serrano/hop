@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Sep 30 11:57:40 2018 (serrano)                */
+;*    Last change :  Sun Sep 30 14:22:56 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -835,7 +835,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-string-set! arr::JsArray idx::obj val throw %this)
    (with-access::JsArray arr (vec ilen)
-      (js-array-fixnum-set! arr 0 val throw %this)
       (let ((n (string->integer idx)))
 	 (if (or (>fx n 0) (eq? idx (js-integer->jsstring 0)))
 	     (js-array-fixnum-set! arr n val throw %this)
