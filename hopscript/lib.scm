@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/lib.scm       */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/lib.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Aug 28 09:05:37 2018 (serrano)                */
+;*    Last change :  Wed Oct  3 10:49:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -156,7 +156,14 @@
 (define (js-pair->jsobject l %this)
    
    (define (plist? l)
-      (and (or (keyword? (car l)) (symbol? (car l))) (list? (cdr l))))
+      (let loop ((l l))
+	 (cond
+	    ((null? l)
+	     #t)
+	    ((and (or (keyword? (car l)) (symbol? (car l))) (pair? (cdr l)))
+	     (loop (cddr l)))
+	    (else
+	     #f))))
 
    (define (alist? l)
       (when (list? l)

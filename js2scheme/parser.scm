@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Oct  3 07:50:39 2018 (serrano)                */
+;*    Last change :  Wed Oct  3 10:16:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2163,13 +2163,14 @@
 	      (parse-token-error
 		 "Invalid ${ ... } statement"
 		 (consume-any!))))
-	 ((and plugins (assq (token-value-value) plugins))
-	  =>
-	  (lambda (p)
-	     (tprint "VAR PLUGINS...")))
 	 (else
-	  (tprint "V=" (peek-token-value))
-	  (parse-token-error "Unexpected token" (peek-token)))))
+	  (cond
+	     ((and plugins (assq (peek-token-value) plugins))
+	      =>
+	      (lambda (p)
+		 ((cdr p) (consume-any!) #t parser-controller)))
+	     (else
+	      (parse-token-error "Unexpected token" (peek-token)))))))
    
    (define (jspragma)
       (let* ((token (consume-token! 'PRAGMA))
