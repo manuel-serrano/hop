@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Sep 18 09:10:18 2018 (serrano)                */
+;*    Last change :  Tue Oct  2 11:12:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -130,15 +130,15 @@
 	   
 	   
 	   (js-can-put o::JsObject ::obj ::JsGlobalObject)
-	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
-	   (js-unresolved-eval-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
+	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::obj ::JsGlobalObject)
+	   (js-unresolved-eval-put! ::JsObject ::obj ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-decl-eval-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
 	   
 	   (generic js-put! ::obj ::obj ::obj ::bool ::JsGlobalObject)
 	   (generic js-put-length! ::obj ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-put-jsobject! ::JsObject ::obj ::obj ::bool ::bool
 	      ::JsGlobalObject
-	      ::obj #!optional (point -1) (cspecs '()))
+	      ::obj #!optional (loc #f) (cspecs '()))
 	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (js-put/cache! ::obj ::obj ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
@@ -1686,15 +1686,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-unresolved-put! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-unresolved-put! o::JsObject p value throw::bool %this::JsGlobalObject)
-   (js-put-jsobject! o p value throw #f %this #f))
+(define (js-unresolved-put! o::JsObject p value throw::bool loc %this::JsGlobalObject)
+   (js-put-jsobject! o p value throw #f %this #f loc))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-unresolved-eval-put! ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-unresolved-eval-put! scope::JsObject p value throw::bool %this::JsGlobalObject)
+(define (js-unresolved-eval-put! scope::JsObject p value throw::bool loc %this::JsGlobalObject)
    (if (eq? (js-get-own-property scope p %this) (js-undefined))
-       (js-put-jsobject! %this p value throw (not throw) %this #f)
+       (js-put-jsobject! %this p value throw (not throw) %this #f loc)
        (js-put! scope p value throw %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -1764,13 +1764,13 @@
 (define (js-put-jsobject! o p v
 	   throw::bool extend::bool
 	   %this::JsGlobalObject
-	   cache #!optional (point -1) (cspecs '()))
+	   cache #!optional (loc #f) (cspecs '()))
    
    (define name (js-toname p %this))
    
    (define (reject msg)
       (if throw
-	  (js-raise-type-error %this
+	  (js-raise-type-error/loc %this loc
 	     (format "[[PUT]], ~a ~~s" msg) (js-toname p %this))
 	  v))
    
@@ -1865,8 +1865,6 @@
 		      (reject "sealed object"))
 		     ((not (isa? el-or-desc JsPropertyDescriptor))
 		      ;; 8.12.5, step 6
-		      ;;;(tprint "INVALIDATE.3 " p " " (typeof el-or-desc) " " point)
-		      ;;(js-invalidate-pcaches-pmap! %this name)
 		      (extend-object!))
 		     (else
 		      (with-access::JsDataDescriptor el-or-desc (writable)
@@ -1995,7 +1993,7 @@
 		(reject "sealed objet"))
 	       ((not extend)
 		;; 11.13.1
-		(js-raise-reference-error %this
+		(js-raise-reference-error/loc %this loc
 		   "[[PUT]], \"~a\" is not defined" p))
 	       ((not (eq? cmap (js-not-a-cmap)))
 		;; 8.12.5, step 6

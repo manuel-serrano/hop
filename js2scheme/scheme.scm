@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Sep 30 14:47:30 2018 (serrano)                */
+;*    Last change :  Tue Oct  2 11:16:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -443,15 +443,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-put! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (j2s-unresolved-put! field expr throw::bool mode::symbol return)
+(define (j2s-unresolved-put! field expr throw::bool mode::symbol return loc)
    ;; no need to type check obj as we statically know that it is an obj
    (cond
       ((and (in-eval? return)
 	    (not (eq? j2s-unresolved-put-workspace
 		    j2s-unresolved-get-workspace)))
-       `(js-unresolved-eval-put! %scope ,field ,expr ,(strict-mode? mode) %this))
+       `(js-unresolved-eval-put! %scope ,field ,expr ,(strict-mode? mode) ',loc %this))
       ((strict-mode? mode)
-       `(js-unresolved-put! ,j2s-unresolved-put-workspace ,field ,expr #t %this))
+       `(js-unresolved-put! ,j2s-unresolved-put-workspace ,field ,expr #t ',loc %this))
       (else
        `(js-put! ,j2s-unresolved-put-workspace ,field ,expr ,throw %this))))
 
@@ -1273,9 +1273,9 @@
 	     (epairify loc
 		(j2s-scheme-set! lhs name 'any #f mode return conf #f loc)))
 	    ((isa? lhs J2SUnresolvedRef)
-	     (with-access::J2SUnresolvedRef lhs (id)
+	     (with-access::J2SUnresolvedRef lhs (id loc)
 		(epairify loc
-		   (j2s-unresolved-put! `',id name #f mode return))))
+		   (j2s-unresolved-put! `',id name #f mode return loc))))
 	    ((isa? lhs J2SAccess)
 	     (with-access::J2SAccess lhs (obj field loc)
 		(epairify loc
@@ -1618,11 +1618,11 @@
 			  (epairify loc assig)
 			  assig)))))
 	    ((isa? lhs J2SUnresolvedRef)
-	     (with-access::J2SUnresolvedRef lhs (id)
+	     (with-access::J2SUnresolvedRef lhs (id loc)
 		(epairify loc
 		   (j2s-unresolved-put! `',id
 		      (box (j2s-scheme rhs mode return conf) (j2s-type rhs) conf)
-		      #f mode return))))
+		      #f mode return loc))))
 	    ((isa? lhs J2SHopRef)
 	     (with-access::J2SHopRef lhs (id)
 		(epairify loc
@@ -1721,14 +1721,14 @@
 			  `(begin
 			      ,(j2s-unresolved-put! `',id
 				  (box val (j2s-type lhs) conf)
-				  #t mode return)
+				  #t mode return loc)
 			      ,tmp)))
 		    ,(new-or-old tmp `(js+ ,tmp ,inc %this)
 		       (lambda (val tmp)
 			  `(let ((,tmp (js-tonumber ,tmp %this)))
 			      ,(j2s-unresolved-put! `',id
 				  (box val (j2s-type lhs) conf)
-				  #t mode return)
+				  #t mode return loc)
 			      ,tmp))))))))
    
    (define (aput-inc tyobj otmp prop op lhs field::J2SExpr cache inc cs cache-missp::bool)
@@ -2069,11 +2069,11 @@
 			    (j2s-scheme lhs mode return conf)
 			    mode return conf #f loc))))
 		  ((isa? lhs J2SUnresolvedRef)
-		   (with-access::J2SUnresolvedRef lhs (id)
+		   (with-access::J2SUnresolvedRef lhs (id loc)
 		      (j2s-unresolved-put! `',id
 			 (box (js-binop2 loc op type lhs rhs mode return conf)
 			    type conf)
-			 #t mode return)))
+			 #t mode return loc)))
 		  ((isa? lhs J2SCast)
 		   (with-access::J2SCast lhs (expr type)
 		      (loop expr)))
