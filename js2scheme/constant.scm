@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Sep 26 14:17:04 2018 (serrano)                */
+;*    Last change :  Thu Oct  4 17:45:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -102,12 +102,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-literal! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (add-literal! this env::struct sharep)
+(define (add-literal! this env::struct type sharep)
    (with-access::J2SLiteralValue this (val)
       (let ((index (add-env! this val env sharep)))
 	 (with-access::J2SExpr this (loc)
 	    (instantiate::J2SLiteralCnst
 	       (loc loc)
+	       (type type)
 	       (index index)
 	       (val this))))))
 
@@ -152,7 +153,7 @@
 (define-walk-method (constant! this::J2SRegExp env nesting)
    (with-access::J2SRegExp this (val flags)
       (if (=fx nesting 0)
-	  (add-literal! this env #f)
+	  (add-literal! this env 'regexp #f)
 	  this)))
 
 ;*---------------------------------------------------------------------*/
@@ -162,7 +163,7 @@
    (with-access::J2SString this (val)
       (if (eq? (string-minimal-charset val) 'ascii)
 	  this
-	  (add-literal! this env #f))))
+	  (add-literal! this env 'string #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2STilde ...                                         */
