@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Thu Sep 13 09:01:21 2018 (serrano)                */
+/*    Last change :  Thu Oct  4 05:25:24 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -26,9 +26,11 @@ function title( attrs, ... subtitle ) {
      <div class="container">
        <div class="row">
 	 <div class="col-md-2">
-	   <svg:img
-             src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
-             height="16ex" width="10em"/>
+	   <div class="svg-container">
+	     <svg:img
+                src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
+                height="16ex" width="10em"/>
+           </div>
 	 </div>
 	 <div class="col-md-7">
 	   <h1>

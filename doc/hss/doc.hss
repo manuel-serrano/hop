@@ -80,32 +80,35 @@ p.danger {
 }
 
 [scrolled="yes"] .jumbotron h1 {
-  margin-top: 8px;
   margin-bottom: 4px;
+  margin-top: 20px;
+  font-size: 230%;
 }
 
 [scrolled="yes"] .jumbotron svg {
-  transform: scale(0.6);
+  transform: scale(0.4);
+  filter: grayscale(30%);
 }
 
-[scrolled="yes"] .jumbotron h1 {
-  margin-top: 20px;
-  font-size: 300%;
-  border: 1px solid blue;
+[scrolled="yes"] .jumbotron .svg-container {
+  height: 10px;
+  font-size: 10px;
 }
 
 [scrolled="yes"] .jumbotron p {
-  margin-top: 8px;
+  margin-top: 2px;
   font-size: 110%;
 }
 
 [scrolled="yes"] .jumbotron p.version {
   text-align: left;
-  padding-top: 30px;
+  padding-top: 24px;
+  margin-top: 6px;
+  font-size: 100%;
 }
 
 [scrolled="yes"] div.col-md-2 {
-  height: 14ex;
+  height: 8ex;
 }
 
 /*---------------------------------------------------------------------*/
