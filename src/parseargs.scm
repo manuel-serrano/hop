@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Sep 27 00:14:42 2018 (serrano)                */
+;*    Last change :  Thu Oct  4 11:46:15 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -733,7 +733,8 @@
    (cond
       ((or (string-suffix? ".js" name) (not (string? context-or-path)))
        (let ((scope context-or-path))
-	  (nodejs-resolve name scope module 'head)))
+	  (when module
+	     (nodejs-resolve name scope module 'head))))
       (else
        (let ((path context-or-path))
 	  (find-file/path name path)))))

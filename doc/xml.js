@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Thu Oct  4 05:25:24 2018 (serrano)                */
+/*    Last change :  Thu Oct  4 12:59:09 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -244,7 +244,11 @@ function idxEntry( e, idx = undefined, arr = undefined ) {
       return <tr class="idx-letter"><td/><th>${e}</th></tr>;
    } else {
       var p = e.proto.indexOf( "(" );
-      var proto = (p > 0? (e.proto.substring( 0, p ) + "()") : e.proto);
+      var proto = (p > 0? (e.proto.substring( 0, p ) + "()") : false);
+      if( !proto ) {
+	 p = e.proto.indexOf( "{" );
+	 proto = (p > 0? (e.proto.substring( 0, p ) + "{}") : e.proto);
+      }
       var i = proto.indexOf( "." );
       var title = e.proto + "..." + e.chapter;
 
