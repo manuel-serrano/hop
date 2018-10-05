@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Oct  1 01:00:02 2018 (serrano)                */
+;*    Last change :  Fri Oct  5 10:01:59 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2064,6 +2064,45 @@
    (js-bind! %this js-array-prototype 'find
       :value (js-make-function %this
 		array-prototype-find 1 'find
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   ;; findIndex
+   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.findindex
+   (define (array-prototype-find-index this::obj proc t)
+
+      (define (vector-find-idx o::JsArray len::uint32 proc::JsFunction t i::uint32)
+	 (with-access::JsArray o (vec ilen)
+	    (let loop ((i i))
+	       (cond
+		  ((>=u32 i ilen)
+		   (if (js-object-mode-inline? o)
+		       -1
+		       (array-find-idx o len proc t i)))
+		  (else
+		   (let ((v (vector-ref vec (uint32->fixnum i))))
+		      (cond
+			 ((js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o))
+			  (js-uint32-tointeger i))
+			 (else
+			  (loop (+u32 i 1))))))))))
+
+      (define (array-find-idx o::JsArray len::uint32 proc::JsFunction t i::uint32)
+	 (let loop ((i i))
+	    (if (>=u32 i len)
+		-1
+		(let* ((pv (js-get-property-value o o (js-toname i %this) %this))
+		       (v (if (js-absent? pv) (js-undefined) pv)))
+		   (if (js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o))
+		       (js-uint32-tointeger i)
+		       (loop (+u32 i 1)))))))
+
+      (array-prototype-iterator %this this proc t array-find-idx vector-find-idx))
+
+   (js-bind! %this js-array-prototype 'findIndex
+      :value (js-make-function %this
+		array-prototype-find-index 1 'findIndex
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
