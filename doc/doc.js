@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Tue Mar 13 15:44:25 2018 (serrano)                */
+/*    Last change :  Sun Oct  7 16:29:30 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -364,6 +364,7 @@ function compileLibrary( content ) {
 function compileIdx( json ) {
    var idx = require( path.join( PWD, json ) );
    var chapter = { title: "Index", key: "index" };
+   var footer = path.join( PWD, "footer.md" );
 
    var document = <html>
      <head css=${css}
@@ -387,7 +388,9 @@ function compileIdx( json ) {
        <div class="container">
 	 <div class="filler">.keep</div>
 	 <docxml.idx>${idx}</docxml.idx>
-	 <docxml.footer root=${ROOT}/>
+	 ${fs.existsSync( footer )
+	   ? hopdoc.load( footer ).XML
+	   : ""}
        </div>
      </body>
    </html>;

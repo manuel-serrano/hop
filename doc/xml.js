@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Sat Oct  6 10:13:57 2018 (serrano)                */
+/*    Last change :  Sun Oct  7 16:25:22 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -237,37 +237,54 @@ function idxLetters( es ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    minIndexOf ...                                                   */
+/*---------------------------------------------------------------------*/
+function minIndexOf( string, ...seps ) {
+   let index = string.length;
+   let sep = false;
+   
+   seps.forEach( s => {
+      const i = string.indexOf( s );
+      
+      if( i > -1 && i < index ) {
+	 index = i;
+	 sep = s;
+      }
+   } )
+		 
+   return { index, sep };
+}
+   
+/*---------------------------------------------------------------------*/
 /*    idxEntry ...                                                     */
 /*---------------------------------------------------------------------*/
 function idxEntry( e, idx = undefined, arr = undefined ) {
    if( typeof( e ) === "string" ) {
       return <tr class="idx-letter"><td/><th>${e}</th></tr>;
    } else {
-      var p = e.proto.indexOf( "(" );
-      var proto = (p > 0? (e.proto.substring( 0, p ) + "()") : false);
-      if( !proto ) {
-	 p = e.proto.indexOf( "{" );
-	 if( p > 0 ) proto = (e.proto.substring( 0, p ) + "{}");
-      }
-      if( !proto ) {
-	 p = e.proto.indexOf( " " );
-	 proto = (p > 0? e.proto.substring( 0, p ) : e.proto);
-      }
-      var i = proto.indexOf( "." );
-      var title = e.proto + "..." + e.chapter;
+      const { index, sep } = minIndexOf( e.proto, "[", "{", "(" );
+      const title = e.proto + "..." + e.chapter;
+      let lbl = index ? e.proto.substring( 0, index ) : e.proto;
+      const i = lbl.indexOf( "." );
+      const { index: cindex, sep: csep } = minIndexOf( e.proto, "(", "{" );
 
+      switch( csep ) {
+	 case "{": lbl += "{}"; break;
+	 case "(": lbl += "()"; break;
+      }
+      
       if( i > 0 ) {
 	 return <tr>
-	   <td class="idx-prefix">${proto.substring( 0, i )}.</td>
+	   <td class="idx-prefix">${lbl.substring( 0, i )}.</td>
 	   <td class="idx-entry" title=${title}>
-	     <a href=${e.url}>${proto.substring( i+1 )}</a>
+	     <a href=${e.url}>${lbl.substring( i+1 )}</a>
 	   </td>
 	 </tr>;
       } else {
 	 return <tr>
 	   <td/>
 	   <td class="idx-entry" title=${title}>
-	     <a href=${e.url}>${proto}</a>
+	     <a href=${e.url}>${lbl}</a>
 	   </td>
 	 </tr>
       }
