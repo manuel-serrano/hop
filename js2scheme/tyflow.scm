@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Sep 30 14:42:59 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 13:44:59 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2075,7 +2075,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SClass from to cell)
    (with-access::J2SClass this (decl)
-      (force-type! decl from to cell))
+      (when decl
+	 (force-type! decl from to cell)))
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/

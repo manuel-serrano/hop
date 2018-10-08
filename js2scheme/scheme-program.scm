@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Sep  5 08:21:08 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:27:24 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -37,7 +37,7 @@
 	 (list module
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
-		(js-make-pcache ,pcache-size ,(config-get conf :filename)))
+		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	     (when (config-get conf :profile-call #f)
@@ -59,7 +59,7 @@
 	    '(define %resource (dirname %source))
 	    `(define (hopscript %this this %scope %module)
 		(define %pcache
-		   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
+		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
 		,@(if (config-get conf :profile-call #f)
 		      `((define %call-log (make-vector ,call-size #l0))
 			(define %call-locations ',(call-locations this)))
@@ -89,7 +89,7 @@
 	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
 	       `(define %pcache
-		   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
+		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
 		(when (config-get conf :profile-call #f)
 		   `(define %call-log (make-vector ,call-size #l0)))
 		(when (config-get conf :profile-call #f)
@@ -145,7 +145,7 @@
 		    `(lambda (%this this %scope %module)
 			(%define-pcache ,pcache-size)	       
 			(define %pcache
-			   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
+			   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
 			,@(if (config-get conf :profile-call #f)
 			      `((define %call-log (make-vector ,call-size #l0))
 				(define %call-locations ',(call-locations this)))
@@ -180,7 +180,7 @@
       (with-access::J2SProgram this (mode pcache-size call-size %this path globals)
 	 `(,module (%define-pcache ,pcache-size)
 	     (define %pcache
-		(js-make-pcache ,pcache-size ,(config-get conf :filename)))
+		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
 	     ,@(if (config-get conf :profile-call #f)
 		   `((define %call-log (make-vector ,call-size #l0))
 		     (define %call-locations ',(call-locations this)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Oct  5 10:01:59 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:22:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -154,7 +154,7 @@
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 4)
-(define %pcache (js-make-pcache 4 "hopscript/array.scm"))
+(define %pcache (js-make-pcache-table 4 "hopscript/array.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-vector ...                                               */

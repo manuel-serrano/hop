@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/hopscript/stringliteral.scm      */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/stringliteral.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Aug 28 09:09:58 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:23:56 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -114,7 +114,7 @@
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 31)
-(define %pcache (js-make-pcache 31 "hopscript/stringliteral.scm"))
+(define %pcache (js-make-pcache-table 31 "hopscript/stringliteral.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */

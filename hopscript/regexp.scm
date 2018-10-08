@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/hopscript/regexp.scm        */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/regexp.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Aug 28 09:07:19 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:22:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -41,7 +41,7 @@
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 3)
-(define %pcache (js-make-pcache 3 "hopscript/regexp.scm"))
+(define %pcache (js-make-pcache-table 3 "hopscript/regexp.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */

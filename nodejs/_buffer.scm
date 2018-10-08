@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu Mar 29 10:38:23 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:26:36 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -54,7 +54,7 @@
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 3)
-(define %pcache (js-make-pcache 3 "nodejs/buffer.scm"))
+(define %pcache (js-make-pcache-table 3 "nodejs/buffer.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    buffer-parser ...                                                */

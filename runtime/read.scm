@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Sep 22 15:38:29 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:57:03 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1038,7 +1038,11 @@
 		    'error)
 		   (else
 		    (or (find-in-unix-path (hop-soname path))
-			(find-in-unix-path path))))))))))
+			(find-in-unix-path path)
+			(let ((sopath (make-file-name dir
+					 (string-append base (so-suffix)))))
+			   (when (file-exists? sopath)
+			      sopath)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-soname ...                                                   */

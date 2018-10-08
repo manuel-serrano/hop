@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct  2 11:12:19 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:09:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -39,8 +39,8 @@
 	   __hopscript_stringliteral
 	   __hopscript_arraybufferview)
    
-   (extern ($js-make-pcache::obj (::obj ::int ::obj ::JsPropertyCache)
-	      "bgl_make_pcache")
+   (extern ($js-make-pcache-table::obj (::obj ::int ::obj ::JsPropertyCache)
+	      "bgl_make_pcache_table")
 	   ($js-invalidate-pcaches-pmap!::void (::obj)
 	      "bgl_invalidate_pcaches_pmap")
 	   ($js-get-pcaches::pair-nil ()
@@ -50,7 +50,7 @@
 	   (js-debug-pcache ::obj #!optional (msg ""))
 	   (js-debug-cmap ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
-	   (js-make-pcache ::int ::obj)
+	   (js-make-pcache-table ::int ::obj)
 	   (js-invalidate-pcaches-pmap! ::JsGlobalObject ::obj)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-imap ::JsPropertyCache)
@@ -411,32 +411,34 @@
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
-;*    make-pcache ...                                                  */
+;*    js-make-pcache-table ...                                         */
+;*    -------------------------------------------------------------    */
+;*    This function is used by a macro of property_expd.sch.           */
 ;*---------------------------------------------------------------------*/
-(define (js-make-pcache len src)
-   (let ((pcache ($make-vector-uncollectable len #unspecified)))
+(define (js-make-pcache-table len src)
+   (let ((pctable ($make-vector-uncollectable len #unspecified)))
       (let loop ((i 0))
 	 (if (=fx i len)
-	     (register-pcache! pcache len src)
+	     (register-pcache-table! pctable len src)
 	     (begin
-		(vector-set! pcache i
+		(vector-set! pctable i
 		   (instantiate::JsPropertyCache
-		      (pcache pcache)))
+		      (pctable pctable)))
 		(loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    *pcaches* ...                                                    */
+;*    *pctables* ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define *pcaches* *pcaches*)
+(define *pctables* *pctables*)
 
 ;*---------------------------------------------------------------------*/
-;*    register-pcache! ...                                             */
+;*    register-pcachet-table! ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (register-pcache! pcache len src)
+(define (register-pcache-table! pctable len src)
    ;; bootstrap initialization
-   (when (eq? *pcaches* #unspecified) (set! *pcaches* '()))
-   (set! *pcaches* (cons (vector pcache len src (current-thread)) *pcaches*))
-   pcache)
+   (when (eq? *pctables* #unspecified) (set! *pctables* '()))
+   (set! *pctables* (cons (vector pctable len src (current-thread)) *pctables*))
+   pctable)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-validate-pcaches-pmap! ...                                    */
@@ -479,7 +481,7 @@
 				  (let ((pcache (vector-ref vec i)))
 				     (invalidate-pcache-pmap! pcache))
 				  (loop (-fx i 1)))))))
-	    *pcaches*))))
+	    *pctables*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-invalidate-cache-method! ...                                  */
@@ -747,21 +749,22 @@
 ;*---------------------------------------------------------------------*/
 (define (js-cmap-vtable-add! o::JsConstructMap idx::long obj cache::JsPropertyCache)
    (with-access::JsConstructMap o (vlen vcache vtable)
-      (with-access::JsPropertyCache cache (pcache)
-	 (if (or (not vcache) (eq? vcache pcache))
-	     (let ((l (vector-length vtable)))
-		(when (>=fx idx l)
-		   (let ((old vtable))
-		      (set! vlen (+fx idx 1))
-		      (set! vtable (copy-vector vtable (+fx idx 1)))
-		      (log-vtable! idx vtable old)
-		      (vector-fill! vtable #unspecified l)))
-		(vector-set! vtable idx obj)
-		(set! vcache pcache)
-		obj)
-	     (begin
-		(log-vtable-conflict!)
-		#f)))))
+      (with-access::JsPropertyCache cache (pctable)
+	 (let ((l (vector-length vtable)))
+	    (cond
+	       ((=fx l 0)
+		(set! vlen (+fx idx 1))
+		(set! vtable (make-vector (+fx idx 1) #unspecified))
+		(log-vtable! idx vtable '#()))
+	       ((>=fx idx l)
+		(let ((old vtable))
+		   (set! vlen (+fx idx 1))
+		   (set! vtable (copy-vector vtable (+fx idx 1)))
+		   (log-vtable! idx vtable old)
+		   (vector-fill! vtable #unspecified l))))
+	    (vector-set! vtable idx obj)
+	    (set! vcache pctable)
+	    obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-vindex ...                                                */

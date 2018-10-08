@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Jun 21 08:03:38 2018 (serrano)                */
+/*    Last change :  Mon Oct  8 14:17:29 2018 (serrano)                */
 /*    Copyright   :  2016-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -127,13 +127,13 @@ bgl_invalidate_pcaches_pmap( obj_t proc ) {
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
-/*    bgl_make_pcache ...                                              */
+/*    bgl_make_pcache_table ...                                        */
 /*    -------------------------------------------------------------    */
 /*    Create a fake Bigloo vector whose elements are inlined pcache    */
 /*    entries.                                                         */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_pcache( obj_t obj, int len, obj_t src, obj_t template ) {
+bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t template ) {
    pcache_t *pcache = (pcache_t *)obj;
    int i;
 

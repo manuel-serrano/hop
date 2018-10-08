@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/types.scm     */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Aug 28 09:06:14 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:13:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -90,7 +90,7 @@
 	      (name::obj (default '||))
 	      (method::obj (default #f))
 	      (function::obj (default #f))
-	      (pcache::obj (default #f))
+	      (pctable::obj (default #f))
 	      (usage::symbol (default '-))
 	      (cntmiss::uint32 (default #u32:0))
 	      (cntimap::uint32 (default #u32:0))
@@ -890,14 +890,12 @@
        ($nanobject? o))
       (else
        (and (%object? o) (>u32 (js-object-mode o) #u32:0)))))
-;*    (isa? o JsObject))                                               */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array? o)
    (and (%object? o) (>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYTAG))))
-;*    (isa? o JsArray))                                                */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function? ...                                                 */

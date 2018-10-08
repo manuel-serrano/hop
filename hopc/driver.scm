@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Sep  6 13:55:27 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 15:13:51 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -421,7 +421,7 @@
 			   (let* ((base (prefix file))
 				  (dest (string-append base "."
 					   (bigloo-config 'shared-lib-suffix))))
-			      (cons* "-y" (dest-opts dest opts))))
+			      (cons* "-dload-sym" "-y" (dest-opts dest opts))))
 			  (else
 			   (dest-opts "a.out" opts))))
 		      (else

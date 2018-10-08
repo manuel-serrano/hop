@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/hopscript/property_expd.sch      */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/property_expd.sch       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Aug 30 14:25:51 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:12:40 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -77,18 +77,18 @@
        (error "%define-pache" "bad syntax" x))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-make-pcache-expander ...                                      */
+;*    js-make-pcache-table-expander ...                                */
 ;*---------------------------------------------------------------------*/
-(define (js-make-pcache-expander x e)
+(define (js-make-pcache-table-expander x e)
    (match-case x
       ((?- (and (? integer?) ?num) ?src)
        (e `(cond-expand
 	     ((and bigloo-c (not hopjs-worker-slave))
-	      ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
+	      ($js-make-pcache-table (pragma::obj "(obj_t)(__bgl_pcache)")
 		 ,num ,src (instantiate::JsPropertyCache
-			      (pcache (pragma::obj "(obj_t)(__bgl_pcache)")))))
+			      (pctable (pragma::obj "(obj_t)(__bgl_pcache)")))))
 	     (else
-	      ((@ js-make-pcache __hopscript_property) ,num ,src)))
+	      ((@ js-make-pcache-table __hopscript_property) ,num ,src)))
 	  e))
       (else
        (error "js-make-pcache" "bad syntax" x))))
@@ -105,18 +105,18 @@
       e))
 
 ;*---------------------------------------------------------------------*/
-;*    js-pcache-pache-expander ...                                     */
+;*    js-pcache-pctable-expander ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (js-pcache-pcache-expander x e)
+(define (js-pcache-pctable-expander x e)
    (e (match-case x
 	 ((js-pcache-imap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
 	     ((and bigloo-c (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_pcachez00)" ,idx))
+	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_pctablez00)" ,idx))
 	     (else
-	      `(with-access::JsPropertyCache ,c (pcache) pcache))))
+	      `(with-access::JsPropertyCache ,c (pctable) pctable))))
 	 ((js-pcache-pcache ?c)
-	  `(with-access::JsPropertyCache ,c (pcache) pcache))
+	  `(with-access::JsPropertyCache ,c (pctable) pctable))
 	 (else
 	  (error "js-pcache-pcache" "bad syntax" x)))
       e))
@@ -388,7 +388,7 @@
 		       ((or no-vtable-cache no-vtable-cache-get)
 			(loop (cdr cs)))
 		       (else
-			`(with-access::JsConstructMap %cmap (vlen vcache vtable %id)
+			`(with-access::JsConstructMap %cmap (vlen vtable %id)
 			    (let ((vidx (js-pcache-vindex ,cache)))
 			       (if (and (<fx vidx vlen)
 					(fixnum? (vector-ref vtable vidx)))
@@ -610,7 +610,7 @@
 			    ((or no-vtable-cache no-vtable-cache-put)
 			     (loop (cdr cs)))
 			    (else
-			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
+			     `(with-access::JsConstructMap %cmap (vlen vtable)
 				 (let ((vidx (js-pcache-vindex ,cache)))
 				    (if (and (<fx vidx vlen)
 					     (pair? (vector-ref vtable vidx)))
@@ -734,7 +734,7 @@
 			    ((or no-vtable-cache no-vtable-cache-call)
 			     (loop (cdr cs)))
 			    (else
-			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
+			     `(with-access::JsConstructMap %cmap (vlen vtable)
 				 (let ((vidx (js-pcache-vindex ,ccache)))
 				    (if (and (<fx vidx vlen)
 					     (procedure? (vector-ref vtable vidx)))
@@ -749,7 +749,7 @@
 			    ((or no-vtable-cache no-vtable-cache-call)
 			     (loop (cdr cs)))
 			    (else
-			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
+			     `(with-access::JsConstructMap %cmap (vlen vtable)
 				 (let ((vidx (js-pcache-vindex ,ccache)))
 				    (if (and (<fx vidx vlen)
 					     (procedure? (vector-ref vtable vidx)))

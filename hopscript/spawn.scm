@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Wed Aug 22 21:07:16 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:23:42 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -104,7 +104,7 @@
 ;*    %pcache ...                                                      */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 10)
-(define %pcache (js-make-pcache 10 "hopscript/spawn.scm"))
+(define %pcache (js-make-pcache-table 10 "hopscript/spawn.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-spawn ...                                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Tue Jun  5 15:53:21 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:26:47 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -38,7 +38,7 @@
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 8)
-(define %pcache (js-make-pcache 8 "nodejs/_stream_wrap.scm"))
+(define %pcache (js-make-pcache-table 8 "nodejs/_stream_wrap.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    stream-shutdown ...                                              */

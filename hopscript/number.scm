@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Aug 28 09:07:07 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:20:39 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -49,7 +49,7 @@
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 2)
-(define %pcache (js-make-pcache 2 "hopscript/number.scm"))
+(define %pcache (js-make-pcache-table 2 "hopscript/number.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsNumber ...                                 */

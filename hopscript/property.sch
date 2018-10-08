@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/hopscript/property.sch      */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/property.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Aug 30 14:40:15 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:14:58 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -35,12 +35,12 @@
 ;*---------------------------------------------------------------------*/
 (define-expander %define-pcache
    %define-pcache-expander)
-(define-expander js-make-pcache
-   js-make-pcache-expander)
+(define-expander js-make-pcache-table
+   js-make-pcache-table-expander)
 (define-expander js-pcache-ref
    js-pcache-ref-expander)
-(define-expander js-pcache-pcache
-   js-pcache-pcache-expander)
+(define-expander js-pcache-pctable
+   js-pcache-pctable-expander)
 (define-expander js-pcache-imap
    js-pcache-imap-expander)
 (define-expander js-pcache-cmap
