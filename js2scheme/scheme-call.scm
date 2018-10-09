@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Sep  5 19:22:47 2018 (serrano)                */
+;*    Last change :  Tue Oct  9 08:33:55 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -580,14 +580,19 @@ ft		`(,f ,@%gen
 	       ((isa? fun J2SAccess)
 		(if (and (config-get conf :profile-call #f) (>=fx profid 0))
 		    (with-access::J2SAccess fun (obj loc)
-		       (let ((self (if (isa? obj J2SSuper)
-				       'this
-				       (j2s-scheme obj mode return conf))))
-			  (let* ((s (gensym '%obj-profile))
-				 (f (duplicate::J2SAccess fun
-				       (obj (J2SHopRef s)))))
-			     `(let ((,s ,self))
-				 ,(call-unknown-function f (list s) args)))))
+		       (if (isa? obj J2SSuper)
+			   (let* ((self (j2s-scheme obj mode return conf))
+				  (s (gensym '%obj-profile))
+				  (f (duplicate::J2SAccess fun
+					(obj (J2SHopRef s)))))
+			      `(let ((,s ,self))
+				  ,(call-unknown-function f (list 'this) args)))
+			   (let* ((self (j2s-scheme obj mode return conf))
+				  (s (gensym '%obj-profile))
+				  (f (duplicate::J2SAccess fun
+					(obj (J2SHopRef s)))))
+			      `(let ((,s ,self))
+				  ,(call-unknown-function f (list s) args)))))
 		    (call-method cache cspecs fun args)))
 	       ((isa? fun J2SParen)
 		(with-access::J2SParen fun (expr)
