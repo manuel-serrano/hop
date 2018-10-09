@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Thu Sep 27 13:14:11 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 19:36:13 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -136,7 +136,8 @@
 	((scmstring ,js->scmstring)
 	 (any nop)))
      (scmstring
-	((any js-string->jssstring)))
+	((bool js-string->bool))
+	((any js-string->jsstring)))
      (real
 	((uint32 js-number-touint32)
 	 (int32 js-number-toint32)

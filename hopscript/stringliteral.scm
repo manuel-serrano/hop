@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Oct  8 14:23:56 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 19:37:58 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -51,6 +51,7 @@
 	   (inline js-jsstring>=?::bool ::obj ::obj)
 	   (js-string->number::obj ::bstring ::JsGlobalObject)
 	   (js-integer->jsstring ::long)
+	   (js-string->bool::bool ::bstring)
 	   (js-jsstring->bool::bool ::obj)
 	   (generic js-jsstring-normalize!::JsStringLiteral ::JsStringLiteral)
 	   
@@ -731,6 +732,13 @@
    (if (or (<fx num 0) (>=fx num (vector-length integers)))
        (js-ascii->jsstring (integer->string num))
        (vector-ref integers num)))
+
+
+;*---------------------------------------------------------------------*/
+;*    js-string->bool ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-string->bool::bool js::bstring)
+   (>fx (string-length js) 0))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->bool ...                                            */
