@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Sun Sep 30 11:12:03 2018 (serrano)                */
+;*    Last change :  Tue Oct  9 10:27:30 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -527,6 +527,12 @@
 	  (J2SString ""))
 	 (else
 	  (J2SUndefined))))
+
+   (define (nopce node)
+      (if (isa? node J2SAccess)
+	  (duplicate::J2SAccess node
+	     (%info '()))
+	  node))
    
    (if expandp
        (with-access::J2SLetBlockPCE this (ainfos loc endloc nodes)
@@ -545,7 +551,10 @@
 					  (J2SAssig (J2SRef d) val)))
 				  decls))
 		       (assig- (map (lambda (a)
-				       (duplicate::J2SAssig a))
+				       (with-access::J2SAssig a (lhs rhs)
+					  (duplicate::J2SAssig a
+					     (lhs (nopce lhs))
+					     (rhs (nopce rhs)))))
 				  assig+)))
 		   (J2SLetBlock ndecls
 		      (J2SIf pretest

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue Aug 28 14:44:22 2018 (serrano)                */
+;*    Last change :  Tue Oct  9 08:43:35 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -148,7 +148,7 @@
    (let* ((len (vector-length js-profile-accesses))
 	  (i (if (>= idx len) (- len 1) idx)))
       (vector-set! js-profile-accesses i
-	 (+llong (fixnum->llong 1) (vector-ref js-profile-accesses i)))))
+	 (+llong #l1 (vector-ref js-profile-accesses i)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-get ...                                           */
