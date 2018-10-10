@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Oct  8 13:44:59 2018 (serrano)                */
+;*    Last change :  Tue Oct  9 17:14:03 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1110,8 +1110,9 @@
       ;; compute a new node-type environment where all mutated globals
       ;; and all mutated captured locals are removed
       (filter (lambda (e)
-		 (with-access::J2SDecl (car e) (ronly scope %info id)
+		 (with-access::J2SDecl (car e) (ronly writable scope %info id)
 		    (or ronly
+			(not writable)
 			(and (eq? scope 'local) (eq? %info 'nocapture)))))
 	 env))
    
@@ -1226,6 +1227,8 @@
 	  (return 'array (unknown-call-env env) bk))
 	 ((is-global? callee 'String)
 	  (return 'string (unknown-call-env env) bk))
+	 ((is-global? callee 'parseInt)
+	  (return 'number (unknown-call-env env) bk))
 	 (else
 	  (type-unknown-call callee env bk))))
    

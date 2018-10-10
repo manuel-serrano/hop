@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Oct  8 14:09:31 2018 (serrano)                */
+;*    Last change :  Wed Oct 10 07:07:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -211,9 +211,10 @@
 	   (js-get-vindex::long ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    vtable-threshold ...                                             */
+;*    inline thresholds ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (vtable-threshold) #u32:100)
+(define (inline-threshold) #u32:100)
+(define (vtable-threshold) #u32:200)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -561,11 +562,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Used to access a direct object property.                         */
 ;*---------------------------------------------------------------------*/
-(define (js-pcache-update-direct! pcache::JsPropertyCache i o::JsObject)
+(define (js-pcache-update-direct! pcache::JsPropertyCache i o::JsObject inlp::bool)
    [assert (i) (>=fx i 0)]
    (with-access::JsObject o ((omap cmap))
       (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
-	 (if (js-object-inline-next-element? o i)
+	 (if (and (js-object-inline-next-element? o i) inlp)
 	     (begin
 		(set! imap omap)
 		(set! cmap omap))
@@ -1433,10 +1434,9 @@
    
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
-	 (when (>=u32 cntmiss (vtable-threshold))
-	    (when (=fx vindex (js-not-a-index))
-	       (set! vindex (js-get-vindex %this)))
-	    (js-cmap-vtable-add! omap vindex i cache))))
+	 (when (=fx vindex (js-not-a-index))
+	    (set! vindex (js-get-vindex %this)))
+	 (js-cmap-vtable-add! omap vindex i cache)))
 
    (let loop ((obj o))
       (jsobject-find obj name
@@ -1456,8 +1456,13 @@
 			   ((eq? o obj)
 			    ;; direct access to the direct object
 			    [assert (i) (<=fx i (vector-length elements))]
-			    (js-pcache-update-direct! cache i o)
-			    (js-pcache-vtable! omap cache i)
+			    (cond
+			       ((<u32 cntmiss (inline-threshold))
+				(js-pcache-update-direct! cache i o #t))
+			       ((<u32 cntmiss (vtable-threshold))
+				(js-pcache-update-direct! cache i o #f))
+			       (else
+				(js-pcache-vtable! omap cache i)))
 			    el-or-desc)
 			   (else
 			    ;; direct access to a prototype object
@@ -1801,7 +1806,7 @@
 		    v)
 		   ((eq? (vector-ref methods i) #f)
 		    ;; normal cached
-		    (when cache (js-pcache-update-direct! cache i o))
+		    (when cache (js-pcache-update-direct! cache i o #t))
 		    (vector-set! elements i v)
 		    v)
 		   (else
@@ -1809,7 +1814,7 @@
 		    (js-invalidate-cache-method! cmap i)
 		    (js-invalidate-pcaches-pmap! %this name)
 		    (reset-cmap-vtable! cmap)
-		    (when cache (js-pcache-update-direct! cache i o))
+		    (when cache (js-pcache-update-direct! cache i o #t))
 		    (vector-set! elements i v)
 		    v)))
 	       ((isa? (vector-ref methods i) JsFunction)
@@ -1817,12 +1822,12 @@
 		(js-invalidate-cache-method! cmap i)
 		(js-invalidate-pcaches-pmap! %this name)
 		(reset-cmap-vtable! cmap)
-		(when cache (js-pcache-update-direct! cache i o))
+		(when cache (js-pcache-update-direct! cache i o #t))
 		(vector-set! elements i v)
 		v)
 	       (else
 		;; normal caching
-		(when cache (js-pcache-update-direct! cache i o))
+		(when cache (js-pcache-update-direct! cache i o #t))
 		(vector-set! elements i v)
 		v)))))
    
@@ -2082,11 +2087,14 @@
 
 	 (unless (eq? %omap (js-not-a-cmap))
 	    (with-access::JsPropertyCache cache (index vindex cntmiss)
-	       (when (=u32 cntmiss (vtable-threshold))
+	       (cond
+		  ((>=u32 cntmiss (vtable-threshold))
 		   (when (>=fx index 0)
 		      (when (=fx vindex (js-not-a-index))
 			 (set! vindex (js-get-vindex %this)))
-		      (js-cmap-vtable-add! %omap vindex (cons index cmap) cache)))))
+		      (js-cmap-vtable-add! %omap vindex (cons index cmap) cache)))
+		  ((>=u32 cntmist (inline-threshold))
+		   (js-pcache-update-direct! cache index #f)))))
 	 tmp)))
 
 ;*---------------------------------------------------------------------*/
