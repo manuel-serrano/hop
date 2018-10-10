@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Sep 30 16:45:59 2018 (serrano)                */
+;*    Last change :  Wed Oct 10 07:55:29 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -929,7 +929,7 @@
    (case type
       ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
       ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
-      ((integer real number) val)
+      ((int53 integer real number) val)
       (else (if (not proc) val (proc val)))))
 
 ;*---------------------------------------------------------------------*/

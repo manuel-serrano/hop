@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Oct 10 07:07:44 2018 (serrano)                */
+;*    Last change :  Wed Oct 10 08:11:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1827,7 +1827,10 @@
 		v)
 	       (else
 		;; normal caching
-		(when cache (js-pcache-update-direct! cache i o #t))
+		(when cache
+		   (with-access::JsPropertyCache cache (cntmiss)
+		      (js-pcache-update-direct! cache i o 
+			 (<=u32 cntmiss (inline-threshold)))))
 		(vector-set! elements i v)
 		v)))))
    
@@ -2084,17 +2087,14 @@
 	    (set! name prop)
 	    (set! cpoint point)
 	    (set! usage 'put))
-
+	 
 	 (unless (eq? %omap (js-not-a-cmap))
 	    (with-access::JsPropertyCache cache (index vindex cntmiss)
-	       (cond
-		  ((>=u32 cntmiss (vtable-threshold))
-		   (when (>=fx index 0)
-		      (when (=fx vindex (js-not-a-index))
-			 (set! vindex (js-get-vindex %this)))
-		      (js-cmap-vtable-add! %omap vindex (cons index cmap) cache)))
-		  ((>=u32 cntmist (inline-threshold))
-		   (js-pcache-update-direct! cache index #f)))))
+	       (when (>=u32 cntmiss (vtable-threshold))
+		  (when (>=fx index 0)
+		     (when (=fx vindex (js-not-a-index))
+			(set! vindex (js-get-vindex %this)))
+		     (js-cmap-vtable-add! %omap vindex (cons index cmap) cache)))))
 	 tmp)))
 
 ;*---------------------------------------------------------------------*/

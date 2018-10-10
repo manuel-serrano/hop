@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/hopscript/arithmetic.scm         */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmetic.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Tue Aug 28 09:05:42 2018 (serrano)                */
+;*    Last change :  Wed Oct 10 08:03:08 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -43,6 +43,7 @@
 	   (inline /pow2u32::uint32 x::uint32 y::long)
 	   (inline /pow2fx::long n::long k::long)
 	   
+	   (inline %$$II ::long ::long)
 	   (%$$NN ::obj ::obj)
 	   (%$$NZ ::obj ::obj)
 	   
@@ -167,6 +168,16 @@
 	 (else
 	  (loop (js-tonumber expr %this))))))
 
+
+;*---------------------------------------------------------------------*/
+;*    %$$II ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (%$$II lnum rnum)
+   (if (=fx rnum 0)
+       +nan.0
+       (if (>=fx lnum 0)
+	   (remainderfx lnum rnum)
+	   (%$$NZ lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %$$NN ...                                                        */

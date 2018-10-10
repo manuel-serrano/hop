@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Sep 29 04:29:12 2018 (serrano)                */
+;*    Last change :  Wed Oct 10 08:10:47 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1724,12 +1724,12 @@
 ;*    js-arithmetic-% ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-arithmetic-% loc type lhs rhs mode return conf)
-
+   
    (define (number totype)
       ;; if the range analysis has shown that the result is an uint, then
       ;; the library function will always return an int
       (if (eq? totype 'uint32) 'integer 'number))
-
+   
    (with-tmp lhs rhs mode return conf '*
       (lambda (left right)
 	 (let ((tlv (j2s-vtype lhs))
@@ -1761,10 +1761,18 @@
 		  ((and (eq? tlv 'integer) (eq? trv 'integer))
 		   (with-tmp lhs rhs mode return conf 'any
 		      (lambda (left right)
-			 (if (and (number? right) (= right 0))
-			     +nan.0
+			 (cond
+			    ((and (number? right) (= right 0))
+			     +nan.0)
+			    ((m64? conf)
+			     (j2s-cast `(%$$II ,left ,right)
+				#f (number type) type conf))
+			    ((and (inrange-int32? lhs) (inrange-int32? rhs))
+			     (j2s-cast `(%$$II ,left ,right)
+				#f (number type) type conf))
+			    (else
 			     (j2s-cast `(%$$NN ,left ,right)
-				#f (number type) type conf)))))
+				#f (number type) type conf))))))
 		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
 		   (cond
 		      ((not (uint32? right))
@@ -1786,8 +1794,8 @@
 		      ((inrange-int32? rhs)
 		       `(if (fixnum? ,left)
 			    ,(j2s-cast `(remainderfx ,left
-					  ,(asfixnum right trv))
-			       lhs (number type) type conf)
+					   ,(asfixnum right trv))
+				lhs (number type) type conf)
 			    ,(if (m64? conf)
 				 (j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
 					       ,(tonumber64 right trv conf))
@@ -1798,31 +1806,44 @@
 		      ((m64? conf)
 		       `(if (fixnum? ,left)
 			    ,(j2s-cast `(remainderfx ,left
-					  ,(asfixnum right trv))
-			       lhs (number type) type conf)
+					   ,(asfixnum right trv))
+				lhs (number type) type conf)
 			    ,(j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
-					  ,(tonumber64 right trv conf))
-			       lhs (number type) type conf)))
+					   ,(tonumber64 right trv conf))
+				lhs (number type) type conf)))
 		      (else
 		       (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
 				     ,(tonumber32 right trv conf))
 			  lhs (number type) type conf))))
+		  ((m64? conf)
+		   (cond
+		      ((and (number? right) (not (= right 0)))
+		       (j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
+				     ,(tonumber64 right trv conf))
+			  lhs (number type) type conf))
+		      ((and (type-integer? tl) (type-integer? tr))
+		       (j2s-cast `(%$$II ,(tonumber64 left tlv conf)
+				     ,(tonumber64 right trv conf))
+			  lhs (number type) type conf))
+		      (else
+		       (j2s-cast `(%$$NN ,(tonumber64 left tlv conf)
+				     ,(tonumber64 right trv conf))
+			  lhs (number type) type conf))))
 		  (else
-		   (if (m64? conf)
-		       (if (and (number? right) (not (= right 0)))
-			   (j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
-					 ,(tonumber64 right trv conf))
-			      lhs (number type) type conf)
-			   (j2s-cast `(%$$NN ,(tonumber64 left tlv conf)
-					 ,(tonumber64 right trv conf))
-			      lhs (number type) type conf))
-		       (if (and (number? right) (not (= right 0)))
-			   (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
-					 ,(tonumber32 right trv conf))
-			      lhs (number type) type conf)
-			   (j2s-cast `(%$$NN ,(tonumber32 left tlv conf)
-					 ,(tonumber32 right trv conf))
-			      lhs (number type) type conf))))))))))
+		   (cond
+		      ((and (number? right) (not (= right 0)))
+		       (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
+				     ,(tonumber32 right trv conf))
+			  lhs (number type) type conf))
+		      ((and (type-integer? tl) (type-integer? tr)
+			    (inrange-int32? lhs) (inrange-int32? rhs))
+		       (j2s-cast `(%$$II ,(tonumber32 left tlv conf)
+				     ,(tonumber32 right trv conf))
+			  lhs (number type) type conf))
+		      (else
+		       (j2s-cast `(%$$NN ,(tonumber32 left tlv conf)
+				     ,(tonumber32 right trv conf))
+			  lhs (number type) type conf))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remainders32-minus-zero ...                                      */
