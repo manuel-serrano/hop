@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Oct 10 08:11:47 2018 (serrano)                */
+;*    Last change :  Wed Oct 10 15:43:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -52,6 +52,7 @@
 	   (%define-pcache ::int)
 	   (js-make-pcache-table ::int ::obj)
 	   (js-invalidate-pcaches-pmap! ::JsGlobalObject ::obj)
+	   (cmap-find-proto-cmap::JsConstructMap ::JsGlobalObject ::JsConstructMap ::obj ::obj)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-imap ::JsPropertyCache)
 	   (inline js-pcache-emap ::JsPropertyCache)
@@ -306,7 +307,7 @@
 	 "\nprops=" props
 	 "\ntransitions="
 	 (map (lambda (tr)
-		 (format "~a [~a] -> ~a"
+		 (format "~a[~a]->~a"
 		    (if (symbol? (transition-name-or-value tr))
 			(transition-name-or-value tr)
 			(typeof (transition-name-or-value tr)))
@@ -370,9 +371,12 @@
 		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize)
 		   (when (<fx constrsize maxconstrsize)
 		      (set! constrsize (+fx 1 constrsize))
-		      (set! constrmap (instantiate::JsConstructMap
-					 (ctor ctor)
-					 (size constrsize)))))))
+		      (with-access::JsConstructMap constrmap (parent)
+			 (set! constrmap
+			    (instantiate::JsConstructMap
+			       (parent parent)
+			       (ctor ctor)
+			       (size constrsize))))))))
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
@@ -647,6 +651,40 @@
        (transition name flags nextmap)))
 
 ;*---------------------------------------------------------------------*/
+;*    cmap-find-proto-cmap ...                                         */
+;*---------------------------------------------------------------------*/
+(define (cmap-find-proto-cmap %this::JsGlobalObject cmap::JsConstructMap old new)
+   (with-access::JsConstructMap cmap (parent (%cid %id))
+      (let* ((flags (property-flags #t #t #t #f))
+	     (memap (cmap-find-transition parent '__proto__ old flags)))
+	 (if (or memap (eq? parent (js-not-a-cmap)))
+	     (let ((nextmap (cmap-find-transition parent '__proto__ new flags)))
+		(or nextmap
+		    (let ((newmap (duplicate::JsConstructMap cmap
+				     (%id (gencmapid)))))
+		       (link-cmap! parent newmap '__proto__ new flags)
+		       newmap)))
+	     (begin
+;* 		(with-access::JsConstructMap parent (%id)              */
+;* 		   (with-access::JsGlobalObject %this (js-object)      */
+;* 		      (with-access::JsFunction js-object (constrmap)   */
+;* 			 (with-access::JsConstructMap constrmap ((rid %id)) */
+;* 			                                               */
+;* 			    (tprint "find-proto cur=" %cid             */
+;* 			       " parent=" %id " root=" rid))))         */
+;* 		   (js-debug-cmap parent "parent=")                    */
+;* 		   (js-debug-cmap cmap "cmap="))                       */
+		(duplicate::JsConstructMap cmap
+		   (%id (gencmapid))))))))
+	     
+;* 		       (if (eq? parent (js-not-a-cmap))                */
+;* 			   (link-cmap! parent newmap '__proto__ val flags) */
+;* 			   (when (or nextmap (eq? parent (js-not-a-cmap))) */
+;* 			      (tprint "LINKING...")                    */
+;* 			      (link-cmap! parent newmap '__proto__ val flags)) */
+;* 			   newmap)))                                   */
+
+;*---------------------------------------------------------------------*/
 ;*    cmap-find-transition ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (cmap-find-transition omap::JsConstructMap name val flags::int)
@@ -702,6 +740,7 @@
       (let ((newprops (vector-extend props (prop name flags)))
 	    (newmethods (vector-extend methods #unspecified)))
 	 (instantiate::JsConstructMap
+	    (parent omap)
 	    (ctor ctor)
 	    (props newprops)
 	    (methods newmethods)))))
@@ -1931,7 +1970,6 @@
 			     (begin
 				(js-invalidate-cache-method! cmap index)
 				(when cache
-				   
 				   (js-validate-pcaches-pmap! %this)
 				   (js-pcache-next-direct! cache o cmap index))))
 			 (js-object-push/ctor! o index v ctor))

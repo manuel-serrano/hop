@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Sep 18 07:59:07 2018 (serrano)                */
+;*    Last change :  Wed Oct 10 16:44:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -580,7 +580,7 @@
 	    (cond
 	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
 		;; 2
-		(with-access::JsFunction f (constrmap constrsize)
+		(with-access::JsFunction f (constrmap constrsize name)
 		   (unless constrmap
 		      (set! constrmap (instantiate::JsConstructMap (ctor f))))
 		   (js-make-jsobject constrsize constrmap %prototype)))
@@ -924,7 +924,13 @@
 	  (with-access::JsObject o (__proto__ cmap)
 	     (js-invalidate-pcaches-pmap! %this "js-setprototypeof")
 	     (unless (eq? cmap (js-not-a-cmap))
-		(set! cmap (duplicate::JsConstructMap cmap (%id (gencmapid)))))
+		(with-access::JsConstructMap cmap (parent single)
+		   (if single
+		       (set! cmap
+			  (duplicate::JsConstructMap cmap
+			     (%id (gencmapid))))
+		       (set! cmap
+			  (cmap-find-proto-cmap %this cmap __proto__ v)))))
 	     (set! __proto__ v)))))
 
 ;*---------------------------------------------------------------------*/

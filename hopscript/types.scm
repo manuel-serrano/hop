@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Oct  8 14:13:42 2018 (serrano)                */
+;*    Last change :  Wed Oct 10 16:14:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -110,7 +110,8 @@
 	      (single::bool read-only (default #f))
 	      (vlen::long (default 0))
 	      (vtable::vector (default '#()))
-	      (vcache::obj (default #f)))
+	      (vcache::obj (default #f))
+	      (parent::obj (default (js-not-a-cmap))))
 	   
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
@@ -861,6 +862,7 @@
 ;*---------------------------------------------------------------------*/
 (define *js-not-a-cmap*
    (instantiate::JsConstructMap
+      (parent #f)
       (%id 0)))
 
 ;*---------------------------------------------------------------------*/
