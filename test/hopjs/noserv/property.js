@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Wed Jun 20 16:42:10 2018 (serrano)                */
+/*    Last change :  Thu Oct 11 08:14:21 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
@@ -304,6 +304,13 @@ p.__proto__ = i;
 
 eq( i.xxx, 19, "p.xxx " + i.xxx + "/19" );
 eq( p.xxx, 18, "p.xxx " + p.xxx + "/18" );
+
+var i2 = { get xxx() { return 19 }, set xxx( v ) {} };
+p2 = { __proto__: i, get xxx() { return 18 }, set xxx( v ) {} };
+p2.__proto__ = i2;
+
+eq( i2.xxx, 19, "p.xxx " + i2.xxx + "/19" );
+eq( p2.xxx, 18, "p.xxx " + p2.xxx + "/18" );
 
 var pxxx = GETX( p );
 eq( pxxx, 18, "p.xxx " + pxxx + "/18" );

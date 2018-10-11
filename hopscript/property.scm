@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Oct 10 15:43:28 2018 (serrano)                */
+;*    Last change :  Thu Oct 11 07:45:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -52,7 +52,7 @@
 	   (%define-pcache ::int)
 	   (js-make-pcache-table ::int ::obj)
 	   (js-invalidate-pcaches-pmap! ::JsGlobalObject ::obj)
-	   (cmap-find-proto-cmap::JsConstructMap ::JsGlobalObject ::JsConstructMap ::obj ::obj)
+	   (cmap-next-proto-cmap::JsConstructMap ::JsGlobalObject ::JsConstructMap ::obj ::obj)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-imap ::JsPropertyCache)
 	   (inline js-pcache-emap ::JsPropertyCache)
@@ -651,20 +651,21 @@
        (transition name flags nextmap)))
 
 ;*---------------------------------------------------------------------*/
-;*    cmap-find-proto-cmap ...                                         */
+;*    cmap-next-proto-cmap ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (cmap-find-proto-cmap %this::JsGlobalObject cmap::JsConstructMap old new)
+(define (cmap-next-proto-cmap %this::JsGlobalObject cmap::JsConstructMap old new)
    (with-access::JsConstructMap cmap (parent (%cid %id))
-      (let* ((flags (property-flags #t #t #t #f))
-	     (memap (cmap-find-transition parent '__proto__ old flags)))
-	 (if (or memap (eq? parent (js-not-a-cmap)))
-	     (let ((nextmap (cmap-find-transition parent '__proto__ new flags)))
-		(or nextmap
-		    (let ((newmap (duplicate::JsConstructMap cmap
-				     (%id (gencmapid)))))
-		       (link-cmap! parent newmap '__proto__ new flags)
-		       newmap)))
-	     (begin
+      (let ((flags (property-flags #t #t #t #f)))
+	 ;; 1- try to find a transition from the current cmap
+	 (let ((nextmap (cmap-find-transition cmap '__proto__ new flags)))
+	    (or nextmap
+		;; 2- create a new plain cmap connected to its parent
+		;; via a regular link
+		(let ((newmap (duplicate::JsConstructMap cmap
+				 (%id (gencmapid)))))
+		   (link-cmap! cmap newmap '__proto__ new flags)
+		   newmap))))))
+		
 ;* 		(with-access::JsConstructMap parent (%id)              */
 ;* 		   (with-access::JsGlobalObject %this (js-object)      */
 ;* 		      (with-access::JsFunction js-object (constrmap)   */
@@ -674,8 +675,8 @@
 ;* 			       " parent=" %id " root=" rid))))         */
 ;* 		   (js-debug-cmap parent "parent=")                    */
 ;* 		   (js-debug-cmap cmap "cmap="))                       */
-		(duplicate::JsConstructMap cmap
-		   (%id (gencmapid))))))))
+;* 		(duplicate::JsConstructMap cmap                        */
+;* 		   (%id (gencmapid))))))))                             */
 	     
 ;* 		       (if (eq? parent (js-not-a-cmap))                */
 ;* 			   (link-cmap! parent newmap '__proto__ val flags) */
