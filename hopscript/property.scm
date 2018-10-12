@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Oct 11 07:45:27 2018 (serrano)                */
+;*    Last change :  Fri Oct 12 07:43:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -371,12 +371,10 @@
 		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize)
 		   (when (<fx constrsize maxconstrsize)
 		      (set! constrsize (+fx 1 constrsize))
-		      (with-access::JsConstructMap constrmap (parent)
-			 (set! constrmap
-			    (instantiate::JsConstructMap
-			       (parent parent)
-			       (ctor ctor)
-			       (size constrsize))))))))
+		      (set! constrmap
+			 (instantiate::JsConstructMap
+			    (ctor ctor)
+			    (size constrsize)))))))
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
@@ -741,7 +739,6 @@
       (let ((newprops (vector-extend props (prop name flags)))
 	    (newmethods (vector-extend methods #unspecified)))
 	 (instantiate::JsConstructMap
-	    (parent omap)
 	    (ctor ctor)
 	    (props newprops)
 	    (methods newmethods)))))

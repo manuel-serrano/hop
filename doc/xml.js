@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Sun Oct  7 16:25:22 2018 (serrano)                */
+/*    Last change :  Fri Oct 12 11:26:09 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -265,7 +265,7 @@ function idxEntry( e, idx = undefined, arr = undefined ) {
       const { index, sep } = minIndexOf( e.proto, "[", "{", "(" );
       const title = e.proto + "..." + e.chapter;
       let lbl = index ? e.proto.substring( 0, index ) : e.proto;
-      const i = lbl.indexOf( "." );
+      const i = lbl.lastIndexOf( "." );
       const { index: cindex, sep: csep } = minIndexOf( e.proto, "(", "{" );
 
       switch( csep ) {
@@ -281,6 +281,13 @@ function idxEntry( e, idx = undefined, arr = undefined ) {
 	   </td>
 	 </tr>;
       } else {
+	 if( lbl.indexOf( "&lt;" ) === 0 && lbl.lastIndexOf( "&gt;" ) === -1 ) {
+	    if( lbl.charAt( lbl.length - 1 ) === " " ) {
+	       lbl = lbl.substring( 0, lbl.length - 1 ) + "&gt;";
+	    } else {
+	       lbl += "&gt;";
+	    }
+	 }
 	 return <tr>
 	   <td/>
 	   <td class="idx-entry" title=${title}>

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Oct 10 17:55:34 2018 (serrano)                */
+;*    Last change :  Fri Oct 12 07:43:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -432,7 +432,6 @@
 			(cmap (if (and shared-cmap (isa? prototype JsObject))
 				  cmap
 				  (duplicate::JsConstructMap cmap
-				     (parent (js-not-a-cmap))
 				     (%id (gencmapid)))))
 			(%prototype (or proto
 					(with-access::JsObject %this (__proto__)
