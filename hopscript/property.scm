@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Oct 12 07:43:16 2018 (serrano)                */
+;*    Last change :  Fri Oct 12 19:13:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -567,14 +567,12 @@
 (define (js-pcache-update-direct! pcache::JsPropertyCache i o::JsObject inlp::bool)
    [assert (i) (>=fx i 0)]
    (with-access::JsObject o ((omap cmap))
-      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
-	 (if (and (js-object-inline-next-element? o i) inlp)
-	     (begin
-		(set! imap omap)
-		(set! cmap omap))
-	     (begin
-		(set! imap #t)
-		(set! cmap omap)))
+      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index iindex)
+	 (when (and (js-object-inline-next-element? o i) inlp)
+	    (set! iindex i)
+	    (set! imap omap))
+;* 	     (set! imap #t))                                           */
+	 (set! cmap omap)
 	 (set! pmap #t)
 	 (set! emap #t)
 	 (set! amap #t)
@@ -607,10 +605,11 @@
 (define (js-pcache-next-direct! pcache::JsPropertyCache o::JsObject nextmap i)
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
-	 (with-access::JsPropertyCache pcache (imap pmap amap cmap emap index owner)
+	 (with-access::JsPropertyCache pcache (imap pmap amap cmap emap index owner iindex)
 	    (if (js-object-inline-next-element? o i)
 		(begin
 		   (set! imap nextmap)
+		   (set! iindex i)
 		   (set! cmap nextmap)
 		   (set! emap omap))
 		(begin

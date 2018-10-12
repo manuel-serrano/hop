@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Oct  8 14:12:40 2018 (serrano)                */
+;*    Last change :  Fri Oct 12 19:20:08 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -207,6 +207,23 @@
       e))
 
 ;*---------------------------------------------------------------------*/
+;*    js-pcache-iindex-expander ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-iindex-expander x e)
+   (e (match-case x
+	 ((js-pcache-iindex (and ?c (js-pcache-ref %pcache ?idx)))
+	  (cond-expand
+	     ((and bigloo-c (not hopjs-worker-slave))
+	      `(free-pragma::long "(__bgl_pcache[ $1 ].BgL_iindexz00)" ,idx))
+	     (else
+	      `(with-access::JsPropertyCache ,c (iindex) iindex))))
+	 ((js-pcache-iindex ?c)
+	  `(with-access::JsPropertyCache ,c (iindex) iindex))
+	 (else
+	  (error "js-pcache-iindex" "bad syntax" x)))
+      e))
+
+;*---------------------------------------------------------------------*/
 ;*    js-pcache-index-expander ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-index-expander x e)
@@ -321,7 +338,7 @@
 		`(,(cache-miss-fun prop)
 		  ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs))
 	       ((eq? cs 'imap)
-		`(let ((idx (js-pcache-index ,cache)))
+		`(let ((idx (js-pcache-iindex ,cache)))
 		    (js-profile-log-cache ,cache :imap #t)
 		    (js-profile-log-index idx)
 		    (js-object-inline-ref ,obj idx)))
@@ -523,7 +540,7 @@
 		       ,obj ,prop ,tmp ,throw ,%this
 		       ,cache ,loc ',cspecs))
 		    ((eq? cs 'imap)
-		     `(let ((idx (js-pcache-index ,cache)))
+		     `(let ((idx (js-pcache-iindex ,cache)))
 			 (js-profile-log-cache ,cache :imap #t)
 			 (js-profile-log-index idx)
 			 (js-object-inline-set! ,obj idx ,tmp)
