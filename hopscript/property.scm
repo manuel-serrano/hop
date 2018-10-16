@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Oct 12 19:13:19 2018 (serrano)                */
+;*    Last change :  Tue Oct 16 16:43:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3111,8 +3111,14 @@
 				      (set! function #f)
 				      (set! method (method->procedure f))))
 				  ((isa? f JsFunction)
-				   (with-access::JsFunction f (len method)
+				   (with-access::JsFunction f (len method arity)
 				      (cond
+					 ((<fx arity 0)
+					  ;; varargs function, for now never cache...
+					  (with-access::JsPropertyCache ccache (pmap emap cmap)
+					     (set! pmap #t)
+					     (set! emap #t)
+					     (set! cmap #t)))
 					 ((=fx (procedure-arity method) (+fx 1 (length args)))
 					  (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
 					     ;; correct arity, put in cache
