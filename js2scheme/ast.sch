@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/ast.sch       */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Mon Sep 17 13:52:53 2018 (serrano)                */
+;*    Last change :  Tue Oct 16 09:33:04 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -509,6 +509,13 @@
 (define-macro (J2SAssig lhs rhs)
    `(instantiate::J2SAssig
        (loc loc)
+       (lhs ,lhs)
+       (rhs ,rhs)))
+
+(define-macro (J2SAssig/type type lhs rhs)
+   `(instantiate::J2SAssig
+       (loc loc)
+       (type ,type)
        (lhs ,lhs)
        (rhs ,rhs)))
 

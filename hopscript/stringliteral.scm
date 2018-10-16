@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Oct  8 19:37:58 2018 (serrano)                */
+;*    Last change :  Tue Oct 16 11:15:43 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -50,6 +50,8 @@
 	   (inline js-jsstring>?::bool ::obj ::obj)
 	   (inline js-jsstring>=?::bool ::obj ::obj)
 	   (js-string->number::obj ::bstring ::JsGlobalObject)
+	   (js-string-parseint ::bstring ::int32 ::bool)
+	   (js-string-parsefloat ::bstring ::bool)
 	   (js-integer->jsstring ::long)
 	   (js-string->bool::bool ::bstring)
 	   (js-jsstring->bool::bool ::obj)
@@ -697,11 +699,149 @@
 	 ((string-null? str)
 	  0)
 	 ((or (string-prefix? "0x" str) (string-prefix? "0X" str))
-	  (js-parseint str 16 #t %this))
+	  (js-string-parseint str #s32:16 #t))
 	 ((string-index str "eE.")
-	  (js-parsefloat str #t %this))
+	  (js-string-parsefloat str #t))
 	 (else
-	  (js-parseint str 10 #t %this)))))
+	  (js-string-parseint str #s32:10 #t)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-string-parseint ...                                           */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*---------------------------------------------------------------------*/
+(define (js-string-parseint s::bstring r::int32 strict-syntax::bool)
+   
+   (define (integer v s r)
+      (if (and (fixnum? v) (=fx v 0))
+	  (cond
+	     ((string-prefix? "0" s) v)
+	     ((string-prefix? "+0" s) v)
+	     ((string-prefix? "-0" s) -0.0)
+	     ((string=? s "+inf.0") +nan.0)
+	     ((string=? s "-inf.0") +nan.0)
+	     ((string=? s "+nan.0") +nan.0)
+	     (else +nan.0))
+	  v))
+   
+   (define (shrink n)
+      (let ((r (+ n 0)))
+	 (if (fixnum? r)
+	     r
+	     (bignum->flonum r))))
+
+   (define radix-charset
+      '#(unspecified
+	 #unspecified
+	 "01"
+	 "012"
+	 "0123"
+	 "01234"
+	 "012345"
+	 "0123456"
+	 "01234567"
+	 "012345678"
+	 "0123456789"
+	 "0123456789aA"
+	 "0123456789aAbB"
+	 "0123456789aAbBcC"
+	 "0123456789aAbBcCdD"
+	 "0123456789aAbBcCdDeE"
+	 "0123456789aAbBcCdDeEfF"
+	 "0123456789aAbBcCdDeEfFgG"
+	 "0123456789aAbBcCdDeEfFgGhH"
+	 "0123456789aAbBcCdDeEfFgGhHiI"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJ"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkK"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlL"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmM"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnN"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoO"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpP"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQ"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrR"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsS"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStT"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuU"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvV"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwW"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxX"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyY"
+	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ"))
+	 
+   (define (string->bignum-safe s r)
+      (let ((v (string->bignum s r)))
+	 (if (=bx v #z0)
+	     (if strict-syntax
+		 (let ((i (string-skip s (vector-ref radix-charset r))))
+		    (if i
+			+nan.0
+			0))
+		 (let ((i (string-skip s (vector-ref radix-charset r))))
+		    (if i
+			(shrink (string->bignum (substring s 0 i) r))
+			0)))
+	     (shrink v))))
+   
+   (define (str->integer s r)
+      (if strict-syntax
+	  (or (string->number s r) +nan.0)
+	  (string->integer s r)))
+
+   (let ((l (string-length s)))
+      (cond
+	 ((and (not (zeros32? r))
+	       (or (<s32 r (fixnum->int32 2))
+		   (>s32 r (fixnum->int32 36))))
+	  +nan.0)
+	 ((and (or (zeros32? r) (=s32 r (fixnum->int32 16)))
+	       (>=fx (string-length s) 2)
+	       (char=? (string-ref s 0) #\0)
+	       (or (char=? (string-ref s 1) #\x)
+		   (char=? (string-ref s 1) #\X)))
+	  (let ((s (substring s 2)))
+	     (if (<=fx l 9)
+		 (integer (str->integer s 16) s 16)
+		 (integer (string->bignum-safe s 16) s 16))))
+	 ((zeros32? r)
+	  (if (<=fx l 8)
+	      (integer (str->integer s 10) s 10)
+	      (integer (string->bignum-safe s 10) s 10)))
+	 (else
+	  (let ((r (int32->fixnum r)))
+	     (if (<=fx l (if (<=fx r 10) 8 (if (<=fx r 16) 7 5)))
+		 (integer (str->integer s r) s 10)
+		 (integer (string->bignum-safe s r) s r)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-parsefloat ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3     */
+;*---------------------------------------------------------------------*/
+(define (js-string-parsefloat s::bstring strict::bool)
+   (let ((l (string-length s)))
+      (cond
+	 ((=fx l 0)
+	  +nan.0)
+	 ((char=? (string-ref s 0) #\E)
+	  +nan.0)
+	 ((and (>=fx l 2)
+	       (char=? (string-ref s 0) #\0)
+	       (or (char=? (string-ref s 1) #\x) (char=? (string-ref s 1) #\X)))
+	  0.)
+	 (else
+	  (let ((n (string->real s)))
+	     (cond
+		((=fl n 0.)
+		 (cond
+		    ((pregexp-match "^(?:[-+]?)(?:0+.?0*|.?0+)$" s) 0.)
+		    (strict +nan.0)
+		    ((pregexp-match "(?:[-+]?)(?:0+.?0*|.?0+)" s) 0.)
+		    (else +nan.0)))
+		((= n +inf.0)
+		 (if (string=? s "infinity") +nan.0 n))
+		(else
+		 n)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-tonumber ...                                         */

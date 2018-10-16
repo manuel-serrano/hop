@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Tue Oct  9 10:27:30 2018 (serrano)                */
+;*    Last change :  Tue Oct 16 09:10:27 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -525,6 +525,8 @@
 	  (J2SArray))
 	 ((string)
 	  (J2SString ""))
+	 ((number)
+	  (J2SNumber/type type 0))
 	 (else
 	  (J2SUndefined))))
 
@@ -548,13 +550,17 @@
 				  decls))
 		       (assig+ (map (lambda (d)
 				       (with-access::J2SDeclInit d (vtype loc val)
-					  (J2SAssig (J2SRef d) val)))
+					  (J2SAssig/type vtype
+					     (J2SRef d :type vtype) val)))
 				  decls))
 		       (assig- (map (lambda (a)
 				       (with-access::J2SAssig a (lhs rhs)
-					  (duplicate::J2SAssig a
-					     (lhs (nopce lhs))
-					     (rhs (nopce rhs)))))
+					  ;; deep copy nrhs if it contains
+					  ;; assignments itself
+					  (let ((nrhs (j2s-alpha rhs '() '())))
+					     (duplicate::J2SAssig a
+						(lhs (nopce lhs))
+						(rhs (nopce nrhs))))))
 				  assig+)))
 		   (J2SLetBlock ndecls
 		      (J2SIf pretest

@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Oct  8 14:06:25 2018 (serrano)                */
+;*    Last change :  Tue Oct 16 07:26:56 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1821,21 +1821,9 @@ usage: (js-return)  -- [RET]"
 ;*    hopjs-mode-line-format ...                                       */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-mode-line-format ()
-  (cons (doc-mode-line) mode-line-format))
-
-;*   (let* ((l mode-line-format)                                       */
-;* 	 (mlf (cons 'head '()))                                        */
-;* 	 (prev mlf))                                                   */
-;*     (while (consp l)                                                */
-;*       (if (not (cdr l))                                             */
-;* 	  (progn                                                       */
-;* 	    (rplacd prev (list "-" (doc-mode-line) "-" (car l)))       */
-;* 	    (setq l '()))                                              */
-;* 	(progn                                                         */
-;* 	  (rplacd prev (cons (car l) '()))                             */
-;* 	  (setq prev (cdr prev))                                       */
-;* 	  (setq l (cdr l)))))                                          */
-;*     (setq mode-line-format (cdr mlf))))                             */
+  (cons (car mode-line-format)
+	(cons (cadr mode-line-format)
+	      (cons "-" (cons (hopjs-doc-mode-line) (cddr mode-line-format))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init                                                             */

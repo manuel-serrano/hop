@@ -182,7 +182,8 @@ hop.HTTPResponseString( JSON.stringify( obj ), { contentType: 'application/json'
 [:@glyphicon glyphicon-tag function]
 
 This class is used to respond files to clients. The argument `path` is
-the full path of a existing file.
+the full path of a existing file. The option is an object whose fields can
+be:
 
   * `contentType`: the `content-type` of the response.
   * `charset`: the charset.

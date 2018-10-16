@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Oct 11 07:45:28 2018 (serrano)                */
+;*    Last change :  Tue Oct 16 11:07:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -326,28 +326,19 @@
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 	    
-	    ;; parseInt
-	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2
-	    (define (parseint this string radix)
-	       (js-parseint
-		  (trim-whitespaces+ (js-tostring string %this) :plus #t)
-		  radix #f %this))
-
 	    (js-bind! %this %this 'parseInt
-	       :value (js-make-function %this parseint 2 'parseInt
+	       :value (js-make-function %this
+			 (lambda (this string radix)
+			    (js-parseint string radix %this))
+			 2 'parseInt
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
-	    ;; parseFloat
-	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3
-	    (define (parsefloat this string)
-	       (js-parsefloat
-		  (trim-whitespaces+ (js-tostring string %this) :plus #t)
-		  #f
-		  %this))
-	    
 	    (js-bind! %this %this 'parseFloat
-	       :value (js-make-function %this parsefloat 1 'parseFloat
+	       :value (js-make-function %this
+			 (lambda (this string)
+			    (js-parsefloat string %this))
+			 1 'parseFloat
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
