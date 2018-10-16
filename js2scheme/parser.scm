@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Oct  3 10:16:22 2018 (serrano)                */
+;*    Last change :  Tue Oct 16 15:31:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2537,7 +2537,19 @@
 	       (unwind-protect
 		  (block)
 		  (set! _this othis))))
-	 (lambda () (with-tilde (lambda () (cond-expr #f))))))
+	 (lambda () (with-tilde (lambda () (cond-expr #f))))
+	 (lambda (this)
+	    (let ((othis _this))
+	       (set! _this this)
+	       (unwind-protect
+		  (statement)
+		  (set! _this othis))))
+	 (lambda (this in-for-init? destructuring?)
+	    (let ((othis _this))
+	       (set! _this this)
+	       (unwind-protect
+		  (expression in-for-init? destructuring?)
+		  (set! _this othis))))))
 
    (define (main-parser input-port conf)
       (case (config-get conf :parser #f)

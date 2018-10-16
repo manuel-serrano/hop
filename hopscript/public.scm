@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Oct 16 11:07:11 2018 (serrano)                */
+;*    Last change :  Tue Oct 16 16:15:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1887,7 +1887,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-parseint-string string)
    (js-string-parseint (trim-whitespaces+ (js-jsstring->string string) :plus #t)
-      #s32:10 #f))
+      #s32:0 #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint-any ...                                              */
@@ -1896,7 +1896,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-parseint-any string %this)
    (js-string-parseint (trim-whitespaces+ (js-tostring string %this) :plus #t)
-      #s32:10 #f))
+      #s32:0 #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint-string-uint32 ...                                    */
