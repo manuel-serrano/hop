@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/symbol.scm        */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon Aug 13 18:44:46 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 07:45:50 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -47,11 +47,20 @@
       (with-access::J2SProgram this (nodes loc mode headers decls)
 	 ;; filters out double definitions
 	 (set! nodes (decl-cleanup-duplicate! nodes))
-	 (let* ((hds (append-map (lambda (s) (collect* s)) headers))
+	 (let* ((%this (instantiate::J2SDecl
+			  (loc loc)
+			  (utype 'object)
+			  (vtype 'object)
+			  (id 'this)
+			  (_scmid '%this)))
+		(%dummy (instantiate::J2SDecl
+			   (loc loc)
+			   (id '__%dummy%__)))
+		(hds (append-map (lambda (s) (collect* s)) headers))
 		(vars (append-map (lambda (s) (collect* s)) nodes))
 		(lets (collect-let nodes))
 		(env (append hds vars lets))
-		(genv (list (instantiate::J2SDecl (id '__%dummy%__) (loc loc))))
+		(genv (list %this %dummy))
 		(scope (config-get conf :bind-global '%scope))
 		(vdecls (bind-decls! vars env mode scope '() '() genv conf)))
 	    (when (pair? vars)
@@ -253,7 +262,7 @@
       (with-access::J2SDecl d (id)
 	 (not (find-decl id params))))
 
-   (with-access::J2SFun this (body params loc (fmode mode) params decl name
+   (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
 				ismethodof)
       (let ((id (or name (j2sfun-id this))))
 	 ;; check parameter correctness
@@ -281,6 +290,7 @@
 		(nenv (if (find-decl 'arguments envl)
 			  (append ldecls env1)
 			  (cons arguments (append ldecls env1))))
+		(bdenv (if (isa? thisp J2SDecl) (cons thisp nenv) nenv))
 		(nwenv (cons arguments (append decls params wenv)))
 		(ctx (and ismethodof (or ctx (make-ctx 'proto '__proto__)))))
 	    (for-each (lambda (decl::J2SDecl)
@@ -294,12 +304,12 @@
 			 (loc loc)
 			 (endloc endloc)
 			 (nodes (append
-				   (bind-decls! decls nenv fmode 'inner
+				   (bind-decls! decls bdenv fmode 'inner
 				      withs wenv genv conf)
-				   (list (walk! body nenv fmode
+				   (list (walk! body bdenv fmode
 					    withs nwenv genv
 					    ctx conf)))))))
-		(set! body (walk! body nenv fmode withs nwenv genv ctx conf)))
+		(set! body (walk! body bdenv fmode withs nwenv genv ctx conf)))
 	    (with-access::J2SDeclArguments arguments (usecnt)
 	       (when (>fx usecnt 0)
 		  (with-access::J2SFun this (vararg argumentsp params)
@@ -561,15 +571,27 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SUnresolvedRef env mode withs wenv genv ctx conf)
    (with-access::J2SUnresolvedRef this (id loc)
-      (let ((decl (find-decl id env)))
+      (let ((decl (find-decl (if (eq? id 'super) 'this id) env)))
 	 (cond
 	    ((isa? decl J2SDecl)
-	     ;; mark arguments used to avoid retraversing
-	     ;; the function body
-	     (when (isa? decl J2SDeclArguments)
-		(with-access::J2SDeclArguments decl (usecnt)
-		   (set! usecnt (+fx 1 usecnt))))
-	     (j2sref decl loc withs wenv))
+	     (case id
+		((this)
+		 (instantiate::J2SThis
+		    (loc loc)
+		    (decl decl)))
+		((super)
+		 (resolve!
+		    (instantiate::J2SSuper
+		       (loc loc)
+		       (decl decl))
+		    env mode withs wenv genv ctx conf))
+		(else
+		 ;; mark arguments used to avoid retraversing
+		 ;; the function body
+		 (when (isa? decl J2SDeclArguments)
+		    (with-access::J2SDeclArguments decl (usecnt)
+		       (set! usecnt (+fx 1 usecnt))))
+		 (j2sref decl loc withs wenv))))
 	    ((pair? withs)
 	     (instantiate::J2SWithRef
 		(loc loc)
@@ -579,10 +601,14 @@
 	    ((find-decl id genv)
 	     =>
 	     (lambda (decl)
-		(instantiate::J2SGlobalRef
-		   (id id)
-		   (loc loc)
-		   (decl decl))))
+		(if (eq? id 'this)
+		    (instantiate::J2SThis
+		       (loc loc)
+		       (decl decl))
+		    (instantiate::J2SGlobalRef
+		       (id id)
+		       (loc loc)
+		       (decl decl)))))
 	    (else
 	     (let ((decl (instantiate::J2SDecl
 			    (ronly #t)

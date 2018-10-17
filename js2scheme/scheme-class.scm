@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sun Sep  9 10:02:05 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 08:56:27 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -116,9 +116,7 @@
 	  (let ((superid (gensym 'super)))
 	     `(let* ((,superid ,(j2s-scheme super mode return conf))
 		     (%super (js-get ,superid 'prototype %this))
-;* 		     (%superctor (js-get %super 'constructor %this))   */
-		     (%superctor ,superid)
-		     )
+		     (%superctor ,superid))
 		 ,(proc superid))))))
    
    (define (make-class name super els constructor length ctorsz src loc)
