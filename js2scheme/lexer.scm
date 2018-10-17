@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Oct  3 10:24:51 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 11:51:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -232,12 +232,10 @@
        ;; integer constant
        (let* ((len (the-length))
 	      (val (cond
-		      ((>=fx len 21)
-		       (string->real (the-string)))
-		      ((>=fx len 18)
-		       (string->real (the-string)))
-		      (else
-		       (js-string->number (the-string))))))
+		      ((<=fx len 8) (the-fixnum))
+		      ((>=fx len 21) (the-flonum))
+		      ((>=fx len 18) (the-flonum))
+		      (else (js-string->number (the-string))))))
 	  (token 'NUMBER val len)))
       ((: (+ #\0) (in ("17")) (* (in ("07"))))
        ;; integer constant
