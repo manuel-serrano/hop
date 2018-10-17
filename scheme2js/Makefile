@@ -85,6 +85,7 @@ POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile \
 build: runtime-build
 	$(MAKE) $(BACKEND)
 
+#* native: o heap-c lib-c                                              */
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 

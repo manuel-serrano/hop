@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Oct  9 08:33:55 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 10:06:47 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -39,6 +39,7 @@
 ;*    builtin-method ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-struct builtin-method jsname met ttype args %this)
+(define-struct builtin-function id scmid args %this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-builtin-methods ...                                          */
@@ -103,6 +104,17 @@
 	("call" ,j2s-call function (any any) #f))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-builtin-functions ...                                        */
+;*---------------------------------------------------------------------*/
+(define j2s-builtin-functions
+   (map (lambda (e)
+	   (apply builtin-function e))
+      `((parseInt js-parseint-string-uint32 (string uint32) #f)
+	(parseInt js-parseint-string (string) #f)
+	(parseInt js-parseint-any (any) %this)
+	(parseInt js-parseint (any any) %this))))
+      
+;*---------------------------------------------------------------------*/
 ;*    j2s-call ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-call obj args mode return conf)
@@ -163,14 +175,14 @@
 ;*    j2s-scheme ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCall mode return conf)
-
+   
    (define (call-profile profid call)
       (if (and (config-get conf :profile-call #f) (>=fx profid 0))
 	  `(begin
 	      (js-profile-log-call %call-log ,profid)
 	      ,call)
 	  call))
-
+   
    (define (funcall-profile profid fun call)
       `(begin
 	  (js-profile-log-funcall %call-log ,profid ,fun %source)
@@ -192,6 +204,12 @@
 			      %o:item)
 			   (js-array-push ,scmobj ,scmarg %this)))))
 	     `(js-array-push ,scmobj ,scmarg %this))))
+   
+   (define (j2s-type-sans-cast expr)
+      (if (isa? expr J2SCast)
+	  (with-access::J2SCast expr (expr)
+	     (j2s-type-sans-cast expr))
+	  (j2s-vtype expr)))
 
    (define (find-builtin-method obj field args)
       
@@ -204,12 +222,6 @@
 	    ((isa? obj J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef obj (id)
 		(eq? ty id)))))
-      
-      (define (j2s-type-sans-cast expr)
-	 (if (isa? expr J2SCast)
-	     (with-access::J2SCast expr (expr)
-		(j2s-type-sans-cast expr))
-	     (j2s-vtype expr)))
       
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
@@ -237,7 +249,23 @@
 					      (loop (cdr args)
 						 (cdr params)))))))))))
 		  j2s-builtin-methods)))))
-
+   
+   (define (find-builtin-function id args)
+      (find (lambda (f)
+	       (when (eq? (builtin-function-id f) id)
+		  (let loop ((args args)
+			     (params (builtin-function-args f)))
+		     (cond
+			((null? args)
+			 (null? params))
+			((null? params)
+			 #f)
+			(else
+			 (let ((tya (j2s-type-sans-cast (car args)))
+			       (tyf (car params)))
+			    (when (or (eq? tyf 'any) (eq? tyf tya))
+			       (loop (cdr args) (cdr params)))))))))
+	 j2s-builtin-functions))
 
    (define (call-builtin-method obj::J2SExpr field::J2SExpr args)
       (let ((m (find-builtin-method obj field args)))
@@ -345,45 +373,61 @@
 			(else
 			 #f))))))))
    
-   (define (call-method ccache ccspecs fun::J2SAccess args)
-      (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
-	 (let loop ((obj obj))
-	    (cond
-	       ((call-builtin-method obj field args)
-		=>
-		(lambda (sexp) sexp))
-	       ((isa? obj J2SRef)
-		(call-ref-method obj ccache acache ccspecs fun obj args))
-	       ((isa? obj J2SGlobalRef)
-		(or (call-globalref-method obj ccache acache fun obj args)
-		    (let* ((tmp (gensym '%obj))
-			   (fun (J2SAccess/cache (J2SHopRef tmp) field
-				   acache acspecs)))
-		       `(let ((,tmp ,(j2s-scheme obj mode return conf)))
-			   ,(call-ref-method obj ccache acache
-			       ccspecs fun (J2SHopRef tmp) args)))))
-	       ((isa? obj J2SParen)
-		(with-access::J2SParen obj (expr)
-		   (loop expr)))
-	       ((and (isa? obj J2SNew)
-		     (call-new-method obj field args mode return conf))
-		=>
-		(lambda (sexp) sexp))
-	       (else
-		(let* ((tmp (gensym 'obj)))
-		   `(let ((,tmp ,(box (j2s-scheme obj mode return conf)
-				    (j2s-vtype obj) conf)))
-		       ,(call-ref-method obj
-			   ccache acache ccspecs
-			   (duplicate::J2SAccess fun
-			      (obj (instantiate::J2SPragma
-				      (loc loc)
-				      (expr tmp))))
-			   (instantiate::J2SHopRef
-			      (type 'any)
-			      (loc loc)
-			      (id tmp))
-			   args))))))))
+   (define (call-method this ccache ccspecs fun::J2SAccess args)
+      (with-access::J2SCall this (profid)
+	 (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
+	    (let loop ((obj obj))
+	       (cond
+		  ((call-builtin-method obj field args)
+		   =>
+		   (lambda (sexp) sexp))
+		  ((isa? obj J2SGlobalRef)
+		   (or (call-globalref-method obj ccache acache fun obj args)
+		       (let* ((tmp (gensym '%obj))
+			      (fun (J2SAccess/cache (J2SHopRef tmp) field
+				      acache acspecs)))
+			  `(let ((,tmp ,(j2s-scheme obj mode return conf)))
+			      ,(call-ref-method obj ccache acache
+				  ccspecs fun (J2SHopRef tmp) args)))))
+		  ((and (config-get conf :profile-call #f) (>=fx profid 0))
+		   (with-access::J2SAccess fun (obj loc)
+		      (if (isa? obj J2SSuper)
+			  (let* ((self (j2s-scheme obj mode return conf))
+				 (s (gensym '%obj-profile))
+				 (f (duplicate::J2SAccess fun
+				       (obj (J2SHopRef s)))))
+			     `(let ((,s ,self))
+				 ,(call-unknown-function f (list 'this) args)))
+			  (let* ((self (j2s-scheme obj mode return conf))
+				 (s (gensym '%obj-profile))
+				 (f (duplicate::J2SAccess fun
+				       (obj (J2SHopRef s)))))
+			     `(let ((,s ,self))
+				 ,(call-unknown-function f (list s) args))))))
+		  ((isa? obj J2SRef)
+		   (call-ref-method obj ccache acache ccspecs fun obj args))
+		  ((isa? obj J2SParen)
+		   (with-access::J2SParen obj (expr)
+		      (loop expr)))
+		  ((and (isa? obj J2SNew)
+			(call-new-method obj field args mode return conf))
+		   =>
+		   (lambda (sexp) sexp))
+		  (else
+		   (let* ((tmp (gensym 'obj)))
+		      `(let ((,tmp ,(box (j2s-scheme obj mode return conf)
+				       (j2s-vtype obj) conf)))
+			  ,(call-ref-method obj
+			      ccache acache ccspecs
+			      (duplicate::J2SAccess fun
+				 (obj (instantiate::J2SPragma
+					 (loc loc)
+					 (expr tmp))))
+			      (instantiate::J2SHopRef
+				 (type 'any)
+				 (loc loc)
+				 (id tmp))
+			      args)))))))))
    
    (define (call-hop-function fun::J2SHopRef thisarg args)
       `(,(j2s-scheme fun mode return conf)
@@ -416,13 +460,13 @@
 
    (define (call-fix-function fun::J2SFun thisarg::pair-nil f %gen args)
       ;; call a function that accepts a fix number of arguments
-      (with-access::J2SFun fun (params vararg thisp)
+      (with-access::J2SFun fun (params vararg thisp id)
 	 (let ((lenf (length params))
 	       (lena (length args)))
 	    (cond
 	       ((=fx lenf lena)
 		;; matching arity
-ft		`(,f ,@%gen
+		`(,f ,@%gen
 		    ,@(j2s-self thisarg)
 		    ,@(map (lambda (a p)
 			      (with-access::J2SDecl p (utype)
@@ -437,7 +481,8 @@ ft		`(,f ,@%gen
 					   (integer->string i))))
 				(iota lena))))
 		   `(let* ,(map (lambda (t a)
-				   `(,t ,(j2s-scheme a mode return conf))) temps args)
+				   `(,t ,(j2s-scheme a mode return conf)))
+			      temps args)
 		       (,f ,@%gen ,@(j2s-self thisarg)
 			  ,@(take temps lenf)))))
 	       (else
@@ -578,22 +623,7 @@ ft		`(,f ,@%gen
 	 (epairify loc
 	    (cond
 	       ((isa? fun J2SAccess)
-		(if (and (config-get conf :profile-call #f) (>=fx profid 0))
-		    (with-access::J2SAccess fun (obj loc)
-		       (if (isa? obj J2SSuper)
-			   (let* ((self (j2s-scheme obj mode return conf))
-				  (s (gensym '%obj-profile))
-				  (f (duplicate::J2SAccess fun
-					(obj (J2SHopRef s)))))
-			      `(let ((,s ,self))
-				  ,(call-unknown-function f (list 'this) args)))
-			   (let* ((self (j2s-scheme obj mode return conf))
-				  (s (gensym '%obj-profile))
-				  (f (duplicate::J2SAccess fun
-					(obj (J2SHopRef s)))))
-			      `(let ((,s ,self))
-				  ,(call-unknown-function f (list s) args)))))
-		    (call-method cache cspecs fun args)))
+		(call-method this cache cspecs fun args))
 	       ((isa? fun J2SParen)
 		(with-access::J2SParen fun (expr)
 		   (loop expr)))
@@ -606,6 +636,24 @@ ft		`(,f ,@%gen
 		   (jsfun->lambda fun mode return conf (j2s-fun-prototype fun) #f)
 		   '()
 		   args))
+	       ((isa? fun J2SGlobalRef)
+		(with-access::J2SGlobalRef fun (decl)
+		   (with-access::J2SDecl decl (id ronly)
+		      (cond
+			 ((not ronly)
+			  (call-unresolved-function fun thisarg args))
+			 ((find-builtin-function id args)
+			  =>
+			  (lambda (f)
+			     `(,(builtin-function-scmid f)
+				 ,@(map (lambda (arg)
+					   (j2s-scheme arg mode return conf))
+				      args)
+				 ,@(if (builtin-function-%this f)
+				       '(%this)
+				       '()))))
+			 (else
+			  (call-unresolved-function fun thisarg args))))))
 	       ((isa? fun J2SUnresolvedRef)
 		(call-unresolved-function fun thisarg args))
 	       ((isa? fun J2SWithRef)

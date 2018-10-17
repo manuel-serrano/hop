@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Oct 16 07:26:56 2018 (serrano)                */
+;*    Last change :  Tue Oct 16 16:11:37 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1786,9 +1786,9 @@ usage: (js-return)  -- [RET]"
     (hopjs-browse-url (format "file://%s/%s" hopjs-doc-dir hopjs-doc-url)))))
 
 ;*---------------------------------------------------------------------*/
-;*    doc-mode-line ...                                                */
+;*    hopjs-doc-mode-line ...                                          */
 ;*---------------------------------------------------------------------*/
-(defun doc-mode-line ()
+(defun hopjs-doc-mode-line ()
   (let ((keymap (make-sparse-keymap)))
     
     (define-key keymap [mode-line mouse-1]

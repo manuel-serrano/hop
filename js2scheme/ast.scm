@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Oct 17 17:41:08 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 18:17:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -108,7 +108,9 @@
 	      (hidden-class::bool read-only (default #t)))
 
 	   (final-class J2SDeclImport::J2SDecl
-	      (alias read-only (default #f) (info '("notraverse"))))
+	      (alias read-only (default #f) (info '("notraverse")))
+	      (linkindex::long read-only (info '("notraverse")))
+	      (import::J2SImport read-only (info '("notraverse"))))
 
 	   (abstract-class J2SExpr::J2SNode
 	      (type::symbol (default 'unknown) (info '("notraverse")))
@@ -455,6 +457,7 @@
 
 	   (final-class J2SImport::J2SStmt
 	      (path::bstring read-only)
+	      (names::obj (default #f))
 	      (respath (default #f)))
 
 	   (generic walk0 n::J2SNode p::procedure)

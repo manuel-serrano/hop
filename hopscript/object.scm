@@ -326,28 +326,19 @@
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 	    
-	    ;; parseInt
-	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2
-	    (define (parseint this string radix)
-	       (js-parseint
-		  (trim-whitespaces+ (js-tostring string %this) :plus #t)
-		  radix #f %this))
-
 	    (js-bind! %this %this 'parseInt
-	       :value (js-make-function %this parseint 2 'parseInt
+	       :value (js-make-function %this
+			 (lambda (this string radix)
+			    (js-parseint string radix %this))
+			 2 'parseInt
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
-	    ;; parseFloat
-	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3
-	    (define (parsefloat this string)
-	       (js-parsefloat
-		  (trim-whitespaces+ (js-tostring string %this) :plus #t)
-		  #f
-		  %this))
-	    
 	    (js-bind! %this %this 'parseFloat
-	       :value (js-make-function %this parsefloat 1 'parseFloat
+	       :value (js-make-function %this
+			 (lambda (this string)
+			    (js-parsefloat string %this))
+			 1 'parseFloat
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
@@ -1079,9 +1070,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-prototype-hasownproperty this v %this)
    (let* ((p (js-tostring v %this))
-	  (o (js-toobject %this this))
-	  (desc (js-get-own-property o p %this)))
-      (not (eq? desc (js-undefined)))))
+	  (o (js-toobject %this this)))
+      (js-has-own-property o p %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsObject ...                                       */

@@ -1,0 +1,226 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/hop/js2scheme/module.scm                */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
+;*    Last change :  Wed Oct 17 18:39:47 2018 (serrano)                */
+;*    Copyright   :  2018 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    ES6 Module handling                                              */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __js2scheme_module
+
+   (library web)
+   
+   (include "ast.sch")
+   
+   (import __js2scheme_ast
+	   __js2scheme_dump
+	   __js2scheme_compile
+	   __js2scheme_stage
+	   __js2scheme_utils)
+
+   (export j2s-module-stage))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-module-stage ...                                             */
+;*---------------------------------------------------------------------*/
+(define j2s-module-stage
+   (instantiate::J2SStageProc
+      (name "module")
+      (comment "Handle es module export and import clauses")
+      (proc j2s-esmodule)
+      (optional #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-esmodule ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-esmodule this args)
+   (when (isa? this J2SProgram)
+      (esimport this this '() args)
+      (esexport this this (make-cell 0)))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    esimport ::J2SNode ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (esimport this::J2SNode prgm::J2SProgram stack args)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    esimport ::J2SImport ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (esimport this::J2SImport prgm::J2SProgram stack args)
+   
+   (define (find-export prgm::J2SProgram name::vector)
+      (let ((id (vector-ref name 0))
+	    (loc (vector-ref name 2)))
+	 (with-access::J2SProgram prgm (exports path)
+	    (let loop ((exports exports)
+		       (idx 0))
+	       (if (null? exports)
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc "import")
+			 (msg (format "imported binding not exported by module ~s"
+				 path))
+			 (obj id)
+			 (fname (cadr loc))
+			 (location (caddr loc))))
+		   (with-access::J2SDecl (car exports) ((imp id))
+		      (if (eq? id imp)
+			  idx
+			  (loop (cdr exports) (+fx idx 1)))))))))
+   
+   (with-access::J2SProgram prgm ((src path) imports decls)
+      (with-access::J2SImport this (path loc respath names)
+	 (set! respath (resolve-module-file path (dirname src) loc))
+	 (set! imports (cons this imports))
+	 (unless (member respath stack)
+	    (call-with-input-file respath
+	       (lambda (in)
+		  (let ((margin (string-append (config-get args :verbmargin "")
+				   "   ")))
+		     (when (>= (config-get args :verbose 0) 2)
+			(fprint (current-error-port) " " path " [" respath "]"))
+		     (let ((iprgm (j2s-compile in :driver (j2s-export-driver)
+				     :verbmargin margin)))
+			(with-access::J2SProgram iprgm (exports path)
+			   (set! decls
+			      (append (map (lambda (n)
+					      (let ((idx (find-export iprgm n)))
+						 (instantiate::J2SDeclImport
+						    (loc (vector-ref n 2))
+						    (id (vector-ref n 0))
+						    (alias (vector-ref n 1))
+						    (binder 'let)
+						    (writable #f)
+						    (linkindex idx)
+						    (import this))))
+					 names)
+				 decls)))))))))))
+	 
+;*---------------------------------------------------------------------*/
+;*    esexport ::J2SNode ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (esexport this::J2SNode prgm::J2SProgram idx::cell)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    esexport ::J2SProgram ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (esexport this::J2SProgram prgm::J2SProgram idx::cell)
+   (with-access::J2SProgram this (nodes headers decls exports)
+      (for-each (lambda (o) (esexport o this idx)) nodes)
+      (for-each (lambda (o) (esexport o this idx)) decls))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    esexport ::J2SDecl ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (esexport this::J2SDecl prgm::J2SProgram idx::cell)
+   (with-access::J2SDecl this (export)
+      (when (isa? export J2SExport)
+	 (with-access::J2SExport export (index)
+	    (set! index (cell-ref idx))
+	    (with-access::J2SProgram prgm (exports)
+	       (set! exports (cons this exports)))
+	    (cell-set! idx (+fx 1 (cell-ref idx)))))))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-module-file ...                                          */
+;*---------------------------------------------------------------------*/
+(define (resolve-module-file name dir loc)
+   
+   (define (resolve-file x)
+      (cond
+	 ((and (file-exists? x) (not (directory? x)))
+	  (file-name-canonicalize x))
+	 (else
+	  (let loop ((suffixes '(".js" ".hop" ".so" ".json" ".hss" ".css")))
+	     (when (pair? suffixes)
+		(let* ((suffix (car suffixes))
+		       (src (string-append x suffix)))
+		   (if (and (file-exists? src) (not (directory? src)))
+		       (file-name-canonicalize src)
+		       (loop (cdr suffixes)))))))))
+
+   (define (resolve-package pkg dir)
+      (call-with-input-file pkg
+	 (lambda (ip)
+	    (let* ((o (json-parse ip
+			 :array-alloc (lambda ()
+					 (make-cell '()))
+			 :array-set (lambda (a i val)
+				       (cell-set! a (cons val (cell-ref a))))
+			 :array-return (lambda (a i)
+					  (reverse! (cell-ref a)))
+			 :object-alloc (lambda () (make-cell '()))
+			 :object-set (lambda (o p val)
+					(cell-set! o
+					   (cons (cons p val)
+					      (cell-ref o))))
+			 :object-return (lambda (o) (cell-ref o))
+			 :parse-error (lambda (msg path loc)
+					 (raise
+					    (instantiate::&io-parse-error
+					       (proc "resolve")
+					       (msg msg)
+					       (obj path)
+					       (fname (cadr loc))
+					       (location (caddr loc)))))))
+		   (m (assoc "main" o)))
+	       (if (pair? m)
+		   (cdr m)
+		   (let ((idx (make-file-name dir "index.js")))
+		      (when (file-exists? idx)
+			 idx)))))))
+   
+   (define (resolve-directory x)
+      (let ((json (make-file-name x "package.json")))
+	 (or (and (file-exists? json)
+		  (let* ((m (resolve-package json x)))
+		     (cond
+			((pair? m)
+			 (cons name
+			    (map (lambda (m)
+				    (resolve-file-or-directory m x))
+			       m)))
+			((string? m)
+			 (resolve-file-or-directory m x))
+			(else
+			 #f))))
+	     (let ((p (make-file-name x "index.js")))
+		(when (file-exists? p)
+		   (file-name-canonicalize p))))))
+   
+   (define (resolve-file-or-directory x dir)
+      (let ((file (make-file-name dir x)))
+	 (or (resolve-file file)
+	     (resolve-directory file))))
+   
+   (define (resolve-error x)
+      (raise
+	 (instantiate::&io-file-not-found-error
+	    (proc "resolve")
+	    (msg "Cannot find module")
+	    (obj name)
+	    (fname (cadr loc))
+	    (location (caddr loc)))))
+   
+   (cond
+      ((or (string-prefix? "http://" name)
+	   (string-prefix? "https://" name))
+       name)
+      ((or (string-prefix? "./" name) (string-prefix? "../" name))
+       (or (resolve-file-or-directory name dir)
+	   (resolve-error name)))
+      ((string-prefix? "/" name)
+       (or (resolve-file-or-directory name "/")
+	   (resolve-error name)))
+      (else
+       (resolve-error name))))

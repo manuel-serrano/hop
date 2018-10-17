@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Oct  8 14:22:46 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 10:46:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2409,6 +2409,12 @@
 		  (<u32 i length))
 	     (if (js-absent? (u32vref vec i)) (call-next-method) #t))
 	    (else (call-next-method))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsArray ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsArray p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */

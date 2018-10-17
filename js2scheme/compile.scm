@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Oct 17 17:28:43 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 18:28:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -174,8 +174,8 @@
 	  j2s-hopscript-stage
 	  j2s-loopexit-stage
 	  j2s-bestpractice-stage
-	  j2s-symbol-stage
 	  j2s-module-stage
+	  j2s-symbol-stage
 	  j2s-multivar-stage
 	  j2s-narrow-stage
 	  j2s-letfusion-stage
@@ -224,8 +224,8 @@
       j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
-      j2s-symbol-stage
       j2s-module-stage
+      j2s-symbol-stage
       j2s-letfusion-stage
       j2s-this-stage
       j2s-use-stage
@@ -247,8 +247,8 @@
       j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
-      j2s-symbol-stage
       j2s-module-stage
+      j2s-symbol-stage
       j2s-letfusion-stage
       j2s-debug-stage
       j2s-this-stage
@@ -270,8 +270,8 @@
       j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
-      j2s-symbol-stage
       j2s-module-stage
+      j2s-symbol-stage
       j2s-letfusion-stage
       j2s-this-stage
       j2s-use-stage
@@ -291,8 +291,8 @@
       j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
-      j2s-symbol-stage
       j2s-module-stage
+      j2s-symbol-stage
       j2s-narrow-stage
       j2s-letfusion-stage
       j2s-letopt-stage
@@ -316,8 +316,8 @@
       j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
-      j2s-symbol-stage
       j2s-module-stage
+      j2s-symbol-stage
       j2s-letfusion-stage
       j2s-javascript-stage))
 
@@ -330,8 +330,8 @@
       j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
-      j2s-symbol-stage
       j2s-module-stage
+      j2s-symbol-stage
       j2s-letfusion-stage
       j2s-return-stage
       j2s-cps-stage
@@ -347,8 +347,8 @@
       j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
-      j2s-symbol-stage
       j2s-module-stage
+      j2s-symbol-stage
       j2s-letfusion-stage
       j2s-debug-stage
       j2s-javascript-stage))

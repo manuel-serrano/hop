@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Mon Apr  9 20:07:23 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 10:48:25 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -531,6 +531,12 @@
 	     (loop (cddr attributes)
 		(cons (js-string->jsstring (keyword->string! (car attributes)))
 		   attrs)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::xml-markup ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::xml-markup p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ::xml-markup ...                             */

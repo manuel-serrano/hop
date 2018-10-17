@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Oct 10 18:25:05 2018 (serrano)                */
+;*    Last change :  Tue Oct 16 16:15:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -173,7 +173,13 @@
 	   (generic js-inspect ::obj ::int)
 
 	   (js-html-head ::JsGlobalObject)
-	   (js-html-script ::JsGlobalObject)))
+	   (js-html-script ::JsGlobalObject)
+
+	   (js-parseint ::obj ::obj ::JsGlobalObject)
+	   (js-parseint-string ::obj)
+	   (js-parseint-any ::obj ::JsGlobalObject)
+	   (js-parseint-string-uint32 ::obj ::uint32)
+	   (js-parsefloat ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-jsobject ...                                             */
@@ -1864,4 +1870,50 @@
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
       2 'SCRIPT))
+
+;*---------------------------------------------------------------------*/
+;*    js-parseint ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*---------------------------------------------------------------------*/
+(define (js-parseint string radix %this)
+   (js-string-parseint (trim-whitespaces+ (js-tostring string %this) :plus #t)
+      (js-toint32 radix %this) #f))
+
+;*---------------------------------------------------------------------*/
+;*    js-parseint-string ...                                           */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*---------------------------------------------------------------------*/
+(define (js-parseint-string string)
+   (js-string-parseint (trim-whitespaces+ (js-jsstring->string string) :plus #t)
+      #s32:0 #f))
+
+;*---------------------------------------------------------------------*/
+;*    js-parseint-any ...                                              */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*---------------------------------------------------------------------*/
+(define (js-parseint-any string %this)
+   (js-string-parseint (trim-whitespaces+ (js-tostring string %this) :plus #t)
+      #s32:0 #f))
+
+;*---------------------------------------------------------------------*/
+;*    js-parseint-string-uint32 ...                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*---------------------------------------------------------------------*/
+(define (js-parseint-string-uint32 string radix::uint32)
+   (js-string-parseint (trim-whitespaces+ (js-jsstring->string string) :plus #t)
+      (uint32->int32 radix) #f))
+
+;*---------------------------------------------------------------------*/
+;*    js-parsefloat ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3     */
+;*---------------------------------------------------------------------*/
+(define (js-parsefloat string %this)
+   (js-string-parsefloat (trim-whitespaces+ (js-tostring string %this) :plus #t)
+      #f))
+
 
