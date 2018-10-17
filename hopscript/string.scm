@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Oct  8 14:21:00 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 16:38:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -649,6 +649,12 @@
 		 (call-next-method)
 		 #t))
 	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsString ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsString p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ::JsString ...                               */
