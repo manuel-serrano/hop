@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.5.x/arch/android/hopdroid/music.scm       */
+;*    .../prgm/project/hop/3.1.x/arch/android/hopdroid/music.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Tue Feb 18 09:05:32 2014 (serrano)                */
-;*    Copyright   :  2010-14 Manuel Serrano                            */
+;*    Last change :  Sat Oct 29 21:09:40 2016 (serrano)                */
+;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
 ;*=====================================================================*/
@@ -85,7 +85,6 @@
    (define (onvolume e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
-		      (tprint "hopdroid onvolume value=" value)
 		      (with-access::androidmusic o (onvolume %status)
 			 (with-access::musicstatus %status (volume)
 			    (set! volume value)
@@ -257,7 +256,7 @@
 		o))
 	    ((pair? s)
 	     (unless (integer? (car s))
-		(bigloo-type-error '|music-play ::androidmusic| 'int (car s)))
+		(bigloo-type-error "music-play ::androidmusic" 'int (car s)))
 	     (playlist-load! o (car s) playlistid))
 	    ((eq? state 'pause)
 	     (android-send-command phone music-plugin #\b))
@@ -356,6 +355,11 @@
       ((member mimetype '("audio/mpeg" "audio/ogg" "audio/aac"))
        ;; all android
        #t)
+      ((member mimetype '("audio/x-flac"))
+       ;; android >= 3.1
+       (with-access::androidmusic m (phone)
+	  (with-access::androidphone phone (sdk)
+	     (>= (string-natural-compare3 sdk "3.1") 0))))
       ((member mimetype '("audio/flac" "application/x-flac" "audio/x-flac"))
        ;; android >= 3.1
        (with-access::androidmusic m (phone)

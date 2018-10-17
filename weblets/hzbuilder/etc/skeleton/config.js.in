@@ -1,0 +1,5 @@
+
+exports.version = "@@VERSION@@";
+exports.date = "@@DATE@@";
+exports.author = "@@AUTHOR@@";
+exports.bgColor = "#999";

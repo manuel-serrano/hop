@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../2.5.x/arch/android/src/fr/inria/hop/HopPluginInit.java       */
+/*    .../2.6.x/arch/android/src/fr/inria/hop/HopPluginInit.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Tue Feb 18 15:19:20 2014 (serrano)                */
+/*    Last change :  Fri Feb 21 13:29:32 2014 (serrano)                */
 /*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */

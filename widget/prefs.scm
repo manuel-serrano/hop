@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/widget/prefs.scm                  */
+;*    serrano/prgm/project/hop/3.1.x/widget/prefs.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan  5 14:11:23 2011                          */
-;*    Last change :  Wed May 16 14:20:08 2012 (serrano)                */
-;*    Copyright   :  2011-12 Manuel Serrano                            */
+;*    Last change :  Mon Dec 21 08:04:07 2015 (serrano)                */
+;*    Copyright   :  2011-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
 ;*=====================================================================*/
@@ -66,14 +66,14 @@
 		 ((string? val)
 		  (string-append "\"" (string-for-read val) "\"") )
 		 (else
-		  (bigloo-type-error 'preferences "string" val)))
+		  (bigloo-type-error "preferences" "string" val)))
 	      (cond
 		 ((eq? val #unspecified)
 		  "")
 		 ((string? val)
 		  val)
 		 (else
-		  (bigloo-type-error 'preferences "string" val)))))
+		  (bigloo-type-error "preferences" "string" val)))))
 	 ((symbol)
 	  (cond
 	     ((symbol? val)
@@ -81,7 +81,7 @@
 	     ((eq? val #unspecified)
 	      '||)
 	     (else
-	      (bigloo-type-error 'preferences "symbol" val))))
+	      (bigloo-type-error "preferences" "symbol" val))))
 	 ((expr quote)
 	  (let ((s (open-output-string)))
 	     (write val s)
@@ -93,7 +93,7 @@
 	     ((number? val)
 	      (number->string val))
 	     (else
-	      (bigloo-type-error 'preferences "number" val))))
+	      (bigloo-type-error "preferences" "number" val))))
 	 ((bool)
 	  (if val "true" "false"))
 	 (else
@@ -122,7 +122,7 @@
 		 ((symbol? val)
 		  (symbol->string val))
 		 (else
-		  (bigloo-type-error 'preferences "enum" val))))
+		  (bigloo-type-error "preferences" "enum" val))))
 	     ((text ?- . ?-)
 	      val)
 	     (else

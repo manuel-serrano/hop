@@ -1,0 +1,6 @@
+{
+   "tags": [ "system" ],
+   "description": "Systime user timing binding",
+   "service": false,
+   "level": 3.1
+}

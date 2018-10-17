@@ -1,0 +1,145 @@
+;*=====================================================================*/
+;*    .../prgm/project/hop/3.2.x/node_modules/feed/lib/_feed.hop       */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Thu Sep  6 15:19:35 2018                          */
+;*    Last change :  Fri Sep  7 07:36:19 2018 (serrano)                */
+;*    Copyright   :  2018 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    FEED Hop parser                                                  */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module _feedn
+
+   (library hopscript hop hopwidget nodejs web)
+   
+   (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))
+
+;*---------------------------------------------------------------------*/
+;*    js-bind-tag! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-macro (js-bind-tag! %this obj tag)
+   `(begin
+       (js-bind! ,%this ,obj ',tag
+	  :value (js-make-function ,%this
+		    (lambda (this attrs . nodes)
+		       (if (isa? attrs JsObject)
+			   (if (null? nodes)
+			       (apply ,(symbol-append '< tag '>)
+				  (js-jsobject->keyword-plist attrs ,%this))
+			       (apply ,(symbol-append '< tag '>)
+				  (append
+				     (js-jsobject->keyword-plist attrs ,%this)
+				     nodes)))
+			   (apply ,(symbol-append '< tag '>)
+			      nodes)))
+		    2 ',tag)
+	  :writable #f
+	  :enumerable #f)))
+
+;*---------------------------------------------------------------------*/
+;*    feed-obj->jsobject ...                                           */
+;*---------------------------------------------------------------------*/
+(define (feed-obj->jsobject obj::obj %this::JsGlobalObject)
+   (cond
+      ((pair? obj) (feed-pair->jsobject obj %this))
+      ((vector? obj) (feed-vector->jsobject obj %this))
+      (else (js-obj->jsobject obj %this))))
+
+;*---------------------------------------------------------------------*/
+;*    feed-vector->jsobject ...                                        */
+;*---------------------------------------------------------------------*/
+(define (feed-vector->jsobject vec %this)
+   (let ((vec (vector-map (lambda (o) (feed-obj->jsobject o %this)) vec)))
+      (js-vector->jsarray vec %this)))
+
+;*---------------------------------------------------------------------*/
+;*    feed-pair->jsobject ...                                          */
+;*---------------------------------------------------------------------*/
+(define (feed-pair->jsobject l %this)
+   
+   (define (plist? l)
+      (or (null? l)
+	  (and (pair? (cdr l))
+	       (and (or (keyword? (car l)) (symbol? (car l)))
+		    (plist? (cddr l))))))
+
+   (define (alist? l)
+      (when (list? l)
+	 (every (lambda (e)
+		   (and (pair? e) (or (keyword? (car e)) (symbol? (car e)))))
+	    l)))
+
+   (cond
+      ((plist? l)
+       (feed-plist->jsobject l %this))
+      ((alist? l)
+       (feed-alist->jsobject l %this))
+      ((list? l)
+       (js-vector->jsarray
+	  (list->vector (map (lambda (o) (feed-obj->jsobject o %this)) l))
+	  %this))
+      (else
+       (cons (feed-obj->jsobject (car l) %this)
+	  (feed-obj->jsobject (cdr l) %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    feed-alist->jsobject ...                                         */
+;*    -------------------------------------------------------------    */
+;*    The cmap structure is defined in property.scm.                   */
+;*---------------------------------------------------------------------*/
+(define (feed-alist->jsobject alist %this)
+   (js-alist->jsobject
+      (map (lambda (e) (cons (car e) (feed-obj->jsobject (cdr e) %this))) alist)
+      %this))
+
+;*---------------------------------------------------------------------*/
+;*    feed-plist->jsobject ...                                         */
+;*---------------------------------------------------------------------*/
+(define (feed-plist->jsobject plist %this)
+   (js-plist->jsobject
+      (map (lambda (e) (feed-obj->jsobject e %this)) plist)
+      %this))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hopscript %this this scope module)
+   (with-access::JsGlobalObject %this (__proto__)
+
+      (define exports (js-get module 'exports %this))
+      
+      ;; bind the module in the markdown scope
+      (js-put! scope 'module module #f %this)
+      
+      (js-bind! %this exports 'parse
+	 :value (js-make-function %this
+		   (lambda (this file encoding)
+		      (let ((path (js-tostring file %this))
+			    (enc (if (eq? encoding (js-undefined))
+				     'UTF-8
+				     (string->symbol
+					(js-tostring encoding %this)))))
+			 (let ((feed (call-with-input-file path
+					(lambda (in)
+					   (feed-parse in
+					      (lambda (t i)
+						 (feed-plist->jsobject
+						    `(:head ,t :items ,i) %this))
+					      (lambda l
+						 (feed-plist->jsobject l %this))
+					      (lambda l
+						 (feed-plist->jsobject l %this))
+					      :encoding enc)))))
+			    (if (pair? feed)
+				(car feed)
+				(js-undefined)))))
+		   2 'parse)
+	 :writable #f
+	 :enumerable #f)))
+
+      
+

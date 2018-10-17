@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/weblets/info/info.hop             */
+;*    serrano/prgm/project/hop/3.0.x/weblets/info/info.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Aug 13 06:46:23 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Fri Jan 16 13:38:05 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
 ;*=====================================================================*/
@@ -60,26 +60,27 @@
 (define traffic-hook
    (lambda (req rep)
       (when traffic-hookingp
-	 (with-access::http-request req (http host port path (u user) seconds)
-	    (hop-event-broadcast! info-event
-				  (<TR> :class "remote"
-				     (<TD> :nowrap #t
-					host ":" port)
-				     (<TD> :nowrap #t
-					path)
-				     (<TD> :nowrap #t
-					(if (isa? u user)
-					    (with-access::user u (name)
-					       name)
-					    ""))
-				     (<TD> :nowrap #t
-					(seconds->date seconds))))))
+	 (with-access::http-request req (http host port path seconds)
+	    (let ((u (http-request-user req)))
+	       (hop-event-broadcast! info-event
+		  (<TR> :class "remote"
+		     (<TD> :nowrap #t
+			host ":" port)
+		     (<TD> :nowrap #t
+			path)
+		     (<TD> :nowrap #t
+			(if (isa? u user)
+			    (with-access::user u (name)
+			       name)
+			    ""))
+		     (<TD> :nowrap #t
+			(seconds->date seconds)))))))
       rep))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-hook ...                                                  */
 ;*---------------------------------------------------------------------*/
-(when (> (bigloo-debug) 0)
+(when (>= (bigloo-debug) 2)
    (hop-http-response-proxy-hook-add! traffic-hook))
 
 ;*---------------------------------------------------------------------*/
@@ -202,7 +203,7 @@
 					      (<NPTABHEAD> "Config")
 					      (<DELAY>
 						 (lambda ()
-						    (<CONFIG>))))
+						    (<CONFIG> req))))
 					   (<NPTAB>
 					      (<NPTABHEAD> "Server")
 					      (<DELAY>
@@ -239,7 +240,7 @@
 						 (lambda ()
 						    (<PERFS>)))))))))))))
 		(<FOOT>)))
-	  (user-access-denied req))))
+	  (access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    info/documentation ...                                           */
@@ -260,8 +261,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    <CONFIG> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (<CONFIG>)
-   (with-access::http-request (current-request) (socket)
+(define (<CONFIG> req)
+   (with-access::http-request req (socket)
       (list
 	 (<H1> "Uptime")
 	 (set! traffic-hookingp #f)
@@ -580,7 +581,7 @@ mmmmmmmmmmlil"))))
       (with-access::http-request req (connection)
 	 (set! connection 'close))
       (instantiate::http-response-string
-	 (request req)
+;* 	 (request req)                                                 */
 	 (content-type (mime-type "hop-16x16.png" "image/png"))
 	 (body perfs-network-image))))
 

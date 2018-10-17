@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/widget/notepad.scm                */
+;*    serrano/prgm/project/hop/3.0.x/widget/notepad.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 21 16:22:52 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Thu Nov 26 18:55:03 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
 ;*=====================================================================*/
@@ -38,10 +38,12 @@
 		       (class #unspecified string)
 		       (history #unspecified)
 		       (onchange #f)
+		       (%location #f)
 		       (attrs)
 		       body)
    (let ((id (xml-make-id id 'NOTEPAD))
 	 (history (if (boolean? history) history (not (eq? id #unspecified))))
+	 (body (xml-body body))
 	 head)
       (if (and (pair? body) (isa? (car body) xml-nphead-element))
 	  (begin
@@ -54,7 +56,8 @@
 			   body))))
       (if (null? body)
 	  (error "<NOTEPAD>" "Missing <NPTAB> elements" id)
-	  (notepad id class history attrs head body onchange))))
+	  (notepad id class history
+	     (map xml-primitive-value attrs) head body onchange))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nptab-get-body ...                                               */
@@ -120,7 +123,8 @@
    (let ((bodies (map (lambda (t i) (make-tab-div t i))
 		      tabs (iota (length tabs))))
 	 (attrs (append-map (lambda (a)
-			       (list (symbol->keyword (car a)) (cdr a)))
+			       (let ((a (xml-primitive-value a)))
+				  (list (symbol->keyword (car a)) (cdr a))))
 			    attrs)))
       (apply <DIV>
 	     :id id
@@ -147,6 +151,7 @@
 ;*    <NPHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-tag <NPHEAD> ((id #unspecified string)
+		      (%location #f)
 		      (attr)
 		      body)
    (instantiate::xml-nphead-element
@@ -159,6 +164,7 @@
 ;*    <NPTABHEAD> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-tag <NPTABHEAD> ((id #unspecified string)
+			 (%location #f)
 			 (attr)
 			 body)
    (instantiate::xml-nptabhead-element
@@ -174,25 +180,28 @@
 		     (class #unspecified string)
 		     (selected #f)
 		     (onselect #f)
+		     (%location #f)
 		     (attr)
 		     body)
-   
-   (cond
-      ((null? body)
-       (error "<NPTAB>" "Missing <NPTABHEAD> " id))
-      ((not (isa? (car body) xml-nptabhead-element))
-       (error "<NPTAB>" "Illegal <NPTABHEAD> " (car body)))
-      (else
-       (let ((cla (make-class-name "hop-nptab " class)))
-	  (instantiate::xml-nptab-element
-	     (tag 'span)
-	     (id (xml-make-id id 'NPTAB))
-	     (idtab (xml-make-id #f 'NPTABTAG))
-	     (attributes `(:data-hss-tag "hop-nptab" ,@attr))
-	     (klass cla)
-	     (onselect onselect)
-	     (head (car body))
-	     (body (cdr body)))))))
+   (let ((head (filter (lambda (b) (isa? b xml-nptabhead-element)) body))
+	 (body (filter (lambda (x) (not (isa? x xml-nptabhead-element))) body)))
+      (cond
+	 ((null? head)
+	  (error "<NPTAB>" "Missing <NPTABHEAD> " id))
+	 ((null? body)
+	  (error "<NPTAB>" "Illegal <NPTABHEAD> " body))
+	 (else
+	  (let ((cla (make-class-name "hop-nptab " class)))
+	     (instantiate::xml-nptab-element
+		(tag 'span)
+		(id (xml-make-id id 'NPTAB))
+		(idtab (xml-make-id #f 'NPTABTAG))
+		(attributes `(:data-hss-tag "hop-nptab"
+				,@(map xml-primitive-value attr)))
+		(klass cla)
+		(onselect onselect)
+		(head (car head))
+		(body body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */

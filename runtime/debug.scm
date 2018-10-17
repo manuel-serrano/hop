@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/debug.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/runtime/debug.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Sat Aug 10 09:10:36 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Thu Aug  2 12:45:30 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
 ;*=====================================================================*/
@@ -20,7 +20,7 @@
 	    "param.sch"
 	    "client-exception.sch"
 	    "sourcemap.sch"
-	    "../scheme2js/base64_vlq.sch")
+	    "base64_vlq.sch")
 
    (library web)
 
@@ -37,6 +37,8 @@
    (export (hop-debug-init! ::output-port)
 	   (hop-debug-exception-stack ::obj)))
 
+(define (alert . l) l)
+
 ;*---------------------------------------------------------------------*/
 ;*    services ...                                                     */
 ;*---------------------------------------------------------------------*/
@@ -52,10 +54,15 @@
    ;; public/server/debug/exception
    (set! *debug-service*
       (service :name "public/server-debug/exception" :timeout 0
-	 (#!key exc url msg obj stack)
+	 (#!key exc url msg obj loc stack)
 	 (synchronize (verb-mutex)
 	    (newline port)
-	    (display-trace-stack-source stack port)
+	    (match-case loc
+	       ((:filename ?fname :pos ?point . ?-)
+		(let ((frame `("client" (at ,fname ,point))))
+		   (display-trace-stack-source (list frame) port)))
+	       (else
+		(display-trace-stack-source stack port)))
 	    (display "*** CLIENT ERROR: " port)
 	    (display-circle url port)
 	    (display #":\n" port)
@@ -82,7 +89,6 @@
 	 (file)
 	 (if (file-exists? file)
 	     (instantiate::http-response-file
-		(request (current-request))
 		(file file)
 		(content-type "application/json")
 		(bodyp #t)
@@ -97,7 +103,8 @@
       (if (and (integer? i)
 	       (substring-at? file (hop-scm-compile-suffix) (+fx i 1)))
 	  (let ((cache (clientc-cached-response (substring file 0 i))))
-	     (or (source-map-translate cache file line col) file))
+	     (or (source-map-translate cache file line col)
+		 (values file #f #f)))
 	  file)))
 
 ;*---------------------------------------------------------------------*/
@@ -115,7 +122,7 @@
    (synchronize *smap-mutex*
       (if (string=? (car *smap-cache*) smap)
 	  (cdr *smap-cache*)
-	  (let ((o (json->obj (call-with-input-file smap read-string))))
+	  (let ((o (javascript->obj (call-with-input-file smap read-string))))
 	     (set-car! *smap-cache* smap)
 	     (set-cdr! *smap-cache* o)
 	     o))))
@@ -126,16 +133,14 @@
 (define (source-map-translate cache file line col)
    (when (string? cache)
       (let ((smap (string-append cache ".map")))
-	 (when (file-exists? smap)
-	    (with-handler
-	       (lambda (e)
-		  #f)
-	       (let ((s (get-smap smap)))
-		  (when (pair? s)
-		     (let ((mappings (assq 'mappings s))
-			   (sources (assq 'sources s)))
-			(when (and (pair? mappings) (pair? sources))
-			   (hop-debug-source-map-file/smap (cdr mappings)
-			      (cdr sources) file line col))))))))))
-
-
+	 (if (file-exists? smap)
+	     (with-handler
+		(lambda (e)
+		   #f)
+		(let ((s (get-smap smap)))
+		   (when (pair? s)
+		      (let ((mappings (assq 'mappings s))
+			    (sources (assq 'sources s)))
+			 (when (and (pair? mappings) (pair? sources))
+			    (hop-debug-source-map-file/smap (cdr mappings)
+			       (cdr sources) file line col))))))))))

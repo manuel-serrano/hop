@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop-slider.js               */
+/*    serrano/prgm/project/hop/3.1.x/share/hop-slider.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Wed Oct  1 19:26:47 2014 (serrano)                */
-/*    Copyright   :  2005-14 Manuel Serrano                            */
+/*    Last change :  Sun Apr 10 07:36:55 2016 (serrano)                */
+/*    Copyright   :  2005-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
@@ -25,14 +25,6 @@ function hop_slider_value_set( slider, value ) {
 
    value = Math.round( value / slider.step ) * slider.step;
 
-/*    if( (slider.id == "hopdac-controls-volume") ) {                  */
-/*       hop_tprint( "hop-slider.js", 1,                               */
-/* 		  sc_cons( "value_set: ",                              */
-/* 			   sc_cons( value + "",                        */
-/* 				    sc_cons( " cur_value=" ,           */
-/* 					     sc_cons( slider.value + "", null ))))); */
-/*    }                                                                */
-   
    if( slider.value != value ) {
       if( value < slider.min ) {
 	 value = slider.min;
@@ -47,17 +39,6 @@ function hop_slider_value_set( slider, value ) {
 
       slider.value = value;
 
-/*       if( (slider.id == "hopdac-controls-volume") ) {               */
-/* 	 hop_tprint( "hop-slider.js", 2,                               */
-/* 		  sc_cons( "cwidth: ",                                 */
-/* 			   sc_cons( slider.clientWidth + "",           */
-/* 				    sc_cons( "v=",                     */
-/* 					     sc_cons( v + "",          */
-/* 						      sc_cons( " w=" , */
-/* 							       sc_cons( w + "", */
-/* 									null ))))))); */
-/*       }                                                             */
-   
       if( slider.clientWidth > 0 ) {
 	 node_style_set( slider.line1, "width", Math.round(v * w) + "px" );
 	 node_style_set( slider.line2, "width", Math.round((1-v) * w) + "px");
@@ -109,9 +90,6 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    var div;
    var caption;
 
-/*    hop_tprint( "hop-slider.js", 0,                                  */
-/* 	       sc_cons( ">>> hop_make_slider",                         */
-/* 			sc_cons( id, null ) ) );                       */
    if( !parent ) { sc_error( '<SLIDER>', "Illegal parent node", parent ); }
    
    parent = parent.parentNode;
@@ -123,6 +101,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    slider.setAttribute( "data-hss-tag", "hop-slider" );
    
    slider.onchange = undefined;
+   slider.onclick = undefined;
    
    slider.parent = parent;
    slider.rules = "none";
@@ -237,9 +216,12 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 	 var val = step * (( mx > (bbox.left + bbox.width/2) ) ? 4 : -4);
 
 	 hop_slider_value_set( slider, slider.value + val );
-
+	 
 	 if( slider.onchange != undefined ) {
 	    slider.onchange( { value: slider.value, target: slider } );
+	 }
+	 if( slider.onclick != undefined ) {
+	    slider.onclick( { value: slider.value, target: slider } );
 	 }
       }
    }
@@ -279,6 +261,8 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 
    if( slider.onchange != undefined )
       slider.onchange( {value : value, target: slider } );
+   if( slider.onclick != undefined )
+      slider.onclick( {value : value, target: slider } );
 
    // touchmove of mobile platforms
    if( !slidertouch ) {
@@ -365,4 +349,28 @@ function hop_slider_onchange_get( slider ) {
 */
 function hop_slider_onchange_set( slider, onchange ) {
    slider.onchange = onchange;
+   return slider;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_slider_onclick_get ...                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export slider-onclick)
+           (arity #t)
+           (peephole: (hole 1 "(" slider ").onclick")))
+*/
+function hop_slider_onclick_get( slider ) {
+   return slider.onclick;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_slider_onclick_set ...                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export slider-onclick-set!)
+           (arity #t)
+           (peephole (hole 2 "(" slider ").onclick = " onclick)))
+*/
+function hop_slider_onclick_set( slider, onclick ) {
+   slider.onclick = onclick;
+   return slider;
 }

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jun 18 17:36:15 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Thu Sep  6 18:29:10 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -39,7 +39,7 @@
 
 	    (xml-markup-is? ::obj ::symbol)
 
-	    (xml-make-id::bstring #!optional id tag)
+	    (xml-make-id::obj #!optional id tag)
 
 	    (xml-event-handler-attribute?::bool ::keyword)
 	    
@@ -50,15 +50,25 @@
 
 	    (hop-xml-backend::xml-backend)
 	    (hop-xml-backend-set! ::obj)
-	    
+
+	    (xml-body ::obj)
+	    (generic xml-body-element ::obj)
+	    (generic xml-unpack ::obj)
+
  	    (generic xml-write ::obj ::output-port ::xml-backend)
-	    (generic xml-write-attribute ::obj ::obj ::output-port ::xml-backend)
+	    (generic xml-write-attribute ::obj ::keyword ::output-port ::xml-backend)
 	    (generic xml-write-expression ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port ::xml-backend)
-	    (xml-attribute-encode obj)
+	    (generic xml-attribute-encode ::obj)
+
+	    (generic xml-primitive-value ::obj)
+	    (generic xml-to-errstring::bstring ::obj)
+
+	    (xml-url-for-each ::obj ::procedure)
 
 	    (xml->string ::obj ::xml-backend)
-	    
+
+	    (parse-html ::input-port ::long)
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
 
@@ -73,6 +83,22 @@
 	    (<TILDE> ::obj #!key src loc env menv)
 	    (<DELAY> . ::obj)
 	    (<PRAGMA> . ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::xml-markup ...                               */
+;*    -------------------------------------------------------------    */
+;*    WARNING: Module initialization prevents this declaration to be   */
+;*    moved to xml_types!                                              */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! xml-markup
+   (lambda (o mode)
+      (if (eq? mode 'hop-to-hop)
+	  o
+	  (let ((p (open-output-string)))
+	     (obj->javascript-expr o p)
+	     (close-output-port p))))
+   (lambda (o)
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-xhtml-xmlns ...                                              */
@@ -100,7 +126,6 @@
       (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">")
 ;*       (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">") */
       (html-attributes '())
-      (header-format "")
       (no-end-tags-elements '(link))
       (empty-end-tag #f)
       ;; the meta-format contains the closing >
@@ -115,7 +140,6 @@
       (mime-type "text/html")
       (doctype "<!DOCTYPE html>")
       (html-attributes '())
-      (header-format "")
       (no-end-tags-elements '(link))
       ;; the meta-format contains the closing >
       (meta-delimiter ">")))
@@ -222,10 +246,13 @@
 ;*    %make-xml-element ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (%make-xml-element el args)
-   
+
    (define (symbol-upcase s)
       (string->symbol (string-upcase! (symbol->string s))))
-   
+
+   (define (el->string el)
+      (string-append "<" (string-upcase (symbol->string! el)) ">"))
+
    (let loop ((a args)
 	      (attr '())
 	      (body '())
@@ -240,24 +267,25 @@
 	 ((keyword? (car a))
 	  (cond
 	     ((not (pair? (cdr a)))
-	      (error (string-append "<" (string-upcase (symbol->string! el)) ">")
-		     "Illegal attribute"
-		     (car a)))
+	      (error (el->string el) "Illegal attribute" (car a)))
 	     ((eq? (car a) :id)
-	      (if (or (string? (cadr a)) (not (cadr a)))
-		  (loop (cddr a) attr body (cadr a))
-		  (bigloo-type-error el "string" (cadr a))))
+	      (let ((v (xml-primitive-value (cadr a))))
+		 (if (or (string? v) (not v))
+		     (loop (cddr a) attr body v)
+		     (bigloo-type-error el "string" (cadr a)))))
 	     (else
 	      (loop (cddr a) (cons* (cadr a) (car a) attr) body id))))
 	 ((null? (car a))
 	  (loop (cdr a) attr body id))
-	 ((pair? (car a))
-	  (if (not (and (or (null? (cdr a)) (pair? (cdr a))) (list? (car a))))
-	      (error (string-append "<" (string-upcase (symbol->string! el)) ">")
-		     "Illegal arguments"
-		     `(,(string-append "<" (string-upcase (symbol->string! el)) ">")
-		       ,@args))
-	      (loop (append (car a) (cdr a)) attr body id)))
+	 ((xml-unpack (car a))
+	  =>
+	  (lambda (l)
+	     (if (not (or (null? (cdr a)) (pair? (cdr a))))
+		 (error (el->string el) "Illegal arguments"
+		    `(,(el->string el) ,@args))
+		 (if (or (pair? l) (null? l))
+		     (loop (append l (cdr a)) attr body id)
+		     (loop (cdr a) attr (cons (car a) body) id)))))
 	 (else
 	  (loop (cdr a) attr (cons (car a) body) id)))))
 
@@ -281,12 +309,6 @@
 (define (xml-make-id #!optional id tag)
    (if (string? id)
        id
-       ;; CARE, MS 24 apr 2010 !!!
-       ;; I don't think we need a lock here because
-       ;; I don't think it's important to have a really unique ID generator.
-       ;; I think we are only interested in uniqueness inside a single
-       ;; thread. If two threads call xml-make-id in parallel it's unlikely
-       ;; that they are constructing a shared tree.
        (let ((n (fixnum->string id-count)))
 	  (set! id-count (+fx 1 id-count))
 	  (cond
@@ -304,7 +326,32 @@
 ;*    whose name start with "on" are event handlers!                   */
 ;*---------------------------------------------------------------------*/
 (define (xml-event-handler-attribute? keyword)
-   (substring-at? (keyword->string! keyword) "on" 0))
+   (substring-ci-at? (keyword->string! keyword) "on" 0))
+
+;*---------------------------------------------------------------------*/
+;*    xml-body ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (xml-body body)
+   (if (null? body)
+       body
+       (let ((el (xml-body-element (car body))))
+	  (if (pair? el)
+	      (append el (xml-body (cdr body)))
+	      (cons el (xml-body (cdr body)))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-body ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-body-element obj)
+   obj)
+
+;*---------------------------------------------------------------------*/
+;*    xml-unpack ::obj ...                                             */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-unpack obj::obj)
+   (when (pair? obj)
+      (when (list? obj)
+	 obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
@@ -319,6 +366,12 @@
 		    (when (string? s)
 		       (display s p))))
 	      (display obj p))))
+      ((integer? obj)
+       (display obj p))
+      ((flonum? obj)
+       (if (nanfl? obj)
+	   (display "NaN" p)
+	   (display obj p)))
       ((number? obj)
        (display obj p))
       ((symbol? obj)
@@ -343,14 +396,23 @@
 		   'UTF-8 (hop-charset))))
 	  (xml-write s p backend)))
       (else
-       (error "xml-write" "Illegal xml object" obj))))
+       (error "xml" "bad XML object" (xml-to-errstring obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-verbatim ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-verbatim p backend)
-   (with-access::xml-verbatim obj (body)
-      (display body p)))
+   (with-access::xml-verbatim obj (data)
+      (display data p)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-comment ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-comment p backend)
+   (with-access::xml-comment obj (data)
+      (display "<!--" p)
+      (display-string data p)
+      (display "-->" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-if ...                                           */
@@ -378,7 +440,7 @@
 	 (display "</" p)
 	 (display tag p)
 	 (display ">" p))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-style ...                                        */
 ;*---------------------------------------------------------------------*/
@@ -391,7 +453,7 @@
 	       (if (isa? hss css-stylesheet)
 		   (css-write (hss-compile hss) p)
 		   (error "xml-write" "Illegal style sheet" el))))))
-
+   
    (with-access::xml-style obj (tag body attributes)
       (with-access::xml-backend backend (cdata-start cdata-stop)
 	 (display "<" p)
@@ -400,11 +462,13 @@
 	 (display ">" p)
 	 (unless (or (not body) (null? body))
 	    (when cdata-start (display cdata-start p))
-	    (for-each (lambda (el)
-			 (if (string? el)
-			     (xml-write-style el p)
-			     (xml-write el p backend)))
-		      body)
+	    (let ((op (open-output-string)))
+	       (for-each (lambda (el)
+			    (if (string? el)
+				(display el op)
+				(xml-write el op backend)))
+		  body)
+	       (xml-write-style (close-output-port op) p))
 	    (when cdata-stop (display cdata-stop p)))
 	 (display "</" p)
 	 (display tag p)
@@ -476,10 +540,17 @@
       (display tag p)
       (xml-write-attributes attributes p backend)
       (with-access::xml-backend backend (mime-type meta-delimiter)
-	 (when content
-	    (display " content='" p)
-	    (fprintf p content mime-type (hop-charset))
-	    (display "'" p))
+	 (cond
+	    ((string? content)
+	     (display " content='" p)
+	     (fprintf p content mime-type (hop-charset))
+	     (display "'" p))
+	    (content
+	     (display " content='" p)
+	     (display mime-type p)
+	     (display "; charset=" p)
+	     (display (hop-charset) p)
+	     (display "'" p)))
 	 (display meta-delimiter p))
       (newline p)))
 
@@ -580,7 +651,7 @@
 				       (else
 					"Unbound variables"))
 				    "Unbound variables"))
-			     (r (http-internal-error e m)))
+			     (r (http-internal-error e m #f)))
 			 (with-access::http-response-xml r (xml)
 			    (xml-write-html xml p backend))))
 		   (error/source-location "<HTML>"
@@ -595,7 +666,8 @@
 ;*---------------------------------------------------------------------*/
 (define (xml-write-html obj::xml-html p backend)	    
    (with-access::xml-backend backend (header-format doctype html-attributes)
-      (fprintf p header-format (hop-charset))
+      (when header-format
+	 (fprintf p header-format (hop-charset)))
       (display doctype p)
       (newline p)
       (with-access::xml-html obj (tag attributes body)
@@ -636,7 +708,8 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-attribute attr::obj id p backend)
    ;; boolean false attribute has no value, xml-tilde are initialized
-   (when attr
+   (unless (or (eq? attr #f) (eq? attr #unspecified)
+	       (char=? (string-ref (keyword->string! id) 0) #\%))
       (display (keyword->string! id) p)
       ;; boolean true attribute has no value
       (display "='" p)
@@ -696,7 +769,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-attribute-encode ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (xml-attribute-encode obj)
+(define-generic (xml-attribute-encode obj)
    (if (not (string? obj))
        obj
        (let ((ol (string-length obj)))
@@ -706,9 +779,6 @@
 		(if (=fx i ol)
 		    j
 		    (let ((c (string-ref str i)))
-		       ;; MS 23 jul 2013, I don't understand anymore why
-		       ;; attribute values should escape &#...
-;* 		       (if (or (char=? c #\') (char=? c #\&))          */
 		       (if (char=? c #\')
 			   (loop (+fx i 1) (+fx j 5))
 			   (loop (+fx i 1) (+fx j 1)))))))
@@ -729,17 +799,27 @@
 				  (string-set! nstr (+fx j 3) #\9)
 				  (string-set! nstr (+fx j 4) #\;)
 				  (loop (+fx i 1) (+fx j 5)))
-;* 				 ((#\&)                                */
-;* 				  (string-set! nstr j #\&)             */
-;* 				  (string-set! nstr (+fx j 1) #\#)     */
-;* 				  (string-set! nstr (+fx j 2) #\3)     */
-;* 				  (string-set! nstr (+fx j 3) #\8)     */
-;* 				  (string-set! nstr (+fx j 4) #\;)     */
-;* 				  (loop (+fx i 1) (+fx j 5)))          */
 				 (else
 				  (string-set! nstr j c)
 				  (loop (+fx i 1) (+fx j 1))))))))))
 	  (encode obj ol (count obj ol)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-primitive-value ::obj ...                                    */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-primitive-value x::obj)
+   x)
+
+;*---------------------------------------------------------------------*/
+;*    xml-to-errstring ::obj ...                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-to-errstring o::obj)
+   (call-with-output-string
+      (lambda (op)
+	 (write-circle o op)
+	 (display " `" op)
+	 (display (typeof o) op)
+	 (display "'" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */
@@ -780,6 +860,7 @@
 ;*    xml-write-initialization ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (xml-write-initialization id tilde var p)
+   (display "hop.reactAttribute( function() { return " p)
    (if (eq? id :style)
        (xml-write-style-initialization tilde var p)
        (begin
@@ -788,7 +869,8 @@
 	  (display (if (eq? id :class) "className" (keyword->string! id)) p)
 	  (display "\"]=" p)
 	  (xml-write-expression tilde p)
-	  (display ";" p))))
+	  (display ";" p)))
+   (display "}.bind( this ) );" p))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-style-initialization ...                               */
@@ -824,54 +906,69 @@
 	  (attributes attributes)
 	  (body body)))
       (else
-       (let ((a (append-map (lambda (a)
-			       (list (symbol->keyword (car a)) (cdr a)))
-			    attributes))
-	     (constr (eval constr)))
+       (let* ((a (append-map (lambda (a)
+				(list (symbol->keyword (car a)) (cdr a)))
+		    attributes))
+	      (constr (with-handler
+			 (lambda (e)
+			    (with-access::&error e (msg)
+			       (if (string=? msg "Unbound variable")
+				   ;; create an opaque XML object
+				   (lambda l
+				      (instantiate::xml-markup
+					 (tag constr)
+					 (attributes a)
+					 (body body)))
+				   ;; re-raise the other errors
+				   (raise e))))
+			 (eval constr))))
 	  (if (procedure? constr)
 	      (apply constr (append a body))
 	      (error "string->xml" "Illegal markup" constr))))))
 
 ;*---------------------------------------------------------------------*/
-;*    string->html ...                                                 */
+;*    parse-html ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (string->html h)
-   (with-input-from-string h
-      (lambda ()
-	 (html-parse
-	  (current-input-port)
-	  :content-length 0
-	  :procedure (lambda (tag attributes body)
-			(let ((constr (string->symbol
-				       (string-append
+(define (parse-html ip clen)
+   (html-parse ip
+      :content-length clen
+      :eoi (lambda (o) (isa? o xml-markup))
+      :procedure (lambda (tag attributes body)
+		    (let ((constr (string->symbol
+				     (string-append
 					"<"
 					(string-upcase (symbol->string! tag))
 					">"))))
-			   (eval-markup constr attributes body)))))))
+		       (eval-markup constr attributes body)))))
+
+;*---------------------------------------------------------------------*/
+;*    string->html ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (string->html h)
+   (call-with-input-string h (lambda (ip) (parse-html ip 0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->xml ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (string->xml h)
-   (with-input-from-string h
-      (lambda ()
-	 (xml-parse
-	  (current-input-port)
-	  :content-length 0
-	  :procedure (lambda (tag attributes body)
-			(let ((constr (string->symbol
-				       (string-append
-					"<"
-					(string-upcase (symbol->string! tag))
-					">"))))
-			   (eval-markup constr attributes body)))))))
+   (call-with-input-string h
+      (lambda (in)
+	 (xml-parse in
+	    :content-length 0
+	    :procedure (lambda (tag attributes body)
+			  (let ((constr (string->symbol
+					   (string-append
+					      "<"
+					      (string-upcase (symbol->string! tag))
+					      ">"))))
+			     (eval-markup constr attributes body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-tilde->expression ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->expression::bstring obj)
    (with-access::xml-tilde obj (%js-expression body)
-      (when (not (string? %js-expression))
+      (unless (string? %js-expression)
 	 (with-access::clientc (hop-clientc) (precompiled->JS-expression)
 	    (set! %js-expression (precompiled->JS-expression body))))
       %js-expression))
@@ -906,27 +1003,13 @@
 	 (else
 	  "")))
 
-   (define (js-catch-callback/location-new stmt parent file point)
-      ;; this is an inlined version of hop_callback (hop-lib.js)
-      (format "hop_callback( function() { ~a }, hop_callback_html_context( \"~a\", \"~a\", ~a ) ).call( this );"
-	 stmt
-	 (string-replace (xml-attribute-encode (parent-context parent))
-            #\Newline #\Space)
-         file point))
-
-   (define (js-catch-callback-old stmt parent)
-      ;; this is an inlined version of hop_callback (hop-lib.js)
-      (format "hop_callback( function() { ~a }, hop_callback_html_context( \"~a\" ) ).call( this );"
-	 stmt
-	 (string-replace (xml-attribute-encode (parent-context parent))
-            #\Newline #\Space)))
-   
    (define (js-catch-callback/location stmt parent file point)
       ;; this is an inlined version of hop_callback (hop-lib.js)
       (let ((ctx (gensym 'ctx)))
 	 (format "var ~a=hop_callback_html_context( \"~a\", \"~a\", ~a );
-hop_curent_stack_context = ~a;
-try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
+hop_current_stack_context = ~a;
+try { ~a } catch( e ) {
+hop_callback_handler(e, ~a); }"
 	    ctx
 	    (string-replace (xml-attribute-encode (parent-context parent))
 	       #\Newline #\Space)
@@ -936,7 +1019,7 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
    (define (js-catch-callback stmt parent)
       (let ((ctx (gensym 'ctx)))
 	 (format "var ~a=hop_callback_listener_context( \"~a\" );
-hop_curent_stack_context = ~a;
+hop_current_stack_context = ~a;
 try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 	    ctx
 	    (string-replace (xml-attribute-encode (parent-context parent))
@@ -946,7 +1029,7 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 	    ctx)))
    
    (with-access::xml-tilde obj (%js-statement body loc parent)
-      (when (not (string? %js-statement))
+      (unless (string? %js-statement)
 	 (with-access::clientc (hop-clientc) (precompiled->JS-statement)
 	    (let ((stmt (precompiled->JS-statement body)))
 	       (if (>fx (bigloo-debug) 0)
@@ -987,13 +1070,16 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 (define (xml-tilde->sexp obj)
    
    (define (wrapper o)
-      `(pragma ,(call-with-output-string
-		   (lambda (op)
-		      (obj->javascript-attr o op)))))
+      `(pragma
+	  ,(call-with-output-string
+	      (lambda (op)
+		 (obj->javascript-attr o op)))))
    
-   (with-access::xml-tilde obj (body)
-      (with-access::clientc (hop-clientc) (precompiled->sexp)
-	 (precompiled->sexp body wrapper))))
+   (with-access::xml-tilde obj (lang body %js-expression)
+      (if (eq? lang 'javascript)
+	  `(pragma ,%js-expression)
+	  (with-access::clientc (hop-clientc) (precompiled->sexp)
+	     (precompiled->sexp body wrapper)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sexp->xml-tilde ...                                              */
@@ -1021,13 +1107,11 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 ;*---------------------------------------------------------------------*/
 (define-tag <DELAY> ((id #unspecified string)
 		     body)
-   (if (and (pair? body)
-	    (procedure? (car body))
-	    (correct-arity? (car body) 0))
+   (if (and (pair? body) (procedure? (car body)) (correct-arity? (car body) 0))
        (instantiate::xml-delay
 	  (id (xml-make-id id))
 	  (thunk (car body)))
-       (error "<DELAY>" "Illegal delay's thunk" (car body))))
+       (error "<DELAY>" "Illegal thunk" (car body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PRAGMA> ...                                                     */
@@ -1035,9 +1119,9 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 (define (<PRAGMA> . obj)
    (cond
       ((and (pair? obj) (null? (cdr obj)) (string? (car obj)))
-       (instantiate::xml-verbatim (body (car obj))))
+       (instantiate::xml-verbatim (data (car obj))))
       ((every string? obj)
-       (instantiate::xml-verbatim (body (apply string-append obj))))
+       (instantiate::xml-verbatim (data (apply string-append obj))))
       (else
        (error "<PRAGMA>" "Illegal arguments" obj))))
 
@@ -1119,4 +1203,98 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 			       (cons src (or loc (source-location src))))))
 	       (precompiled-free-variables body))))))
 
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Apply proc to all the URLs (href, src) found in OBJ.             */
+;*---------------------------------------------------------------------*/
+(define (xml-url-for-each obj::obj proc::procedure)
+   (xml-url-for-each-inner obj (make-cell #f) proc))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-base ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (xml-url-base s base)
+   (if (char=? (string-ref s 0) #\/)
+       s
+       (let ((b (cell-ref base)))
+	  (if (or (not (string? b)) (string-null? b))
+	      s
+	      (string-append b s)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each-attributes ...                                  */
+;*---------------------------------------------------------------------*/
+(define (xml-url-for-each-attributes obj base::cell key proc)
+   (with-access::xml-cdata obj (tag body attributes)
+      (with-access::xml-markup obj (attributes)
+	 (let ((a (plist-assq key attributes)))
+	    (when (and a (string? (cadr a)))
+	       (unless (or (string-prefix? "data:" (cadr a))
+			   (string-prefix? "http:" (cadr a))
+			   (string-prefix? "https:" (cadr a)))
+		  (let* ((i (string-index (cadr a) #\?))
+			 (s (if i (substring (cadr a) 0 i) (cadr a))))
+		     (unless (string-null? s)
+			(proc obj (xml-url-base s base))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each-inner ...                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-url-for-each-inner obj::obj base::cell proc::procedure)
+   (when (pair? obj)
+      (for-each (lambda (o) (xml-url-for-each-inner o base proc)) obj)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each-inner ::xml-markup ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (xml-url-for-each-inner obj::xml-markup base proc)
+   (with-access::xml-markup obj (tag body attributes)
+      (for-each (lambda (o) (xml-url-for-each-inner o base proc)) body)
+      (when (eq? tag 'head)
+	 (let ((a (plist-assq :%authorizations attributes)))
+	    (when (pair? a)
+	       (cond
+		  ((string? (cadr a))
+		   (proc obj (xml-url-base a base)))
+		  ((list? (cadr a))
+		   (for-each (lambda (a) (proc obj (xml-url-base a base)))
+		      (cadr a)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each-inner ::xml-element ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (xml-url-for-each-inner obj::xml-element base proc)
+   (with-access::xml-element obj (tag body)
+      (case tag
+	 ((link)
+	  (xml-url-for-each-attributes obj base :href proc)))
+      (for-each (lambda (o) (xml-url-for-each-inner o base proc)) body)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each-inner ::xml-cdata ...                           */
+;*---------------------------------------------------------------------*/
+(define-method (xml-url-for-each-inner obj::xml-cdata base proc)
+   (xml-url-for-each-attributes obj base :src proc)
+   (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each-inner ::xml-svg ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (xml-url-for-each-inner obj::xml-svg base proc)
+   (xml-url-for-each-attributes obj base :src proc)
+   (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each-inner ::xml-empty-element ...                   */
+;*---------------------------------------------------------------------*/
+(define-method (xml-url-for-each-inner obj::xml-empty-element base proc)
+   (with-access::xml-empty-element obj (tag attributes)
+      (case tag
+	 ((img)
+	  (xml-url-for-each-attributes obj base :src proc))
+	 ((base)
+	  (let ((h (plist-assq :href attributes)))
+	     (when (and (pair? h) (string? (cadr h)))
+		(cell-set! base (cadr h))))))))
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/dom.scm                   */
+;*    serrano/prgm/project/hop/3.1.x/runtime/dom.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Mon May  7 07:51:06 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Fri Jun 10 08:35:33 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -18,7 +18,7 @@
 	   __hop_xml
 	   __hop_priv)
 
-   (export (dom-get-attributes::pair-nil ::obj)
+   (export (generic dom-get-attributes::pair-nil ::obj)
 	   (dom-owner-document node)
 	   (dom-child-nodes::pair-nil ::obj)
 	   (dom-first-child ::obj)
@@ -44,10 +44,10 @@
 	   (dom-get-elements-by-tag-name::pair-nil obj ::bstring)
 	   (dom-get-elements-by-hss-tag-name::pair-nil obj ::bstring)
 	   (dom-get-elements-by-class::pair-nil obj ::bstring)
-	   (dom-get-attribute node ::bstring)
-	   (dom-has-attribute?::bool node ::bstring)
-	   (dom-remove-attribute! node name)
-	   (dom-set-attribute! node name value)
+	   (generic dom-get-attribute node ::bstring)
+	   (generic dom-has-attribute?::bool node ::bstring)
+	   (generic dom-remove-attribute! node name)
+	   (generic dom-set-attribute! node name value)
 	   (dom-node-element? node)
 	   (dom-node-text? node)
 	   (dom-node-document? node)
@@ -159,7 +159,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-attributes ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (dom-get-attributes node)
+(define-generic (dom-get-attributes node)
    (if (isa? node xml-markup)
        (with-access::xml-markup node (attributes)
 	  attributes)
@@ -210,28 +210,21 @@
 ;*---------------------------------------------------------------------*/
 (define (dom-node-type node)
    (cond
-      ((string? node)
-       'text)
-      ((isa? node xml-markup)
-       (with-access::xml-markup node (tag) tag))
-      ((isa? node xml-element)
-       'element)
-      ((isa? node xml-document)
-       'document)
-      (else
-       'unknown)))
+      ((or (string? node) (isa? node xml-verbatim)) 'text)
+      ((isa? node xml-markup) (with-access::xml-markup node (tag) tag))
+      ((isa? node xml-element) 'element)
+      ((isa? node xml-document) 'document)
+      ((isa? node xml-comment) 'comment)
+      (else 'unknown)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-node-value ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (dom-node-value node)
    (cond
-      ((string? node)
-       node)
-      ((isa? node xml-markup)
-       #f)
-      (else
-       #f)))
+      ((string? node) node)
+      ((isa? node xml-markup) #f)
+      (else #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-parent-node ...                                              */
@@ -275,35 +268,81 @@
 			 (loop parent nparent))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    eq-verbatim? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (eq-verbatim? left right)
+   (cond
+      ((eq? left right)
+       #t)
+      ((isa? right xml-verbatim)
+       (with-access::xml-verbatim right (data) (eq? data left)))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    memq-verbatim ...                                                */
+;*---------------------------------------------------------------------*/
+(define (memq-verbatim n lst)
+   (cond
+      ((null? lst) #f)
+      ((eq-verbatim? n (car lst)) lst)
+      (else (memq-verbatim n (cdr lst)))))
+
+;*---------------------------------------------------------------------*/
+;*    remq-verbatim! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (remq-verbatim! x y)
+   (cond
+      ((null? y)
+       y)
+      ((eq? x (car y))
+       (remq-verbatim! x (cdr y)))
+      (else
+       (let loop ((prev y))
+	  (cond ((null? (cdr prev))
+		 y)
+		((eq-verbatim? (cadr prev) x)
+		 (set-cdr! prev (cddr prev))
+		 (loop prev))
+		(else (loop (cdr prev))))))))
+
+;*---------------------------------------------------------------------*/
+;*    skip-non-nodes ...                                               */
+;*---------------------------------------------------------------------*/
+(define (skip-non-nodes child)
+   (when (pair? child)
+      (let ((c (car child)))
+	 (cond
+	    ((not (string? c)) c)
+	    ((string-skip c "\n \t") c)
+	    (else (skip-non-nodes (cdr child)))))))
+      
+;*---------------------------------------------------------------------*/
 ;*    dom-previous-sibling ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (dom-previous-sibling node)
-   (and (isa? node xml-element)
-	(with-access::xml-element node (parent)
-	   (and (isa? parent xml-markup)
-		(with-access::xml-markup parent (body)
-		   (let loop ((body body)
-			      (prev #f))
-		      (cond
-			 ((null? body)
-			  prev)
-			 ((eq? (car body) node)
-			  prev)
-			 (else
-			  (loop (cdr body) (car body))))))))))
+   (when (isa? node xml-element)
+      (with-access::xml-element node (parent)
+	 (when (isa? parent xml-markup)
+	    (with-access::xml-markup parent (body)
+	       (let loop ((body body)
+			  (prev #f))
+		  (cond
+		     ((null? body) prev)
+		     ((eq-verbatim? (car body) node) prev)
+		     (else (loop (cdr body) (car body))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-next-sibling ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (dom-next-sibling node)
-   (and (isa? node xml-element)
-	(with-access::xml-element node (parent)
-	   (and (isa? parent xml-markup)
-		(with-access::xml-markup parent (body)
-		   (let ((child (memq node body)))
-		      (and (pair? child)
-			   (pair? (cdr child))
-			   (cadr child))))))))
+   (when (isa? node xml-element)
+      (with-access::xml-element node (parent)
+	 (when (isa? parent xml-markup)
+	    (with-access::xml-markup parent (body)
+	       (let ((child (memq-verbatim node body)))
+		  (when (pair? child)
+		     (skip-non-nodes (cdr child)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-remove-child! ...                                            */
@@ -316,7 +355,7 @@
 	       (with-access::xml-element old (id)
 		  (hashtable-remove! %idtable id)))))
       (with-access::xml-markup node (body)
-	 (set! body (remq! old body))
+	 (set! body (remq-verbatim! old body))
 	 (when (eq? (dom-parent-node old) node)
 	    (dom-set-parent-node! old #f))
 	 old)))
@@ -332,7 +371,7 @@
 	  (let ((parent (dom-parent-node new)))
 	     (when (isa? parent xml-markup)
 		(with-access::xml-markup parent (body)
-		   (set! body (remq! new body)))))
+		   (set! body (remq-verbatim! new body)))))
 	  (let ((doc (dom-owner-document node)))
 	     (when (isa? doc xml-document)
 		(with-access::xml-document doc (%idtable)
@@ -364,7 +403,7 @@
 	     (let ((parent (dom-parent-node new)))
 		(when (isa? parent xml-markup)
 		   (with-access::xml-markup parent (body)
-		      (set! body (remq! new body)))))
+		      (set! body (remq-verbatim! new body)))))
 	     (when (isa? docp xml-document)
 		(with-access::xml-document docp (%idtable)
 		   (doc-update-idtable! docp new))))
@@ -406,7 +445,7 @@
 		    (let ((parent (dom-parent-node new)))
 		       (when (isa? parent xml-markup)
 			  (with-access::xml-markup parent (body)
-			     (set! body (remq! new body)))))
+			     (set! body (remq-verbatim! new body)))))
 		    (let ((doc (dom-owner-document node)))
 		       (when (isa? doc xml-document)
 			  (with-access::xml-document doc (%idtable)
@@ -504,7 +543,8 @@
 	     (dom-set-attribute! node "class" name)
 	     (let ((regexp (string-append name "\\b")))
 		(unless (pregexp-match regexp cname)
-		   (dom-set-attribute! node "class" (string-append cname " " name))))))))
+		   (dom-set-attribute! node "class"
+		      (string-append cname " " name))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-remove-class! ...                                            */
@@ -587,7 +627,7 @@
 	  (append-map loop obj))
 	 ((isa? obj xml-markup)
 	  (with-access::xml-markup obj (body)
-	     (let ((c (dom-get-attribute obj "data-hss-tag")))
+	     (let ((c (xml-primitive-value (dom-get-attribute obj "data-hss-tag"))))
 		(if (and (string? c) (string=? c name))
 		    (cons obj (loop body))
 		    (loop body)))))
@@ -598,18 +638,30 @@
 ;*    dom-get-elements-by-class ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (dom-get-elements-by-class::pair-nil obj name)
+
+   (define (string-in? c name)
+      (or (string=? c name)
+	  (let ((cl (string-length c))
+		(nl  (string-length name)))
+	     (and (>fx cl nl)
+		  (or (and (string-prefix? name c)
+			   (memq (string-ref c nl)
+			      '(#\space #\newline #\tab)))
+		      (and (string-suffix? name c)
+			   (memq (string-ref c (-fx (-fx cl nl) 1))
+			      '(#\space #\newline #\tab)))
+		      (and (string-contains c name)
+			   (pregexp-match
+			      (string-append "[ \t\n]" name "[ \t\n]") c)))))))
+   
    (let loop ((obj obj))
       (cond
 	 ((pair? obj)
 	  (append-map loop obj))
 	 ((isa? obj xml-markup)
-	  (with-access::xml-markup obj (body)
-	     (let ((c (dom-get-attribute obj "class")))
-		;; CARE: may be we should check that name is part
-		;; of the class attribute. If we decide to change this,
-		;; the change should be reported in the JS implementation
-		;; inside the file hop-dom.js
-		(if (and (string? c) (string=? c name))
+	  (with-access::xml-markup obj (body tag)
+	     (let ((c (xml-primitive-value (dom-get-attribute obj "class"))))
+		(if (and (string? c) (string-in? c name))
 		    (cons obj (loop body))
 		    (loop body)))))
 	 (else
@@ -618,7 +670,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-attribute ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (dom-get-attribute node name)
+(define-generic (dom-get-attribute node name)
    (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (let ((a (plist-assq (string->keyword name) attributes)))
@@ -627,7 +679,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-has-attribute? ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (dom-has-attribute? node name)
+(define-generic (dom-has-attribute? node name)
    (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (pair? (plist-assq (string->keyword name) attributes)))))
@@ -635,7 +687,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-remove-attribute! ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (dom-remove-attribute! node name)
+(define-generic (dom-remove-attribute! node name)
    (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (set! attributes (plist-remq! (string->keyword name) attributes))
@@ -644,7 +696,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-set-attribute!...                                            */
 ;*---------------------------------------------------------------------*/
-(define (dom-set-attribute! node name value)
+(define-generic (dom-set-attribute! node name value)
    (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (let* ((key (string->keyword name))

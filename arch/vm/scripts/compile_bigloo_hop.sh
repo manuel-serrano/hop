@@ -97,7 +97,7 @@ EOF
 (hop-load-rc "wizard.hop")
 
 ;; proxying
-(hop-enable-proxing-set! #t)
+(hop-enable-proxying-set! #t)
 
 ;; proxy authentication
 (hop-proxy-authentication-set! #t)

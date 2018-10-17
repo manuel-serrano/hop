@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/make_lib.scm              */
+;*    serrano/prgm/project/hop/3.2.x/runtime/make_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri Nov  8 11:13:31 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Last change :  Wed Mar 14 07:21:24 2018 (serrano)                */
+;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
 ;*=====================================================================*/
@@ -27,6 +27,7 @@
 	   __hop_xml
 	   __hop_html-base
 	   __hop_html-img
+	   __hop_html-react
 	   __hop_html-head
 	   __hop_charset
 	   __hop_dom
@@ -36,7 +37,6 @@
 	   __hop_css
 	   __hop_css-match
 	   __hop_clientc
-	   __hop_cgi
 	   __hop_user
 	   __hop_password
 	   __hop_js-comp
@@ -69,7 +69,8 @@
 	   __hop_hz
 	   __hop_security
 	   __hop_zeroconf
-	   __hop_upnp)
+	   __hop_upnp
+	   __hop-base64-vlq)
 	   
    (eval   (export-all)
 
@@ -92,14 +93,15 @@
 	   (class http-response-file)
 	   (class http-response-shoutcast)
 	   (class http-response-string)
-	   (class http-response-error)
 	   (class http-response-raw)
 	   (class http-response-hop)
 	   (class http-response-authentication)
 	   (class http-response-cgi)
 	   (class http-response-abort)
 	   (class http-response-persistent)
+	   (class http-response-async)
 	   (class http-response-put)
+	   (class http-response-websocket)
 	   
 	   (class hop-service)
 
@@ -131,12 +133,15 @@
   	   (class wiki-syntax)
 
 	   (class event)
-
+	   (class server)
+	   
 	   (class zeroconf)
 	   (class zeroconf-service-event)
 
 	   (class websocket)
-	   (class ws-server))
+	   (class ws-server)
+
+	   (class clientc))
 
    (cond-expand
       ((and enable-upnp (library upnp))

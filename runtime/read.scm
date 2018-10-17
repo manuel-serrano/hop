@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/3.2.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Aug 16 17:21:15 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Mon Oct  8 14:57:03 2018 (serrano)                */
+;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -30,7 +30,8 @@
 	    __hop_xml-types
 	    __hop_xml
 	    __hop_misc
-	    __hop_thread)
+	    __hop_thread
+	    __hop_configure)
 
    (export  (loading-file-set! ::obj)
 	    (the-loading-file)
@@ -71,6 +72,9 @@
 			       (afile #t)
 			       (module #f))
 	    (hop-unload! ::bstring)
+
+	    (hop-find-sofile::obj ::bstring)
+	    (hop-sofile-path::bstring ::bstring)
 	    
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
@@ -267,29 +271,29 @@
 (define *sharp-grammar*
    (regular-grammar ()
       
-      ;; characters
-      ((: (uncase "a") (= 3 digit))
+      ((: "a" (= 3 digit))
        (let ((string (the-string)))
-	  (if (not (=fx (the-length) 4))
-	      (read-error "Illegal ascii character" string (the-port))
-	      (integer->char (string->integer (the-substring 1 4))))))
+	  (integer->char (string->integer (the-substring 1 4)))))
       
       ;; ucs-2 characters
       ((: "u" (= 4 xdigit))
        (integer->ucs2 (string->integer (the-substring 1 5) 16)))
       
+      ;; foreign strings of char
+      ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
+       (the-escape-substring 1 (-fx (the-length) 1) #f))
+      
       ;; ucs2 strings
       ((: "u\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (the-escape-substring 2 (-fx (the-length) 1) #f)))
   	  (utf8-string->ucs2-string str)))
-      
       ;; fixnums
       ((: "b" (? (in "-+")) (+ (in ("01"))))
-       (string->integer (the-substring 1 (the-length)) 2))
+       (string->integer-obj (the-substring 1 (the-length)) 2))
       ((: "o" (? (in "-+")) (+ (in ("07"))))
-       (string->integer (the-substring 1 (the-length)) 8))
+       (string->integer-obj (the-substring 1 (the-length)) 8))
       ((: "d" (? (in "-+")) (+ (in ("09"))))
-       (string->integer (the-substring 1 (the-length)) 10))
+       (string->integer-obj (the-substring 1 (the-length)) 10))
       ((: "e" (? (in "-+")) (+ digit))
        (string->elong (the-substring 1 (the-length)) 10))
       ((: "ex" (+ xdigit))
@@ -299,7 +303,12 @@
       ((: "lx" (+ xdigit))
        ($strtoull (the-substring 2 (the-length)) 0 16))
       ((: "x" (? (in "-+")) (+ (in (uncase (in ("09af"))))))
-       (string->integer (the-substring 1 (the-length)) 16))
+       (string->integer-obj (the-substring 1 (the-length)) 16))
+      ;; bignums
+      ((: "z" (? (in "-+")) (+ (in ("09"))))
+       (string->bignum (the-substring 1 (the-length)) 10))
+      ((: "zx" (+ xdigit))
+       (string->bignum (the-substring 2 (the-length)) 16))
       
       ;; unspecified and eof-object
       ((: (in "ue") (+ (in "nspecified-objt")))
@@ -311,20 +320,49 @@
 	      beof)
 	     (else
 	      (read-error "Illegal identifier"
-			  (string-append "#" (symbol->string symbol))
-			  (the-port))))))
-      
+		 (string-append "#" (symbol->string symbol)) (the-port))))))
+
+      ;; stdint
+      ((: "s8:" (? #\-) (+ (in ("09"))))
+       (fixnum->int8 (string->integer (the-substring 3 0))))
+      ((: "u8:" (+ (in ("09"))))
+       (fixnum->uint8 (string->integer (the-substring 3 0))))
+      ;; stdint
+      ((: "s16:" (? #\-) (+ (in ("09"))))
+       (fixnum->int16 (string->integer (the-substring 4 0))))
+      ((: "u16:" (+ (in ("09"))))
+       (fixnum->uint16 (string->integer (the-substring 4 0))))
+      ;; stdint
+      ((: "s32:" (? #\-) (+ (in ("09"))))
+       (elong->int32 (string->elong (the-substring 4 0))))
+      ((: "u32:" (+ (in ("09"))))
+       (cond-expand
+	  (bint61
+	   (elong->uint32 (string->elong (the-substring 4 0))))
+	  (else
+	   (llong->uint32 (string->llong (the-substring 4 0))))))
+      ;; stdint
+      ((: "s64:" (? #\-) (+ (in ("09"))))
+       (fixnum->int64 (string->llong (the-substring 4 0))))
+      ((: "u64:" (+ (in ("09"))))
+       (let ((s2 (the-substring 5 0))
+	     (s1 (the-substring 4 5)))
+	  (+u64 (llong->uint64 (string->llong s2))
+	     (let loop ((pow (string-length s2))
+			(n1 (fixnum->uint64 (string->integer s1))))
+		(if (=fx pow 0)
+		    n1
+		    (loop (-fx pow 1) (*u64 n1 (fixnum->uint64 10))))))))
+
       ;; constants
-      ((: "<" (+ (or digit (uncase (in "afAF")))) ">")
-       (if (not (=fx (the-length) 6))
-	   (read-error "Illegal constant" (the-string) (the-port))
-	   (make-cnst (string->integer (the-substring 1 5) 16))))
+      ((: "<" (= 4 (or digit (uncase (in ("AF"))))) ">")
+       (make-cnst (string->integer (the-substring 1 5) 16)))
       
       (else
        (let ((c (the-failure)))
 	  (if (char? c)
-	      (read-error "Illegal char" c (the-port))
-	      (read-error "Illegal token" (string #\# c) (the-port)))))))
+	      (read-error "Illegal token" (string #\# c) (the-port))
+	      (read-error "Illegal char" c (the-port)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *hop-grammar* ...                                                */
@@ -725,6 +763,14 @@
 	      (item (cset (the-string)))
 	      (rest (ignore)))
 	  (econs (text->html-string item) rest loc)))
+      ((: (* (out ",[]\\")) #\, #\,)
+       (let* ((port (the-port))
+	      (name (input-port-name port))
+	      (pos (input-port-position port))
+	      (loc (list 'at name pos))
+	      (item (cset (the-substring 0 -1))))
+	  (unread-char! #\, (the-port))
+	  (econs (text->html-string item) (ignore) loc)))
       ((: (* (out ",[]\\")) #\,)
        (let* ((port (the-port))
 	      (name (input-port-name port))
@@ -782,12 +828,17 @@
        (error "hop-read" "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
-	  (with-access::clientc (hop-clientc) (macroe)
-	     (let* ((cset (charset-converter! charset (hop-charset)))
-		    (menv (or menv (macroe)))
-		    (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv location)))
-		((hop-read-post-hook) iport)
-		e)))))
+	  (let* ((cset (if (procedure? charset)
+			   charset
+			   (charset-converter! charset (hop-charset))))
+		 (menv (or menv
+			   (if (isa? (hop-clientc) clientc)
+			       (with-access::clientc (hop-clientc) (macroe)
+				  (macroe))
+			       '())))
+		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv location)))
+	     ((hop-read-post-hook) iport)
+	     e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *the-loading-file* ...                                           */
@@ -855,22 +906,8 @@
 ;*    access table.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-afile dir)
-   
-   (define (add-dir f)
-      (if (or (string=? f "") (char=? (string-ref f 0) #\/))
-	  f
-	  (make-file-name dir f)))
-
-   (when (synchronize *afile-mutex*
-	    (unless (member dir *afile-dirs*)
-	       (set! *afile-dirs* (cons dir *afile-dirs*))
-	       #t))
-      (with-trace 1 "hop-load-afile"
-	 (trace-item "dir=" dir)
-	 (let ((path (make-file-name dir ".afile")))
-	    (if (file-exists? path)
-		(module-load-access-file path)
-		(get-directory-module-access dir))))))
+   (or (module-load-access-file dir)
+       (get-directory-module-access dir)))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-directory-module-access ...                                  */
@@ -923,20 +960,106 @@
 ;*    hop-load-from-hz ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-from-hz fname env menv mode charset abase)
-   (with-trace 1 "hop-load-from-hz"
+   (with-trace 'read "hop-load-from-hz"
       (trace-item "fname=" fname)
       (trace-item "abase=" abase)
       ;; feed the cache
       (let ((dir (hz-dir fname)))
 	 ;; load the afile
-	 (let ((afile (make-file-path dir ".afile")))
-	    (when (file-exists? afile)
-	       (module-load-access-file afile)))
+	 (hop-load-afile dir)
 	 ;; load the .hop source file
 	 (let ((base (basename dir)))
 	    (let ((fname (string-append (make-file-name dir base) ".hop")))
 	       (hop-load-file fname env menv mode charset abase 'eval #f))))))
 
+;*---------------------------------------------------------------------*/
+;*    so-arch-directory ...                                            */
+;*---------------------------------------------------------------------*/
+(define (so-arch-directory)
+   (string-append (os-name) "-" (os-arch)))
+
+;*---------------------------------------------------------------------*/
+;*    so-suffix ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (so-suffix)
+   (string-append "." (shared-library-suffix)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-find-sofile ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-find-sofile path)
+   
+   (define (more-recent? sopath)
+      (when (file-exists? sopath)
+	 (>=elong (file-modification-time sopath)
+	    (file-modification-time path))))
+   
+   (define (errfile file)
+      (string-append file ".err"))
+
+   (define (find-in-unix-path file)
+      (let ((env (getenv "HOP_LIBS_PATH")))
+	 (when (string? env)
+	    (let loop ((paths (unix-path->list env)))
+	       (when (pair? paths)
+		  (let ((path (make-file-path (car paths) file)))
+		     (cond
+			((more-recent? path)
+			 path)
+			((more-recent? (errfile path))
+			 'error)
+			(else
+			 (loop (cdr paths))))))))))
+
+   ;; check the path directory first
+   (when (hop-sofile-enable)
+      (let* ((dir (dirname path))
+	     (base (prefix (basename path)))
+	     (file (string-append base
+		      (cond-expand
+			 (bigloo-unsafe "_u")
+			 (else "_s"))
+		      "-" (hop-version) (so-suffix)))
+	     (sopath (make-file-path dir ".libs"
+			(hop-version) (hop-build-id) (so-arch-directory)
+			file)))
+	 (cond
+	    ((more-recent? sopath)
+	     sopath)
+	    ((more-recent? (errfile sopath))
+	     'error)
+	    (else
+	     ;; if not found check the user global libs repository
+	     (let ((sopath (hop-sofile-path path)))
+		(cond
+		   ((more-recent? sopath)
+		    sopath)
+		   ((more-recent? (errfile sopath))
+		    'error)
+		   (else
+		    (or (find-in-unix-path (hop-soname path))
+			(find-in-unix-path path)
+			(let ((sopath (make-file-name dir
+					 (string-append base (so-suffix)))))
+			   (when (file-exists? sopath)
+			      sopath)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-soname ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-soname path)
+   (let ((base (prefix (basename path))))
+      (string-append base "-" (md5sum-string path) (so-suffix))))
+   
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-path ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-sofile-path path)
+   (make-file-path
+      (hop-sofile-directory)
+      (hop-version) (hop-build-id) (so-arch-directory)
+      (hop-soname path)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-file ...                                                */
 ;*    -------------------------------------------------------------    */
@@ -944,15 +1067,18 @@
 ;*    be inlined.                                                      */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-file fname env menv mode charset abase traceid::symbol afile)
-   
-   (define (hop-load-path path)
+
+   (define (hop-eval-path path)
       (let ((apath (cond
 		      ((string? abase) abase)
 		      (abase (dirname fname))
 		      (else ".")))
-	    (menv (or menv (with-access::clientc (hop-clientc) (macroe)
-			      (macroe)))))
-	 (with-trace 1 "hop-load-file"
+	    (menv (or menv
+		      (if (isa? (hop-clientc) clientc)
+			  (with-access::clientc (hop-clientc) (macroe)
+			     (macroe))
+			  '()))))
+	 (with-trace 'read "hop-eval-path"
 	    (trace-item "fname=" fname)
 	    (trace-item "path=" path)
 	    (trace-item "abase=" abase)
@@ -966,7 +1092,6 @@
 			 (let ()
 			    ($env-push-trace denv traceid #f)
 			    (when afile (hop-load-afile apath))
-			    (when abase (module-abase-set! apath))
 			    (loading-file-set! path)
 			    (when (evmodule? env) (eval-module-set! env))
 			    (case mode
@@ -1007,6 +1132,19 @@
 					     (reverse! res))
 					  (let ((val (eval! e (eval-module))))
 					     (loop (cons val res) #f))))))
+			       ((module force-module)
+				(let loop ((loc #t))
+				   (let ((e (hop-read port charset menv loc)))
+				      (when (epair? e)
+					 ($env-set-trace-location denv (cer e)))
+				      (if (eof-object? e)
+					  (let ((nm (eval-module)))
+					     (unless (eq? m nm)
+						(evmodule-check-unbound nm #f))
+					     ($env-pop-trace denv)
+					     (unless (eq? m nm) nm))
+					  (let ((val (eval! e (eval-module))))
+					     (loop #f))))))
 			       (else
 				(error "hop-load"
 				   (format "Illegal mode \"~a\"" mode)
@@ -1020,14 +1158,50 @@
 			     (msg "Can't open file")
 			     (obj fname))))))))
    
+   (define (hop-load-path path)
+      (with-trace 'read "hop-load-path"
+	 (trace-item "fname=" fname)
+	 (trace-item "path=" path)
+	 (trace-item "abase=" abase)
+	 (trace-item "afile=" afile)
+	 (if (or (eq? mode 'load) (eq? mode 'module))
+	     (let ((sopath (hop-find-sofile path)))
+		(if sopath
+		    ;; a compiled file has been found, try to load that one
+		    (with-trace 'read "hop-load-path-compiled"
+		       (trace-item "sopath=" sopath)
+		       (let ((loadval (dynamic-load sopath)))
+			  (trace-item "sovalue=" loadval)
+			  (if (eq? mode 'load)
+			      loadval
+			      (or loadval
+				  ;; the dynamic load didn't produced the expected
+				  ;; value, load with eval
+				  (hop-eval-path path)))))
+		    (hop-eval-path path)))
+	     (hop-eval-path path))))
+   
    (let ((path (find-file/path fname (hop-path))))
-      (if (string? path)
-	  (hop-load-path path)
+      (cond
+	 ((not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
 		    (proc "hop-load")
 		    (msg "file not found")
-		    (obj fname))))))
+		    (obj fname))))
+	 (else
+	  (let ((loader (hop-find-loader path)))
+	     (if (procedure? loader)
+		 (loader path env menv mode charset abase traceid afile)
+		 (hop-load-path path)))))))
 
+;*---------------------------------------------------------------------*/
+;*    hop-find-loader ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-find-loader path)
+   (let ((c (assoc (suffix path) (hop-loaders))))
+      (when (pair? c)
+	 (cdr c))))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    *load-table* ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -1151,8 +1325,8 @@
 		(cons 'loop t))
 	       (else
 		(cons 'error t))))))
-   
-   (with-trace 2 "%hop-load"
+
+   (with-trace 'read "%hop-load"
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
       (trace-item "modifiedp=" modifiedp)

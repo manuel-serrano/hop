@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Aug 16 17:21:03 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Tue Feb  6 18:25:50 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -37,6 +37,27 @@
 	    (hop-cache-enable::bool)
 	    (hop-cache-enable-set! ::bool)
 
+	    (hop-hopc::bstring)
+	    (hop-hopc-set! ::bstring)
+	    
+	    (hop-hopc-flags::bstring)
+	    (hop-hopc-flags-set! ::bstring)
+	    
+	    (hop-profile::bool)
+	    (hop-profile-set! ::bool)
+	    
+	    (hop-sofile-enable::bool)
+	    (hop-sofile-enable-set! ::bool)
+
+	    (hop-sofile-compile-policy::symbol)
+	    (hop-sofile-compile-policy-set! ::symbol)
+
+	    (hop-sofile-max-workers::int)
+	    (hop-sofile-max-workers-set! ::int)
+
+	    (hop-sofile-directory::bstring)
+	    (hop-sofile-directory-set! ::bstring)
+
 	    (hop-load-preferences::bool)
 	    (hop-load-preferences-set! ::bool)
 	    (hop-store-preferences::bool)
@@ -49,6 +70,9 @@
 	    (hop-security::int)
 	    (hop-security-set! ::int)
 
+	    (hop-file-authorization::bool)
+	    (hop-file-authorization-set! ::bool)
+	    
 	    (hop-http-authentication::symbol)
 	    (hop-http-authentication-set! ::symbol)
 
@@ -57,6 +81,9 @@
 
 	    (hop-realm::bstring)
 	    (hop-realm-set! ::bstring)
+	    
+	    (hop-https-protocol::symbol)
+	    (hop-https-protocol-set! ::symbol)
 	    
 	    (hop-login-cookie-id::bstring)
 	    (hop-login-cookie-time::int)
@@ -83,6 +110,10 @@
 	    (hop-capture-port::obj)
 	    (hop-capture-port-set! ::obj)
 
+	    (hop-loaders::pair-nil)
+	    (hop-loaders-set! ::pair-nil)
+	    (hop-loader-add! ::bstring ::procedure)
+	    
 	    (hop-max-file-size-cache::elong)
 	    (hop-max-file-size-cache-set! ::elong)
 
@@ -151,8 +182,15 @@
 	    (hop-hss-theme::bstring)
 	    (hop-hss-theme-set! ::bstring)
 
+	    (hop-hss-foreign-eval::procedure)
+	    (hop-hss-foreign-eval-set! ::procedure)
+
+	    (hop-hss-clear-cache::obj)
+	    (hop-hss-clear-cache-set! ::obj)
+
 	    (hop-enable-proxying::bool)
 	    (hop-enable-proxying-set! ::bool)
+	    (hop-enable-proxing-set! ::bool)
 	    
 	    (hop-enable-websocket-proxying::bool)
 	    (hop-enable-websocket-proxying-set! ::bool)
@@ -204,8 +242,12 @@
 
 	    (hop-server-name::bstring)
 	    (hop-server-name-set! ::bstring)
+
+	    (hop-server-addresses::pair-nil)
+	    (hop-server-addresses-set! ::pair-nil)
 	    
-	    (hop-icons-directory)
+	    (hop-icons-directory::bstring)
+	    (hop-icons-directory-set! ::bstring)
 
 	    (hop-connection-ttl::int) 
 	    (hop-connection-ttl-set! ::int)
@@ -236,6 +278,9 @@
 
 	    (hop-remanent-timeout::int) 
 	    (hop-remanent-timeout-set! ::int)
+
+	    (hop-senfile-timeout::int)
+	    (hop-senfile-timeout-set! ::int)
 
 	    (hop-weblets::pair-nil)
 	    (hop-weblets-set! ::pair-nil)
@@ -312,8 +357,18 @@
 	    (hop-runtime-extra-set! ::pair-nil)
 	    (hop-runtime-extra-add! ::bstring)
 
+	    (hop-exepath)
+	    (hop-exepath-set! ::obj)
+
+	    (hop-user-agent::bstring)
+	    (hop-user-agent-set! ::bstring)
+
+	    (hop-preferred-language::bstring)
+	    (hop-preferred-language-set! ::bstring)
+
+	    (hop-rc-loaded)
 	    (hop-rc-loaded?)
-	    (hop-rc-loaded!)))
+	    (hop-rc-loaded! ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-uptime ...                                                   */
@@ -363,6 +418,48 @@
    #t)
 
 ;*---------------------------------------------------------------------*/
+;*    hop-hopc ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hopc
+   (make-file-name (hop-bin-directory) (string-append "hopc-" (hop-version))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hopc-flags ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hopc-flags
+   "-O3 --safe")
+
+;*---------------------------------------------------------------------*/
+;*    hop-profile ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-profile
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-enable                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sofile-enable
+   (bigloo-config 'have-dlopen))
+
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-compile-policy ...                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sofile-compile-policy
+   'nte)
+
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-max-workers ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sofile-max-workers
+   4)
+   
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-directory ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sofile-directory
+   (make-file-path (hop-rc-directory) "libs"))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-rc-file
@@ -394,6 +491,19 @@
 (define-parameter hop-security 1)
 
 ;*---------------------------------------------------------------------*/
+;*    hop-file-authorization-locked ...                                */
+;*---------------------------------------------------------------------*/
+(define hop-file-authorization-locked #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-file-authorization ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-file-authorization #t
+   (lambda (v)
+      (unless v (set! hop-file-authorization-locked #t))
+      (if hop-file-authorization-locked #f v)))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-http-authentication ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-http-authentication 'basic)
@@ -409,6 +519,14 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-realm
    "hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-https-protocol ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-https-protocol
+   (cond-expand
+      (bigloo4.2a 'tlsv1)
+      (else 'tlsv1_2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy ...                                                    */
@@ -444,7 +562,7 @@
 ;*    hop-log ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-log
-   0)
+   1)
 
 ;*---------------------------------------------------------------------*/
 ;     hop-verbose-file ...                                             */
@@ -461,6 +579,15 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-capture-port
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-loaders ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-loaders
+   '())
+
+(define (hop-loader-add! suffix loader)
+   (hop-loaders-set! (cons (cons suffix loader) (hop-loaders))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-max-file-size-cache ...                                      */
@@ -640,7 +767,7 @@
    '()
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error "hop-http-response-proxy-hook-set!" "Hooks closed" #f)
+	  (error "hop-http-response-proxy-hook-set!" "Hooks closed" v)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
@@ -720,7 +847,7 @@
 ;*    The suffixes of the client compilation urls                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-client-script-suffixes
-   '("hop" "scm"))
+   '("scm" "hop"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-module-suffixes ...                                          */
@@ -764,10 +891,29 @@
    "hss")
 
 ;*---------------------------------------------------------------------*/
+;*    hop-hss-foreign-eval ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hss-foreign-eval
+   (lambda (ip)
+      (raise
+	 (instantiate::&io-read-error
+	    (fname (input-port-name ip))
+	    (location (input-port-position ip))
+	    (proc "read")
+	    (msg "No foreign evaluator given")
+	    (obj "{")))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hss-clear-cache ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hss-clear-cache
+   #t)
+
+;*---------------------------------------------------------------------*/
 ;*    hop-service-weblet-weblet-name ...                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-weblet-name
-   (format "public/svc-~a" (hop-session)))
+   (format "svc-~a" (hop-session)))
 
 (define-parameter hop-service-weblet-id
    (string->symbol (hop-service-weblet-name)))
@@ -786,6 +932,13 @@
 
 (define-parameter hop-max-websocket-proxy-tunnel
    10)
+
+(define (hop-enable-proxing-set! v)
+   (fprint (current-error-port) "\"hop-enable-proxing-set!\" is deprecated\n"
+      "It has been replaced with \"hop-enable-proxying-set!\". "
+      (format "Edit the file \"~a/wizard.hop\" or \"~a/hoprc.hop\" and fix it."
+	 (hop-rc-directory)))
+   (hop-enable-proxying-set! v))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-aliases ...                                           */
@@ -908,7 +1061,7 @@
 ;*    disc into the charset specified by HOP-CHARSET.                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-locale
-   (case (string->symbol (os-charset))
+   (case (string->symbol (suffix (os-charset)))
       ((UTF-8) 'UTF-8)
       (else 'ISO-8859-1))
    (lambda (v)
@@ -924,7 +1077,7 @@
 	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
 	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
 	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
-	 ((WINDOW-1252 window-1252) 'WINDOW-1252)
+	 ((WINDOWS-1252 windows-1252) 'WINDOWS-1252)
 	 (else (error "hop-locale-set!" "Illegal charset" v)))))
 
 ;*---------------------------------------------------------------------*/
@@ -956,14 +1109,14 @@
 	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
 	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
 	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
-	 ((WINDOW-1252 window-1252) 'WINDOW-1252)
+	 ((WINDOWS-1252 windows-1252) 'WINDOWS-1252)
 	 (else (error "hop-charset-set!" "Illegal charset" v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-upload-directory ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-upload-directory
-   (make-file-name (hop-rc-directory) "upload"))
+   "upload")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-job-file ...                                                 */
@@ -982,6 +1135,17 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-server-name
    (hop-name))
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-addresses ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-addresses
+   (with-handler
+      (lambda (e)
+	 '())
+      (let ((hi (hostinfo (hostname))))
+	 (let ((c (assq 'addresses hi)))
+	    (if (pair? c) (cdr c) '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Connection delays and timeouts                                   */
@@ -1043,6 +1207,9 @@
 
 (define-parameter hop-remanent-timeout
    (*fx 1000 30))
+
+(define-parameter hop-senfile-timeout
+   (*fx 1000 120))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-weblets ...                                                  */
@@ -1295,14 +1462,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hop-rc-loaded!)
-   (set! *hop-rc-loaded* #t))
+(define (hop-rc-loaded! path)
+   (set! *hop-rc-loaded* path))
+
+;*---------------------------------------------------------------------*/
+;*    hop-rc-loaded ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hop-rc-loaded)
+   *hop-rc-loaded*)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded? ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (hop-rc-loaded?)
-   *hop-rc-loaded*)
+   (string? *hop-rc-loaded*))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-login-cookie-id ...                                          */
@@ -1335,3 +1508,22 @@
 	     v)
 	  (error "hop-port" "Illegal hop port" v))))
 
+;*---------------------------------------------------------------------*/
+;*    hop-exepath ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-exepath
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-user-agent ...                                               */
+;*    -------------------------------------------------------------    */
+;*    User-Agent string when emitting http requests                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-user-agent
+   "Mozilla/5.0 (X11; Linux i686; rv:31.0) Gecko/20100101 Firefox/31.0 Iceweasel/31.5.3")
+
+;*---------------------------------------------------------------------*/
+;*    hop-preferred-language ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-preferred-language
+   "hop")

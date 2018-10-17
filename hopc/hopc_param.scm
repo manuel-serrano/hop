@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/3.2.x/hopc/hopc_param.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Nov  4 19:22:18 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Thu Sep  6 07:48:46 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -23,20 +23,35 @@
 	    (hopc-bigloo-set! ::bstring)
 	    (hopc-bigloo-options::pair-nil)
 	    (hopc-bigloo-options-set! ::pair-nil)
-
+	    (hopc-bigloo-O-options::pair-nil)
+	    (hopc-bigloo-safe-option::obj)
+	    (hopc-bigloo-safe-option-set! ::obj)
+	    (hopc-bigloo-profile-options::pair-nil)
+	    (hopc-bigloo-profile-options-set! ::pair-nil)
+	    
 	    (hopc-pass::symbol)
 	    (hopc-pass-set! ::symbol)
-	    
+
+	    (hopc-js-target::symbol)
+	    (hopc-js-target-set! ::symbol)
+
 	    (hopc-sources::pair-nil)
 	    (hopc-sources-set! ::pair-nil)
 	    (hopc-destination::obj)
 	    (hopc-destination-set! ::obj)
+	    (hopc-temp::obj)
+	    (hopc-temp-set! ::obj)
 
 	    (hopc-share-directory::bstring)
 	    (hopc-share-directory-set! ::bstring)
    
 	    (hopc-access-file::obj)
 	    (hopc-access-file-set! ::obj)
+
+	    (hopc-long-size::obj)
+	    (hopc-long-size-set! ::obj)
+	    (hopc-int-size::obj)
+	    (hopc-int-size-set! ::obj)
 
 	    (hopc-jsheap::obj)
 	    (hopc-jsheap-set! ::obj)
@@ -62,11 +77,55 @@
 	    (hopc-clientc-pp::bool)
 	    (hopc-clientc-pp-set! ::bool)
 	    
-	    (hopc-clientc-compress::bool)
-	    (hopc-clientc-compress-set! ::bool)
-	    
 	    (hopc-clientc-inlining::bool)
-	    (hopc-clientc-inlining-set! ::bool))
+	    (hopc-clientc-inlining-set! ::bool)
+
+	    (hopc-source-language::symbol)
+	    (hopc-source-language-set! ::symbol)
+
+	    (hopc-optim-level::int)
+	    (hopc-optim-level-set! ::int)
+
+	    (hopc-js-worker::bool)
+	    (hopc-js-worker-set! ::bool)
+
+	    (hopc-js-worker-slave::bool)
+	    (hopc-js-worker-slave-set! ::bool)
+
+	    (hopc-js-module-name::obj)
+	    (hopc-js-module-name-set! ::obj)
+	    
+	    (hopc-js-module-path::obj)
+	    (hopc-js-module-path-set! ::obj)
+	    
+	    (hopc-js-module-main::obj)
+	    (hopc-js-module-main-set! ::obj)
+
+	    (hopc-source-ast::obj)
+	    (hopc-source-ast-set! ::obj)
+	    
+	    (hopc-js-header::obj)
+	    (hopc-js-header-set! ::obj)
+
+	    (hopc-js-type-annotations::bool)
+	    (hopc-js-type-annotations-set! ::bool)
+
+	    (hopc-js-libraries::pair-nil)
+	    (hopc-js-libraries-set! ::pair-nil)
+	    
+	    (hopc-js-driver::obj)
+	    (hopc-js-driver-set! ::obj)
+
+	    (hopc-js-return-as-exit::bool)
+	    (hopc-js-return-as-exit-set! ::bool)
+
+	    (hopc-j2s-flags::pair-nil)
+	    (hopc-j2s-flags-set! ::pair-nil)
+
+	    (hopc-j2s-plugins::bool)
+	    (hopc-j2s-plugins-set! ::bool)
+
+	    (hop-max-threads::int))
 	    
    (eval    (export-exports)))
 
@@ -80,19 +139,43 @@
 ;*    hopc-bigloo ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo
-   "bigloo")
+   (hop-bigloo))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-bigloo-options ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo-options
-   '("-fidentifier-syntax" "bigloo"))
+   `("-L" ,(make-file-path (hop-lib-directory) "hop" (hop-version))))
+
+;*---------------------------------------------------------------------*/
+;*    hopc-bigloo-O-options ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-bigloo-O-options
+   '((2 . ("-freturn" "-fisa")) (6 . ("-freturn-goto"))))
+
+;*---------------------------------------------------------------------*/
+;*    hopc-bigloo-safe-option ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-bigloo-safe-option
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    hopc-bigloo-profile-options ...                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-bigloo-profile-options
+   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-pass ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-pass
-   'object)
+   'link)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-target ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-target
+   'es6)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-sources ...                                                 */
@@ -107,6 +190,12 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
+;*    hopc-temp ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-temp
+   #f)
+
+;*---------------------------------------------------------------------*/
 ;*    hopc-share-directory ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-share-directory
@@ -116,6 +205,18 @@
 ;*    hopc-access-file ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-access-file
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-long-size ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-long-size
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-int-size ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-int-size
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -167,14 +268,120 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    hopc-clientc-compress ...                                        */
-;*---------------------------------------------------------------------*/
-(define-parameter hopc-clientc-compress
-   #f)
-
-;*---------------------------------------------------------------------*/
 ;*    hopc-clientc-inlining ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-clientc-inlining
    #f)
 
+;*---------------------------------------------------------------------*/
+;*    hopc-source-language ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-source-language
+   'auto)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-optim-level ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-optim-level
+   0)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-worker ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-worker
+   (cond-expand
+      (enable-threads #t)
+      (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-worker-slave ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-worker-slave
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-module-name ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-module-name
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-module-path ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-module-path
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-module-main ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-module-main
+   #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-source-ast ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-source-ast
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-header ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-header
+   #t)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-type-annotations ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-type-annotations
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-libraries ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-libraries
+   (cond-expand
+      (enable-libuv
+       '("-library" "hopscript"
+	 "-library" "web"
+	 "-library" "nodejs"
+	 "-library" "libuv"))
+      (else
+       '("-library" "hopscript"
+	 "-library" "web"
+	 "-library" "nodejs"))))
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-driver ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-driver
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-return-as-exit ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-return-as-exit
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-j2s-flags ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-j2s-flags
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    hopc-j2s-plugins ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Enable/disable j2s plugins                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-j2s-plugins
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-max-threads ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Merely a compatibility variable with Hop (for tools autoconf)    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-threads
+   (cond-expand
+      (enable-threads 12)
+      (else 1)))

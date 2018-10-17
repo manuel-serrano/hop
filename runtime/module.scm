@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/module.scm                */
+;*    serrano/prgm/project/hop/3.0.x/runtime/module.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Fri Jan 24 16:36:58 2014 (serrano)                */
-;*    Copyright   :  2009-14 Manuel Serrano                            */
+;*    Last change :  Wed Dec  9 14:38:02 2015 (serrano)                */
+;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
 ;*=====================================================================*/
@@ -29,6 +29,12 @@
 ;*    hop-module-extension-handler ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (hop-module-extension-handler exp)
+   
+   (define (find-location-dir exp)
+      (when (epair? exp)
+	 (match-case (cer exp)
+	    ((at ?file . ?-) (dirname file)))))
+
    (match-case exp
       ((?- ?- . ?clauses)
        (let ((i (filter-map (lambda (c)
@@ -38,7 +44,10 @@
 			    clauses)))
 	  (if (pair? i)
 	      (with-access::clientc (hop-clientc) (modulec)
-		 (modulec i))
+		 (with-trace 'module "clientc-modulec"
+		    (trace-item "i=" i)
+		    (trace-item "dir=" (find-location-dir exp))
+		    (modulec i (find-location-dir exp))))
 	      i)))
       (else
        '())))
@@ -54,39 +63,57 @@
 (define (make-hop-module-resolver resolver)
    (set! initial-resolver resolver)
    (lambda (module files abase)
-      (with-trace 1 "hop-module-resolver"
+      (with-trace 'module "hop-module-resolver"
 	 (trace-item "module=" module)
 	 (trace-item "files=" files)
 	 (trace-item "abase=" abase)
 	 (if (pair? files)
-	     (hop-module-afile-resolver module files abase)
-	     (let ((rfiles (resolver module files '*)))
-		(let ((r (if (pair? rfiles)
-			     (hop-module-afile-resolver module rfiles abase)
-			     (hop-module-path-resolver module "."))))
-		   (trace-item "result=" r)
-		   r))))))
+	     (hop-module-afile-resolver module
+		(if (string? abase)
+		    (map (lambda (f) (make-file-name abase f)) files)
+		    files))
+	     (let ((rfiles (resolver module files (find-afile abase))))
+		(trace-item "rfiles=" rfiles " abase=" abase)
+		(if (pair? rfiles)
+		    (hop-module-afile-resolver module rfiles)
+		    (let ((f (or (hop-module-path-resolver module ".")
+				 (hop-module-path-resolver module abase))))
+		       (if f (list f) '()))))))))
+
+;*---------------------------------------------------------------------*/
+;*    find-afile ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (find-afile dir)
+   (when (string? dir)
+      (let loop ((dir dir))
+	 (if (file-exists? (make-file-name dir ".afile"))
+	     dir
+	     (let ((parent (dirname dir)))
+		(unless (string=? parent dir)
+		   (if (string=? parent ".")
+		       (when (file-exists? ".afile")
+			  ".")
+		       (find-afile parent))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-module-path-resolver ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-module-path-resolver module dir)
    (let* ((name (string-append (symbol->string module) ".hop"))
-	  (file (make-file-name dir name)))
-      (if (file-exists? file)
-	  (list file)
-	  '())))
+	  (file (if (eq? dir '*) name (make-file-name dir name))))
+      (when (file-exists? file)
+	  file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-module-afile-resolver ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (hop-module-afile-resolver module files abase)
-   (apply append (filter-map (lambda (f) (url-resolver module f abase)) files)))
+(define (hop-module-afile-resolver module files)
+   (apply append (filter-map (lambda (f) (url-resolver module f)) files)))
    
 ;*---------------------------------------------------------------------*/
 ;*    url-resolver ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (url-resolver module url abase)
+(define (url-resolver module url)
    (if (hz-package-filename? url)
        (hz-module-resolver module url)
        (list url)))
@@ -97,18 +124,12 @@
 (define (hz-module-resolver module url)
    
    (define (resolve-in-dir dir)
-      (with-trace 1 "resolve-in-dir"
+      (with-trace 'module "resolve-in-dir"
 	 (trace-item "module=" module)
 	 (trace-item "url=" url)
 	 (trace-item "dir=" dir)
-	 (let ((afile (make-file-path dir ".afile"))
-	       (abase (module-abase)))
-	    (when (file-exists? afile)
-	       (hop-load-afile dir)
-	       (module-abase-set! dir))
-	    (unwind-protect
-	       (initial-resolver module '() dir)
-	       (module-abase-set! abase)))))
+	 (hop-load-afile dir)
+	 (initial-resolver module '() dir)))
    
    (define (resolve-default)
       (let ((dir (hz-download-to-cache url (hop-hz-repositories))))
@@ -116,7 +137,7 @@
 	     (resolve-in-dir dir)
 	     '())))
 
-   (with-trace 1 "hz-module-resolver"
+   (with-trace 'module "hz-module-resolver"
       (trace-item "module=" module)
       (trace-item "url=" url)
       (cond

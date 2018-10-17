@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/client-exception.sch      */
+;*    serrano/prgm/project/hop/3.2.x/runtime/client-exception.sch      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 10 05:33:45 2013                          */
-;*    Last change :  Sat Aug 10 07:38:26 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Mon May 14 16:23:10 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common exception implementation.                                 */
 ;*=====================================================================*/
@@ -21,6 +21,12 @@
 ;*---------------------------------------------------------------------*/
 (define (scheme2js-mangled? str)
    (string-prefix? "sc_" str))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hidden-frame-regexp ...                                      */
+;*---------------------------------------------------------------------*/
+(define hop-hidden-frame-regexp
+   "^(?:hop_send_request|withHOP|HopFrame.post|HTML[A-z][a-z]*Element[.]on[a-z]*|applyCallback|&pool-scheduler[0-9]+|&pthread-[0-9]+)$")
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme2js-demangle ...                                           */
@@ -78,7 +84,10 @@
    (pregexp "^([^ ]+)@([^ ]+)$"))
 
 (define *firefox-frame-location-regexp*
-   (pregexp "(.+):([0-9]+)$"))
+   (pregexp "(.+):([0-9]+):([0-9]+)$"))
+
+(define *firefox-id-regexp*
+   (pregexp "hop[[]\"%requires\"][[]\"[^\"]+\"]/(.*)"))
 
 ;*---------------------------------------------------------------------*/
 ;*    *opera-stack-frame-regexp* ...                                   */
@@ -107,6 +116,12 @@
 	 (and (pair? t) (eq? (cdr t) 'exception)))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-hidden-frame-id? ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hop-hidden-frame-id? id)
+   (pregexp-match hop-hidden-frame-regexp id))
+   
+;*---------------------------------------------------------------------*/
 ;*    hop-exception-context->frames ...                                */
 ;*---------------------------------------------------------------------*/
 (define (hop-exception-context->frames f)
@@ -121,7 +136,9 @@
    (define (firefox-frame f)
       
       (define (firefox-demangle id)
-	 (let ((i (string-index id "/")))
+	 (let* ((m (pregexp-match *firefox-id-regexp* id))
+		(id (if (pair? m) (cadr m) id))
+		(i (string-index id "/")))
 	    (if (integer? i)
 		(let* ((pref (substring id 0 i))
 		       (dm (hop-demangle pref)))
@@ -129,29 +146,32 @@
 		       (string-append dm " (let)")
 		       (string-append dm (hop-demangle (substring id i)))))
 		(hop-demangle id))))
-      
+
       (let ((m (pregexp-match *firefox-stack-frame-regexp* f)))
 	 (when (pair? m)
 	    (let* ((id (cadr m))
 		   (loc (caddr m))
 		   (dm (firefox-demangle id))
 		   (l (pregexp-match *firefox-frame-location-regexp* loc)))
-	       (if (pair? l)
-		   (let ((file (abspath (cadr l)))
-			 (line (string->integer (caddr l))))
-		      (multiple-value-bind (srcfile srcline _)
-			 (hop-source-map file line 0)
-			 (if (string? srcfile)
-			     (list dm
-				`(line ,srcfile ,srcline)
-				`(js-line ,file ,(-fx line 1))
-				`(type . ,(if (string=? dm id) 'js 'client))
-				'(format . "~~~a"))
-			     (list dm
-				`(line ,file ,(-fx line 1))
-				`(type . ,(if (string=? dm id) 'js 'client))
-				'(format . "~~~a")))))
-		   (list dm))))))
+	       (unless (hop-hidden-frame-id? id)
+		  (if (pair? l)
+		      (let* ((file (abspath (cadr l)))
+			     (line (string->integer (caddr l)))
+			     (col (string->integer (cadddr l))))
+			 (multiple-value-bind (srcfile srcline _)
+			    (hop-source-map file line col)
+			    (if (string? srcfile)
+				;; FF returns a source-mapped stack
+				(list dm
+				   `(line ,srcfile ,srcline)
+				   `(js-line ,file ,(-fx line 1))
+				   `(type . ,(if (string=? dm id) 'js 'client))
+				   '(format . "~~~a"))
+				(list dm
+				   `(line ,file ,(-fx line 1))
+				   `(type . ,(if (string=? dm id) 'js 'client))
+				   '(format . "~~~a")))))
+		      (list dm)))))))
    
    (define (opera-frame f)
       (let ((m (pregexp-match "^([^()]+)[(][^)]*[)]@([^ ]+)$" f)))
@@ -169,25 +189,26 @@
 		   (loc (caddr m))
 		   (dm (hop-demangle id))
 		   (l (pregexp-match *chrome-frame-location-regexp* loc)))
-	       (if (pair? l)
-		   ;; source map the file position
-		   (let ((file (abspath (cadr l)))
-			 (line (string->integer (caddr l)))
-			 (col (string->integer (cadddr l))))
-		      (multiple-value-bind (srcfile srcline srccol)
-			 (hop-source-map file line col)
-			 (if (string? srcfile)
-			     (list dm
-				`(line-col ,srcfile ,srcline ,srccol)
-				`(js-line-col ,file ,(-fx line 1), col)
-				`(type . ,(if (string=? dm id) 'js 'client))
-				'(format . "~~~a"))
-			     (list dm
-				`(line-col ,file ,(-fx line 1), col)
-				`(type . ,(if (string=? dm id) 'js 'client))
-				'(format . "~~~a")))))
-		   (list dm))))))
-   
+	       (unless (hop-hidden-frame-id? id)
+		  (if (pair? l)
+		      ;; source map the file position
+		      (let ((file (abspath (cadr l)))
+			    (line (string->integer (caddr l)))
+			    (col (string->integer (cadddr l))))
+			 (multiple-value-bind (srcfile srcline srccol)
+			    (hop-source-map file line col)
+			    (if (string? srcfile)
+				(list dm
+				   `(line-col ,srcfile ,srcline ,srccol)
+				   `(js-line-col ,file ,(-fx line 1), col)
+				   `(type . ,(if (string=? dm id) 'js 'client))
+				   '(format . "~~~a"))
+				(list dm
+				   `(line-col ,file ,(-fx line 1), col)
+				   `(type . ,(if (string=? dm id) 'js 'client))
+				   '(format . "~~~a")))))
+		      (list dm)))))))
+
    (let* ((stack (car f))
 	  (lines (string-split stack "\n"))
 	  (offset (cdr (assq 'offset (cddr f)))))

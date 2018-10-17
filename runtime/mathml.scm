@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/mathml.scm                */
+;*    serrano/prgm/project/hop/2.6.x/runtime/mathml.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Mon Dec  2 14:56:44 2013 (serrano)                */
-;*    Copyright   :  2007-13 Manuel Serrano                            */
+;*    Last change :  Fri Feb 21 13:41:25 2014 (serrano)                */
+;*    Copyright   :  2007-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
 ;*=====================================================================*/

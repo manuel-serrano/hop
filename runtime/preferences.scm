@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/preferences.scm           */
+;*    serrano/prgm/project/hop/3.0.x/runtime/preferences.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Mon Feb 11 08:20:18 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Last change :  Sun Jan 11 20:41:12 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
 ;*=====================================================================*/
@@ -25,7 +25,6 @@
 	    __hop_xml
 	    __hop_html-base
 	    __hop_html-head
-	    __hop_cgi
 	    __hop_service
 	    __hop_js-comp
 	    __hop_read
@@ -45,18 +44,13 @@
 	   (user-preference-get ::user ::symbol #!key default)
 	   (user-preference-set! ::user ::symbol ::obj)
 	   (user-preference-store! ::user ::symbol ::obj)
-	   (user-preference-update! ::user ::symbol ::obj
-				    #!key (kons cons) (init '()))
+	   (user-preference-update! ::user ::symbol ::obj #!key (kons cons) (init '()))
 	   
 	   (write-preferences request)
-	   (preference-get ::symbol #!key default (request (current-request)))
-	   (preference-set! ::symbol ::obj #!key (request (current-request)))
-	   (preference-store! ::symbol ::obj #!key (request (current-request)))
-	   (preference-update! ::symbol ::obj
-			       #!key
-			       (request (current-request))
-			       (kons cons)
-			       (init '()))))
+	   (preference-get ::symbol #!key default request)
+	   (preference-set! ::symbol ::obj #!key request)
+	   (preference-store! ::symbol ::obj #!key request)
+	   (preference-update! ::symbol ::obj #!key request (kons cons) (init '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *preferences-mutex* ...                                          */
@@ -142,7 +136,7 @@
 				   (authorized-service? req 'admin/preferences/save))
 			       (authorized-path? req file))
 			  (save file ov)
-			  (user-access-denied req)))))
+			  (access-denied req)))))
 	     (http-bad-request "admin/preferences/save")))))
 
 ;*---------------------------------------------------------------------*/
@@ -342,9 +336,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    preference-get ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (preference-get key #!key default (request (current-request)))
+(define (preference-get key #!key default request)
    (if (isa? request http-request)
-       (with-access::http-request request (user)
+       (let ((user (http-request-user request)))
 	  (with-access::user user (preferences-filename)
 	     (if (string? preferences-filename)
 		 (user-preference-get user key :default default)
@@ -354,9 +348,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    preference-set! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (preference-set! key val #!key (request (current-request)))
+(define (preference-set! key val #!key request)
    (when (isa? request http-request)
-      (with-access::http-request request (user)
+      (let ((user (http-request-user request)))
 	 (with-access::user user (preferences-filename)
 	    (when (string? preferences-filename)
 	       (user-preference-set! user key val))))))
@@ -364,9 +358,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    preference-store! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (preference-store! key val #!key (request (current-request)))
+(define (preference-store! key val #!key request)
    (when (isa? request http-request)
-      (with-access::http-request request (user)
+      (let ((user (http-request-user request)))
 	 (with-access::user user (preferences-filename)
 	    (when (string? preferences-filename)
 	       (user-preference-store! user key val))))))
@@ -374,13 +368,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    preference-update! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (preference-update! key nv
-			    #!key
-			    (request (current-request))
-			    (kons cons)
-			    (init '()))
+(define (preference-update! key nv #!key request (kons cons) (init '()))
    (when (isa? request http-request)
-      (with-access::http-request request (user)
+      (let ((user (http-request-user request)))
 	 (with-access::user user (preferences-filename)
 	    (when (string? preferences-filename)
 	       (user-preference-update! user key nv :kons kons :init init))))))
@@ -390,7 +380,7 @@
 ;*---------------------------------------------------------------------*/
 (define (write-preferences request)
    (when (isa? request http-request)
-      (with-access::http-request request (user)
+      (let ((user (http-request-user request)))
 	 (with-access::user user (preferences-filename)
 	    (when (string? preferences-filename)
 	       (user-write-preferences user))))))

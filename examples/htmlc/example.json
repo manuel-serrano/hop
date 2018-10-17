@@ -1,0 +1,7 @@
+{
+   "tags": ["html"],
+   "files": [ "htmlc.js" ],
+   "description": "Client-side attributes",
+   "doc": "This example shows how to add client-side attributes to HTML elements.",
+   "level": 1
+}

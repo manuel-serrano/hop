@@ -1,0 +1,184 @@
+#*=====================================================================*/
+#*    serrano/prgm/project/hop/3.0.x/test/nodejs/BLACKLIST             */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Fri Oct 24 07:32:52 2014                          */
+#*    Last change :  Fri Feb  6 12:23:24 2015 (serrano)                */
+#*    Copyright   :  2014-15 Manuel Serrano                            */
+#*    -------------------------------------------------------------    */
+#*    nodejs blacklisted tests                                         */
+#*=====================================================================*/
+
+#*---------------------------------------------------------------------*/
+#*    unimplemented (yet) features                                     */
+#*---------------------------------------------------------------------*/
+# failures that need to be fixed
+simple/test-http-pipeline-flood.js # Hop too slow start (need 500 setTimeout)
+pummel/test-tls-ci-reneg-attack.js
+
+#*---------------------------------------------------------------------*/
+#*    bad (javascript or nodejs) tests                                 */
+#*---------------------------------------------------------------------*/
+simple/test-fs-readfile-error.js
+simple/test-stream-pipe-multi.js
+simple/test-executable-path.js
+simple/test-regress-GH-1697.js
+simple/test-next-tick-starvation.js
+simple/test-dgram-broadcast-multi-process.js
+simple/test-http-parser-bad-ref.js
+simple/test-process-argv-0.js
+simple/test-process-config.js
+
+# nodejs failing tests
+simple/test-cluster-disconnect-with-no-workers.js
+simple/test-domain-implicit-fs.js
+simple/test-crypto-stream.js
+simple/test-url.js
+simple/test-tls-honorcipherorder.js
+simple/test-tls-session-cache.js
+
+message/error_exit.js
+message/nexttick_throw.js
+message/stack_overflow.js
+message/throw_custom_error.js
+message/throw_in_line_with_tabs.js
+message/undefined_reference_in_new_context.js
+message/throw_non_error.js
+message/timeout_throw.js
+
+# nodejs hangs
+simple/test-https-no-reader.js
+
+# EADDRINUSE
+simple/test-net-pingpong.js
+simple/test-http-client-pipe-end.js
+simple/test-http-client-response-domain.js
+simple/test-http-unix-socket.js
+simple/test-cluster-http-pipe.js
+simple/test-pipe-stream.js
+simple/test-pipe-unref.js
+simple/test-net-pipe-connect-errors.js
+simple/test-cluster-eaddrinuse.js
+simple/test-tls-connect-pipe.js
+
+# Bad crypto key
+simple/test-crypto.js
+
+# openssl-1.1 incompatibilies
+simple/test-tls-set-ciphers.js
+simple/test-tls-getcipher.js
+simple/test-tls-set-cipher.js
+simple/test-crypto-binary-default.js
+
+#*---------------------------------------------------------------------*/
+#*    incompatible tests                                               */
+#*---------------------------------------------------------------------*/
+# incompatible tests
+simple/test-child-process-silent.js
+simple/test-child-process-fork-exec-argv.js
+simple/test-child-process-fork-net2.js # insufficient speed (set count=5)
+simple/test-init.js
+simple/test-domain.js # the hop error messages differ from nodejs
+simple/test-setproctitle.js
+simple/test-module-loading.js # uses deprecated require.extensions
+simple/test-fs-null-bytes.js # uses keyword async
+
+# imccompatible command line options
+simple/test-cli-eval.js
+simple/test-deprecation-flags.js
+simple/test-stdout-close-catch.js
+simple/test-sigint-infinite-loop.js
+simple/test-eval-require.js
+simple/test-eval.js
+simple/test-force-repl.js
+simple/test-process-exec-argv.js
+simple/test-process-wrap.js
+simple/test-stdout-stderr-reading.js
+pummel/test-exec.js
+
+# unsupported features
+simple/test-event-emitter-memory-leak.js
+simple/test-module-loading-error.js
+simple/test-readline-interface.js
+simple/test-readline-set-raw-mode.js
+simple/test-util.js
+simple/test-util-inspect.js
+simple/test-process-active-wraps.js
+simple/test-regress-GH-5927.js
+simple/test-vm-create-context-accessors.js
+simple/test-vm-create-context-arg.js
+simple/test-vm-create-context-circular-reference.js
+pummel/test-debugger-debug-brk.js
+pummel/test-regress-GH-814.js
+pummel/test-regress-GH-814_2.js
+pummel/test-tls-connect-memleak.js
+pummel/test-net-connect-memleak.js
+pummel/test-net-connect-econnrefused.js
+pummel/test-postmortem-findjsobjects.js
+pummel/test-next-tick-loops-quick.js 
+
+# intrinsic incompatibilities
+simple/test-abort-fatal-error.js
+
+# debug
+simple/test-debug-brk-no-arg.js
+simple/test-debugger-client.js
+simple/test-debugger-repl-break-in-module.js
+simple/test-debugger-repl-restart.js
+simple/test-debugger-repl-utf8.js
+simple/test-debugger-repl.js
+
+# script
+simple/test-script-context.js
+
+# signals
+simple/test-signal-handler.js # Boehm's GC uses SIGUSR1 and SIGUSR2
+
+# repl
+simple/test-repl-.save.load.js
+simple/test-repl-autolibs.js
+simple/test-repl-console.js
+simple/test-repl-domain.js
+simple/test-repl-end-emits-exit.js
+simple/test-repl-options.js
+simple/test-repl-require-cache.js
+simple/test-repl-tab-complete.js
+simple/test-repl.js
+
+# zlib
+simple/test-zlib-close-after-write.js
+simple/test-zlib-dictionary-fail.js
+simple/test-zlib-dictionary.js
+simple/test-zlib-from-gzip.js
+simple/test-zlib-from-string.js
+simple/test-zlib-invalid-input.js
+simple/test-zlib-random-byte-pipes.js
+simple/test-zlib-write-after-close.js
+simple/test-zlib-write-after-flush.js
+simple/test-zlib-zero-byte.js
+simple/test-zlib.js
+
+# stack overflows
+simple/test-regress-GH-4015.js
+
+# different timing
+simple/test-timers-ordering.js
+
+pummel/test-process-uptime.js
+pummel/test-net-write-callbacks.js
+
+#*---------------------------------------------------------------------*/
+#*    undeterministics error (observed also with node)                 */
+#*---------------------------------------------------------------------*/
+pummel/test-https-ci-reneg-attack.js
+pummel/test-vm-memleak.js
+
+#*---------------------------------------------------------------------*/
+#*    ok but temporarily disabled                                      */
+#*---------------------------------------------------------------------*/
+#* simple/test-pipe.js                                                 */
+#* simple/test-child-process-stdout-flush.js                           */
+#* simple/test-stdout-to-file.js                                       */
+simple/test-tls-fast-writing.js
+simple/test-http-many-keep-alive-connections.js
+internet/test-dns.js

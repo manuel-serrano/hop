@@ -1,0 +1,8 @@
+{
+   "tags": ["service", "asynchrony" ],
+   "description": "Proxied services",
+   "doc": "Shows how to access proxied services",
+   "level": 2,
+   "commands": [ "hop -v --no-color --no-zeroconf -p $(PORT) --rc-file $(RCFILE) -- proxy.js $(NEXTPORT)",
+		 "hop -v --no-color --no-zeroconf -p $(PORT) --rc-file $(RCFILE) proxy.js" ]
+}

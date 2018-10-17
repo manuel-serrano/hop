@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/3.1.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Tue Sep 24 09:16:30 2013 (serrano)                */
-/*    Copyright   :  2007-13 Manuel Serrano                            */
+/*    Last change :  Thu Aug  9 09:40:51 2018 (serrano)                */
+/*    Copyright   :  2007-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -20,22 +20,16 @@ var hop_serialize_context = {
  }
 
 /*---------------------------------------------------------------------*/
-/*    object serialization                                             */
+/*    HopArguments ...                                                 */
 /*---------------------------------------------------------------------*/
-sc_Object.prototype.hop_bigloo_serialize = hop_bigloo_serialize_sc_object;
-Int8Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s8vector;
-Uint8Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u8vector;
-Int16Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s16vector;
-Uint16Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u16vector;
-Int32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s32vector;
-Uint32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u32vector;
-Float32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f32vector;
-Float64Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f64vector;
+function HopArguments( args ) {
+   this.args = args;
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize ...                                         */
 /*    -------------------------------------------------------------    */
-/*    Returns a URL encode Bigloo serialization.                       */
+/*    Returns a URL encoded Bigloo serialization.                      */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize( item ) {
    if( hop_serialize_context.active ) {
@@ -43,15 +37,63 @@ function hop_bigloo_serialize( item ) {
    } else {
       hop_serialize_context.active = true;
       hop_serialize_context.ref = 0;
-      hop_serialize_context.def = 0;
+      hop_serialize_context.def = 0; 
       hop_serialize_context.key++;
+      hop_serialize_context.objects = {};
 
       var str = hop_bigloo_serialize_context( item );
 
       hop_serialize_context.active = false;
 
-      return "c" + hop_serialize_number( hop_serialize_context.def ) + str;
+      return "c" + hop_serialize_number( hop_serialize_context.def + 1 ) + str;
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_serialize_context_key ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_serialize_context_key( item ) {
+   if( Object.isFrozen( item ) ) {
+      return item in hop_serialize_context.objects;
+   } else {
+      if( "hop_serialize_context_key" in item ) {
+	 return item.hop_serialize_context_key;
+      } else {
+	 return false;
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_serialize_context_def ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_serialize_context_def( item ) {
+   if( Object.isFrozen( item ) ) {
+      return hop_serialize_context.objects[ item ];
+   } else {
+      return item.hop_serialize_context_def;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_serialize_context_key_set ...                                */
+/*---------------------------------------------------------------------*/
+function hop_serialize_context_key_set( item ) {
+   if( Object.isFrozen( item ) ) {
+   } else {
+      Object.defineProperty( item, "hop_serialize_context_key", {
+	 value: hop_serialize_context.key,
+	 enumerable: false,
+	 configurable: true
+      } );
+      Object.defineProperty( item, "hop_serialize_context_def", {
+	 value: hop_serialize_context.def++,
+	 enumerable: false,
+	 configurable: true
+      } );
+   }
+
+   return hop_serialize_context.def;
 }
 
 /*---------------------------------------------------------------------*/
@@ -84,13 +126,12 @@ function hop_bigloo_serialize_context( item ) {
    if( item === null )
       return ".";
 
-   if( "hop_serialize_context_key" in item &&
-       item[ "hop_serialize_context_key" ] === hop_serialize_context.key ) {
+   if( hop_serialize_context_key( item ) === hop_serialize_context.key ) {
       hop_serialize_context.ref++;
-      return "%23" + hop_serialize_word( item.hop_serialize_context_def );
+      return "%23" + hop_serialize_word( hop_serialize_context_def( item ) );
    }
 
-   if( item && ("hop_bigloo_serialize" in item) ) {
+   if( "hop_bigloo_serialize" in item ) {
       return hop_bigloo_serialize_custom( item );
    }
 
@@ -100,6 +141,7 @@ function hop_bigloo_serialize_context( item ) {
    if( item instanceof Date )
       return hop_serialize_date( item );
 
+#if !HOP_NOBROWSER
    if( (HTMLCollection != undefined) && (item instanceof HTMLCollection) )
       return hop_serialize_array( item );
       
@@ -111,28 +153,41 @@ function hop_bigloo_serialize_context( item ) {
 
    if( (HTMLSelectElement != undefined) && (item instanceof HTMLSelectElement) )
       return hop_bigloo_serialize_context( item.value );
-
+#endif
+   
    if( (item.callee != undefined) && (item.length > -1) )
       return hop_serialize_array( item );
 
+#if !HOP_NOBROWSER
    if( hop_is_html_element( item ) )
       return hop_serialize_html( item );
-
+#endif
+   
+   if( item instanceof Error ) {
+      return hop_bigloo_serialize_error( item );
+   }
+   
+#if HOP_SCHEME
    if( sc_isClass( item ) )
       return hop_bigloo_serialize_sc_class( item );
-      
-   return hop_bigloo_serialize_alist( item );
+#endif
+   
+   if( item.hop_bigloo_serialize instanceof Function ) {
+      // non compliant JS implementation... (e.g., espruino)
+      return hop_bigloo_serialize_custom( item );
+   }
+
+   
+   return "X" + hop_bigloo_serialize_as_plist( item );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_custom ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_custom( item ) {
-   item.hop_serialize_context_key = hop_serialize_context.key;
-   item.hop_serialize_context_def = hop_serialize_context.def++;
+   var ctxdef = hop_serialize_context_key_set( item );
 
-   return "=" + hop_serialize_word( item.hop_serialize_context_def ) +
-      item.hop_bigloo_serialize();
+   return "=" + hop_serialize_word( ctxdef ) + item.hop_bigloo_serialize();
 }
    
 /*---------------------------------------------------------------------*/
@@ -145,16 +200,12 @@ function hop_bigloo_serialize_object() {
    var str = "|" + "%27" + hop_serialize_string( classname );
    var args = "";
    var len = 1;
-
-   item.hop_serialize_context_key = hop_serialize_context.key;
-   item.hop_serialize_context_def = hop_serialize_context.def++;
+   var ctxdef = hop_serialize_context_key_set( item );
 
    for( var p in item ) {
       if( p !== "hop_bigloo_serialize" &&
 	  p !== "hop_classname" &&
 	  p !== "hop_circle_forced" &&
-	  p !== "hop_serialize_context_key" &&
-	  p !== "hop_serialize_context_def" &&
 	  p !== "hop_classhash" ) {
 	 len++;
 	 args += hop_bigloo_serialize_context( item[ p ] );
@@ -166,7 +217,29 @@ function hop_bigloo_serialize_object() {
    str += args;
    str += hop_bigloo_serialize_context( item.hop_classhash );
 
-   str = "=" +  hop_serialize_word( item.hop_serialize_context_def ) + str;
+   str = "=" + hop_serialize_word( ctxdef ) + str;
+
+   return str;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_custom_object ...                           */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_custom_object() {
+   var item = this;
+   var hash = item.hop_classhash;
+   
+   var classfields = item.hop_classfields;
+   var str = "O("
+       + hop_serialize_word( 2 )
+       + hop_serialize_word( 0 );
+
+   var ctxdef = hop_serialize_context_key_set( item );
+
+   str += hop_bigloo_serialize_as_plist( item, item.__class__ );
+   str += hop_serialize_word( hash );
+
+   str = "=" + hop_serialize_word( ctxdef ) + str;
 
    return str;
 }
@@ -183,21 +256,7 @@ function hop_bigloo_serialize_sc_object() {
    var fields = sc_class_all_fields( clazz );
    var len = 1 + fields.length;
 
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: false
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
-	 value: hop_serialize_context.def++,
-	 enumerable: false,
-	 configurable: false
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   }
+   var ctxdef = hop_serialize_context_key_set( item );
 
    for( var i = 0; i < fields.length; i++ ) {
       args += hop_bigloo_serialize_context( fields[ i ].sc_getter( item ) );
@@ -208,18 +267,87 @@ function hop_bigloo_serialize_sc_object() {
    str += args;
    str += hop_bigloo_serialize_context( sc_class_hash( clazz ) );
 
-   str = "=" +  hop_serialize_word( item.hop_serialize_context_def ) + str;
+   str = "=" + hop_serialize_word( ctxdef ) + str;
 
    return str;
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_hopframe ...                                */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_hopframe() {
+   var item = this;
+   var classname = "JsHopFrame";
+   var hash = HopFrame.prototype.hash;
+   var str = "O";
+
+   var ctxdef = hop_serialize_context_key_set( item );
+
+   var obj = [ this.srv, this.path, this.args, this.options, this.header ];
+   str += hop_bigloo_serialize_context( sc_cons( hash, obj ) );
+   str += hop_bigloo_serialize_context( 0 );
+
+   str = "=" + hop_serialize_word( ctxdef ) + str;
+
+   return str;
+}   
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_service ...                                 */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_service() {
+   var item = this;
+   var classname = "JsService";
+   var hash = HopService.prototype.hash;
+   var str = "O";
+
+   var ctxdef = hop_serialize_context_key_set( item );
+
+   str += hop_bigloo_serialize_context( sc_cons( hash, [ this.base, dir.dir ] ) );
+   str += hop_bigloo_serialize_context( 0 );
+
+   str = "=" + hop_serialize_word( ctxdef ) + str;
+
+   return str;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_error_hash ...                                               */
+/*---------------------------------------------------------------------*/
+var hop_error_hash = 0;
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_error ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_error( item ) {
+   var classname = "JsError";
+   var hash = hop_error_hash;
+   var str = "O";
+
+   var ctxdef = hop_serialize_context_key_set( item );
+
+   var obj = [ item.constructor.name.toString(),
+	       item.message.toString(),
+	       hop_bigloo_serialize_context( item.stack ),
+	       "fileName" in item ? item.fileName.toString() : "",
+	       "lineNumber" in item ? ~~item.lineNumber : 0 ];
+   str += hop_bigloo_serialize_context( sc_cons( hash, obj ) );
+   str += hop_bigloo_serialize_context( 0 );
+
+   str = "=" + hop_serialize_word( ctxdef ) + str;
+
+   return str;
+}   
+
+/*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_sc_class ...                                */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 function hop_bigloo_serialize_sc_class( clazz ) {
    var classname = sc_symbol2jsstring( sc_class_name( clazz ) );
    return "k" + hop_serialize_string( classname );
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_size_of_word ...                                             */
@@ -235,6 +363,41 @@ function hop_size_of_word( word ) {
    return s;
 }
 
+/*---------------------------------------------------------------------*/
+/*    hop_serialize_bytes ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_serialize_bytes( word, size ) {
+   var rw = "";
+
+   while( --size >= 0 ) {
+      var c = ((word >> (size << 3)) & 0xff);
+
+      if( (c >= 46) && (c < 127) ) {
+	 if( c == 92 )
+	    // Chrome patch:
+	    // Chrome (at least Chrome <= 12) escapes \ characters when
+	    // sending the request via an XHR. The consequence is the
+	    // client-side DIGEST authentication is computed on a different
+	    // string from the one actually sent to the client. As a
+	    // workaround we explicitly escape \ character using the URL
+	    // escaping mechanism.
+	    rw += "%5c";
+	 else
+	    rw += String.fromCharCode( c );
+      } else {
+         var i1 = (c >> 4);
+         var i2 = (c & 0xf);
+         var c1 = i1 + ((i1 < 10) ? 48 : 55);
+         var c2 = i2 + ((i2 < 10) ? 48 : 55);
+         
+         rw += String.fromCharCode( 37, c1, c2 );
+      }
+      
+      size--;
+   }
+   return rw;
+}
+   
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_word_size ...                                      */
 /*---------------------------------------------------------------------*/
@@ -387,6 +550,8 @@ function hop_serialize_number( item ) {
 	    return hop_serialize_number_string( 'L', sitem );
 	 }
       }
+   } if( sitem.indexOf( "+" ) != -1 ) {
+      return hop_serialize_number_string( 'f', sitem.replace( /e[+]/, "e" ) );
    } else {
       return hop_serialize_number_string( 'f', sitem );
    }
@@ -407,27 +572,13 @@ function hop_serialize_array( item ) {
    var ra = '[' + hop_serialize_word( l );
    var i = 0;
 
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: false
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
-	 value: hop_serialize_context.def++,
-	 enumerable: false,
-	 configurable: false
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   } 
+   var ctxdef = hop_serialize_context_key_set( item );
 
    for( i = 0; i < l; i++ ) {
       ra += hop_bigloo_serialize_context( item[ i ] );
    }
 
-   return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
+   return "=" + hop_serialize_word( ctxdef ) + ra;
 }
 
 /*---------------------------------------------------------------------*/
@@ -438,29 +589,15 @@ function hop_bigloo_serialize_hvector( item, tag, size ) {
    var ra = 'h' + hop_serialize_word( l ) + hop_serialize_word( size ) + hop_serialize_string( tag );
    var i;
 
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: false
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
-	 value: hop_serialize_context.def++,
-	 enumerable: false,
-	 configurable: false
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   }
+   var ctxdef = hop_serialize_context_key_set( item );
 
    for( i = 0; i < l; i++ ) {
-      ra += hop_serialize_word_size( item[ i ], size );
+      ra += hop_serialize_bytes( item[ i ], size );
    }
 
-   return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
+   return "=" + hop_serialize_word( ctxdef ) + ra;
 }
-   
+
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_fvector ...                                 */
 /*---------------------------------------------------------------------*/
@@ -469,30 +606,16 @@ function hop_bigloo_serialize_fvector( item, tag, size ) {
    var ra = 'h' + hop_serialize_word( l ) + hop_serialize_word( size ) + hop_serialize_string( tag );
    var i;
 
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: false
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
-	 value: hop_serialize_context.def++,
-	 enumerable: false,
-	 configurable: false
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   }
+   var ctxdef = hop_serialize_context_key_set( item );
 
    for( i = 0; i < l; i++ ) {
       var s = item[ i ].toString();
       ra += hop_serialize_word( s.length ) + s;
    }
 
-   return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
+   return "=" + hop_serialize_word( ctxdef ) + ra;
 }
-   
+
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_s8vector ...                                */
 /*---------------------------------------------------------------------*/
@@ -581,6 +704,7 @@ function hop_serialize_date( item ) {
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_html ...                                           */
 /*---------------------------------------------------------------------*/
+#if !HOP_NOBROWSER
 function hop_serialize_html( item ) {
    if( "outerHTML" in item ) {
       return hop_serialize_string( item.outerHTML );
@@ -599,20 +723,70 @@ function hop_serialize_html( item ) {
       }
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
-/*    hop_serialize_alist ...                                          */
+/*    hop_bigloo_serialize_as_plist ...                                */
 /*---------------------------------------------------------------------*/
-function hop_bigloo_serialize_alist( item ) {
-   var alist = null;
-   
+function hop_bigloo_serialize_as_plist( item, clazz ) {
+   var res = "";
+   var len = 0;
+
+
+   if( clazz ) {
+      res += "%3a" + hop_serialize_string( "__class__" )
+	 + hop_bigloo_serialize_context( clazz );
+      len = 2;
+   }
+      
    for( var p in item ) {
-      var k = sc_jsstring2keyword( p );
-      alist = sc_cons( sc_cons( k, sc_cons( item[ p ] ) ), alist );
+      res += "%3a" + hop_serialize_string( p )
+	 + hop_bigloo_serialize_context( item[ p ] );
+      len += 2;
    }
 
-   return hop_bigloo_serialize_context( alist );
+   if( len == 0 ) {
+      return ".";
+   } else {
+      return "(" + hop_serialize_word( len + 1 ) + res + ".";
+   }
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_arguments ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_arguments() {
+   var res = "";
+   var i;
+   var args = this.args;
+
+   for( i = 0; i < args.length; i++ ) {
+      res += hop_bigloo_serialize_context( args[ i ] );
+   }
+
+   if( res == "" ) {
+      return ".";
+   } else {
+      return "(" + hop_serialize_word( i + 1 ) + res + ".";
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    object serialization                                             */
+/*---------------------------------------------------------------------*/
+#if HOP_SCHEME
+sc_Object.prototype.hop_bigloo_serialize = hop_bigloo_serialize_sc_object;
+#endif
+
+Int8Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s8vector;
+Uint8Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u8vector;
+Int16Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s16vector;
+Uint16Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u16vector;
+Int32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s32vector;
+Uint32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u32vector;
+Float32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f32vector;
+Float64Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f64vector;
+HopArguments.prototype.hop_bigloo_serialize = hop_bigloo_serialize_arguments;
 
 /*---------------------------------------------------------------------*/
 /*    safe_decode_uri ...                                              */
@@ -654,20 +828,14 @@ function safe_decode_uri( s ) {
 /*** META ((export obj->string) (arity #t)) */
 function hop_obj_to_string( item ) {
    hop_serialize_context.active = false;
-   hop_serialize_context.ref = 0;
-   hop_serialize_context.def = 0;
-   hop_serialize_context.key++;
-   
-   var s = hop_bigloo_serialize_context( item );
-
-   return safe_decode_uri( s );
+   return safe_decode_uri( hop_bigloo_serialize( item ) );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_string_to_obj ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export string->obj) (arity #t)) */
-function hop_string_to_obj( s ) {
+/*** META ((export string->obj) (arity -2)) */
+function hop_string_to_obj( s, extension ) {
    var a = hop_config.uint8array ?
       new Uint8Array( s.length ) : new Array( s.length );
 
@@ -675,7 +843,7 @@ function hop_string_to_obj( s ) {
       a[ i ] = (s.charCodeAt( i )) & 0xff;
    }
 
-   return hop_bytearray_to_obj( a );
+   return hop_bytearray_to_obj( a, extension );
 }
 
 /*---------------------------------------------------------------------*/
@@ -698,7 +866,7 @@ function hop_url_encoded_to_obj( s ) {
    var len = s.length;
    
    /* compute the destination length */
-   for( var i = 0; i < len; ++i ) {
+   for( var i = 0; i < s.length; ++i ) {
       if( s.charCodeAt( i ) == 0x25 ) {
 	 i += 2;
 	 len -= 2;
@@ -726,7 +894,7 @@ function hop_url_encoded_to_obj( s ) {
 /*---------------------------------------------------------------------*/
 /*    hop_bytearray_to_obj ...                                         */
 /*---------------------------------------------------------------------*/
-function hop_bytearray_to_obj( s ) {
+function hop_bytearray_to_obj( s, extension ) {
    var pointer = 0;
    var definitions = [];
    var defining = -1;
@@ -740,40 +908,38 @@ function hop_bytearray_to_obj( s ) {
    }
 
    function utf8substring( s, end ) {
-      var codes = new Array();
-      var j = 0;
+      var res = "";
 
       while( pointer < end ) {
 	 var code = s[ pointer++ ];
-
 	 if( code < 128 ) {
-	    codes[ j++ ] = code;
+	    res += String.fromCharCode( code );
 	 } else {
 	    var code2 = s[ pointer++ ];
-	    
 	    if( code < 224 ) {
-	       codes[ j++ ] = ((code - 192) << 6) + (code2 - 128);
+	       code2 = ((code - 192) << 6) + (code2 - 128);
+	       res += String.fromCharCode( code2 );
 	    } else {
 	       var code3 = s[ pointer++ ];
-
 	       if( code < 240 ) {
-		  codes[ j++ ] = ((code - 224) << 12)
+		  code3 = ((code - 224) << 12)
 		     + ((code2 - 128) << 6) + (code3 - 128);
+		  res += String.fromCharCode( code3 );
 	       } else {
-		  code4 = s[ pointer++ ];
-
-		  codes[ j++ ] = ((code - 240) << 18)
+		  var code4 = s[ pointer++ ];
+		  code4 = ((code - 240) << 18)
 		     + ((code2 - 128) << 12)
 		     + ((code3 - 128) << 6)
 		     + (code4 - 128);
+		  res += String.fromCharCode( code4 );
 	       }
 	    }
 	 }
       }
-
-      return String.fromCharCode.apply( null, codes );
+      
+      return res;
    }
-   
+
    function read_integer( s ) {
       return read_size( s );
    }
@@ -804,7 +970,6 @@ function hop_bytearray_to_obj( s ) {
    function read_long_word( s, szlw ) {
       return read_word( szlw );
    }
-
 
    function read_size( s ) {
       var szs = s[ pointer++ ];
@@ -878,7 +1043,7 @@ function hop_bytearray_to_obj( s ) {
 
       hd.__hop_car = read_item();
       hd.__hop_cdr = read_item();
-
+      
       return res;
    }
 
@@ -928,7 +1093,7 @@ function hop_bytearray_to_obj( s ) {
 
    function read_object() {
       var old_defining = defining;
-      var key, sz, clazz, fields;
+      var key, sz, clazz, fields, cinfo;
       var res;
       
       defining = -1;
@@ -959,30 +1124,44 @@ function hop_bytearray_to_obj( s ) {
 	 res = new Object();
 
 	 for( var i = 0; i < sz; i++ ) {
-	    res[ cinfo[ i ] ] = read_item();
+	    res[ sc_keyword2jsstring( cinfo[ i ] ) ] = read_item();
 	 }
-	 
+
+	 // consume the hash number
+	 read_item();
+
 	 return res;
+      }
+   }
+
+   function read_extension() {
+      var item = read_item();
+      if( extension ) {
+	 return extension( item );
+      } else {
+	 return item;
       }
    }
 
    function read_custom_object() {
       var old_defining = defining;
-      var obj, hash, unserializer;
+      var obj, hashobj, hash_, hash, unserializer, clazz;
       var res;
       
       defining = -1;
       
-      obj = read_item();
-      hash = read_item();
-      unserializer = hop_find_class_unserializer( hash );
+      hashobj = read_item();
+      hash_ = read_item();
+      hash = hashobj.__hop_car;
+      obj = hashobj.__hop_cdr;
 
-      res = unserializer( obj );
-      
+      res = hop_find_class_unserializer( hash )( obj );
+
       if( old_defining >= 0 ) {
 	 definitions[ old_defining ] = res;
       }
-      
+
+#if HOP_SCHEME
       clazz = sc_object_class( res );
 
       if( !(res instanceof sc_Object) || (hash === clazz.sc_hash) ) {
@@ -990,14 +1169,17 @@ function hop_bytearray_to_obj( s ) {
       } else {
 	 sc_error( "string->obj", "corrupted custom class", hash );
       }
+#else
+      return res;
+#endif      
    }
    
    function read_elong( sz ) {
       return read_word( s, sz );
    }
       
-   function read_llong( sz ) {
-      return read_word( s, sz );
+   function read_llong( s ) {
+      return read_float( s );
    }
 
    function read_unsupported( type ) {
@@ -1010,6 +1192,10 @@ function hop_bytearray_to_obj( s ) {
       return seconds_date( parseInt( read_string( s ), 10 ) );
    }
 
+   function read_nanoseconds() {
+      return new Date( parseInt( read_string( s ), 10 ) / 1000000 );
+   }
+
    function read_class() {
       var cname = read_symbol();
       var cinfo = read_item();
@@ -1017,17 +1203,47 @@ function hop_bytearray_to_obj( s ) {
       return sc_class_exists( cname ) || cinfo;
    }
 
-   function string_to_array( s ) {
-      var a = hop_config.uint8array ?
-	 new Uint8Array( s.length ) : new Array( s.length );
+   function read_hvector() {
+      var len = read_size( s );
+      var bsize = read_size( s );
+      var sym = read_item();
+      var res;
+      var cntr;
 
-      for( var i = 0, len = s.length; i < len; ++i ) {
-	 a[ i ] = (s.charCodeAt(i)) & 0xff;
+      switch( sym ) {
+        case "s8": cntr = Int8Array; break;
+        case "u8": cntr = Uint8Array; break;
+        case "s16": cntr = Int16Array; break;
+        case "u16": cntr = Uint16Array; break;
+        case "s32": cntr = Int32Array; break;
+        case "u32": cntr = Uint32Array; break;
+        case "f32": cntr = Float32Array; break;
+        case "f64": cntr = Float64Array; break;
+        default: cntr = Uint8Array; 
       }
-
-      return a;
+      
+      res = new cntr( len );
+      for( var i = 0; i < len; i++ ) {
+	 res[ i ] = read_word( s, bsize );
+      }
+      return res;
    }
-   
+
+   function read_procedure() {
+      var svc = read_item();
+
+      if( svc == undefined ) {
+	 return undefined;
+      } else {
+	 var rsc = svc.resource ? svc.resource : "/hop";
+	 if( svc.javascript) {
+	    return eval( sc_format( svc.javascript, svc.path, rsc ) );
+	 } else {
+	    return undefined;
+	 }
+      }
+   }
+
    function read_item() {
       switch( s[ pointer++ ] ) {
 	 case 0x3d /* = */: return read_definition();
@@ -1040,6 +1256,7 @@ function hop_bytearray_to_obj( s ) {
 	 case 0x3b /* ; */: return undefined;
 	 case 0x2e /* . */: return null;
 	 case 0x3c /* < */: return read_cnst();
+         case 0x60 /* ` */: 
          case 0x22 /* " */: return read_string( s );
          case 0x25 /* % */: return decodeURIComponent( read_string( s ) );
          case 0x55 /* U */: return read_string( s );
@@ -1052,11 +1269,14 @@ function hop_bytearray_to_obj( s ) {
 	 case 0x66 /* f */: return read_float( s );
 	 case 0x2d /* - */: return -read_integer( s );
          case 0x45 /* E */: return read_elong( read_size( s ) );
-         case 0x4c /* L */: return read_llong( read_size( s ) );
+         case 0x4c /* L */: return read_llong( s );
          case 0x64 /* d */: return read_date();
+         case 0x44 /* D */: return read_nanoseconds();
          case 0x6b /* k */: return read_class();
          case 0x72 /* r */: return sc_pregexp( read_string( s ) );
-         case 0x68 /* h */: return read_unsupported( "homogeneous-vector" );
+         case 0x58 /* X */: return read_extension();
+         case 0x68 /* h */: return read_hvector();
+         case 0x70 /* p */: return read_procedure();
 	 case 0x56 /* V */: return read_unsupported( "typed-vector" );
 	 case 0x21 /* ! */: return read_unsupported( "cell" );
          case 0x75 /* u */: return read_unsupported( "ucs2" );
@@ -1064,7 +1284,6 @@ function hop_bytearray_to_obj( s ) {
          case 0x2b /* + */: return read_unsupported( "custom" );
 	 case 0x77 /* w */: return read_unsupported( "weak-ptr" );
          case 0x74 /* t */: return read_unsupported( "tagged vectors" );
-         case 0x70 /* p */: return read_unsupported( "process" );
          case 0x65 /* e */: return read_unsupported( "process" );
          case 0x6f /* o */: return read_unsupported( "opaque" );
 	 default: pointer--; return read_integer( s );
@@ -1084,49 +1303,211 @@ function hop_bytearray_to_obj( s ) {
 /*    -------------------------------------------------------------    */
 /*    See HOP_CREATE_ENCODED_ELEMENT (hop-dom.js).                     */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 var hop_custom_object_regexp =
    new RegExp( "hop_create_encoded_element[(][ ]*\"([^\"]*)\"[ ]*[)]" );
-	       
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    hop_class_register_serializer ...                                */
+/*---------------------------------------------------------------------*/
+/*** META ((export register-class-serialization!) (arity #f)) */
+#if HOP_SCHEME
+function hop_class_register_serializer( clazz, serializer, unserializer ) {
+   
+   function makeUnserializer( fun ) {
+      return function( o ) {
+	 var jso = unserializer( o );
+
+	 if( jso instanceof Object ) {
+	    jso.__proto__ = clazz.prototype;
+	 }
+	 return jso;
+      }
+   }
+   var hop_bigloo_unserialize_custom_object =
+       makeUnserializer( hop_plist2jsobject );
+   
+   if( serializer === undefined && unserializer === undefined ) {
+      hop_class_serializers[ clazz.sc_hash ] = {
+	 serializer: hop_bigloo_serialize_custom_object,
+	 unserializer: hop_bigloo_unserialize_custom_object
+      }
+   } else {
+      hop_class_serializers[ clazz.sc_hash ] = {
+	 serializer: serializer === true ?
+	    hop_bigloo_serialize_custom_object
+	    : serializer,
+	 unserializer: unserializer === true ?
+	    hop_bigloo_serialize_custom_object 
+	    : (unserializer && makeUnserializer( unserializer ))
+      }
+   }
+
+   Object.defineProperty( clazz.prototype , "hop_bigloo_serialize", {
+      value: hop_class_serializers[ clazz.sc_hash ].serializer,
+      enumerable: false,
+      configurable: false
+   } );
+}
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    sc__class__ ...                                                  */
+/*---------------------------------------------------------------------*/
+#if HOP_SCHEME
+var sc__class__ = sc_string2keyword( "__class__" );
+#endif
+
 /*---------------------------------------------------------------------*/
 /*    hop_find_class_unserializer ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_find_class_unserializer( hash ) {
-   return function( o ) {
-      if( typeof( o ) === "string" ) {
-	 var m = o.match( hop_custom_object_regexp );
+   var custom = hop_class_serializers[ hash ];
 
-	 if( m ) {
-	    /* kind of specialized eval */
-	    return hop_create_encoded_element( m [ 1 ] );
+   if( custom ) {
+      return custom.unserializer;
+   } else {
+#if HOP_SCHEME
+      return function( o ) {
+	 if( typeof( o ) === "string" ) {
+	    var m = o.match( hop_custom_object_regexp );
+
+	    if( m ) {
+	       /* kind of specialized eval */
+	       return hop_create_encoded_element( m [ 1 ] );
+	    } else {
+	       return sc_error( "string->obj",
+				"Cannot find custom class ("
+				+ hash
+				+ ") unserializer", o );
+	    }
 	 } else {
-	    return sc_error( "string->obj", "Cannot find custom class unserializer", o );
+	    if( sc_isPair( o ) && sc_car( o ) == sc__class__ ) {
+	       var clazz = { sc_hash: hash, prototype: {} };
+	       hop_class_register_serializer( clazz, true, hop_plist2jsobject );
+	       return hop_find_class_unserializer( hash )( o );
+	    } else {
+	       return sc_error( "string->obj",
+				"Cannot find custom class ("
+				+ hash
+				+ ") unserializer", o );
+	    }
 	 }
-      } else {
-	 return sc_error( "string->obj", "Cannot find custom class unserializer", hash );
       }
+#else
+      throw "Cannot find unserializer " + hash;
+#endif
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_js_to_object ...                                             */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 function hop_js_to_object( cname, hash, o ) {
-   var klass = sc_class_exists( sc_string2symbol( sc_jsstring2string( cname ) ) );
+   var clazz = sc_string2symbol( sc_jsstring2string( cname ) );
+   var klass = sc_class_exists( clazz );
 
    if( !klass ) {
-      o.hop_bigloo_serialize = hop_bigloo_serialize_object;
-      o.hop_classname = cname;
-      o.hop_classhash = hash;
+      var custom = hop_class_serializers[ hash ];
 
+      Object.defineProperty( o, "hop_bigloo_serialize" , {
+	 value: (custom && custom.serializer)
+	    || hop_bigloo_serialize_custom_object,
+	 enumerable: false,
+	 configurable: true
+      } );
+
+      Object.defineProperty( o, "hop_classname", {
+	 value: cname,
+	 enumerable: false,
+	 configurable: true
+      } );
+      
+      Object.defineProperty( o, "hop_classhash", {
+	 value: hash,
+	 enumerable: false,
+	 configurable: true
+      } );
+
+      Object.defineProperty( o, "__class__", {
+	 value: clazz,
+	 enumerable: false,
+	 configurable: true
+      } );
+      
       return o;
    } else {
       if( sc_class_hash( klass ) !== hash ) {
 	 sc_error( "hop_js_to_object", "incomptabile class versions", cname );
       } else {
 	 o.__proto__ = klass.prototype;
-	 o.__proto__.constructor = klass;
-
+	 //o.__proto__.constructor = klass;
 	 return o;
       }
    }
 }
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    hop_hextobuf ...                                                 */
+/*---------------------------------------------------------------------*/
+function hop_hextobuf( str ) {
+   var buf = new Uint8Array( str.length / 2 );
+   for( var i = 0; i < str.length; i += 2 ) {
+      buf[ i / 2 ] = parseInt( str.substr( i, 2 ), 16 );
+   }
+   return buf;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_buffer ...                                                   */
+/*---------------------------------------------------------------------*/
+function hop_buffer( name, _ ) {
+   switch( name ) {
+      case "JsSlowBuffer":
+	 return hop_hextobuf( arguments[ 1 ] );
+	 
+      case "JsFastBuffer":
+	 return new Uint8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+	 
+      case "JsInt8Array":
+	 return new Int8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      case "JsUint8Array":
+	 return new Uint8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      case "JsUint8ClampedArray":
+	 return new Uint8ClampedArray( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+	 
+      case "JsInt16Array":
+	 return new Int16Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      case "JsUint16Array":
+	 return new Uint16Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+	 
+      case "JsInt32Array":
+	 return new Int32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      case "JsUint32Array":
+	 return new Uint32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+	 
+      case "JsFloat32Array":
+	 return new Float32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      case "JsFloat64Array":
+	 return new Float64Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+	 
+      case "JsDataView":
+	 return new DataView( arguments[ 3 ], arguments[ 2 ], arguments[ 3 ].length );
+
+      case "JsArrayBuffer":
+	 return hop_hextobuf( arguments[ 2 ] ).buffer;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    module exports                                                   */
+/*---------------------------------------------------------------------*/
+#if HOP_MODULES
+exports.eval = function( expr ) { return eval( expr ); };
+exports.hop_bigloo_serialize = hop_bigloo_serialize;
+exports.hop_arguments = HopArguments;
+exports.hop_url_encoded_to_obj = hop_url_encoded_to_obj;
+#endif

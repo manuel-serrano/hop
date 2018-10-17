@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/upnp.scm                  */
+;*    serrano/prgm/project/hop/2.6.x/runtime/upnp.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 10 16:49:31 2013                          */
-;*    Last change :  Mon Nov 11 17:23:57 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Fri Feb 21 13:46:58 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    UPNP Hop support                                                 */
 ;*=====================================================================*/

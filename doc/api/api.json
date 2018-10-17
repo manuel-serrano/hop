@@ -1,0 +1,10 @@
+{
+   "title": "Api",
+   "key": "api",
+   "files": [ "api",
+	      "../node_modules/config/doc/config.md",
+	      "../node_modules/user/doc/user.md",
+	      "../node_modules/hss/doc/hss.md",
+	      "../node_modules/syslog/doc/syslog.md"
+	    ]
+}

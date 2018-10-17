@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sun Aug 16 17:19:44 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Mon Apr  9 19:55:08 2018 (serrano)                */
+;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -28,7 +28,6 @@
 	    __hop_types
 	    __hop_xml-types
 	    __hop_xml
-	    __hop_param
 	    __hop_mime
 	    __hop_misc
 	    __hop_user
@@ -184,7 +183,7 @@
        (let ((str (string-append "f{" val "}")))
 	  (with-access::css-ruleset (hss-parse-ruleset str) (declaration*)
 	     declaration*))
-       (bigloo-type-error 'hss-property->declaration-list "string" val)))
+       (bigloo-type-error "hss-property->declaration-list" "string" val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-properties->ruleset-list ...                                 */
@@ -219,7 +218,7 @@
       ((and (list? val) (every string? val))
        (append-map hss-string->ruleset val))
       (else
-       (bigloo-type-error 'hss-property->ruleset-list
+       (bigloo-type-error "hss-property->ruleset-list"
 			  "string or string-list"
 			  val))))
 	       
@@ -329,7 +328,8 @@
 ;*    hss-cache ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define hss-cache
-   #unspecified)
+   (instantiate::cache-memory
+      (max-file-size #e1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss->css ...                                                     */
@@ -357,9 +357,13 @@
 ;*---------------------------------------------------------------------*/
 (define (init-hss-compiler! port)
    (set! hss-cache
-	 (instantiate::cache-disk
-	    (path (make-cache-name "hss"))
-	    (out (lambda (o p) (css-write o p))))))
+      (if (hop-cache-enable)
+	  (instantiate::cache-disk
+	     (clear (hop-hss-clear-cache))
+	     (path (make-cache-name "hss"))
+	     (out (lambda (o p) (css-write o p))))
+	  (instantiate::cache-memory
+	     (max-file-size #e1024)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-response ...                                                 */
@@ -377,13 +381,11 @@
 		       (if (and (string? etag)
 				(=elong (string->elong etag) signature))
 			   (instantiate::http-response-string
-			      (request req)
 			      (start-line "HTTP/1.1 304 Not Modified")
 			      (content-type mime)
 			      (header hd)
 			      (charset (hop-locale)))
 			   (instantiate::http-response-file
-			      (request req)
 			      (charset (hop-locale))
 			      (content-type mime)
 			      (bodyp (eq? method 'GET))
@@ -391,35 +393,34 @@
 			      (file value))))))
 		((string? hss)
 		 (instantiate::http-response-file
-		    (request req)
 		    (charset (hop-locale))
 		    (content-type mime)
 		    (bodyp (eq? method 'GET))
 		    (file hss)))
 		(hss
                  (instantiate::http-response-procedure
-                      (request req)
                       (charset (hop-locale))
                       (content-type mime)
                       (bodyp (eq? method 'GET))
                       (proc (lambda (p) (css-write hss p)))))
 		(else
 		 (http-file-not-found path)))))
-       (user-access-denied req)))
+       (access-denied req)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-get-hss ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (hop-get-hss path)
    (synchronize hss-mutex
-      (let ((ce (cache-get hss-cache path)))
-	 (if (isa? ce cache-entry)
-	     ce
-	     (let* ((hss (hop-load-hss path))
-		    (ce (cache-put! hss-cache path hss)))
-		(if (isa? ce cache-entry)
-		    ce
-		    hss))))))
+      (when (isa? hss-cache cache)
+	 (let ((ce (cache-get hss-cache path)))
+	    (if (isa? ce cache-entry)
+		ce
+		(let* ((hss (hop-load-hss path))
+		       (ce (cache-put! hss-cache path hss)))
+		   (if (isa? ce cache-entry)
+		       ce
+		       hss)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-hss ...                                                 */
@@ -467,13 +468,23 @@
       (lambda (e)
 	 (if (not (isa? e &io-parse-error))
 	     (raise e)
-	     (with-access::&io-parse-error e (obj)
+	     (with-access::&io-parse-error e (obj proc)
+		(set! proc "hop-read-hss")
 		(match-case obj
 		   ((?token ?val ?file ?pos)
-		    (raise (duplicate::&io-parse-error e
-			      (obj (format "~a (~a)" token val))
-			      (fname file)
-			      (location pos))))
+		    (let ((v (cond
+				(val
+				 val)
+				((input-string-port? iport)
+				 (input-port-buffer iport))
+				(else
+				 token))))
+		       (raise (duplicate::&io-parse-error e
+				 (obj v)
+				 (fname (if (input-string-port? iport)
+					    (input-port-buffer iport)
+					    file))
+				 (location pos)))))
 		   (else
 		    (raise e))))))
       (css->ast iport :extension hss-extension)))
@@ -764,29 +775,38 @@
 ;*    hss-extension ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (hss-extension c ip)
+   
+   (define (ill-eof pos)
+      (read-error/location "Unexpected end-of-file" "Unclosed hss extension"
+	 (input-port-name ip) pos))
+   
    (when (char=? c #\$)
-      (let ((exp (hop-read ip))
-	    (pos (input-port-position ip)))
-	 (if (eof-object? exp)
-	     (read-error/location "Unexpected end-of-file"
-				  "Unclosed list"
-				  (input-port-name ip)
-				  pos)
-	     (with-handler
-		(lambda (e)
-		   (cond
-		      ((isa? e &eval-warning)
-		       (warning-notify e)
-		       #unspecified)
-		      ((and (isa? e &exception)
-			    (not (with-access::&exception e (location) location)))
-		       (with-access::&exception e (location fname)
-			  (set! location pos)
-			  (set! fname (input-port-name ip)))
-		       (raise e))
-		      (else
-		       (raise e))))
-		(eval exp))))))
+      (let ((follow (read-char ip)))
+	 (unread-char! follow ip)
+	 (cond
+	    ((eof-object? exp)
+	     (ill-eof (input-port-position ip)))
+	    ((char=? follow #\{)
+	     ;; a foreign extension
+	     ((hop-hss-foreign-eval) ip))
+	    (else
+	     (let ((exp (hop-read ip))
+		   (pos (input-port-position ip)))
+		(with-handler
+		   (lambda (e)
+		      (cond
+			 ((isa? e &eval-warning)
+			  (warning-notify e)
+			  #unspecified)
+			 ((and (isa? e &exception)
+			       (not (with-access::&exception e (location) location)))
+			  (with-access::&exception e (location fname)
+			     (set! location pos)
+			     (set! fname (input-port-name ip)))
+			  (raise e))
+			 (else
+			  (raise e))))
+		   (eval exp))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ::css-hash-color ...                              */

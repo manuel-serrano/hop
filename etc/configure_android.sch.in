@@ -10,12 +10,18 @@
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
+;*    Bigloo                                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-bigloo) #f)
+
+;*---------------------------------------------------------------------*/
 ;*    Install directories ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (hop-etc-directory) "@ETCDIR@")
 (define-inline (hop-bin-directory) "@BINDIR@")
 (define-inline (hop-lib-directory) "@LIBDIR@")
 (define-inline (hop-share-directory) "@SHAREDIR@")
+(define-inline (hop-doc-directory) "@DOCDIR@")
 (define-inline (hop-contribs-directory) "@CONTRIBSDIR@")
 (define-inline (hop-weblets-directory) "@WEBLETSDIR@")
 

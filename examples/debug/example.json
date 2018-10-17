@@ -1,0 +1,7 @@
+{
+   "tags": ["multitier"],
+   "description": "Hop.js debugging facilities",
+   "doc": "This example shows multitier debugging support.",
+   "level": 1,
+   "commands": ["hop --no-color --no-zeroconf -p $(PORT) $(SRC) --rc-file $(RCFILE) -g"]
+}

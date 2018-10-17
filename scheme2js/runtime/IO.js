@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-15 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -912,36 +912,45 @@ sc_Pair.prototype.sc_toCircleString = function(symb, writeOrDisplay, inList) {
 	res += ")";
     return res;
 };
-sc_Vector.prototype.sc_toCircleString = function(symb, writeOrDisplay) {
-    if (this[symb + "use"]) { // use-flag is set. Just use it.
-	var nb = this[symb + "nb"];
-	if (this[symb]-- === 0) { // if we are the last use. remove all fields.
-	    delete this[symb];
-	    delete this[symb + "nb"];
-	    delete this[symb + "use"];
-	}
-	return '#' + nb + '#';
-    }
-    if (this[symb]-- === 0) { // if we are the last use. remove all fields.
-	delete this[symb];
-	delete this[symb + "nb"];
-	delete this[symb + "use"];
-    }
 
-    var res = "";
-    if (this[symb] !== undefined) { // implies > 0
-	this[symb + "use"] = true;
-	res += '#' + this[symb + "nb"] + '=';
+function sc_VectorToCircleString( symb, writeOrDisplay ) {
+   if (this[symb + "use"]) { // use-flag is set. Just use it.
+      var nb = this[symb + "nb"];
+      if (this[symb]-- === 0) { // if we are the last use. remove all fields.
+	 delete this[symb];
+	 delete this[symb + "nb"];
+	 delete this[symb + "use"];
+      }
+      return '#' + nb + '#';
+   }
+   if (this[symb]-- === 0) { // if we are the last use. remove all fields.
+      delete this[symb];
+      delete this[symb + "nb"];
+      delete this[symb + "use"];
+   }
+
+   var res = "";
+   if (this[symb] !== undefined) { // implies > 0
+      this[symb + "use"] = true;
+      res += '#' + this[symb + "nb"] + '=';
+   }
+   res += "#(";
+   for (var i = 0; i < this.length; i++) {
+      res += sc_genToCircleString(this[i], symb, writeOrDisplay);
+      if (i < this.length - 1) res += " ";
     }
-    res += "#(";
-    for (var i = 0; i < this.length; i++) {
-	res += sc_genToCircleString(this[i], symb, writeOrDisplay);
-	if (i < this.length - 1) res += " ";
-    }
-    res += ")";
-    return res;
+   res += ")";
+   return res;
+}
+
+if( "defineProperty" in Object ) {
+   Object.defineProperty( sc_Vector, "sc_toCircleString", {
+      value: sc_VectorToCircleString,
+      enumerable: false
+   } );
+} else {
+   sc_Vector.prototype.sc_toCircleString = sc_VectorToCircleString;
 };
-
 
 /* ------------------ print ---------------------------------------------------*/
 
@@ -1023,22 +1032,30 @@ function sc_format(s) {
       }
    }
 
-   function format_list(sep, l, p) {
+   function format_list_inner(sep, l, p) {
       if (sc_isPair(l)) {
 	 while (true) {
-	    format_list(sep, l.__hop_car, p);
+	    format_list_inner(sep, l.__hop_car, p);
 	    if (sc_isPair(l.__hop_cdr)) {
 	       p.appendJSString(sep);
 	       l = l.__hop_cdr;
 	    } else {
 	       if (l.__hop_cdr != null) {
-		  format_list(sep, l.__hop_cdr, p);
+		  format_list_inner(sep, l.__hop_cdr, p);
 	       }
 	       break;
 	    }
 	 }
       } else {
 	 sc_display(l, p);
+      }
+   }
+   
+   function format_list(sep, l, p) {
+      if (sc_isPair(l)) {
+	 format_list_inner(sep, l, p);
+      } else {
+	 sc_display("", p);
       }
    }
 	 

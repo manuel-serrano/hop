@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hop/2.5.x/arch/android/src/fr/inria/hop/HopUiUtils.java      */
+/*    .../hop/2.6.x/arch/android/src/fr/inria/hop/HopUiUtils.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Mon Feb 17 08:55:54 2014 (serrano)                */
+/*    Last change :  Fri Feb 21 13:32:08 2014 (serrano)                */
 /*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */

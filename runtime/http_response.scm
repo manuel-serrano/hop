@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/3.2.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Aug 16 17:20:44 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Mon Jul  2 18:02:44 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -36,16 +36,15 @@
 	    __hop_cache
 	    __hop_security)
 
-   (export  (generic http-response::symbol ::%http-response ::socket)
+   (export  (generic http-response::symbol ::%http-response ::obj ::socket)
 	    (generic scheme->response ::obj ::http-request)
-	    (http-response-void ::http-request)
-	    (http-send-request ::http-request ::procedure)
+	    (http-send-request ::http-request ::procedure #!key body args)
 	    (chunked-flush-hook port size)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-generic (http-response::symbol r::%http-response socket))
+(define-generic (http-response::symbol r::%http-response request socket))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-write-content-type ...                                      */
@@ -59,14 +58,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-string ...                         */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-string socket)
-   (with-trace 3 "http-response::http-response-string"
+(define-method (http-response r::http-response-string request socket)
+   (with-trace 'hop-response "http-response::http-response-string"
       (with-access::http-response-string r (start-line
 					    header
 					    content-type charset
 					    server content-length
 					    bodyp body
-					    timeout request)
+					    timeout)
 	 (let* ((p (socket-output socket))
 		(body body)
 		(connection (with-access::http-request request (connection)
@@ -91,78 +90,111 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-hop ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-hop socket)
-   (with-trace 3 "http-response::http-response-hop"
+(define-method (http-response r::http-response-hop request socket)
+
+   (define (serialize val)
+      (obj->string val (request-type request)))
+   
+   (define (arraybuffer-request? request)
+      (with-access::http-request request (header)
+	 (let ((c (assq hop-responsetype: header)))
+	    (and (pair? c) (string=? (cdr c) "arraybuffer")))))
+   
+   (define (request-type request)
+      (with-access::http-request request (header)
+	 (let ((c (assq hop-client: header)))
+	    (if (and (pair? c) (string=? (cdr c) "hop"))
+		'hop-to-hop
+		'hop-client))))
+   
+   (define (response-x-hop value conn p)
+      (with-access::http-request request (connection)
+	 (let* ((str (serialize value))
+		(rep (if (arraybuffer-request? request)
+			 str
+			 (string-hex-extern str))))
+	    (http-write-line p "Content-Length: " (string-length rep))
+	    (http-write-line p "Connection: " conn)
+	    (http-write-line p)
+	    (display-string rep p))))
+
+   (define (response-x-javascript value p padding)
+      (http-write-line p "Connection: close")
+      (http-write-line p)
+      (when padding (display padding p))
+      (display "(" p)
+      (obj->javascript-expr value p)
+      (display ")" p))
+
+   (define (response-x-url-hop value conn p)
+      (let ((s (url-path-encode (serialize value))))
+	 (http-write-line p "Content-Length: " (string-length s))
+	 (http-write-line p "Connection: " conn)
+	 (http-write-line p)
+	 (display s p)))
+
+   (define (response-x-json-hop value p)
+      (http-write-line p "Connection: close")
+      (http-write-line p)
+      (byte-array->json (serialize value) p))
+   
+   (define (response-json value p padding)
+      (http-write-line p "Connection: close")
+      (http-write-line p)
+      (if padding
+	  (begin
+	     (display padding p)
+	     (display "(" p)
+	     (obj->json value p)
+	     (display ")" p))
+	  (obj->json value p)))
+
+   (with-trace 'hop-response "http-response::http-response-hop"
       (with-access::http-response-hop r (start-line
 					   header
-					   content-type charset
+					   (ctype content-type)
+					   charset
 					   server content-length
 					   value padding
-					   bodyp timeout request)
-	 (with-access::http-request request (connection hop-serialize)
+					   bodyp 
+					   timeout)
+	 (with-access::http-request request (connection (headerreq header))
 	    (let ((p (socket-output socket))
 		  (conn connection))
 	       (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	       (http-write-line-string p start-line)
 	       (http-write-header p header)
 	       (http-write-line p "Cache-Control: no-cache")
-	       (http-write-content-type p content-type charset)
+	       (http-write-content-type p ctype charset)
 	       (http-write-line-string p "Server: " server)
-	       ;; the body
 	       (when bodyp
-		  ;; the content-type tells Hop how to serialize the value
+		  ;; select the transfer method according to the content-type
 		  (cond
-		     ((not (string? content-type))
+		     ((not (string? ctype))
 		      (error "http-response"
 			 "No serialization method specified"
-			 content-type))
-		     ((string-prefix? "application/x-javascript" content-type)
+			 ctype))
+		     ((string-prefix? "application/x-hop" ctype)
+		      ;; fast path, bigloo serialization
+		      (response-x-hop value conn p))
+		     ((string-prefix? "application/x-javascript" ctype)
 		      ;; standard javascript serialization
 		      (set! conn 'close)
-		      (http-write-line p "Connection: " conn)
-		      (http-write-line p)
-		      (if padding
-			  (begin
-			     (display padding p)
-			     (display "(" p)
-			     (obj->javascript-expr value p)
-			     (display ")" p))
-			  (obj->javascript-expr value p)))
-		     ((string-prefix? "application/x-hop" content-type)
+		      (response-x-javascript value p padding))
+		     ((string-prefix? "application/x-url-hop" ctype)
 		      ;; fast path, bigloo serialization
-		      (let ((s (obj->string value)))
-			 (http-write-line p "Content-Length: " (string-length s))
-			 (http-write-line p "Connection: " conn)
-			 (http-write-line p)
-			 (display s p)))
-		     ((string-prefix? "application/x-url-hop" content-type)
-		      ;; fast path, bigloo serialization
-		      (let ((s (url-path-encode (obj->string value))))
-			 (http-write-line p "Content-Length: " (string-length s))
-			 (http-write-line p "Connection: " conn)
-			 (http-write-line p)
-			 (display s p)))
-		     ((string-prefix? "application/x-json-hop" content-type)
+		      (response-x-url-hop value conn p))
+		     ((string-prefix? "application/x-json-hop" ctype)
 		      (set! conn 'close)
-		      (http-write-line p "Connection: " conn)
-		      (http-write-line p)
-		      (byte-array->json (obj->string value) p))
-		     ((string-prefix? "application/json" content-type)
+		      (response-x-json-hop value p))
+		     ((string-prefix? "application/json" ctype)
 		      ;; json encoding
 		      (set! conn 'close)
-		      (http-write-line p "Connection: " conn)
-		      (http-write-line p)
-		      (if padding
-			  (begin
-			     (display padding p)
-			     (display "(" p)
-			     (obj->json value p)
-			     (display ")" p))
-			  (obj->json value p)))
+		      (response-json value p padding))
 		     (else
 		      (error "http-response"
 			 (format "Unsupported serialization method \"~a\""
-			    content-type)
+			    ctype)
 			 request))))
 	       (flush-output-port p)
 	       conn)))))
@@ -205,10 +237,9 @@
 ;*    responses which allows Hop to use keep-alive connections for     */
 ;*    dynamic responses.                                               */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-xml socket)
-   (with-trace 3 "http-response-xml"
-      (with-access::http-response-xml r (request
-					 start-line header
+(define-method (http-response r::http-response-xml request socket)
+   (with-trace 'hop-response "http-response-xml"
+      (with-access::http-response-xml r (start-line header
 					 content-type charset server
 					 xml bodyp timeout
 					 backend)
@@ -238,12 +269,12 @@
 		   (output-port-flush-hook-set! p chunked-flush-hook))
 		(http-write-line p))
 	    ;; the body
-	    (with-trace 4 "http-response-xml"
+	    (with-trace 'hop-respponse "http-response-xml"
 	       (when bodyp
 		  (with-access::xml-backend backend (security)
 		     (if (isa? security security-manager)
 			 (with-access::security-manager security (xml-sanitize)
-			    (let ((xmls (xml-sanitize xml backend)))
+			    (let ((xmls (xml-sanitize xml backend request)))
 			       (xml-write xmls p backend)))
 			 (xml-write xml p backend)))))
 	    (flush-output-port p)
@@ -257,9 +288,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-procedure ...                      */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-procedure socket)
-   (with-trace 3 "http-response::http-response-procedure"
-      (with-access::http-response-procedure r (start-line header content-type charset server content-length proc bodyp timeout request)
+(define-method (http-response r::http-response-procedure request socket)
+   (with-trace 'hop-response "http-response::http-response-procedure"
+      (with-access::http-response-procedure r (start-line header content-type
+						 charset server content-length
+						 proc bodyp
+						 timeout)
 	 (let ((p (socket-output socket))
 	       (connection (if (>elong content-length #e0)
 			       (with-access::http-request request (connection)
@@ -277,7 +311,7 @@
 	    (http-write-line p)
 	    (flush-output-port p)
 	    ;; the body
-	    (with-trace 4 "http-response-procedure"
+	    (with-trace 'hop-response "http-response-procedure"
 	       (when bodyp
 		  (proc p)
 		  (flush-output-port p)))
@@ -286,9 +320,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-raw ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-raw socket)
-   (with-trace 3 "http-response::http-response-raw"
-      (with-access::http-response-raw r (bodyp proc timeout request connection)
+(define-method (http-response r::http-response-raw request socket)
+   (with-trace 'hop-response "http-response::http-response-raw"
+      (with-access::http-response-raw r (bodyp proc timeout connection)
 	 (let ((p (socket-output socket)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (when bodyp
@@ -302,19 +336,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response-range ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (http-response-range range r::http-response-file socket::socket)
+(define (http-response-range range r::http-response-file request socket::socket)
    
    (define (response-error status-line request socket header)
       (http-response
-       (instantiate::http-response-error
-	  (request request)
+       (instantiate::http-response-string
 	  (start-line status-line)
 	  (charset (hop-locale))
 	  (header header))
+       request
        socket))
 
    (define (response-header conn beg end size p r file)
-      (with-access::http-response-file r (start-line header content-type charset server request)
+      (with-access::http-response-file r (start-line header
+					    content-type charset
+					    server)
 	 (with-access::http-request request (http)
 	    ;; partial content header
 	    (display http p)
@@ -343,7 +379,7 @@
 	    ;; close the header
 	    (http-write-line p))))
    
-   (with-access::http-response-file r (start-line file bodyp request timeout)
+   (with-access::http-response-file r (start-line file bodyp timeout)
       (let ((size (file-size file)))
 	 (if (>=elong size #e0)
 	     (with-handler
@@ -376,19 +412,27 @@
 			       (response-header connection beg end size cp r file)
 			       (flush-output-port cp)))
 			 ;; the body
-			 (with-trace 4 "http-response-file"
+			 (with-trace 'hop-response "http-response-file"
 			    (when bodyp
 			       (send-file file p (+elong #e1 (-elong end beg)) beg)
 			       (flush-output-port p)))
 			 connection))))
-	     (http-response (http-file-not-found file) socket)))))
+	     (http-response (http-file-not-found file) request socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response-regular-file ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (http-response-regular-file r::http-response-file socket::socket)
-   (with-access::http-response-file r (start-line header content-type charset server file bodyp request timeout)
-      (let ((size (file-size file)))
+(define (http-response-regular-file r::http-response-file request socket::socket)
+   (with-access::http-response-file r (start-line header
+					 content-type charset
+					 server file bodyp
+					 size offset
+					 timeout)
+      (let ((size (if (=elong size #e-1)
+		      (let ((fs (file-size file)))
+			 (if (<=elong offset 0)
+			     fs
+			     (-elong fs offset))))))
 	 (if (>=elong size #e0)
 	     (with-access::http-request request (connection)
 		(let ((p (socket-output socket)))
@@ -405,29 +449,28 @@
 		   (http-write-line p)
 		   (flush-output-port p)
 		   ;; the body
-		   (with-trace 4 "http-response-file"
-		      (when bodyp (send-file file p size #e-1)))
+		   (when bodyp (send-file file p size offset))
 		   (flush-output-port p)
 		   connection))
-	     (http-response (http-file-not-found file) socket)))))
+	     (http-response (http-file-not-found file) request socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    directory->response ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (directory->response rep dir)
-   (with-access::%http-response rep (request bodyp)
+   (with-access::%http-response rep (bodyp)
       (instantiate::http-response-xml
 	 (backend (hop-xml-backend))
 	 (content-type (with-access::xml-backend (hop-xml-backend) (mime-type) mime-type))
 	 (charset (hop-charset))
-	 (request request)
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (xml (if bodyp
 		  (<HTML>
 		     (<HEAD> (<TITLE> dir))
 		     (<BODY>
 			(<H1> dir)
-			(let ((cvt (charset-converter (hop-locale) (hop-charset))))
+			(let ((cvt (charset-converter
+				      (hop-locale) (hop-charset))))
 			   (<PRE>
 			      (unless (string=? dir "/")
 				 (<A> :href
@@ -450,24 +493,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-file ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-file socket)
-   (with-trace 3 "http-response::http-response-file"
-      (with-access::http-response-file r (start-line header file request)
+(define-method (http-response r::http-response-file request socket)
+   (with-trace 'hop-response "http-response::http-response-file"
+      (with-access::http-response-file r (start-line header file)
 	 (with-access::http-request request (header)
 	    (cond
 	       ((directory? file)
-		(http-response (directory->response r file) socket))
+		(http-response (directory->response r file) request socket))
 	       ((http-header-field header range:)
 		=>
-		(lambda (range) (http-response-range range r socket)))
+		(lambda (range) (http-response-range range r request socket)))
 	       (else
-		(http-response-regular-file r socket)))))))
+		(http-response-regular-file r request socket)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cgi-env ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (hop-cgi-env socket r path qstr method)
-   (with-access::%http-response r (request header content-type)
+(define (hop-cgi-env socket r::%http-response request::http-request
+	      path::bstring  qstr method)
+   (with-access::%http-response r (header content-type)
       (let* ((auth (http-header-field header authorization:))
 	     (auth-type (if (and (string? auth) (substring=? auth "Basic" 5))
 			    "Basic"
@@ -515,9 +559,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-cgi ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-cgi socket)
-   (with-trace 3 "http-response::http-response-cgi"
-      (with-access::http-response-cgi r (start-line header content-type charset server cgibin bodyp request timeout content-length)
+(define-method (http-response r::http-response-cgi request socket)
+   (with-trace 'hop-response "http-response::http-response-cgi"
+      (with-access::http-response-cgi r (start-line header
+					   content-type charset
+					   server cgibin
+					   bodyp
+					   timeout content-length)
 	 (if (authorized-path? request cgibin)
 	     (let ((p (socket-output socket)))
 		(when (>=fx timeout 0) (output-timeout-set! p timeout))
@@ -528,11 +576,11 @@
 		(http-write-line-string p "Server: " server)
 		(http-write-line p)
 		;; the body
-		(with-trace 4 "http-response-cgi-process"
+		(with-trace 'hop-response "http-response-cgi-process"
 		   (let* ((pi (socket-input socket))
 			  (cl content-length)
 			  (body (read-chars (elong->fixnum cl) pi))
-			  (env (hop-cgi-env socket r cgibin "" 'POST))
+			  (env (hop-cgi-env socket r request cgibin "" 'POST))
 			  (proc (apply run-process cgibin output: pipe: input: pipe: env)))
 		      (fprint (process-input-port proc) body "\r\n")
 		      (close-output-port (process-input-port proc))
@@ -545,25 +593,28 @@
 			 (close-input-port (process-output-port proc)))
 		      (flush-output-port p)
 		      'close)))
-	     (http-response (user-access-denied request) socket)))))
+	     (http-response (access-denied request) request socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-put ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-put socket)
-   (with-trace 3 "http-response::http-response-put"
-      (with-access::http-response-put r (start-line header content-type charset server uri bodyp timeout request)
+(define-method (http-response r::http-response-put request socket)
+   (with-trace 'hop-response "http-response::http-response-put"
+      (with-access::http-response-put r (start-line header
+					   content-type charset
+					   server uri bodyp
+					   timeout)
 	 (let ((l (string-length uri)))
 	    (let loop ((i 0))
 	       (cond
 		  ((=fx i l)
 		   (http-response
 		    (instantiate::http-response-string
-		       (request request)
 		       (start-line "HTTP/1.0 400 Bad Request")
 		       (charset (hop-locale))
 		       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request ~a</body></html>" uri))
 		       (timeout timeout))
+		    request
 		    socket))
 		  ((char=? (string-ref uri i) #\?)
 		   (let ((cmd (substring uri 0 i))
@@ -577,9 +628,9 @@
 		      (http-write-line-string p "Server: " server)
 		      (http-write-line p)
 		      ;; the body
-		      (with-trace 4 "http-response-put-process"
+		      (with-trace 'hop-response "http-response-put-process"
 			 (let* ((pi (socket-input socket))
-				(env (hop-cgi-env socket r cmd args 'GET))
+				(env (hop-cgi-env socket r request cmd args 'GET))
 				(proc (apply run-process cmd
 					     output: pipe: input: pipe: env)))
 			    (fprint (process-input-port proc) args "\r\n")
@@ -599,24 +650,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-abort ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-abort socket)
-   (with-trace 3 "http-response::http-response-abort"
+(define-method (http-response r::http-response-abort request socket)
+   (with-trace 'hop-response "http-response::http-response-abort"
       'abort))
       
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-filter ...                         */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-filter socket)
-   (with-trace 3 "http-response::http-response-filter"
+(define-method (http-response r::http-response-filter request socket)
+   (with-trace 'hop-response "http-response::http-response-filter"
       (with-access::http-response-filter r (response)
-	 (http-filter response r socket))))
+	 (http-filter response r request socket))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-persistent ...                     */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-persistent socket)
-   (with-trace 3 "http-response::http-response-persistent"
-      (with-access::http-response-persistent r (body request)
+(define-method (http-response r::http-response-persistent request socket)
+   (with-trace 'hop-response "http-response::http-response-persistent"
+      (with-access::http-response-persistent r (body)
 	 (when (string? body)
 	    (let ((p (socket-output socket)))
 	       (display body p)
@@ -647,7 +698,6 @@
 	 ((string? obj)
 	  (instantiate::http-response-string
 	     (charset (hop-charset))
-	     (request req)
 	     (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	     (bodyp (not (eq? method 'HEAD)))
 	     (body obj)))
@@ -656,10 +706,10 @@
 		 (ctype (cond
 			   ((or (not (pair? c)) (not (string? (cdr c))))
 			    "application/x-javascript")
+			   ((string=? (cdr c) "x-hop")
+			    "application/x-hop")
 			   ((string=? (cdr c) "javascript")
 			    "application/x-javascript")
-			   ((string=? (cdr c) "arraybuffer")
-			    "application/x-hop")
 			   ((string=? (cdr c) "url-arraybuffer")
 			    "application/x-url-hop")
 			   ((string=? (cdr c) "json-byte-array")
@@ -672,7 +722,6 @@
 		(backend (hop-xml-backend-secure))
 		(content-type ctype)
 		(charset (hop-charset))
-		(request req)
 		(header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 		(bodyp (not (eq? method 'HEAD)))
 		(value obj)))))))
@@ -691,7 +740,6 @@
       (let ((be (hop-xml-backend-secure)))
 	 (with-access::xml-backend be (mime-type)
 	    (instantiate::http-response-xml
-	       (request req)
 	       (backend be)
 	       (content-type mime-type)
 	       (charset (hop-charset))
@@ -707,7 +755,6 @@
       (instantiate::http-response-string
 	 (content-type (hop-mime-type))
 	 (charset (hop-charset))
-	 (request req)
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (bodyp (not (eq? method 'HEAD)))
 	 (body (xml-tilde->expression obj)))))
@@ -721,33 +768,23 @@
 (define-method (scheme->response obj::xml-http-request req)
    (with-access::xml-http-request obj (status input-port header)
       (instantiate::http-response-procedure
-	 (request req)
 	 (start-line (format "HTTP/1.1 ~a" status))
 	 (header header)
 	 (proc (lambda (op) (display (read-string input-port) op))))))
    
 ;*---------------------------------------------------------------------*/
-;*    http-response-void ...                                           */
-;*---------------------------------------------------------------------*/
-(define (http-response-void req)
-   (instantiate::http-response-string
-      (request req)
-      (charset (hop-locale))
-      (start-line "HTTP/1.0 204 No Content")))
-
-;*---------------------------------------------------------------------*/
 ;*    http-send-request ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (http-send-request req::http-request proc::procedure)
-   (with-trace 3 "http-send-request"
-      (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout connection-timeout connection)
+(define (http-send-request req::http-request proc::procedure #!key args body)
+   (with-trace 'hop-response "http-send-request"
+      (with-access::http-request req (scheme method path (httpv http) host port header userinfo timeout connection-timeout connection)
 	 (let ((ssl (eq? scheme 'https)))
 	    (let loop ((host host)
 		       (port port)
 		       (user userinfo)
 		       (path path))
 	       (trace-item "scheme=" scheme " host=" host " port=" port)
-	       (trace-item "method=" method " path=" path)
+	       (trace-item "method=" method " path=" path " user=" user)
 	       (let* ((sock (if (and (not ssl) (hop-use-proxy))
 				(make-proxy-socket
 				   (hop-use-proxy) connection-timeout)
@@ -755,6 +792,7 @@
 				   host port connection-timeout req ssl)))
 		      (out (socket-output sock))
 		      (in (socket-input sock)))
+		  (socket-option-set! sock SO_REUSEADDR: #t)
 		  (when (> timeout 0)
 		     (output-timeout-set! out timeout)
 		     (input-timeout-set! in timeout))
@@ -780,14 +818,19 @@
 				     (with-access::http-server-request req (authorization)
 					authorization)
 				     (let ((auth (assq :authorization header)))
-					(when (pair? auth) (cdr auth))))))
+					(when (pair? auth) (cdr auth)))))
+			   (ctype (let ((ct (assq :content-type header)))
+				     (when (pair? ct)
+					(string->symbol (cdr ct))))))
 			(http :in in :out out
 			   :protocol scheme :method method :http-version httpv
 			   :host host :port port :path path :header header
+			   :content-type (or ctype (when args 'multipart/form-data))
 			   :authorization auth
 			   :timeout timeout
 			   :login user
-			   :body socket
+			   :args args
+			   :body body
 			   :proxy (hop-use-proxy))
 			(when (eq? connection 'close)
 			   (close-output-port out))
@@ -820,3 +863,4 @@
 		 (port (string->integer (substring proxy (+fx i 1) len))))
 	     (make-client-socket proxy port :timeout tmt))
 	  (make-client-socket proxy 80 :timeout tmt))))
+

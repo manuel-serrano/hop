@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/widget/tree.scm                   */
+;*    serrano/prgm/project/hop/3.1.x/widget/tree.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jul 19 16:03:47 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Wed Mar  1 16:33:28 2017 (serrano)                */
+;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -63,8 +63,10 @@
 		    (inline #t boolean)
 		    (iconopen #t)
 		    (iconclose #t)
+		    (%location #f)
 		    body)
-   (let ((head ""))
+   (let ((head "")
+	 (body (xml-body body)))
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
 	 (set! head (car body))
 	 (set! body (cdr body)))
@@ -85,10 +87,10 @@
 	 (onunselect onunselect)
 	 (onopen onopen)
 	 (onclose onclose)
-	 (value value)
+	 (value (xml-primitive-value value))
 	 (inline inline)
-	 (iconopen iconopen)
-	 (iconclose iconclose)
+	 (iconopen (xml-primitive-value iconopen))
+	 (iconclose (xml-primitive-value iconclose))
 	 (body body))))
 
 ;*---------------------------------------------------------------------*/
@@ -105,14 +107,15 @@
 		      (value #unspecified)
 		      (inline #t boolean)
 		      (icon #t)
+		      (%location #f)
 		      body)
    (instantiate::html-tree-leaf
       (tag 'tree-leaf)
       (klass (if (string? class) class ""))
       (id (xml-make-id id 'TRLEAF))
-      (value value)
-      (icon (tree-icon icon inline "file.png"))
-      (iconerr icon)
+      (value (xml-primitive-value value))
+      (icon (tree-icon (xml-primitive-value icon) inline "file.png"))
+      (iconerr (xml-primitive-value icon))
       (body body)))
 
 ;*---------------------------------------------------------------------*/
@@ -350,7 +353,8 @@
 			     (with-access::xml-delay b (thunk)
 				(loop (thunk))))
 			    ((service? b)
-			     (loop ((service-proc b))))
+			     (with-access::hop-service (service->hop-service b) (proc)
+				(loop (xml-body-element (proc #f)))))
 			    ((isa? b html-tree)
 			     (html-write-tree level b parent p be)
 			     (display ";\n" p))
@@ -368,6 +372,9 @@
 				 (start-line "HTTP/1.0 501 Internal Server Error")
 				 (content-type (hop-mime-type))
 				 (value b))))
+			    ((xml-unpack b)
+			     =>
+			     loop)
 			    (else
 			     (error "<TREE>" "Illegal tree body" b)))))
 		   body)

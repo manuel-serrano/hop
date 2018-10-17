@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/etc/configure.scm.in              */
+;*    serrano/prgm/project/hop/3.2.x/etc/configure.scm.in              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Wed Jul 31 07:19:38 2013 (serrano)                */
+;*    Last change :  Fri Sep 14 08:40:29 2018 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -18,13 +18,16 @@
    (export  (hop-configure ::bstring)
 	    (hop-name)
 	    (hop-version)
+	    (hop-minor-version)
 	    (hop-branch)
 	    (hop-backend)
 	    (hop-url)
+	    (inline hop-bigloo)
 	    (inline hop-bin-directory)
 	    (inline hop-lib-directory)
 	    (inline hop-etc-directory)
 	    (inline hop-share-directory)
+	    (inline hop-doc-directory)
 	    (inline hop-contribs-directory)
 	    (inline hop-weblets-directory)
 	    (hop-library-path)
@@ -37,17 +40,22 @@
 	    (hop-configure-var-directory)
 	    (hop-configure-cache-directory)
 	    (hop-srfis::pair-nil)
-	    (hop-zeroconf-default))
+	    (hop-zeroconf-default)
+	    (hop-build-id)
+	    (hop-build-tag))
    
    (eval    (export hop-name)
 	    (export hop-version)
+	    (export hop-minor-version)
 	    (export hop-branch)
 	    (export hop-backend)
 	    (export hop-url)
+	    (export hop-bigloo)
 	    (export hop-etc-directory)
 	    (export hop-bin-directory)
 	    (export hop-lib-directory)
 	    (export hop-share-directory)
+	    (export hop-doc-directory)
 	    (export hop-contribs-directory)
 	    (export hop-weblets-directory)
 	    (export hop-library-path)
@@ -60,7 +68,9 @@
 	    (export hop-configure-var-directory)
 	    (export hop-configure-cache-directory)
 	    (export hop-srfis)
-	    (export hop-zeroconf-default)))
+	    (export hop-zeroconf-default)
+	    (export hop-build-id)
+	    (export hop-build-tag)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure ...                                                */
@@ -69,6 +79,8 @@
    (case (string->symbol config)
       ((--version)
        (print (hop-version)))
+      ((--minor-version)
+       (print (hop-minor-version)))
       ((--branch)
        (print (hop-branch)))
       ((--backend)
@@ -81,6 +93,8 @@
        (print (hop-lib-directory)))
       ((--sharedir)
        (print (hop-share-directory)))
+      ((--docdir)
+       (print (hop-doc-directory)))
       ((--contribsdir)
        (print (hop-contribs-directory)))
       ((--webletsdir)
@@ -99,6 +113,12 @@
        (print (hop-runtime-system-files)))
       ((--hop-service-base)
        (print (hop-service-base)))
+      ((--bigloo)
+       (print (hop-bigloo)))
+      ((--build-id)
+       (print (hop-build-id)))
+      ((--build-tag)
+       (print (hop-build-tag)))
       (else
        (with-output-to-port (current-error-port)
 	  (lambda ()
@@ -106,28 +126,37 @@
 	     (newline)
 	     (print "Option:")
 	     (print "  [--version]")
+	     (print "  [--minor-version]")
 	     (print "  [--branch]")
 	     (print "  [--backend]")
 	     (print "  [--etcdir]")
 	     (print "  [--bindir]")
 	     (print "  [--libdir]")
 	     (print "  [--sharedir]")
+	     (print "  [--docdir]")
 	     (print "  [--contribsdir]")
              (print "  [--webletsdir]")
 	     (print "  [--library-path]")
              (print "  [--mimetypes]")
              (print "  [--javascript-mime-type]")
              (print "  [--css-mime-type]")
-	     (print "  [--url]"))))))
+	     (print "  [--url]")
+	     (print "  [--bigloo]")
+	     (print "  [--build-id]")
+	     (print "  [--build-tag]"))))))
 	     
 ;*---------------------------------------------------------------------*/
 ;*    Name and version                                                 */
 ;*---------------------------------------------------------------------*/
 (define (hop-name) "Hop")
 (define (hop-version) "@VERSION@")
+(define (hop-minor-version) "@MINORVERSION@")
 (define (hop-branch) "@BRANCH@")
 (define (hop-backend) "@BACKEND@")
 (define (hop-url) "@URL@")
+
+(define (hop-build-id) "@BUILDID@")
+(define (hop-build-tag) "@BUILDTAG@")
 
 ;*---------------------------------------------------------------------*/
 ;*    Misc ...                                                         */

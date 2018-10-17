@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/doc/api.hop               */
+;*    serrano/prgm/project/hop/3.0.x/weblets/doc/api.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Wed Nov 16 16:22:01 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Fri Jan 16 13:26:01 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
 ;*=====================================================================*/
@@ -106,20 +106,22 @@
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api page)
    (setup-api-tables!)
-   (let ((s (make-wiki-request-syntax *server-syntax* make-api-title)))
+   (let ((s (make-wiki-request-syntax *server-syntax* (current-request)
+	       make-api-title)))
       (if (or (eq? page #unspecified) (equal? page ""))
 	  (<TOC>)
-	  (doc-page page s))))
+	  (doc-page page s (current-request)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc/api-sans-title ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api-sans-title page)
    (setup-api-tables!)
-   (let ((s (make-wiki-request-syntax *server-syntax* (lambda (t) t))))
+   (let ((s (make-wiki-request-syntax *server-syntax* (current-request)
+	       (lambda (t) t))))
       (if (or (eq? page #unspecified) (equal? page ""))
 	  (<TOC>)
-	  (doc-page page s))))
+	  (doc-page page s (current-request)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-api-title ...                                               */

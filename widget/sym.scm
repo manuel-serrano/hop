@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/sym.scm                    */
+;*    serrano/prgm/project/hop/3.0.x/widget/sym.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 27 09:39:08 2006                          */
-;*    Last change :  Tue May 24 14:11:12 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Thu Aug 27 07:28:28 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML symbols (special characters).                               */
 ;*=====================================================================*/
@@ -301,7 +301,7 @@
    (let ((s (if (symbol? sym) (symbol->string sym) sym)))
       (let ((e (hashtable-get *symbol-table* s)))
 	 (if e
-	     (instantiate::xml-verbatim (body e))
+	     (instantiate::xml-verbatim (data e))
 	     (error "<SYM>" "Illegal symbol" sym)))))
 
 ;*---------------------------------------------------------------------*/

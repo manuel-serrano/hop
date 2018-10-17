@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/html_img.scm              */
+;*    serrano/prgm/project/hop/3.0.x/runtime/html_img.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Mon Nov 18 10:04:01 2013 (serrano)                */
-;*    Copyright   :  2007-13 Manuel Serrano                            */
+;*    Last change :  Tue Feb  9 14:17:32 2016 (serrano)                */
+;*    Copyright   :  2007-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
 ;*=====================================================================*/
@@ -61,8 +61,8 @@
 ;*---------------------------------------------------------------------*/
 (define (inline-base64 src content)
    (format "data:~a;base64,~a"
-	   (mime-type src (format "image/~a" (suffix src)))
-	   (base64-encode content -1)))
+      (mime-type src (format "image/~a" (suffix src)))
+      (base64-encode content -1)))
 		       
 ;*---------------------------------------------------------------------*/
 ;*    img-base64-encode ...                                            */
@@ -111,7 +111,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    IMG ...                                                          */
 ;*---------------------------------------------------------------------*/
-(define-tag <IMG> ((id #f string)
+(define-tag <IMG> ((id #f)
 		   (inline #f boolean)
 		   (alt #f)
 		   (src #unspecified)
@@ -121,15 +121,18 @@
    (define (plain-img src cssrc)
       (instantiate::xml-empty-element
 	 (tag 'img)
-	 (id (xml-make-id id 'img))
-	 (attributes `(:src ,cssrc :alt ,(or alt (basename src)) ,@attributes))
+	 (id (xml-make-id (xml-primitive-value id) 'img))
+	 (attributes `(:src ,cssrc :alt ,(or alt (basename src))
+			 ,@(map xml-primitive-value attributes)))
 	 (body '())))
 
    (define (empty-img)
       (instantiate::xml-empty-element
 	 (tag 'img)
-	 (id (xml-make-id id 'img))
-	 (attributes (if alt `(:alt ,alt ,@attributes) attributes))
+	 (id (xml-make-id (xml-primitive-value id) 'img))
+	 (attributes (if alt
+			 `(:alt ,alt ,@(map xml-primitive-value attributes))
+			 (map xml-primitive-value attributes)))
 	 (body '())))
    
    (define (onerror-img attributes src)
@@ -152,44 +155,41 @@
 		   (set-car! (cdr onerror) nval)
 		   attributes)))
 	    (else
-	     `(:onerror ,(secure-javascript-attr val) ,@attributes)))))
+	     `(:onerror ,(secure-javascript-attr val)
+		 ,@(map xml-primitive-value attributes))))))
    
    (define (inline-img src cssrc isrc)
       (if isrc
 	  (instantiate::xml-empty-element
 	     (tag 'img)
-	     (id (xml-make-id id 'img))
+	     (id (xml-make-id (xml-primitive-value id) 'img))
 	     (attributes `(:src ,isrc :alt ,(or alt (basename src))
 				,@(onerror-img attributes src)))
 	     (body '()))
 	  (plain-img src cssrc)))
 
-   (cond
-      ((isa? src xml-tilde)
-       ;; see xml-write-initializations
-       (instantiate::xml-empty-element
-	  (tag 'img)
-	  (id id)
-	  (attributes `(:src ,src :alt ,alt ,@attributes))
-	  (body '())))
-      ((string? src)
-       (if (string-prefix? "data:" src)
-	   (inline-img src src src)
-	   (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))
-	      (cond
-		 ((and (pair? body) (string? (car body)) (null? (cdr body)))
-		  (let ((req (current-request)))
-		     (if (or (not req) (authorized-path? (current-request) src))
-			 (inline-img src cssrc (inline-base64 src (car body)))
-			 (plain-img src cssrc))))
-		 (inline
-		  (let ((req (current-request)))
-		     (if (or (not req) (authorized-path? (current-request) src))
-			 (inline-img src cssrc (inline-image src))
-			 (plain-img src cssrc))))
-		 (else
-		  (plain-img src cssrc))))))
-      ((eq? src #unspecified)
-       (empty-img))
-      (else
-       (error "<IMG>" "Illegal image src" src))))
+   (let ((src (xml-primitive-value src)))
+      (cond
+	 ((isa? src xml-tilde)
+	  ;; see xml-write-initializations
+	  (instantiate::xml-empty-element
+	     (tag 'img)
+	     (id id)
+	     (attributes `(:src ,src :alt ,(xml-primitive-value alt)
+			     ,@(map xml-primitive-value attributes)))
+	     (body '())))
+	 ((string? src)
+	  (if (string-prefix? "data:" src)
+	      (plain-img "inline" src)
+	      (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))
+		 (cond
+		    ((and (pair? body) (string? (car body)) (null? (cdr body)))
+		     (inline-img src cssrc (inline-base64 src (car body))))
+		    (inline
+		     (inline-img src cssrc (inline-image src)))
+		    (else
+		     (plain-img src cssrc))))))
+	 ((eq? src #unspecified)
+	  (empty-img))
+	 (else
+	  (error "<IMG>" "Illegal image src" src)))))

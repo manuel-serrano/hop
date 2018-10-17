@@ -4,5 +4,5 @@
  (author "M. Serrano")
  (title "HOP Web filtering.")
  (about-service "about")
- (rc (hop-load-once (make-file-path (hop-weblets-directory) "webfilter" "webfilter.hop")))
+ (rc (when (>fx (bigloo-debug) 1) (hop-load-once (make-file-path (hop-weblets-directory) "webfilter" "webfilter.hop"))))
  (autoload #f))

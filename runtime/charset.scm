@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/charset.scm               */
+;*    serrano/prgm/project/hop/3.0.x/runtime/charset.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Tue Mar 13 07:41:27 2012 (serrano)                */
-;*    Copyright   :  2007-12 Manuel Serrano                            */
+;*    Last change :  Tue Nov 18 16:23:46 2014 (serrano)                */
+;*    Copyright   :  2007-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
 ;*=====================================================================*/
@@ -130,18 +130,18 @@
 ;*---------------------------------------------------------------------*/
 (define (charset-converter charset1 charset2)
    (make-charset-converter charset1 charset2
-			   iso-latin->utf8 utf8->iso-latin utf8->iso-latin-15
-			   iso-8859-1->us-ascii
-			   cp1252->utf8 utf8->cp1252))
+      iso-latin->utf8 utf8->iso-latin utf8->iso-latin-15
+      iso-8859-1->us-ascii
+      cp1252->utf8 utf8->cp1252))
 
 ;*---------------------------------------------------------------------*/
 ;*    charset-converter! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (charset-converter! charset1 charset2)
    (make-charset-converter charset1 charset2
-			   iso-latin->utf8! utf8->iso-latin! utf8->iso-latin-15! 
-			   iso-8859-1->us-ascii!
-			   cp1252->utf8! utf8->cp1252!))
+      iso-latin->utf8! utf8->iso-latin! utf8->iso-latin-15! 
+      iso-8859-1->us-ascii!
+      cp1252->utf8! utf8->cp1252!))
 
 ;*---------------------------------------------------------------------*/
 ;*    charset-convert ...                                              */

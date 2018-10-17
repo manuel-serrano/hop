@@ -1,14 +1,14 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/etc/Makefile.version              */
+#*    serrano/prgm/project/hop/3.1.x/etc/Makefile.version              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:38:36 2006                          */
-#*    Last change :  Wed Nov  3 11:46:42 2010 (serrano)                */
-#*    Copyright   :  2006-10 Manuel Serrano                            */
+#*    Last change :  Thu Jun 29 08:38:47 2017 (serrano)                */
+#*    Copyright   :  2006-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    This Makefile interfaces with version managers.                  */
 #*=====================================================================*/
--include $(BUILDETCDIR)/Makefile.mercurial
+-include $(BUILDETCDIR)/Makefile.git
 
 #*---------------------------------------------------------------------*/
 #*    Global control                                                   */
@@ -34,7 +34,7 @@ pop:
 .PHONY: populate commit revision log
 
 populate:
-	find . -name '*~' -exec $(RM) {} \;
+	find . -name '*~' -exec /bin/rm {} \;
 	$(VM-POPULATE) `$(MAKE) -s pop`
 
 commit:
@@ -44,20 +44,18 @@ commit:
            $(VM-COMMIT) $(OPT) && $(VM-VERIFY); \
         fi
 
-push:
-	if [ "$(HOPBRANCH) " != " " ]; then \
-	  $(VM-PUSH) $(VM-PUSH-BRANCH) $(HOPBRANCH) $(HOPSVN); \
-        else \
-	  $(VM-PUSH) $(HOPSVN); \
-        fi
+push: $(VM)-push
 
-pull:
-	$(VM-PULL) $(HOPSVN)
+pull: $(VM)-pull
 
 tag:
 	$(VM-TAG) "v$(HOPRELEASE)"
 
 revision: populate commit
+	$(MAKE) revision-tar
+
+revision-tar:
+	tar cvfz $(VM).`date +'%F'`.tgz .$(VM)
 
 clone:
 	$(VM-CLONE) . $(CLONEDIR)
@@ -67,3 +65,6 @@ clone:
 
 log:
 	@ $(VM-LOG) | $(BIGLOO) -i $(BUILDETCDIR)/hglog.scm --stdin
+
+buildid:
+	@ $(VM-ID)
