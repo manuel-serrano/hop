@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct 16 16:43:46 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 10:32:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -86,6 +86,7 @@
 	   (generic js-properties-symbol::vector ::obj ::JsGlobalObject)
 	   
 	   (generic js-has-property::bool ::obj ::obj ::JsGlobalObject)
+	   (generic js-has-own-property::bool ::obj ::obj ::JsGlobalObject)
 	   (generic js-get-own-property ::obj ::obj ::JsGlobalObject)
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
@@ -1283,6 +1284,27 @@
       (lambda (__proto__) (js-has-property __proto__ name %this))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-has-own-property ...                                          */
+;*    -------------------------------------------------------------    */
+;*    This generic is used to implement Object.hasOwnProperty (see     */
+;*    object.scm)                                                      */
+;*---------------------------------------------------------------------*/
+(define-generic (js-has-own-property::bool o p::obj %this)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsObject ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsObject p::obj %this)
+   (jsobject-find o (string->symbol p)
+      ;; cmap search
+      (lambda (owner i) #t)
+      ;; prototype search
+      (lambda (o d) #t)
+      ;; not found
+      (lambda () #f)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.1       */
@@ -1482,6 +1504,7 @@
 	       (with-access::JsObject obj (elements)
 		  (with-access::JsPropertyCache cache (index owner cntmiss)
 		     (let ((el-or-desc (vector-ref elements i)))
+			
 			(cond
 			   ((isa? el-or-desc JsPropertyDescriptor)
 			    (unless (eq? o obj)
@@ -3114,7 +3137,7 @@
 				   (with-access::JsFunction f (len method arity)
 				      (cond
 					 ((<fx arity 0)
-					  ;; varargs function, for now never cache...
+					  ;; varargs functions, currently not cached...
 					  (with-access::JsPropertyCache ccache (pmap emap cmap)
 					     (set! pmap #t)
 					     (set! emap #t)

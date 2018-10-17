@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/hopscript/arraybuffer.scm        */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/arraybuffer.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Tue Aug 28 09:09:34 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 10:47:29 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -260,6 +260,12 @@
 	  #t)
 	 (else
 	  (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsArrayBuffer ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsArrayBuffer p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Oct 16 11:07:36 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 10:35:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1070,9 +1070,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-prototype-hasownproperty this v %this)
    (let* ((p (js-tostring v %this))
-	  (o (js-toobject %this this))
-	  (desc (js-get-own-property o p %this)))
-      (not (eq? desc (js-undefined)))))
+	  (o (js-toobject %this this)))
+      (js-has-own-property o p %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsObject ...                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Oct 16 08:25:41 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 10:06:47 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -373,45 +373,61 @@
 			(else
 			 #f))))))))
    
-   (define (call-method ccache ccspecs fun::J2SAccess args)
-      (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
-	 (let loop ((obj obj))
-	    (cond
-	       ((call-builtin-method obj field args)
-		=>
-		(lambda (sexp) sexp))
-	       ((isa? obj J2SRef)
-		(call-ref-method obj ccache acache ccspecs fun obj args))
-	       ((isa? obj J2SGlobalRef)
-		(or (call-globalref-method obj ccache acache fun obj args)
-		    (let* ((tmp (gensym '%obj))
-			   (fun (J2SAccess/cache (J2SHopRef tmp) field
-				   acache acspecs)))
-		       `(let ((,tmp ,(j2s-scheme obj mode return conf)))
-			   ,(call-ref-method obj ccache acache
-			       ccspecs fun (J2SHopRef tmp) args)))))
-	       ((isa? obj J2SParen)
-		(with-access::J2SParen obj (expr)
-		   (loop expr)))
-	       ((and (isa? obj J2SNew)
-		     (call-new-method obj field args mode return conf))
-		=>
-		(lambda (sexp) sexp))
-	       (else
-		(let* ((tmp (gensym 'obj)))
-		   `(let ((,tmp ,(box (j2s-scheme obj mode return conf)
-				    (j2s-vtype obj) conf)))
-		       ,(call-ref-method obj
-			   ccache acache ccspecs
-			   (duplicate::J2SAccess fun
-			      (obj (instantiate::J2SPragma
-				      (loc loc)
-				      (expr tmp))))
-			   (instantiate::J2SHopRef
-			      (type 'any)
-			      (loc loc)
-			      (id tmp))
-			   args))))))))
+   (define (call-method this ccache ccspecs fun::J2SAccess args)
+      (with-access::J2SCall this (profid)
+	 (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
+	    (let loop ((obj obj))
+	       (cond
+		  ((call-builtin-method obj field args)
+		   =>
+		   (lambda (sexp) sexp))
+		  ((isa? obj J2SGlobalRef)
+		   (or (call-globalref-method obj ccache acache fun obj args)
+		       (let* ((tmp (gensym '%obj))
+			      (fun (J2SAccess/cache (J2SHopRef tmp) field
+				      acache acspecs)))
+			  `(let ((,tmp ,(j2s-scheme obj mode return conf)))
+			      ,(call-ref-method obj ccache acache
+				  ccspecs fun (J2SHopRef tmp) args)))))
+		  ((and (config-get conf :profile-call #f) (>=fx profid 0))
+		   (with-access::J2SAccess fun (obj loc)
+		      (if (isa? obj J2SSuper)
+			  (let* ((self (j2s-scheme obj mode return conf))
+				 (s (gensym '%obj-profile))
+				 (f (duplicate::J2SAccess fun
+				       (obj (J2SHopRef s)))))
+			     `(let ((,s ,self))
+				 ,(call-unknown-function f (list 'this) args)))
+			  (let* ((self (j2s-scheme obj mode return conf))
+				 (s (gensym '%obj-profile))
+				 (f (duplicate::J2SAccess fun
+				       (obj (J2SHopRef s)))))
+			     `(let ((,s ,self))
+				 ,(call-unknown-function f (list s) args))))))
+		  ((isa? obj J2SRef)
+		   (call-ref-method obj ccache acache ccspecs fun obj args))
+		  ((isa? obj J2SParen)
+		   (with-access::J2SParen obj (expr)
+		      (loop expr)))
+		  ((and (isa? obj J2SNew)
+			(call-new-method obj field args mode return conf))
+		   =>
+		   (lambda (sexp) sexp))
+		  (else
+		   (let* ((tmp (gensym 'obj)))
+		      `(let ((,tmp ,(box (j2s-scheme obj mode return conf)
+				       (j2s-vtype obj) conf)))
+			  ,(call-ref-method obj
+			      ccache acache ccspecs
+			      (duplicate::J2SAccess fun
+				 (obj (instantiate::J2SPragma
+					 (loc loc)
+					 (expr tmp))))
+			      (instantiate::J2SHopRef
+				 (type 'any)
+				 (loc loc)
+				 (id tmp))
+			      args)))))))))
    
    (define (call-hop-function fun::J2SHopRef thisarg args)
       `(,(j2s-scheme fun mode return conf)
@@ -607,22 +623,7 @@
 	 (epairify loc
 	    (cond
 	       ((isa? fun J2SAccess)
-		(if (and (config-get conf :profile-call #f) (>=fx profid 0))
-		    (with-access::J2SAccess fun (obj loc)
-		       (if (isa? obj J2SSuper)
-			   (let* ((self (j2s-scheme obj mode return conf))
-				  (s (gensym '%obj-profile))
-				  (f (duplicate::J2SAccess fun
-					(obj (J2SHopRef s)))))
-			      `(let ((,s ,self))
-				  ,(call-unknown-function f (list 'this) args)))
-			   (let* ((self (j2s-scheme obj mode return conf))
-				  (s (gensym '%obj-profile))
-				  (f (duplicate::J2SAccess fun
-					(obj (J2SHopRef s)))))
-			      `(let ((,s ,self))
-				  ,(call-unknown-function f (list s) args)))))
-		    (call-method cache cspecs fun args)))
+		(call-method this cache cspecs fun args))
 	       ((isa? fun J2SParen)
 		(with-access::J2SParen fun (expr)
 		   (loop expr)))

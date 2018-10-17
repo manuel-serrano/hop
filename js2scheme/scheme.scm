@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Oct  2 11:16:53 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 10:19:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2155,7 +2155,25 @@
 		 (access (J2SAccess (J2SHopRef tmp) field)))
 	     `(let ((,tmp ,(j2s-scheme obj mode return conf)))
 		 ,(index-obj-ref access ref field cache cspecs loc)))))
-	  
+
+   (define (builtin-object? obj)
+      (when (isa? obj J2SGlobalRef)
+	 (with-access::J2SGlobalRef obj (decl)
+	    (with-access::J2SDecl decl (id ronly)
+	       (when ronly
+		  (memq id '(Object Function Math Array Boolean RegExp String Number)))))))
+
+   (define (get-builtin-object obj field mode return conf)
+      (when (isa? field J2SString)
+	  (with-access::J2SString field (val)
+	     (cond
+		((string=? val "prototype")
+		 `(with-access::JsFunction ,(j2s-scheme obj mode return conf)
+			(%prototype)
+		     %prototype))
+		(else
+		 #f)))))
+		 
    (with-access::J2SAccess this (loc obj field cache cspecs type)
       (epairify-deep loc 
 	 (cond
@@ -2175,6 +2193,10 @@
 		    field cache cspecs #f loc)))
 	    ((mightbe-number? field)
 	     (index-ref obj field cache cspecs loc))
+	    ((and (builtin-object? obj)
+		  (get-builtin-object obj field mode return conf))
+	     =>
+	     (lambda (sexp) sexp))
 	    (else
 	     (get obj (j2s-scheme obj mode return conf)
 		field cache cspecs #t loc))))))

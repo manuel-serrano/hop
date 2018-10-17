@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/hopscript/arguments.scm     */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/arguments.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Tue Aug 28 09:08:19 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 10:47:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -317,6 +317,12 @@
 		    (call-next-method)
 		    #t)))
 	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsArray ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsArguments p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */
