@@ -1,14 +1,14 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/comp.js         */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/comp.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Jun  9 07:48:11 2017                          */
-/*    Last change :  Fri Jun 23 10:46:06 2017 (serrano)                */
-/*    Copyright   :  2017 Manuel Serrano                               */
+/*    Last change :  Thu May  3 07:03:44 2018 (serrano)                */
+/*    Copyright   :  2017-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Compilation and optimization tests                               */
 /*=====================================================================*/
-var assert = require( "assert" );
+const assert = require( "assert" );
 
 /*---------------------------------------------------------------------*/
 /*    tyflow ...                                                       */

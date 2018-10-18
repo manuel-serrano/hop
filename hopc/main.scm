@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/3.2.x/hopc/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Oct  3 09:57:42 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Thu Sep  6 13:59:31 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
 ;*=====================================================================*/
@@ -20,6 +20,8 @@
 	    hopc_param
 	    hopc_driver)
 
+   (with    hop_param)
+   
    (eval    (library hop))
 
    (main    main))
@@ -28,6 +30,9 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; not debug by default
+   (bigloo-warning-set! 0)
+   (bigloo-debug-set! 0)
    ;; set the Hop cond-expand identification
    (register-srfi! 'hopc)
    (for-each register-eval-srfi! (hop-srfis))

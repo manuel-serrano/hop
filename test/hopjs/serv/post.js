@@ -20,6 +20,7 @@ service serv1( o ) {
 
    assert.ok( x1 > 0 );
    assert.ok( y1 > x1 );
+   
    res++;
    
    return x1 + y1;
@@ -62,7 +63,7 @@ service serv3() {
       f64: new Float64Array( [10001.0, 10001.1, 10001.2] ),
       dv: new DataView( new Int8Array( [1,2,3,4,5,-6] ).buffer ),
       buf: new Buffer( [-3,-2,-1,0,1,2,3,127 ] ),
-      el: <DIV> { style: "border: 2px solid green", id: "bar", "toto" }
+      el: <div style="border: 2px solid green" id="bar">toto</div>
    };
    return o;
 }
@@ -89,6 +90,7 @@ function test() {
    }, function(result) {
       result.on( 'data', function( chunk ) {
 	 assert.equal( eval( chunk.toString() ), 3 );
+	 console.log( "serv1...test passed" );
       } );
    } );
    req.write( postData );
@@ -109,7 +111,10 @@ function test() {
       console.log( "status=", result.statusCode );
       assert.ok( result.statusCode == 200, "statusCode" );
       result.on( 'data', function ( chunk ) {
-	 assert.ok( chunk.toString() == "OK" );
+	 var c = chunk.toString();
+	 console.log( "chunk=", c );
+	 assert.ok( c == "OK" );
+	 console.log( "upload...test passed" );
       });
    } );
 
@@ -117,9 +122,15 @@ function test() {
    req.end();
 
    serv2( "foobar+", { x: 0, val: "foobar" } )
-      .post( function( v ) { assert.ok( v ) } );
+      .post( function( v ) {
+	 assert.ok( v );
+	 console.log( "serv2a...test passed" );
+      } );
    serv2( { x: 0, val: "foobar" }, "foobar+" )
-      .post( function( v ) { assert.ok( v ) } );
+      .post( function( v ) {
+	 assert.ok( v );
+	 console.log( "serv2b...test passed" );
+      } );
 
    serv3()
       .post( function( v ) {
@@ -139,17 +150,28 @@ function test() {
 	 assert.ok( v.f32[ 0 ] > 0.9 );
 	 assert.ok( v.buf instanceof Buffer );
 	 assert.ok( v.el.id === "bar" );
+	 console.log( "serv3...test passed" );
 	 res++;
       } );
 }
 
-setTimeout( function() {
+function checkCompletion() {
    try {
-      assert.ok( res === 3 );
+      assert.ok( res === 3, "post incomplete" );
    } finally {
       process.exit( res === 3 ? 0 : 1 );
    }
-}, 500 );
+}
+
+setTimeout( function() {
+   if( hop.compilerDriver.pending > 0 ) {
+      hop.compilerDriver.addEventListener( "all", function( e ) {
+	 checkCompletion();
+      } );
+   } else {
+      checkCompletion();
+   }
+}, 2000 );
 
 test();
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/propcce.scm             */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/propcce.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Mon Apr 10 16:01:28 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Sat Feb 10 10:55:06 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property common caching elimination optimization                 */
 ;*=====================================================================*/
@@ -33,23 +33,22 @@
       (name "propcce")
       (comment "Common caching elimination")
       (proc j2s-propcce)
-      (optional #t)))
+      (optional :optim-cce)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-propcce ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-propcce this::obj args)
    (when (isa? this J2SProgram)
-      (when (config-get args :optim-cce #f)
-	 (with-access::J2SProgram this (nodes headers decls)
-	    ;; compute the cache scoping
-	    (for-each (lambda (n) (j2s-propcache n (make-cursor 0) #f '()))
-	       nodes)
-	    (for-each (lambda (n) (j2s-propcache n (make-cursor 0) #f '()))
-	       decls)
-	    ;; precache
-	    (for-each (lambda (n) (j2s-precache! n)) nodes)
-	    (for-each (lambda (n) (j2s-precache! n)) decls))))
+      (with-access::J2SProgram this (nodes headers decls)
+	 ;; compute the cache scoping
+	 (for-each (lambda (n) (j2s-propcache n (make-cursor 0) #f '()))
+	    nodes)
+	 (for-each (lambda (n) (j2s-propcache n (make-cursor 0) #f '()))
+	    decls)
+	 ;; precache
+	 (for-each (lambda (n) (j2s-precache! n)) nodes)
+	 (for-each (lambda (n) (j2s-precache! n)) decls)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -377,13 +376,13 @@
 ;*    j2s-cachelevel1! ::J2SAccess ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-cachelevel1! this::J2SAccess)
-   (with-access::J2SAccess this (%info clevel obj)
+   (with-access::J2SAccess this (%info cspecs obj)
       (when (cceinfo? %info)
 	 (tprint "ACCESS.. " (j2s->list this))
 	 (with-access::J2SRef obj (type)
 	    (set! type 'object))
 	 (set! %info #f)
-	 (set! clevel 1)))
+	 (set! cspecs '(cmap))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -396,6 +395,6 @@
 ;*    j2s-uncache! ::J2SAccess ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-uncache! this::J2SAccess)
-   (with-access::J2SAccess this (%info clevel obj)
-      (set! clevel 2))
+   (with-access::J2SAccess this (%info cspecs obj)
+      (set! cspecs '(pmap amap vtable)))
    this)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/html_head.scm             */
+;*    serrano/prgm/project/hop/3.2.x/runtime/html_head.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Feb  3 09:16:45 2018 (serrano)                */
+;*    Last change :  Wed Aug  1 15:14:48 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -448,13 +448,10 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 	     res)))
    
    (define incs '())
-
    (define idiom "scheme")
-
    (define context #f)
-
+   (define module #f)
    (define favico #f)
-
    (define location #f)
 
    (let loop ((a args)
@@ -538,6 +535,9 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		 ((:context)
 		  (set! context (cadr a))
 		  (loop (cddr a) #f rts dir path base inl packed els))
+		 ((:module)
+		  (set! module (cadr a))
+		  (loop (cddr a) #f rts dir path base inl packed els))
 		 ((:inline)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
 		      (loop (cddr a) #f rts dir path base (cadr a) packed els)
@@ -587,7 +587,8 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		       (cons (script (absolute-path file dir) inl) els))))
 	     ((:require :module)
 	      (let* ((v (car a))
-		     (file (clientc-resolve-filename v (or context path))))
+		     (file (clientc-resolve-filename v
+			      (or context path) module)))
 		 (if (not file)
 		     (error "<HEAD>" "Cannot find required file" file)
 		     (loop (cdr a) mode rts dir path base inl packed 
@@ -726,6 +727,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		      (idiom #f)
 		      (context #f)
 		      (module #f)
+		      (lang #f)
 		      (attributes)
 		      body)
    
@@ -766,20 +768,20 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		(body (list "\n" body)))
 	     (default src))))
 
-   (define (require p m inl)
+   (define (require p m inl lang)
       (<REQUIRE> :type (hop-mime-type)
-	 :inline inl :src p :mod m))
+	 :inline inl :src p :mod m :lang lang))
    
    (let ((src (xml-primitive-value src))
 	 (type (xml-primitive-value type))
-	 (module (xml-primitive-value module)))
+	 (lang (xml-primitive-value lang)))
       (purify
 	 (cond
 	    ((not (string? src))
 	     (default src))
-	    (module
-	     (let ((file (clientc-resolve-filename src context)))
-		(require file src inline)))
+	    (lang
+	     (let ((file (clientc-resolve-filename src context module)))
+		(require file src inline lang)))
 	    ((and inline (file-exists? src))
 	     (inl src))
 	    (else
@@ -793,12 +795,16 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		       (mod #unspecified string)
 		       (id #unspecified string)
 		       (type (hop-mime-type) string)
+		       (lang #f)
 		       (attributes)
 		       body)
    
    (define (default src)
       (if (string? src)
-	  (let ((src (string-append src "?js=" (or mod src))))
+	  (let ((src (if (string? lang)
+			 (string-append src "?js=" (or mod src)
+			    "&lang=" lang)
+			 (string-append src "?js=" (or mod src)))))
 	     (when inline (warning "<SCRIPT>" "Cannot inline file -- " src))
 	     (instantiate::xml-cdata
 		(tag 'script)

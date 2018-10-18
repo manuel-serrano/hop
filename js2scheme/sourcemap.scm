@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/sourcemap.scm           */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/sourcemap.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Fri Jul 11 16:09:55 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sat Jun  2 19:52:27 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
 ;*=====================================================================*/
@@ -14,13 +14,275 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_sourcemap
 
-   (include "../scheme2js/base64_vlq.sch")
+   (library hop)
+   
+   (include "ast.sch"
+	    "../runtime/sourcemap.sch")
    
    (import __js2scheme_ast
+	   __js2scheme_dump
+	   __js2scheme_stage
 	   __js2scheme_dump)
 
-   (export (generate-source-map pair-nil ::bstring ::bstring ::output-port)))
+   (export j2s-sourcemap-stage
+	   (generate-source-map ::pair-nil ::bstring ::bstring ::output-port)))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-sourcemap-stage ...                                          */
+;*---------------------------------------------------------------------*/
+(define j2s-sourcemap-stage
+   (instantiate::J2SStageProc
+      (optional #f)
+      (name "sourcemap")
+      (comment "Modify program source locations according to a source-map")
+      (proc j2s-sourcemap!)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-sourcemap! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-sourcemap! this conf)
+   
+   (define (assq-get k lst)
+      (let ((v (assq k lst)))
+	 (when (pair? v) (cdr v))))
+   
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (source-map nodes path)
+	 (when source-map
+	    (let* ((smap (read-source-map source-map))
+		   (mappings (assq-get 'mappings smap))
+		   (sources (assq-get 'sources smap))
+		   (root (assq-get 'sourceRoot smap))
+		   (file (assq-get 'file smap)))
+	       (when (and mappings sources file)
+		  (let* ((positions (read-line-positions file))
+			 (translations (make-vector (vector-length positions)))
+			 (srcs (vector-map!
+				  (lambda (f)
+				     (let ((p (if (and root
+						       (not (string-null? root)))
+						  (make-file-name root f)
+						  f)))
+					(cons p (read-line-positions p))))
+				  sources)))
+		     (decode-mappings! mappings srcs positions translations)
+;* 		     (tprint "positions=" positions " file=" file)     */
+;* 		     (tprint "*** translations " translations " " path) */
+		     (set! nodes
+			(map! (lambda (n) (sourcemap! n translations path))
+			   nodes))))))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    decode-mappings! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (decode-mappings! mappings::bstring srcs::vector positions::vector
+	   translations::vector)
+   (let ((len (string-length mappings)))
+      (let loop ((i 0)
+		 (lnum 0)
+		 (pgcol 0)
+		 (pfindex 0)
+		 (psline 0)
+		 (pscol 0)
+		 (pname 0))
+	 (when (<fx i len)
+	    (multiple-value-bind (status ni gcol findex sline scol name)
+	       (source-map-decode-segment mappings i)
+	       (if (eq? status 'newline)
+		   (loop ni (+fx lnum 1) 0 pfindex psline pscol pname)
+		   (let ((ngcol (+fx gcol pgcol))
+			 (nfindex (+fx findex pfindex))
+			 (nsline (+fx sline psline))
+			 (nscol (+fx scol pscol))
+			 (nname (+fx name pname)))
+		      (when (<fx nfindex (vector-length srcs))
+			 (let ((path (car (vector-ref srcs nfindex)))
+			       (lines (cdr (vector-ref srcs nfindex)))
+			       (j (+fx (vector-ref positions lnum) ngcol)))
+			    (when (<fx nsline (vector-length lines))
+			       (let ((pos (+fx (vector-ref lines nsline) nscol)))
+				  (when (<fx j (vector-length translations))
+				     (vector-set! translations j (cons path pos)))))))
+		      (loop ni lnum ngcol nfindex nsline nscol nname))))))))
+
+;*---------------------------------------------------------------------*/
+;*    sourcemap! ::J2SNode ...                                         */
+;*---------------------------------------------------------------------*/
+(define-generic (sourcemap! this::obj translations path)
+   (if (pair? this)
+       (map! (lambda (n) (sourcemap! n translations path)) this)
+       this))
+
+;*---------------------------------------------------------------------*/
+;*    sourcemap! ::J2SNode ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (sourcemap! this::J2SNode translations path)
+   (with-access::J2SNode this (loc)
+      (update-node-location! loc translations path))
+   (let* ((clazz (object-class this))
+	  (fields (class-all-fields clazz)))
+      ;; instance fields
+      (let loop ((i (-fx (vector-length fields) 1)))
+	 (when (>=fx i 0)
+	    (let* ((f (vector-ref-ur fields i))
+		   (info (class-field-info f)))
+	       (when (and (pair? info) (member "ast" info))
+		  (let ((v ((class-field-accessor f) this)))
+		     (when (class-field-mutator f)
+			(let ((nv (sourcemap! v translations path)))
+			   ((class-field-mutator f) this nv)))))
+	       (loop (-fx i 1)))))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    sourcemap! ::J2SBlock ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (sourcemap! this::J2SBlock translations path)
+   (with-access::J2SBlock this (loc endloc)
+      (call-next-method)
+      (update-node-location! endloc translations path)
+      (match-case loc
+	 ((at ?- ?start)
+	  (match-case endloc
+	     ((at ?- ?end)
+	      (when (<fx end start)
+		 (set-car! (cddr endloc) start))))))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    sourcemap! ::J2SDataPropertyInit ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (sourcemap! this::J2SDataPropertyInit translations path)
+
+   (define (%location? %this)
+      (with-access::J2SDataPropertyInit this (name val)
+	 (when (isa? name J2SString)
+	    (with-access::J2SString name (val)
+	       (when (string=? val "%location")
+		  (when (isa? val J2SObjInit)
+		     (with-access::J2SObjInit val (inits)
+			(when (and (list? inits) (=fx (length inits) 3))
+			   (every (lambda (i) (isa? i J2SDataPropertyInit)) inits)))))))))
+
+   (define (update-%location-init! i loc)
+      (with-access::J2SDataPropertyInit i (name)
+	 (when (isa? name J2SString)
+	    (with-access::J2SString name (val)
+	       (cond
+		  ((string=? val "filename")
+		   (with-access::J2SDataPropertyInit i (val)
+		      (when (isa? val J2SString)
+			 (with-access::J2SString val (val)
+			    (set! val (cadr loc))))))
+		  ((string=? val "pos")
+		   (with-access::J2SDataPropertyInit i (val)
+		      (when (isa? val J2SNumber)
+			 (with-access::J2SNumber val (val)
+			    (set! val (caddr loc)))))))))))
+
+   (when (%location? this)
+      (with-access::J2SDataPropertyInit this (val loc)
+	 (when (update-node-location! loc translations path)
+	    (with-access::J2SObjInit val (inits)
+	       (for-each (lambda (i) (update-%location-init! i loc))
+		  inits)))))
+   (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    update-node-location! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (update-node-location! loc translations path)
+
+   (define (find-closest-shift-position translations pos direction)
+      (let loop ((pos pos)
+		 (delta 0))
+	 (cond
+	    ((or (>=fx pos (vector-length translations)) (<fx pos 0))
+	     #f)
+	    ((pair? (vector-ref translations pos))
+	     (cons delta (vector-ref translations pos)))
+	    ((>fx direction 0)
+	     (loop (+fx pos 1) (-fx delta 1)))
+	    (else
+	     (loop (-fx pos 1) (+fx delta 1))))))
+   
+   (define (find-closest-position translations pos)
+      (if (pair? (vector-ref translations pos))
+	  (cons 0 (vector-ref translations pos))
+	  (let ((r (find-closest-shift-position translations pos 1))
+		(l (find-closest-shift-position translations pos -1)))
+	     (cond
+		((not r) l)
+		((not l) r)
+		((< (abs (car r)) (abs (car l))) r)
+		(else l)))))
+
+   (match-case loc
+      ((at ?fname ?pos)
+;*        (tprint "path=" path " pos=" pos " trans=" (vector-length translations) */
+;* 	  " test="                                                     */
+;* 	  (and (equal? fname path) (<fx pos (vector-length translations)))) */
+       (when (and (equal? fname path) (<fx pos (vector-length translations)))
+	  (let ((p (find-closest-position translations pos)))
+	     ;; (tprint "p=" p " " (+fx (car p) (cddr p)))
+	     (when (and (pair? p) (>=fx (+fx (car p) (cddr p)) 0)) 
+;* 		(tprint "update loc=" loc " => " p)                    */
+;* 		(tprint "      nloc=" `(at ,(cadr p) ,(+fx (car p) (cddr p)) */
+;* 					  ,(car p)))                   */
+		(set-car! (cdr loc) (cadr p))
+		(set-car! (cddr loc) (+fx (car p) (cddr p)))
+		#t))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    read-source-map ...                                              */
+;*---------------------------------------------------------------------*/
+(define (read-source-map smap)
+   (javascript->obj (call-with-input-file smap read-string)))
+
+;*---------------------------------------------------------------------*/
+;*    read-line-positions ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Build a vector containing all the positions (character numbers)  */
+;*    of the line beginings.                                           */
+;*---------------------------------------------------------------------*/
+(define (read-line-positions::vector path)
+   
+   (define (read-mmap-lnums path)
+      (let* ((mmap (open-mmap path :read #t))
+	     (len (mmap-length mmap))
+	     (vec (make-vector len 0)))
+	 (vector-set! vec 0 0)
+	 (unwind-protect
+	    (let loop ((i 0)
+		       (line 1))
+	       (when (<fx i len)
+		  (if (char=? (mmap-ref mmap i) #\Newline)
+		      (begin
+			 (vector-set! vec line (+fx i 1))
+			 (loop (+fx i 1) (+fx line 1)))
+		      (loop (+fx i 1) line))))
+	    (close-mmap mmap))
+	 vec))
+   
+   (define (read-file-lnums path)
+      (call-with-input-file path
+	 (lambda (ip)
+	    (let loop ((i 0)
+		       (line 1)
+		       (acc '(0)))
+	       (if (eof-object? ip)
+		   (list->vector (reverse! acc))
+		   (if (char=? (read-char ip) #\Newline)
+		       (loop (+fx i 1) (+fx line 1) (cons (+fx i 1) acc))
+		       (loop (+fx i 1) line acc)))))))
+   
+   (if (file-exists? path)
+       (read-mmap-lnums path)
+       (read-file-lnums path)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    source-map-version ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -83,9 +345,9 @@
 			       (loc (cadr seg))
 			       (file (hashtable-get sourcetable (cadr loc)))
 			       (src-linetable (vector-ref src-linetables file)))
-			   (multiple-value-bind (dstline dstbeg dstend)
+			   (multiple-value-bind (dstline dstbeg)
 			      (linetable-find dst-linetable pdstline pos dst-file)
-			      (multiple-value-bind (srcline srcbeg srcend)
+			      (multiple-value-bind (srcline srcbeg)
 				 (linetable-find src-linetable psrcline (caddr loc) src-file)
 				 (let ((srccol (-fx (caddr loc) srcbeg))
 				       (dstcol (-fx pos dstbeg)))
@@ -146,20 +408,23 @@
 ;*    and the column number.                                           */
 ;*---------------------------------------------------------------------*/
 (define (linetable-find table fromline pos file)
-   (let ((len (vector-length table)))
-      (let loop ((i fromline))
-	 (if (<fx i len)
-	     (let* ((line (vector-ref table i))
-		    (b (car line))
-		    (e (cdr line)))
-		(cond
-		   ((<fx pos b)
-		    (linetable-find table 0 pos file))
-		   ((>=fx e pos)
-		    (values i b e))
-		   (else
-		    (loop (+fx i 1)))))
-	     (linetable-find table 0 pos file)))))
+   (if (and (>=fx pos 0) (>=fx fromline 0))
+       ;; guard against corrupted ast
+       (let ((len (vector-length table)))
+	  (let loop ((i fromline))
+	     (if (<fx i len)
+		 (let* ((line (vector-ref table i))
+			(b (car line))
+			(e (cdr line)))
+		    (cond
+		       ((<fx pos b)
+			(linetable-find table 0 pos file))
+		       ((>=fx e pos)
+			(values i b))
+		       (else
+			(loop (+fx i 1)))))
+		 (values (-fx len 1) (car (vector-ref table (-fx len 1)))))))
+       (values 0 0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    segments ...                                                     */
@@ -172,11 +437,14 @@
 	 (let ((t (car tree)))
 	    (cond
 	       ((string? t)
-		(loop (cdr tree) (+fx offset (string-length t))))
+		(loop (cdr tree)
+		   (+fx offset (string-length t))))
 	       ((number? t)
-		(loop (cdr tree) (+fx offset (string-length (number->string t)))))
+		(loop (cdr tree)
+		   (+fx offset (string-length (number->string t)))))
 	       ((symbol? t)
-		(loop (cdr tree) (+fx offset (string-length (symbol->string! t)))))
+		(loop (cdr tree)
+		   (+fx offset (string-length (symbol->string! t)))))
 	       ((isa? t J2SNode)
 		(with-access::J2SNode t (loc)
 		   (let ((segment (list offset loc)))

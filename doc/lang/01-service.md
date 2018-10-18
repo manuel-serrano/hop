@@ -12,6 +12,12 @@ browser, or a third party application (services are built on top of
 HTTP, they can be invoked using the hop.js API or from handcrafted GET
 and POST HTTP requests).
 
+The name of the service defines the URL under which it is known
+to the web. The URL is building by prefixing the service name
+with the string `/hop/`. That is, the URL associated with a
+service `myService` will be `/hop/myService`, for instance invoking
+with a qualified URL such as `http://myhost:8080/hop/myService`.
+
 Invoking a service builds a _service frame_. This frame can
 be used to actually invoke the service. If the service declaration
 used _named arguments_ the frame can be automatically built out of a
@@ -168,6 +174,12 @@ Service.exists( "public" )
 Service.exists( "private" );
 // false
 ```
+
+### Service.allowURL( url ) ###
+[:@glyphicon glyphicon-tag function]
+
+Add the `url` string to the list of URLs that can be used to alias
+services (see method `service.addURL`).
 
 Importing Services
 ------------------
@@ -436,8 +448,48 @@ svc2.ttl = 5;
 Unregister a service from the Hop.js server. Once unregistered services
 can no longer be invoked in response to client requests.
 
+### service.addURL( url ) ###
+[:@glyphicon glyphicon-tag function]
+
+Adds another public URL to the service. This URL is not required
+to be prefixed with `/hop` as public URL automatically associated with
+services are. 
+
+An additional URL can be added to a service under the following conditions.
+
+  1. It has been previously added to the list of the alias URLs via the
+ method `Service.allowURL`. This method can only be invoked from with
+ the `hoprc.js` file.
+  2. The URL is not already associated with another service.
+
+Unless these two conditions hold, a runtime error is raised.
+
+Examples:
+```hopscript
+service mySvc( o ) {
+   console.log( "o=", o );
+   return <html>
+     v=${o.v}
+   </html>
+}
+
+mySvc.addURL( "/" );
+mySvc.addURL( "/bar" );
+```
+
+### service.removeURL( url ) ###
+[:@glyphicon glyphicon-tag function]
+
+Remove an alias URL from service. The automatic URL cannot be removed.
+
+### service.getURLs() ###
+[:@glyphicon glyphicon-tag function]
+
+Returns the vector of the current alias URL.
+
 Interoperable WebServices
------------------------
+-------------------------
+[:interop]
 
 Services may be invoked from third party clients, allowing the Hop
 server to deliver WebServices to these clients. To do so, a few
@@ -448,8 +500,8 @@ which makes the service compliant to RFC3986.  Services with unnamed
 arguments cannot be invoked from a third party client.
 
 * The service should not respond with `hop.HTTPResponseHop` that would
-not be understood by the client. Other Response constructors deliver
-contents that is generally handled by most clients. Take care to
+not be understood by the client. Others Response constructors deliver
+contents that are generally handled by most clients. Take care to
 stringify objects before sending them to the client, and note that
 string values are received on the client side as `\[text/plain\]`,
 HTML values are received as `\[text/html\]`.
@@ -496,6 +548,27 @@ frame.post( function( result ) {
 });
 ```
 
+Asynchronous Services
+---------------------
+
+Hop services can either be synchronous or asynchronous. A synchronous
+service directly returns its response to its client, using a normal
+return statement. Asynchronous services postpone their responses. For
+that, instead of returning a value, they simply return a JavaScript
+promise. When this promise resolves, its resolution is sent to the client
+as response of the service. If the promise reject, the error object
+is propagated to the client.
+
+#### Example ####
+
+${ doc.include( doc.EXAMPLES_DIR + "/asvc/README.md" ) }
+
+${ <span class="label label-info">asvc/asvc.js</span> }
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/asvc/asvc.js", 14 ) }
+```
+
+
 Examples
 --------
 
@@ -521,5 +594,6 @@ ${ <span class="label label-info">wspost/wsclient.js</span> }
 ```hopscript
 ${ doc.include( doc.EXAMPLES_DIR + "/wspost/wsclient.js", 14 ) }
 ```
+
 
 

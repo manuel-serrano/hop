@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/alpha.scm               */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/alpha.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Thu Apr  6 17:00:35 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Wed Aug  8 08:02:43 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
 ;*=====================================================================*/
@@ -63,7 +63,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (alpha this::obj)
    (if (pair? this)
-       (map! alpha this)
+       (map alpha this)
        this))
 
 ;*---------------------------------------------------------------------*/
@@ -117,15 +117,6 @@
 	 (set! %info oinfo)
 	 inst)))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    alpha ::J2SExpr ...                                              *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (alpha this::J2SExpr)                                */
-;*    (let ((new (call-next-method)))                                  */
-;*       (with-access::J2SExpr new (type)                              */
-;* 	 (set! type #f)                                                */
-;* 	 new)))                                                        */
-
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SDecl ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -168,6 +159,39 @@
    (alpha/targetinfo this))
 
 ;*---------------------------------------------------------------------*/
+;*    alpha ::J2SBindExit ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SBindExit)
+   (let ((new (duplicate::J2SBindExit this)))
+      (with-access::J2SBindExit this (%info)
+	 (set! %info
+	    (instantiate::AlphaInfo
+	       (new new)
+	       (%oinfo %info)))
+	 (with-access::J2SBindExit new (stmt)
+	    (set! stmt (alpha stmt))
+	    (with-access::AlphaInfo %info (%oinfo)
+	       (set! %info %oinfo))
+	    new))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SReturn ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SReturn)
+   (with-access::J2SReturn this (expr from)
+      (if (isa? from J2SExpr)
+	  (with-access::J2SExpr from (%info)
+	     (if (isa? %info AlphaInfo)
+		 (with-access::AlphaInfo %info (new)
+		    (duplicate::J2SReturn this
+		       (expr (alpha expr))
+		       (from new)))
+		 (duplicate::J2SReturn this
+		    (expr (alpha expr)))))
+	  (duplicate::J2SReturn this
+	     (expr (alpha expr))))))
+
+;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SBreak ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SBreak)
@@ -190,7 +214,7 @@
 			(with-access::TargetInfo %info (new)
 			   new)
 			target))))))
-      
+
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SRef ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -199,8 +223,14 @@
       (with-access::J2SDecl decl (%info)
 	 (if (isa? %info AlphaInfo)
 	     (with-access::AlphaInfo %info (new)
-		(duplicate::J2SRef this
-		   (decl new)))
+		(cond
+		   ((isa? new J2SDecl)
+		    (duplicate::J2SRef this
+		       (decl new)))
+		   ((isa? new J2SExpr)
+		    (alpha new))
+		   (else
+		    (error "alpha" "new must be a decl or an expr" new))))
 	     (duplicate::J2SRef this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -211,8 +241,14 @@
       (with-access::J2SDecl decl (%info)
 	 (if (isa? %info AlphaInfo)
 	     (with-access::AlphaInfo %info (new)
-		(duplicate::J2SThis this
-		   (decl new)))
+		(cond
+		   ((isa? new J2SDecl)
+		    (duplicate::J2SThis this
+		       (decl new)))
+		   ((isa? new J2SExpr)
+		    (alpha new))
+		   (else
+		    (error "alpha" "new must be a decl or an expr" new))))
 	     (duplicate::J2SThis this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -231,6 +267,11 @@
 (define-method (alpha this::J2SLetBlock)
    (with-access::J2SLetBlock this (decls nodes)
       (let ((ndecls (map j2sdecl-duplicate decls)))
+	 (for-each (lambda (d)
+		      (when (isa? d J2SDeclInit)
+			 (with-access::J2SDeclInit d (val)
+			    (set! val (j2s-alpha val decls ndecls)))))
+	    ndecls)
 	 (duplicate::J2SLetBlock this
 	    (decls ndecls)
 	    (nodes (map (lambda (n) (j2s-alpha n decls ndecls)) nodes))))))
@@ -268,14 +309,23 @@
 	    (exn nexn)
 	    (body (j2s-alpha body (list param exn) (list nparam nexn)))))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    alpha ::J2SAccess ...                                            *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (alpha this::J2SAccess)                              */
-;*    (with-access::J2SAccess this (obj field)                         */
-;*       (duplicate::J2SAccess this                                    */
-;* 	 (obj (alpha obj))                                             */
-;* 	 (field (alpha field)))))                                      */
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SDConsumer ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SDConsumer)
+   (with-access::J2SDConsumer this (decl expr)
+      (duplicate::J2SDConsumer this
+	 (decl (j2sdecl-duplicate decl))
+	 (expr (alpha expr)))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SDProducer ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SDProducer)
+   (with-access::J2SDProducer this (decl expr)
+      (duplicate::J2SDProducer this
+	 (decl (j2sdecl-duplicate decl))
+	 (expr (alpha expr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sdecl-duplicate ...                                            */
@@ -284,7 +334,6 @@
    (if (isa? p J2SDeclInit)
        (with-access::J2SDeclInit p (val)
 	  (duplicate::J2SDeclInit p
-	     (val (alpha val))
 	     (key (ast-decl-key))))
        (duplicate::J2SDecl p
 	  (key (ast-decl-key)))))

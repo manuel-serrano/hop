@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/debug/debug.js           */
+/*    serrano/prgm/project/hop/3.2.x/examples/debug/debug.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Thu Dec 17 08:02:18 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Fri Mar  9 10:18:35 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Illustrates multitier error reporting                            */
 /*    -------------------------------------------------------------    */
@@ -13,7 +13,13 @@
 /*=====================================================================*/
 service debug() {
    return <html>
-     <head module="./bugs.js">~{ var BUGS = require( "./bugs.js" ) }</head>
+     <head>
+       <script src="./bug.js" lang="hopscript"/>
+       <script defer>
+          var BUGS = require( "./bugs.js" )
+       
+       </script>
+     </head>
      <h1>Examples of error reporting</h1>
      <ol>
        <li>

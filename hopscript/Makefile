@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/hopscript/Makefile                */
+#*    serrano/prgm/project/hop/3.2.x/hopscript/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Sep 12 13:41:14 2017 (serrano)                */
+#*    Last change :  Sat Sep 22 15:33:52 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -42,7 +42,8 @@ BLIBFLAGS = $(BCFLAGSRTS)
 _OBJECTS = types rts object function string number regexp boolean \
   error array arguments date json math worker private public lib service \
   property websocket pair obj arraybuffer arraybufferview stringliteral dom \
-  symbol promise generator spawn expanders
+  symbol promise generator spawn expanders profile \
+  arithmetic arithmetic32 arithmetic64 
 
 _C_OBJECTS = _bglhopscript
 
@@ -55,8 +56,9 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 SOURCES = $(_OBJECTS:%=%.scm) $(_C_OBJECTS:%=%.c)
 
 INCLUDES = stringliteral.sch property_expd.sch property.sch expanders.sch \
-  arithmetic.sch call.sch array.sch number.sch public.sch public_expd.sch
-C_INCLUDES = bglhopscript.h
+  arithmetic.sch call.sch array.sch number.sch public_expd.sch \
+  stringliteral_expd.sch types.sch types_expd.sch
+C_INCLUDES = bglhopscript.h bglhopscript_malloc.h
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -100,22 +102,18 @@ getsources:
 	@ echo $(SOURCES)
 
 #*---------------------------------------------------------------------*/
-#*    The implicit rules                                               */
-#*---------------------------------------------------------------------*/
-%.scm: %.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS) $(EFLAGS) $(BHOPCFLAGS),-s --js-module-name __hopscript_$* --js-module-path $* --js-no-module-main --js-type-annotations --js-no-header ,$< -o $@)
-
-#*---------------------------------------------------------------------*/
 #*    bglhopscript.h                                                   */
 #*---------------------------------------------------------------------*/
 bglhopscript.h: types.scm
-	$(BIGLOO) $(EFLAGS) $(BCFLAGS) -copt $(CPICFLAGS) -copt "-I$(C_SRC_DIR)" -copt "$(CEFLAGS)" $< -o $@ -hgen
+	$(BIGLOO) $(EFLAGS) $(BCFLAGS) -copt $(CPICFLAGS) -copt $(CNANFLAGS) -copt "-I$(C_SRC_DIR)" -copt "$(CEFLAGS)" $< -o $@ -hgen
 
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
-o/_bglhopscript.o: _bglhopscript.c bglhopscript.h
+o/_bglhopscript.o: _bglhopscript.c bglhopscript.h bglhopscript_malloc.h
 	@ $(call compile2,$(CCOMP),$(CCFLAGS), -c $< -o $@)
+
+o/expanders.o: expanders.sch
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/

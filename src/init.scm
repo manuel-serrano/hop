@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/src/init.scm                      */
+;*    serrano/prgm/project/hop/3.2.x/src/init.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon Aug 22 11:38:22 2016 (serrano)                */
-;*    Copyright   :  2005-16 Manuel Serrano                            */
+;*    Last change :  Fri Mar  9 10:44:46 2018 (serrano)                */
+;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -192,14 +192,20 @@
 ;*    http-get-file-query ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-get-file-query req)
+
+   (define (query-name query)
+      (let* ((str (substring query 3))
+	     (i (string-index str #\&)))
+	 (if i (substring str 0 i) str)))
+      
    (with-access::http-request req (abspath query method timeout header)
       (cond
 	 ((string=? query (hop-scm-compile-suffix))
 	  (clientc-response req abspath abspath (hop-scm-compile-suffix)))
 	 ((string-prefix? "js=" query)
-	  (clientc-response req abspath (substring query 3) "js"))
+	  (clientc-response req abspath (query-name query) query))
 	 ((string-prefix? "es=" query)
-	  (let ((resp (clientc-response req abspath (substring query 3) "es")))
+	  (let ((resp (clientc-response req abspath (query-name query) query)))
 	     (with-access::%http-response resp (content-type)
 		(set! content-type "application/javascript")
 		resp)))

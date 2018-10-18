@@ -16,17 +16,12 @@ The arguments are as follows:
 
  * `id` is a string that designates the source file containing the module.
  * `language` is an optional string denoting the implementation language
- of the module. The supported languages are:
+ of the module. The supported builtin languages are:
    * `javascript`;
    * `html`;
+   * `json`;
    * `hopscript`.
    
-When a language is specified and when this language is not `hopscript`,
-all the syntactic extensions of Hop.js are disabled (`service`, HTML syntax,
-`${<span>$</span>}{`, and `${<span>~</span>}{` mark). Requiring a module
-specifying the `javascript` language is then useful to require a module
-that uses the extra HopScript keywords as normal identifiers.
-
 Modules are loaded differently depending on their source file suffix.
 
  * `.js`, the module is source file module. It is loaded as plain source
@@ -61,6 +56,71 @@ ${ <span class="label label-info">htmlr/htmlr.html</span> }
 ${ doc.include( doc.EXAMPLES_DIR + "/htmlr/htmlr.html", 14 ) }
 ```
 
+#### Languages ####
+
+The optional argument `language` is a string denoting an implementation
+language for the module to be required. The builtin languages are:
+
+  * `hopscript`
+  * `hop`
+  * `html`
+  * `json`
+  * `ecmascript5`
+  * `ecmascript6`
+  * `ecmascript2017`
+
+
+Additional custom languages may also be defined. See chapter
+[Language definition](20-lang.html). The optional `language` defaults
+to `require.lang`.
+
+### require.lang ###
+[:@glyphicon glyphicon-tag parameter] 
+The default language used to require other modules.
+
+${ <span class="label label-warning">Note:</span> } Language
+importation is recursive. That is, if a module `mod` is imported with
+a language `lang`, all the modules imported by `mod` will be
+considered implemented in the same language `lang`, unless a specific
+language is specified on the `require` calls.
+
+This can be changed by modified the value of the `require.lang`
+attribute.
+
+### DSL ###
+
+Modules implemented in Hop DSL (Domain Specific Languages) that
+extend the Hop syntax by implementing their parser with the builtin
+machinery of the Hop parser can auto-declare their implementation
+language. In that case, the `require` calls that load them do not need
+to specify any implementation language. The declaration is an extra
+_use string_ to be included in the head of the program. For instance:
+
+```hopscript
+"use hiphop"
+"use strict"
+
+exports.prg = hiphop module( in A, in B, in R, out O ) {
+   do {
+      fork {
+	 await now( A );
+      } par {
+	 await now( B );
+      }
+      emit O();
+   } every( now( R ) )
+}
+```
+
+The syntax of the _use string_ declaration is:
+
+```ebnf
+<UseDeclaration> --> use <Identifier>
+```
+
+The `Identifier` should be a module name resolvable using 
+`require.resolve( Identifier )`.
+
 
 ### Client Side modules ###
 
@@ -71,6 +131,7 @@ page, using the special attribute `module`. Then, it can be required
 using the same syntax as any regular server-side module. The `src`
 attribute of the `script` tag must exactly match the path mentioned
 in the `require` call. See [API HTML](01-html.html) for details.
+
 
 #### Example ####
 
@@ -94,3 +155,14 @@ ${ <span class="label label-info">requirec/mod2.js</span> }
 ${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod2.js", 14 ) }
 ```
 
+${ <span class="label label-info">requirec/example.json</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/example.json", 0 ) }
+```
+
+${ <span class="label label-info">requirec/mod.html</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod.html", 0 ) }
+```

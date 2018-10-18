@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/number.js       */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/number.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Thu Feb 22 07:43:01 2018 (serrano)                */
+/*    Last change :  Fri Feb 23 17:07:21 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -125,3 +125,22 @@ var num2 = parseInt( "FFFFFFFF", 16);
 
 assert.equal( num1.toString( 16 ), "ffffffff" );
 assert.equal( num2.toString( 16 ), "ffffffff" );
+
+/*---------------------------------------------------------------------*/
+/*    switch                                                           */
+/*---------------------------------------------------------------------*/
+function testS( a ) {
+   switch( a ) {
+      case 0: return 28;
+      case 1: return "un";
+      case 2: return false;
+      default: return true;
+   }
+}
+
+assert.equal( testS( 0 ), 28 );
+assert.equal( testS( 1 ), "un" );
+assert.equal( testS( 2 ), false );
+assert.equal( testS( 3 ), true );
+assert.equal( testS( 4 ), true );
+

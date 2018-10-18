@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/service.scm             */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/service.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Jul  9 17:45:05 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Tue Jun  5 10:13:46 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
 ;*=====================================================================*/
@@ -16,9 +16,10 @@
 
    (library hop js2scheme)
 
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_rts
 	   __hopscript_object
 	   __hopscript_error
@@ -86,7 +87,7 @@
    (lambda (o ctx)
       (if (and (vector? o) (=fx (vector-length o) 5))
 	  (with-access::JsGlobalObject ctx (js-hopframe-prototype)
-	     (instantiate::JsHopFrame
+	     (instantiateJsHopFrame
 		(__proto__ js-hopframe-prototype)
 		(%this ctx)
 		(srv (vector-ref o 0))
@@ -110,7 +111,7 @@
    (lambda (o ctx)
       (if (and (vector? o) (=fx (vector-length o) 6))
 	  (with-access::JsGlobalObject ctx (js-server-prototype)
-	     (let ((srv (instantiate::JsServer
+	     (let ((srv (instantiateJsServer
 			   (__proto__  js-server-prototype)
 			   (obj (instantiate::server
 				   (host (vector-ref o 0))
@@ -151,8 +152,9 @@
 			 (with-access::hop-service svc (path)
 			    (js-make-hopframe %this this path args)))))
 	     (nobj (duplicate::JsService obj
-		      (procedure proc)
-		      (properties '()))))
+		      (procedure proc))))
+	 (js-object-properties-set! nobj '())
+	 (js-object-mode-set! nobj (js-object-mode obj))
 	 (js-for-in obj
 	    (lambda (k)
 	       (js-put! nobj k
@@ -242,7 +244,7 @@
 	 
 	 ;; service prototype
 	 (set! js-service-prototype
-	    (instantiate::JsService
+	    (instantiateJsService
 	       (__proto__ js-function-prototype)
 	       (worker (class-nil WorkerHopThread))
 	       (name "service")
@@ -250,8 +252,8 @@
 	       (construct (lambda (constructor args)
 			     (js-raise-type-error %this "not a constructor ~s"
 				js-function-prototype)))
-	       (prototype (with-access::JsGlobalObject %this (__proto__)
-			     __proto__))
+	       (%prototype (with-access::JsGlobalObject %this (__proto__)
+			      __proto__))
 	       (len -1)
 	       (procedure list)
 	       (method list)
@@ -288,7 +290,7 @@
 			     timeout)))
 		    0 'timeout)
 	    :hidden-class #t)
-
+	 
 	 (js-bind! %this js-service-prototype 'ttl
 	    :get (js-make-function %this
 		    (lambda (this)
@@ -304,9 +306,30 @@
 		    0 'ttl)
 	    :hidden-class #t)
 	 
+	 (js-bind! %this js-service-prototype 'addURL
+	    :value (js-make-function %this
+		      (lambda (this url)
+			 (service-add-url! this url %this))
+		      1 'addURL)
+	    :hidden-class #t)
+	 
+	 (js-bind! %this js-service-prototype 'removeURL
+	    :value (js-make-function %this
+		      (lambda (this url)
+			 (service-remove-url! this url %this))
+		      1 'removeURL)
+	    :hidden-class #t)
+	 
+	 (js-bind! %this js-service-prototype 'getURLs
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (service-get-urls this %this))
+		      0 'getURLs)
+	    :hidden-class #t)
+	 
 	 ;; HopFrame prototype and constructor
 	 (set! js-hopframe-prototype
-	    (instantiate::JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 	 
 	 (js-bind! %this js-hopframe-prototype 'post
@@ -364,7 +387,7 @@
 			    this))
 		      1 'setOptions)
 	    :hidden-class #t)
-
+	 
 	 (letrec ((js-service (js-make-function %this
 				 (lambda (this proc path)
 				    (js-new %this js-service proc path))
@@ -398,8 +421,26 @@
 			 (lambda (this svc)
 			    (service-exists? (js-tostring svc %this)))
 			 1 'exists)
+	       :hidden-class #t)
+	    
+	    (js-bind! %this js-service 'allowURL
+	       :configurable #f :enumerable #f
+	       :value (js-make-function %this
+			 (lambda (this url)
+			    (cond
+			       ((not (hop-filters-open?))
+				(js-raise-type-error %this
+				   "allowURL must called from within the hoprc.js file"
+				   url))
+			       ((not (memq service-url-filter (hop-filters)))
+				(set! *url-redirect* (create-hashtable))
+				(hop-filter-add! service-url-filter)
+				(add-service-allow-url! url))
+			       (else
+				(add-service-allow-url! url))))
+			 1 'allowURL)
 	       :hidden-class #t))
-
+	 
 	 (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
@@ -407,7 +448,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-make-hopframe %this::JsGlobalObject srv path args)
    (with-access::JsGlobalObject %this (js-hopframe-prototype js-object js-server)
-      (instantiate::JsHopFrame
+      (instantiateJsHopFrame
 	 (__proto__ js-hopframe-prototype)
 	 (%this %this)
 	 (srv srv)
@@ -471,6 +512,7 @@
 	    :ctx %this
 	    :json-parser json-parser
 	    :x-javascript-parser x-javascript-parser
+	    :connection-timeout (hop-connection-timeout)
 	    :args (map multipart-form-arg args))))
    
    (define (post-server-promise this %this host port auth scheme)
@@ -486,7 +528,8 @@
 						(lambda (e)
 						   (js-promise-async p
 						      (lambda ()
-							 (js-call1 %this reject %this e))))
+							 (js-promise-reject p
+							    (scheme->js e)))))
 						(post-request
 						   (lambda (x)
 						      (js-promise-async p
@@ -613,7 +656,7 @@
 		   (post-websocket-async this srv success failure))
 		  (else
 		   (post-websocket-promise this srv)))))))
-   
+
    (with-access::JsHopFrame this (srv)
       (cond
 	 ((isa? srv JsServer)
@@ -954,13 +997,13 @@
       v)
    
    (with-access::JsGlobalObject %this (js-service-prototype)
-      (instantiate::JsService
+      (instantiateJsService
 	 (procedure proc)
 	 (method proc)
 	 (len arity)
 	 (arity arity)
 	 (worker worker)
-	 (prototype (with-access::JsGlobalObject %this (__proto__)
+	 (%prototype (with-access::JsGlobalObject %this (__proto__)
 		       __proto__))
 	 (__proto__ js-service-prototype)
 	 (name (if (symbol? name) (symbol->string! name) ""))
@@ -970,6 +1013,7 @@
 	 (construct (lambda (_ arg)
 		       (js-raise-type-error %this
 			  "service not a constructor" arg)))
+	 (svc (or svc (default-service)))
 	 (properties (list
 			(instantiate::JsValueDescriptor
 			   (name 'length)
@@ -985,8 +1029,7 @@
 			   (get (js-make-function %this get-name 1 'name))
 			   (set (js-make-function %this set-name 2 'name))
 			   (%get get-name)
-			   (%set set-name))))
-	 (svc (or svc (default-service))))))
+			   (%set set-name)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service? ::JsService ...                                         */
@@ -1007,3 +1050,91 @@
 (define-method (js-tostring obj::hop-service %this)
    (with-access::hop-service obj (path)
       (format "[Service ~a]" path)))
+
+;*---------------------------------------------------------------------*/
+;*    *allow-urls* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define *allow-urls* '())
+(define *url-redirect* #f)
+
+;*---------------------------------------------------------------------*/
+;*    add-service-allow-url! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (add-service-allow-url! url)
+   (set! *allow-urls* (cons url *allow-urls*)))
+
+;*---------------------------------------------------------------------*/
+;*    service-add-url! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (service-add-url! svc url %this)
+   (let ((u (js-jsstring->string url)))
+      (cond
+	 ((not (isa? svc JsService))
+	  (js-raise-type-error %this
+	     "Not a service ~s" (js-tostring svc %this)))
+	 ((not (member u *allow-urls*))
+	  (js-raise-type-error %this
+	     "URL not allowed for redirection ~s (see Service.allowURL)" u))
+	 ((string-prefix? (hop-service-base) u)
+	  (js-raise-type-error %this
+	     (format "Illegal URL prefix ~~s (must not be a prefix of ~s)"
+		(hop-service-base))
+	     u))
+	 (else
+	  (with-access::JsService svc (svc)
+	     (with-access::hop-service svc (path)
+		(let ((old (hashtable-get *url-redirect* u)))
+		   (when old
+		      (js-raise-type-error %this
+			 (format "URL ~s already bound to ~~s" u) old))
+		   (hashtable-put! *url-redirect* u path))))))))
+
+;*---------------------------------------------------------------------*/
+;*    service-remove-url! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (service-remove-url! svc url %this)
+   (let ((u (js-jsstring->string url)))
+      (cond
+	 ((not (isa? svc JsService))
+	  (js-raise-type-error %this
+	     "Not a service ~s" (js-tostring svc %this)))
+	 ((not (member u *allow-urls*))
+	  (js-raise-type-error %this
+	     "URL not allowed for redirection ~s (see Service.allowURL)" u))
+	 (else
+	  (with-access::JsService svc (svc)
+	     (with-access::hop-service svc (path)
+		(let ((old (hashtable-get *url-redirect* u)))
+		   (cond
+		      ((not old)
+		       (js-raise-type-error %this "unbound URL ~s" u))
+		      ((not (string=? path old))
+		       (js-raise-type-error %this "URL ~s bound to another service" u))
+		      (else
+		       (hashtable-remove! *url-redirect* u))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    service-get-urls ...                                             */
+;*---------------------------------------------------------------------*/
+(define (service-get-urls svc %this)
+   (if (isa? svc JsService)
+       (with-access::JsService svc (svc)
+	  (with-access::hop-service svc (path)
+	     (let ((res '()))
+		(hashtable-for-each *url-redirect*
+		   (lambda (k v)
+		      (when (string=? v path)
+			 (set! res (cons (js-string->jsstring k) res)))))
+		(js-vector->jsarray (list->vector res) %this))))
+       (js-raise-type-error %this
+	  "Not a service ~s" (js-tostring svc %this))))
+
+;*---------------------------------------------------------------------*/
+;*    service-url-filter ...                                           */
+;*---------------------------------------------------------------------*/
+(define (service-url-filter req::http-request)
+   (when (isa? req http-server-request)
+      (with-access::http-server-request req (abspath path)
+	 (let ((alias (hashtable-get *url-redirect* abspath)))
+	    (when alias (set! abspath alias))))
+      req))

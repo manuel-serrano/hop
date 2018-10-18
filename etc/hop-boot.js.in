@@ -17,7 +17,8 @@
 if( !('hop' in window) ) {
    window.hop = {
       'version': "@VERSION@",
-      'build': "@BUILD@",
+      'buildId': "@BUILDID@",
+      'buildTag': "@BUILDTAG@",
       'etcDir': "@ETCDIR@",
       'binDir': "@BINDIR@",
       'libDir': "@LIBDIR@",

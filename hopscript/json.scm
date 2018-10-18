@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/json.scm                */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/json.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Nov 25 16:28:48 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Tue Aug 28 09:08:39 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */
@@ -18,13 +18,15 @@
 
    (library web hop)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_object
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_array)
@@ -52,7 +54,7 @@
 (define (js-init-json! %this)
    (with-access::JsGlobalObject %this (__proto__ js-json)
       (set! js-json
-	 (instantiate::JsJSON
+	 (instantiateJsJSON
 	    (__proto__ __proto__)))
       ;; parse
       (js-bind! %this js-json 'parse
@@ -92,6 +94,11 @@
       :expr expr
       :undefined undefined
       :string-alloc js-string->jsstring
+      :constant-alloc (lambda (n)
+			 (cond
+			    ((elong? n) (elong->flonum n))
+			    ((llong? n) (llong->flonum n))
+			    (else n)))
       :array-alloc (lambda ()
 		      (with-access::JsGlobalObject %this (js-array)
 			 (make-cell '())))
@@ -289,15 +296,16 @@
 		     (proc (vector-ref vec i) (vector-ref vecname i))
 		     (loop (+fx i 1))))))
 
-	 (define (in-mapped-property el-or-descr name)
-	    (when (symbol? name)
+	 (define (in-mapped-property el-or-descr prop)
+	    (when (and (symbol? (prop-name prop))
+		       (flags-enumerable? (prop-flags prop)))
 	       (cond
 		  ((isa? el-or-descr JsPropertyDescriptor)
 		   (with-access::JsPropertyDescriptor el-or-descr (enumerable)
 		      (when (eq? enumerable #t)
-			 (proc name))))
+			 (proc (prop-name prop)))))
 		  (else
-		   (proc name)))))
+		   (proc (prop-name prop))))))
 	 
 	 (define (in-property p)
 	    (when (isa? p JsPropertyDescriptor)
@@ -308,20 +316,11 @@
 	 (cond
 	    ((isa? obj JsObject)
 	     (let loop ((o obj))
-		(with-access::JsObject o (elements cmap properties __proto__)
+		(with-access::JsObject o (elements cmap __proto__)
 		   (if (not (eq? cmap (js-not-a-cmap)))
-		       (with-access::JsConstructMap cmap (names)
-			  (vfor-each3 in-mapped-property elements names))
-		       (for-each in-property properties)))))
-;* 	    ((isa? obj JsObject)                                       */
-;* 	     (let loop ((o obj))                                       */
-;* 		(with-access::JsObject o (cmap properties __proto__)   */
-;* 		   (if (not (eq? cmap (js-not-a-cmap)))                */
-;* 		       (with-access::JsConstructMap cmap (names)       */
-;* 			  (vfor-each (lambda (n)                       */
-;* 					(when (and n (symbol? n)) (proc n))) */
-;* 			     names))                                   */
-;* 		       (for-each in-property properties)))))           */
+		       (with-access::JsConstructMap cmap (props)
+			  (vfor-each3 in-mapped-property elements props))
+		       (for-each in-property (js-object-properties o))))))
 	    ((object? obj)
 	     (vfor-each2 (lambda (f) (proc (class-field-name f)))
 		(class-all-fields (object-class obj))))
@@ -343,7 +342,15 @@
 	       ((js-jsstring? value)
 		(string-quote (js-jsstring->string value)))
 	       ((number? value)
-		(js-ascii->jsstring (number->string value)))
+		(cond
+		   ((fixnum? value)
+		    (js-ascii->jsstring (fixnum->string value)))
+		   ((not (infinitefl? value))
+		    (js-ascii->jsstring (number->string value)))
+		   ((= value +inf.0)
+		    "Infinity")
+		   (else
+		    "-Infinity")))
 	       ((eq? (js-null) value)
 		(js-ascii->jsstring "null"))
 	       ((eq? value #t)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/pair.scm                */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/pair.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Thu Apr  6 16:23:45 2017 (serrano)                */
+;*    Last change :  Wed Dec 13 20:10:53 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -19,6 +19,7 @@
    (include "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_object
 	   __hopscript_error
 	   __hopscript_private
@@ -31,9 +32,9 @@
    (export  (js-properties-name-pair::vector ::pair ::JsGlobalObject)
 	    (js-get-own-property-pair ::pair ::obj ::JsGlobalObject)
 	    (js-get-property-value-pair ::pair ::pair ::obj ::JsGlobalObject)
-	    (js-get-pair ::pair ::symbol ::JsGlobalObject)
-	    (js-get-null ::nil ::symbol ::JsGlobalObject)
-	    (js-put-pair! ::pair ::symbol v throw::bool ::JsGlobalObject)))
+	    (js-get-pair ::pair ::obj ::JsGlobalObject)
+	    (js-get-null ::nil ::obj ::JsGlobalObject)
+	    (js-put-pair! ::pair ::obj v throw::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -69,15 +70,6 @@
 	     (enumerable #t)
 	     (configurable #f)))
 	 ((cer)
-	  (if (epair? o)
-	      (instantiate::JsValueDescriptor	
-		 (name 'cer)
-		 (writable #t)
-		 (value (js-obj->jsobject (cer o) %this))
-		 (enumerable #t)
-		 (configurable #f))
-	      (js-undefined)))
-	 ((toArray)
 	  (if (epair? o)
 	      (instantiate::JsValueDescriptor	
 		 (name 'cer)
@@ -194,7 +186,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-put-pair! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-put-pair! o::pair prop::symbol v throw::bool %this::JsGlobalObject)
+(define (js-put-pair! o::pair prop::obj v throw::bool %this::JsGlobalObject)
    (case prop
       ((car)
        (set-car! o v)

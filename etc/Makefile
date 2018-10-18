@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/etc/Makefile                      */
+#*    serrano/prgm/project/hop/3.2.x/etc/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Jan 29 10:33:11 2018 (serrano)                */
+#*    Last change :  Thu Sep 20 19:06:11 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -57,6 +57,7 @@ install:
 	  chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/site-lisp; \
 	fi
 	$(INSTALL) hopjs.el $(DESTDIR)$(HOPSHAREDIR)/site-lisp
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/site-lisp/hopjs.el
 
 uninstall:
 	$(RM) -f $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Feb 22 09:05:55 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 18:17:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -21,6 +21,7 @@
    (export (abstract-class J2SNode
 	      (loc::pair read-only (info '("notraverse")))
 	      (%info (default #unspecified) (info '("notraverse")))
+	      (%%dump (default #unspecified) (info '("notraverse")))
 	      (%%wstamp (default -1) (info '("notraverse"))))
 	   
 	   (abstract-class J2SStmt::J2SNode)
@@ -28,10 +29,10 @@
 	   (class J2SMeta::J2SStmt
 	      (debug::long (default 0))
 	      (optim::long (default 0))
-	      stmt::J2SStmt)
+	      (stmt::J2SStmt (info '("ast"))))
 	   
 	   (class J2SSeq::J2SStmt
-	      nodes::pair-nil)
+	      (nodes::pair-nil (info '("ast"))))
 	   
 	   (class J2SBlock::J2SSeq
 	      (endloc::pair read-only (info '("notraverse"))))
@@ -40,71 +41,133 @@
 	      (version::int read-only (default 1))
 	      (mode::symbol read-only (default 'normal))
 	      (path::bstring read-only)
-	      (pcache-size::int (default 0))
+	      (pcache-size::long (default 0))
+	      (call-size::long (default 0))
 	      (name read-only (default #f))
 	      (main read-only (default #f))
 	      (module read-only (default #f))
 	      (cnsts::pair-nil (default '()))
-	      (decls::pair-nil (default '()))
-	      (headers::pair-nil (default '()))
-	      (globals::pair-nil (default '()))
-	      (direct-eval::bool (default #t)))
+	      (decls::pair-nil (default '()) (info '("ast")))
+	      (headers::pair-nil (default '()) (info '("ast")))
+	      (globals::pair-nil (default '()) (info '("ast")))
+	      (direct-eval::bool (default #t))
+	      (source-map (default #f))
+	      (imports::pair-nil (default '()))
+	      (exports::pair-nil (default '())))
+
+	   (class J2SDecl::J2SStmt
+	      id::symbol
+	      (_scmid (default #f) (info '("notraverse")))
+	      (key (default (ast-decl-key)) (info '("notraverse")))
+	      ;; writable=#f iff decl is const
+	      (writable (default #t) (info '("notraverse")))
+	      (ronly (default #f) (info '("notraverse")))
+	      (scope::symbol (default 'local) (info '("notraverse")))
+	      (usecnt::int (default 0) (info '("notraverse")))
+	      (useinloop::bool (default #f) (info '("notraverse")))
+	      (useinfun::bool (default #f) (info '("notraverse")))
+	      ;; usage: init, new, ref, assig, get (field), set (field), call
+	      ;; delete
+	      (usage::pair-nil (default '()) (info '("notraverse")))
+	      ;; variable range
+	      (binder::symbol (default 'var) (info '("notraverse")))
+	      ;; user declared type, if set, assign will be guarded
+	      (utype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; initial parameter type
+	      (itype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; computed variable type value
+	      (vtype::symbol (default 'unknown) (info '("notraverse")))
+	      ;; initial parameter range
+	      (irange::obj (default #unspecified) (info '("notraverse")))
+	      ;; computed variable range
+	      (vrange::obj (default #unspecified) (info '("notraverse")))
+	      ;; variable 
+	      (hint::pair-nil (default '()) (info '("notraverse")))
+	      ;; es module export
+	      (export (default #f) (info '("notraverse"))))
+
+	   (class J2SDeclArguments::J2SDecl)
+	   
+	   (class J2SDeclInit::J2SDecl
+	      (val::J2SExpr (info '("ast"))))
+
+	   (class J2SDeclFun::J2SDeclInit
+	      (parent read-only (default #f))
+	      (expression::bool (default #f))
+	      (hintinfo::obj (default #f) (info '("notraverse"))))
+
+	   (class J2SDeclFunType::J2SDeclFun)
+
+	   (class J2SDeclClass::J2SDecl
+	      (val::J2SClass (info '("ast"))))
+
+	   (class J2SDeclSvc::J2SDeclFun)
+
+	   (final-class J2SDeclExtern::J2SDeclInit
+	      (bind::bool read-only (default #f))
+	      (hidden-class::bool read-only (default #t)))
+
+	   (final-class J2SDeclImport::J2SDecl
+	      (alias read-only (default #f) (info '("notraverse")))
+	      (linkindex::long read-only (info '("notraverse")))
+	      (import::J2SImport read-only (info '("notraverse"))))
 
 	   (abstract-class J2SExpr::J2SNode
 	      (type::symbol (default 'unknown) (info '("notraverse")))
-	      (hint::pair-nil (default '()) (info '("notraverse"))))
+	      (hint::pair-nil (default '()) (info '("notraverse")))
+	      (range::obj (default #unspecified) (info '("notraverse"))))
 
 	   (class J2SCast::J2SExpr
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SStmtExpr::J2SStmt
-	      expr::J2SExpr)
-	   
-	   (final-class J2SExprStmt::J2SExpr
-	      stmt::J2SStmt)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SIf::J2SStmt
-	      test::J2SExpr
-	      then::J2SStmt
-	      else::J2SStmt)
+	      (test::J2SExpr (info '("ast")))
+	      (then::J2SStmt (info '("ast")))
+	      (else::J2SStmt (info '("ast"))))
 
 	   (final-class J2SPrecache::J2SIf
 	      (accesses::pair-nil read-only (default '())))
 	   
 	   (final-class J2SVarDecls::J2SStmt
-	      decls::pair)
+	      (decls::pair (info '("ast"))))
 
 	   (final-class J2SLetBlock::J2SBlock
-	      decls::pair-nil)
+	      (rec::bool (default #t))
+	      (decls::pair-nil (info '("ast"))))
 	   
 	   (class J2SIdStmt::J2SStmt
 	      (need-bind-exit-break::bool (default #t))
 	      (id::obj (default #unspecified)))
 	   
 	   (final-class J2SSwitch::J2SIdStmt
-	      key::J2SExpr
-	      cases::pair-nil)
+	      (key::J2SExpr (info '("ast")))
+	      (cases::pair-nil (info '("ast"))))
 	   
 	   (class J2SLoop::J2SIdStmt
 	      (need-bind-exit-continue::bool (default #t))
-	      body::J2SStmt)
+	      (body::J2SStmt (info '("ast"))))
 	   
 	   (final-class J2SFor::J2SLoop
-	      init::J2SNode
-	      test::J2SExpr
-	      incr::J2SExpr)
+	      (init::J2SNode (info '("ast")))
+	      (test::J2SExpr (info '("ast")))
+	      (incr::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SForIn::J2SLoop
-	      lhs::J2SNode
-	      obj::J2SExpr)
+	      ;; op: in, of
+	      (op::symbol read-only (default 'in))
+	      (lhs::J2SNode (info '("ast")))
+	      (obj::J2SExpr (info '("ast"))))
 	   
 	   (class J2SWhile::J2SLoop
-	      test::J2SExpr)
+	      (test::J2SExpr (info '("ast"))))
 	   
 	   (class J2SDo::J2SWhile)
 	   
 	   (final-class J2SLabel::J2SIdStmt
-	      body::J2SStmt)
+	      (body::J2SStmt (info '("ast"))))
 	   
 	   (class J2SBreak::J2SStmt
 	      (target (default #f) (info '("notraverse")))
@@ -115,51 +178,59 @@
 	   (final-class J2SNop::J2SStmt)
 	   
 	   (class J2SCase::J2SStmt
-	      expr::J2SExpr
-	      body::J2SSeq
+	      (expr::J2SExpr (info '("ast")))
+	      (body::J2SSeq (info '("ast")))
 	      (cascade::bool (default #f)))
 	   
 	   (final-class J2SDefault::J2SCase)
 	   
+	   (final-class J2SBindExit::J2SExpr
+	      (lbl read-only)
+	      (stmt::J2SStmt (info '("ast"))))
+
 	   (class J2SReturn::J2SStmt
 	      (exit::bool (default #f))
 	      (tail::bool (default #t))
-	      expr::J2SExpr)
+	      (from (default #unspecified) (info '("notraverse")))
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SReturnYield::J2SStmt
-	      expr::J2SExpr
+	      (expr::J2SExpr (info '("ast")))
 	      (generator::bool read-only (default #f))
-	      kont::J2SExpr)
+	      (kont::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SYield::J2SExpr
-	      expr::J2SExpr
+	      (expr::J2SExpr (info '("ast")))
 	      (generator::bool read-only (default #f)))
 	   
 	   (final-class J2SWith::J2SStmt
 	      (id::symbol read-only (default (gensym '__with)))
-	      obj::J2SExpr
-	      block::J2SStmt)
+	      (obj::J2SExpr (info '("ast")))
+	      (block::J2SStmt (info '("ast"))))
 	   
 	   (final-class J2SThrow::J2SStmt
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SFun::J2SExpr
 	      (rtype::symbol (default 'unknown) (info '("notraverse")))
-	      (idthis read-only (default 'this) (info '("notraverse")))
+	      (rrange::obj (default #unspecified) (info '("notraverse")))
+	      (idthis::obj (default 'this) (info '("notraverse")))
 	      (idgen read-only (default #f) (info '("notraverse")))
 	      (mode::symbol (default 'normal) (info '("notraverse")))
 	      (decl (default #f) (info '("notraverse")))
 	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
 	      (vararg::obj (default #f) (info '("notraverse")))
-	      (name read-only (default '||) (info '("notraverse")))
+	      (name::symbol read-only (default '||) (info '("notraverse")))
 	      (generator::bool (default #f) (info '("notraverse")))
-	      (optimize read-only (default #t) (info '("notraverse")))
+	      (optimize (default #t) (info '("notraverse")))
 	      (thisp (default #f) (info '("notraverse")))
+	      (argumentsp (default #f) (info '("notraverse")))
 	      (params::pair-nil (default '()))
 	      (constrsize::int (default 3) (info '("notraverse")))
 	      (src::bool (default #t) (info '("notraverse")))
 	      (method (default #f) (info '("notraverse")))
-	      body::J2SBlock)
+	      (ismethodof (default #f) (info '("notraverse")))
+	      (body::J2SBlock (info '("ast"))))
 	   
 	   (class J2SSvc::J2SFun
 	      init::J2SNode
@@ -170,41 +241,57 @@
 	   (class J2SArrow::J2SFun)
 
 	   (class J2SMethod::J2SExpr
-	      function::J2SFun
-	      method::J2SFun)
+	      (function::J2SFun (info '("ast")))
+	      (method::J2SFun (info '("ast"))))
+
+	   (class J2SClass::J2SExpr
+	      (endloc::pair read-only (info '("notraverse")))
+	      (name read-only (info '("notraverse")))
+	      (decl (default #f) (info '("notraverse")))
+	      (super::J2SExpr (info '("ast")))
+	      (src::bool (default #t) (info '("notraverse")))
+	      (elements::pair-nil (info '("ast"))))
+
+	   (class J2SClassElement::J2SNode
+	      (static::bool read-only)
+	      (prop::J2SPropertyInit (info '("ast"))))
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SDecl
-	      body::J2SNode)
+	      (body::J2SNode (info '("ast"))))
 	   
 	   (final-class J2STry::J2SStmt
-	      body::J2SBlock
-	      catch::J2SStmt
-	      finally::J2SStmt)
+	      (body::J2SBlock (info '("ast")))
+	      (catch::J2SStmt (info '("ast")))
+	      (finally::J2SStmt (info '("ast"))))
 	   
 	   (class J2SPragma::J2SExpr
 	      (lang::symbol (default 'scheme))
-	      expr)
+	      (vars::pair-nil (default '()))
+	      (vals::pair-nil (default '()) (info '("ast")))
+	      (expr (info '("notraverse"))))
 	   
 	   (class J2SSequence::J2SExpr
-	      exprs::pair)
+	      (exprs::pair (info '("ast"))))
 	   
 	   (class J2SUnresolvedRef::J2SExpr
 	      (cache (default #f))
 	      id::symbol)
 	   
-	   (class J2SRef::J2SExpr
+	   (class J2SGlobalRef::J2SUnresolvedRef
 	      (decl::J2SDecl (info '("nojson"))))
+	   
+	   (class J2SRef::J2SExpr
+	      (decl::J2SDecl (info '("nojson" "notraverse"))))
 	   
 	   (class J2SWithRef::J2SExpr
 	      (id::symbol read-only)
 	      withs::pair
-	      expr::J2SExpr)
-	   
+	      (expr::J2SExpr (info '("ast"))))
+
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
-	      (itype::symbol read-only (default 'any))
-	      (rtype::symbol read-only (default 'any))
+	      (rtype::symbol (default 'any))
 	      (module read-only (default #f)))
 
 	   (class J2SLetRef::J2SRef)
@@ -212,56 +299,24 @@
 	   (final-class J2SAref::J2SRef
 	      (array::J2SDecl read-only)
 	      (alen::J2SDecl read-only)
-	      (mark::obj read-only)
+	      (amark::obj read-only)
 	      (deps::pair-nil read-only))
 	   
 	   (final-class J2SThis::J2SRef)
 	   
+	   (final-class J2SSuper::J2SRef
+	      (clazz (default #unspecified) (info '("notraverse"))))
+
 	   (final-class J2SCond::J2SExpr
-	      test::J2SExpr
-	      then::J2SExpr
-	      else::J2SExpr)
-
-	   (class J2SComprehension::J2SExpr
-	      decls::pair
-	      iterables::pair
-	      test::J2SExpr
-	      expr::J2SExpr)
-	   
-	   (class J2SDecl::J2SStmt
-	      id::symbol
-	      (_scmid (default #f) (info '("notraverse")))
-	      (key (default (ast-decl-key)) (info '("notraverse")))
-	      (writable (default #t) (info '("notraverse")))
-	      (ronly (default #f) (info '("notraverse")))
-	      (scope::symbol (default 'local) (info '("notraverse")))
-	      (usecnt::int (default 0) (info '("notraverse")))
-	      (usage::pair-nil (default '()) (info '("notraverse")))
-	      (utype::symbol (default 'unknown) (info '("notraverse")))
-	      (itype::symbol (default 'unknown) (info '("notraverse")))
-	      (vtype::symbol (default 'unknown) (info '("notraverse")))
-	      (hint::pair-nil (default '()) (info '("notraverse")))
-	      (binder::symbol (default 'var) (info '("notraverse"))))
-	   
-	   (class J2SDeclInit::J2SDecl
-	      val::J2SExpr)
-
-	   (class J2SDeclFun::J2SDeclInit
-	      (parent read-only (default #f))
-	      (expression::bool (default #f)))
-
-	   (class J2SDeclFunType::J2SDeclFun)
-
-	   (class J2SDeclFunCnst::J2SDeclFun)
-
-	   (class J2SDeclSvc::J2SDeclFun)
-
-	   (final-class J2SDeclExtern::J2SDeclInit
-	      (bind::bool read-only (default #f)))
+	      (test::J2SExpr (info '("ast")))
+	      (then::J2SExpr (info '("ast")))
+	      (else::J2SExpr (info '("ast"))))
 
 	   (abstract-class J2SLiteral::J2SExpr)
 
 	   (final-class J2SArrayAbsent::J2SLiteral)
+	   (final-class J2SDots::J2SLiteral
+	      lhs)
 	   
 	   (final-class J2SNull::J2SLiteral)
 	   (final-class J2SUndefined::J2SLiteral)
@@ -277,7 +332,8 @@
 	   (class J2SNumber::J2SLiteralValue)
 	   (final-class J2SOctalNumber::J2SNumber)
 	   (final-class J2SRegExp::J2SLiteralValue
-	      (flags::bstring read-only))
+	      (flags::bstring read-only)
+	      (inline::bool (default #f)))
 	   (final-class J2SCmap::J2SLiteralValue)
 
 	   (final-class J2SLiteralCnst::J2SLiteral
@@ -286,91 +342,123 @@
 	       
 	   (final-class J2SArray::J2SLiteral
 	      len::int
-	      exprs::pair-nil)
+	      (exprs::pair-nil (info '("ast"))))
 	   
 	   (final-class J2STemplate::J2SExpr
-	      (exprs::pair read-only))
+	      (exprs::pair (info '("ast"))))
 	   
 	   (final-class J2SParen::J2SExpr
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SUnary::J2SExpr
 	      op::symbol
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SBinary::J2SExpr
 	      op::symbol
-	      lhs::J2SExpr
-	      rhs::J2SExpr)
+	      (lhs::J2SExpr (info '("ast")))
+	      (rhs::J2SExpr (info '("ast"))))
 	   
 	   (class J2SAssig::J2SExpr
-	      lhs::J2SExpr
-	      rhs::J2SExpr)
-	   
-	   (final-class J2SPrefix::J2SAssig
-	      op::symbol)
-	   (final-class J2SPostfix::J2SAssig
-	      op::symbol)
+	      (lhs::J2SExpr (info '("ast")))
+	      (rhs::J2SExpr (info '("ast"))))
 	   
 	   (class J2SInit::J2SAssig)
-	   
-	   (final-class J2SAssigOp::J2SAssig
-	      op::symbol)
 	   
 	   (final-class J2SVAssig::J2SAssig)
 	   (final-class J2SCAssig::J2SAssig)
 
 	   (final-class J2SFunBinding::J2SInit)
 	   
+	   (final-class J2SPrefix::J2SAssig
+	      op::symbol)
+	   (final-class J2SPostfix::J2SAssig
+	      op::symbol)
+	   (final-class J2SAssigOp::J2SAssig
+	      op::symbol)
+	   
 	   (final-class J2SObjInit::J2SExpr
-	      inits::pair-nil
+	      (inits::pair-nil (info '("ast")))
 	      (cmap (default #f)))
 	   
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f) (info '("notraverse")))
-	      (clevel::long (default 100) (info '("notraverse")))
-	      obj::J2SExpr
-	      field::J2SExpr)
-	   
+	      (cspecs (default '(imap emap cmap pmap amap vtable)) (info '("notraverse")))
+	      (obj::J2SExpr (info '("ast")))
+	      (field::J2SExpr (info '("ast"))))
+
+	   (final-class J2SCacheCheck::J2SExpr
+	      (prop::symbol read-only)
+	      (cache read-only (info '("notraverse")))
+	      (obj::J2SExpr (info '("ast")))
+	      fields::pair-nil)
+
+	   (final-class J2SCacheUpdate::J2SExpr
+	      (prop::symbol read-only)
+	      (cache read-only (info '("notraverse")))
+	      (obj::J2SExpr (info '("ast"))))
+
 	   (final-class J2SCall::J2SExpr
+	      (profid::long (default -1) (info '("notraverse")))
 	      (cache (default #f) (info '("notraverse")))
-	      (clevel::long (default 100) (info '("notraverse")))
-	      fun::J2SExpr
-	      (protocol (default 'direct) (info '("notraverse")))
-	      (this (default #unspecified))
-	      (args::pair-nil (default '())))
+	      (cspecs (default '(pmap vtable)) (info '("notraverse")))
+	      (fun::J2SExpr (info '("ast")))
+	      (protocol::symbol (default 'direct) (info '("notraverse")))
+	      (thisarg::pair-nil (info '("ast")))
+	      (args::pair-nil (default '()) (info '("ast"))))
 	   
 	   (final-class J2STilde::J2SExpr
 	      stmt::J2SStmt)
 	   
 	   (final-class J2SDollar::J2SExpr
-	      node::J2SNode)
+	      (node::J2SNode (info '("ast"))))
 	   
 	   (final-class J2SNew::J2SExpr
 	      (cache (default #f))
-	      clazz::J2SNode
-	      args::pair-nil)
+	      (clazz::J2SNode (info '("ast")))
+	      (args::pair-nil (info '("ast"))))
 
 	   (abstract-class J2SPropertyInit::J2SNode
-	      name::J2SExpr)
+	      (name::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SDataPropertyInit::J2SPropertyInit
-	      val::J2SExpr)
+	      (val::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SAccessorPropertyInit::J2SPropertyInit
-	      (get::obj (default #f))
-	      (set::obj (default #f)))
+	      (get::obj (default #f) (info '("ast")))
+	      (set::obj (default #f) (info '("ast"))))
 
 	   (final-class J2SKont::J2SExpr
 	      (param::J2SDecl read-only)
 	      (exn::J2SDecl read-only)
-	      body::J2SNode)
+	      (body::J2SNode (info '("ast"))))
 
 	   (final-class J2SOPTInitSeq::J2SSeq
 	      ref::J2SRef
-	      (cmap0::symbol read-only)
-	      (cmap1::symbol read-only)
+	      (cmap0 read-only)
+	      (cmap1 read-only)
+	      (cmap2 read-only)
 	      (offset::symbol read-only))
+
+	   (final-class J2SDProducer::J2SExpr
+	      (decl::J2SDecl (info '("nojson")))
+	      (expr::J2SExpr (info '("ast")))
+	      (size::long read-only (info '("notraverse"))))
+
+	   (final-class J2SDConsumer::J2SExpr
+	      (decl::J2SDecl (info '("nojson")))
+	      (expr::J2SExpr (info '("ast")))
+	      (path read-only))
+
+	   (final-class J2SExport
+	      (id::symbol read-only)
+	      (index::long (default -1))
+	      (decl (default #f)))
+
+	   (final-class J2SImport::J2SStmt
+	      (path::bstring read-only)
+	      (names::obj (default #f))
+	      (respath (default #f)))
 
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
@@ -379,6 +467,7 @@
 	   (generic walk4 n::J2SNode p::procedure a0 a1 a2 a3)
 	   (generic walk5 n::J2SNode p::procedure a0 a1 a2 a3 a4)
 	   (generic walk6 n::J2SNode p::procedure a0 a1 a2 a3 a4 a5)
+	   (generic walk7 n::J2SNode p::procedure a0 a1 a2 a3 a4 a5 a6)
 	   (generic walk0*::pair-nil n::J2SNode p::procedure)
 	   (generic walk1*::pair-nil n::J2SNode p::procedure a0)
 	   (generic walk2*::pair-nil n::J2SNode p::procedure a0 a1)
@@ -386,6 +475,7 @@
 	   (generic walk4*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3)
 	   (generic walk5*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3 a4)
 	   (generic walk6*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3 a4 a5)
+	   (generic walk7*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3 a4 a5 a6)
 	   (generic walk0!::J2SNode n::J2SNode p::procedure)
 	   (generic walk1!::J2SNode n::J2SNode p::procedure a0)
 	   (generic walk2!::J2SNode n::J2SNode p::procedure a0 a1)
@@ -393,9 +483,14 @@
 	   (generic walk4!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3)
 	   (generic walk5!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4)
 	   (generic walk6!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4 a5)
+	   (generic walk7!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4 a5 a6)
 	   
 	   (macro define-walk-method)
 
+	   (node-%info ::J2SNode)
+	   (node-loc ::J2SNode)
+	   (node-endloc ::J2SNode)
+	   
 	   (j2sfun-id ::J2SFun)
 	   (j2sfun-expression? ::J2SFun)
 	   
@@ -417,13 +512,30 @@
 	   (j2s-field-name::obj ::J2SNode)
 	   (inline j2s-field-length?::bool ::J2SNode)
 
-	   (j2s-type ::obj)
-
-	   (j2s-expr-type-test ::J2SExpr)
-	   (class-of ::J2SExpr))
+	   (j2sdeclinit-val-fun::J2SExpr ::J2SDeclInit))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
+
+;*---------------------------------------------------------------------*/
+;*    node-%info ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (node-%info n)
+   (with-access::J2SNode n (%info) %info))
+
+;*---------------------------------------------------------------------*/
+;*    node-loc ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (node-loc n)
+   (with-access::J2SNode n (loc) loc))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (node-endloc n)
+   (if (isa? n J2SBlock)
+       (with-access::J2SBlock n (endloc) endloc)
+       (with-access::J2SNode n (loc) loc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %nodefval ...                                                    */
@@ -448,43 +560,43 @@
 ;*    j2s-var? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-var? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder)
+   (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((var) #t)
 	 ((let let-opt) #t)
-	 ((param) #f)
-	 (else (error "j2s-var?" "wrong binder" binder)))))
+	 ((param class) #f)
+	 (else (error "j2s-var?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-let? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-let? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder)
+   (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((let let-opt) #t)
-	 ((var param) #f)
-	 (else (error "j2s-let?" "wrong binder" binder)))))
+	 ((var param class) #f)
+	 (else (error "j2s-let?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-const? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-const? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder writable)
+   (with-access::J2SDecl decl (binder writable id loc)
       (unless writable
 	 (case binder
 	    ((let let-opt) #t)
-	    ((var param) #f)
-	    (else (error "j2s-const?" "wrong binder" binder))))))
+	    ((var param class) #f)
+	    (else (error "j2s-const?" "wrong binder" (vector loc id binder)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-let-opt? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-let-opt? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder)
+   (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((let-opt) #t)
-	 ((let var param) #f)
-	 (else (error "j2s-let-opt?" "wrong binder" binder)))))
+	 ((let var param class) #f)
+	 (else (error "j2s-let-opt?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-access-field ...                                             */
@@ -510,11 +622,11 @@
 ;*    j2s-param? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-param? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder)
+   (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((param) #t)
-	 ((var let const let-opt const-opt) #f)
-	 (else (error "j2s-param?" "wrong binder" binder)))))
+	 ((var let const let-opt const-opt class) #f)
+	 (else (error "j2s-param?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-id ...                                                    */
@@ -530,10 +642,8 @@
 ;*---------------------------------------------------------------------*/
 (define (j2sfun-expression? this::J2SFun)
    (with-access::J2SFun this (decl)
-      (if (isa? decl J2SDeclFun)
-	  (with-access::J2SDeclFun decl (expression)
-	     expression)
-	  (isa? decl J2SDeclFunCnst))))
+      (when (isa? decl J2SDeclFun)
+	 (with-access::J2SDeclFun decl (expression) expression))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *ast-decl-key* ...                                               */
@@ -572,6 +682,9 @@
 (define-generic (walk6 n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
    (error "walk6" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
+(define-generic (walk7 n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6)
+   (error "walk7" "Internal Error: forgot Node type"
+      (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0*::pair-nil n::J2SNode p::procedure)
    (error "walk0*" "Internal Error: forgot Node type"
@@ -594,6 +707,9 @@
 (define-generic (walk6*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
    (error "walk6*" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
+(define-generic (walk7*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6)
+   (error "walk7*" "Internal Error: forgot Node type"
+      (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0!::J2SNode n::J2SNode p::procedure)
    (error "walk0!" "Internal Error: forgot Node type"
@@ -615,6 +731,9 @@
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk6!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
    (error "walk6!" "Internal Error: forgot Node type"
+      (with-output-to-string (lambda () (write-circle n)))))
+(define-generic (walk7!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6)
+   (error "walk7!" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 
 ;*---------------------------------------------------------------------*/
@@ -727,9 +846,9 @@
        (print "   return _ast;\n};\n\n")))
    
    `(begin
-       ,@(map (lambda (nb) (gen-method nb)) (iota 7))
-       ,@(map (lambda (nb) (gen-method* nb)) (iota 7))
-       ,@(map (lambda (nb) (gen-method! nb)) (iota 7))))
+       ,@(map (lambda (nb) (gen-method nb)) (iota 8))
+       ,@(map (lambda (nb) (gen-method* nb)) (iota 8))
+       ,@(map (lambda (nb) (gen-method! nb)) (iota 8))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-traversals ...                                               */
@@ -813,9 +932,9 @@
 		    n))))))
 
    `(begin
-       ,@(map (lambda (nb) (gen-method nb)) (iota 7))
-       ,@(map (lambda (nb) (gen-method* nb)) (iota 7))
-       ,@(map (lambda (nb) (gen-method! nb)) (iota 7))))
+       ,@(map (lambda (nb) (gen-method nb)) (iota 8))
+       ,@(map (lambda (nb) (gen-method* nb)) (iota 8))
+       ,@(map (lambda (nb) (gen-method! nb)) (iota 8))))
 
 ;*---------------------------------------------------------------------*/
 ;*    default walk                                                     */
@@ -824,6 +943,7 @@
 (gen-walks J2SMeta stmt)
 (gen-walks J2SSeq (nodes))
 (gen-walks J2SProgram (decls) (headers) (nodes))
+(gen-walks J2SBindExit stmt)
 (gen-walks J2SReturn expr)
 (gen-walks J2SReturnYield expr kont)
 (gen-walks J2SWith obj block)
@@ -831,7 +951,7 @@
 (gen-walks J2STry body catch finally)
 (gen-walks J2SCatch body)
 (gen-walks J2SStmtExpr expr)
-(gen-walks J2SExprStmt stmt)
+;* (gen-walks J2SExprStmt stmt)                                        */
 (gen-walks J2SSequence (exprs))
 (gen-walks J2SVarDecls (decls))
 (gen-walks J2SLetBlock (decls) (nodes))
@@ -849,7 +969,9 @@
 (gen-walks J2SBinary lhs rhs)
 (gen-walks J2SDefault body)
 (gen-walks J2SAccess obj field)
-(gen-walks J2SCall fun (args))
+(gen-walks J2SCacheCheck obj)
+(gen-walks J2SCacheUpdate obj)
+(gen-walks J2SCall fun (thisarg) (args))
 (gen-walks J2SNew clazz (args))
 (gen-walks J2SAssig lhs rhs)
 (gen-walks J2SFun body (params))
@@ -860,16 +982,19 @@
 (gen-walks J2SAccessorPropertyInit name get set)
 (gen-walks J2SArray (exprs))
 (gen-walks J2SDeclInit val)
-(gen-walks J2SDeclFunCnst)
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
 (gen-walks J2SPrecache (accesses) test then else)
 (gen-walks J2SCond test then else)
 (gen-walks J2SDollar node)
-(gen-walks J2SComprehension (iterables) test expr)
 (gen-walks J2SYield expr)
 (gen-walks J2SKont body)
 (gen-walks J2SCast expr)
+(gen-walks J2SClass super (elements))
+(gen-walks J2SClassElement prop)
+(gen-walks J2SDProducer expr)
+(gen-walks J2SDConsumer expr)
+(gen-walks J2SPragma (vals))
 
 (gen-traversals J2STilde)
 
@@ -976,17 +1101,31 @@
 ;*    j2s->json ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SPragma op::output-port)
-   (with-access::J2SPragma this (expr loc lang)
+   (with-access::J2SPragma this (expr loc lang vars vals)
       (display "{ \"__node__\": \"J2SPragma\", \"expr\": \"" op)
       (display (string-for-read
 		  (call-with-output-string
 		     (lambda (op) (write expr op))))
 	 op)
-      (display "\", \"lang\": " op)
+      (display ", \"vars\": " op)
+      (display (format "\"(~(, ))\"" vars))
+      (display ", \"vals\": [" op)
+      (if (null? vals)
+	  (display "]" op)
+	  (let loop ((vals vals))
+	     (if (null? (cdr vals))
+		 (begin
+		    (j2s->json (car vals) op)
+		    (display "]" op))
+		 (begin
+		    (j2s->json (car vals) op)
+		    (display ", " op)
+		    (loop (cdr vals))))))
+      (display ", \"lang\": " op)
       (display #\" op)
       (display lang op)
       (display #\" op)
-      (display "\", \"loc\": " op)
+      (display ", \"loc\": " op)
       (j2s->json loc op)
       (display " }" op)))
 
@@ -1128,6 +1267,28 @@
 	 (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
+;*    json-link-decl! ::J2SConsumer ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (json-link-decl! node::J2SDConsumer env)
+   (with-access::J2SDConsumer node (decl)
+      (with-access::%JSONDecl decl (%id)
+	 (if (or (<fx %id 0) (>fx %id (vector-length env)))
+	     (error "json->ast" "Illegal reference" %id)
+	     (set! decl (vector-ref env %id)))
+	 (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    json-link-decl! ::J2SProducer ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (json-link-decl! node::J2SDProducer env)
+   (with-access::J2SDProducer node (decl)
+      (with-access::%JSONDecl decl (%id)
+	 (if (or (<fx %id 0) (>fx %id (vector-length env)))
+	     (error "json->ast" "Illegal reference" %id)
+	     (set! decl (vector-ref env %id)))
+	 (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
 ;*    json-link-decl! ::J2SPragma ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (json-link-decl! node::J2SPragma env)
@@ -1136,148 +1297,11 @@
       node))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-type ...                                                     */
+;*    j2sdeclinit-val-fun ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (j2s-type node)
-   (cond
-      ((isa? node J2SExpr)
-       (with-access::J2SExpr node (type)
-	  type))
-      (else
-       'void)))
-
-;*---------------------------------------------------------------------*/
-;*    class-of ...                                                     */
-;*    -------------------------------------------------------------    */
-;*    Used to find the class of an X instanceof Y expression.          */
-;*---------------------------------------------------------------------*/
-(define (class-of rhs::J2SExpr)
-   (when (isa? rhs J2SUnresolvedRef)
-      (with-access::J2SUnresolvedRef rhs (id)
-	 (case id
-	    ((Array) 'array)
-	    ((Argument) 'argument)
-	    ((Date) 'date)
-	    ((RegExp) 'regexp)
-	    ((Object) 'object)
-	    ((Function) 'function)
-	    ((Promise) 'promise)
-	    (else 'unknown)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-expr-type-test ...                                           */
-;*    -------------------------------------------------------------    */
-;*    Is an expression a type test. If it is returns                   */
-;*       <op, decl, type, ref>                                         */
-;*    Otherwise, returns #f                                            */
-;*    Tested patterns are:                                             */
-;*       pat ::= (typeof X == STRING)                                  */
-;*           | !pat                                                    */
-;*           | (pat)                                                   */
-;*---------------------------------------------------------------------*/
-(define (j2s-expr-type-test expr::J2SExpr)
-   
-   (define (normalize-op op)
-      (case op
-	 ((===) '==)
-	 ((!==) '!=)
-	 (else op)))
-   
-   (define (not-op op)
-      (case op
-	 ((==) '!=)
-	 ((===) '!==)
-	 ((!=) '=)
-	 ((!==) '==)
-	 ((instanceof) '!instanceof)
-	 (else (error "j2s-expr-type-test" "Unknown op" op))))
-   
-   (define (typeof op expr str)
-      (when (isa? expr J2SUnary)
-	 (with-access::J2SUnary expr ((bop op) expr)
-	    (let loop ((expr expr))
-	       (cond
-		  ((isa? expr J2SParen)
-		   (with-access::J2SParen expr (expr)
-		      (loop expr)))
-		  ((and (eq? bop 'typeof) (isa? expr J2SRef))
-		   (with-access::J2SRef expr (decl)
-		      (with-access::J2SString str (val)
-			 (values op decl (string->symbol val) expr)))))))))
-   
-   (define (binary-type-test expr)
-      (with-access::J2SBinary expr (op lhs rhs)
-	 (case op
-	    ((== === != !==)
-	     (cond
-		((isa? lhs J2SString)
-		 (typeof op rhs lhs))
-		((isa? rhs J2SString)
-		 (typeof op lhs rhs))
-		(else
-		 #f)))
-	    ((instanceof)
-	     (when (isa? lhs J2SRef)
-		(let ((typ (class-of rhs)))
-		   (when typ
-		      (with-access::J2SRef lhs (decl)
-			 (values 'instanceof decl typ lhs))))))
-	    (else
-	     #f))))
-   
-   (define (unary-type-test expr)
-      (with-access::J2SUnary expr (op expr)
-	 (when (eq? op '!)
-	    (multiple-value-bind (op decl type expr)
-	       (j2s-expr-type-test expr)
-	       (when op
-		  (values (not-op op) decl type expr))))))
-   
-   (define (paren-type-test expr)
-      (with-access::J2SParen expr (expr)
-	 (j2s-expr-type-test expr)))
-   
-   (define (is-native-test test)
-      ;; if test === (js-index? (ref decl) ) return decl
-      ;; see __js2scheme_range
-      (when (isa? test J2SCall)
-         (with-access::J2SCall test (fun args)
-            (when (isa? fun J2SHopRef)
-	       (when (and (pair? args) (null? (cdr args)))
-		  (when (isa? (car args) J2SRef)
-		     (car args)))))))
-   
-   (define (native-type-test test)
-      (with-access::J2SCall test (fun)
-	 (with-access::J2SHopRef fun (id)
-	    id)))
-   
-   (cond
-      ((isa? expr J2SBinary)
-       (binary-type-test expr))
-      ((isa? expr J2SUnary)
-       (unary-type-test expr))
-      ((isa? expr J2SParen)
-       (paren-type-test expr))
-      ((is-native-test expr)
-       =>
-       (lambda (ref)
-	  (let ((typ (case (native-type-test expr)
-			((js-index?) 'index)
-			((fixnum?) 'fixnum)
-			((number?) 'number)
-			((js-jsstring?) 'string)
-			((js-array?) 'array)
-			((js-object?) 'object)
-			((js-function?) 'function)
-			((boolean?) 'bool)
-			((js-undefined?) 'undefined)
-			((js-null?) 'null)
-			(else #f))))
-	     (if typ
-		 (with-access::J2SRef ref (decl)
-		    (values '== decl typ ref))
-		 #f))))
-      (else
-       #f)))
-
+(define (j2sdeclinit-val-fun node::J2SDeclInit)
+   (with-access::J2SDeclInit node (val)
+      (if (isa? val J2SMethod)
+	  (with-access::J2SMethod val (function)
+	     function)
+	  val)))

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/share/hop-require.js              */
+/*    serrano/prgm/project/hop/3.2.x/share/hop-require.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Mon Jan 18 14:47:03 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Fri Sep 28 11:12:25 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
 /*=====================================================================*/
@@ -28,7 +28,16 @@ function require( url ) {
       if( window.hop[ '%requires' ][ path ] ) {
 	 return window.hop[ '%requires' ][ path ]();
       } else {
-	 throw new Error( "Client-side module \"" + url + "\" not requirable" );
+	 console.log( "*** REQUIRE ERROR" );
+	 console.log( "url=", url );
+	 console.log( "path=", path );
+	 console.log( "defined requires: ", window.hop[ '%requires' ] );
+	 console.log( "%root: ", hop[ '%root' ] );
+	 if( !hop[ '%root' ] ) {
+	    throw new Error( "Client-side program lacks a HEAD section" );
+	 } else {
+	    throw new Error( "Client-side module \"" + url + "\" is unbound or not requirable (check the server console for details)" );
+	 }
       }
    }
 }

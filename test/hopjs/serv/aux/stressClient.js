@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.1.x/test/hopjs/serv/aux/stressClient.js        */
+/*    .../project/hop/3.2.x/test/hopjs/serv/aux/stressClient.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  14 11:43:00 2015                         */
-/*    Last change :  Thu Oct 13 14:11:08 2016 (serrano)                */
-/*    Copyright   :  2015-16 Inria                                     */
+/*    Last change :  Tue Jun  5 13:13:49 2018 (serrano)                */
+/*    Copyright   :  2015-18 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Stress test for services: client worker                          */
 /*=====================================================================*/
@@ -37,7 +37,7 @@ function test( id ) {
 	 }, { fail: function( error ) {
 	    console.log( 'Service invocation failed for client %s at %s',
 			 id, effectiveCalls, error );
-	    //	 process.exit( 1 );
+	    postMessage( id );
 	 }});
       } catch( e ) {
 	 console.log( 'client %s cannot post at %s', id, effectiveCalls );

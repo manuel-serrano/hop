@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/spawn.scm               */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/spawn.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Wed Aug 22 21:07:16 2018 (serrano)                */
+;*    Last change :  Mon Oct  8 14:23:42 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -57,7 +57,8 @@
 	   __hopscript_public
 	   __hopscript_function
 	   __hopscript_lib
-	   __hopscript_promise)
+	   __hopscript_promise
+	   __hopscript_stringliteral)
 
    (export (js-spawn ::JsFunction ::obj ::JsGlobalObject)))
 
@@ -76,7 +77,7 @@
 (define-macro (ref obj prop)
    (eval '(set! idx (+fx 1 idx)))
    (eval '(when (>=fx idx 10) (error "ref" "index out-of-bound" idx)))
-   `(js-get-name/cache ,obj ,prop (js-pcache-ref %pcache ,(eval idx)) %this))
+   `(js-get-name/cache ,obj ,prop #f %this (js-pcache-ref %pcache ,(eval idx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    call ...                                                         */
@@ -103,7 +104,7 @@
 ;*    %pcache ...                                                      */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 10)
-(define %pcache (js-make-pcache 10))
+(define %pcache (js-make-pcache-table 10 "hopscript/spawn.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-spawn ...                                                     */

@@ -80,7 +80,10 @@ doc/hss/fontifier.css
 doc/hss/markdown.hss
 doc/hss/markdown.css
 doc/hss/doc.css
+doc/version.json
 doc/favicon.png
+doc/doc.json
+doc/LICENSE.academic
 
 # widget compiled files
 widget/colorchooser.scm
@@ -103,7 +106,6 @@ etc/hopsh.man
 # misc
 .hoprelease
 TODO
-bench/
 devel/
 old/
 repository/

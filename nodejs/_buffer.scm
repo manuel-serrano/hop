@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/_buffer.scm                */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_buffer.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri May 26 07:46:49 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Mon Oct  8 14:26:36 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
 ;*=====================================================================*/
@@ -14,8 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__buffer
 
-   (include "nodejs_debug.sch")
-   
+   (include "nodejs_debug.sch" "nodejs_types.sch")
+
    (library hopscript hop)
 
    (import  __nodejs_process
@@ -49,6 +49,12 @@
 	    (make-slab-allocator ::JsGlobalObject ::JsObject)
 	    (slab-allocate ::object ::obj ::long)
 	    (slab-shrink! ::obj ::obj ::long ::long)))
+
+;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 3)
+(define %pcache (js-make-pcache-table 3 "nodejs/buffer.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    buffer-parser ...                                                */
@@ -113,7 +119,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsslowbuffer str %this)
    (with-access::JsGlobalObject %this (js-slowbuffer-proto)
-      (let ((buf (instantiate::JsSlowBuffer
+      (let ((buf (instantiateJsSlowBuffer
 		    (__proto__ js-slowbuffer-proto)
 		    (data str))))
 	 (js-put! buf 'length (string-length str) #f %this)
@@ -126,7 +132,7 @@
    (with-access::JsGlobalObject %this (js-buffer-proto)
       (let ((slowbuffer (js-string->jsslowbuffer str %this)))
 	 (with-access::JsSlowBuffer slowbuffer (data)
-	    (let ((buf (instantiate::JsFastBuffer
+	    (let ((buf (instantiateJsFastBuffer
 			  (__proto__ js-buffer-proto)
 			  (%data data)
 			  (frozen #f)
@@ -239,7 +245,7 @@
 ;*    js-buffer-constr ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-buffer-constr proto %this)
-   (instantiate::JsFastBuffer
+   (instantiateJsFastBuffer
       (cmap (js-not-a-cmap))
       (bpe #u32:1)
       (__proto__ proto)))
@@ -256,9 +262,12 @@
 ;*---------------------------------------------------------------------*/
 (define (hopscript %this this %scope %module)
    ((@ hopscript __nodejs_buffer) %this this %scope %module)
-   (let* ((exp (js-get %module 'exports %this))
-	  (buf (js-get exp 'Buffer %this))
-	  (proto (js-get buf 'prototype %this)))
+   (let* ((exp (js-object-get-name/cache %module 'exports #f %this
+		  (js-pcache-ref %pcache 0)))
+	  (buf (js-object-get-name/cache exp 'Buffer #f %this
+		  (js-pcache-ref %pcache 1)))
+	  (proto (js-object-get-name/cache buf 'prototype #f %this
+		    (js-pcache-ref %pcache 2))))
 
       (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
 	 (set! js-buffer-proto proto))
@@ -498,10 +507,11 @@
 		   ((>fl n (exptfl 2. 32.))
 		    (js-raise-type-error %this "Bad argument" a0))
 		   ((>=fl n 1073741823.0) ;; #x3fffffff + 1
+		    (tprint "a0=" a0 " " (typeof a0) " n=" n)
 		    (js-raise-range-error %this "length (~s) > kMaxLength" a0))
 		   (else
 		    (with-access::JsGlobalObject %this (js-object)
-		       (let ((this (instantiate::JsSlowBuffer
+		       (let ((this (instantiateJsSlowBuffer
 				      (__proto__ slowbuffer-proto)
 				      (data (make-string (->fixnum a0) #a000)))))
 			  ;; length
@@ -514,7 +524,7 @@
 	    ((string? a0)
 	     (with-access::JsGlobalObject %this (js-object)
 		(let* ((data a0)
-		       (this (instantiate::JsSlowBuffer
+		       (this (instantiateJsSlowBuffer
 				(__proto__ slowbuffer-proto)
 				(data data))))
 		   ;; length
@@ -527,7 +537,7 @@
 	    ((js-jsstring? a0)
 	     (with-access::JsGlobalObject %this (js-object)
 		(let* ((data (js-jsstring->string a0))
-		       (this (instantiate::JsSlowBuffer
+		       (this (instantiateJsSlowBuffer
 				(__proto__ slowbuffer-proto)
 				(data data))))
 		   ;; length

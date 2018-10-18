@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/3.2.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Oct  6 21:32:52 2017 (serrano)                */
-;*    Copyright   :  2005-17 Manuel Serrano                            */
+;*    Last change :  Mon Oct  8 14:57:03 2018 (serrano)                */
+;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -271,29 +271,29 @@
 (define *sharp-grammar*
    (regular-grammar ()
       
-      ;; characters
-      ((: (uncase "a") (= 3 digit))
+      ((: "a" (= 3 digit))
        (let ((string (the-string)))
-	  (if (not (=fx (the-length) 4))
-	      (read-error "Illegal ascii character" string (the-port))
-	      (integer->char (string->integer (the-substring 1 4))))))
+	  (integer->char (string->integer (the-substring 1 4)))))
       
       ;; ucs-2 characters
       ((: "u" (= 4 xdigit))
        (integer->ucs2 (string->integer (the-substring 1 5) 16)))
       
+      ;; foreign strings of char
+      ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
+       (the-escape-substring 1 (-fx (the-length) 1) #f))
+      
       ;; ucs2 strings
       ((: "u\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (the-escape-substring 2 (-fx (the-length) 1) #f)))
   	  (utf8-string->ucs2-string str)))
-      
       ;; fixnums
       ((: "b" (? (in "-+")) (+ (in ("01"))))
-       (string->integer (the-substring 1 (the-length)) 2))
+       (string->integer-obj (the-substring 1 (the-length)) 2))
       ((: "o" (? (in "-+")) (+ (in ("07"))))
-       (string->integer (the-substring 1 (the-length)) 8))
+       (string->integer-obj (the-substring 1 (the-length)) 8))
       ((: "d" (? (in "-+")) (+ (in ("09"))))
-       (string->integer (the-substring 1 (the-length)) 10))
+       (string->integer-obj (the-substring 1 (the-length)) 10))
       ((: "e" (? (in "-+")) (+ digit))
        (string->elong (the-substring 1 (the-length)) 10))
       ((: "ex" (+ xdigit))
@@ -303,7 +303,12 @@
       ((: "lx" (+ xdigit))
        ($strtoull (the-substring 2 (the-length)) 0 16))
       ((: "x" (? (in "-+")) (+ (in (uncase (in ("09af"))))))
-       (string->integer (the-substring 1 (the-length)) 16))
+       (string->integer-obj (the-substring 1 (the-length)) 16))
+      ;; bignums
+      ((: "z" (? (in "-+")) (+ (in ("09"))))
+       (string->bignum (the-substring 1 (the-length)) 10))
+      ((: "zx" (+ xdigit))
+       (string->bignum (the-substring 2 (the-length)) 16))
       
       ;; unspecified and eof-object
       ((: (in "ue") (+ (in "nspecified-objt")))
@@ -315,20 +320,49 @@
 	      beof)
 	     (else
 	      (read-error "Illegal identifier"
-			  (string-append "#" (symbol->string symbol))
-			  (the-port))))))
-      
+		 (string-append "#" (symbol->string symbol)) (the-port))))))
+
+      ;; stdint
+      ((: "s8:" (? #\-) (+ (in ("09"))))
+       (fixnum->int8 (string->integer (the-substring 3 0))))
+      ((: "u8:" (+ (in ("09"))))
+       (fixnum->uint8 (string->integer (the-substring 3 0))))
+      ;; stdint
+      ((: "s16:" (? #\-) (+ (in ("09"))))
+       (fixnum->int16 (string->integer (the-substring 4 0))))
+      ((: "u16:" (+ (in ("09"))))
+       (fixnum->uint16 (string->integer (the-substring 4 0))))
+      ;; stdint
+      ((: "s32:" (? #\-) (+ (in ("09"))))
+       (elong->int32 (string->elong (the-substring 4 0))))
+      ((: "u32:" (+ (in ("09"))))
+       (cond-expand
+	  (bint61
+	   (elong->uint32 (string->elong (the-substring 4 0))))
+	  (else
+	   (llong->uint32 (string->llong (the-substring 4 0))))))
+      ;; stdint
+      ((: "s64:" (? #\-) (+ (in ("09"))))
+       (fixnum->int64 (string->llong (the-substring 4 0))))
+      ((: "u64:" (+ (in ("09"))))
+       (let ((s2 (the-substring 5 0))
+	     (s1 (the-substring 4 5)))
+	  (+u64 (llong->uint64 (string->llong s2))
+	     (let loop ((pow (string-length s2))
+			(n1 (fixnum->uint64 (string->integer s1))))
+		(if (=fx pow 0)
+		    n1
+		    (loop (-fx pow 1) (*u64 n1 (fixnum->uint64 10))))))))
+
       ;; constants
-      ((: "<" (+ (or digit (uncase (in "afAF")))) ">")
-       (if (not (=fx (the-length) 6))
-	   (read-error "Illegal constant" (the-string) (the-port))
-	   (make-cnst (string->integer (the-substring 1 5) 16))))
+      ((: "<" (= 4 (or digit (uncase (in ("AF"))))) ">")
+       (make-cnst (string->integer (the-substring 1 5) 16)))
       
       (else
        (let ((c (the-failure)))
 	  (if (char? c)
-	      (read-error "Illegal char" c (the-port))
-	      (read-error "Illegal token" (string #\# c) (the-port)))))))
+	      (read-error "Illegal token" (string #\# c) (the-port))
+	      (read-error "Illegal char" c (the-port)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *hop-grammar* ...                                                */
@@ -794,7 +828,9 @@
        (error "hop-read" "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
-	  (let* ((cset (charset-converter! charset (hop-charset)))
+	  (let* ((cset (if (procedure? charset)
+			   charset
+			   (charset-converter! charset (hop-charset))))
 		 (menv (or menv
 			   (if (isa? (hop-clientc) clientc)
 			       (with-access::clientc (hop-clientc) (macroe)
@@ -955,12 +991,26 @@
    
    (define (more-recent? sopath)
       (when (file-exists? sopath)
-	 (>elong (file-modification-time sopath)
+	 (>=elong (file-modification-time sopath)
 	    (file-modification-time path))))
    
    (define (errfile file)
       (string-append file ".err"))
-   
+
+   (define (find-in-unix-path file)
+      (let ((env (getenv "HOP_LIBS_PATH")))
+	 (when (string? env)
+	    (let loop ((paths (unix-path->list env)))
+	       (when (pair? paths)
+		  (let ((path (make-file-path (car paths) file)))
+		     (cond
+			((more-recent? path)
+			 path)
+			((more-recent? (errfile path))
+			 'error)
+			(else
+			 (loop (cdr paths))))))))))
+
    ;; check the path directory first
    (when (hop-sofile-enable)
       (let* ((dir (dirname path))
@@ -987,29 +1037,28 @@
 		   ((more-recent? (errfile sopath))
 		    'error)
 		   (else
-		    (let ((env (getenv "HOP_LIBS_PATH")))
-		       (when (string? env)
-			  (let loop ((paths (unix-path->list env)))
-			     (when (pair? paths)
-				(let ((path (make-file-path (car paths) file)))
-				   (cond
-				      ((more-recent? path)
-				       path)
-				      ((more-recent? (errfile path))
-				       'error)
-				      (else
-				       (loop (cdr paths)))))))))))))))))
+		    (or (find-in-unix-path (hop-soname path))
+			(find-in-unix-path path)
+			(let ((sopath (make-file-name dir
+					 (string-append base (so-suffix)))))
+			   (when (file-exists? sopath)
+			      sopath)))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    hop-soname ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-soname path)
+   (let ((base (prefix (basename path))))
+      (string-append base "-" (md5sum-string path) (so-suffix))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-sofile-path ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (hop-sofile-path path)
-   (let* ((base (prefix (basename path)))
-	  (soname (string-append base "-" (md5sum-string path) (so-suffix))))
-      (make-file-path
-	 (hop-sofile-directory)
-	 (hop-version) (hop-build-id) (so-arch-directory)
-	 soname)))
+   (make-file-path
+      (hop-sofile-directory)
+      (hop-version) (hop-build-id) (so-arch-directory)
+      (hop-soname path)))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-file ...                                                */

@@ -1,5 +1,5 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.1.x/test/hopjs/noserv/es6-defval.js       */
+/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-defval.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
@@ -42,3 +42,13 @@ assert.strictEqual( d3b( 6 ), 3 );
 assert.strictEqual( d3b( undefined, 3 ), 2 );
 assert.strictEqual( d3b( 10, 2 ), 8 );
 
+var d3 = function d3() {
+   try {
+      d3 = 4;
+      return false;
+   } catch( e ) {
+      return e instanceof TypeError;
+   }
+}
+
+assert.ok( d3, "d3" );

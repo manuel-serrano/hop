@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/lexer.scm               */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/lexer.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Tue May 15 11:31:40 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 11:51:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -76,15 +76,17 @@
      "void"
      "while"
      "with"
-     "yield"))
+     "yield"
+     ;; es2015 classes
+     "class"
+     "extends"
+     "super"
+     "static"))
 
 (define *future-reserved-list*
-   '("class"
-     "enum"
+   '("enum"
      "export"
-     "extends"
-     "import"
-     "super"))
+     "import"))
 
 (define *future-strict-reserved-list*
    '("implements"
@@ -92,8 +94,7 @@
      "package"
      "private"
      "protected"
-     "public"
-     "static"))
+     "public"))
 
 (for-each (lambda (word)
 	     (putprop! (string->symbol word) 'reserved #t))
@@ -190,10 +191,18 @@
        (token 'NEWLINE #\newline 1))
 
       ;; line comment
-      ((:"//" (* (or (out "\n\xe2\r")
-		     (: "\xe2" (out "\x80"))
-		     (: "\xe2\x80" (out "\xa8\xa9")))))
-       (ignore))
+      ((: "//" (* (or (out "\n\xe2\r")
+		      (: "\xe2" (out "\x80"))
+		      (: "\xe2\x80" (out "\xa8\xa9")))))
+       (if (and (>fx (the-length) 20)
+		(=fx (the-byte-ref 2) (char->integer #\#)))
+	   ;; source-map parsing
+	   (let* ((s (the-substring 3 (the-length)))
+		  (i (string-skip s " \t" 0)))
+	      (if (and i (substring-at? s "sourceMappingURL=" i))
+		  (token 'SOURCEMAP (substring s (+fx i 17)) (the-length))
+		  (ignore)))
+	   (ignore)))
 
       ;; type comments
       ((: "/* ::" (+ letter) " */")
@@ -223,12 +232,10 @@
        ;; integer constant
        (let* ((len (the-length))
 	      (val (cond
-		      ((>=fx len 21)
-		       (string->real (the-string)))
-		      ((>=fx len 18)
-		       (string->real (the-string)))
-		      (else
-		       (js-string->number (the-string))))))
+		      ((<=fx len 8) (the-fixnum))
+		      ((>=fx len 21) (the-flonum))
+		      ((>=fx len 18) (the-flonum))
+		      (else (js-string->number (the-string))))))
 	  (token 'NUMBER val len)))
       ((: (+ #\0) (in ("17")) (* (in ("07"))))
        ;; integer constant
@@ -254,9 +261,16 @@
 	      (rest (string->bignum
 		       (if (char=? (string-ref s (+fx i 1)) #\+)
 			   (substring s (+fx i 2))
-			   (substring s (+fx i 1))))))
-	  (token 'NUMBER (+ 0 (*bx base (exptbx #z10 rest))) (the-length))))
-       
+			   (substring s (+fx i 1)))))
+	      (flo (bignum->flonum (*bx base (exptbx #z10 rest)))))
+	  (token 'NUMBER
+	     (if (and (integer? flo)
+		      (<fl flo (fixnum->flonum (-fx (bit-lsh 1 29) 1)))
+		      (>=fl flo (negfl (fixnum->flonum (bit-lsh 1 29)))))
+		 ;; could be more precise
+		 (flonum->fixnum flo)
+		 flo)
+	     (the-length))))
       ((: (uncase "0x") (+ xdigit))
        (token 'NUMBER (js-string->number (the-substring 2 (the-length)) 16)
 	  (the-length)))
@@ -281,7 +295,7 @@
 	   "*=" "%=" "<<=" ">>=" ">>>=" "&=" "^=" "/=" #\/ #\?)
        (token (the-symbol) (the-string) (the-length)))
       ("=>" (token '=> "=>" 2))
-      ("..." (token 'DOTS #\. 3))
+      ("..." (token 'DOTS '|...| 3))
 
       ;; strings
       ((: #\" (* string_char_quote) #\")

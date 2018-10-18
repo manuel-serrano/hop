@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/object.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/object.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Feb  3 09:09:43 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 16:39:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -19,9 +19,10 @@
    
    (library hop hopwidget js2scheme)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_string
 	   __hopscript_stringliteral
 	   __hopscript_symbol
@@ -80,8 +81,9 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((nobj (duplicate::JsObject obj
-			(__proto__ (js-get js-object 'prototype %this))
-			(properties '()))))
+			(__proto__ (js-get js-object 'prototype %this)))))
+	    (js-object-properties-set! nobj '())
+	    (js-object-mode-set! nobj (js-object-mode obj))
 	    (js-for-in obj
 	       (lambda (k)
 		  (js-put! nobj k
@@ -135,7 +137,9 @@
 ;*    object. This method is then invoked from Scheme code.            */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-to-errstring o::JsObject)
-   (js-tostring o (js-initial-global-object)))
+   (format
+      (format "~a `~a'" (js-tostring o (js-initial-global-object))
+	 (typeof o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-fields ...                                              */
@@ -212,6 +216,22 @@
 	    tags)))
    
 ;*---------------------------------------------------------------------*/
+;*    js-bind-svg-tags! ...                                            */
+;*---------------------------------------------------------------------*/
+(define-macro (js-bind-svg-tags! %this obj . tags)
+   `(begin
+       ,@(map (lambda (tag)
+		 (let* ((s (symbol->string tag))
+			(i (string-index s #\:)))
+		    (if i
+			`(begin
+			    (js-bind-tag! ,%this ,obj ,tag)
+			    (js-bind-tag! ,%this ,obj ,tag
+			       ,(string->symbol (substring s (+fx i 1)))))
+			`(js-bind-tag! ,%this ,obj ,tag))))
+	    tags)))
+   
+;*---------------------------------------------------------------------*/
 ;*    %this ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define %this #f)
@@ -226,18 +246,31 @@
    %this)
 
 ;*---------------------------------------------------------------------*/
+;*    make-cmap ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (make-cmap props)
+   (instantiate::JsConstructMap
+      (methods (make-vector (vector-length props)))
+      (props props)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-new-global-object ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-new-global-object)
    ;; before all, initialize the builtin object prototype
    ;; and then create the global object
-   (let* ((%prototype (instantiate::JsObject
+   (let* ((%prototype (instantiateJsObject
+			 (cmap (instantiate::JsConstructMap))
 			 (__proto__ (js-null))
-			 (elements (make-vector 20))
-			 (cmap (instantiate::JsConstructMap))))
-	  (%this (instantiate::JsGlobalObject
-		    (__proto__ %prototype)
-		    (cmap (instantiate::JsConstructMap)))))
+			 (elements (make-vector 20))))
+	  (%this (instantiateJsGlobalObject
+		    (cmap (make-cmap '#()))
+		    (__proto__ %prototype))))
+      ;; for bootstrap, first allocat hasInstance symbol
+      (with-access::JsGlobalObject %this (js-symbol-hasinstance)
+	 (set! js-symbol-hasinstance
+	    (instantiate::JsSymbolLiteral
+	       (val "hasInstance"))))
       ;; init the builtin function class
       (js-init-function! %this)
       ;; the object constructor
@@ -293,28 +326,19 @@
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 	    
-	    ;; parseInt
-	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2
-	    (define (parseint this string radix)
-	       (js-parseint
-		  (trim-whitespaces+ (js-tostring string %this) :plus #t)
-		  radix #f %this))
-
 	    (js-bind! %this %this 'parseInt
-	       :value (js-make-function %this parseint 2 'parseInt
+	       :value (js-make-function %this
+			 (lambda (this string radix)
+			    (js-parseint string radix %this))
+			 2 'parseInt
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
-	    ;; parseFloat
-	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3
-	    (define (parsefloat this string)
-	       (js-parsefloat
-		  (trim-whitespaces+ (js-tostring string %this) :plus #t)
-		  #f
-		  %this))
-	    
 	    (js-bind! %this %this 'parseFloat
-	       :value (js-make-function %this parsefloat 1 'parseFloat
+	       :value (js-make-function %this
+			 (lambda (this string)
+			    (js-parsefloat string %this))
+			 1 'parseFloat
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
@@ -428,13 +452,14 @@
 	       A ABBR ACRONYM ADDRESS APPLET AREA ARTICLE B BASE
 	       BASEFONT BDI BDO BIG BLOCKQUOTE BODY BR BUTTON
 	       CANVAS CAPTION CENTER CITE CODE COL COLGROUP
-	       DATALIST DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET FIGURE
-	       FIGCAPTION FONT FOOTER FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
+	       DATALIST DD DEL DETAILS DFN DIR DIV DL DT EM EMBED FIELDSET
+	       FIGURE FIGCAPTION FONT FOOTER FORM FRAME FRAMESET
+	       H1 H2 H3 H4 H5 H6
 	       HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
 	       LI MAIN MAP MARQUEE MENU MENUITEM META METER NAV NOFRAMES NOSCRIPT
 	       OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
 	       Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
-	       STRONG SUB SUP TABLE TBODY TD TEXTAREA TFOOT TH
+	       STRONG SUB SUMMARY SUP TABLE TBODY TD TEXTAREA TFOOT TH
 	       THEAD TIME TITLE TR TT U UL VAR REACT)
 
 	    ;; html5
@@ -470,12 +495,14 @@
 	    (js-bind-tags! %this %this IMG)
 
 	    ;; svg
-	    (js-bind-tags! %this %this
+	    (js-bind-svg-tags! %this %this
 	       SVG SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
 	       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
 	       SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
 	       SVG:TEXTPATH SVG:TREF SVG:TSPAN
-	       SVG:RADIALGRADIENT SVG:LINEARGRADIENT SVG:IMG)
+	       SVG:RADIALGRADIENT SVG:LINEARGRADIENT)
+
+	    (js-bind-tag! %this %this SVG:IMG)
 
 	    ;; mathml
 	    (js-bind-tags! %this %this
@@ -495,7 +522,7 @@
 
 	    (define (string->xml-tilde body)
 	       (let ((expr (js-tostring body %this)))
-		  (instantiate::JsWrapper
+		  (instantiateJsWrapper
 		     (__proto__ %prototype)
 		     (data body)
 		     (obj (instantiate::xml-tilde
@@ -513,7 +540,7 @@
 			 :construct (lambda (this body)
 				       (string->xml-tilde body)))
 	       :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	    
+
 	    ;; return the newly created object
 	    %this))))
 
@@ -544,7 +571,9 @@
 	    (cond
 	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
 		;; 2
-		(with-access::JsFunction f (constrmap constrsize)
+		(with-access::JsFunction f (constrmap constrsize name)
+		   (unless constrmap
+		      (set! constrmap (instantiate::JsConstructMap (ctor f))))
 		   (js-make-jsobject constrsize constrmap %prototype)))
 	       ((isa? value JsObject)
 		;; 1.a
@@ -573,7 +602,8 @@
 	       :constrsize 3 :maxconstrsize 4
 	       :prototype %prototype
 	       :construct js-object-construct
-	       :constructor js-object-constructor)))
+	       :constructor js-object-constructor
+	       :shared-cmap #f)))
       
       ;; getPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2
@@ -650,7 +680,7 @@
 	 (if (not (or (eq? o (js-null)) (isa? o JsObject)))
 	     (js-raise-type-error %this "create: bad object ~s" o)
 	     (let ((obj (js-new0 %this js-object)))
-		(with-access::JsObject obj (__proto__)
+		(with-access::JsObject obj (__proto__ elements)
 		   (set! __proto__ o)
 		   (unless (eq? properties (js-undefined))
 		      (object-defineproperties %this this obj properties)))
@@ -693,8 +723,8 @@
 	 (let ((to (js-cast-object target %this "assign")))
 	    (for-each (lambda (src)
 			 (unless (or (null? src) (eq? src (js-undefined)))
-			    (let* ((fro (js-cast-object src %this "assign"))
-				   (names (js-properties-names fro #f))
+			    (let* ((fro (js-toobject %this src))
+				   (names (js-properties-names fro #t %this))
 				   (keys '())
 				   (idx '()))
 			       ;; keys have to be sorted as specified in
@@ -706,11 +736,11 @@
 				  names)
 			       (for-each (lambda (k)
 					    (let ((val (js-get fro k %this)))
-					       (js-put! to k val #f %this)))
+					       (js-put! to k val #t %this)))
 				  (sort idx-cmp idx))
 			       (for-each (lambda (k)
 					    (let ((val (js-get fro k %this)))
-					       (js-put! to k val #f %this)))
+					       (js-put! to k val #t %this)))
 				  (reverse! keys)))))
 	       sources)
 	    to))
@@ -771,20 +801,31 @@
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #f)
+
+      (define (vector-every proc v)
+	 (let loop ((i (-fx (vector-length v) 1)))
+	    (cond
+	       ((=fx i -1) #t)
+	       ((proc (vector-ref v i)) (loop (-fx i 1)))
+	       (else #f))))
       
       ;; isSealed
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.11
       (define (issealed this o)
 	 ;; 1
 	 (let ((o (js-cast-object o %this "isSealed")))
-	    (with-access::JsObject o (properties cmap)
+	    (with-access::JsObject o (cmap)
 	       (and
-		(eq? cmap (js-not-a-cmap))
 		;; 2
+		(with-access::JsConstructMap cmap (props)
+		   (vector-every (lambda (p)
+				    (let ((flags (prop-flags p)))
+				       (not (flags-configurable? flags))))
+		      props))
 		(every (lambda (desc::JsPropertyDescriptor)
 			  (with-access::JsPropertyDescriptor desc (configurable)
 			     (not (eq? configurable #t))))
-		   properties)
+		   (js-object-properties o))
 		;; 3
 		(not (js-object-mode-extensible? o))))))
       
@@ -800,19 +841,22 @@
       (define (isfrozen this o)
 	 ;; 1
 	 (let ((o (js-cast-object o %this "isFrozen")))
-	    (with-access::JsObject o (properties cmap)
+	    (with-access::JsObject o (cmap)
 	       (and
-		(or (eq? cmap (js-not-a-cmap))
-		    (with-access::JsConstructMap cmap (names)
-		       (=fx (vector-length names) 0)))
 		;; 2
+		(with-access::JsConstructMap cmap (props)
+		   (vector-every (lambda (p)
+				    (let ((flags (prop-flags p)))
+				       (and (not (flags-writable? flags))
+					    (not (flags-configurable? flags)))))
+			props))	     
 		(every (lambda (desc::JsPropertyDescriptor)
 			  (with-access::JsPropertyDescriptor desc (configurable)
 			     (and (not (eq? configurable #t))
 				  (or (not (isa? desc JsValueDescriptor))
 				      (with-access::JsValueDescriptor desc (writable)
 					 (not (eq? writable #t)))))))
-		   properties)
+		   (js-object-properties o))
 		;; 3
 		(not (js-object-mode-extensible? o))))))
       
@@ -869,10 +913,17 @@
 	  (js-raise-type-error %this 
 	     "Prototype of non-extensible object mutated" v)
 	  (with-access::JsObject o (__proto__ cmap)
-	     (js-invalidate-pcaches-pmap! %this)
-	     (unless (eq? cmap (js-not-a-cmap))
-		(set! cmap (duplicate::JsConstructMap cmap (%id (gencmapid)))))
-	     (set! __proto__ v)))))
+	     (unless (eq? __proto__ v)
+		(js-invalidate-pcaches-pmap! %this "js-setprototypeof")
+		(unless (eq? cmap (js-not-a-cmap))
+		   (with-access::JsConstructMap cmap (parent single)
+		      (if single
+			  (set! cmap
+			     (duplicate::JsConstructMap cmap
+				(%id (gencmapid))))
+			  (set! cmap
+			     (cmap-next-proto-cmap %this cmap __proto__ v)))))
+		(set! __proto__ v))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-object-prototype! ...                                    */
@@ -880,7 +931,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-object-prototype! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this ((obj __proto__) js-object)
+   (with-access::JsGlobalObject %this ((obj __proto__)
+				       js-object
+				       js-symbol-tostringtag)
       
       ;; __proto__
       (js-bind! %this obj '__proto__
@@ -915,23 +968,29 @@
 		(js-string->jsstring (js-tostring obj %this))))
 	    (else
 	     (let* ((obj (js-toobject %this this))
-		    (clazz (if (isa? obj JsFunction)
-			       JsFunction
-			       (object-class obj)))
-		    (name (symbol->string! (class-name clazz))))
-		(js-string->jsstring
-		   (format "[object ~a]"
-		      (cond
-			 ((not (string-prefix? "Js" name))
-			  name)
-			 ((string=? name "JsGlobalObject")
-			  "Object")
-			 ((isa? obj JsArrayBufferView)
-			  (let ((ctor (js-get obj 'constructor %this)))
-			     (with-access::JsFunction ctor (name)
-				name)))
-			 (else
-			  (substring name 2)))))))))
+		    (tag (js-get obj js-symbol-tostringtag %this)))
+		(if (js-jsstring? tag)
+		    (js-jsstring-append
+		       (js-string->jsstring "[object")
+		       (js-jsstring-append tag
+			  (js-string->jsstring "]")))
+		    (let* ((clazz (if (isa? obj JsFunction)
+				      JsFunction
+				      (object-class obj)))
+			   (name (symbol->string! (class-name clazz))))
+		       (js-string->jsstring
+			  (format "[object ~a]"
+			     (cond
+				((not (string-prefix? "Js" name))
+				 name)
+				((string=? name "JsGlobalObject")
+				 "Object")
+				((isa? obj JsArrayBufferView)
+				 (let ((ctor (js-get obj 'constructor %this)))
+				    (with-access::JsFunction ctor (name)
+				       name)))
+				(else
+				 (substring name 2)))))))))))
       
       (js-bind! %this obj 'toString
 	 :value (js-make-function %this
@@ -1011,9 +1070,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-prototype-hasownproperty this v %this)
    (let* ((p (js-tostring v %this))
-	  (o (js-toobject %this this))
-	  (desc (js-get-own-property o p %this)))
-      (not (eq? desc (js-undefined)))))
+	  (o (js-toobject %this this)))
+      (js-has-own-property o p %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsObject ...                                       */
@@ -1074,12 +1132,12 @@
    
    (define (defineproperties/cmap cmap o props)
       (with-access::JsObject props (elements)
-	 (with-access::JsConstructMap cmap (names)
-	    (vfor-each (lambda (name::symbol i)
-			  (when (enumerable-mapped-property? props i)
+	 (with-access::JsConstructMap cmap (props)
+	    (vfor-each (lambda (d::struct i)
+			  (when (flags-enumerable? (prop-flags d))
 			     (let ((prop (vector-ref elements i)))
-				(define-own-property o name prop))))
-	       names))))
+				(define-own-property o (prop-name d) prop))))
+	       props))))
    
    (define (defineproperties/properties oprops o props)
       (for-each (lambda (prop)
@@ -1091,10 +1149,11 @@
    (let* ((o (js-cast-object obj %this "defineProperties"))
 	  (props (js-cast-object (js-toobject %this properties) %this
 		    "defineProperties")))
-      (with-access::JsObject props (cmap (oprops properties))
-	 (if (not (eq? cmap (js-not-a-cmap)))
-	     (defineproperties/cmap cmap o props)
-	     (defineproperties/properties oprops o props)))
+      (with-access::JsObject props (cmap)
+	 (let ((oprops (js-object-properties props)))
+	    (if (not (eq? cmap (js-not-a-cmap)))
+		(defineproperties/cmap cmap o props)
+		(defineproperties/properties oprops o props))))
       obj))
 
 ;*---------------------------------------------------------------------*/
@@ -1103,21 +1162,28 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.8     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-seal o::JsObject obj)
-   (when (>=fx (bigloo-debug) 3)
-      (tprint "TODO, why js-seal need unmap?"))
-   (js-object-unmap! obj)
-   (with-access::JsObject o (properties)
-      ;; 2
-      (for-each (lambda (desc::JsPropertyDescriptor)
-		   (with-access::JsPropertyDescriptor desc (name configurable)
-		      (set! configurable #f)))
-	 properties)
-      ;; 3
-;*       (with-access::JsObject o (extensible)                         */
-;* 	 (set! extensible #f))                                         */
-      (js-object-mode-extensible-set! o #f)
-      ;; 4
-      obj))
+   
+   (define (prop-seal p)
+      (let ((flags (prop-flags p)))
+	 (prop (prop-name p)
+	    (property-flags
+	       (flags-writable? flags)
+	       (flags-enumerable? flags)
+	       #f
+	       (flags-accessor? flags)))))
+   
+   (for-each (lambda (desc::JsPropertyDescriptor)
+		(with-access::JsPropertyDescriptor desc (configurable)
+		   (set! configurable #f)))
+      (js-object-properties o))
+   (js-object-mode-extensible-set! o #f)
+   (with-access::JsObject o (cmap)
+      (unless (eq? cmap (js-not-a-cmap))
+	 (with-access::JsConstructMap cmap (props)
+	    (let ((ncmap (duplicate::JsConstructMap cmap
+			    (props (vector-map prop-seal props)))))
+	       (set! cmap ncmap)))))
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-freeze ::JsObject ...                                         */
@@ -1125,15 +1191,25 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.9     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-freeze o::JsObject obj)
-   (when (>=fx (bigloo-debug) 3)
-      (tprint "TODO, why js-freeze need unmap?"))
-   (js-object-unmap! obj)
-   (with-access::JsObject o (properties)
-      (for-each js-freeze-property! properties)
-;*       (with-access::JsObject o (extensible)                         */
-;* 	 (set! extensible #f))                                         */
-      (js-object-mode-extensible-set! o #f)
-      obj))
+   
+   (define (prop-freeze p)
+      (let ((flags (prop-flags p)))
+	 (prop (prop-name p)
+	    (property-flags
+	       #f
+	       (flags-enumerable? flags)
+	       #f
+	       (flags-accessor? flags)))))
+
+   (for-each js-freeze-property! (js-object-properties o))
+   (js-object-mode-extensible-set! o #f)
+   (with-access::JsObject o (cmap)
+      (unless (eq? cmap (js-not-a-cmap))
+	 (with-access::JsConstructMap cmap (props)
+	    (let ((ncmap (duplicate::JsConstructMap cmap
+			    (props (vector-map prop-freeze props)))))
+	       (set! cmap ncmap)))))
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ...                                               */

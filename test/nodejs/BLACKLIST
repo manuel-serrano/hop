@@ -171,6 +171,7 @@ pummel/test-net-write-callbacks.js
 #*    undeterministics error (observed also with node)                 */
 #*---------------------------------------------------------------------*/
 pummel/test-https-ci-reneg-attack.js
+pummel/test-vm-memleak.js
 
 #*---------------------------------------------------------------------*/
 #*    ok but temporarily disabled                                      */
@@ -180,3 +181,4 @@ pummel/test-https-ci-reneg-attack.js
 #* simple/test-stdout-to-file.js                                       */
 simple/test-tls-fast-writing.js
 simple/test-http-many-keep-alive-connections.js
+internet/test-dns.js

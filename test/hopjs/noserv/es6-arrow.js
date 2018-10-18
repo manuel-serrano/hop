@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.0.x/test/hopjs/noserv/es6-arrow.js        */
+/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-arrow.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sat Aug 22 08:46:47 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Wed Oct 11 19:03:16 2017 (serrano)                */
+/*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 arrow functions                           */
 /*=====================================================================*/
@@ -42,4 +42,14 @@ assert.strictEqual( p.get(), 10 );
 p.inc( 3 );
 p.inc( 2 );
 assert.strictEqual( p.get(), 15 );
+
+Person.prototype.fun = function( a ) {
+   // check if the arrow function captures lexical this correctly
+   let res = undefined;
+   a.forEach( (x) => { res = this; } );
+   return res;
+}
+
+var p = new Person( 20 );
+assert.strictEqual( p.fun( [ 10 ] ).age, 20 );
 

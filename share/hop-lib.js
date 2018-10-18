@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/3.2.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Apr 29 09:00:06 2016 (serrano)                */
-/*    Copyright   :  2007-16 Manuel Serrano                            */
+/*    Last change :  Sat Jan 27 09:01:50 2018 (serrano)                */
+/*    Copyright   :  2007-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -1032,40 +1032,4 @@ var hop_id_count = 0;
 /*** META ((export xml-make-id) (arity #t)) */
 function hop_xml_make_id( obj ) {
    return (obj instanceof String ? obj : "id") + hop_id_count++;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_comprehension ...                                            */
-/*---------------------------------------------------------------------*/
-function hop_comprehension( iterables, fun, test, _names, _astp, _aste, _astd ) {
-   function product( iterables ) {
-      return iterables.reduce( function(a, b) {
-	 var ret = [];
-	 a.forEach( function( a ) {
-	    b.forEach( function( b ) {
-	       ret.push( a.concat( [ b ] ) );
-	    } );
-	 } );
-	 return ret;
-      }, [[]]);
-   };
-
-   if( iterables.length == 1 ) {
-      // fast path
-      if( test === true ) {
-	 return iterables[ 0 ].map( fun );
-      } else {
-	 return iterables[ 0 ].filter( test ).map( fun );
-      }
-   } else {
-      // full path
-      var prods = product( iterables );
-      var self = iterables[ 0 ];
-      if( test === true ) {
-	 return prods.map( function( a ) { return fun.apply( self, a ) } );
-      } else {
-	 return prods.filter( function( a ) { return test.apply( self, a ) } )
-	    .map( function( a ) { return fun.apply( self, a ) } );
-      }
-   }
 }

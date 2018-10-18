@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/3.2.x/hopc/hopc_param.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Jan 28 06:35:52 2018 (serrano)                */
+;*    Last change :  Thu Sep  6 07:48:46 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -26,6 +26,8 @@
 	    (hopc-bigloo-O-options::pair-nil)
 	    (hopc-bigloo-safe-option::obj)
 	    (hopc-bigloo-safe-option-set! ::obj)
+	    (hopc-bigloo-profile-options::pair-nil)
+	    (hopc-bigloo-profile-options-set! ::pair-nil)
 	    
 	    (hopc-pass::symbol)
 	    (hopc-pass-set! ::symbol)
@@ -48,9 +50,8 @@
 
 	    (hopc-long-size::obj)
 	    (hopc-long-size-set! ::obj)
-
-	    (hopc-uint32::bool)
-	    (hopc-uint32-set! ::bool)
+	    (hopc-int-size::obj)
+	    (hopc-int-size-set! ::obj)
 
 	    (hopc-jsheap::obj)
 	    (hopc-jsheap-set! ::obj)
@@ -99,6 +100,9 @@
 	    
 	    (hopc-js-module-main::obj)
 	    (hopc-js-module-main-set! ::obj)
+
+	    (hopc-source-ast::obj)
+	    (hopc-source-ast-set! ::obj)
 	    
 	    (hopc-js-header::obj)
 	    (hopc-js-header-set! ::obj)
@@ -117,6 +121,9 @@
 
 	    (hopc-j2s-flags::pair-nil)
 	    (hopc-j2s-flags-set! ::pair-nil)
+
+	    (hopc-j2s-plugins::bool)
+	    (hopc-j2s-plugins-set! ::bool)
 
 	    (hop-max-threads::int))
 	    
@@ -150,6 +157,12 @@
 ;*    hopc-bigloo-safe-option ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo-safe-option
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    hopc-bigloo-profile-options ...                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-bigloo-profile-options
    '())
 
 ;*---------------------------------------------------------------------*/
@@ -201,9 +214,9 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    hopc-uint32 ...                                                  */
+;*    hopc-int-size ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-parameter hopc-uint32
+(define-parameter hopc-int-size
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -276,7 +289,9 @@
 ;*    hopc-js-worker ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-js-worker
-   #t)
+   (cond-expand
+      (enable-threads #t)
+      (else #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-worker-slave ...                                         */
@@ -301,6 +316,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-js-module-main
    #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-source-ast ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-source-ast
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-header ...                                               */
@@ -346,6 +367,14 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-j2s-flags
    '())
+
+;*---------------------------------------------------------------------*/
+;*    hopc-j2s-plugins ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Enable/disable j2s plugins                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-j2s-plugins
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-max-threads ...                                              */

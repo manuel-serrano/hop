@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/html_base.scm             */
+;*    serrano/prgm/project/hop/3.2.x/runtime/html_base.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Wed Oct  5 06:18:50 2016 (serrano)                */
-;*    Copyright   :  2010-16 Manuel Serrano                            */
+;*    Last change :  Mon Sep 17 10:37:56 2018 (serrano)                */
+;*    Copyright   :  2010-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
 ;*=====================================================================*/
@@ -49,6 +49,7 @@
 	    (<DATALIST> . ::obj)
 	    (<DD> . ::obj)
 	    (<DEL> . ::obj)
+	    (<DETAILS> . ::obj)
 	    (<DFN> . ::obj)
 	    (<DIR> . ::obj)
  	    (<DIV> . ::obj)
@@ -111,6 +112,7 @@
 	    (<STRIKE> . ::obj)
 	    (<STRONG> . ::obj)
 	    (<SUB> . ::obj)
+	    (<SUMMARY> . ::obj)
 	    (<SUP> . ::obj)
 	    (<TABLE> . ::obj)
 	    (<TBODY> . ::obj)
@@ -158,6 +160,7 @@
 (define-xml-element <DATALIST>)
 (define-xml-element <DD>)
 (define-xml-element <DEL>)
+(define-xml-element <DETAILS>)
 (define-xml-element <DFN>)
 (define-xml-element <DIR>)
 (define-xml-element <DIV>)
@@ -217,6 +220,7 @@
 (define-xml-element <STRIKE>)
 (define-xml-element <STRONG>)
 (define-xml-element <SUB>)
+(define-xml-element <SUMMARY>)
 (define-xml-element <SUP>)
 (define-xml-element <TABLE>)
 (define-xml-element <TBODY>)

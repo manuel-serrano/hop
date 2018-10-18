@@ -1,5 +1,5 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/nodejs/Makefile                   */
+#*    serrano/prgm/project/hop/3.2.x/nodejs/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
@@ -57,7 +57,7 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm) $(_JS_OBJECTS:%=%.js)
 
-INCLUDES = nodejs_debug.sch nodejs_async.sch uv.sch
+INCLUDES = nodejs_debug.sch nodejs_async.sch uv.sch nodejs_types.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */

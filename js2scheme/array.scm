@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/array.scm               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/array.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Jan 31 18:51:16 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Wed May  9 15:52:44 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
 ;*=====================================================================*/
@@ -37,15 +37,15 @@
    (instantiate::J2SStageProc
       (name "array")
       (comment "Array loop optimization")
+      (optional :optim-array)
       (proc j2s-array!)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-array! ::obj ...                                             */
+;*    j2s-array! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array! this args)
    (when (isa? this J2SProgram)
-      (when (>=fx (config-get args :optim 0) 6)
-	 (j2s-array-program! this args))
+      (j2s-array-program! this args)
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -86,7 +86,7 @@
 ;*---------------------------------------------------------------------*/
 (define (decl->adecl::J2SDeclInit decl::J2SDecl)
    (with-access::J2SDecl decl (id loc)
-      (J2SLetOptUtype 'vector '(read write)
+      (J2SLetOptVtype 'vector '(read write)
 	 (symbol-append '%A id)
 	 (J2SCall (J2SHopRef 'js-array-vec) (J2SRef decl)))))
 
@@ -95,7 +95,7 @@
 ;*---------------------------------------------------------------------*/
 (define (decl->ldecl::J2SDeclInit adecl::J2SDecl decl::J2SDecl)
    (with-access::J2SDecl decl (id loc)
-      (J2SLetOptUtype 'uint32 '(read write)
+      (J2SLetOptVtype 'uint32 '(read write)
 	 (symbol-append '%L id)
 	 (J2SCall (J2SHopRef 'js-array-ilen) (J2SRef decl)))))
 
@@ -103,7 +103,7 @@
 ;*    mark-decl ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (mark-decl::J2SDeclInit loc)
-   (J2SLetOptUtype 'fixnum '(read write)
+   (J2SLetOptVtype 'integer '(read write)
       (gensym '%Marray-mark)
       (J2SCall (J2SHopRef 'js-array-mark))))
 
@@ -132,19 +132,19 @@
 			     (init init)
 			     (incr incr)
 			     (test test)
-			     (body body))))
+			     (body (array! body env)))))
 		    (duplicate::J2SFor this
 		       (init init)
 		       (incr incr)
 		       (test test)
-		       (body body))))))))
+		       (body (array! body env)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array! ::J2SWhile ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (array! this::J2SWhile env::pair-nil)
    (with-access::J2SWhile this (test body loc)
-      (let ((arrs (delete-duplicates! (array-collect* body env))))
+      (let ((arrs (delete-duplicates! (array-collect* body env) eq?)))
 	 (if (null? arrs)
 	     (call-default-walker)
 	     (let* ((adecls (map decl->adecl arrs))
@@ -221,7 +221,6 @@
 	     (append (array-collect* obj env) fdaref)
 	     (with-access::J2SRef obj (type decl)
 		(if (and (eq? type 'array)
-			 (with-access::J2SDecl decl (ronly) #t)
 			 (memq decl env)
 			 (type-number? (j2s-type field)))
 		    (cons decl fdaref)
@@ -248,7 +247,7 @@
 	  (lambda (arr)
 	     (duplicate::J2SAref this
 		(deps env)
-		(mark mdecl)
+		(amark mdecl)
 		(array (cadr arr))
 		(alen (caddr arr)))))
 	 (else

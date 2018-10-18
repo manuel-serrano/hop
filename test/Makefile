@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/test/Makefile                     */
+#*    serrano/prgm/project/hop/3.2.x/test/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Feb  6 09:07:49 2018 (serrano)                */
+#*    Last change :  Sat Jun  9 14:31:43 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -36,8 +36,9 @@ POPULATION = Makefile \
   hopjs/README \
   hopjs/TEST.in \
   hopjs/passwd.hop \
+  hopjs/noserv/optim.js \
+  hopjs/noserv/cache.js \
   hopjs/noserv/array.js \
-  hopjs/noserv/comprehension.js \
   hopjs/noserv/ecma51.js \
   hopjs/noserv/number.js \
   hopjs/noserv/regexp.js \
@@ -51,6 +52,7 @@ POPULATION = Makefile \
   hopjs/noserv/es6-let.js \
   hopjs/noserv/es6-let-tl.js \
   hopjs/noserv/es6-sym.js \
+  hopjs/noserv/es6-ksym.js \
   hopjs/noserv/es6-template.js \
   hopjs/noserv/es6-promise.js \
   hopjs/noserv/es6-arrow.js \
@@ -58,10 +60,14 @@ POPULATION = Makefile \
   hopjs/noserv/es6-generator.js \
   hopjs/noserv/es6-generator-mdn.js \
   hopjs/noserv/es6-generator-kangax.js \
+  hopjs/noserv/es6-destructuring-param.js \
+  hopjs/noserv/es6-destructuring-assig.js \
   hopjs/noserv/es6-rest.js \
   hopjs/noserv/es6-array.js \
   hopjs/noserv/es6-misc.js \
   hopjs/noserv/es6-literal.js \
+  hopjs/noserv/es6-forof.js \
+  hopjs/noserv/es6-async.js \
   hopjs/noserv/worker1.js \
   hopjs/noserv/worker2.js \
   hopjs/noserv/parserFailure1.js \

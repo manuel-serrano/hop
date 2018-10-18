@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscheme/precompilation.scm      */
+;*    serrano/prgm/project/hop/3.2.x/hopscheme/precompilation.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Wed Oct 14 10:49:13 2015 (serrano)                */
-;*    Copyright   :  2010-15 Manuel Serrano                            */
+;*    Last change :  Sun Jan  7 14:38:37 2018 (serrano)                */
+;*    Copyright   :  2010-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
 ;*=====================================================================*/

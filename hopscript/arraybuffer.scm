@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/arraybuffer.scm         */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/arraybuffer.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Fri May 26 07:25:24 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Wed Oct 17 10:47:29 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
 ;*=====================================================================*/
@@ -16,15 +16,17 @@
 
    (library hop)
 
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
 
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_property
 	   __hopscript_error
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_number
 	   __hopscript_worker)
 
@@ -48,7 +50,7 @@
       (with-access::JsGlobalObject %this (js-arraybuffer)
 	 (with-access::JsArrayBuffer obj (data frozen)
 	    (let* ((ndata data)
-		   (nobj (instantiate::JsArrayBuffer
+		   (nobj (instantiateJsArrayBuffer
 			    (__proto__ (js-get js-arraybuffer 'prototype %this))
 			    (frozen frozen)
 			    (data ndata))))
@@ -79,8 +81,8 @@
       (let loop ((i 0))
 	 (when (<fx i (u8vector-length data))
 	    (let ((v (uint8->fixnum (u8vector-ref data i))))
-	       (write-char (vector-ref-ur chars (bit-rsh v 8)) op)
-	       (write-char (vector-ref-ur chars (bit-and v #xf)) op))
+	       (write-char (vector-ref chars (bit-rsh v 8)) op)
+	       (write-char (vector-ref chars (bit-and v #xf)) op))
 	    (loop (+fx i 1))))
       (display "\")" op)))
 
@@ -90,7 +92,7 @@
 (define (javascript-buffer->arraybuffer name args %this)
    (with-access::JsGlobalObject %this (js-arraybuffer)
       (let* ((u8v (hexstring->u8vector (cadr args)))
-	     (buf (instantiate::JsArrayBuffer
+	     (buf (instantiateJsArrayBuffer
 		     (__proto__ (js-get js-arraybuffer 'prototype %this))
 		     (frozen (car args))
 		     (data u8v))))
@@ -146,7 +148,7 @@
 	 
 	 ;; builtin ArrayBuffer prototype
 	 (define js-arraybuffer-prototype
-	    (instantiate::JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 
 	 (define (%js-arraybuffer this . items)
@@ -163,7 +165,7 @@
 			     (apply js-arraybuffer-construct this items))))
 
 	 (define (js-arraybuffer-alloc constructor::JsFunction %this)
-	    (instantiate::JsArrayBuffer
+	    (instantiateJsArrayBuffer
 	       (cmap (js-not-a-cmap))
 	       (__proto__ (js-get constructor 'prototype %this))))
 
@@ -239,11 +241,11 @@
 	 js-arraybuffer)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::JsArray ...                                 */
+;*    js-properties-names ::JsArray ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name obj::JsArrayBuffer enump %this)
+(define-method (js-properties-names obj::JsArrayBuffer enump %this)
    (let ((len (js-arraybuffer-length obj)))
-      (vector-append (apply vector (map js-integer->jsstring (iota len)))
+      (append! (map js-integer->name (iota len))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -258,6 +260,12 @@
 	  #t)
 	 (else
 	  (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsArrayBuffer ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsArrayBuffer p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */

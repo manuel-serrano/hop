@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/Makefile                          */
+#*    serrano/prgm/project/hop/3.2.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Oct  6 15:29:14 2017 (serrano)                */
+#*    Last change :  Wed Sep 12 10:51:30 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -28,7 +28,7 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
                   src hopc hopsh hopreplay hophz \
                   etc share arch \
                   weblets widget nodejs node_modules \
-                  examples test tools doc
+                  examples test tools doc docker
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -374,7 +374,7 @@ distrib-inc-version:
 	  $(MAKE) revision LOGMSG="New distrib $$version-$$devel$$min"; \
         fi
 
-distrib-sans-version: distrib-native # distrib-jvm
+distrib-sans-version: distrib-native
 
 distrib-pre:
 	(version=$(HOPRELEASE); \
@@ -412,12 +412,16 @@ distrib-native: distrib-tmp
            ./configure && \
            $(MAKE) predistrib && \
            $(MAKE) distclean) && \
-          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .git -C $(HOPTMPDIR) hop-$$distrib && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
+          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .git -C $(HOPTMPDIR) hop-$$distrib; \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
               $(RM) -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
-              mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
+              mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR) && \
+              cp $(HOPTMPDIR)/hop-$$distrib/docker/Dockerfile \
+                $(HOPDISTRIBDIR)/hop-$$distrib.dockerfile && \
+              cp $(HOPTMPDIR)/hop-$$distrib/docker/hop.docker \
+                $(HOPDISTRIBDIR)/hop-$$distrib.docker && \
+              $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
             fi \
           fi) || exit 1
 

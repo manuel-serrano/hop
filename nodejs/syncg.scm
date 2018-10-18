@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/syncg.scm                  */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/syncg.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 20 08:04:06 2017                          */
-;*    Last change :  Mon May 22 14:02:11 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Sat Jun  9 10:56:07 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global inter-process synchronization                             */
 ;*=====================================================================*/
@@ -32,6 +32,7 @@
 	       (set! syncg-state 'running)
 	       (register-exit-function!
 		  (lambda (status)
+		     (tprint "EXIT GLOBAL...")
 		     (synchronize syncg-mutex
 			(set! syncg-state 'exit)
 			(when (file-exists? lockfile)

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/array.js        */
+/*    serrano/trashcan/array.js                                        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Apr 15 10:03:14 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Wed Jun  6 19:29:06 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
 /*=====================================================================*/
@@ -145,7 +145,7 @@ function forShrink( a ) {
       if( i == 3 ) {
 	 if( i in a ) { console.log( "a=", a ); return -2; }
 	 if( Object.getOwnPropertyDescriptor( a, "" + i ) ) return -3;
-	 if( Object.hasOwnProperty( a, "" + i ) ) return -4;
+	 if( a.hasOwnProperty( "" + i ) ) return -4;
 	 if( a[ i ] !== undefined ) { console.log( a[ i ] ); return -5; }
 	 return 0;
       };
@@ -161,7 +161,7 @@ function forDelete( a ) {
       if( i == 3 ) {
 	 if( i in a ) { console.log( "a=", a ); return -2; }
 	 if( Object.getOwnPropertyDescriptor( a, "" + i ) ) return -3;
-	 if( Object.hasOwnProperty( a, "" + i ) ) return -4;
+	 if( a.hasOwnProperty( "" + i ) ) return -4;
 	 if( a[ i ] !== undefined ) { console.log( "a=", a ); return -5; }
 	 return 0;
       };
@@ -177,7 +177,7 @@ function forExpand( a ) {
       if( i == 3 ) {
 	 if( (l+1) in a ) return -2;
 	 if( Object.getOwnPropertyDescriptor( a, "" + (l+1) ) ) return -3;
-	 if( Object.hasOwnProperty( a, "" + (l+1) ) ) return -4;
+	 if( a.hasOwnProperty( "" + (l+1) ) ) return -4;
 	 if( a[ l+1 ] !== undefined ) return -5;
 	 if( a[ l+2 ] !== 4 ) { console.log( "a=", a, " v=", a[ l + 2 ] ); return -6; }
 	 return 0;
@@ -206,7 +206,7 @@ function vecExpand( a ) {
    if( !a.length == l + 3 ) return -3;
    if( l in a ) return -4;
    if( Object.getOwnPropertyDescriptor( a, "" + l ) ) return -5;
-   if( Object.hasOwnProperty( a, "" + l ) ) return -6;
+   if( a.hasOwnProperty( "" + l ) ) return -6;
    return 0;
 }
 
@@ -299,3 +299,35 @@ var p = [];
 
 [1,2,3,4,5,6,7,8,9,10].forEach( n => assert.ok( p.push( true ) === n ) );
 
+/*---------------------------------------------------------------------*/
+/*    holey                                                            */
+/*---------------------------------------------------------------------*/
+function holey() {
+   var a = [];
+   var k = 0; 
+
+   a[ 1 ] = 3;
+
+   for( var i = 0; i < a.length; i++ ) {
+      k += i;
+   }
+
+   return k;
+}
+
+assert.ok( holey() === 1, "holey" );
+
+/*---------------------------------------------------------------------*/
+/*    expansion                                                        */
+/*---------------------------------------------------------------------*/
+function expansion() {
+   var foo = [];
+
+   foo[ 1 ] = true;
+   foo[ 0 ] = true;
+   foo[ 2 ] = true;
+
+   return foo[ 2 ] ;
+}
+
+assert.ok( expansion(), "expansion" );

@@ -44,7 +44,37 @@ The Hop version.
 ```hopscript
 console.log( "Hop version:", hop.version );
 ```
- 
+
+Server Configuration
+--------------------
+
+### hop.httpAuthenticationMethod ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop HTTP authentication method. Can either be `"basic"` or `"digest"`.
+
+```hopscript
+console.log( "method:", hop.httpAuthenticationMethod );
+```
+
+### hop.useProxy ###
+[:@glyphicon glyphicon-tag parameter]  
+
+Proxy to be used to access internet resources.
+
+```hopscript
+hop.useProxy = "192.168.3.4";
+```
+
+### hop.enableProxying ###
+[:@glyphicon glyphicon-tag parameter]  
+
+Enable/disable Hop to act as an HTTP proxy.
+
+```hopscript
+hop.enableProxying = false;
+```
+
+
 Responses
 ---------
 [:responses]
@@ -152,7 +182,8 @@ hop.HTTPResponseString( JSON.stringify( obj ), { contentType: 'application/json'
 [:@glyphicon glyphicon-tag function]
 
 This class is used to respond files to clients. The argument `path` is
-the full path of a existing file.
+the full path of a existing file. The option is an object whose fields can
+be:
 
   * `contentType`: the `content-type` of the response.
   * `charset`: the charset.
@@ -371,8 +402,11 @@ notified of the message.
 Web Service
 -----------
 
-WebService is a set of API that let you invoke third party WebServices
-the same way you invoke Hop services.
+A WebService reifies an API, i.e., a set of services, that let you
+invoke third party WebServices the same way you invoke Hop services
+(see [Interoperable WebServices](01-service.html#interop) for
+interoperability notes).
+
 
 ```hopscript
 var hop = require( 'hop' );
@@ -384,7 +418,7 @@ mymemory( {q: 'My tailor is rich.', langpair: 'en|fr' } ).post( function( result
 } });
 ```
 
-###hop.webService( url ) ###
+### hop.webService( url ) ###
 [:@glyphicon glyphicon-tag function]
 
 Use this method to declare a remote WebService,that can later be
@@ -394,7 +428,7 @@ named arguments you want to send to the WebService. The returned value
 is a WebServiceFrame (very similar in use to Service Frames).
 
 
-###WebServiceFrame.post([ success [, fail-or-options]] ) ###
+### WebServiceFrame.post([ success [, fail-or-options]] ) ###
 [:@glyphicon glyphicon-tag function]
 
 Invokes asynchronously the webService. The optional `success`argument,
@@ -432,7 +466,7 @@ ws()
     body: "grant_type=password&client_id=android&client_secret=SomeRandomCharsAndNumbers&username=myapi&password=abc1234" } );
 ```
 
-###WebServiceFrame.postSync([ success [, fail-or-option]] ) ###
+### WebServiceFrame.postSync([ success [, fail-or-option]] ) ###
 [:@glyphicon glyphicon-tag function]
 
 The synchronous version of `post`. Returns the value returned by the
@@ -451,6 +485,19 @@ status.
 ### hop.compilerDriver ###
 [:@glyphicon glyphicon-tag parameter]
 
+### hop.compilerDriver.policy ###
+[:@glyphicon glyphicon-tag parameter]
+
+The compilation policy. The possible values are:
+
+  * `none`: never compile.
+  * `aot`: compile before loading.
+  * `nte`: compile for the next execution. The pending compilation are stopped
+ when the current execution is about to end.  
+  * `nte+`: compile for the next execution and wait for all running compilations
+ before ending current execution.
+
+
 ### hop.compilerDriver.pending ###
 [:@glyphicon glyphicon-tag parameter]
 
@@ -464,7 +511,7 @@ events are
 
   * `start`: emitted when a background compilation starts.
     The `event.target` denotes the file name.
-  * `end`: emitted when a background compilation starts.
+  * `end`: emitted when a background compilation ends.
     The `event.target` denotes the file name and `event.value` the
     compilation termination status (an integer).
   * `all`: emitted when all background compilation complete. This event
@@ -489,6 +536,36 @@ ${ <span class="label label-info">url/url.js</span> }
 
 ```hopscript
 ${ doc.include( doc.BUILDDIR + "/examples/url/url.js", 14 ) }
+```
+
+### hop.decodeHTML( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Decodes an encoded HTML string.
+
+```hopscript
+hop.decodeHTML( 'jean &lt;dupont&gt;' );
+// "jean <dupont>"
+```
+
+### hop.decodeURIComponent( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Decodes an encoded URI component.
+
+```hopscript
+hop.encodeURIComponent( 'jean dupont' );
+// "jean%20dupont"
+```
+
+### hop.encodeHTML( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Encodes an HTML string into a textual string.
+
+```hopscript
+hop.encodeHTML( 'jean <dupont>' );
+// "jean &lt;upont&gt;"
 ```
 
 ### hop.encodeURIComponent( string ) ###

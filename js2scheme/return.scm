@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/return.scm              */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/return.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Jun 10 08:37:21 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Mon Feb  5 14:05:07 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
 ;*    -------------------------------------------------------------    */
@@ -103,6 +103,7 @@
 	 (let ((ret (instantiate::J2SReturn
 		       (loc loc)
 		       (tail #t)
+		       (from target)
 		       (expr (instantiate::J2SUndefined
 				(loc loc))))))
 	    (if (null? nodes)
@@ -111,6 +112,20 @@
 		   (for-each (lambda (n) (untail-return! n target)) nodes)
 		   (set-cdr! (last-pair nodes) (list ret)))))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    unreturn! ::J2SNop ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unreturn! this::J2SNop target tail? in-handler args)
+   (if (and target tail?)
+       (with-access::J2SNop this (loc)
+	  (instantiate::J2SReturn
+	     (loc loc)
+	     (tail #t)
+	     (from target)
+	     (expr (instantiate::J2SUndefined
+		      (loc loc)))))
+       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SLetBlock ...                                      */
@@ -157,7 +172,8 @@
 (define-walk-method (unreturn! this::J2STry target tail? in-handler args)
    (with-access::J2STry this (body catch finally)
       (set! body (walk! body target tail? in-handler args))
-      (set! catch (walk! catch target tail? in-handler args))
+      (unless (isa? catch J2SNop)
+	 (set! catch (walk! catch target tail? in-handler args)))
       (set! finally (walk! finally target #f in-handler args)))
    this)
    
@@ -165,7 +181,7 @@
 ;*    unreturn! ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SFun target tail? in-handler args)
-   (with-access::J2SFun this (body)
+   (with-access::J2SFun this (body name)
       (set! body (walk! body this #t in-handler args)))
    this)
 
@@ -199,15 +215,17 @@
 ;*    unreturn! ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SReturn target tail? in-handler args)
-   (with-access::J2SReturn this (tail loc expr exit)
-      (unless target
-	 (if (config-get args :return-as-exit)
-	     (begin
-		(set! exit #t)
-		(set! tail #t)
-		(set! tail? #t)
-		(set! expr (walk! expr target #f in-handler args)))
-	     (syntax-error this "Illegal \"return\" statement")))
+   (with-access::J2SReturn this (tail from loc expr exit)
+      (cond
+	 (target
+	  (set! from target))
+	 ((config-get args :return-as-exit)
+	  (set! exit #t)
+	  (set! tail #t)
+	  (set! tail? #t)
+	  (set! expr (walk! expr target #f in-handler args)))
+	 (else
+	  (syntax-error this "Illegal \"return\" statement")))
       (unless tail?
 	 ;; mark the return as non-tail
 	 (set! tail #f)
@@ -270,7 +288,7 @@
 ;*    unreturn! ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SDeclInit target tail? in-handler args)
-   (with-access::J2SDeclInit this (val)
+   (with-access::J2SDeclInit this (val id)
       (set! val (walk! val target #f in-handler args)))
    this)
 
@@ -296,7 +314,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    untail-return! ::J2SReturn ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (untail-return! this::J2SReturn target)
+(define-walk-method (untail-return! this::J2SReturn target)
    (with-access::J2SReturn this (tail)
       (with-access::J2SFun target (need-bind-exit-return)
 	 (set! need-bind-exit-return #t))
@@ -306,7 +324,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    untail-return! ::J2SFun ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (untail-return! this::J2SFun target)
+(define-walk-method (untail-return! this::J2SFun target)
    this)
 
 ;*---------------------------------------------------------------------*/

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/html.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/html.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Wed Dec 21 12:40:28 2016 (serrano)                */
-;*    Copyright   :  2015-16 Manuel Serrano                            */
+;*    Last change :  Fri Jul 27 21:56:49 2018 (serrano)                */
+;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
 ;*=====================================================================*/
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_html
 
-   (include "token.sch")
+   (include "token.sch"
+	    "ast.sch")
    
    (library hop)
    
@@ -23,27 +24,29 @@
 	   __js2scheme_dump
 	   __js2scheme_utils)
    
-   (export (html-parser ::input-port ::pair-nil #!optional tag)))
+   (export (html-parser ::input-port ::pair-nil parser plugins
+	      #!optional tag sep)))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-parser ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (html-parser port conf::pair-nil #!optional tag)
-   (let ((lang (config-get conf :language 'hopscript)))
+(define (html-parser port conf::pair-nil parser plugins #!optional tag sep)
+   (let ((lang (config-get conf :language "hopscript")))
       (if tag
 	  (let ((str (symbol->string! (token-value tag))))
-	     (rgc-buffer-unget-char port (char->integer #\space))
+	     (when sep
+		(rgc-buffer-unget-char port (char->integer #\space)))
 	     (rgc-buffer-insert-substring! port str 0 (string-length str))
 	     (read/rp xml-grammar port '()
-		(eq? lang 'hopscript) #f
+		(string=? lang "hopscript") #f
 		(lambda (x) x)
-		(hop-locale) lang conf))
+		(hop-locale) lang conf parser plugins))
 	  (let loop ()
 	     (let ((v (read/rp xml-grammar port '()
-			 (eq? lang 'hopscript) #f
+			 (string=? lang "hopscript") #f
 			 (lambda (x) x)
 			 (hop-locale)
-			 lang conf)))
+			 lang conf parser plugins)))
 		(cond
 		   ((isa? v J2SString)
 		    (with-access::J2SString v (val)
@@ -158,48 +161,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    html-parse-script ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (html-parse-script iport)
-   (let* ((sp (input-port-position iport))
-	  (g (regular-grammar ()
-		((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-		 (let ((s (instantiate::J2SString
-			     (escape '(escape))
-			     (val (the-substring 1 (-fx (the-length) 1)))
-			     (loc (the-coord (the-port) (+fx (the-length) 1))))))
-		    (cons s (ignore))))
-		((: "\'" (* (or (out #a000 #\\ #\') (: #\\ all))) "\'")
-		 (let ((s (instantiate::J2SString
-			     (escape '(escape))
-			     (val (string-for-read
-				     (the-substring 1 (-fx (the-length) 1))))
-			     (loc (the-coord (the-port) (+fx (the-length) 1))))))
-		    (cons s (ignore))))
-		((: "//" (* all))
-		 (ignore))
-		((: "/*" (* (or (out #\*) (: #\* (out "/")))) "*/")
-		 (ignore))
-		((or (+ (out "<")) #\<)
-		 (let ((s (instantiate::J2SString
-			     (escape '(escape))
-			     (val (the-string))
-			     (loc (the-coord (the-port) (the-length))))))
-		    (cons s (ignore))))
-		((uncase "</script>")
-		 '())  
-		(else
-		 (let ((char (the-failure)))
-		    (raise
-		       (instantiate::&io-parse-error
-			  (proc "xml-parser")
-			  (msg (if (eof-object? char)
-				   "Premature end of file"
-				   "Unclosed list"))
-			  (obj (if (eof-object? char)
-				   char
-				   (string-append "{" (string char) "}")))
-			  (fname (input-port-name iport))
-			  (location (input-port-position iport)))))))))
-      (read/rp g iport)))
+(define (html-parse-script iport conf plugins)
+   (rgc-buffer-insert-substring! iport "~{" 0 2)
+   (j2s-parser iport (cons* :parser 'script-expression conf) plugins))
 
 ;*---------------------------------------------------------------------*/
 ;*    special ...                                                      */
@@ -328,7 +292,9 @@
 		     decoder
 		     encoding
 		     lang
-		     conf)
+		     conf
+		     parser
+		     plugins)
       
       (define (find-special stack)
          ;;; find the top-most special element of the stack, if any
@@ -357,10 +323,11 @@
 		   (push-node-ignore
 		      (make-dom-create tag attributes '() lang conf))))
 	       ((html-property-script? prop)
-		(let ((tag (token type sym (the-length)))
-		      (args (html-parse-script (the-port))))
+		(let ((tag (token type sym (the-length))))
 		   (push-node-ignore
-		      (make-dom-create tag attributes args lang conf))))
+		      (make-dom-create tag attributes
+			 (list (html-parse-script (the-port) conf plugins))
+			 lang conf))))
 	       (else
 		(let* ((tag (token type sym (the-length)))
 		       (el (element tag attributes
@@ -411,12 +378,14 @@
       ((: "<!--"
 	  (* (or (out "-") (: "-" (out "-")) (: "--" (out ">"))))
 	  (+ "-") "->")
-       (let ((tag (token 'HTML '<!--> (the-length)))
-	     (data (the-substring 4 -3)))
+       (let* ((tag (token 'HTML '<!--> (the-length)))
+	      (data (the-substring 4 -3))
+	      (loc (token-loc tag)))
 	  (push-ignore
 	     (instantiate::J2SCall
-		(loc (token-loc tag))
+		(loc loc)
 		(fun (j2s-tag->expr tag #t))
+		(thisarg (list (J2SUndefined)))
 		(args (list (instantiate::J2SNativeString
 			       (val (decoder data))
 			       (loc (the-coord (the-port) (+fx (the-length) 6))))))))))
@@ -435,7 +404,8 @@
 	  (string-set! s (-fx (string-length s) 2) #\space)
 	  (let ((p (open-input-string s)))
 	     (let loop ((attr '()))
-		(let ((obj (read/rp attribute-grammar p 'xml #t decoder conf)))
+		(let ((obj (read/rp attribute-grammar p
+			      'xml #t decoder conf parser)))
 		   (cond
 		      ((pair? obj)
 		       (loop (cons obj attr)))
@@ -451,7 +421,7 @@
 	      (sym (string->symbol (string-append t ">"))))
 	  (let loop ((attr '()))
 	     (let ((obj (read/rp attribute-grammar (the-port) sym
-			   strictattr decoder conf)))
+			   strictattr decoder conf parser)))
 		(cond
 		   ((isa? obj J2SNode)
 		    (loop (cons obj attr)))
@@ -482,7 +452,7 @@
       ("~{"
        (push-ignore
 	  (let ((str (the-string)))
-	     (if (eq? lang 'html)
+	     (if (string=? lang "html")
 		 (instantiate::J2SString
 		    (escape '(escape))
 		    (val str)
@@ -494,14 +464,14 @@
       ("${"
        (push-ignore
 	  (let ((str (the-string)))
-	     (if (eq? lang 'html)
+	     (if (string=? lang "html")
 		 (instantiate::J2SString
 		    (escape '(escape))
 		    (val str)
 		    (loc (the-coord (the-port) (+fx (the-length) 1))))
 		 (begin
 		    (rgc-buffer-insert-substring! (the-port) str 0 2)
-		    (j2s-parser (the-port)
+		    (parser (the-port)
 		       (cons* :parser 'dollar-expression conf)))))))
       (else
        (let ((c (the-failure)))
@@ -592,6 +562,15 @@
    (define (html? tag)
       (when (symbol? (token-value tag))
 	 (memq (token-value tag) '(<html> <HTML>))))
+
+   (define (debug-attribute? inits)
+      (find (lambda (i)
+	       (when (isa? i J2SDataPropertyInit)
+		  (with-access::J2SDataPropertyInit i (name)
+		     (when (isa? name J2SString)
+			(with-access::J2SString name (val)
+			   (string=? val "%location"))))))
+	 inits))
    
    (let ((attrs '())
 	 (abody '()))
@@ -618,10 +597,10 @@
       (let* ((loc (token-loc tag))
 	     (inits (reverse! attrs))
 	     (dbg (> (config-get conf :debug 0) 0))
-	     (inits (if dbg
+	     (inits (if (and dbg (not (debug-attribute? inits)))
 			(cons (debug-init loc (token-value tag)) inits)
 			inits))
-	     (inits (if (or (eq? lang 'hopscript) (not (html? tag)))
+	     (inits (if (or (string=? lang "hopscript") (not (html? tag)))
 			inits
 			(cons (hopautohead-init loc) inits)))
 	     (a (cond
@@ -639,13 +618,14 @@
 	 (instantiate::J2SCall
 	    (loc loc)
 	    (fun (j2s-tag->expr tag #t))
+	    (thisarg (list (J2SUndefined)))
 	    (args (cons a body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    attribute-value-grammar ...                                      */
 ;*---------------------------------------------------------------------*/
 (define attribute-value-grammar
-   (regular-grammar (strict tag conf)
+   (regular-grammar (strict tag conf parser)
       ((+ (in " \t\n\r"))
        (ignore))
       ((or (: #\" (* (or (out "~$\\\"") (: #\\ all) (: (in "~$") (out "{")))) #\")
@@ -677,23 +657,23 @@
       ("~{"
        (let ((str (the-string)))
 	  (rgc-buffer-insert-substring! (the-port) str 0 2))
-       (j2s-parser (the-port) (cons* :parser 'tilde-expression conf)))
+       (parser (the-port) (cons* :parser 'tilde-expression conf)))
       ((or (: "\"~{" (* (or (out #\\ #\") (: #\\ all))) "}\"")
 	   (: "'~{" (* (or (out #\\ #\') (: #\\ all))) "}'"))
        (let ((str (the-substring 1 -1)))
 	  (call-with-input-string str
 	     (lambda (ip)
-		(j2s-parser ip (cons* :parser 'tilde-expression conf))))))
+		(parser ip (cons* :parser 'tilde-expression conf))))))
       ("${"
        (let ((str (the-string)))
 	  (rgc-buffer-insert-substring! (the-port) str 0 2))
-       (j2s-parser (the-port) (cons* :parser 'dollar-expression conf)))
+       (parser (the-port) (cons* :parser 'dollar-expression conf)))
       ((or (: "\"${" (* (or (out #\\ #\") (: #\\ all))) "}\"")
 	   (: "'${" (* (or (out #\\ #\') (: #\\ all))) "}'"))
        (let ((str (the-substring 1 -1)))
 	  (call-with-input-string str
 	     (lambda (ip)
-		(j2s-parser ip (cons* :parser 'dollar-expression conf))))))
+		(parser ip (cons* :parser 'dollar-expression conf))))))
       (else
        (let ((c (the-failure)))
 	  (if (not (eof-object? c))
@@ -721,13 +701,14 @@
 		     tag
 		     strict
 		     decoder
-		     conf)
+		     conf parser)
       ((+ (in " \t\n\r"))
        (ignore))
       ((: id "=")
        (let* ((loc (the-coord (the-port) (+fx (the-length) 1)))
 	      (key (the-substring 0 (-fx (the-length) 1)))
-	      (val (read/rp attribute-value-grammar (the-port) strict tag conf))
+	      (val (read/rp attribute-value-grammar (the-port)
+		      strict tag conf parser))
 	      (name (instantiate::J2SString
 		       (loc loc)
 		       (val key))))
@@ -738,7 +719,8 @@
       ((: id (+ blank) "=")
        (let* ((loc (the-coord (the-port) (+fx (the-length) 1)))
 	      (key (the-substring 0 (-fx (the-length) 2)))
-	      (val (read/rp attribute-value-grammar (the-port) strict tag conf)))
+	      (val (read/rp attribute-value-grammar (the-port)
+		      strict tag conf parser)))
 	  (let loop ((i (-fx (string-length key) 1)))
 	     (case (string-ref key i)
 		((#\space #\tab #\Newline)
@@ -770,7 +752,11 @@
       ("${"
        (let ((str (the-string)))
 	  (rgc-buffer-insert-substring! (the-port) str 0 2))
-       (j2s-parser (the-port) (cons* :parser 'dollar-expression conf)))
+       (let ((o (parser (the-port) (cons* :parser 'dollar-expression conf))))
+	  (if (isa? o J2SObjInit)
+	      (with-access::J2SObjInit o (inits)
+		 (car inits))
+	      o)))
       (else
        (let ((c (the-failure))
 	     (loc (input-port-position (the-port))))

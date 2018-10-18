@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/es6-sym.js      */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/es6-sym.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 12 08:24:17 2015                          */
-/*    Last change :  Sat Nov 25 20:04:22 2017 (serrano)                */
+/*    Last change :  Sat Nov 25 20:20:55 2017 (serrano)                */
 /*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 symbol support.                                      */
@@ -218,4 +218,24 @@ assert.equal( kangaxk(), true, "kangaxk" );
 
 console.log( "   kangaxl()");
 assert.equal( kangaxl(), true, "kangaxl" );
+
+/*---------------------------------------------------------------------*/
+/*    Kangax Well Known Symbols                                        */
+/*---------------------------------------------------------------------*/
+function kangaxSyma() {
+   var passed = false;
+   var obj = { foo: true };
+   var C = function(){};
+   console.log( Symbol.hasInstance );
+   Object.defineProperty(C, Symbol.hasInstance, {
+      value: function(inst) { passed = inst.foo; return false; }
+   });
+   obj instanceof C;
+   return passed;
+}
+
+console.log( "kangax well known symbols" );
+
+/* console.log( "   kangaxSyma()");                                    */
+/* assert.equal( kangaxSyma(), true, "kangaxSyma" );                   */
 

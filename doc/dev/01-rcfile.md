@@ -39,7 +39,7 @@ user.add( { name: "anonymous",
 
 ${ <span class="label label-warning">Note:</span> } The anonymous user
 is the user on which all non-authentified request are
-identified. Declaring an anonymous user in the ++hoprc.js++ file is
+identified. Declaring an anonymous user in the `hoprc.js` file is
 mandatory. Without such a declaration, the server will raise an error
 for each new web request it will receive. The anonymous might have no
 permissions granted, as in the example above, but it must

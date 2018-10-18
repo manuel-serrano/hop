@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/_hop.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Nov 24 18:13:08 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Wed Sep 12 11:52:43 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -31,6 +31,11 @@
 	   (nodejs-modules-directory-set! ::bstring)
 	   (hopjs-standalone-set! ::bool)
 	   (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    constructors                                                     */
+;*---------------------------------------------------------------------*/
+(define-instantiate JsUrlFrame)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-standalone ...                                             */
@@ -64,7 +69,7 @@
 					 __proto__)
       
       (define js-urlframe-prototype
-	 (instantiate::JsObject
+	 (instantiateJsObject
 	    (__proto__ __proto__)))
       
       (define js-webservice
@@ -80,7 +85,7 @@
 			     url args))))
 
       (define server-prototype
-	 (instantiate::JsObject
+	 (instantiateJsObject
 	    (__proto__ __proto__)))
       
       (define js-server
@@ -91,7 +96,7 @@
 	    :__proto__ js-function-prototype
 	    :prototype server-prototype
 	    :construct (lambda (this host port auth ssl)
-			  (instantiate::JsServer
+			  (instantiateJsServer
 			     (__proto__ server-prototype)
 			     (data '())
 			     (obj (instantiate::server
@@ -110,9 +115,11 @@
       (define (js-compiler-driver-add-event-listener this event proc . cap)
 	 (let ((e (js-tostring event %this))
 	       (f (lambda (evt)
-		     (js-worker-push-thunk! (js-current-worker) "server"
-			(lambda ()
-			   (js-call1 %this proc this evt))))))
+		     (if (eq? (hop-sofile-compile-policy) 'aot)
+			 (js-call1 %this proc this evt)
+			 (js-worker-push-thunk! (js-current-worker) "server"
+			    (lambda ()
+			       (js-call1 %this proc this evt)))))))
 	    (nodejs-compile-add-event-listener! e f (when (pair? cap) cap))))
 
       (define (js-compiler-driver-remove-event-listener this event proc . cap)
@@ -122,8 +129,8 @@
 	       (nodejs-compile-remove-event-listener! e (cdr f)))))
 	 
       (define js-compiler-driver
-	 (let ((driver (instantiate::JsObject
-		       (__proto__ __proto__))))
+	 (let ((driver (instantiateJsObject
+			  (__proto__ __proto__))))
 	    (js-bind! %this driver 'pending
 	       :get (js-make-function %this
 		       (lambda (this)
@@ -142,6 +149,20 @@
 			 js-compiler-driver-remove-event-listener
 			 3 'removeEventListener)
 	       :writable #f
+	       :configurable #f)
+	    (js-bind! %this driver 'policy
+	       :get (js-make-function %this
+		       (lambda (this)
+			  (js-string->jsstring
+			     (symbol->string (hop-sofile-compile-policy))))
+		       0 'get)
+	       :set (js-make-function %this
+		       (lambda (this v)
+			  (hop-sofile-compile-policy-set!
+			     (string->symbol
+				(js-tostring v %this))))
+		       1 'set)
+	       :writable #t
 	       :configurable #f)
 	    driver))
       
@@ -246,6 +267,16 @@
 	       `(buildid . ,(hop-build-id))
 	       `(buildtag . ,(hop-build-tag))
 	       `(standalone . ,hopjs-standalone)
+
+	       ;; server configuration
+	       (define-js httpAuthenticationMethodGet 0
+		  (lambda (this)
+		     (js-string->jsstring
+			(symbol->string (hop-http-authentication)))))
+	       (define-js httpAuthenticationMethodSet 1
+		  (lambda (this v)
+		     (hop-http-authentication-set!
+			(string->symbol (js-tostring v %this)))))
 
 	       ;; port
 	       (define-js port 0 (lambda (this) (hop-port)))
@@ -352,10 +383,20 @@
 		     (js-string->jsstring
 			(url-path-encode (js-tostring path %this)))))
 	       
+	       (define-js decodeURIComponent 1
+		  (lambda (this path)
+		     (js-string->jsstring
+			(uri-decode-component (js-tostring path %this)))))
+	       
 	       (define-js encodeHTML 1
 		  (lambda (this path)
 		     (js-string->jsstring
 			(html-string-encode (js-tostring path %this)))))
+
+	       (define-js decodeHTML 1
+		  (lambda (this path)
+		     (js-string->jsstring
+			(html-string-decode (js-tostring path %this)))))
 	       
 	       (define-js md5sum 1
 		  (lambda (this path)
@@ -381,7 +422,7 @@
 ;*    js-make-urlframe ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-make-urlframe %this::JsGlobalObject js-urlframe-prototype url args)
-   (instantiate::JsUrlFrame
+   (instantiateJsUrlFrame
       (%this %this)
       (url url)
       (args (if (eq? args (js-undefined))
@@ -412,13 +453,13 @@
 		(js-call1 %this fail %this
 		   (js-alist->jsobject header %this)))
 	     (js-call1 %this fail %this obj))))
-   
+
    (let ((host "localhost")
 	 (port #f)
 	 (authorization #f)
 	 (fail #f)
 	 (asynchronous (not force-sync))
-	 (header #f)
+	 (header '())
 	 (timeout 0)
 	 (method 'GET)
 	 (body #f)
@@ -500,7 +541,7 @@
       
       (define (scheme->js val)
 	 (js-obj->jsobject val %this))
-      
+
       (cond
 	 ((not asynchronous)
 	  (post 

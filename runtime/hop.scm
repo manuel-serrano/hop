@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Nov 27 08:37:38 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Tue Jun  5 10:22:15 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -68,6 +68,7 @@
 	       (ctx #f)
 	       (json-parser (lambda (ip ctx) (javascript->obj ip)))
 	       (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
+	       (connection-timeout 0)
 	       args)
 	    (generic with-hop-local obj success fail authorization header)
 	    (hop-get-file::obj ::bstring ::obj)
@@ -468,7 +469,7 @@
 			      (userinfo userinfo)
 			      (host (or host path))
 			      (port (or port (scheme-default-port s)))
-			      (header (cons `(connection: . ,connection) header))
+			      (header header)
 			      (connection-timeout timeout)
 			      (connection connection)
 			      (timeout timeout)
@@ -497,6 +498,7 @@
 	   (json-parser (lambda (ip ctx) (javascript->obj ip)))
 	   (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
 	   (ctx #f)
+	   (connection-timeout 0)
 	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
@@ -521,6 +523,7 @@
 			 (host host)
 			 (port port)
 			 (connection 'close)
+			 (connection-timeout connection-timeout)
 			 (header (cons*
 				    '(hop-serialize: . "x-hop")
 				    '(hop-responsetype: . "arraybuffer")

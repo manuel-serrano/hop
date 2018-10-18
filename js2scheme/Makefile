@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/js2scheme/Makefile                */
+#*    serrano/prgm/project/hop/hop/js2scheme/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Sep 12 13:39:16 2017 (serrano)                */
+#*    Last change :  Mon Oct 15 15:16:24 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -36,12 +36,16 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _OBJECTS = lexer header parser html ast dump utils \
-  stage compile js \
-  syntax return loopexit symbol scheme ronly resolve this \
-  use property bestpractice sourcemap debug stmtassign letopt \
-  cps ecmascript5 narrow constant tyflow hint range cast \
-  array alpha letfusion uint32 constrsize ctor propcce sweep \
-  globvar method
+  stage compile js globvar varpreinit method nodesize \
+  syntax return loopexit symbol ronly resolve this any \
+  use property bestpractice sourcemap debug stmtassign letopt unletrec \
+  cps ecmascript5 narrow constant tyflow hint range cast vector \
+  array alpha letfusion constrsize ctor propcce clevel sweep inline unthis \
+  instanceof hintnum pce callapply multivar module \
+  scheme scheme-utils scheme-program \
+  scheme-fun scheme-ops scheme-test scheme-class scheme-string scheme-math \
+  scheme-date scheme-array scheme-regexp scheme-cast scheme-arguments \
+  scheme-call
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o
@@ -69,6 +73,8 @@ build: $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
+
+lib-c: .afile
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

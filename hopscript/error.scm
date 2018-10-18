@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/error.scm               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/error.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Aug  3 08:46:36 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Tue Aug 28 09:07:54 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
 ;*    -------------------------------------------------------------    */
@@ -18,14 +18,16 @@
 
    (library hop)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_object
 	   __hopscript_property
 	   __hopscript_array
 	   __hopscript_function
 	   __hopscript_private
+	   __hopscript_lib
 	   __hopscript_public)
 
    (static (class JsFrame::JsObject
@@ -36,6 +38,11 @@
 	      (fun::bstring read-only)))
    
    (export (js-init-error! ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    constructor                                                      */
+;*---------------------------------------------------------------------*/
+(define-instantiate JsFrame)
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -64,7 +71,7 @@
 		 (proc (js-string->jsstring (vector-ref o 3)))
 		 (location (vector-ref o 4)))
 	      (with-access::JsGlobalObject ctx (js-error)
-		 (instantiate::JsError
+		 (instantiateJsError
 		    (__proto__ (js-get js-error 'prototype ctx))
 		    (name (js-string->jsstring (vector-ref o 0)))
 		    (msg (js-string->jsstring (vector-ref o 1)))
@@ -85,15 +92,17 @@
 (define-method (object-display o::JsError . port)
    (with-output-to-port (if (null? port) (current-output-port) (car port))
       (lambda ()
-	 (with-access::JsError o (name msg)
+	 (with-access::JsError o (name msg fname location)
 	    (display* "#<"
-	       (class-name (object-class o)) ": " name ", " msg ">")))))
+	       (class-name (object-class o)) ": " name ", " msg
+	       (if (and location fname) (format " ~s:~s" fname location) "")
+	       ">")))))
 
 (define-method (object-print o::JsError port pslot)
    (object-display o port))
    
 ;*---------------------------------------------------------------------*/
-;*    exception-notify ::obj ...                                       */
+;*    exception-notify ::JsError ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (exception-notify exc::JsError)
    (with-access::JsError exc (name msg stack fname location)
@@ -149,13 +158,13 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 (define js-error-prototype
-	    (instantiate::JsError
+	    (instantiateJsError
 	       (__proto__ __proto__)
 	       (msg (js-ascii->jsstring ""))))
 	 
 	 (define (js-error-alloc constructor::JsFunction)
 	    (with-access::JsFunction constructor (name)
-	       (instantiate::JsError
+	       (instantiateJsError
 		  (name (js-string->jsstring name))
 		  (msg (js-ascii->jsstring ""))
 		  (__proto__ (js-get constructor 'prototype %this))
@@ -170,13 +179,6 @@
 		      (js-bind! %this this 'message :value m :enumerable #f
 			 :hidden-class #t)
 		      (set! msg m)))
-		  ((?m (and (? string?) ?f) ?l)
-		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f
-			 :hidden-class #t)
-		      (set! msg m))
-		   (set! fname (js-string->jsstring f))
-		   (set! location l))
 		  ((?m (and (? js-jsstring?) ?f) ?l)
 		   (unless (eq? m (js-undefined))
 		      (js-bind! %this this 'message :value m :enumerable #f
@@ -184,6 +186,20 @@
 		      (set! msg m))
 		   (set! fname f)
 		   (set! location l))
+		  ((?m (and (? string?) ?f) ?l)
+		   (unless (eq? m (js-undefined))
+		      (js-bind! %this this 'message :value m :enumerable #f
+			 :hidden-class #t)
+		      (set! msg m))
+		   (set! fname (js-string->jsstring f))
+		   (set! location l))
+		  ((?m (and ?loc (? js-object?)) #unspecified)
+		   (unless (eq? m (js-undefined))
+		      (js-bind! %this this 'message :value m :enumerable #f
+			 :hidden-class #t)
+		      (set! msg m))
+		   (set! fname (js-get loc 'filename %this))
+		   (set! location (js-get loc 'pos %this)))
 		  ((?m . ?-)
 		   (unless (eq? m (js-undefined))
 		      (js-bind! %this this 'message :value m :enumerable #f
@@ -209,7 +225,7 @@
 	    
 	    (define (make-frame fun loc file line column)
 	       (with-access::JsGlobalObject %this (js-object)
-		  (let ((obj (instantiate::JsFrame
+		  (let ((obj (instantiateJsFrame
 				(__proto__ frame-proto)
 				(file file)
 				(line line)
@@ -324,6 +340,12 @@
 		     :hidden-class #t))))
 	 
 	 ;; bind the properties of the prototype
+	 (js-bind! %this js-error-prototype 'notify
+	    :value (js-make-function %this
+		      (lambda (exn)
+			 (exception-notify exn))
+		      1 'notify)
+	    :enumerable #f)
 	 (js-bind! %this js-error-prototype 'message
 	    :set (js-make-function %this
 		    (lambda (o v)
@@ -365,7 +387,7 @@
 	    (js-make-function %this (%js-syntax-error %this) 1
 	       'SyntaxError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -374,7 +396,7 @@
 	    (js-make-function %this (%js-type-error %this) 1
 	       'TypeError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -383,7 +405,7 @@
 	    (js-make-function %this (%js-uri-error %this) 1
 	       'URIError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -392,7 +414,7 @@
 	    (js-make-function %this (%js-eval-error %this) 1
 	       'EvalError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -401,7 +423,7 @@
 	    (js-make-function %this (%js-range-error %this) 1
 	       'RangeError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -410,7 +432,7 @@
 	    (js-make-function %this (%js-reference-error %this) 1
 	       'ReferenceError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc

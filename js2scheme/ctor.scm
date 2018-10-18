@@ -1,14 +1,14 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/ctor.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/ctor.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Thu Feb 22 09:07:21 2018 (serrano)                */
+;*    Last change :  Sat Sep 22 08:15:10 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Static approximation of constructors sizes                       */
+;*    Constructor optimization                                         */
 ;*    -------------------------------------------------------------    */
-;*    This stage must executes after the property stage as the         */
+;*    This stage must execute after the property stage as the          */
 ;*    cache indexes are needed.                                        */
 ;*=====================================================================*/
 
@@ -37,6 +37,11 @@
       (name "ctor")
       (comment "Type ctors")
       (proc j2s-ctor!)))
+
+;*---------------------------------------------------------------------*/
+;*    ctor-init-threshold ...                                          */
+;*---------------------------------------------------------------------*/
+(define ctor-init-threshold 5)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ctor! ::obj ...                                              */
@@ -131,18 +136,12 @@
 ;*    constrinit! ::J2SDeclInit ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constrinit! this::J2SDeclInit prog)
-   (with-access::J2SDeclInit this (id usage val)
-      (when (and (isa? val J2SFun) (or #t (memq 'new usage)))
-	 (constrinit-ctor! val prog)))
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    constrinit! ::J2SDeclFun ...                                     */
-;*---------------------------------------------------------------------*/
-(define-walk-method (constrinit! this::J2SDeclFun prog)
-   (with-access::J2SDeclFun this (id usage val)
-      (when (and (isa? val J2SFun) (or #t (memq 'new usage)))
-	 (constrinit-ctor! val prog)))
+   (with-access::J2SDeclInit this (id usage)
+      (let ((val (j2sdeclinit-val-fun this)))
+	 (when (isa? val J2SFun)
+	    (with-access::J2SFun val (optimize)
+	       (when optimize
+		  (constrinit-ctor! val prog))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -165,7 +164,7 @@
 
    (define (simple-expr? expr obj)
       ;; is the expr simple enough so we are certain that there is no
-      ;; occurrent of decl involved
+      ;; occurrence of decl involved
       (cond
 	 ((isa? expr J2SArray)
 	  (with-access::J2SArray expr (exprs)
@@ -205,16 +204,21 @@
 			(when (isa? field J2SString)
 			   (when (isa? obj J2SRef)
 			      (with-access::J2SRef obj (decl)
-				 (if ref-or-bool
+				 (cond
+				    ((isa? ref-or-bool J2SRef)
 				     (with-access::J2SRef ref-or-bool ((rd decl))
 					(when (eq? rd decl)
-					   (simple-expr? rhs decl)))
-				     (with-access::J2SDecl decl (itype)
-					(when (eq? itype 'object)
-					   obj)))))))))))))
+					   (when (simple-expr? rhs decl)
+					      obj))))
+				    ((isa? obj J2SThis)
+				     obj)
+				    (else
+				     (with-access::J2SDecl decl (vtype)
+					(when (eq? vtype 'object)
+					   obj))))))))))))))
    
    (define (split-init-sequence this)
-      ;; split a block in two part
+      ;; split a block in two parts
       ;;   1- the "ref" assignments
       ;;   2- the other statements
       (with-access::J2SBlock this (nodes)
@@ -233,37 +237,69 @@
 			  (else
 			   (set-cdr! prev '())
 			   (values nodes ns ref)))))))))
-   
+
+   (define (init-names inits)
+      `,(list->vector
+	   (filter-map (lambda (n)
+			  (when (isa? n J2SStmtExpr)
+			     (with-access::J2SStmtExpr n (expr)
+				(when (isa? expr J2SAssig)
+				   (with-access::J2SAssig expr (lhs)
+				      (when (isa? lhs J2SAccess)
+					 (with-access::J2SAccess lhs (obj field)
+					    (when (and (isa? obj J2SThis)
+						       (isa? field J2SString))
+					       (with-access::J2SString field (val)
+						  (string->symbol val))))))))))
+	      inits)))
+
    (multiple-value-bind (init rest ref)
       (split-init-sequence this)
       (cond
 	 ((null? init)
 	  ;; no init, just a regular block
 	  (call-default-walker))
-	 ((<fx (length init) 5)
-	  ;; too small to be optimized, not worse the bookkeeping
+	 ((<fx (length init) ctor-init-threshold)
+	  ;; too small to be optimized, not worth the bookkeeping
 	  (set-cdr! (last-pair init) rest)
 	  (call-default-walker))
 	 (else
 	  ;; optimize the init sequence, first create two program globals
 	  (let ((cmap0 (gensym '%cmap0))
 		(cmap1 (gensym '%cmap1))
+		(cmap2 (gensym '%cmap2))
 		(offset (gensym '%offset)))
 	     (with-access::J2SProgram prog (globals)
 		(set! globals
 		   (cons* `(define ,cmap0 #f)
 		      `(define ,cmap1 #f)
+		      `(define ,cmap2 (js-names->cmap ',(init-names init)))
 		      `(define ,offset -1)
 		      globals)))
 	     ;; then split the init sequence
 	     (with-access::J2SBlock this (nodes loc)
-		(set! nodes 
+		(set! nodes
 		   (cons (instantiate::J2SOPTInitSeq
 			    (loc loc)
 			    (ref ref)
-			    (nodes init)
+			    (nodes (map adjust-cspecs! init))
 			    (cmap0 cmap0)
 			    (cmap1 cmap1)
+			    (cmap2 cmap2)
 			    (offset offset))
 		      (map! (lambda (n) (constrinit-seq! n prog)) rest))))
 	     this)))))
+
+;*---------------------------------------------------------------------*/
+;*    adjust-cspecs! ::J2SNode ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (adjust-cspecs! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    adjust-cspecs! ::J2SAccess ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (adjust-cspecs! this::J2SAccess)
+   (with-access::J2SAccess this (cspecs)
+      (set! cspecs '(pmap cmap+))
+      (call-default-walker)))

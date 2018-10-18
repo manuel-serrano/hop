@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/3.2.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Jan 28 08:30:35 2018 (serrano)                */
+#*    Last change :  Thu Sep 20 19:17:42 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -136,6 +136,7 @@ POPULATION	= $(RTSCONFIG) $(EXTRA) \
                   $(BUTTONS:%=buttons/%) \
                   editor \
 		  $(FLASH:%=flash/%) \
+                  values.sch \
                   Makefile
 
 #*---------------------------------------------------------------------*/
@@ -225,6 +226,10 @@ install:
           $(INSTALL) $$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor && \
           chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor/`basename $$p`; \
         done
+	$(INSTALL) ../docker/Dockerfile $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/Dockerfile.hop
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/Dockerfile.hop
+	$(INSTALL) ../docker/hop.docker $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop.docker
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop.docker
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -242,20 +247,24 @@ uninstall:
 	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
 	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p.gz; \
         done
+	$(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/Dockerfile.hop
+	$(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop.docker
 
 #*---------------------------------------------------------------------*/
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
 hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
   hop-exception.js hop-nodejs.js hop-react.js \
-  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js 
+  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js \
+  $(BGLCPP)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
 	echo >> $@
 	echo "\"use strict\";" >> $@
 	echo >> $@
-	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+	cat $(filter %.js,$^) \
+               | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                | sed -e "s|//[^\"]*$$||g" \
                | sed -e "/^[ \t]*$$/D" \
                | $(BGLCPP) -DHOP_SCHEME\
@@ -263,7 +272,8 @@ hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
 
 hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
   hop-exception.js hop-debug.js hop-nodejs.js hop-react.js \
-  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js 
+  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js \
+  $(BGLCPP)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -271,13 +281,15 @@ hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
 	echo "\"use strict\";" >> $@
 	echo >> $@
 	if [ "$(DEBUG) " != "yes " ]; then \
-	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+	  cat $(filter %.js,$^) \
+                 | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
                  | $(BGLCPP) -DHOP_SCHEME -DHOP_RTS_DEBUG \
                  >> $@; \
         else \
-	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+	  cat $(filter %.js,$^) \
+                 | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
                  | $(BGLCPP) -DHOP_SCHEME \
@@ -289,7 +301,8 @@ hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
 #*---------------------------------------------------------------------*/
 hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
   hop-nodejs.js hop-react.js \
-  hop-builtin-serializers.js 
+  hop-builtin-serializers.js \
+  $(BGLCPP)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -297,9 +310,12 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
 	echo "\"use strict\";" >> $@
 	echo >> $@
 	echo "var hop_current_stack_context;" >> $@
+	echo "function hop_callback_listener_context(m) { return m; }" >> $@
+	echo "function hop_callback_html_context(m) { return m; }" >> $@
 	echo "function hop_callback_handler( e, ctx ) { throw e; }" >> $@
 	echo "function sc_error( proc, msg, obj ) { throw msg; }" >> $@
-	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+	cat $(filter %.js,$^) \
+               | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                | sed -e "s|//[^\"]*$$||g" \
                | sed -e "/^[ \t]*$$/D" \
                | $(BGLCPP) -DHOP_JAVASCRIPT | $(CLOSURE) \
@@ -307,27 +323,6 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
 
 hopjs_s.js: hop_s.js
 	cp $^ $@
-
-hopjs-serialize.js: hopscheme.js hop-builtin-serializers.js hop-serialize.js
-	echo "/* Automatically generated file (don't edit) */" > $@
-	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
-	date +'/* %D %I:%H */' >> $@
-	echo >> $@
-	echo "\"use strict\";" >> $@
-	echo >> $@
-	if [ "$(DEBUG) " != "yes " ]; then \
-	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
-                 | sed -e "s|//[^\"]*$$||g" \
-                 | sed -e "/^[ \t]*$$/D" \
-                 | $(BGLCPP) -DHOP_JAVASCRIPT -DHOP_MODULES -DHOP_NOBROWSER \
-                 >> $@; \
-        else \
-	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
-                 | sed -e "s|//[^\"]*$$||g" \
-                 | sed -e "/^[ \t]*$$/D" \
-                 | $(BGLCPP) -DHOP_JAVASCRIPT -DHOP_MODULES -DHOP_NOBROWSER \
-                 >> $@; \
-        fi
 
 #*---------------------------------------------------------------------*/
 #*    hop-runtime.sch ...                                              */
@@ -358,10 +353,11 @@ flash/%.swf: flash/%.as
 #*    JavaScript compilation                                           */
 #*---------------------------------------------------------------------*/
 hop-exception.js: hop-exception.scm ../runtime/client-exception.sch
-	$(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
+	$(call compile3,$(HOPC),--no-use-strict --no-source-map $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
+	cat hop-exception-onload.js >> hop-exception.js
 
-hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch
-	$(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
+hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch values.sch
+	$(call compile3,$(HOPC),--no-use-strict --no-source-map $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 hop-builtin-serializers.js: $(BUILDETCDIR)/mkserializer.hop
 	($(call compile,$(BIGLOO),-suffix hop ,-L $(BUILDLIBDIR), -static-all-bigloo $<) && ./a.out > $@ && $(RM) -f a.out $(BUILDETCDIR)/mkserializer.o) || ($(RM) -f $@; exit 1)
@@ -401,6 +397,7 @@ clean:
 	$(RM) hop_u.js hop_s.js 
 	$(RM) hopjs_u.js hopjs_s.js 
 	$(RM) hop-runtime.sch 
+#* 	$(RM) hopjs-serialize.js                                       */
 
 devclean:
 	$(RM) hop-exception.js hop-debug.js hop-builtin-serializers.js
