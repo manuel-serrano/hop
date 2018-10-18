@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/header.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/header.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue Oct 16 08:33:05 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 08:28:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -116,10 +116,10 @@
 		(nodejs-eval %this %scope)
 		(nodejs-function %this %scope)
 		,(unless (string=? path "buffer")
-		    `(nodejs-import! %this %scope
+		    `(nodejs-bind-export! %this %scope
 			(nodejs-require-core "buffer" %worker %this) 'Buffer))
 		,(unless (string=? path "timers")
-		    `(nodejs-import! %this %scope
+		    `(nodejs-bind-export! %this %scope
 			(nodejs-require-core "timers" %worker %this)))))
 	 (instantiate::J2SUndefined
 	    (type 'undefined)

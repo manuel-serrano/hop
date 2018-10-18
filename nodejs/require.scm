@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Oct 17 12:29:10 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 08:27:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -23,12 +23,13 @@
 
    (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
+	   (nodejs-import-module::vector ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load src ::bstring ::obj ::obj ::WorkerHopThread #!optional lang srcalias)
-	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
+	   (nodejs-bind-export!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-abort-all!)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-json ::bstring ::bstring ::bstring ::bstring)
@@ -43,7 +44,9 @@
 	   (nodejs-eval ::JsGlobalObject ::JsObject)
 	   (nodejs-function ::JsGlobalObject ::JsObject)
 	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)
-	   (nodejs-plugins-toplevel-loader)))
+	   (nodejs-plugins-toplevel-loader)
+	   (inline nodejs-module-ref ::vector ::long)
+	   (inline nodejs-module-set! ::vector ::long ::obj)))
 
 ;;(define-macro (bigloo-debug) 0)
 
@@ -574,6 +577,16 @@
    require)
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-import-module ...                                         */
+;*    -------------------------------------------------------------    */
+;*    ES6 module import.                                               */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import-module::vector worker::WorkerHopThread %this::JsGlobalObject %module::JsObject path::bstring)
+   (let ((mod (nodejs-load-module path worker %this %module "hopscript")))
+      (with-access::JsModule mod (exports)
+	 exports)))
+   
+;*---------------------------------------------------------------------*/
 ;*    nodejs-head ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    Per module version of js-html-script@__hopscript_public          */
@@ -778,7 +791,7 @@
 		   (elements '#()))))
       (js-object-properties-set! scope '())
       (js-object-mode-set! scope (js-object-default-mode))
-      (nodejs-import! global scope global)
+      (nodejs-bind-export! global scope global)
       (hopscript-global-object-init! scope)
       scope))
 
@@ -1514,12 +1527,12 @@
       (with-loading-file filename load-module)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-require-module ...                                        */
+;*    nodejs-load-module ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Require a nodejs module, load it if necessary or simply          */
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require-module name::bstring worker::WorkerHopThread
+(define (nodejs-load-module path::bstring worker::WorkerHopThread
 	   %this %module #!optional (lang "hopscript") compiler)
    
    (define (load-json path)
@@ -1581,18 +1594,29 @@
 		   (js-put! mod 'parent %module #f %this)))
 	     mod))))
 
-   (with-trace 'require (format "nodejs-require-module ~a" name)
+   (with-trace 'require (format "nodejs-load-module ~a" path)
       (with-access::WorkerHopThread worker (module-cache)
-	 (let* ((path (nodejs-resolve name %this %module 'body))
-		(mod (js-get-property-value module-cache module-cache path %this)))
+	 (let ((mod (js-get-property-value module-cache module-cache path %this)))
 	    (trace-item "path=" path)
 	    (trace-item "mod=" (if (eq? mod (js-absent)) 'absent (typeof mod)))
 	    (if (eq? mod (js-absent))
-		(let ((mod (load-module path path worker %this %module lang compiler #f)))
-		   (js-get mod 'exports %this))
-		(let ((exports (js-get mod 'exports %this)))
-		   (trace-item "exports=" (typeof exports))
-		   exports))))))
+		(load-module path path worker %this %module lang compiler #f)
+		mod)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-require-module ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Require a nodejs module, load it if necessary or simply          */
+;*    reuse the previously loaded module structure.                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-require-module name::bstring worker::WorkerHopThread
+	   %this %module #!optional (lang "hopscript") compiler)
+   (with-trace 'require (format "nodejs-require-module ~a" name)
+      (let* ((path (nodejs-resolve name %this %module 'body))
+	     (mod (nodejs-load-module path worker %this %module lang compiler))
+	     (exports (js-get mod 'exports %this)))
+	 (trace-item "exports=" (typeof exports))
+	 exports)))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module? ...                                                 */
@@ -1849,11 +1873,11 @@
    (set! nodejs-env-path (append nodejs-env-path path)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-import! ...                                               */
+;*    nodejs-bind-export! ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Bind the exported binding into a global object.                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-import! %this %scope e . bindings)
+(define (nodejs-bind-export! %this %scope e . bindings)
    
    (define (for-in obj::JsObject proc)
       
@@ -2027,6 +2051,18 @@
 	 (let* ((worker (js-init-main-worker! this #f nodejs-new-global-object))
 		(mod (nodejs-new-module "hopc" "." worker this)))
 	    (make-plugins-loader this mod worker)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-module-ref ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-module-ref obj index)
+   (vector-ref obj index))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-module-set! ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-module-set! obj index val)
+   (vector-set! obj index val))
 
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */

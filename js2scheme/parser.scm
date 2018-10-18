@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Oct 17 18:11:45 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 07:54:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1200,7 +1200,10 @@
 			      (consume-any!)
 			      (token-value (consume-token! 'ID)))
 			   id))
-		(import (vector id alias loc))
+		(import (instantiate::J2SImportName
+			   (id id)
+			   (alias alias)
+			   (loc loc)))
 		(next (consume-any!)))
 	    (case (token-tag next)
 	       ((RBRACE)
@@ -1211,19 +1214,26 @@
 		(parse-token-error "Illegal import" next))))))
 
    (define (export-decl decl::J2SDecl)
-      (with-access::J2SDecl decl (export id)
-	 (set! export
-	    (instantiate::J2SExport
-	       (id id)
-	       (decl decl)))))
+      (with-access::J2SDecl decl (id export binder scope)
+	 (set! binder 'export)
+	 (set! scope 'export)
+	 (set! export (instantiate::J2SExport
+			 (id id)
+			 (decl decl)))
+	 decl))
+   
+   (define (export-declinit decl::J2SDeclInit)
+      (with-access::J2SDeclInit decl (export id)
+	 (duplicate::J2SDeclImport decl
+	    (alias id))))
    
    (define (export token)
       (case (peek-token-type)
 	 ((var let const)
 	  (let ((stmt (statement)))
 	     (with-access::J2SVarDecls stmt (decls)
-		(for-each export-decl decls)
-		stmt)))
+		(set! decls (map export-decl decls)))
+	     stmt))
 	 ((LBRACE)
 	  (tprint "tobeimplemented"))
 	 ((function class)

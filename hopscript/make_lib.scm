@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/make_lib.scm            */
+;*    serrano/prgm/project/hop/hop/hopscript/make_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Feb  6 17:36:22 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 10:45:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -63,6 +63,8 @@
 	   (class JsDate)
 	   (class JsError)
 	   
+	   (class JsModule)
+
 	   (class JsWorker)
 	   (class JsPromise)
 	   (class JsGenerator)

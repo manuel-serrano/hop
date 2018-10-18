@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Wed Oct 17 18:39:47 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 07:54:14 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -32,6 +32,7 @@
 (define j2s-module-stage
    (instantiate::J2SStageProc
       (name "module")
+      (footer "")
       (comment "Handle es module export and import clauses")
       (proc j2s-esmodule)
       (optional #f)))
@@ -43,6 +44,9 @@
    (when (isa? this J2SProgram)
       (esimport this this '() args)
       (esexport this this (make-cell 0)))
+   (with-access::J2SProgram this (imports path)
+      (when (and (null? imports) (>= (config-get args :verbose 0) 2))
+	 (newline (current-error-port))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -56,9 +60,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esimport this::J2SImport prgm::J2SProgram stack args)
    
-   (define (find-export prgm::J2SProgram name::vector)
-      (let ((id (vector-ref name 0))
-	    (loc (vector-ref name 2)))
+   (define (export-decl::J2SDeclImport prgm::J2SProgram name::J2SImportName)
+      (with-access::J2SImportName name (id alias loc)
 	 (with-access::J2SProgram prgm (exports path)
 	    (let loop ((exports exports)
 		       (idx 0))
@@ -73,36 +76,39 @@
 			 (location (caddr loc))))
 		   (with-access::J2SDecl (car exports) ((imp id))
 		      (if (eq? id imp)
-			  idx
+			  (instantiate::J2SDeclImport
+			     (loc loc)
+			     (id alias)
+			     (alias id)
+			     (binder 'let)
+			     (writable #f)
+			     (linkindex idx)
+			     (import this))
 			  (loop (cdr exports) (+fx idx 1)))))))))
    
    (with-access::J2SProgram prgm ((src path) imports decls)
       (with-access::J2SImport this (path loc respath names)
-	 (set! respath (resolve-module-file path (dirname src) loc))
-	 (set! imports (cons this imports))
-	 (unless (member respath stack)
-	    (call-with-input-file respath
-	       (lambda (in)
-		  (let ((margin (string-append (config-get args :verbmargin "")
-				   "   ")))
-		     (when (>= (config-get args :verbose 0) 2)
-			(fprint (current-error-port) " " path " [" respath "]"))
-		     (let ((iprgm (j2s-compile in :driver (j2s-export-driver)
-				     :verbmargin margin)))
-			(with-access::J2SProgram iprgm (exports path)
-			   (set! decls
-			      (append (map (lambda (n)
-					      (let ((idx (find-export iprgm n)))
-						 (instantiate::J2SDeclImport
-						    (loc (vector-ref n 2))
-						    (id (vector-ref n 0))
-						    (alias (vector-ref n 1))
-						    (binder 'let)
-						    (writable #f)
-						    (linkindex idx)
-						    (import this))))
-					 names)
-				 decls)))))))))))
+	 (let ((base (dirname (file-name-canonicalize (make-file-name (pwd) src)))))
+	    (set! respath (resolve-module-file path base loc))
+	    (set! imports (cons this imports))
+	    (unless (member respath stack)
+	       (call-with-input-file respath
+		  (lambda (in)
+		     (let ((margin (string-append
+				      (config-get args :verbmargin "")
+				      "     ")))
+			(when (>= (config-get args :verbose 0) 2)
+			   (fprint (current-error-port) "\n" margin
+			      path " [" respath "]"))
+			(let ((iprgm (j2s-compile in :driver (j2s-export-driver)
+					:verbose (config-get args :verbose 0)
+					:verbmargin margin)))
+			   (with-access::J2SProgram iprgm (exports path)
+			      (set! decls
+				 (append (map (lambda (n)
+						 (export-decl iprgm n))
+					    names)
+				    decls))))))))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SNode ...                                           */
@@ -133,6 +139,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve-module-file ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Almost similar to nodejs's resolve method (see                   */
+;*    nodejs/require.scm).                                             */
 ;*---------------------------------------------------------------------*/
 (define (resolve-module-file name dir loc)
    

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/use.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/use.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Aug 10 16:21:36 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 11:17:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -397,13 +397,22 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    usage ::J2SDecl ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (usage this::J2SDecl ctx deval infun)
+   (with-access::J2SDecl this ((u usage) export)
+      (when (and export (not (memq 'ref u)))
+	 (set! u (cons 'ref u))))
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    usage ::J2SDeclInit ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SDeclInit ctx deval infun)
    (with-access::J2SDeclInit this ((u usage) val)
       (usage val 'ref deval infun)
       (set! u (cons 'init u)))
-   this)
+   (call-next-method))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SReturn ...                                            */

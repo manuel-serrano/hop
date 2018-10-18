@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Oct 16 07:32:56 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 08:42:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -59,12 +59,14 @@
 		(hds (append-map (lambda (s) (collect* s)) headers))
 		(vars (append-map (lambda (s) (collect* s)) nodes))
 		(lets (collect-let nodes))
-		(env (append hds vars lets))
+		(env (append decls hds vars lets))
 		(genv (list %this %dummy))
 		(scope (config-get conf :bind-global '%scope))
 		(vdecls (bind-decls! vars env mode scope '() '() genv conf)))
 	    (when (pair? vars)
-	       (set! decls (filter (lambda (d) (isa? d J2SDecl)) vdecls)))
+	       (set! decls
+		  (append decls
+		     (filter (lambda (d) (isa? d J2SDecl)) vdecls))))
 	    (when (pair? lets)
 	       (for-each (lambda (d::J2SDecl)
 			    (with-access::J2SDecl d (scope)
@@ -158,7 +160,8 @@
 	  (append (reverse! acc) (reverse! funs))
 	  (let ((decl (car decls)))
 	     (with-access::J2SDecl decl (id (bscope scope))
-		(set! bscope scope)
+		(unless (eq? bscope 'export)
+		   (set! bscope scope))
 		(let ((old (find-decl id acc)))
 		   (if old
 		       (if (or (isa? decl J2SDeclFun)
