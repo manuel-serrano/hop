@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/nodejs/hop.js                     */
+/*    serrano/prgm/project/hop/3.2.x/nodejs/hop.js                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Oct 20 08:16:15 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Wed Sep 12 11:51:32 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
@@ -19,6 +19,13 @@ exports.hostname = hop.hostname;
 exports.version = hop.version;
 exports.__defineGetter__( 'port', function() { return hop.port(); } );
 exports.standalone = hop.standalone;
+
+/*---------------------------------------------------------------------*/
+/*    Server configuration                                             */
+/*---------------------------------------------------------------------*/
+exports.__defineGetter__( 'httpAuthenticationMethod',
+			  hop.httpAuthenticationMethodGet,
+			  hop.httpAuthenticationMethodSet );
 
 /*---------------------------------------------------------------------*/
 /*    Services                                                         */
@@ -75,6 +82,8 @@ exports.createElement = hop.createElement;
 /*---------------------------------------------------------------------*/
 exports.encodeURIComponent = hop.encodeURIComponent;
 exports.encodeHTML = hop.encodeHTML;
+exports.decodeURIComponent = hop.decodeURIComponent;
+exports.decodeHTML = hop.decodeHTML;
 exports.md5sum = hop.md5sum;
 exports.sha1sum = hop.sha1sum;
 
@@ -209,6 +218,8 @@ exports.hss = hop.modulesDir + "/hss";
 exports.markdown = hop.modulesDir + "/markdown";
 exports.syslog = hop.modulesDir + "/syslog";
 exports.systime = hop.modulesDir + "/systime";
+exports.hopc = hop.modulesDir + "/hopc";
+exports.feed = hop.modulesDir + "/feed";
 
 Object.seal( exports );
 Object.freeze( exports );

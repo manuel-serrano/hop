@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/promise.scm             */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/promise.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Aug 29 09:03:45 2018 (serrano)                */
+;*    Last change :  Fri Jan 12 18:27:00 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -20,9 +20,10 @@
    
    (library hop)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_lib
 	   __hopscript_object
 	   __hopscript_function
@@ -161,7 +162,7 @@
    ;; builtin prototype
    (define js-promise-prototype
       (with-access::JsGlobalObject %this (__proto__)
-	 (instantiate::JsPromise
+	 (instantiateJsPromise
 	    (worker (js-undefined))
 	    (%this %this)
 	    (__proto__ __proto__))))
@@ -186,7 +187,8 @@
 		(with-handler
 		   (lambda (e)
 		      ;; promise .10.a
-		      (exception-notify e)
+		      (when (>=fx (bigloo-debug) 1)
+			 (exception-notify e))
 		      (js-call1 %this reject (js-undefined) e)
 		      o)
 		   (begin
@@ -196,7 +198,7 @@
    
    ;; promise allocation
    (define (js-promise-alloc::JsPromise constructor::JsFunction)
-      (instantiate::JsPromise
+      (instantiateJsPromise
 	 (worker (js-current-worker))
 	 (%this %this)
 	 (__proto__ (js-get constructor 'prototype %this))))
@@ -232,12 +234,13 @@
 			      (vector-set! it i result)
 			      (set! count (-fx count 1))
 			      (if (=fx count 0)
-				  (js-vector->jsarray it %this)
+				  (promise-resolve promise
+				     (js-vector->jsarray it %this))
 				  js-unresolved))
 			   1 "onfullfilled")
 			(js-make-function %this
 			   (lambda (this reason)
-			      reason)
+			      (promise-reject promise reason))
 			   1 "onrejected")
 			promise)
 		     (loop (-fx i 1)))
@@ -260,11 +263,11 @@
 		     (js-promise-then-catch %this (vector-ref it i)
 			(js-make-function %this
 			   (lambda (this result)
-			      result)
+			      (promise-resolve promise result))
 			   1 "onfullfilled")
 			(js-make-function %this
 			   (lambda (this reason)
-			      reason)
+			      (promise-reject promise reason))
 			   1 "onrejected")
 			promise)
 		     (loop (+fx i 1)))
@@ -388,6 +391,8 @@
 			  (rejecter #f)
 			  (state 'pending)
 			  (%name "then-catch"))))
+		(js-object-properties-set! np '())
+		(js-object-mode-set! np (js-object-default-mode))
 		(js-promise-then-catch %this this onfullfilled onrejected np)))))
       
    ;; catch

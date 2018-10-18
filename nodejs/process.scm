@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/process.scm                */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/process.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed May 17 11:16:55 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Sun Jun 10 13:30:49 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
 ;*=====================================================================*/
@@ -22,6 +22,7 @@
       (enable-ssl (library ssl)))
 
    (include "nodejs.sch"
+	    "nodejs_types.sch"
 	    "nodejs_debug.sch"
 	    "nodejs_async.sch")
 
@@ -75,6 +76,12 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compiler-options-add! k v)
    (j2s-compile-options-set! (cons* k v (j2s-compile-options))))
+
+;*---------------------------------------------------------------------*/
+;*    binding ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-macro (binding var val)
+   `(or ,var (begin (set! ,var ,val) ,var)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-process ...                                               */
@@ -185,13 +192,13 @@
 	       (let ((remall (js-make-function %this removeall 1 "removeAllListeners")))
 		  (js-put! %process 'removeAllListeners remall #f %this))))
 	 ;; stdios
-	 (let* ((oldstdout (js-get %process 'stdout %this))
-		(oldstderr (js-get %process 'stderr %this))
+	 (let* (;; (oldstdout (js-get %process 'stdout %this))
+		;; (oldstderr (js-get %process 'stderr %this))
 		(m (nodejs-require-core "node_stdio" %worker %this))
 		(stdio (js-get m 'initNodeStdio %this)))
 	    (js-call1 %this stdio (js-undefined) %process))
 	 ;; console finalization
-	 ;; for this a new console object is create and the core module
+	 ;; for this a new console object is created and the core module
 	 ;; console.exports value is updated
 	 (let* ((stdout (js-get %process 'stdout %this))
 		(stderr (js-get %process 'stderr %this))
@@ -229,7 +236,7 @@
 ;*---------------------------------------------------------------------*/
 (define (new-process-object %worker::WorkerHopThread %this)
    (with-access::JsGlobalObject %this (js-object)
-      (let ((proc (instantiate::JsProcess
+      (let ((proc (instantiateJsProcess
 		     (cmap (instantiate::JsConstructMap))
 		     (__proto__ (js-new %this js-object)))))
 
@@ -301,6 +308,24 @@
 	    ;; see NeedTickCallback, node.cc:215
 	    (set! need-tick-cb #t)
 	    (nodejs-idle-start %worker %this tick-spinner))
+
+	 (define constant-binding #f)
+	 (define fs-binding #f)
+	 (define buffer-binding #f)
+	 (define tcp-binding #f)
+	 (define udp-binding #f)
+	 (define pipe-binding #f)
+	 (define eval-binding #f)
+	 (define cares-binding #f)
+	 (define timer-binding #f)
+	 (define process-binding #f)
+	 (define crypto-binding #f)
+	 (define http-binding #f)
+	 (define zlib-binding #f)
+	 (define os-binding #f)
+	 (define tty-binding #f)
+	 (define fs-event-binding #f)
+	 (define hop-binding #f)
 	 
 	 ;; these stdio definitions are used during the bootstrap only
 	 ;; they will be overriden by node_stdio.js
@@ -416,12 +441,14 @@
 			(js-put! proc '_exiting #t #f %this)
 			(let ((emit (js-get proc 'emit %this)))
 			   (js-call2 %this emit proc "exit" r))
+			(nodejs-compile-abort-all!)
 			(exit r))))
 	       1 "exit")
 	    #f %this)
 	 (js-put! proc 'reallyExit
 	    (js-make-function %this
 	       (lambda (this status)
+		  (nodejs-compile-abort-all!)
 		  (exit (js-tointeger status %this)))
 	       1 "exit")
 	    #f %this)
@@ -433,39 +460,56 @@
 		  (let ((mod (js-jsstring->string module)))
 		     (cond
 			((string=? mod "constants")
-			 (process-constants %this))
+			 (binding constant-binding
+			    (process-constants %this)))
 			((string=? mod "fs")
-			 (process-fs %worker %this proc))
+			 (binding fs-binding
+			    (process-fs %worker %this proc)))
 			((string=? mod "buffer")
-			 (process-buffer %this slowbuffer))
+			 (binding buffer-binding
+			    (process-buffer %this slowbuffer)))
 			((string=? mod "tcp_wrap")
-			 (process-tcp-wrap %worker %this proc slab slowbuffer))
+			 (binding tcp-binding
+			    (process-tcp-wrap %worker %this proc slab slowbuffer)))
 			((string=? mod "udp_wrap")
-			 (process-udp-wrap %worker %this proc slab slowbuffer))
+			 (binding udp-binding
+			    (process-udp-wrap %worker %this proc slab slowbuffer)))
 			((string=? mod "pipe_wrap")
-			 (process-pipe-wrap %worker %this proc slab))
+			 (binding pipe-binding
+			    (process-pipe-wrap %worker %this proc slab)))
 			((string=? mod "evals")
-			 (process-evals %worker %this))
+			 (binding eval-binding
+			    (process-evals %worker %this)))
 			((string=? mod "cares_wrap")
-			 (process-cares-wrap %worker %this proc))
+			 (binding cares-binding
+			    (process-cares-wrap %worker %this proc)))
 			((string=? mod "timer_wrap")
-			 (hopjs-process-timer %worker %this proc))
+			 (binding timer-binding
+			    (hopjs-process-timer %worker %this proc)))
 			((string=? mod "process_wrap")
-			 (process-process-wrap %worker %this proc))
+			 (binding process-binding
+			    (process-process-wrap %worker %this proc)))
 			((string=? mod "crypto")
-			 (process-crypto %worker %this))
+			 (binding crypto-binding
+			    (process-crypto %worker %this)))
 			((string=? mod "http_parser")
-			 (process-http-parser %this))
+			 (binding http-binding
+			    (process-http-parser %this)))
 			((string=? mod "zlib")
-			 (process-zlib %worker %this proc))
+			 (binding zlib-binding
+			    (process-zlib %worker %this proc)))
 			((string=? mod "os")
-			 (process-os %this))
+			 (binding os-binding
+			    (process-os %this)))
 			((string=? mod "tty_wrap")
-			 (process-tty-wrap %worker %this proc slab slowbuffer))
+			 (binding tty-binding
+			    (process-tty-wrap %worker %this proc slab slowbuffer)))
 			((string=? mod "fs_event_wrap")
-			 (process-fs-event-wrap %worker %this proc))
+			 (binding fs-event-binding
+			    (process-fs-event-wrap %worker %this proc)))
 			((string=? mod "hop")
-			 (hopjs-process-hop %worker %this))
+			 (binding hop-binding
+			    (hopjs-process-hop %worker %this)))
 			(else
 			 (warning "%nodejs-process"
 			    "binding not implemented: " mod)
@@ -812,7 +856,7 @@
 	 fs-event-proto))
    
    (define (fs-event this)
-      (instantiate::JsHandle
+      (instantiateJsHandle
 	 (handle (nodejs-make-fs-event %worker))
 	 (__proto__ (get-fs-event-proto process))))
    

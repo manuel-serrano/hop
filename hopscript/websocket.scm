@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/websocket.scm           */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/websocket.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
@@ -14,11 +14,12 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_websocket
 
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (library web hop js2scheme)
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_object
 	   __hopscript_property
 	   __hopscript_private
@@ -174,15 +175,15 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 (define js-websocket-prototype
-	    (instantiate::JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 	 
 	 (define js-websocket-server-prototype
-	    (instantiate::JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 	 
 	 (define js-websocket-client-prototype
-	    (instantiate::JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 
 	 (define (js-websocket-construct o url options)
@@ -219,7 +220,7 @@
 					     (lambda (e)
 						(exception-notify e))
 					     (wss-onbinary data queue worker))))))
-		      (obj (instantiate::JsWebSocket
+		      (obj (instantiateJsWebSocket
 			      (__proto__ js-websocket-prototype)
 			      (worker worker)
 			      (recvqueue queue)
@@ -256,7 +257,7 @@
 	    (lambda (resp)
 	       (with-access::http-response-websocket resp (request)
 		  (with-access::http-request request (socket)
-		     (let  ((ws (instantiate::JsWebSocketClient
+		     (let  ((ws (instantiateJsWebSocketClient
 				   (socket socket)
 				   (wss wss)
 				   (__proto__ js-websocket-client-prototype))))
@@ -368,7 +369,7 @@
 			      (let ((req (current-request)))
 				 (websocket-server-response req 0
 				    (wss-onconnect wss) proto))))
-		      (wss (instantiate::JsWebSocketServer
+		      (wss (instantiateJsWebSocketServer
 			      (state (js-websocket-state-open))
 			      (worker (js-current-worker))
 			      (__proto__ js-websocket-server-prototype)
@@ -395,7 +396,8 @@
 		  (js-new %this js-websocket url options))
 	       2 'WebSocket
 	       :__proto__ js-function-prototype
-	       :construct js-websocket-construct))
+	       :construct js-websocket-construct
+	       :shared-cmap #f))
 	 
 	 (define js-websocket-server
 	    (js-make-function %this
@@ -403,7 +405,8 @@
 		  (js-new %this js-websocket-server path))
 	       1 'WebSocketServer
 	       :__proto__ js-function-prototype
-	       :construct js-websocket-server-construct))
+	       :construct js-websocket-server-construct
+	       :shared-cmap #f))
 	 
 	 (js-bind! %this %this 'WebSocket
 	    :configurable #f :enumerable #f :value js-websocket
@@ -415,19 +418,19 @@
 	 (js-bind! %this js-websocket 'CONNECTING
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-connecting)
-	    :hidden-class #t)
+	    :hidden-class #f)
 	 (js-bind! %this js-websocket 'OPEN
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-open)
-	    :hidden-class #t)
+	    :hidden-class #f)
 	 (js-bind! %this js-websocket 'CLOSING
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-closing)
-	    :hidden-class #t)
+	    :hidden-class #f)
 	 (js-bind! %this js-websocket 'CLOSED
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-closed)
-	    :hidden-class #t)
+	    :hidden-class #f)
 
 	 (js-undefined))))
 
@@ -680,7 +683,7 @@
 	    ((isa? val JsHopFrame)
 	     val)
 	    ((isa? val JsObject)
-	     (instantiate::JsHopFrame
+	     (instantiateJsHopFrame
 		(%this %this)
 		(args (map! cdr
 			 (js-jsobject->alist (js-get val 'args %this) %this)))
@@ -690,7 +693,7 @@
 		(path (string-append
 			 (hop-service-base) "/" (js-get val 'path %this)))))
 	    ((pair? val)
-	     (instantiate::JsHopFrame
+	     (instantiateJsHopFrame
 		(%this %this)
 		(args (cdr val))
 		(header '())

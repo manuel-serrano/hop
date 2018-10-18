@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/webSocket.js      */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/serv/webSocket.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Thu Sep 17 11:43:00 2015                          */
-/*    Last change :  Fri Sep 18 16:11:43 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Tue Oct 10 12:48:36 2017 (serrano)                */
+/*    Copyright   :  2015-17 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Stress test for webSockets                                       */
 /*=====================================================================*/
@@ -26,7 +26,7 @@ serv.onconnection = function( event ) {
 
 var NUMCLIENTS = 5; // number of concurrent clients
 var NUMCALLS = 1000; // number of ws messages sent per client
-var TIMEOUT = 10000; //global timeout (test will fail if not completed by then)
+var TIMEOUT = 20000; //global timeout (test will fail if not completed by then)
 // change TIMEOUT value to match your hardware ( ~ 500 requests/s on a laptop)
 
 function onFailure() {

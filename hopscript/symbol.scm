@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/symbol.scm              */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Nov 25 14:52:26 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Sat Sep  8 20:19:06 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
 ;*    -------------------------------------------------------------    */
@@ -20,9 +20,10 @@
    
    (library hop)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_lib
 	   __hopscript_object
 	   __hopscript_function
@@ -60,8 +61,8 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((nobj (duplicate::JsSymbol obj
-			(__proto__ (js-get js-object 'prototype %this))
-			(properties '()))))
+			(__proto__ (js-get js-object 'prototype %this)))))
+	    (js-object-properties-set! nobj '())
 	    (js-for-in obj
 	       (lambda (k)
 		  (js-put! nobj k
@@ -74,6 +75,13 @@
 ;*    js-tostring ::JsSymbolLiteral ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (js-tostring obj::JsSymbolLiteral %this)
+   (with-access::JsSymbolLiteral obj (val)
+      (string-append "Symbol(" val ")")))
+
+;*---------------------------------------------------------------------*/
+;*    js-inspect ::JsSymbolLiteral ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect obj::JsSymbolLiteral cnt)
    (with-access::JsSymbolLiteral obj (val)
       (string-append "Symbol(" val ")")))
 
@@ -119,8 +127,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-name ::JsSymbolLiteral ...                         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name o::JsSymbolLiteral enump::bool %this)
-   '#())
+(define-method (js-properties-names o::JsSymbolLiteral enump::bool %this)
+   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsSymbolLiteral ...                            */
@@ -148,6 +156,11 @@
    (create-hashtable :eqtest string=? :hash string-hash))   
 
 ;*---------------------------------------------------------------------*/
+;*    symbols ...                                                      */
+;*---------------------------------------------------------------------*/
+(define symbols '())
+
+;*---------------------------------------------------------------------*/
 ;*    js-init-symbol! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-symbol! %this::JsGlobalObject)
@@ -157,19 +170,21 @@
 					 js-symbol-ctor
 					 js-symbol-table
 					 js-symbol-iterator
-					 js-symbol-species)
+					 js-symbol-species
+					 js-symbol-hasinstance
+					 js-symbol-tostringtag)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 ;; builtin prototype
 	 (define js-symbol-prototype
-	    (instantiate::JsSymbol
+	    (instantiateJsSymbol
 	       (val (instantiate::JsSymbolLiteral (val "")))
 	       (__proto__ __proto__)))
 
 	 (set! js-symbol-ctor
 	    ;; this constructor is invoked when Object( symbol ) is called
 	    (lambda (this arg)
-	       (instantiate::JsSymbol
+	       (instantiateJsSymbol
 		  (__proto__ js-symbol-prototype)
 		  (val arg))))
 	 
@@ -181,23 +196,29 @@
 		     (val (if (null? args) "" (js-tostring (car args) %this)))))
 	       1 'Symbol
 	       :__proto__ js-function-prototype
-	       :prototype js-symbol-prototype))
+	       :prototype js-symbol-prototype
+	       :shared-cmap #f))
 	 
 	 (js-bind! %this %this 'Symbol
 	    :configurable #f :enumerable #f :value js-symbol
 	    :hidden-class #t)
 
 	 (define (bind-symbol! s)
-	    (let ((sym (instantiate::JsSymbolLiteral
-			  (val (string-append "Symbol."
-				  (symbol->string! s))))))
+	    (let ((o (assq s symbols)))
+	       (let ((v (if (pair? o)
+			    (cdr o)
+			    (let ((sym (instantiate::JsSymbolLiteral
+					  (val (string-append "Symbol."
+						  (symbol->string! s))))))
+			       (set! symbols (cons (cons s sym) symbols))
+			       sym))))
 	       (js-bind! %this js-symbol s
-		  :value sym
+		  :value v
 		  :writable #f
 		  :enumerable #f
 		  :configurable #f
 		  :hidden-class #f)
-	       sym))
+	       v)))
 	 
 	 ;; for
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-symbol.for
@@ -215,7 +236,7 @@
 	    :writable #t
 	    :enumerable #f
 	    :configurable #t
-	    :hidden-class #t)
+	    :hidden-class #f)
 
 	 ;; keyFor
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-symbol.keyfor
@@ -230,16 +251,29 @@
 	    :writable #t
 	    :enumerable #f
 	    :configurable #t
-	    :hidden-class #t)
+	    :hidden-class #f)
 
 	 ;; global symbols
 	 (for-each bind-symbol!
-	    '(hasInstance isConcatSpreadable match
-	      replace search split toPrimitive toStringTag
+	    '(isConcatSpreadable match
+	      replace search split toPrimitive
 	      unscopables))
 
+	 ;; hop symbol
+	 (bind-symbol! 'compiler)
+
+	 ;; bind the known symbols
 	 (set! js-symbol-iterator (bind-symbol! 'iterator))
+	 (set! js-symbol-tostringtag (bind-symbol! 'toStringTag))
 	 (set! js-symbol-species (bind-symbol! 'species))
+
+	 ;; hasinstance has already been allocated
+	 (js-bind! %this js-symbol 'hasInstance
+	    :value js-symbol-hasinstance
+	    :writable #f
+	    :enumerable #f
+	    :configurable #f
+	    :hidden-class #f)
 
 	 ;; prototype properties
 	 (init-builtin-symbol-prototype! %this js-symbol js-symbol-prototype)

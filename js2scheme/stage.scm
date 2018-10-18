@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/stage.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/stage.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Fri Feb  3 15:31:13 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Thu Oct 18 08:22:37 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
 ;*=====================================================================*/
@@ -16,14 +16,16 @@
 
    (library hop)
    
-   (import __js2scheme_ast)
+   (import __js2scheme_ast
+	   __js2scheme_utils)
 
    (use    __js2scheme_dump)
    
    (export (abstract-class J2SStage
 	      (name::bstring read-only)
+	      (footer::bstring read-only (default "\n"))
 	      (comment::bstring read-only)
-	      (optional::bool read-only (default #f))
+	      (optional read-only (default #f))
 	      (before read-only (default #f))
 	      (after read-only (default #f)))
 
@@ -53,27 +55,42 @@
 	 (if (pair? l)
 	     (cadr l)
 	     (hop-verbose))))
-   
-   (with-access::J2SStage stage (name comment before after)
-      (when (>=fx (j2s-verbose) 2)
-	 (fprintf (current-error-port) "~3d. ~a" count name))
-      (when (procedure? before) (before ast))
-      (let ((nast (proc ast args)))
-	 (when (directory? tmp)
-	    (let ((file (make-file-path tmp
-			   (string-replace name (file-separator) #\_))))
-	       (cond
-		  ((>=fx (bigloo-debug) 1)
-		   (call-with-output-file file
-		      
-		      (lambda (p)
-			 (fprint p ";; " comment)
-			 (pp (j2s->list nast) p))))
-		  ((file-exists? file)
-		   (delete-file file)))))
-	 (when (procedure? after) (after nast))
-	 (when (>=fx (j2s-verbose) 2) (newline (current-error-port)))
-	 nast)))
+
+   (define (active? stage)
+      (with-access::J2SStage stage (optional)
+	 (let loop ((opt optional))
+	    (or (not opt)
+		(and (keyword? opt) (config-get args opt #f))
+		(and (integer? opt) (>= (config-get args :optim 0) opt))
+		(and (procedure? opt) (opt args))
+		(and (eq? opt #t) (error "stage" "bad opt" stage))
+		(and (pair? opt) (any loop opt))))))
+
+   (with-access::J2SStage stage (name footer comment before after)
+      (if (active? stage)
+	  (begin
+	     (when (>=fx (j2s-verbose) 2)
+		(fprintf (current-error-port) "~a~3d. ~a"
+		   (config-get args :verbmargin "") count name))
+	     (when (procedure? before) (before ast))
+	     (let ((nast (proc ast args)))
+		(when (directory? tmp)
+		   (let ((file (make-file-path tmp
+				  (string-replace name (file-separator) #\_))))
+		      (cond
+			 ((config-get args :debug-stage)
+			  (call-with-output-file file
+			     (lambda (p)
+				(fprint p ";; -*-bee-*-")
+				(fprint p ";; " comment)
+				(pp (j2s->list nast) p))))
+			 ((file-exists? file)
+			  (delete-file file)))))
+		(when (procedure? after) (after nast))
+		(when (>=fx (j2s-verbose) 2)
+		   (display footer (current-error-port)))
+		(values nast #t)))
+	  (values ast #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    driver-exec ...                                                  */

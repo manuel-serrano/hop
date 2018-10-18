@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/doc/hss/doc.hss                   */
+/*    serrano/prgm/project/hop/3.2.x/doc/hss/doc.hss                   */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Mon Jan 29 15:07:18 2018 (serrano)                */
+/*    Last change :  Fri Oct 12 10:26:51 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -62,32 +62,53 @@ p.danger {
 .jumbotron svg {
   transition: 0.5s all;
 }  
-  .jumbotron h1, .jumbotron p {
+
+.jumbotron h1, .jumbotron p {
   transition: 0.2s all;
+}
+
+.jumbotron p.version {
+  text-align: left;
+  padding-top: 60px;
 }
 
 [scrolled="yes"] .jumbotron {
   margin-top: 0;
-  padding-top: 48px;
+  padding-top: 38px;
   padding-bottom: 0px;
+  opacity: 0.85;
 }
 
 [scrolled="yes"] .jumbotron h1 {
-  margin-top: 8px;
   margin-bottom: 4px;
+  margin-top: 20px;
+  font-size: 230%;
 }
 
 [scrolled="yes"] .jumbotron svg {
-  transform: scale(0.6);
+  transform: scale(0.4);
+  filter: grayscale(30%);
 }
 
-[scrolled="yes"] .jumbotron h1 {
-  margin-top: 20px;
-  font-size: 300%;
+[scrolled="yes"] .jumbotron .svg-container {
+  height: 10px;
+  font-size: 10px;
 }
+
 [scrolled="yes"] .jumbotron p {
-  margin-top: 8px;
+  margin-top: 2px;
   font-size: 110%;
+}
+
+[scrolled="yes"] .jumbotron p.version {
+  text-align: left;
+  padding-top: 24px;
+  margin-top: 6px;
+  font-size: 100%;
+}
+
+[scrolled="yes"] div.col-md-2 {
+  height: 8ex;
 }
 
 /*---------------------------------------------------------------------*/
@@ -236,6 +257,7 @@ h3.glyphicon:before,
 h4.glyphicon:before {
   font-size: 65%;
   margin-right: 0.4em;
+  margin-left: 2px;
   font-family: 'Glyphicons Halflings';
   font-style: normal;
   font-weight: 400;
@@ -266,6 +288,16 @@ h4.tag:before {
 h3.scheme:before,
 h4.scheme:before {
   color: #720bc3;
+}
+
+h3.syntax:before,
+h4.syntax:before {
+  color: #555555;
+}
+
+h3.ext-function:before,
+h4.ext-function:before {
+  color: #f63646;
 }
 
 /*---------------------------------------------------------------------*/

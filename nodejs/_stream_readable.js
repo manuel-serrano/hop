@@ -874,7 +874,7 @@ Readable.prototype.wrap = function(stream) {
 	 console_error( "push.6" );
     var ret = self.push(chunk);
     if (!ret) {
-      paused = true;
+       paused = true;
       stream.pause();
     }
   });

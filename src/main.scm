@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/src/main.scm                      */
+;*    serrano/prgm/project/hop/3.2.x/src/main.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Aug 23 17:21:24 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Wed Sep  5 07:53:21 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -92,6 +92,8 @@
 	 ;; install the builtin filters
 	 (hop-filter-add! service-filter)
 	 (hop-init args files exprs)
+	 ;; adjust the actual hop-port before executing client code
+	 (hop-port-set! (socket-port-number (hop-server-socket)))
 	 ;; js rc load
 	 (if (hop-javascript)
 	     (set! jsworker (javascript-init args files exprsjs))
@@ -103,7 +105,8 @@
 	 (when (hop-enable-webdav) (init-webdav!))
 	 (when (hop-enable-fast-server-event) (init-flash!))
 	 ;; close filter installation
-	 (hop-filters-close!)
+	 (unless (hop-javascript)
+	    (hop-filters-close!))
 	 ;; https file handling
 	 (cond-expand
 	    (enable-ssl
@@ -121,8 +124,7 @@
 		  "An error has occurred in the Hop main loop, exiting...")
 	       (exit 1))
 	    (let ((serv (hop-server-socket)))
-	       ;; adjust the actual hop-port
-	       (hop-port-set! (socket-port-number serv))
+	       ;; fast server event socket
 	       (hop-fast-server-event-port-set! (socket-port-number serv))
 	       ;; ready to now say hello
 	       (hello-world)
@@ -159,7 +161,9 @@
 		  (when jsworker
 		     (synchronize jsmutex
 			(unless jsinit
-			   (condition-variable-wait! jscondv jsmutex))))
+			   (condition-variable-wait! jscondv jsmutex)
+			   (users-close!)
+			   (hop-filters-close!))))
 		  ;; start the main loop
 		  (scheduler-accept-loop (hop-scheduler) serv #t))
 	       (if jsworker
@@ -178,7 +182,7 @@
 	 ;; set a dummy request
 	 (thread-request-set! #unspecified req)
 	 ;; preload the user files
-	 (for-each (lambda (f) (load-command-line-weblet f #f)) files)
+	 (for-each (lambda (f) (load-command-line-weblet f #f #f #f)) files)
 	 ;; unset the dummy request
 	 (thread-request-set! #unspecified #unspecified)))
    ;; evaluate the user expressions
@@ -204,18 +208,23 @@
 	  (%worker (js-init-main-worker! %global
 		      ;; keep-alive
 		      (or (hop-run-server) (eq? (hop-enable-repl) 'js))
-		      nodejs-new-global-object)))
+		      nodejs-new-global-object))
+	  (%module (nodejs-new-module "." "" %worker %global)))
       ;; js loader
-      (hop-loader-add! "js" (lambda (path . test) (nodejs-load path %worker)))
+      (hop-loader-add! "js"
+	 (lambda (path . test) (nodejs-load path path %global %module %worker)))
+      ;; profiling
+      (when (hop-profile)
+	 (js-profile-init `(:server #t) #f))
       ;; rc.js file
       (when (string? (hop-rc-loaded))
-	 (javascript-rc %worker %global))
+	 (javascript-rc %global %module %worker))
       ;; hss extension
       (when (hop-javascript) (javascript-init-hss %worker %global))
       ;; create the repl JS module
       (let ((path (file-name-canonicalize!
 		     (make-file-name (pwd) (car args)))))
-	 (nodejs-module "repl" path %worker %global))
+	 (nodejs-new-module "<repl>" path %worker %global))
       ;; push the user expressions
       (when (pair? exprs)
 	 (js-worker-push-thunk! %worker "cmdline"
@@ -229,7 +238,6 @@
       ;; close user registration
       (js-worker-push-thunk! %worker "cmdline"
 	 (lambda ()
-	    (users-close!)
 	    (synchronize jsmutex
 	       (set! jsinit #t)
 	       (condition-variable-signal! jscondv))))
@@ -241,7 +249,9 @@
 	    ;; set a dummy request
 	    (thread-request-set! #unspecified req)
 	    ;; preload the user files
-	    (for-each (lambda (f) (load-command-line-weblet f %worker)) files)
+	    (for-each (lambda (f)
+			 (load-command-line-weblet f %global %module %worker))
+	       files)
 	    ;; unset the dummy request
 	    (thread-request-set! #unspecified #unspecified)))
       ;; install the hopscript expanders
@@ -259,7 +269,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Load the hoprc.js in a sandboxed environment.                    */
 ;*---------------------------------------------------------------------*/
-(define (javascript-rc %worker %global)
+(define (javascript-rc %global %module %worker)
    
    (define (load-rc path)
       (hop-rc-file-set! path)
@@ -278,7 +288,7 @@
 	       (let ((oldload (hop-rc-loaded)))
 		  (hop-rc-loaded! #f)
 		  (unwind-protect
-		     (nodejs-load path %worker)
+		     (nodejs-load path path %global %module %worker)
 		     (hop-rc-loaded! oldload)))))))
 
    (let ((path (string-append (prefix (hop-rc-loaded)) ".js")))
@@ -292,11 +302,12 @@
 ;*    javascript-init-hss ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init-hss %worker %global)
-   (let ((mod (nodejs-module "hss" "hss" %worker %global))
+   (let ((mod (nodejs-new-module "hss" "hss" %worker %global))
 	 (scope (nodejs-new-scope-object %global))
 	 (exp (call-with-input-string "false"
 		 (lambda (in)
 		    (j2s-compile in :driver (j2s-plain-driver)
+		       :driver-name "j2s-plain-driver"
 		       :parser 'repl
 		       :verbose 0
 		       :filename "repl.js")))))
@@ -347,7 +358,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    load-command-line-weblet ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (load-command-line-weblet f %worker)
+(define (load-command-line-weblet f %global %module %worker)
 
    (define (load-hop-directory path)
       (let ((src (string-append (basename path) ".hop")))
@@ -367,7 +378,8 @@
 		   (cmain (assq 'main obj)))
 	       (when (pair? cmain)
 		  (load-command-line-weblet
-		     (make-file-name (dirname pkg) (cdr cmain)) %worker)
+		     (make-file-name (dirname pkg) (cdr cmain))
+		     %global %module %worker)
 		  #t)))))
 
    (let ((path (cond
@@ -398,7 +410,7 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
-		      (nodejs-load path %worker))))))
+		      (nodejs-load path path %global %module %worker))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))
 	 (else

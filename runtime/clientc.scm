@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/clientc.scm               */
+;*    serrano/prgm/project/hop/3.2.x/runtime/clientc.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Fri Jan 26 08:30:33 2018 (serrano)                */
+;*    Last change :  Wed Aug  1 15:16:23 2018 (serrano)                */
 ;*    Copyright   :  2009-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -48,7 +48,8 @@
 	       (jsc::procedure read-only)
 	       (jsonc::procedure read-only)
 	       (htmlc::procedure read-only)
-	       (filename-resolver::procedure read-only (default find-file/path)))
+	       (filename-resolver::procedure read-only
+		  (default (lambda (file path mod) (find-file/path file path)))))
 
 	    (init-clientc-compiler! #!key
 	       filec expressionc valuec
@@ -70,7 +71,7 @@
 	    (clientc-cached-response ::bstring)
 	    (clientc-response::%http-response ::http-request ::bstring ::bstring ::obj)
 	    (get-clientc-compiled-file ::bstring ::bstring ::obj)
-	    (clientc-resolve-filename ::bstring ::obj)))
+	    (clientc-resolve-filename ::bstring ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    clientc-cache ...                                                */
@@ -128,7 +129,7 @@
 	 (precompiled->sexp precompiled->sexp)
 	 (precompiled-declared-variables (or precompiled-declared-variables null))
 	 (precompiled-free-variables (or precompiled-free-variables null))
-	 (filename-resolver (or filename-resolver (lambda (n p) n)))
+	 (filename-resolver (or filename-resolver (lambda (n p m) n)))
 	 (jsc (or jsc error))
 	 (jsonc (or jsonc error))
 	 (htmlc (or htmlc error)))))
@@ -246,6 +247,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    clientc-resolve-filename ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (clientc-resolve-filename url path)
+(define (clientc-resolve-filename url path module)
    (with-access::clientc (hop-clientc) (filename-resolver)
-      (filename-resolver url path)))
+      (filename-resolver url path module)))

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/generator.scm           */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/generator.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri May 26 07:25:45 2017 (serrano)                */
-;*    Copyright   :  2015-17 Manuel Serrano                            */
+;*    Last change :  Tue Aug 14 15:10:01 2018 (serrano)                */
+;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
 ;*    -------------------------------------------------------------    */
@@ -20,10 +20,10 @@
    
    (library hop)
    
-   (include "stringliteral.sch")
-;* 	    "property.sch")                                            */
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_lib
 	   __hopscript_object
 	   __hopscript_function
@@ -37,8 +37,6 @@
 	   __hopscript_spawn)
    
    (export (js-init-generator! ::JsGlobalObject)
-;* 	   (js-init-spawn! ::JsGlobalObject)                           */
-;* 	   (js-spawn ::JsFunction ::obj ::JsGlobalObject)              */
 	   js-yield-cmap
 	   (js-make-generator::JsGenerator ::procedure ::JsObject ::JsGlobalObject)
 	   (js-make-iterator ::object ::JsGlobalObject)
@@ -55,49 +53,10 @@
 ;*---------------------------------------------------------------------*/
 (define %spawn::procedure list)
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-init-spawn! ...                                               *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (js-init-spawn! %this)                                      */
-;*                                                                     */
-;*    (define (make-module %this)                                      */
-;*       (with-access::JsGlobalObject %this (js-object)                */
-;* 	 (let ((mod (instantiate::JsObject (__proto__ js-object)))     */
-;* 	       (exp (instantiate::JsObject (__proto__ js-object))))    */
-;* 	    (js-put! mod 'exports exp #f %this)                        */
-;* 	    mod)))                                                     */
-;*                                                                     */
-;*    (define (make-scope %this mod)                                   */
-;*       (with-access::JsGlobalObject %this (js-object)                */
-;* 	 (let ((scope (instantiate::JsObject (__proto__ %this))))      */
-;* 	    (js-put! scope 'module mod #f %this)                       */
-;* 	    scope)))                                                   */
-;*                                                                     */
-;*    (tprint "js-init-spawn!")                                        */
-;*    (when (eq? %spawn list)                                          */
-;*       (let* ((%module (make-module %this))                          */
-;* 	     (%scope (make-scope %this %module))                       */
-;* 	     (mod ((@ hopscript __hopscript_spawn) %this %this %scope %module)) */
-;* 	     (spawn (js-get mod 'exports %this)))                      */
-;* 	 (tprint "sp=" spawn)                                          */
-;* 	 (with-access::JsFunction spawn (procedure)                    */
-;* 	    (set! %spawn procedure)))))                                */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-spawn ...                                                     *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (js-spawn fun this %this)                                   */
-;*    (tprint "THIS=" (typeof %this))                                  */
-;*    (with-access::JsFunction fun (procedure)                         */
-;*       (when (eq? %spawn list)                                       */
-;* 	 (js-init-spawn! %this))                                       */
-;*       (%spawn this fun this)))                                      */
-
 ;*---------------------------------------------------------------------*/
 ;*    js-yield-cmap ...                                                */
 ;*---------------------------------------------------------------------*/
 (define js-yield-cmap #f)
-(define js-generator-cmap #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsGenerator ...                              */
@@ -122,19 +81,26 @@
 	 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-generator! ...                                           */
+;*    -------------------------------------------------------------    */
+;*    https://www.ecma-international.org/ecma-262/6.0/#sec-25.2        */
 ;*---------------------------------------------------------------------*/
 (define (js-init-generator! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype)
+   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype js-generatorfunction-prototype js-symbol-iterator js-symbol-tostringtag)
 
       (define js-gen-proto
-	 (instantiate::JsObject
+	 (instantiateJsObject
+	    (cmap (instantiate::JsConstructMap))
+	    (__proto__ __proto__)))
+
+      (define js-genfun-proto
+	 (instantiateJsObject
 	    (cmap (instantiate::JsConstructMap))
 	    (__proto__ js-function-prototype)))
       
       (define (js-generator-done)
-	 (instantiate::JsObject
-	    (__proto__ __proto__)
+	 (instantiateJsObject
 	    (cmap js-yield-cmap)
+	    (__proto__ __proto__)
 	    (elements (vector (js-undefined) #t))))
       
       (define (js-generator-next this val exn)
@@ -149,9 +115,9 @@
       (define (js-generator-return this val exn)
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
-		(let ((done (instantiate::JsObject
-			       (__proto__ __proto__)
+		(let ((done (instantiateJsObject
 			       (cmap js-yield-cmap)
+			       (__proto__ __proto__)
 			       (elements (vector val #t)))))
 		   (set! %next #f)
 		   done))
@@ -174,14 +140,6 @@
 		(call-with-input-string fun
 		   (lambda (ip)
 		      (%js-eval ip 'eval %this this %this))))))
-      
-      (js-bind! %this js-gen-proto 'constructor
-	 :configurable #t :enumerable #f :writable #f
-	 :value (js-make-function %this
-		   js-generator-construct
-		   1 'constructor
-		   :construct js-generator-construct)
-	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto 'next
 	 :configurable #f :enumerable #f
@@ -206,13 +164,37 @@
 		      (js-generator-next this val #t))
 		   1 'throw)
 	 :hidden-class #t)
+
+      (js-bind! %this js-gen-proto js-symbol-iterator
+	 :configurable #t :enumerable #f :writable #t
+	 :value (js-make-function %this
+		   (lambda (this val)
+		      this)
+		   0 '@@iterator
+		   :prototype (js-undefined)))
+
+      (js-bind! %this js-gen-proto js-symbol-tostringtag
+	 :configurable #t :enumerable #f :writable #f
+	 :value (js-string->jsstring "Generator"))
+
+      
+      (js-bind! %this js-genfun-proto 'constructor
+	 :configurable #t :enumerable #f :writable #f
+	 :value (js-make-function %this
+		   js-generator-construct
+		   1 'constructor
+		   :construct js-generator-construct)
+	 :hidden-class #t)
+      
+      (js-bind! %this js-genfun-proto js-symbol-tostringtag
+	 :configurable #t :enumerable #f :writable #f
+	 :value (js-string->jsstring "GeneratorFunction"))
       
       (set! js-generator-prototype js-gen-proto)
+      (set! js-generatorfunction-prototype js-genfun-proto)
       
       (set! js-yield-cmap (js-names->cmap '#(value done)))
       
-      (with-access::JsObject js-gen-proto (cmap)
-	 (set! js-generator-cmap cmap))
       ))
 	    
 ;*---------------------------------------------------------------------*/
@@ -241,15 +223,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-make-generator ...                                            */
 ;*    -------------------------------------------------------------    */
-;*    Generator use a special encoding. They directly points to the    */
+;*    Generators use a special encoding. They directly point to the    */
 ;*    elements and cmap of their prototype. This optimizes "next"      */
 ;*    and "throw" access. To preserve the semantics, JS-PUT! is        */
 ;*    overriden for that class.                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-make-generator proc proto %this)
-   (with-access::JsGlobalObject %this (js-generator-prototype)
-      (with-access::JsObject js-generator-prototype (cmap elements)
-	 (instantiate::JsGenerator
+   (with-access::JsGlobalObject %this (js-generatorfunction-prototype)
+      (with-access::JsObject js-generatorfunction-prototype (cmap elements)
+	 (instantiateJsGenerator
 	    (cmap cmap)
 	    (elements elements)
 	    (__proto__ proto)
@@ -262,8 +244,8 @@
 ;*    de-optimized (see JS-MAKE-CONSTRUCT).                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! this::JsGenerator prop v throw %this)
-   (with-access::JsGenerator this (cmap properties elements)
-      (when (and (null? properties) (isa? cmap JsConstructMap))
+   (with-access::JsGenerator this (cmap elements)
+      (when (and (null? (js-object-properties this)) (isa? cmap JsConstructMap))
 	 ;; de-optimze the generator first
 	 (set! cmap (js-not-a-cmap))
 	 (set! elements '#()))
@@ -291,7 +273,8 @@
 		     (with-access::JsGlobalObject %this (js-generator-prototype)
 			js-generator-prototype)
 		     %this)))
-      %gen))				  
+      %gen))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-generator-yield ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -299,9 +282,9 @@
    (with-access::JsGenerator gen (%next)
       (set! %next kont)
       (with-access::JsGlobalObject %this (__proto__)
-	 (instantiate::JsObject
-	    (__proto__ __proto__)
+	 (instantiateJsObject
 	    (cmap js-yield-cmap)
+	    (__proto__ __proto__)
 	    (elements (vector val done))))))
 
 ;*---------------------------------------------------------------------*/

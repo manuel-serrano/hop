@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/property.js     */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/property.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Wed Jul 19 11:43:39 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Thu Oct 11 08:14:21 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
 /*=====================================================================*/
@@ -159,6 +159,14 @@ var o = { get readwrite() { return 24; },set readwrite( val ) {} };
 
 assert.strictEqual( o.readwrite, 24 );
 
+function getfun() {
+   var foo = 55;
+   var o = { get foo() { return foo; } };
+
+   return o.foo;
+}
+
+assert.strictEqual( getfun(), 55, "getter" );
 
 /*---------------------------------------------------------------------*/
 /*    Prototypes                                                       */
@@ -297,6 +305,13 @@ p.__proto__ = i;
 eq( i.xxx, 19, "p.xxx " + i.xxx + "/19" );
 eq( p.xxx, 18, "p.xxx " + p.xxx + "/18" );
 
+var i2 = { get xxx() { return 19 }, set xxx( v ) {} };
+p2 = { __proto__: i, get xxx() { return 18 }, set xxx( v ) {} };
+p2.__proto__ = i2;
+
+eq( i2.xxx, 19, "p.xxx " + i2.xxx + "/19" );
+eq( p2.xxx, 18, "p.xxx " + p2.xxx + "/18" );
+
 var pxxx = GETX( p );
 eq( pxxx, 18, "p.xxx " + pxxx + "/18" );
 pxxx = GETX( p );
@@ -351,3 +366,30 @@ var o = { __proto__: pz };
 eq( getZ( o ), 45, "first cache" );
 pz.z = 55;
 eq( getZ( o ), 55, "second cache" );
+
+var tz0 = { a: 10, z: 45 };
+var tz = { __proto__: tz0 };
+var o2 = { __proto__: tz };
+var f = function() { return 0 };
+
+eq( getZ( o2 ), 45, "first cache (bis)" );
+tz.z = f;
+eq( getZ( o2 ), f, "second cache (bis)" );
+
+/*---------------------------------------------------------------------*/
+/*    Cmap property bug                                                */
+/*---------------------------------------------------------------------*/
+function Foo() {};
+function Bar() {};
+
+Object.defineProperty( Foo.prototype, "prop", {
+   get: function() {}, set: function(v) {}, enumerable: true
+} );
+
+Object.defineProperty( Bar.prototype, "prop", {
+   value: 10, enumerable: false
+} );
+
+
+assert.strictEqual( Foo.prototype.propertyIsEnumerable( "prop" ), true );
+assert.strictEqual( Bar.prototype.propertyIsEnumerable( "prop" ), false );

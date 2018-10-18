@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/array.sch               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/array.sch     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Wed Mar 22 07:54:36 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Mon Aug 20 07:53:31 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
 ;*=====================================================================*/
@@ -49,16 +49,6 @@
 	      deps)))
    #unspecified)
 
-;* (define-macro (define-%update-deps)                                 */
-;*    (eval '(define (%update-deps deps)                               */
-;* 	   (append-map (lambda (dep)                                   */
-;* 			  (let ((arr (car dep))                        */
-;* 				(vec (cadr dep))                       */
-;* 				(ilen (caddr dep)))                    */
-;* 			     `((set! ,ilen #u32:0))))                  */
-;* 	      deps)))                                                  */
-;*    #unspecified)                                                    */
-   
 (define-%make-ref)
 (define-%make-set)
 (define-%update-deps)
@@ -74,19 +64,22 @@
 		(<u32 (fixnum->uint32 ,i) ,alen)
 		(eq? ,mark (js-array-mark)))
 	   (vector-ref-ur ,avec ,i)
-	   (js-array-ref-ur ,arr ,i ,%this)))
+	   (js-array-ref ,arr ,i ,%this)))
    
    (%make-ref idx ref))
 
 (define-macro (JS-ARRAY-MARK-SET! arr idx val avec alen mark throw %this)
 
    (define (set i v)
-      `(if (and (fixnum? ,i)
-		(>=fx ,i 0)
-		(<u32 (fixnum->uint32 ,i) ,alen)
-		(eq? ,mark (js-array-mark)))
-	   (vector-set-ur! ,avec ,i ,v)
-	   (js-array-set-ur! ,arr ,i ,v ,throw ,%this)))
+      (let ((tmp (gensym 'tmp)))
+	 `(if (and (fixnum? ,i)
+		   (>=fx ,i 0)
+		   (<u32 (fixnum->uint32 ,i) ,alen)
+		   (eq? ,mark (js-array-mark)))
+	      (vector-set-ur! ,avec ,i ,v)
+	      (let ((,tmp (js-array-set! ,arr ,i ,v ,throw ,%this)))
+		 (set! ,alen (js-array-ilen ,arr))
+		 ,tmp))))
 
    (%make-set idx val set))
 
@@ -98,7 +91,7 @@
 		   (>=fx ,i 0)
 		   (<u32 (fixnum->uint32 ,i) ,alen))
 	      (vector-ref-ur ,avec ,i)
-	      (let ((,tmp (js-array-ref-ur ,arr ,i ,%this)))
+	      (let ((,tmp (js-array-ref-ur ,arr (fixnum->uint32 ,i) ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
    
@@ -112,7 +105,8 @@
 		   (>=fx ,i 0)
 		   (<u32 (fixnum->uint32 ,i) ,alen))
 	      (vector-set-ur! ,avec ,i ,v)
-	      (let ((,tmp (js-array-set-ur! ,arr ,i ,v ,throw ,%this)))
+	      (let ((,tmp (js-array-set-ur! ,arr (fixnum->uint32 ,i)
+			     ,v ,throw ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
 
@@ -139,17 +133,17 @@
 		(<u32 (fixnum->uint32 ,i) ,alen)
 		(eq? ,mark (js-array-mark)))
 	   (vector-set-ur! ,avec ,i ,v)
-	   (js-array-set-ur! ,arr ,i ,v ,throw ,%this)))
+	   (js-array-set-ur! ,arr (fixnum->uint32 ,i) ,v ,throw ,%this)))
 
    (%make-set idx val set))
 
-(define-macro (JS-ARRAY-FIXNUM-FAST-REF arr idx avec alen mark %this)
+(define-macro (JS-ARRAY-FIXNUM-FAST-REF arr idx avec alen deps %this)
    
    (define (ref i)
       (let ((tmp (gensym 'tmp)))
 	 `(if (and (>=fx ,i 0) (<u32 (fixnum->uint32 ,i) ,alen))
 	      (vector-ref-ur ,avec ,i)
-	      (let ((,tmp (js-array-ref-ur ,arr ,i ,%this)))
+	      (let ((,tmp (js-array-ref-ur ,arr (fixnum->uint32 ,i) ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
    
@@ -161,7 +155,8 @@
       (let ((tmp (gensym 'tmp)))
 	 `(if (and (>=fx ,i 0) (<u32 (fixnum->uint32 ,i) ,alen))
 	      (vector-set-ur! ,avec ,i ,v)
-	      (let ((,tmp (js-array-set-ur! ,arr ,i ,v ,throw ,%this)))
+	      (let ((,tmp (js-array-set-ur! ,arr (fixnum->uint32 ,i)
+			     ,v ,throw ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
    
@@ -211,3 +206,9 @@
 		 ,tmp))))
 
    (%make-set idx val set))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-vector ...                                               */
+;*---------------------------------------------------------------------*/
+(define-macro (js-make-vector len init)
+   `($js-init-vector ($alloca ($js-vector-bytesize ,len)) ,len ,init))

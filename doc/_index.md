@@ -3,12 +3,13 @@ Hop: a multitier JavaScript
 
 Hop is:
 
+* A multitier JavaScript:
+  - a single code runs on the client and the server.
 * A compliant JavaScript implementation:
   - EcmaScript 5.1 compliant;
   - EcmaScript 6 features;
   - Nodejs compatibility.
 * An extended JavaScript:
-  - **multitier**: a single code that runs on the client and the server;
   - builtin **HTML**: native HTML syntax support and multitier dom.
   - server-side web **workers**.
   - native **websockets**.

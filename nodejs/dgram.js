@@ -300,8 +300,8 @@ Socket.prototype.send = function(buffer,
     else if (self._handle) {
       var req = self._handle.send(buffer, offset, length, port, ip);
       if (req) {
-        req.oncomplete = afterSend;
-        req.cb = callback;
+         req.oncomplete = afterSend;
+         req.cb = callback;
       }
       else {
         // don't emit as error, dgram_legacy.js compatibility

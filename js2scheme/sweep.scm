@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/sweep.scm               */
+;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/sweep.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Wed May 17 17:34:35 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Tue Aug 14 12:36:37 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Dead code removable stage.                                       */
+;*    Dead code removal                                                */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -14,11 +14,14 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_sweep
 
+   (include "ast.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_utils)
+	   __js2scheme_utils
+	   __js2scheme_use)
 
    (export j2s-sweep-stage))
 
@@ -30,81 +33,106 @@
       (name "sweep")
       (comment "Remove unreachable definitions")
       (proc (lambda (n args) (j2s-sweep! n args)))
-      (optional #t)))
+      (optional 2)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-sweep! ::J2SProgram ...                                      */
+;*    j2s-sweep! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (j2s-sweep! this::J2SProgram args)
+(define (j2s-sweep! this::J2SNode args)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)
-	 (let ((deval (make-cell #f)))
-	    (for-each (lambda (n) (mark n deval)) nodes)
-	    (for-each (lambda (d)
-			 (cond
-			    ((isa? d J2SDeclSvc)
-			     (mark d deval))
-			    ((isa? d J2SDeclFun)
-			     #unspecified)
-			    ((isa? d J2SDeclInit)
-			     (with-access::J2SDeclInit d (val %info)
-				(mark val deval)
-				(unless (dead-expr? val)
-				   (set! %info 'sweep))))))
-	       decls)
-	    (unless (cell-ref deval)
-	       (set! direct-eval #f)
-	       (let ((rems '()))
-		  (set! decls
-		     (filter (lambda (d)
-				(with-access::J2SDecl d (%info id)
-				   (or (eq? %info 'sweep)
-				       (begin
-					  (set! rems (cons id rems))
-					  #f))))
-			(map! sweep! decls)))
-		  (for-each sweep! nodes)
-		  (when (>= (config-get args :verbose 0) 2)
-		     (when (pair? rems)
-			(fprintf (current-error-port) " (~(, ))" rems))))))))
+	 (let loop ((stamp (cons 1 2))
+		    (removed '()))
+	    (let ((deval (make-cell #f)))
+	       (mark this deval stamp)
+	       (unless (cell-ref deval)
+		  (set! direct-eval #f)
+		  (let ((rems (make-cell '())))
+		     (sweep! this rems stamp)
+		     (cond
+			((pair? (cell-ref rems))
+			 (loop (cons 1 2)
+			    (append (cell-ref rems) removed)))
+			((>= (config-get args :verbose 0) 3)
+			 (fprintf (current-error-port) " (~(, ))"
+			    removed)))))))
+	 (reinit-use-count! this)))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    use-decl! ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (use-decl! this::J2SDecl stamp)
+   (with-access::J2SDecl this (%info)
+      (unless (eq? %info stamp)
+	 (set! %info stamp)
+	 #t)))
+   
+;*---------------------------------------------------------------------*/
+;*    mark-decl! ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (mark-decl! this::J2SDecl deval::cell stamp)
+   (with-access::J2SDecl this (%info)
+      (unless (eq? %info stamp)
+	 (set! %info stamp)
+	 (when (isa? this J2SDeclInit)
+	    (with-access::J2SDeclInit this (val)
+	       (mark val deval stamp))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SNode ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark this::J2SNode deval)
+(define-walk-method (mark this::J2SNode deval::cell stamp)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    mark ::J2SDecl ...                                               */
+;*    mark ::J2SProgram ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark this::J2SDecl deval)
-   (mark-decl! this deval))
+(define-walk-method (mark this::J2SProgram deval stamp)
+   (with-access::J2SProgram this (nodes decls)
+      ;; nodes
+      (for-each (lambda (n) (mark n deval stamp)) nodes)
+      ;; decls
+      (for-each (lambda (n)
+		   (when (isa? n J2SDeclInit)
+		      (mark n deval stamp)))
+	 decls)))
+   
+;*---------------------------------------------------------------------*/
+;*    mark ::J2SDeclInit ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark this::J2SDeclInit deval stamp)
+   (with-access::J2SDeclInit this (val id)
+      (mark val deval stamp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SDeclFun ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark this::J2SDeclFun deval)
+(define-walk-method (mark this::J2SDeclFun deval stamp)
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SDeclSvc ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark this::J2SDeclSvc deval)
-   (mark-decl! this deval))
+(define-walk-method (mark this::J2SDeclSvc deval stamp)
+   (with-access::J2SDeclSvc this (val)
+      (use-decl! this stamp)
+      (mark val deval stamp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SRef ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark this::J2SRef deval)
+(define-walk-method (mark this::J2SRef deval stamp)
    (with-access::J2SRef this (decl)
-      (mark-decl! decl deval))
-   #unspecified)
+      (when (use-decl! decl stamp)
+	 (when (isa? decl J2SDeclFun)
+	    (with-access::J2SDeclFun decl (val id)
+	       (mark val deval stamp))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SInit ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark this::J2SInit deval)
+(define-walk-method (mark this::J2SInit deva stampl)
    (if (dead-init? this)
        this
        (call-default-walker)))
@@ -112,7 +140,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SCall ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark this::J2SCall deval)
+(define-walk-method (mark this::J2SCall deval stamp)
    (call-default-walker)
    (with-access::J2SCall this (fun args)
       (when (isa? fun J2SUnresolvedRef)
@@ -126,6 +154,10 @@
 ;*---------------------------------------------------------------------*/
 (define (dead-expr? this::J2SExpr)
    (or (isa? this J2SLiteralCnst)
+       (and (isa? this J2SLiteral)
+	    (or (not (isa? this J2SArray))
+		(with-access::J2SArray this (exprs)
+		   (every dead-expr? exprs))))
        (isa? this J2SFun)
        (isa? this J2SRef)))
 
@@ -136,42 +168,64 @@
    (with-access::J2SInit this (lhs rhs)
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
-	    (with-access::J2SDecl decl (usecnt)
-	       (and (=fx usecnt 1)
+	    (with-access::J2SDecl decl (usecnt usage)
+	       (and (=fx usecnt 0)
+		    (not (usage? '(eval) usage))
 		    (dead-expr? rhs)))))))
-
-;*---------------------------------------------------------------------*/
-;*    mark-decl! ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (mark-decl! this::J2SDecl deval)
-   (with-access::J2SDecl this (%info)
-      (unless (eq? %info 'sweep)
-	 (set! %info 'sweep)
-	 (when (isa? this J2SDeclInit)
-	    (with-access::J2SDeclInit this (val)
-	       (mark val deval))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sweep! ::J2SNode ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (sweep! this::J2SNode)
+(define-walk-method (sweep! this::J2SNode rems::cell stamp)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    sweep! ::J2SProgram ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (sweep! this::J2SProgram rems stamp)
+   (with-access::J2SProgram this (decls nodes)
+      (set! decls (filter (lambda (d)
+			     (with-access::J2SDecl d (%info id)
+				(if (eq? %info stamp)
+				    ;; used, keep it
+				    (begin
+				       (sweep! d rems stamp)
+				       #t)
+				    (begin
+				       ;; unused, remove it
+				       (cell-set! rems
+					  (cons id (cell-ref rems)))
+				       #f))))
+		     decls))
+      (for-each (lambda (n) (sweep! n rems stamp)) nodes)
+      this))
+      
+;*---------------------------------------------------------------------*/
+;*    sweep! ::J2SDeclInit ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (sweep! this::J2SDeclInit rems stamp)
+   (with-access::J2SDeclInit this (%info loc id val)
+      (if (or (eq? %info stamp) (not (dead-expr? val)))
+	  ;; used, keep it
+	  (call-default-walker)
+	  (J2SNop))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sweep! ::J2SLeBlock ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (sweep! this::J2SLetBlock)
+(define-walk-method (sweep! this::J2SLetBlock rems stamp)
    (with-access::J2SLetBlock this (decls)
-      (set! decls (filter (lambda (d)
-			     (with-access::J2SDecl d (%info)
-				(eq? %info 'sweep)))
+      (set! decls (filter-map (lambda (d)
+				 (let ((n (sweep! d rems stamp)))
+				    (unless (isa? n J2SNop)
+				       n)))
 		     decls))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    sweep! ::J2SInit ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (sweep! this::J2SInit)
+(define-walk-method (sweep! this::J2SInit rems stamp)
    (if (dead-init? this)
        (with-access::J2SNode this (loc)
 	  (instantiate::J2SUndefined (loc loc)))

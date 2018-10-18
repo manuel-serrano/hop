@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/math.scm                */
+;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/math.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 21 09:35:24 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Tue Aug 28 09:08:50 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
 ;*    -------------------------------------------------------------    */
@@ -15,18 +15,28 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_math
-
+   
    (library hop)
+   
+   (include "types.sch")
    
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_function
-	   __hopscript_error)
-
-   (export (js-init-math! ::JsObject)))
+	   __hopscript_error
+	   __hopscript_stringliteral)
+   
+   (export (js-init-math! ::JsObject)
+	   (js-math-ceil ::obj)
+	   (js-math-sqrt ::obj ::JsGlobalObject)
+	   (inline js-math-sqrtfl ::double)
+	   (js-math-floor ::obj ::JsGlobalObject)
+	   (js-math-floorfl ::double)
+	   (js-math-round ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math ...                                                      */
@@ -48,7 +58,7 @@
    (with-access::JsGlobalObject %this (__proto__ js-math)
       ;; create the math object
       (set! js-math
-	 (instantiate::JsMath
+	 (instantiateJsMath
 	    (cmap (instantiate::JsConstructMap))
 	    (__proto__ __proto__)))
       ;; other properties
@@ -156,22 +166,21 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.5
       (define (js-math-atan2 this y x)
 	 (if (and (= x 0) (= y 0))
-	     (begin
-		(cond
-		   ((and (flonum? y) (=fx (signbitfl y) 0))
-		    (cond
-		       ((and (flonum? x) (>fx (signbitfl x) 0))
-			(* 2 (atan 1 0)))
-		       (else
-			0)))
-		   ((and (flonum? y) (>fx (signbitfl y) 0))
-		    (cond
-		       ((and (flonum? x) (>fx (signbitfl x) 0))
-			(* -2 (atan 1 0)))
-		       (else
-			0)))
-		   (else
-		    0)))
+	     (cond
+		((and (flonum? y) (=fx (signbitfl y) 0))
+		 (cond
+		    ((and (flonum? x) (>fx (signbitfl x) 0))
+		     (*fl 2. (atanfl 1. 0.)))
+		    (else
+		     0.)))
+		((and (flonum? y) (>fx (signbitfl y) 0))
+		 (cond
+		    ((and (flonum? x) (>fx (signbitfl x) 0))
+		     (*fl -2. (atan 1. 0.)))
+		    (else
+		     0.0)))
+		(else
+		 0.0))
 	     (atan y x)))
       
       (js-bind! %this js-math 'atan2
@@ -181,23 +190,9 @@
 	 :enumerable #f
 	 :hidden-class #f)
       
-      ;; ceil
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.6
-      (define (js-math-ceil this x)
-	 (cond
-	    ((not (flonum? x))
-	     x)
-	    ((nanfl? x)
-	     x)
-	    ((=fl x +inf.0)
-	     x)
-	    ((=fl x -inf.0)
-	     x)
-	    (else
-	     (ceilingfl x))))
-      
       (js-bind! %this js-math 'ceil
-	 :value (js-make-function %this js-math-ceil 1 'ceil)
+	 :value (js-make-function %this
+		   (lambda (this x) (js-math-ceil x)) 1 'ceil)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -227,29 +222,9 @@
 	 :enumerable #f
 	 :hidden-class #f)
       
-      ;; floor
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.9
-      (define (js-math-floor this x)
-	 (cond
-	    ((not (flonum? x)) x)
-	    ((nanfl? x) x)
-	    ((=fl x +inf.0) x)
-	    ((=fl x -inf.0) x)
-	    (else
-	     (cond-expand
-		((or bint30 bint32)
-		 (cond
-		    ((> x (bit-lsh 1 29))
-		     (floor x))
-		    ((< x (- (bit-lsh 1 29)))
-		     (floor x))
-		    (else
-		     (flonum->fixnum (floor x)))))
-		(else
-		 (flonum->fixnum (floor x)))))))
-      
       (js-bind! %this js-math 'floor
-	 :value (js-make-function %this js-math-floor 1 'floor)
+	 :value (js-make-function %this
+		   (lambda (this x) (js-math-floor x %this)) 1 'floor)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -365,16 +340,9 @@
       
       ;; round
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.15
-      (define (js-math-round this x)
-	 (cond
-	    ((not (flonum? x)) x)
-	    ((nanfl? x) x)
-	    ((=fl x +inf.0) x)
-	    ((=fl x -inf.0) x)
-	    (else (inexact->exact (floor (+ x 0.5))))))
-      
       (js-bind! %this js-math 'round
-	 :value (js-make-function %this js-math-round 1 'round)
+	 :value (js-make-function %this
+		   (lambda (this x) (js-math-round x)) 1 'round)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -395,7 +363,7 @@
       ;; sqrt
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.17
       (define (js-math-sqrt this x)
-	 (if (< x 0) +nan.0 (sqrt x)))
+	 (js-math-sqrt x %this))
       
       (js-bind! %this js-math 'sqrt
 	 :value (js-make-function %this js-math-sqrt 1 'sqrt)
@@ -422,8 +390,79 @@
 	 :hidden-class #f)
       js-math))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-math-ceil ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.6     */
+;*---------------------------------------------------------------------*/
+(define (js-math-ceil x)
+   (cond
+      ((not (flonum? x)) x)
+      ((nanfl? x) x)
+      ((=fl x +inf.0) x)
+      ((=fl x -inf.0) x)
+      (else (ceilingfl x))))
 
+;*---------------------------------------------------------------------*/
+;*    js-math-sqrt ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.17    */
+;*---------------------------------------------------------------------*/
+(define (js-math-sqrt x %this)
+   (let loop ((x x))
+      (cond
+	 ((flonum? x) (js-math-sqrtfl x))
+	 ((fixnum? x) (js-math-sqrtfl (fixnum->flonum x)))
+	 (else (loop (js-tonumber x %this))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-math-sqrtfl ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-math-sqrtfl x)
+   (if (<fl x 0.0) +nan.0 (sqrtfl x)))
 
+;*---------------------------------------------------------------------*/
+;*    js-math-floor ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.9     */
+;*---------------------------------------------------------------------*/
+(define (js-math-floor x %this)
+   (let loop ((x x))
+      (cond
+	 ((fixnum? x) x)
+	 ((not (flonum? x)) (loop (js-tonumber x %this)))
+	 (else (js-math-floorfl x)))))
 
-   
+;*---------------------------------------------------------------------*/
+;*    js-math-floorfl ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-math-floorfl x::double)
+   (cond
+      ((nanfl? x) x)
+      ((=fl x +inf.0) x)
+      ((=fl x -inf.0) x)
+      (else
+       (cond-expand
+	  ((or bint30 bint32)
+	   (cond
+	      ((>fl x (fixnum->flonum (bit-lsh 1 29)))
+	       (floor x))
+	      ((<fl x (- (fixnum->flonum (bit-lsh 1 29))))
+	       (floor x))
+	      (else
+	       (flonum->fixnum (floor x)))))
+	  (else
+	   (flonum->fixnum (floor x)))))))
+      
+;*---------------------------------------------------------------------*/
+;*    js-math-round ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.15    */
+;*---------------------------------------------------------------------*/
+(define (js-math-round x)
+   (cond
+      ((not (flonum? x)) x)
+      ((nanfl? x) x)
+      ((=fl x +inf.0) x)
+      ((=fl x -inf.0) x)
+      (else (inexact->exact (floor (+ x 0.5))))))

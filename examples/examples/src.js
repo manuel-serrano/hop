@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/examples/src.js          */
+/*    serrano/prgm/project/hop/3.2.x/examples/examples/src.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 19 10:32:06 2014                          */
-/*    Last change :  Thu Jan  7 07:58:17 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Fri Mar  9 10:10:26 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Read and fontify the examples source codes.                      */
 /*    -------------------------------------------------------------    */
@@ -33,6 +33,8 @@ service examplesSrc( path ) {
 	 fontify = fontifier.xml;
       } else if( path.match( /[.]hop$/ ) ) {
 	 fontify = fontifier.hop;
+	 lbegin = 1;
+      } else if( path.match( /[.]csv$/ ) ) {
 	 lbegin = 1;
       }
 

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/bufferrw.js     */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/bufferrw.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Mon Apr 25 08:19:13 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Mon Dec 11 14:15:17 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Extra Nodejs buffer Testing                                      */
 /*=====================================================================*/
@@ -22,32 +22,33 @@ var buf = new Buffer( 6 );
 buf.fill( 0 );
 
 buf.writeFloatLE( 3.4, 2 );
-assert.equal( Math.round( buf.readFloatLE( 2 ) ), 3.0 );
+assert.equal( Math.round( buf.readFloatLE( 2 ) ), 3.0, "writeFloatLE" );
 
 assert.deepEqual(
-   buf, new Buffer( [ 0, 0, 0x9a, 0x99, 0x59, 0x40 ] ) );
+   buf, new Buffer( [ 0, 0, 0x9a, 0x99, 0x59, 0x40 ] ), "buffer.1" );
 
 buf.writeFloatBE( 14.85, 2 );
-assert.equal( Math.round( buf.readFloatBE( 2 )) , 15.0 );
+assert.equal( Math.round( buf.readFloatBE( 2 )) , 15.0, "writeFloatBE" );
 
 assert.deepEqual(
-   buf, new Buffer( [ 0, 0, 0x41, 0x6d, 0x99, 0x9a ] ) );
+   buf, new Buffer( [ 0, 0, 0x41, 0x6d, 0x99, 0x9a ] ), "buffer.2" );
 
 var buf = new Buffer( 10 );
 buf.fill( 0 );
 buf.writeDoubleLE( 1233.46, 2 );
-assert.equal( Math.round( buf.readDoubleLE( 2  )), 1233.0 );
+assert.equal( Math.round( buf.readDoubleLE( 2  )), 1233.0, "writeDoubleLE" );
 
 assert.deepEqual(
-   buf, new Buffer( [ 0, 0, 0xa4, 0x70, 0x3d, 0x0a, 0xd7, 0x45, 0x93, 0x40] ) );
+   buf, new Buffer( [ 0, 0, 0xa4, 0x70, 0x3d, 0x0a, 0xd7, 0x45, 0x93, 0x40] ),
+   "buffer.3" );
 
 buf.writeDoubleBE( 1233.46, 2 );
-assert.equal( Math.round( buf.readDoubleBE( 2 )), 1233.0 );
+assert.equal( Math.round( buf.readDoubleBE( 2 )), 1233.0, "writeDoubleBE" );
 
 assert.deepEqual(
-   buf, new Buffer( [ 0, 0, 0x40, 0x93, 0x45, 0xd7, 0x0a, 0x3d, 0x70, 0xa4 ] ) );
+   buf, new Buffer( [ 0, 0, 0x40, 0x93, 0x45, 0xd7, 0x0a, 0x3d, 0x70, 0xa4 ] ),
+   "buffer.4" );
    
-
 /*---------------------------------------------------------------------*/
 /*    Encoding                                                         */
 /*---------------------------------------------------------------------*/

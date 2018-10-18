@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Aug 24 11:13:18 2016 (serrano)                */
-;*    Copyright   :  2005-16 Manuel Serrano                            */
+;*    Last change :  Mon Apr  9 19:55:08 2018 (serrano)                */
+;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -328,7 +328,8 @@
 ;*    hss-cache ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define hss-cache
-   #unspecified)
+   (instantiate::cache-memory
+      (max-file-size #e1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss->css ...                                                     */
@@ -411,14 +412,15 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-get-hss path)
    (synchronize hss-mutex
-      (let ((ce (cache-get hss-cache path)))
-	 (if (isa? ce cache-entry)
-	     ce
-	     (let* ((hss (hop-load-hss path))
-		    (ce (cache-put! hss-cache path hss)))
-		(if (isa? ce cache-entry)
-		    ce
-		    hss))))))
+      (when (isa? hss-cache cache)
+	 (let ((ce (cache-get hss-cache path)))
+	    (if (isa? ce cache-entry)
+		ce
+		(let* ((hss (hop-load-hss path))
+		       (ce (cache-put! hss-cache path hss)))
+		   (if (isa? ce cache-entry)
+		       ce
+		       hss)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-hss ...                                                 */

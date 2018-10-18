@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/arguments.scm           */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/arguments.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sun May 21 09:31:15 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed Oct 17 10:47:07 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
 ;*=====================================================================*/
@@ -18,22 +18,27 @@
 
    (library hop)
 
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_property
 	   __hopscript_error
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_worker
 	   __hopscript_array)
 
    (export (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
 	   (js-arguments ::JsGlobalObject ::vector)
 	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
-	   (js-arguments->list ::JsArguments ::JsGlobalObject)))
+	   (js-arguments->list ::JsArguments ::JsGlobalObject)
+	   (js-arguments-ref ::JsArguments ::obj ::JsGlobalObject)
+	   (js-arguments-index-ref ::JsArguments ::uint32 ::JsGlobalObject)
+	   (inline js-arguments-length::obj ::JsArguments ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArguments ...                              */
@@ -107,7 +112,49 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments-define-own-property arguments indx prop)
    (with-access::JsArguments arguments (vec)
+      (js-object-mode-inline-set! arguments #f)
       (vector-set! vec indx prop)))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-length ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-arguments-length arr::JsArguments %this)
+   (if (js-object-mode-inline? arr)
+       (with-access::JsArguments arr (vec)
+	  (vector-length vec))
+       (js-get arr 'length %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsArguments ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-length arr::JsArguments %this #!optional cache)
+   (js-arguments-length arr %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-ref ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-arguments-ref arr::JsArguments idx %this)
+   (with-access::JsArguments arr (vec)
+      (if (and (js-object-mode-inline? arr)
+	       (and (fixnum? idx) (>=fx idx 0) (<fx idx (vector-length vec))))
+	  (vector-ref vec idx)
+	  (js-get arr idx %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-index-ref ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-arguments-index-ref arr::JsArguments idx::uint32 %this)
+   (with-access::JsArguments arr (vec)
+      (if (and (js-object-mode-inline? arr)
+	       (<u32 idx (fixnum->uint32 (vector-length vec))))
+	  (u32vref vec idx)
+	  (js-get arr idx %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-put-length! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-put-length! o::JsArguments v::obj throw::bool cache %this)
+   (js-put! o 'length v throw %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsArguments ...                                        */
@@ -119,6 +166,8 @@
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((not (js-isindex? i))
+	     (when (eq? p 'length)
+		(js-object-mode-inline-set! o #f))
 	     (call-next-method))
 	    ((<uint32 i (vector-length vec))
 	     (let ((desc (u32vref vec i)))
@@ -198,58 +247,61 @@
    (let* ((ismapped (get-mapped-property o p))
 	  (allowed (js-define-own-property% o (js-toname p %this) desc #f %this)))
       ;; 3
-      (if (not allowed)
+      (cond
+	 ((not allowed)
 	  ;; 4
 	  (js-raise-type-error %this "Illegal arguments property override ~s"
-	     (with-access::JsPropertyDescriptor desc (name) name))
-	  (begin
-	     (when ismapped
-		;; 5
-		(if (isa? desc JsAccessorDescriptor)
-		    ;; 5.a (don't need to delete as define-own-property%
-		    ;; has replace the property) but we need to propagate
-		    ;; the set attribute of the new desc
-		    (with-access::JsAccessorDescriptor desc ((dset set))
-		       (when (isa? ismapped JsAccessorDescriptor)
-			  (with-access::JsAccessorDescriptor ismapped (set)
-			     (set! set
-				(if (isa? dset JsFunction)
-				    dset
-				    (js-undefined))))))
-		    (begin
-		       ;; 5.b
-		       (when (isa? desc JsValueDescriptor)
-			  ;; 5.b.i
-			  (with-access::JsValueDescriptor desc (value)
-			     (cond
-				((isa? ismapped JsAccessorDescriptor)
-				 (with-access::JsAccessorDescriptor ismapped
-				       (set)
-				    (when (isa? set JsFunction)
-				       (js-call1 %this set o value))))
-				((isa? ismapped JsValueDescriptor)
-				 (with-access::JsValueDescriptor ismapped
-				       ((avalue value) writable)
-				    (when writable
-				       (set! avalue value)))))))
-		       (when (isa? desc JsDataDescriptor)
-			  (with-access::JsDataDescriptor desc (writable)
-			     (when (eq? writable #f)
-				;; 5.b.ii (don't need to delete as
-				;; define-own-property%
-				;; has replace the property)
-				#unspecified))))))
-	     #t))))
+	     (with-access::JsPropertyDescriptor desc (name) name)))
+	 (ismapped
+	  ;; 5
+	  (if (isa? desc JsAccessorDescriptor)
+	      ;; 5.a (don't need to delete as define-own-property%
+	      ;; has replace the property) but we need to propagate
+	      ;; the set attribute of the new desc
+	      (with-access::JsAccessorDescriptor desc ((dset set))
+		 (when (isa? ismapped JsAccessorDescriptor)
+		    (with-access::JsAccessorDescriptor ismapped (set)
+		       (set! set
+			  (if (isa? dset JsFunction)
+			      dset
+			      (js-undefined))))))
+	      (begin
+		 ;; 5.b
+		 (when (isa? desc JsValueDescriptor)
+		    ;; 5.b.i
+		    (with-access::JsValueDescriptor desc (value)
+		       (cond
+			  ((isa? ismapped JsAccessorDescriptor)
+			   (with-access::JsAccessorDescriptor ismapped
+				 (set)
+			      (when (isa? set JsFunction)
+				 (js-call1 %this set o value))))
+			  ((isa? ismapped JsValueDescriptor)
+			   (with-access::JsValueDescriptor ismapped
+				 ((avalue value) writable)
+			      (when writable
+				 (set! avalue value)))))))
+		 (when (isa? desc JsDataDescriptor)
+		    (with-access::JsDataDescriptor desc (writable)
+		       (when (eq? writable #f)
+			  ;; 5.b.ii (don't need to delete as
+			  ;; define-own-property%
+			  ;; has replace the property)
+			  #unspecified))))))
+	 ((eq? p 'length)
+	  (js-object-mode-inline-set! o #f)
+	  (call-next-method))
+	 (else
+	  #t))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::JsArray ...                                 */
+;*    js-properties-names ::JsArray ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name obj::JsArguments enump %this)
+(define-method (js-properties-names obj::JsArguments enump %this)
    (with-access::JsArguments obj (vec)
-      (let ((len::uint32 (js-touint32 (js-get obj 'length %this) %this)))
-	 (vector-append
-	    (apply vector (map! js-integer->jsstring (iota (uint32->fixnum len))))
-	    (call-next-method))	 )))
+      (append!
+	 (map! js-integer->name (iota (vector-length vec)))
+	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArguments ...                                */
@@ -265,6 +317,12 @@
 		    (call-next-method)
 		    #t)))
 	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsArray ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsArguments p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */
@@ -311,23 +369,11 @@
 	     (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-length ::JsArguments ...                                  */
+;*    js-object-get-name/cache-miss ...                                */
 ;*---------------------------------------------------------------------*/
-;* (define-method (js-get-length o::JsArguments cache %this)           */
-;*    (with-access::JsArguments o (vec)                                */
-;*       (call-next-method)))                                          */
-;* {*       (vector-length vec)))                                         *} */
-   
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-get-lookup ...                                                *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-get-lookup o::JsArguments p::obj cache::JsPropertyCache throw %this) */
-;*    (js-get o p %this))                                              */
-
-;*---------------------------------------------------------------------*/
-;*    js-get-name/cache-miss ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (js-get-name/cache-miss o::JsArguments p::obj cache::JsPropertyCache throw %this)
+(define-method (js-object-get-name/cache-miss o::JsArguments p::obj
+		  throw::bool %this::JsGlobalObject
+		  cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-get o p %this))
 
 ;*---------------------------------------------------------------------*/
@@ -337,7 +383,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments %this::JsGlobalObject vec::vector)
    (with-access::JsObject %this (__proto__)
-      (let ((obj (instantiate::JsArguments
+      (let ((obj (instantiateJsArguments
 		    (vec vec)
 		    (cmap (instantiate::JsConstructMap))
 		    (elements (make-vector 1))
@@ -375,7 +421,7 @@
 	    (loop (+fx i 1) (cdr lst))))
       ;; build the arguments object
       (with-access::JsObject %this (__proto__)
-	 (let ((obj (instantiate::JsArguments
+	 (let ((obj (instantiateJsArguments
 		       (vec vec)
 		       (elements (make-vector 1))
 		       (__proto__ __proto__))))
@@ -440,5 +486,19 @@
 		    (call-next-method))))
 	  (call-next-method))))
 
-
-  
+;*---------------------------------------------------------------------*/
+;*    js-for-of ::JsArguments ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-of o::JsArguments proc close %this)
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (let ((fun (js-get o js-symbol-iterator %this)))
+	 (if (isa? fun JsFunction)
+	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
+	     (with-access::JsArguments o (vec)
+		(let ((len (minfx (vector-length vec)
+			      (uint32->fixnum
+				 (js-touint32 (js-get o 'length %this) %this)))))
+		   (let loop ((i 0))
+		      (when (<fx i len)
+			 (proc (js-property-value o (vector-ref vec i) %this))
+			 (loop (+fx i 1))))))))))

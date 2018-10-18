@@ -33,10 +33,12 @@ Hop.js extends the HTML5 `<head>` attributes with the following list:
  * `title`: a string. The title of the document, equivalent to a `<title>`
  node.
  * `inline`: a boolean. When `true` all resources are inlined in the generated
- document, which is then standlone.
+ document, which is then standone.
 
 
-Example
+#### Example ####
+
+A basic example.
 
 ```hopscript
 function foo( title ) {

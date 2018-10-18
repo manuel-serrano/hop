@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/worker.scm              */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/worker.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Aug 23 17:22:44 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Tue Aug 28 09:09:02 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
 ;*    -------------------------------------------------------------    */
@@ -18,13 +18,15 @@
    
    (library web hop js2scheme)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_object
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_array)
@@ -41,6 +43,7 @@
 	   (js-worker-load::procedure)
 	   (js-worker-load-set! ::procedure)
 
+	   (generic js-worker-init! ::object)
 	   (generic js-worker-loop ::object)
 	   (generic js-worker-tick ::object)
 	   (generic js-worker-exception-handler ::object ::obj ::int)
@@ -97,7 +100,7 @@
 
 	 ;; first, create the builtin prototype
 	 (set! js-worker-prototype
-	    (instantiate::JsWorker
+	    (instantiateJsWorker
 	       (__proto__ __proto__)))
 	 
 	 ;; then, Create a HopScript worker object constructor
@@ -184,7 +187,7 @@
 				(js-get %this 'module %this) #f this)
 			     (loader source thread this)))
 		   (thread (instantiate::WorkerHopThread
-			      (name "WebWorker")
+			      (name (gensym (string-append "WebWorker@" src)))
 			      (parent parent)
 			      (tqueue (list (cons "init" thunk)))
 			      (%this this)
@@ -196,6 +199,9 @@
 					  (when (isa? parent WorkerHopThread)
 					     (remove-subworker! parent thread)))))))
 
+	    ;; prepare the worker loop
+	    (js-worker-init! thread)
+
 	    ;; add the worker to the parent list
 	    (when (isa? parent WorkerHopThread)
 	       (add-subworker! parent thread))
@@ -204,7 +210,7 @@
 	    (thread-start! thread)
 	       
 	    ;; create the worker object
-	    (let ((worker (instantiate::JsWorker
+	    (let ((worker (instantiateJsWorker
 			     (__proto__ js-worker-prototype)
 			     (thread thread))))
 	       (with-access::WorkerHopThread thread (prehook)
@@ -411,7 +417,11 @@
 (define (default-worker-load filename worker %this::JsGlobalObject)
    (loading-file-set! filename)
    (let ((exprs (call-with-input-file filename
-		   (lambda (in) (j2s-compile in :main #f :%this %this)))))
+		   (lambda (in)
+		      (j2s-compile in
+			 :driver-name "default-worker-load"
+			 :main #f
+			 :%this %this)))))
       (let ((m (eval-module))
 	    (jsmodule #f))
 	 (unwind-protect
@@ -470,7 +480,8 @@
 	       (onexit #f)
 	       (keep-alive keep-alive)
 	       (module-cache (js-new0 %this js-object))
-	       (body (lambda () (js-worker-loop %worker)))))))
+	       (body (lambda () (js-worker-loop %worker))))))
+      (js-worker-init! %worker))
    %worker)
 
 ;*---------------------------------------------------------------------*/
@@ -529,7 +540,13 @@
 	       (with-trace 'hopscript-worker (car nthunk)
 		  (call (cdr nthunk)))
 	       (loop))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-init! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-init! th::object)
+   #unspecified)
+
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ...                                               */
 ;*    -------------------------------------------------------------    */

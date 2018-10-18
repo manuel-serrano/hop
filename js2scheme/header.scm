@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/header.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/header.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Sat Feb  3 09:05:34 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 08:28:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -50,61 +50,77 @@
 ;*---------------------------------------------------------------------*/
 (define (hopscript-header::pair id path loc conf)
    
-   (define (js-def-extern js bind writable expr #!optional (type 'unknown))
+   (define (js-def-extern js bind writable expr
+	      #!key (type 'unknown) (hidden-class #t) (scope '%scope))
       (instantiate::J2SDeclExtern
 	 (loc loc)
 	 (id js)
 	 (writable writable)
-	 (scope '%scope)
+	 (scope scope)
 	 (bind bind)
 	 (itype type)
 	 (binder 'let-opt)
-	 (val (instantiate::J2SPragma
-		 (type type)
-		 (loc loc)
-		 (expr expr)))))
+	 (hidden-class hidden-class)
+	 (val (if (isa? expr J2SNode)
+		  expr
+		  (instantiate::J2SPragma
+		     (type type)
+		     (loc loc)
+		     (expr expr))))))
 
-   (list
-      (js-def-extern 'global #t #t '%this 'global)
-      (js-def-extern 'GLOBAL #t #f '%this 'global)
-      (js-def-extern 'module #t #t 
-	 '(begin
-	   (js-put! %scope 'module %module #f %this)
-	   %module))
-      (js-def-extern 'exports #t #t '(js-get %module 'exports %scope))
-      (js-def-extern 'require #t #f `(nodejs-require %worker %this %module ',(config-get conf :language 'hopscript)))
-      (js-def-extern 'HEAD #t #f `(nodejs-head %worker %this %scope %module))
-      (js-def-extern 'SCRIPT #t #f `(nodejs-script %worker %this %scope %module))
-      (js-def-extern 'Worker #t #t '(nodejs-worker %this %scope %module))
-      (js-def-extern '__filename #t #f '(js-get %module 'filename %scope) 'string)
-      (js-def-extern '__dirname #t #f '(js-string->jsstring (dirname (js-jsstring->string (js-get %module 'filename %scope)))) 'string)
-      (js-def-extern '%__GLOBAL #f #f
-	 ;; this will not be compiled as a global (see scheme.scm)
-	 '(js-put! GLOBAL 'global GLOBAL #f %this))
-      (js-def-extern 'process #t #t '(nodejs-process %worker %this) 'object)
-      (if (or (string=? id "console.js") (string=? id "node_stdio.js"))
-	  (instantiate::J2SUndefined
-	     (type 'undefined)
-	     (loc loc))
-	  (js-def-extern 'console #t #f
-	     '(nodejs-require-core "console" %worker %this) 'object))
-      (if (string=? path "hop")
-	  (instantiate::J2SUndefined
-	     (type 'undefined)
-	     (loc loc))
-	  (js-def-extern 'hop #t #t
-	     '(nodejs-require-core "hop" %worker %this)))
-      (js-def-extern '%__INIT #f #f
-	 ;; this will not be compiled as a global (see scheme.scm)
-	 `(begin
-	   (nodejs-eval %this %scope)
-	   (nodejs-function %this %scope)
-	   ,(unless (string=? path "buffer")
-	       `(nodejs-import! %this %scope
-		   (nodejs-require-core "buffer" %worker %this) 'Buffer))
-	   ,(unless (string=? path "timers")
-	       `(nodejs-import! %this %scope
-		   (nodejs-require-core "timers" %worker %this)))))
-      (instantiate::J2SUndefined
-	 (type 'undefined)
-	 (loc loc))))
+   (let ((%require (js-def-extern '%require #t #f 
+		     `(nodejs-require %worker %this %module
+			 ,(config-get conf :language "hopscript"))
+		     :type 'function :scope '%hop)))
+      (list
+	 %require
+	 (js-def-extern 'global #t #t '%this :type 'object)
+	 (js-def-extern 'GLOBAL #t #f '%this :type 'object)
+	 (js-def-extern 'module #t #t '%module :type 'object :hidden-class #f)
+	 (js-def-extern 'exports #t #t
+	    '(js-get %module 'exports %scope))
+	 (js-def-extern 'require #t #f
+	    (instantiate::J2SRef
+	       (loc loc)
+	       (decl %require)))
+	 (js-def-extern 'HEAD #t #f
+	    `(nodejs-head %worker %this %scope %module))
+	 (js-def-extern 'SCRIPT #t #f
+	    `(nodejs-script %worker %this %scope %module))
+	 (js-def-extern 'Worker #t #t
+	    '(nodejs-worker %this %scope %module))
+	 (js-def-extern '__filename #t #f
+	    '(js-get %module 'filename %scope) :type 'string)
+	 (js-def-extern '__dirname #t #f
+	    '(js-string->jsstring (dirname (js-jsstring->string (js-get %module 'filename %scope)))) :type 'string)
+	 (js-def-extern '%__GLOBAL #f #f
+	    ;; this will not be compiled as a global (see scheme.scm)
+	    '(js-put! GLOBAL 'global GLOBAL #f %this))
+	 (js-def-extern 'process #t #t '(nodejs-process %worker %this)
+	    :type 'object)
+	 (if (or (string=? id "console.js") (string=? id "node_stdio.js"))
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc))
+	     (js-def-extern 'console #t #f
+		'(nodejs-require-core "console" %worker %this) :type 'object))
+	 (if (string=? path "hop")
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc))
+	     (js-def-extern 'hop #t #t
+		'(nodejs-require-core "hop" %worker %this)))
+	 (js-def-extern '%__INIT #f #f
+	    ;; this will not be compiled as a global (see scheme.scm)
+	    `(begin
+		(nodejs-eval %this %scope)
+		(nodejs-function %this %scope)
+		,(unless (string=? path "buffer")
+		    `(nodejs-bind-export! %this %scope
+			(nodejs-require-core "buffer" %worker %this) 'Buffer))
+		,(unless (string=? path "timers")
+		    `(nodejs-bind-export! %this %scope
+			(nodejs-require-core "timers" %worker %this)))))
+	 (instantiate::J2SUndefined
+	    (type 'undefined)
+	    (loc loc)))))

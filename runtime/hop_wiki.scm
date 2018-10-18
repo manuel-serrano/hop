@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/hop_wiki.scm              */
+;*    serrano/prgm/project/hop/3.2.x/runtime/hop_wiki.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Sun Mar 10 08:49:57 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Last change :  Wed Dec 27 07:26:57 2017 (serrano)                */
+;*    Copyright   :  2006-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
 ;*=====================================================================*/
@@ -87,4 +87,8 @@
 	 ((file-exists? src)
 	  (if (isa? cache (@ cache __hop_cache))
 	      (wiki-cache->hop cache src syn charset)
-	      (wiki-file->hop src :syntax syn :charset charset))))))
+	      (wiki-file->hop src :syntax syn :charset charset)))
+	 ((or (string-prefix? "http://" src) (string-prefix? "https://" src))
+	  (let ((str (file->string src))
+		(venv `(,id '())))
+	     (wiki-string->hop str :syntax syn :charset charset :env venv))))))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/require.scm                */
+;*    serrano/prgm/project/hop/hop/nodejs/require.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Feb  3 09:24:33 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 08:27:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -21,14 +21,16 @@
 	   __nodejs_process
 	   __nodejs_syncg)
 
-   (export (nodejs-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::symbol)
+   (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
+	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
+	   (nodejs-import-module::vector ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang)
-	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
+	   (nodejs-load src ::bstring ::obj ::obj ::WorkerHopThread #!optional lang srcalias)
+	   (nodejs-bind-export!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
+	   (nodejs-compile-abort-all!)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-json ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-html ::bstring ::bstring ::bstring ::bstring)
@@ -41,9 +43,19 @@
 	   (nodejs-new-scope-object ::JsGlobalObject)
 	   (nodejs-eval ::JsGlobalObject ::JsObject)
 	   (nodejs-function ::JsGlobalObject ::JsObject)
-	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)))
+	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)
+	   (nodejs-plugins-toplevel-loader)
+	   (inline nodejs-module-ref ::vector ::long)
+	   (inline nodejs-module-set! ::vector ::long ::obj)))
 
 ;;(define-macro (bigloo-debug) 0)
+
+;*---------------------------------------------------------------------*/
+;*    builtin-language? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (builtin-language? str)
+   (member str '("hopscript" "html" "json" "hop" "ecmascript5"
+		 "ecmascript6" "ecmascript2017")))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-mutex ...                                                */
@@ -57,22 +69,115 @@
 (define compile-listeners-start '())
 (define compile-listeners-end '())
 
+(define command-line-this #f)
+(define command-line-module #f)
+
 ;*---------------------------------------------------------------------*/
 ;*    socompile ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-struct socompile proc cmd src ksucc kfail)
+(define-struct socompile proc cmd src ksucc kfail abortp)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */
+;*    -------------------------------------------------------------    */
+;*    This function implements the clientc jsc compiler                */
+;*    (see src/parserargs.scm). It is used when a client, i.e., a      */
+;*    browser requests a JavaScript module.                            */
+;*    See alao runtime/clientc.scm                                     */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile-file ifile::bstring name::bstring ofile::bstring query)
+   (let ((i (string-contains query "&lang=")))
+      (multiple-value-bind (%ctxthis %ctxmodule)
+	 (nodejs-command-line-dummy-module)
+	 (if i
+	     (let ((lang (substring query (+fx i 6))))
+		(if (string=? lang "hopscript")
+		    (nodejs-compile-file-hopscript ifile ifile
+		       name ofile query #f %ctxthis %ctxmodule lang)
+		    (nodejs-compile-file-lang ifile name ofile query
+		       %ctxthis %ctxmodule lang)))
+	     (nodejs-compile-file-hopscript ifile ifile name ofile query #f
+		%ctxthis %ctxmodule "hopscript")))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile-file-lang ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-file-lang ifile name ofile query
+	   %ctxthis %ctxmodule lang::bstring)
+
+   (define (filename->file val lang %this)
+      (let ((ifile (js-tostring val %this)))
+	 (nodejs-compile-file-hopscript ifile ifile
+	    name ofile query ifile %ctxthis %ctxmodule lang)))
+
+   (define (ast->file val lang %this)
+      (nodejs-compile-file-hopscript val ifile
+	 name ofile query ifile %ctxthis %ctxmodule lang))
+
+   (define (json->file val lang %this)
+      (nodejs-compile-json
+	 (string-append "string:" (js-jsstring->string val))
+	 name ofile query))
+   
+   (define (value->file val lang %this)
+      (with-access::JsGlobalObject %this (js-json)
+	 (let* ((stringify (js-get js-json 'stringify %this))
+		(str (js-call1 %this stringify (js-undefined) val)))
+	    (json->file str lang %this))))
+
+   (let ((worker (js-current-worker)))
+      (js-worker-exec worker "nodejs-compile-file-lang"
+	 (lambda ()
+	    (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
+	       (let* ((exp (nodejs-require-module lang worker %ctxthis %ctxmodule))
+		      (key (js-get js-symbol 'compiler %ctxthis))
+		      (comp (js-get exp key %ctxthis)))
+		  (if (isa? comp JsFunction)
+		      (let ((obj (js-call1 %ctxthis comp (js-undefined)
+				    (js-string->jsstring ifile))))
+			 (when (isa? obj JsObject)
+			    (let* ((ty (js-tostring (js-get obj 'type %ctxthis) %ctxthis))
+				   (val (js-get obj 'value %ctxthis))
+				   (l (js-get obj 'language %ctxthis))
+				   (lang (if (eq? l (js-undefined)) lang (js-tostring l %ctxthis))))
+			       (cond
+				  ((string=? ty "filename")
+				   (filename->file val lang %ctxthis))
+				  ((string=? ty "json")
+				   (json->file val lang %ctxthis))
+				  ((string=? ty "value")
+				   (value->file val lang %ctxthis))
+				  ((string=? ty "error")
+				   (raise val))
+				  ((string=? ty "ast")
+				   (ast->file val lang %ctxthis))
+				  (else
+				   (js-raise-error %ctxthis
+				      "Wrong language compiler output"
+				      lang))))))
+		      (js-raise-error (js-new-global-object)
+			 (format "Wrong language (~s) object `~a'"
+			    lang (typeof comp))
+			 lang))))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile-file-hopscript ...                                */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-file-hopscript obj ifile name ofile query srcalias
+	   %ctxthis %ctxmodule lang::bstring)
    (let* ((srcmap (when (>fx (bigloo-debug) 0)
 		     (string-append ofile ".map")))
 	  (op (if (string=? ofile "-")
 		  (current-output-port)
 		  (open-output-file ofile)))
+	  (qr (cond
+		 ((string-prefix? "js=" query) 'js)
+		 ((string-prefix? "el=" query) 'el)
+		 (else 'js)))
 	  (tree (unwind-protect
-		   (module->javascript ifile name op #f #f srcmap query)
+		   (module->javascript obj ifile
+		      name op #f #f srcmap qr srcalias
+		      %ctxthis %ctxmodule lang)
 		   (unless (eq? op (current-output-port))
 		      (close-output-port op)))))
       (when (>fx (bigloo-debug) 0)
@@ -115,7 +220,8 @@
 			   :filename filename
 			   :parser 'client-program
 			   :site 'client
-			   :driver (j2s-javascript-driver))))
+			   :driver (j2s-javascript-driver)
+			   :driver-name "j2s-javascript-driver")))
 	       (filter (lambda (exp)
 			  (not (isa? exp J2SNode)))
 		  tree)))))
@@ -187,8 +293,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (module->javascript filename::bstring id op compile isexpr srcmap query)
-
+(define (module->javascript obj filename id op compile isexpr srcmap query
+	   srcalias %ctxthis::JsGlobalObject %ctxmodule::JsObject lang::bstring)
+   
    (define (init-dummy-module! this worker)
       (with-access::JsGlobalObject this (js-object)
 	 (let ((mod (js-new0 this js-object))
@@ -204,15 +311,56 @@
 	    (js-put! this '__dirname
 	       (js-string->jsstring (dirname filename)) #f this)
 	    (js-put! this 'require
-	       (nodejs-require worker this mod 'hopscript) #f this)
+	       (nodejs-require worker this mod "hopscript") #f this)
 	    (js-put! this 'process
 	       (nodejs-process worker this) #f this)
 	    (js-put! this 'console
 	       (nodejs-require-core "console" worker this) #f this))))
 
+   (define (hopscript->javascript obj filename header lang::bstring esplainp this worker)
+      (debug-compile-trace filename)
+      (j2s-compile obj
+	 :%this this
+	 :source filename
+	 :resource (dirname filename)
+	 :filename filename
+	 :worker worker
+	 :header header
+	 :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+	 :parser 'client-program
+	 :driver (if (or (<=fx (bigloo-debug) 0) esplainp)
+		     (j2s-javascript-driver)
+		     (j2s-javascript-debug-driver))
+	 :driver-name (if (or (<=fx (bigloo-debug) 0) "esplainp")
+			  "j2s-javascript-driver"
+			  "j2s-javascript-debug-driver")
+	 :language lang
+	 :site 'client
+	 :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+	 :debug (if esplainp 0 (bigloo-debug))))
+   
+   (define (compile obj header offset esplainp worker this)
+      (let ((tree (hopscript->javascript obj filename
+		     header lang esplainp this worker)))
+	 (for-each (lambda (exp)
+		      (unless (isa? exp J2SNode)
+			 ;; skip node information, used
+			 ;; for sourcemap generation
+			 (display exp op)))
+	    tree)
+	 (when header
+	    (display "\nreturn module.exports;}\n" op)
+	    (when srcmap
+	       (fprintf op "\n\nhop_source_mapping_url(~s, \"~a\");\n"
+		  (or srcalias filename) srcmap)
+	       (fprintf op "\n//# sourceMappingURL=~a\n" srcmap)))
+	 ;; first element of the tree is a position offset
+	 ;; see sourcemap generation
+	 (cons offset tree)))
+   
    (let ((this (nodejs-new-global-object))
 	 (worker (js-current-worker))
-	 (esplainp (string=? query "es")))
+	 (esplainp (eq? query 'es)))
       (init-dummy-module! this worker)
       (let ((header (unless esplainp
 		       (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
@@ -221,44 +369,33 @@
 			  filename))))
 	 (when header
 	    (fprintf op (hop-boot))
-	    (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
+	    (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n"
+	       (or srcalias filename))
 	    (flush-output-port op))
 	 (let ((offset (output-port-position op)))
-	    (call-with-input-file filename
-	       (lambda (in)
-		  (debug-compile-trace filename)
-		  (let ((tree (j2s-compile in
-				 :%this this
-				 :source filename
-				 :resource (dirname filename)
-				 :filename filename
-				 :worker worker
-				 :header header
-				 :verbose (if (>=fx (bigloo-debug) 3)
-					      (hop-verbose)
-					      0)
-				 :parser 'client-program
-				 :driver (if (or (<=fx (bigloo-debug) 0)
-						 esplainp)
-					     (j2s-javascript-driver)
-					     (j2s-javascript-debug-driver))
-				 :site 'client
-				 :debug (if esplainp 0 (bigloo-debug)))))
-		     (for-each (lambda (exp)
-				  (unless (isa? exp J2SNode)
-				     ;; skip node information, used
-				     ;; for sourcemap generation
-				     (display exp op)))
-			tree)
-		     (when header
-			(display "\nreturn module.exports;}\n" op)
-			(when srcmap
-			   (fprintf op "\n\nhop_source_mapping_url(~s, \"~a\");\n"
-			      filename srcmap)
-			   (fprintf op "\n//# sourceMappingURL=~a\n" srcmap)))
-		     ;; first element of the tree is a position offset
-		     ;; see sourcemap generation
-		     (cons offset tree))))))))
+	    (if (string? obj)
+		(call-with-input-file filename
+		   (lambda (in)
+		      (compile in header offset esplainp worker this)))
+		(compile obj header offset esplainp worker this))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-command-line-dummy-module ...                             */
+;*    -------------------------------------------------------------    */
+;*    This function creates a JS global object and a JS module that    */
+;*    are used to load the file from the top-level, i.e., those        */
+;*    files that are invoked on the command line or for client-side    */
+;*    compilation.                                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-command-line-dummy-module)
+   (synchronize compile-mutex
+      (unless command-line-this
+	 (set! command-line-this (nodejs-new-global-object))
+	 (let ((worker (js-current-worker))
+	       (filename (make-file-name (pwd) "")))
+	    (set! command-line-module
+	       (nodejs-new-module "." filename worker command-line-this))))
+      (values command-line-this command-line-module)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-paths ...                                                     */
@@ -285,7 +422,10 @@
 ;*    nodejs-file->paths ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-filename->paths::vector file::bstring)
-   (if (char=? (string-ref file 0) #\/)
+   (cond
+      ((string-null? file)
+       (vector (pwd)))
+      ((char=? (string-ref file 0) #\/)
        (let loop ((dir (dirname file))
 		  (acc '()))
 	  (cond
@@ -298,38 +438,41 @@
 	      (loop (dirname dir)
 		 (cons
 		    (js-string->jsstring (make-file-name dir "node_modules"))
-		    acc)))))
-       '#()))
+		    acc))))))
+      (else
+       '#())))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-module ...                                                */
+;*    nodejs-new-module ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-module::JsObject id filename worker::WorkerHopThread %this::JsGlobalObject)
+(define (nodejs-new-module::JsObject id filename worker::WorkerHopThread %this::JsGlobalObject)
 
    (define (module-init! m)
       (with-access::JsGlobalObject %this (js-object)
-	 ;; id field
-	 (js-put! m 'id (js-string->jsstring id) #f %this)
-	 ;; exports
-	 (js-put! m 'exports (js-new0 %this js-object) #f %this)
-	 ;; filename
-	 (js-put! m 'filename (js-string->jsstring filename) #f %this)
-	 ;; loaded
-	 (js-put! m 'loaded #f #f %this)
-	 ;; parent
-	 (js-put! m 'parent (js-null) #f %this)
-	 ;; children
-	 (js-put! m 'children (js-vector->jsarray '#() %this) #f %this)
-	 ;; paths
-	 (js-put! m 'paths
-	    (js-vector->jsarray (nodejs-filename->paths filename) %this)
-	    #f %this)))
+	 (let ((expo (js-new0 %this js-object)))
+	    (with-access::JsObject expo (cmap)
+	       (set! cmap (instantiate::JsConstructMap (single #t))))
+	    ;; id field
+	    (js-put! m 'id (js-string->jsstring id) #f %this)
+	    ;; exports
+	    (js-put! m 'exports expo #f %this)
+	    ;; filename
+	    (js-put! m 'filename (js-string->jsstring filename) #f %this)
+	    ;; loaded
+	    (js-put! m 'loaded #f #f %this)
+	    ;; parent
+	    (js-put! m 'parent (js-null) #f %this)
+	    ;; children
+	    (js-put! m 'children (js-vector->jsarray '#() %this) #f %this)
+	    ;; paths
+	    (js-put! m 'paths
+	       (js-vector->jsarray (nodejs-filename->paths filename) %this)
+	       #f %this))))
 
-   (with-trace 'require "nodejs-module"
-      (trace-item "id=" id)
-      (trace-item "filename=" filename)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let ((m (js-new0 %this js-object)))
+   (with-trace 'require (format "nodejs-module ~a ~a" id filename)
+      (with-access::JsGlobalObject %this (js-object __proto__)
+	 (let ((m (instantiateJsModule
+		     (__proto__ __proto__))))
 	    ;; module properties
 	    (module-init! m)
 	    ;; register the module in the current worker thread
@@ -342,7 +485,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject language::symbol)
+(define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject language::bstring)
 
    ;; require
    (define require
@@ -352,26 +495,63 @@
 	       (js-current-worker) this %module
 	       (if (eq? lang (js-undefined))
 		   language
-		   (string->symbol (js-tostring lang this)))))
+		   (js-tostring lang this))
+	       (let loop ((lang lang))
+		  (cond
+		     ((isa? lang JsObject)
+		      (with-access::JsGlobalObject this (js-symbol)
+			 (let* ((key (js-get js-symbol 'compiler this))
+				(comp (js-get lang key this)))
+			    (if (isa? comp JsFunction)
+				comp
+				(js-raise-error (js-new-global-object)
+				   "Wrong language object"
+				   lang)))))
+		     ((js-jsstring? lang)
+		      (let ((str (js-jsstring->string lang)))
+			 (unless (builtin-language? str)
+			    (let ((langmod (nodejs-require-module str
+					      (js-current-worker)
+					      this %module)))
+			       (loop langmod)))))
+		     ((not (builtin-language? language))
+		      (let ((langmod (nodejs-require-module language
+					(js-current-worker)
+					this %module)))
+			 (loop langmod)))
+		     (else
+		      #f)))))
 	 2 "require"))
 
+   ;; require.lang
+   (js-bind! this require 'lang
+      :get (js-make-function this
+	      (lambda (_)
+		 (js-string->jsstring language)) 0
+		 'lang)
+      :set (js-make-function this
+	      (lambda (_ val)
+		 (set! language (js-tostring val this))
+		 val)
+	      1 'lang)
+      :configurable #f :writable #t)
+   
    ;; require.main
    (with-access::JsGlobalObject this (js-main js-object) 
       (js-bind! this require 'main
 	 :get (js-make-function this (lambda (this) js-main) 0 'main)
-	 :configurable #f
-	 :writable #f))
+	 :configurable #f :writable #f))
    
    ;; require.resolve
-   (js-put! require 'resolve
-      (js-make-function this
-	 (lambda (_ name)
-	    (let ((name (js-tostring name this)))
-	       (if (core-module? name)
-		   (js-string->jsstring name)
-		   (js-string->jsstring (nodejs-resolve name this %module 'body)))))
-	 1 "resolve")
-      #f this)
+   (js-bind! this require 'resolve
+      :value (js-make-function this
+		(lambda (_ name)
+		   (let ((name (js-tostring name this)))
+		      (if (core-module? name)
+			  (js-string->jsstring name)
+			  (js-string->jsstring (nodejs-resolve name this %module 'body)))))
+		1 "resolve")
+      :configurable #t :writable #t :enumerable #t)
 
    ;; require.cache
    (with-access::WorkerHopThread worker (module-cache)
@@ -394,12 +574,18 @@
       :value require
       :enumerable #f)
 
-   ;; require.language
-   (let ((lang (js-string->jsstring (symbol->string language))))
-      (js-put! require 'language lang #f this))
-   
    require)
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-import-module ...                                         */
+;*    -------------------------------------------------------------    */
+;*    ES6 module import.                                               */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import-module::vector worker::WorkerHopThread %this::JsGlobalObject %module::JsObject path::bstring)
+   (let ((mod (nodejs-load-module path worker %this %module "hopscript")))
+      (with-access::JsModule mod (exports)
+	 exports)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-head ...                                                  */
 ;*    -------------------------------------------------------------    */
@@ -424,8 +610,10 @@
 		  (when (isa? attrs JsObject)
 		     (js-object->keyword-arguments* attrs %this))
 		  (filter (lambda (n)
-			     (or (isa? n xml-tilde) (isa? n xml-markup)))
-		     nodes))))
+			     (or (isa? n xml-tilde)
+				 (isa? n xml-markup)
+				 (isa? n xml-cdata)))
+		     (xml-body nodes)))))
 	 -1 "HEAD"))
 
    head)
@@ -442,10 +630,14 @@
    (define script
       (js-make-function %this
 	 (lambda (this attrs . nodes)
-	    (apply <SCRIPT> :idiom "javascript" :context %scope
-	       (when (isa? attrs JsObject)
-		  (js-object->keyword-arguments* attrs %this))
-	       nodes))
+	    (let ((tmp (apply <SCRIPT> :idiom "javascript"
+			  :context %scope :module %module
+			  (when (isa? attrs JsObject)
+			     (js-object->keyword-arguments* attrs %this))
+			  nodes)))
+	       (if (pair? tmp)
+		   (js-vector->jsarray (list->vector tmp) %this)
+		   tmp)))
 	 -1 "SCRIPT"))
    
    script)
@@ -462,7 +654,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-global-object)
    (unless (or *resolve-service* (<fx (hop-port) -1))
-      (when (memq (hop-sofile-compile-policy) '(nte nte+))
+      (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
 	 (nodejs-compile-workers-inits!))
       (set! *resolve-service*
 	 (service :name *resolve-url-path* (name filename)
@@ -481,7 +673,9 @@
 			#f this)
 		     ;; the resolution
 		     (nodejs-resolve name this m 'body)))))))
-   (nodejs-v8-global-object-init! (js-new-global-object)))
+   (let ((obj (js-new-global-object)))
+      (nodejs-v8-global-object-init! obj)
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-v8-global-object-init! ...                                */
@@ -506,113 +700,85 @@
 		      (lambda (this req socket)
 			 (js-undefined))
 		      2 "DTRACE_HTTP_SERVER_REQUEST")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_HTTP_SERVER_RESPONSE
 	    :value (js-make-function %this
 		      (lambda (this req socket)
 			 (js-undefined))
 		      2 "DTRACE_HTTP_SERVER_RESPONSE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_HTTP_SERVER_REQUEST
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_HTTP_SERVER_REQUEST")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_HTTP_SERVER_RESPONSE
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_HTTP_SERVER_RESPONSE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_HTTP_CLIENT_RESPONSE
 	    :value (js-make-function %this
 		      (lambda (this req socket)
 			 (js-undefined))
 		      2 "DTRACE_HTTP_CLIENT_RESPONSE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_HTTP_CLIENT_REQUEST
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_HTTP_CLIENT_REQUEST")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_HTTP_CLIENT_REQUEST
 	    :value (js-make-function %this
 		      (lambda (this req socket)
 			 (js-undefined))
 		      2 "DTRACE_HTTP_CLIENT_REQUEST")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_HTTP_CLIENT_RESPONSE
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_HTTP_CLIENT_RESPONSE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_NET_STREAM_END
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "DTRACE_NET_STREAM_END")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_NET_SOCKET_READ
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "DTRACE_NET_SOCKET_READ")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_NET_SOCKET_WRITE
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "DTRACE_NET_SOCKET_WRITE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_NET_SERVER_CONNECTION
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "DTRACE_NET_SERVER_CONNECTION")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_NET_SERVER_CONNECTION
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_NET_SERVER_CONNECTION")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_NET_SERVER_CONNECTION_CLOSE
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_NET_SERVER_CONNECTION_CLOSE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)))
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)))
    %this)
 
 ;*---------------------------------------------------------------------*/
@@ -622,10 +788,10 @@
    (let ((scope (duplicate::JsGlobalObject global
 		   (cmap (instantiate::JsConstructMap))
 		   (__proto__ global)
-		   (properties '())
 		   (elements '#()))))
-      (js-object-mode-packed-set! scope #t)
-      (nodejs-import! global scope global)
+      (js-object-properties-set! scope '())
+      (js-object-mode-set! scope (js-object-default-mode))
+      (nodejs-bind-export! global scope global)
       (hopscript-global-object-init! scope)
       scope))
 
@@ -647,7 +813,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile filename::bstring #!optional lang worker-slave)
+(define (nodejs-compile src filename::bstring
+	   %ctxthis %ctxmodule
+	   #!key lang worker-slave)
    
    (define (compile-file filename::bstring mod)
       (with-trace 'require "compile-file"
@@ -659,13 +827,15 @@
 		  (unwind-protect
 		     (j2s-compile in
 			:driver (nodejs-driver)
+			:driver-name "nodejs-driver"
 			:filename filename
-			:language (or lang 'hopscript)
+			:language (or lang "hopscript")
 			:mmap-src m
 			:module-main #f
 			:module-name (symbol->string mod)
 			:worker-slave worker-slave
 			:verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+			:plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 			:debug (bigloo-debug))
 		     (close-mmap m)))))))
    
@@ -679,18 +849,49 @@
 	       (input-port-name-set! in url)
 	       (j2s-compile in
 		  :driver (nodejs-driver)
-		  :language (or lang 'hopscript)
+		  :driver-name "nodejs-driver"
+		  :language (or lang "hopscript")
 		  :filename filename
 		  :module-main #f
 		  :module-name (symbol->string mod)
 		  :worker-slave worker-slave
 		  :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+		  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 		  :debug (bigloo-debug))))))
+
+   (define (compile-ast ast::J2SProgram mod)
+      (with-trace 'require "compile-ast"
+	 (with-access::J2SProgram ast (path)
+	    (trace-item "ast=" path)
+	    (debug-compile-trace path)
+	    (let ((m (when (file-exists? path)
+			(open-mmap filename read: #t :write #f))))
+	       (unwind-protect
+		  (j2s-compile ast
+			      :driver (nodejs-driver)
+			      :driver-name "nodejs-driver"
+			      :filename filename
+			      :language (or lang "hopscript")
+			      :module-main #f
+			      :mmap-src m
+			      :module-name (symbol->string mod)
+			      :worker-slave worker-slave
+			      :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+			      :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+			      :debug (bigloo-debug))
+		  (when (mmap? m)
+		     (close-mmap m)))))))
    
-   (define (compile filename::bstring mod)
-      (if (file-exists? filename)
-	  (compile-file filename mod)
-	  (compile-url filename mod)))
+   (define (compile src mod)
+      (cond
+	 ((isa? src J2SProgram)
+	  (compile-ast src mod))
+	 ((not (string? src))
+	  (bigloo-type-error "nodejs-compile" "string or J2SProgram" src))
+	 ((file-exists? filename)
+	  (compile-file filename mod))
+	 (else
+	  (compile-url filename mod))))
 
    (unless nodejs-debug-compile
       (set! nodejs-debug-compile
@@ -703,7 +904,7 @@
 	 (trace-item "filename=" filename)
 	 (or (hashtable-get compile-table filename)
 	     (let* ((mod (gensym))
-		    (expr (compile filename mod))
+		    (expr (compile src mod))
 		    (evmod (eval-module)))
 		(when (eq? nodejs-debug-compile 'yes)
 		   (unless (directory? "/tmp/HOP")
@@ -788,6 +989,45 @@
 	       (apply-listeners compile-listeners-all evt))))))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-compile-abort-all! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-abort-all!)
+   
+   (define (socompile-wait p::struct status::bool)
+      (let ((proc (socompile-proc p)))
+	 (nodejs-process-wait proc (socompile-src p))
+	 (if (and status (=fx (process-exit-status proc) 0))
+	     ((socompile-ksucc p))
+	     ((socompile-kfail p)))))
+
+   (synchronize socompile-mutex
+      (for-each (lambda (p)
+		   (define debug-abort #f)
+		   (case (hop-sofile-compile-policy)
+		      ((nte1)
+		       (socompile-wait p #t)
+		       (hop-sofile-compile-policy-set! 'abort))
+		      ((nte+)
+		       (socompile-wait p #t))
+		      (else
+		       (when debug-abort
+			  (tprint "aborting " (socompile-proc p)
+			     " " (socompile-cmd p)))
+		       (hop-verb 3 (hop-color -1 -1 " ABORTING ") " "
+			  (socompile-cmd p) "\n")
+		       (socompile-abortp-set! p #t)
+		       (process-kill (socompile-proc p))
+		       (when debug-abort
+			  (tprint "waiting/abort " (socompile-proc p)))
+		       (socompile-wait p #f)
+		       (when debug-abort
+			  (tprint "killed " (socompile-proc p))))))
+	 socompile-processes)
+      (set! socompile-processes '())
+      (set! socompile-files '())
+      (set! socompile-ended #t)))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-workers-inits! ...                                */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile-workers-inits!)
@@ -803,39 +1043,12 @@
 	     (begin
 		(condition-variable-wait! socompile-condv socompile-mutex)
 		(loop)))))
-   
-   (define (socompile-wait p::struct status::bool)
-      (let ((proc (socompile-proc p)))
-	 (nodejs-process-wait proc (socompile-src p))
-	 (if (and status (=fx (process-exit-status proc) 0))
-	     ((socompile-ksucc p))
-	     ((socompile-kfail p)))))
-   
+
    (register-exit-function!
       (lambda (status)
-	 (synchronize socompile-mutex
-	    (for-each (lambda (p)
-			 (define debug-abort #f)
-			 (if (eq? (hop-sofile-compile-policy) 'nte+)
-			     (socompile-wait p #t)
-			     (begin
-				(when debug-abort
-				   (tprint "aborting " (socompile-proc p)
-				      " " (socompile-cmd p)))
-				(hop-verb 3 (hop-color -1 -1 " ABORTING ") " "
-				   (socompile-cmd p) "\n")
-				(process-kill (socompile-proc p))
-				(when debug-abort
-				   (tprint "waiting/abort " (socompile-proc p)))
-				(socompile-wait p #f)
-				(when debug-abort
-				   (tprint "killed " (socompile-proc p))))))
-	       socompile-processes)
-	    (set! socompile-processes '())
-	    (set! socompile-files '())
-	    (set! socompile-ended #t)
-	    status)))
-   
+	 (nodejs-compile-abort-all!)
+	 status))
+
    (thread-start!
       (instantiate::hopthread
 	 (name "socompile-orchestrator")
@@ -861,7 +1074,7 @@
 (define (register-socompile-process! proc::process cmd::bstring src ksucc kfail)
    ;; socompile-mutex already locked
    (set! socompile-processes
-      (cons (socompile proc cmd src ksucc kfail) socompile-processes))
+      (cons (socompile proc cmd src ksucc kfail #f) socompile-processes))
    proc)
 
 ;*---------------------------------------------------------------------*/
@@ -871,8 +1084,8 @@
    ;; socompile-mutex already locked
    (let ((el (find (lambda (s) (eq? (socompile-proc s) proc))
 		socompile-processes)))
-      (set! socompile-processes (delete! el socompile-processes)))
-   proc)
+      (set! socompile-processes (delete! el socompile-processes))
+      el))
 
 ;*---------------------------------------------------------------------*/
 ;*    soworker-name ...                                                */
@@ -896,7 +1109,7 @@
 		  (with-trace 'sorequire "make-compile-worker"
 		     (trace-item "thread=" (current-thread))
 		     (trace-item "e=" e)
-		     (nodejs-socompile (car e) (cdr e))
+		     (nodejs-socompile (car e) (car e) (cdr e))
 		     (synchronize socompile-mutex
 			(set! socompile-worker-count
 			   (-fx socompile-worker-count 1))
@@ -946,57 +1159,63 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-socompile ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-socompile filename lang)
+(define (nodejs-socompile src::obj filename::bstring lang)
    
-   (define (exec cmd::bstring ksucc::procedure kfail::procedure)
+   (define (exec line::pair ksucc::procedure kfail::procedure)
       
-      (let* ((line (string-split cmd " "))
-	     (proc (synchronize socompile-mutex
-		      (unless socompile-ended
-			 (register-socompile-process!
-			    (apply run-process (car line)
-			       :wait #f
-			       error: pipe:
-			       output: "/dev/null"
-			       (cdr line))
-			    cmd  filename ksucc kfail))))
-	     (estr (when (process? proc)
-		      (let ((err (process-error-port proc)))
-			 (with-handler
-			    (lambda (e) e)
-			    (unwind-protect
-			       (read-string err)
-			       (close-input-port err))))))
-	     (debug-abort #f))
-	 (with-handler
-	    (lambda (e)
-	       (exception-notify e))
+      (let ((cmd (format "~( )" line))
+	    (mutex (make-mutex "compilation"))
+	    (estr #f)
+	    (proc #f))
+	 
+	 (synchronize socompile-mutex
+	    (set! proc (unless socompile-ended
+			  (register-socompile-process!
+			     (apply run-process (car line)
+				:wait #f
+				error: pipe:
+				output: "/dev/null"
+				(cdr line))
+			     cmd filename ksucc kfail)))
+	    ;; error logger (mandatory to flush child stderr)
 	    (when (process? proc)
-	       (synchronize socompile-mutex
-		  (set! compile-pending (+fx compile-pending 1))
-		  (when (pair? compile-listeners-start)
-		     (let ((evt (instantiate::event
-				   (name "start")
-				   (target filename)
-				   (value compile-pending))))
-			(apply-listeners compile-listeners-start evt))))
-	       (when debug-abort
-		  (tprint ">>> wait-process " proc " " cmd))
-	       (nodejs-process-wait proc filename)
-	       (when debug-abort
-		  (tprint "<<< wait-process " proc " " cmd))
-	       (synchronize socompile-mutex
-		  (when debug-abort
-		     (tprint "spcompile-ended=" socompile-ended " estr=" estr))
-		  (if (and socompile-ended (=fx (process-exit-status proc) 0))
-		      'ended
-		      (begin
-			 (unregister-socompile-process! proc)
-			 (unless (=fx (process-exit-status proc) 0)
-			    estr))))))))
+	       (thread-start!
+		  (instantiate::hopthread
+		     (name "errlogger")
+		     (body (lambda ()
+			      (let ((err (process-error-port proc)))
+				 (with-handler
+				    (lambda (e) e)
+				    (unwind-protect
+				       (synchronize mutex
+					  (set! estr (read-string err)))
+				       (close-input-port err)))))))))
+	    (with-handler
+	       (lambda (e)
+		  (fprint (current-error-port) "**** ERROR: compilation failed " filename)
+		  (exception-notify e))
+	       (when (process? proc)
+		  ;;(synchronize socompile-mutex
+		  (begin
+		     (set! compile-pending (+fx compile-pending 1))
+		     (when (pair? compile-listeners-start)
+			(let ((evt (instantiate::event
+				      (name "start")
+				      (target filename)
+				      (value `(pending: ,compile-pending
+						 command: ,cmd)))))
+			   (apply-listeners compile-listeners-start evt)))))))
+	 (nodejs-process-wait proc filename)
+	 (synchronize mutex
+	    (if (and socompile-ended (=fx (process-exit-status proc) 0))
+		'ended
+		(let ((soc (unregister-socompile-process! proc)))
+		   (unless (=fx (process-exit-status proc) 0)
+		      (if soc
+			  (unless (socompile-abortp soc)
+			     estr))))))))
    
    (define (dump-error cmd sopath msg)
-      (display msg (current-error-port))
       (call-with-output-file (string-append sopath ".err")
 	 (lambda (op)
 	    (display cmd op)
@@ -1012,11 +1231,14 @@
    
    (define (make-kfail sopath sopathtmp)
       (lambda ()
+	 (let ((o (string-append (prefix sopathtmp) ".o"))
+	       (c (string-append (prefix sopathtmp) ".c")))
+	    (when (file-exists? o) (delete-file o))
+	    (when (file-exists? c) (delete-file c)))
 	 (when (file-exists? sopath) (delete-file sopath))
 	 (when (file-exists? sopathtmp) (delete-file sopathtmp))))
    
-   (with-trace 'sorequire "nodejs-socompile"
-      (trace-item "filename=" filename)
+   (with-trace 'sorequire (format "nodejs-socompile ~a" filename)
       (let loop ()
 	 (let ((tmp (synchronize socompile-mutex
 		       (cond
@@ -1028,7 +1250,8 @@
 			      socompile-condv socompile-mutex)
 			   'loop)
 			  (else
-			   (set! socompile-files (cons filename socompile-files))
+			   (set! socompile-files
+			      (cons filename socompile-files))
 			   'compile)))))
 	    (trace-item "tmp=" tmp)
 	    (cond
@@ -1042,17 +1265,57 @@
 			  (sopathtmp (make-file-name
 					(dirname sopath)
 					(string-append "#" (basename sopath))))
-			  (cmd (format "~a ~a -y -v3 --js-no-module-main -o ~a ~a"
-				  (hop-hopc)
-				  filename sopathtmp
-				  (hop-hopc-flags)))
+			  (cmd `(,(hop-hopc)
+				  ;; bigloo
+				  ,(format "--bigloo=~a" (hop-bigloo))
+				  ;; verbosity
+				  ,@(if (= (hop-verbose) 0)
+					(if (eq? nodejs-debug-compile 'yes) '("-v4") '())
+				       (list (format "-v~a" (hop-verbose))))
+				  ;; source
+				  ,@(cond
+				       ((string? src)
+					(list src))
+				       ((isa? src J2SProgram)
+					`(,filename "--ast" ,(string-for-read (obj->string src))))
+				       (else
+					(error "nodejs-socompile"
+					   (format "bad source format `~a'" (typeof src)) filename)))
+				  ;; target
+				  "-y" "--js-no-module-main" "-o" ,sopathtmp
+				  ;; js plugins
+				  "--js-plugins"
+				  ;; profiling
+				  ,@(if (hop-profile) '("--profile") '())
+				  ;; debug
+				  ,@(if (eq? nodejs-debug-compile 'yes)
+					`("-t" ,(make-file-name "/tmp/HOP"
+						   (string-append
+						      (prefix (basename filename))
+						      ".scm")))
+					'())
+				  ;; config
+				  ,@(if (pair? (j2s-compile-options))
+					`("--js-config"
+					    ,(string-for-read
+						(format "~s"
+						   (j2s-compile-options))))
+					'())
+				  ;; other options
+				  ,@(call-with-input-string (hop-hopc-flags) port->string-list)))
 			  (ksucc (make-ksucc sopath sopathtmp))
 			  (kfail (make-kfail sopath sopathtmp)))
 		      (make-directories (dirname sopath))
 		      (trace-item "sopath=" sopath)
 		      (trace-item "sopathtmp=" sopathtmp)
 		      (trace-item "cmd=" cmd)
-		      (hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
+		      (hop-verb 3 (hop-color -2 -2 " COMPILE") " "
+			 (format "~( )\n"
+			    (map (lambda (s)
+				    (if (string-index s #\space)
+					(string-append "\"" s "\"")
+					s))
+			       cmd)))
 		      (synchronize-global
 			 (make-file-name
 			    (dirname (hop-sofile-path "hop.lock"))
@@ -1083,34 +1346,39 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-load filename worker::WorkerHopThread #!optional lang)
+(define (nodejs-load src filename %ctxthis %ctxmodule worker::WorkerHopThread
+	   #!optional lang srcalias)
 
    (define (loadso-or-compile filename lang worker-slave)
       (if worker-slave
-	  (nodejs-compile filename lang #t)
+	  (nodejs-compile src filename %ctxthis %ctxmodule
+	     :lang lang :worker-slave #t)
 	  (let loop ((sopath (hop-find-sofile filename)))
 	     (cond
 		((string? sopath)
 		 (let ((p (hop-dynamic-load sopath)))
 		    (if (and (procedure? p) (=fx (procedure-arity p) 4))
 			p
-			(js-raise-error (js-new-global-object)
+			(js-raise-error %ctxthis
 			   (format "Wrong compiled file format ~s" sopath)
 			   sopath))))
 		((and (not (eq? sopath 'error)) (hop-sofile-enable))
 		 (case (hop-sofile-compile-policy)
 		    ((aot)
-		     (loop (nodejs-socompile filename lang)))
-		    ((nte nte+)
+		     (loop (nodejs-socompile src filename lang)))
+		    ((nte nte1 nte+)
 		     (nodejs-socompile-queue-push filename lang)
-		     (nodejs-compile filename lang))
+		     (nodejs-compile src filename %ctxthis %ctxmodule
+			:lang lang))
 		    (else
-		     (nodejs-compile filename lang))))
+		     (nodejs-compile src filename %ctxthis %ctxmodule
+			:lang lang))))
 		(else
-		 (when (eq? (hop-sofile-compile-policy) 'nte+)
+		 (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
 		    (nodejs-socompile-queue-push filename lang))
-		 (nodejs-compile filename lang))))))
-   
+		 (nodejs-compile src filename %ctxthis %ctxmodule
+		    :lang lang))))))
+
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
 	 (with-access::WorkerHopThread worker (%this prehook parent)
@@ -1118,8 +1386,8 @@
 	       (let ((hopscript (loadso-or-compile filename lang parent))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
-		     (mod (nodejs-module (if js-main filename ".")
-			     filename worker %this)))
+		     (mod (nodejs-new-module (if js-main filename ".")
+			     (or srcalias filename) worker %this)))
 		  ;; prehooking
 		  (when (procedure? prehook)
 		     (prehook %this this scope mod))
@@ -1135,18 +1403,19 @@
 		  ;; set the loaded property
 		  (js-put! mod 'loaded #t #f %this)
 		  ;; return the newly created module
-		  (trace-item "mod=" (typeof mod))
+		  (trace-item "mod=" (typeof mod) " filename=" filename)
 		  mod)))))
 
    (define (load-module-html)
       (with-trace 'require "require@load-module-html"
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
-	       (let ((hopscript (nodejs-compile filename lang))
+	       (let ((hopscript (nodejs-compile filename filename
+				   %ctxthis %ctxmodule :lang lang))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
-		     (mod (nodejs-module (if js-main filename ".")
-			     filename worker %this)))
+		     (mod (nodejs-new-module (if js-main filename ".")
+			     (or srcalias filename) worker %this)))
 		  ;; prehooking
 		  (when (procedure? prehook)
 		     (prehook %this this scope mod))
@@ -1178,7 +1447,8 @@
 	    (let ((evmod-or-init (hop-load/cache filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module filename filename worker %this)))
+		  (mod (nodejs-new-module filename
+			  (or srcalias filename) worker %this)))
 	       (cond
 		  ((and (procedure? evmod-or-init)
 			(=fx (procedure-arity evmod-or-init) 4))
@@ -1196,16 +1466,36 @@
 	    (let ((init (hop-dynamic-load filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module filename filename worker %this)))
+		  (mod (nodejs-new-module filename
+			  (or srcalias filename) worker %this)))
 	       (when (procedure? init)
 		  (init %this this scope mod))
 	       ;; return the newly created module
 	       mod))))
    
    (define (not-found filename)
-      (js-raise-error (js-new-global-object)
+      (js-raise-error %ctxthis
 	 (format "Don't know how to load module ~s" filename)
 	 filename))
+
+   (define (mime-html? url)
+      (multiple-value-bind (scheme userinfo host port path)
+	 (url-parse url)
+	 (let ((r (instantiate::http-server-request
+		     (scheme (string->symbol scheme))
+		     (userinfo userinfo)
+		     (host (or host path))
+		     (port (or port 80))
+		     (connection-timeout (hop-connection-timeout))
+		     (connection 'close)
+		     (method 'HEAD)
+		     (path (if host path "/")))))
+	    (http-send-request r
+	       (lambda (p status header clength tenc)
+		  (let ((ct (assq :content-type header)))
+		     (when (pair? ct)
+			(string-prefix? "text/html"
+			   (cdr ct)))))))))
 
    (define (load-module)
       (cond
@@ -1221,43 +1511,81 @@
 	  (load-module-so))
 	 ((or (string-prefix? "http://" filename)
 	      (string-prefix? "https://" filename))
-	  (case lang
-	     ((html) (load-module-html))
-	     (else (load-module-js))))
+	  (cond
+	     ((string=? lang "html")
+	      (load-module-html))
+	     ((mime-html? filename)
+	      (load-module-html))
+	     (else
+	      (load-module-js))))
 	 ((not (string-index (basename filename) #\.))
 	  (load-module-js))
 	 (else
 	  (not-found filename))))
 
-   (with-trace 'require "nodejs-load"
-      (trace-item "filename=" filename)
+   (with-trace 'require (format "nodejs-load ~a" filename)
       (with-loading-file filename load-module)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-require-module ...                                        */
+;*    nodejs-load-module ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Require a nodejs module, load it if necessary or simply          */
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require-module name::bstring worker::WorkerHopThread %this
-	   %module #!optional lang)
+(define (nodejs-load-module path::bstring worker::WorkerHopThread
+	   %this %module #!optional (lang "hopscript") compiler)
    
    (define (load-json path)
-      (let ((mod (nodejs-module path path worker %this))
+      (let ((mod (nodejs-new-module path path worker %this))
 	    (json (call-with-input-file path
 		     (lambda (ip)
 			(js-json-parser ip #f #f #f %this)))))
 	 (js-put! mod 'exports json #f %this)
 	 mod))
    
-   (define (load-module path worker %this %module)
+   (define (load-module src path worker %this %module lang compiler srcalias)
       (cond
 	 ((core-module? path)
 	  (nodejs-core-module path worker %this))
-	 ((string-suffix? ".json" path)
+	 ((isa? compiler JsFunction)
+	  (let ((obj (js-call1 %this compiler (js-undefined) path)))
+	     (when (isa? obj JsObject)
+		(let ((ty (js-tostring (js-get obj 'type %this) %this))
+		      (val (js-get obj 'value %this))
+		      (langc (js-get obj 'language %this)))
+		   (cond
+		      ((string=? ty "filename")
+		       (load-module (js-tostring val %this)
+			  (js-tostring val %this)
+			  worker %this %module
+			  (if (eq? langc (js-undefined))
+			      lang
+			      (js-tostring langc %this))
+			  #f
+			  path))
+		      ((string=? ty "ast")
+		       (load-module val path
+			  worker %this %module
+			  (if (eq? langc (js-undefined))
+			      lang
+			      (js-tostring langc %this))
+			  #f
+			  path))
+		      ((string=? ty "value")
+		       (let ((mod (nodejs-new-module path path worker %this)))
+			  (js-put! mod 'exports val #f %this)
+			  mod))
+		      ((string=? ty "json")
+		       (let ((mod (nodejs-new-module path path worker %this)))
+			  (js-put! mod 'exports val #f %this)
+			  mod))
+		      (else
+		       val))))))
+	 ((or (eq? lang 'json) (string-suffix? ".json" path))
 	  (load-json path))
 	 (else
-	  (let ((mod (nodejs-load path worker lang)))
+	  (let ((mod (nodejs-load src path %this %module worker
+			lang srcalias)))
 	     (unless (js-get mod 'parent %this)
 		;; parent and children
 		(let* ((children (js-get %module 'children %this))
@@ -1266,19 +1594,29 @@
 		   (js-put! mod 'parent %module #f %this)))
 	     mod))))
 
-   (with-trace 'require "nodejs-require-module"
-      (trace-item "name=" name)
+   (with-trace 'require (format "nodejs-load-module ~a" path)
       (with-access::WorkerHopThread worker (module-cache)
-	 (let* ((path (nodejs-resolve name %this %module 'body))
-		(mod (js-get-property-value module-cache module-cache path %this)))
+	 (let ((mod (js-get-property-value module-cache module-cache path %this)))
 	    (trace-item "path=" path)
 	    (trace-item "mod=" (if (eq? mod (js-absent)) 'absent (typeof mod)))
 	    (if (eq? mod (js-absent))
-		(let ((mod (load-module path worker %this %module)))
-		   (js-get mod 'exports %this))
-		(let ((exports (js-get mod 'exports %this)))
-		   (trace-item "exports=" (typeof exports))
-		   exports))))))
+		(load-module path path worker %this %module lang compiler #f)
+		mod)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-require-module ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Require a nodejs module, load it if necessary or simply          */
+;*    reuse the previously loaded module structure.                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-require-module name::bstring worker::WorkerHopThread
+	   %this %module #!optional (lang "hopscript") compiler)
+   (with-trace 'require (format "nodejs-require-module ~a" name)
+      (let* ((path (nodejs-resolve name %this %module 'body))
+	     (mod (nodejs-load-module path worker %this %module lang compiler))
+	     (exports (js-get mod 'exports %this)))
+	 (trace-item "exports=" (typeof exports))
+	 exports)))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module? ...                                                 */
@@ -1295,26 +1633,27 @@
 (define (nodejs-core-module name::bstring worker %this)
    
    (define (nodejs-init-core name worker %this)
-      (with-trace 'require "nodejs-init-core"
-	 (trace-item "name=" name)
+      (with-trace 'require (format "nodejs-init-core ~a" name)
+	 (trace-item "gencmapid=" (gencmapid))
 	 (with-access::JsGlobalObject %this (js-object)
 	    (let ((init (cdr (assoc name (core-module-table))))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module name name worker %this)))
+		  (mod (nodejs-new-module name name worker %this)))
 	       ;; initialize the core module
-	       (init %this this scope mod)
+	       (with-trace 'require (format "nodejs-init-core.init ~a" name)
+		  (init %this this scope mod))
 	       ;; return the module
 	       (trace-item "mod=" (typeof mod))
+	       (trace-item "gencmapid=" (gencmapid))
 	       mod))))
    
-   (with-trace 'require "nodejs-core-module"
-      (trace-item "name=" name)
+   (with-trace 'require (format "nodejs-core-module ~a" name)
       (with-access::WorkerHopThread worker (module-cache)
-	 (let ((mod (js-get-property-value module-cache module-cache name %this)))
-	    (if (eq? mod (js-absent))
+	 (let ((m (js-get-property-value module-cache module-cache name %this)))
+	    (if (eq? m (js-absent))
 		(nodejs-init-core name worker %this)
-		mod)))))
+		m)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require-core ...                                          */
@@ -1323,9 +1662,12 @@
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-core name::bstring worker %this)
-   (with-trace 'require "nodejs-require-core"
-      (trace-item "name=" name)
-      (js-get (nodejs-core-module name worker %this) 'exports %this)))
+   (with-trace 'require (format "nodejs-require-core ~a" name)
+      (let ((e (js-get (nodejs-core-module name worker %this) 'exports %this)))
+	 (with-access::JsObject e (cmap)
+	    (with-access::JsConstructMap cmap (%id props)
+	       (trace-item name " cmap.id=" %id " cmap.props=" props)
+	       e)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve ...                                               */
@@ -1455,10 +1797,11 @@
 	     nodejs-env-path))))
    
    (with-trace 'require "nodejs-resolve"
+      (trace-item "name=" name)
+      (trace-item "%module=" (typeof %module))
       (let* ((mod %module)
 	     (filename (js-jsstring->string (js-get mod 'filename %this)))
 	     (dir (dirname filename)))
-	 (trace-item "name=" name)
 	 (trace-item "dir=" dir)
 	 (trace-item "paths=" (let ((paths (js-get mod 'paths %this)))
 				(if (isa? paths JsArray)
@@ -1529,29 +1872,12 @@
 (define (nodejs-resolve-extend-path! path)
    (set! nodejs-env-path (append nodejs-env-path path)))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    nodejs-cache-module ...                                          *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (nodejs-cache-module name worker)                           */
-;*    (with-access::WorkerHopThread worker (module-table module-mutex) */
-;*       (synchronize module-mutex                                     */
-;* 	 (hashtable-get module-table name))))                          */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    nodejs-cache-module-put! ...                                     *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (nodejs-cache-module-put! name worker module)               */
-;*    (with-access::WorkerHopThread worker (module-table module-mutex) */
-;*       (synchronize module-mutex                                     */
-;* 	 (hashtable-put! module-table name module)                     */
-;* 	 module)))                                                     */
-
 ;*---------------------------------------------------------------------*/
-;*    nodejs-import! ...                                               */
+;*    nodejs-bind-export! ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Bind the exported binding into a global object.                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-import! %this %scope e . bindings)
+(define (nodejs-bind-export! %this %scope e . bindings)
    
    (define (for-in obj::JsObject proc)
       
@@ -1563,7 +1889,7 @@
 		  (loop (+fx i 1))))))
       
       (define (in-mapped-property n)
-	 (when (symbol? n) (proc n)))
+	 (when (symbol? (property-name n)) (proc (property-name n))))
       
       (define (in-property p)
 	 (when (isa? p JsPropertyDescriptor)
@@ -1571,11 +1897,11 @@
 	       (proc name))))
       
       (let loop ((o obj))
-	 (with-access::JsObject o (cmap properties __proto__)
+	 (with-access::JsObject o (cmap __proto__)
 	    (if (not (eq? cmap (js-not-a-cmap)))
-		(with-access::JsConstructMap cmap (names)
-		   (vfor-each in-mapped-property names))
-		(for-each in-property properties)))))
+		(with-access::JsConstructMap cmap (props)
+		   (vfor-each in-mapped-property props))
+		(for-each in-property (js-object-properties o))))))
    
    ;; e start being undefined during the first steps of the rts boot
    (when (isa? e JsObject)
@@ -1583,13 +1909,18 @@
       (if (null? bindings)
 	  (for-in e
 	     (lambda (k)
-		(js-put! %scope k (js-get e k %this) #f %this)))
+		(js-bind! %this %scope k
+		   :value (js-get e k %this)
+		   :writable #t :enumerable #f :configurable #f
+		   :hidden-class #f)))
+		;;(js-put! %scope k  #f %this)
 	  (for-each (lambda (k)
 		       (js-bind! %this %scope k
 			  :get (js-make-function %this
 				  (lambda (o)
 				     (js-get e k %this))
-				  0 'get)))
+				  0 'get)
+			  :hidden-class #f))
 	     bindings))))
 
 ;*---------------------------------------------------------------------*/
@@ -1656,7 +1987,7 @@
 
    (js-bind! %this scope 'Function
       :value js-function
-      :configurable #f :enumerable #f))
+      :configurable #f :enumerable #f :hidden-class #f))
 
 
 ;*---------------------------------------------------------------------*/
@@ -1687,11 +2018,56 @@
    (js-bind! %this scope 'Worker
       :value js-worker
       :configurable #f :enumerable #f))
-   
+
 ;*---------------------------------------------------------------------*/
-;*    Bind the nodejs require function                                 */
+;*    make-plugins-loader ...                                          */
+;*---------------------------------------------------------------------*/
+(define (make-plugins-loader %ctxthis %ctxmodule worker)
+   (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
+      (lambda (lang conf)
+	 (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
+	    (let* ((langmode (nodejs-require-module lang worker
+				%ctxthis %ctxmodule))
+		   (key (js-get js-symbol 'compiler %ctxthis))
+		   (parser (let ((o (js-get langmode key %ctxthis)))
+			      (when (isa? o JsObject)
+				 (js-get o 'parser %ctxthis)))))
+	       (if (isa? parser JsObject)
+		   (let ((ps (js-get parser 'plugins %ctxthis)))
+		      (if (pair? ps)
+			  ps
+			  '()))
+		   '()))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-plugins-toplevel-loader ...                               */
+;*    -------------------------------------------------------------    */
+;*    This function is intended to be used by external tools only      */
+;*    (e.g., hopc).                                                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-plugins-toplevel-loader)
+   (let ((this (nodejs-new-global-object)))
+      (with-access::JsGlobalObject this (js-object)
+	 (let* ((worker (js-init-main-worker! this #f nodejs-new-global-object))
+		(mod (nodejs-new-module "hopc" "." worker this)))
+	    (make-plugins-loader this mod worker)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-module-ref ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-module-ref obj index)
+   (vector-ref obj index))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-module-set! ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-module-set! obj index val)
+   (vector-set! obj index val))
+
+;*---------------------------------------------------------------------*/
+;*    Bind the nodejs require functions                                */
 ;*---------------------------------------------------------------------*/
 (js-worker-load-set!
    (lambda (filename worker this)
       (nodejs-require-module filename worker this
-	 (nodejs-module (basename filename) filename worker this))))
+	 (nodejs-new-module (basename filename) filename worker this))))

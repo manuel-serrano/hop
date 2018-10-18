@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/doc/xml.js                        */
+/*    serrano/prgm/project/hop/3.2.x/doc/xml.js                        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Thu Jul 13 08:25:55 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Fri Oct 12 11:26:09 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
 /*=====================================================================*/
@@ -26,16 +26,20 @@ function title( attrs, ... subtitle ) {
      <div class="container">
        <div class="row">
 	 <div class="col-md-2">
-	   <svg:img
-             src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
-             height="16ex" width="10em"/>
+	   <div class="svg-container">
+	     <svg:img
+                src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
+                height="16ex" width="10em"/>
+           </div>
 	 </div>
-	 <div class="col-md-10">
+	 <div class="col-md-7">
 	   <h1>
               ${attrs.title ? attrs.title : "Hop.js"}
               ${subtitle.length > 0 ? <small>/${subtitle}</small> : ""}
 	   </h1>
-	   <p>
+	 </div>
+	 <div class="col-md-3">
+	   <p class="version">
              <span class="label label-default lbl-lg">
               version ${attrs.version ? attrs.version : config.version}
 	     </span>
@@ -121,7 +125,11 @@ function navbar( attrs, chapters ) {
                    <li><a href=${p.href}>${p.name}</a></li>
                    <li role="separator" class="divider"></li>
 	           ${p.entries.map( function( e, idx = undefined, arr = undefined ) {
-                        return <li><a href=${e.href}>${e.title}</a></li>
+		      if( !(e instanceof Object) ) {
+			 return <li role="separator" class="divider"></li>;
+		      } else {
+			 return <li><a href=${e.href}>${e.title}</a></li>
+		      }
 		   } )}
                  </ul>
 	       </li>
@@ -158,11 +166,11 @@ function docfooter( attrs ) {
        </div>
        <div class="copyright col-md-8 copyright-middle">
          <a class="iddn" href="http://app.legalis.net/">
-           IDDN.FR.001.260002.000.S.P.2006.000.10400
+           IDDN.FR.001.310007.000.S.P.2018.000.31235
 	 </a>
          - 
          <a class="iddn" href="http://app.legalis.net/">
-           IDDN.FR.001.260002.001.S.A.2006.000.10600
+	   IDDN.FR.001.310008.000.S.P.2018.000.31235
 	 </a>
        </div>
        <div class="copyright copyright-right col-md-2">
@@ -229,29 +237,61 @@ function idxLetters( es ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    minIndexOf ...                                                   */
+/*---------------------------------------------------------------------*/
+function minIndexOf( string, ...seps ) {
+   let index = string.length;
+   let sep = false;
+   
+   seps.forEach( s => {
+      const i = string.indexOf( s );
+      
+      if( i > -1 && i < index ) {
+	 index = i;
+	 sep = s;
+      }
+   } )
+		 
+   return { index, sep };
+}
+   
+/*---------------------------------------------------------------------*/
 /*    idxEntry ...                                                     */
 /*---------------------------------------------------------------------*/
 function idxEntry( e, idx = undefined, arr = undefined ) {
    if( typeof( e ) === "string" ) {
       return <tr class="idx-letter"><td/><th>${e}</th></tr>;
    } else {
-      var p = e.proto.indexOf( "(" );
-      var proto = (p > 0? (e.proto.substring( 0, p ) + "()") : e.proto);
-      var i = proto.indexOf( "." );
-      var title = e.proto + "..." + e.chapter;
+      const { index, sep } = minIndexOf( e.proto, "[", "{", "(" );
+      const title = e.proto + "..." + e.chapter;
+      let lbl = index ? e.proto.substring( 0, index ) : e.proto;
+      const i = lbl.lastIndexOf( "." );
+      const { index: cindex, sep: csep } = minIndexOf( e.proto, "(", "{" );
 
+      switch( csep ) {
+	 case "{": lbl += "{}"; break;
+	 case "(": lbl += "()"; break;
+      }
+      
       if( i > 0 ) {
 	 return <tr>
-	   <td class="idx-prefix">${proto.substring( 0, i )}.</td>
+	   <td class="idx-prefix">${lbl.substring( 0, i )}.</td>
 	   <td class="idx-entry" title=${title}>
-	     <a href=${e.url}>${proto.substring( i+1 )}</a>
+	     <a href=${e.url}>${lbl.substring( i+1 )}</a>
 	   </td>
 	 </tr>;
       } else {
+	 if( lbl.indexOf( "&lt;" ) === 0 && lbl.lastIndexOf( "&gt;" ) === -1 ) {
+	    if( lbl.charAt( lbl.length - 1 ) === " " ) {
+	       lbl = lbl.substring( 0, lbl.length - 1 ) + "&gt;";
+	    } else {
+	       lbl += "&gt;";
+	    }
+	 }
 	 return <tr>
 	   <td/>
 	   <td class="idx-entry" title=${title}>
-	     <a href=${e.url}>${proto}</a>
+	     <a href=${e.url}>${lbl}</a>
 	   </td>
 	 </tr>
       }
@@ -262,7 +302,7 @@ function idxEntry( e, idx = undefined, arr = undefined ) {
 /*    idx ...                                                          */
 /*---------------------------------------------------------------------*/
 function idx( attrs, entries ) {
-   var en = idxLetters( entries );
+   var en = idxLetters( entries.filter( x => x ) );
    var collen = en.length / 3;
    
    return <div class="row">

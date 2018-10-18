@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/dom.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/dom.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Tue Sep 12 13:38:20 2017 (serrano)                */
-;*    Copyright   :  2015-17 Manuel Serrano                            */
+;*    Last change :  Wed Oct 17 10:48:25 2018 (serrano)                */
+;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
 ;*=====================================================================*/
@@ -19,6 +19,7 @@
    (include "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_string
 	   __hopscript_stringliteral
 	   __hopscript_function
@@ -331,6 +332,38 @@
 			       o)))
 		      body))
 		%this)))
+	 ((firstChild)
+	  (with-access::xml-markup o (body)
+	     (if (null? body)
+		 (js-undefined)
+		 (let ((o (car body)))
+		    (cond
+		       ((string? o)
+			(instantiate::xml-verbatim
+			   (parent o)
+			   (data o)))
+		       ((isa? o JsStringLiteral)
+			(instantiate::xml-verbatim
+			   (parent o)
+			   (data (js-jsstring->string o))))
+		       (else
+			o))))))
+	 ((lastChild)
+	  (with-access::xml-markup o (body)
+	     (if (null? body)
+		 (js-undefined)
+		 (let ((o (car (last-pair body))))
+		    (cond
+		       ((string? o)
+			(instantiate::xml-verbatim
+			   (parent o)
+			   (data o)))
+		       ((isa? o JsStringLiteral)
+			(instantiate::xml-verbatim
+			   (parent o)
+			   (data (js-jsstring->string o))))
+		       (else
+			o))))))
 	 (else
 	  (with-access::xml-markup o (attributes)
 	     (let ((name (if (eq? pname 'className)
@@ -472,9 +505,9 @@
 (define base-properties-name #f)
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::xml-markup ...                              */
+;*    js-properties-names ::xml-markup ...                             */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name o::xml-markup enump::bool %this::JsGlobalObject)
+(define-method (js-properties-names o::xml-markup enump %this)
    (with-access::xml-markup o (attributes)
       (let loop ((attributes attributes)
 		 (attrs `(,(js-string->jsstring "nodeType")
@@ -491,14 +524,19 @@
 			  ,(js-string->jsstring "removeChild"))))
 	 (cond
 	    ((null? attributes)
-	     (list->vector
-		(if (or (isa? o xml-element) (isa? o xml-html))
-		    (cons (js-string->jsstring "id") attrs)
-		    attrs)))
+	     (if (or (isa? o xml-element) (isa? o xml-html))
+		 (cons (js-string->jsstring "id") attrs)
+		 attrs))
 	    (else
 	     (loop (cddr attributes)
 		(cons (js-string->jsstring (keyword->string! (car attributes)))
 		   attrs)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::xml-markup ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::xml-markup p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ::xml-markup ...                             */
@@ -536,12 +574,12 @@
 	    (loop (cddr attributes))))))
 	 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::xml-html ...                                */
+;*    js-properties-names ::xml-html ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name o::xml-html enump::bool %this::JsGlobalObject)
+(define-method (js-properties-names o::xml-html enump::bool %this)
    (with-access::xml-markup o (attributes)
-      `#(,(js-string->jsstring "createTextNode")
-	 ,(js-string->jsstring "createElement"))))
+      `(,(js-string->jsstring "createTextNode")
+	,(js-string->jsstring "createElement"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::xml-element ...                                      */

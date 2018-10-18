@@ -1,12 +1,24 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/watch.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/runtime/watch.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 21 18:31:30 2017                          */
-;*    Last change :  Wed Mar  7 11:56:07 2018 (serrano)                */
+;*    Last change :  Tue Jul  3 04:59:12 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Watch for socket close                                           */
+;*    -------------------------------------------------------------    */
+;*    This module implements the WATCH-SOCKET! facility that waits     */
+;*    for a socket termination. More precisely, it waits for a char    */
+;*    to be available on the socket, as the only char that can be      */
+;*    read is EOF.                                                     */
+;*                                                                     */
+;*    The *INPIPE* variable is used to "unlock" the SELECT call when   */
+;*    a new thread is to be added to the watch set.                    */
+;*                                                                     */
+;*    An alternative method, without select would consist in spawning  */
+;*    a new thread waiting for EOF each time a new socket is to be     */
+;*    watched.                                                         */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -35,8 +47,15 @@
 (define (watch-socket! socket onclose)
    (cond-expand
       (bigloo4.3a
-       #unspecified)
+       ;; alternative without select
+       (thread-start!
+	  (instantiate::hopthread
+	     (body (lambda ()
+		      (input-port-timeout-set! (socket-input socket) 0)
+		      (onclose socket))))))
       (else
+       ;; efficient method with select and an pipe to unlock it
+       ;; when a new socket is to be added
        (synchronize *watch-mutex*
 	  (set! *sockets* (cons socket *sockets*))
 	  (if *outpipe*
@@ -63,21 +82,25 @@
 		      (open-pipes)
 		      (set! *inpipe* in)
 		      (set! *outpipe* out))))
-	     (multiple-value-bind (readfs _ _)
+	     (multiple-value-bind (readfs _ errfs)
 		(with-handler
 		   (lambda (e)
 		      (values '() #f #f))
 		   (select :read (cons *inpipe* *sockets*)))
 		(let ((socks (filter socket? readfs)))
-		   (for-each onclose socks)
-		   (synchronize *watch-mutex*
-		      (for-each (lambda (s)
-				   (set! *sockets* (remq! s *sockets*)))
-			 socks)
-		      (unless (pair? *sockets*)
-			 (close-input-port *inpipe*)
-			 (close-output-port *outpipe*)
-			 (set! *inpipe* #f)
-			 (set! *outpipe* #f)))
-		   (when *outpipe*
-		      (loop)))))))))
+		   (with-trace 'watch "watch-thread"
+		      (trace-item "readfs=" readfs)
+		      (trace-item "errfs=" errfs)
+		      (for-each onclose socks)
+		      (synchronize *watch-mutex*
+			 (for-each (lambda (s)
+				      (set! *sockets* (remq! s *sockets*)))
+			    socks)
+			 (unless (pair? *sockets*)
+			    (close-input-port *inpipe*)
+			    (close-output-port *outpipe*)
+			    (set! *inpipe* #f)
+			    (set! *outpipe* #f)))
+		      (when *outpipe*
+			 (sleep 1000000)
+			 (loop))))))))))

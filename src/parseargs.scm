@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 26 08:08:25 2018 (serrano)                */
+;*    Last change :  Thu Oct  4 11:46:15 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -125,7 +125,7 @@
 	     (set! clear-libs #f))
 	    (("--no-sofile" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
-	    (("--sofile-policy" ?policy (help "Sofile compile policy [none, aot, nte, nte+]"))
+	    (("--sofile-policy" ?policy (help "Sofile compile policy [none, aot, nte, nte1, nte+]"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))
@@ -335,6 +335,9 @@
 	    (("--js-es2017" (help "Enable all EcmaScript 2017 supports"))
 	     (for-each (lambda (ext)
 			  (nodejs-compiler-options-add! ext #t))
+		ecmascript-es6)
+	     (for-each (lambda (ext)
+			  (nodejs-compiler-options-add! ext #t))
 		ecmascript-es2017))
 	    (("--js-dsssl" (help "Enable DSSSL like JS services (deprecated)"))
 	     (nodejs-compiler-options-add! :dsssl #t))
@@ -347,6 +350,8 @@
 		   (else val))))
 	    (("--js-modules-dir" ?dir (help "Set default node_modules dir"))
 	     (nodejs-modules-directory-set! dir))
+	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
+	     (hop-profile-set! #t))
 	    ;; Internals
 	    (section "Internals")
 	    (("--configure" ?config (help "Report HOP configuration"))
@@ -630,7 +635,7 @@
    (print "Shell Variables:")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:usage, j2s:key")
-   (print "      nodejs:compile, hopscript:cache, hopscript:hint")
+   (print "      j2s:dump, nodejs:compile, hopscript:cache, hopscript:hint")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print "   - NODE_DEBUG: nodejs internal debugging [NODE_DEBUG=key]")
    (print "   - NODE_PATH: nodejs require path")
@@ -724,11 +729,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-clientc-filename-resolver ...                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-clientc-filename-resolver name context-or-path)
+(define (hop-clientc-filename-resolver name context-or-path module)
    (cond
       ((or (string-suffix? ".js" name) (not (string? context-or-path)))
        (let ((scope context-or-path))
-	  (nodejs-resolve name scope (js-get scope 'module scope) 'head)))
+	  (when module
+	     (nodejs-resolve name scope module 'head))))
       (else
        (let ((path context-or-path))
 	  (find-file/path name path)))))

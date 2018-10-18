@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/string.scm              */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/string.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 21 09:34:05 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed Oct 17 16:38:52 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
 ;*    -------------------------------------------------------------    */
@@ -20,9 +20,10 @@
    
    (library hop js2scheme)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_lib
 	   __hopscript_object
 	   __hopscript_function
@@ -45,6 +46,12 @@
 (%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 2)
+(define %pcache (js-make-pcache-table 2 "hopscript/string.scm"))
+
+;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsString
@@ -54,7 +61,7 @@
    (lambda (o %this)
       (let ((this (or %this (js-initial-global-object))))
 	 (with-access::JsGlobalObject this (js-string)
-	    (instantiate::JsString
+	    (instantiateJsString
 	       (val (js-string->jsstring o))
 	       (__proto__ (js-get js-string 'prototype this)))))))
 
@@ -111,7 +118,7 @@
 	 
 	 ;; builtin prototype
 	 (define js-string-prototype
-	    (instantiate::JsString
+	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
 	       (__proto__ __proto__)))
 
@@ -125,9 +132,9 @@
 			     (configurable #f)
 			     (enumerable #f)
 			     (value (string-length str)))))
-		  (with-access::JsString o (val properties)
+		  (with-access::JsString o (val)
 		     (set! val (js-ascii->jsstring str))
-		     (set! properties (list len)))))
+		     (js-object-properties-set! o (list len)))))
 	    
 	    (define (set-string! str)
 	       (let ((len (instantiate::JsValueDescriptor
@@ -137,9 +144,9 @@
 			     (enumerable #f)
 			     (value (uint32->fixnum
 				       (js-jsstring-codeunit-length str))))))
-		  (with-access::JsString o (val properties)
+		  (with-access::JsString o (val)
 		     (set! val str)
-		     (set! properties (list len)))))
+		     (js-object-properties-set! o (list len)))))
 	    
 	    (if (null? arg)
 		;; 2
@@ -158,9 +165,11 @@
 
 	 ;; string allocation
 	 (define (js-string-alloc::JsString constructor::JsFunction)
-	    (instantiate::JsString
+	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
-	       (__proto__ (js-get constructor 'prototype %this))))
+	       (__proto__ (js-object-get-name/cache constructor 'prototype #f
+			     %this
+			     (js-pcache-ref %pcache 0)))))
 
 	 ;; then, create a HopScript object
 	 (set! js-string
@@ -476,23 +485,8 @@
    ;; slice
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.13
    (define (slice this::obj start end)
-      (let* ((jss (js-cast-string %this this))
-	     (len (uint32->fixnum (js-jsstring-length jss)))
-	     (intstart (js-tointeger start %this))
-	     (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
-	     (from (->fixnum
-		      (if (< intstart 0)
-			  (max (+ len intstart) 0)
-			  (min intstart len))))
-	     (to (->fixnum
-		    (if (< intend 0)
-			(max (+ len intend) 0)
-			(min intend len))))
-	     (span (maxfx (-fx to from) 0))
-	     (end (+ from span)))
-	 (if (or (>fx from 0) (<fx end len))
-	     (js-jsstring-substring jss from end %this)
-	     jss)))
+      (let ((jss (js-cast-string %this this)))
+	 (js-jsstring-slice jss start end %this)))
    
    (js-bind! %this obj 'slice
       :value (js-make-function %this slice 2 'slice)
@@ -631,16 +625,15 @@
       (js-tointeger val %this)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::JsString ...                                */
+;*    js-properties-names ::JsString ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name obj::JsString enump %this)
+(define-method (js-properties-names obj::JsString enump %this)
    (with-access::JsString obj (val)
-      (vector-append
-	 (apply vector
-	    (map! js-integer->jsstring
-	       (iota
-		  (uint32->fixnum
-		     (js-jsstring-character-length (js-cast-string %this val))))))
+      (append!
+	 (map! js-integer->name
+	    (iota
+	       (uint32->fixnum
+		  (js-jsstring-character-length val))))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -656,6 +649,12 @@
 		 (call-next-method)
 		 #t))
 	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsString ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsString p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ::JsString ...                               */
@@ -760,6 +759,17 @@
 		       (loop (+u32 i #u32:1)))
 		    (call-next-method)))
 	     (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-for-of ::JsString ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-of o::JsString proc close %this)
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (let ((fun (js-get o js-symbol-iterator %this)))
+	 (if (isa? fun JsFunction)
+	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
+	     (with-access::JsString o (val)
+		(js-for-of val proc close %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-template-raw ...                                              */

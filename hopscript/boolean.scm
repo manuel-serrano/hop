@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/boolean.scm             */
+;*    .../prgm/project/hop/3.2.x-new-types/hopscript/boolean.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Jan 29 13:05:50 2018 (serrano)                */
+;*    Last change :  Tue Aug 28 09:07:41 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -18,11 +18,12 @@
 
    (library hop)
 
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_property
@@ -77,12 +78,12 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 (define js-boolean-prototype
-	    (instantiate::JsBoolean
+	    (instantiateJsBoolean
 	       (val #f)
 	       (__proto__ __proto__)))
 	 
 	 (define (js-boolean-alloc constructor::JsFunction)
-	    (instantiate::JsBoolean
+	    (instantiateJsBoolean
 	       (__proto__ (js-get constructor 'prototype %this))))
 
 	 ;; then, Create a HopScript string object

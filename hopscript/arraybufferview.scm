@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/arraybufferview.scm     */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/arraybufferview.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sat Apr 28 17:43:37 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 10:47:56 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -16,18 +16,23 @@
 
    (library hop)
 
+   (include "types.sch" "stringliteral.sch")
+   
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_property
 	   __hopscript_error
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_number
 	   __hopscript_worker
 	   __hopscript_arraybuffer)
 
-   (export (js-init-arraybufferview! ::JsGlobalObject)))
+   (export (js-init-arraybufferview! ::JsGlobalObject)
+	   (js-typedarray-lengthu32 o::JsTypedArray %this #!optional cache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
@@ -39,7 +44,7 @@
    `(lambda (o %this)
        (let ((this (or %this (js-initial-global-object))))
 	  (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
-	     (let ((abuf (instantiate::JsArrayBuffer
+	     (let ((abuf (instantiateJsArrayBuffer
 			    (__proto__ (js-get js-arraybuffer 'prototype this))
 			    (data o))))
 		(,(symbol-append 'instantiate:: type)
@@ -84,10 +89,10 @@
    (lambda (o %this)
       (let ((this (or %this (js-initial-global-object))))
 	 (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
-	    (let ((abuf (instantiate::JsArrayBuffer
+	    (let ((abuf (instantiateJsArrayBuffer
 			   (__proto__ (js-get js-arraybuffer 'prototype this))
 			   (data o))))
-	       (instantiate::JsDataView
+	       (instantiateJsDataView
 		  (__proto__ (js-get js-int8array 'prototype this))
 		  (%data o)
 		  (byteoffset 0)
@@ -101,7 +106,7 @@
       (with-access::JsGlobalObject %this (js-arraybuffer)
 	 (with-access::JsDataView obj (%data buffer frozen byteoffset)
 	    (let ((nbuffer (js-donate buffer worker %_this)))
-	       (instantiate::JsDataView
+	       (instantiateJsDataView
 		  (__proto__ (js-get js-arraybuffer 'prototype %this))
 		  (frozen frozen)
 		  (buffer nbuffer)
@@ -148,7 +153,7 @@
 ;*---------------------------------------------------------------------*/
 (define (javascript-buffer->arraybufferview name args %this)
    (with-access::JsArrayBuffer (caddr args) (data)
-      (let ((buf (instantiate::JsDataView
+      (let ((buf (instantiateJsDataView
 		    (frozen (car args))
 		    (byteoffset (fixnum->uint32 (cadr args)))
 		    (buffer (caddr args))
@@ -356,7 +361,7 @@
 	 
 	 ;; builtin ArrayBufferview prototype
 	 (define js-typedarray-prototype
-	    (instantiate::JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 
 	 (define (js-create-from-arraybuffer this::JsTypedArray
@@ -543,11 +548,11 @@
 
 	 (define (js-typedarray-alloc constructor::JsFunction %this)
 	    (let ((o (allocate-instance (symbol-append 'Js name))))
-	       (with-access::JsTypedArray o (cmap bpe __proto__ properties
-					       elements)
+	       (with-access::JsTypedArray o (cmap bpe __proto__ elements)
+		  (js-object-properties-set! o '())
+		  (js-object-mode-set! o (js-object-default-mode))
 		  (js-object-mode-extensible-set! o #t)
 		  (set! cmap (js-not-a-cmap))
-		  (set! properties '())
 		  (set! bpe (fixnum->uint32 bp))
 		  (set! elements '#())
 		  (set! __proto__ (js-get constructor 'prototype %this)))
@@ -647,12 +652,13 @@
 	 js-typedarray)))
 	 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::JsTypedArray ...                            */
+;*    js-properties-names ::JsTypedArray ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name::vector obj::JsTypedArray enump %this)
+(define-method (js-properties-names::vector obj::JsTypedArray enump %this)
    (with-access::JsTypedArray obj (length)
       (let ((len (uint32->fixnum length)))
-	 (vector-append (apply vector (iota len)) (call-next-method)))))
+	 (append! (map js-integer->name (iota len))
+	    (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsTypedArray ...                               */
@@ -665,6 +671,12 @@
 		 (call-next-method)
 		 #t)
 	     (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsTypedArray ...                           */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsTypedArray p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ::JsTypedArray ...                           */
@@ -740,16 +752,41 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::JsTypedArray ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-length o::JsTypedArray cache %this)
+(define-method (js-get-length o::JsTypedArray %this #!optional cache)
    (with-access::JsTypedArray o (length)
       (if (or (not *optimize-length*) (=u32 length #u32:0))
 	  (call-next-method)
 	  (uint32->fixnum length))))
 
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-get-lengthu32 ::JsTypedArray ...                              *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-get-lengthu32 o::JsTypedArray %this #!optional cache) */
+;*    (with-access::JsTypedArray o (length)                            */
+;*       (if (or (not *optimize-length*) (=u32 length #u32:0))         */
+;* 	  (call-next-method)                                           */
+;* 	  length)))                                                    */
+
 ;*---------------------------------------------------------------------*/
-;*    js-get-name/cache-miss ::JsTypedArray ...                        */
+;*    js-typedarray-lengthu32 ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-name/cache-miss o::JsTypedArray p cache::JsPropertyCache throw %this)
+(define (js-typedarray-lengthu32 o::JsTypedArray %this #!optional cache)
+   (with-access::JsTypedArray o (length)
+      (if (or (not *optimize-length*) (=u32 length #u32:0))
+	  (js-touint32
+	     (if cache
+		 (js-get-name/cache o 'length #f %this cache)
+		 (js-get o 'length %this))
+	     %this)
+	  length)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-get-name/cache-miss ::JsTypedArray ...                 */
+;*---------------------------------------------------------------------*/
+(define-method (js-object-get-name/cache-miss o::JsTypedArray p
+		  throw::bool %this::JsGlobalObject
+		  cache::JsPropertyCache
+		  #!optional (point -1) (cspecs '()))
    (if (and *optimize-length* (eq? p 'length))
        (with-access::JsTypedArray o (length)
 	  (if (=u32 length #u32:0)
@@ -848,7 +885,7 @@
 	 
 	 ;; builtin DataView prototype
 	 (define js-dataview-prototype
-	    (instantiate::JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 	 
 	 (define (js-create-from-arraybuffer this::JsDataView
@@ -1053,7 +1090,7 @@
 	       items))
 	 
 	 (define (js-dataview-alloc constructor::JsFunction %this)
-	    (instantiate::JsDataView
+	    (instantiateJsDataView
 	       (cmap (js-not-a-cmap))
 	       (__proto__ (js-get constructor 'prototype %this))))
 	 
@@ -1284,4 +1321,17 @@
 	 
 	 js-dataview)))
 	 
-   
+;*---------------------------------------------------------------------*/
+;*    js-for-of ::JsTypedArray ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-of o::JsTypedArray proc close %this)
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (let ((fun (js-get o js-symbol-iterator %this)))
+	 (if (isa? fun JsFunction)
+	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
+	     (with-access::JsTypedArray o (length %data)
+		(let ((vref (js-typedarray-ref o)))
+		   (let loop ((i #u32:0))
+		      (when (<u32 i length)
+			 (proc (vref %data (uint32->fixnum i)))
+			 (loop (+u32 i 1))))))))))

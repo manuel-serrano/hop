@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Nov 27 08:43:44 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Thu Sep  6 18:29:10 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -396,8 +396,7 @@
 		   'UTF-8 (hop-charset))))
 	  (xml-write s p backend)))
       (else
-       (error "xml" "bad XML object"
-	  (xml-to-errstring obj)))))
+       (error "xml" "bad XML object" (xml-to-errstring obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-verbatim ...                                     */
@@ -817,7 +816,10 @@
 (define-generic (xml-to-errstring o::obj)
    (call-with-output-string
       (lambda (op)
-	 (write-circle o op))))
+	 (write-circle o op)
+	 (display " `" op)
+	 (display (typeof o) op)
+	 (display "'" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */

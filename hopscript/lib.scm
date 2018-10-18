@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/lib.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/lib.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Jan 29 13:30:35 2018 (serrano)                */
+;*    Last change :  Wed Oct  3 10:49:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -16,7 +16,10 @@
 
    (library hop)
 
+   (include "types.sch" "property.sch")
+   
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_property
 	   __hopscript_object
 	   __hopscript_function
@@ -40,42 +43,72 @@
 	   (js-jsobject->keyword-plist ::JsObject ::JsGlobalObject)
 	   (js-jsobject->alist ::JsObject ::JsGlobalObject)
 	   (js-dsssl-args->jsargs ::pair ::JsGlobalObject)
-	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)))
+	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)
+	   (inline fixnums?::bool ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-constant-init ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-constant-init str %this)
    (let ((cnsts (string->obj str)))
-       (let loop ((i (-fx (vector-length cnsts) 1)))
-	  (when (>=fx i 0)
-	     (let ((el (vector-ref-ur cnsts i)))
-		(cond
-		   ((isa? el JsRegExp)
-		    ;; patch the regexp prototype
-		    (with-access::JsGlobalObject %this (js-regexp-prototype)
-		       (with-access::JsRegExp el (__proto__)
-			  (set! __proto__ js-regexp-prototype))))
-		   ((vector? el)
-		    (vector-set-ur! cnsts i
-		       (case (vector-ref el 0)
-			  ((0)
-			   (let ((str (vector-ref-ur el 1)))
-			      (js-string->jsstring str)))
-			  ((1)
-			   (with-access::JsGlobalObject %this (js-regexp)
-			      (let* ((cnsts (vector-ref-ur el 1))
-				     (flags (vector-ref-ur el 2))
-				     (rx (js-string->jsstring cnsts)))
-				 (if flags
-				     (js-new2 %this js-regexp rx
-					(js-string->jsstring flags))
-				     (js-new1 %this js-regexp rx)))))
-			  ((2)
-			   (let ((names (vector-ref-ur el 1)))
-			      (js-names->cmap names)))))))
-		(loop (-fx i 1)))))
-       cnsts))
+      (let loop ((i (-fx (vector-length cnsts) 1)))
+	 (when (>=fx i 0)
+	    (let ((el (vector-ref cnsts i)))
+	       (cond
+		  ((isa? el JsRegExp)
+		   ;; patch the regexp prototype
+		   (with-access::JsGlobalObject %this (js-regexp-prototype)
+		      (with-access::JsRegExp el (__proto__)
+			 (set! __proto__ js-regexp-prototype))))
+		  ((vector? el)
+		   (vector-set! cnsts i
+		      (case (vector-ref el 0)
+			 ((0)
+			  ;; a plain string
+			  (let ((str (vector-ref el 1)))
+			     (js-string->jsstring str)))
+			 ((1 4)
+			  ;; a plain regexp
+			  (with-access::JsGlobalObject %this (js-regexp)
+			     (let* ((cnsts (vector-ref el 1))
+				    (flags (vector-ref el 2))
+				    (rx (js-string->jsstring cnsts)))
+				(if flags
+				    (if (eq? (vector-ref el 0) 4)
+					(js-new3 %this js-regexp rx
+					   (js-string->jsstring flags)
+					   (vector-ref el 3))
+					(js-new2 %this js-regexp rx
+					   (js-string->jsstring flags)))
+				    (if (eq? (vector-ref el 0) 4)
+					(js-new2 %this js-regexp rx
+					   (vector-ref el 3))
+					(js-new1 %this js-regexp rx))))))
+			 ((2)
+			  ;; a literal cmap
+			  (let ((props (vector-ref el 1)))
+			     (js-names->cmap props)))
+			 ((3 5)
+			  ;; an inlined regexp
+			  (with-access::JsGlobalObject %this (js-regexp)
+			     (let* ((cnsts (vector-ref el 1))
+				    (flags (vector-ref el 2))
+				    (rx (js-string->jsstring cnsts))
+				    (regexp (if flags
+						(if (eq? (vector-ref el 0) 5)
+						    (js-new3 %this js-regexp rx
+						       (js-string->jsstring flags)
+						       (vector-ref el 3))
+						    (js-new2 %this js-regexp rx
+						       (js-string->jsstring flags)))
+						(if (eq? (vector-ref el 0) 5)
+						    (js-new2 %this js-regexp rx
+						       (vector-ref el 3))
+						    (js-new1 %this js-regexp rx)))))
+				(with-access::JsRegExp regexp (rx)
+				   rx))))))))
+	       (loop (-fx i 1)))))
+      cnsts))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-obj->jsobject ...                                             */
@@ -123,7 +156,14 @@
 (define (js-pair->jsobject l %this)
    
    (define (plist? l)
-      (and (or (keyword? (car l)) (symbol? (car l))) (list? (cdr l))))
+      (let loop ((l l))
+	 (cond
+	    ((null? l)
+	     #t)
+	    ((and (or (keyword? (car l)) (symbol? (car l))) (pair? (cdr l)))
+	     (loop (cddr l)))
+	    (else
+	     #f))))
 
    (define (alist? l)
       (when (list? l)
@@ -148,10 +188,10 @@
 ;*---------------------------------------------------------------------*/
 (define (js-literal->jsobject::JsObject elements::vector names::vector %this)
    (with-access::JsGlobalObject %this (__proto__)
-      (instantiate::JsObject
+      (instantiateJsObject
 	 (cmap (js-names->cmap names))
-	 (elements elements)
-	 (__proto__ __proto__))))
+	 (__proto__ __proto__)
+	 (elements elements))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-alist->jsobject ...                                           */
@@ -162,16 +202,18 @@
    (with-access::JsGlobalObject %this (js-object __proto__)
       (let* ((len (length alist))
 	     (elements ($create-vector len))
-	     (names ($create-vector len)))
+	     (props ($create-vector len))
+	     (methods (make-vector len #f)))
 	 (let loop ((i 0)
 		    (alist alist))
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
-			       (names names))))
-		   (instantiate::JsObject
+			       (props props)
+			       (methods methods))))
+		   (instantiateJsObject
 		      (cmap cmap)
-		      (elements elements)
-		      (__proto__ __proto__)))
+		      (__proto__ __proto__)
+		      (elements elements)))
 		(let* ((name (cond
 				((keyword? (caar alist))
 				 (keyword->symbol (caar alist)))
@@ -180,8 +222,9 @@
 				(else
 				 (caar alist))))
 		       (val (js-obj->jsobject (cdar alist) %this)))
-		   (vector-set-ur! names i name)
-		   (vector-set-ur! elements i val)
+		   (vector-set! props i (prop name (property-flags-default)))
+		   (vector-set! elements i val)
+		   (when (isa? val JsFunction) (vector-set! methods i #t))
 		   (loop (+fx i 1) (cdr alist))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -191,16 +234,18 @@
    (with-access::JsGlobalObject %this (js-object __proto__)
       (let* ((len (/fx (length plist) 2))
 	     (elements ($create-vector len))
-	     (names ($create-vector len)))
+	     (props ($create-vector len))
+	     (methods (make-vector len #f)))
 	 (let loop ((i 0)
 		    (plist plist))
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
-			       (names names))))
-		   (instantiate::JsObject
+			       (methods methods)
+			       (props props))))
+		   (instantiateJsObject
 		      (cmap cmap)
-		      (elements elements)
-		      (__proto__ __proto__)))
+		      (__proto__ __proto__)
+		      (elements elements)))
 		(let* ((name (cond
 				((keyword? (car plist))
 				 (keyword->symbol (car plist)))
@@ -209,8 +254,9 @@
 				(else
 				 (car plist))))
 		       (val (js-obj->jsobject (cadr plist) %this)))
-		   (vector-set-ur! names i name)
-		   (vector-set-ur! elements i val)
+		   (vector-set! props i (prop name (property-flags-default)))
+		   (vector-set! elements i val)
+		   (when (isa? val JsFunction) (vector-set! methods i #t))
 		   (loop (+fx i 1) (cddr plist))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -302,7 +348,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-socket->jsobject obj %this)
    (with-access::JsGlobalObject %this (__proto__)
-      (let ((sock (instantiate::JsWrapper
+      (let ((sock (instantiateJsWrapper
 		     (__proto__ __proto__)
 		     (data #unspecified)
 		     (obj obj))))
@@ -330,3 +376,12 @@
 (define (js-procedure->jsobject obj %this)
    (js-make-function %this obj (procedure-arity obj) 'native))
       
+;*---------------------------------------------------------------------*/
+;*    fixnums? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (fixnums? a b)
+   (cond-expand
+      ((and bigloo-c (config nan-tagging #f))
+       (pragma::bool "INTEGERP( TAG_INT == 0 ? ((long)$1 | (long)$2) : ((long)$1 & (long)$2) )" a b))
+      (else
+       (and (fixnum? a) (fixnum? b)))))

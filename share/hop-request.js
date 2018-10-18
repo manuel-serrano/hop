@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/3.2.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Nov 16 13:45:35 2017 (serrano)                */
-/*    Copyright   :  2004-17 Manuel Serrano                            */
+/*    Last change :  Tue May 15 06:30:12 2018 (serrano)                */
+/*    Copyright   :  2004-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -868,6 +868,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
    if( arg == null ) {
       xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8' );
       if( hop_config.navigator_family != "safari" &&
+	  hop_config.navigator_family != "mozilla" &&
 	  hop_config.navigator_family != "chrome" &&
 	  hop_config.navigator_family != "webkit" ) {
 	 xhr.setRequestHeader( 'Connection', 'close' );

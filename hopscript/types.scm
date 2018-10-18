@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/types.scm               */
+;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Nov 25 14:12:05 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Thu Oct 18 10:02:23 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -29,7 +29,8 @@
 	__hopscript_private
 	__hopscript_function
 	__hopscript_property
-	__hopscript_public)
+	__hopscript_public
+	__hopscript_lib)
    
    (export (class WorkerHopThread::hopthread
 	      (%loop (default #f))
@@ -72,27 +73,45 @@
 	   (final-class JsAccessorDescriptor::JsPropertyDescriptor
 	      get set
 	      %get::procedure %set::procedure)
+	   (final-class JsWrapperDescriptor::JsDataDescriptor
+	      (value (default (js-undefined)))
+	      %set::procedure)
 	   
 	   (final-class JsPropertyCache
+	      (imap::obj (default #f))
+	      (emap::obj (default #f))
 	      (cmap::obj (default #f))
 	      (pmap::obj (default #t))
+	      (amap::obj (default #t))
+	      (iindex::long (default -1))
 	      (index::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))
+	      (point::long (default -1))
 	      (name::obj (default '||))
 	      (method::obj (default #f))
-	      (minid::uint32 (default 0))
-	      (maxid::uint32 (default 0))
-	      (cntmiss::long (default 0)))
+	      (function::obj (default #f))
+	      (pctable::obj (default #f))
+	      (usage::symbol (default '-))
+	      (cntmiss::uint32 (default #u32:0))
+	      (cntimap::uint32 (default #u32:0))
+	      (cntemap::uint32 (default #u32:0))
+	      (cntcmap::uint32 (default #u32:0))
+	      (cntpmap::uint32 (default #u32:0))
+	      (cntamap::uint32 (default #u32:0))
+	      (cntvtable::uint32 (default #u32:0)))
 	   
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))
-	      (names::vector (default '#()))
+	      (size::long (default 0))
+	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
 	      (transitions::pair-nil (default '()))
 	      (ctor::obj (default #f))
+	      (single::bool read-only (default #f))
 	      (vlen::long (default 0))
-	      (vtable::vector (default '#())))
+	      (vtable::vector (default '#()))
+	      (vcache::obj (default #f)))
 	   
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
@@ -110,15 +129,13 @@
 	   
 	   (class JsObject
 	      (__proto__ (default (js-null)))
-	      (mode::byte (default (js-object-default-mode)))
-	      (properties::pair-nil (default '()))
 	      (cmap::JsConstructMap (default (js-not-a-cmap)))
 	      (elements::vector (default '#())))
 	   
 	   (class JsWrapper::JsObject
 	      obj
 	      data)
-	   
+
 	   (class JsGlobalObject::JsObject
 	      (js-object::JsFunction (default (class-nil JsFunction)))
 	      (js-array::JsFunction (default (class-nil JsFunction)))
@@ -140,6 +157,7 @@
 	      (js-number::JsFunction (default (class-nil JsFunction)))
 	      (js-function::JsFunction (default (class-nil JsFunction)))
 	      (js-function-prototype::JsFunction (default (class-nil JsFunction)))
+	      (js-function-strict-prototype::JsObject (default (class-nil JsObject)))
 	      (js-math::JsMath (default (class-nil JsMath)))
 	      (js-regexp::JsFunction (default (class-nil JsFunction)))
 	      (js-regexp-prototype::JsRegExp (default (class-nil JsRegExp)))
@@ -159,17 +177,21 @@
 	      (js-promise (default (class-nil JsFunction)))
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
+	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
 	      (js-symbol-ctor::procedure (default list))
 	      (js-symbol-table read-only (default (js-symbol-table)))
 	      (js-symbol-iterator (default (js-undefined)))
 	      (js-symbol-species (default (js-undefined)))
+	      (js-symbol-hasinstance (default (js-undefined)))
+	      (js-symbol-tostringtag (default (js-undefined)))
 	      (js-main (default (js-null)))
 	      (js-call (default #f))
 	      (js-apply (default #f))
 	      (js-vindex (default 0))
-	      (js-pmap-valid::bool (default #f)))
+	      (js-pmap-valid::bool (default #f))
+	      (js-input-port (default #f)))
 	   
 	   (final-class JsArray::JsObject
 	      (length::uint32 (default #u32:0))
@@ -217,7 +239,7 @@
 	   (class JsFunction::JsObject
 	      (name::bstring read-only)
 	      (constructor::obj read-only (default #f))
-	      prototype::JsObject
+	      %prototype::JsObject
 	      alloc::procedure
 	      (construct::procedure read-only)
 	      (constrsize::long (default 3))
@@ -259,7 +281,9 @@
 	   (class JsMath::JsObject)
 	   
 	   (class JsRegExp::JsObject
-	      rx::obj)
+	      rx::obj
+	      (lastindex::JsValueDescriptor read-only)
+	      (global::JsValueDescriptor read-only))
 	   
 	   (class JsBoolean::JsObject
 	      (val::bool (default #t)))
@@ -275,6 +299,10 @@
 	      (val (default #f)))
 	   
 	   (class JsJSON::JsObject)
+	   
+	   (class JsModule::JsObject
+	      (exports (default '()))
+	      (checksum (default 0)))
 	   
 	   (class JsWorker::JsObject
 	      (thread::obj (default #unspecified)))
@@ -293,7 +321,8 @@
 	   (class JsGenerator::JsObject
 	      %next)
 	   
-	   (inline js-object-default-mode::byte)
+	   (inline js-object-default-mode::uint32)
+	   (inline js-array-default-mode::uint32)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
@@ -310,15 +339,29 @@
 	   (inline js-object-mode-getter?::bool ::JsObject)
 	   (inline js-object-mode-getter-set! ::JsObject ::bool)
 	   
-	   (inline js-object-mode-packed?::bool ::JsObject)
-	   (inline js-object-mode-packed-set! ::JsObject ::bool)
+	   (inline js-object-mode-hasinstance?::bool ::JsObject)
+	   (inline js-object-mode-hasinstance-set! ::JsObject ::bool)
 	   
-	   (inline JS-OBJECT-MODE-EXTENSIBLE::byte)
-	   (inline JS-OBJECT-MODE-SEALED::byte)
-	   (inline JS-OBJECT-MODE-FROZEN::byte)
-	   (inline JS-OBJECT-MODE-INLINE::byte)
-	   (inline JS-OBJECT-MODE-GETTER::byte)
-	   (inline JS-OBJECT-MODE-PACKED::byte)
+	   (inline js-object-mode-instance?::bool ::JsObject)
+	   (inline js-object-mode-instance-set! ::JsObject ::bool)
+	   
+	   (inline js-object-mode-holey?::bool ::JsObject)
+	   (inline js-object-mode-holey-set! ::JsObject ::bool)
+	   
+	   (inline JS-OBJECT-MODE-EXTENSIBLE::uint32)
+	   (inline JS-OBJECT-MODE-SEALED::uint32)
+	   (inline JS-OBJECT-MODE-FROZEN::uint32)
+	   (inline JS-OBJECT-MODE-INLINE::uint32)
+	   (inline JS-OBJECT-MODE-GETTER::uint32)
+	   (inline JS-OBJECT-MODE-HASINSTANCE::uint32)
+	   (inline JS-OBJECT-MODE-INSTANCE::uint32)
+	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
+
+	   (inline js-object-inline-elements?::bool ::JsObject)
+	   (inline js-object-inline-ref ::JsObject ::long)
+	   (inline js-object-inline-set! ::JsObject ::long ::obj)
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
@@ -350,7 +393,17 @@
 	   
 	   (inline js-number?::bool ::obj)
 	   (inline js-object?::bool ::obj)
+	   (inline js-array?::bool ::obj)
 	   (inline js-function?::bool ::obj)
+	   (inline js-symbol?::bool ::obj)
+
+	   (inline js-object-cmap ::JsObject)
+	   
+	   (inline js-object-properties ::JsObject)
+	   (inline js-object-properties-set! ::JsObject ::obj)
+	   
+	   (inline js-object-mode::uint32 ::object)
+	   (inline js-object-mode-set! ::object ::uint32)
 	   
 	   (gencmapid::uint32))
    
@@ -368,81 +421,153 @@
 ;*    js-object-default-mode ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-default-mode)
-   (bit-or (JS-OBJECT-MODE-EXTENSIBLE) (JS-OBJECT-MODE-INLINE)))
+   (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
+      (bit-oru32 (JS-OBJECT-MODE-INLINE)
+	 (JS-OBJECT-MODE-JSOBJECTTAG))))
 
-(define-inline (JS-OBJECT-MODE-EXTENSIBLE) 1)
-(define-inline (JS-OBJECT-MODE-SEALED) 2)
-(define-inline (JS-OBJECT-MODE-FROZEN) 4)
-(define-inline (JS-OBJECT-MODE-INLINE) 8)
-(define-inline (JS-OBJECT-MODE-GETTER) 16)
-(define-inline (JS-OBJECT-MODE-PACKED) 32) ;; see _bglhopscript.c
+(define-inline (js-array-default-mode)
+   (bit-oru32 (js-object-default-mode)
+      (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
+	 (JS-OBJECT-MODE-JSARRAYTAG))))
 
-(define-macro (JS-OBJECT-MODE-EXTENSIBLE) 1)
-(define-macro (JS-OBJECT-MODE-SEALED) 2)
-(define-macro (JS-OBJECT-MODE-FROZEN) 4)
-(define-macro (JS-OBJECT-MODE-INLINE) 8)
-(define-macro (JS-OBJECT-MODE-GETTER) 16)
-(define-macro (JS-OBJECT-MODE-PACKED) 32) ;; see _bglhopscript.c
+(define-inline (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
+(define-inline (JS-OBJECT-MODE-SEALED) #u32:2)
+(define-inline (JS-OBJECT-MODE-FROZEN) #u32:4)
+(define-inline (JS-OBJECT-MODE-INLINE) #u32:8)
+(define-inline (JS-OBJECT-MODE-GETTER) #u32:16)
+(define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
+(define-inline (JS-OBJECT-MODE-INSTANCE) #u32:64)
+(define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:128)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:256)
+(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:512)
+
+(define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
+(define-macro (JS-OBJECT-MODE-SEALED) #u32:2)
+(define-macro (JS-OBJECT-MODE-FROZEN) #u32:4)
+(define-macro (JS-OBJECT-MODE-INLINE) #u32:8)
+(define-macro (JS-OBJECT-MODE-GETTER) #u32:16)
+(define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
+(define-macro (JS-OBJECT-MODE-INSTANCE) #u32:64)
+(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:128)
+(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:256)
+(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:512)
 
 (define-inline (js-object-mode-extensible? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-EXTENSIBLE) mode) (JS-OBJECT-MODE-EXTENSIBLE))))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
+      (JS-OBJECT-MODE-EXTENSIBLE)))
 
 (define-inline (js-object-mode-extensible-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-EXTENSIBLE)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-EXTENSIBLE)))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-EXTENSIBLE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-EXTENSIBLE))))))
 
 (define-inline (js-object-mode-frozen? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-FROZEN) mode) (JS-OBJECT-MODE-FROZEN))))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-FROZEN) (js-object-mode o))
+      (JS-OBJECT-MODE-FROZEN)))
 
 (define-inline (js-object-mode-frozen-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-FROZEN)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-FROZEN)))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-FROZEN))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-FROZEN))))))
 
 (define-inline (js-object-mode-sealed? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-SEALED) mode) (JS-OBJECT-MODE-SEALED))))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-SEALED) (js-object-mode o))
+      (JS-OBJECT-MODE-SEALED)))
 
 (define-inline (js-object-mode-sealed-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-SEALED)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-SEALED)))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-SEALED))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-SEALED))))))
 
 (define-inline (js-object-mode-inline? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-INLINE) mode) (JS-OBJECT-MODE-INLINE))))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-INLINE) (js-object-mode o))
+      (JS-OBJECT-MODE-INLINE)))
 
 (define-inline (js-object-mode-inline-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-INLINE)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-INLINE)))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-INLINE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-INLINE))))))
 
 (define-inline (js-object-mode-getter? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-GETTER) mode) (JS-OBJECT-MODE-GETTER))))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-GETTER) (js-object-mode o))
+      (JS-OBJECT-MODE-GETTER)))
 
 (define-inline (js-object-mode-getter-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-GETTER)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-GETTER)))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-GETTER))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-GETTER))))))
 
-(define-inline (js-object-mode-packed? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-PACKED) mode) (JS-OBJECT-MODE-PACKED))))
+(define-inline (js-object-mode-hasinstance? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-HASINSTANCE) (js-object-mode o))
+      (JS-OBJECT-MODE-HASINSTANCE)))
 
-(define-inline (js-object-mode-packed-set! o flag)
-   (with-access::JsObject o (mode)
+(define-inline (js-object-mode-hasinstance-set! o flag)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-PACKED)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-PACKED)))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-HASINSTANCE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-HASINSTANCE))))))
+
+(define-inline (js-object-mode-instance? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-INSTANCE) (js-object-mode o))
+      (JS-OBJECT-MODE-INSTANCE)))
+
+(define-inline (js-object-mode-instance-set! o flag)
+   (js-object-mode-set! o
+      (if flag
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-INSTANCE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-INSTANCE))))))
+
+(define-inline (js-object-mode-holey? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSARRAYHOLEY) (js-object-mode o))
+      (JS-OBJECT-MODE-JSARRAYHOLEY)))
+
+(define-inline (js-object-mode-holey-set! o flag)
+   (js-object-mode-set! o
+      (if flag
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYHOLEY))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-JSARRAYHOLEY))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-inline-elements? ...                                   */
+;*    -------------------------------------------------------------    */
+;*    See bgl_make_jsobject in _bglhopscript.c.                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-inline-elements?::bool o::JsObject)
+   (cond-expand
+      (bigloo-c
+       (with-access::JsObject o (elements)
+	  (eq? elements
+	     (pragma::obj "BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1)))"
+		o))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-inline-ref ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-inline-ref o::JsObject idx::long)
+   (cond-expand
+      ((and bigloo-c (not devel))
+       (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
+      (else
+       (with-access::JsObject o (elements)
+	  (vector-ref elements idx)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-inline-set! ...                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-inline-set! o::JsObject idx::long val::obj)
+   (cond-expand
+      ((and bigloo-c (not devel))
+       (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val))
+      (else
+       (with-access::JsObject o (elements)
+	  (vector-set! elements idx val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */
@@ -564,12 +689,15 @@
 ;*    js-clone ::JsGlobalObject ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-clone obj::JsGlobalObject)
-   (with-access::JsObject obj (properties __proto__ cmap elements)
-      (duplicate::JsGlobalObject obj
-	 (__proto__ (js-clone __proto__))
-	 (cmap (js-clone cmap))
-	 (elements (when (vector? elements) (vector-map js-clone elements)))
-	 (properties (js-properties-clone properties)))))
+   (with-access::JsObject obj (__proto__ cmap elements)
+      (let ((nobj (duplicate::JsGlobalObject obj
+		     (__proto__ (js-clone __proto__))
+		     (cmap (js-clone cmap))
+		     (elements (vector-map js-clone elements)))))
+	 (let ((properties (js-object-properties obj)))
+	    (js-object-properties-set! nobj (js-properties-clone properties))
+	    (js-object-mode-set! nobj (js-object-mode obj))
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-clone ::JsConstructMap ...                                    */
@@ -577,9 +705,9 @@
 (define-method (js-clone obj::JsConstructMap)
    (if (eq? obj (js-not-a-cmap))
        obj
-       (with-access::JsConstructMap obj (names)
+       (with-access::JsConstructMap obj (props)
 	  (duplicate::JsConstructMap obj
-	     (names (vector-copy names))))))
+	     (props (vector-copy props))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ...                                                    */
@@ -596,6 +724,8 @@
 	  (js-donate (car obj) worker %this)
 	  (js-donate (cdr obj) worker %this)
 	  (js-donate (cer obj) worker %this)))
+      ((js-absent? obj)
+       obj)
       ((pair? obj)
        (cons
 	  (js-donate (car obj) worker %this)
@@ -754,16 +884,62 @@
 ;*    js-number? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-number? o)
-   (or (fixnum? o) (flonum? o)))
+   (or (fixnum? o) (flonum? o) (int32? o) (uint32? o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object? o)
-   (isa? o JsObject))
+   (cond-expand
+      ((config nan-tagging #t)
+       ($nanobject? o))
+      (else
+       (and (%object? o) (>u32 (js-object-mode o) #u32:0)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array? o)
+   (and (%object? o) (>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYTAG))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function? o)
    (isa? o JsFunction))
+
+;*---------------------------------------------------------------------*/
+;*    js-symbol? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-symbol? o)
+   (isa? o JsSymbolLiteral))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-cmap ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-cmap o)
+   (with-access::JsObject o (cmap) cmap))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-properties ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-properties o)
+   (object-widening o))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-properties-set! ...                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-properties-set! o p)
+   (object-widening-set! o p))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-mode ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-mode o)
+   (fixnum->uint32 (object-header-size o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-mode-set! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-mode-set! o p)
+   (object-header-size-set! o (uint32->fixnum p)))

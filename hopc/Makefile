@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/hopc/Makefile                     */
+#*    serrano/prgm/project/hop/3.2.x/hopc/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Oct  3 09:18:18 2017 (serrano)                */
+#*    Last change :  Thu Sep  6 12:20:49 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -30,10 +30,10 @@ INCLUDES =
 
 CLASS_DIR = o/class_s/bigloo/hop
 
-OBJECTS = $(MODULES:%=o/%.o)
+OBJECTS = $(MODULES:%=o/%.o) o/hop_param.o
 BGL_CLASSES = $(MODULES:%=$(CLASS_DIR)/%.class)
 
-SOURCES = $(MODULES:%=%.scm)
+SOURCES = $(MODULES:%=%.scm) ../src/hop_param.scm 
 
 COLOR = 32
 
@@ -125,6 +125,9 @@ o/class_s/lib/hop/$(HOPRELEASE):
 o/%.o: %.scm .afile
 	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BHFLAGS),-c,$< -o $@)
 
+o/hop_param.o: ../src/hop_param.scm
+	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BHFLAGS),-c,$< -o $@)
+
 $(CLASS_DIR)/%.class: %.scm .afile
 	@ $(call compile2,$(BIGLOO),$(BJVMFLAGS),$(BHFLAGS),-c,$< -o $@)
 
@@ -136,7 +139,7 @@ ude:
 	@ $(MAKE) -f Makefile .afile .etags dep
 
 .afile: $(SOURCES)
-	@ $(AFILE) -o .afile $(SOURCES) 
+	@ $(AFILE) -o .afile $(SOURCES)
 
 .jfile: $(SOURCES)
 	@ $(JFILE) -o .jfile -pbase bigloo.hop $(SOURCES)

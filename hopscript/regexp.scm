@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/regexp.scm              */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/regexp.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Sep 30 10:09:32 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Mon Oct  8 14:22:38 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
 ;*=====================================================================*/
@@ -16,22 +16,32 @@
 
    (library hop)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_array
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_string
 	   __hopscript_stringliteral
 	   __hopscript_error)
 
    (export (js-init-regexp! ::JsGlobalObject)
 	   (inline js-regexp?::bool ::obj)
-	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)))
+	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
+	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)
+	   (js-regexp-literal-test-string::bool ::JsRegExp ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 3)
+(define %pcache (js-make-pcache-table 3 "hopscript/regexp.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -73,13 +83,15 @@
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsRegExp op compile isexpr)
-   (let ((%this (js-initial-global-object)))
-      (display "/" op)
-      (display (js-tostring (js-get o 'source %this) %this) op)
-      (display "/" op)
-      (when (js-totest (js-get o 'global %this)) (display "g" op))
-      (when (js-totest (js-get o 'ignoreCase %this)) (display "i" op))
-      (when (js-totest (js-get o 'multiline %this)) (display "m" op))))
+   (with-access::JsRegExp o (global)
+      (with-access::JsValueDescriptor global ((global value))
+	 (let ((%this (js-initial-global-object)))
+	    (display "/" op)
+	    (display (js-tostring (js-get o 'source %this) %this) op)
+	    (display "/" op)
+	    (when (js-totest global) (display "g" op))
+	    (when (js-totest (js-get o 'ignoreCase %this)) (display "i" op))
+	    (when (js-totest (js-get o 'multiline %this)) (display "m" op))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-regexp! ...                                              */
@@ -91,11 +103,20 @@
    (with-access::JsGlobalObject %this (__proto__ js-regexp js-function
 					 js-regexp-prototype)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 
-	 (set! js-regexp-prototype
-	    (instantiate::JsRegExp
-	       (rx (pregexp ""))
-	       (__proto__ __proto__)))
+	 (let* ((global (instantiate::JsValueDescriptor
+			   (name 'global)
+			   (value #f)))
+		(lastindex (instantiate::JsValueDescriptor
+			      (name 'lastIndex)
+			      (writable #t)
+			      (value 0))))
+	    (set! js-regexp-prototype
+	       (instantiateJsRegExp
+		  (lastindex lastindex)
+		  (global global)
+		  (rx (pregexp ""))
+		  (__proto__ __proto__)
+		  (properties (list lastindex global)))))
 	 
 	 ;; create a HopScript regexp object constructor
 	 (set! js-regexp
@@ -117,11 +138,11 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.3.1    */
 ;*---------------------------------------------------------------------*/
 (define (%js-regexp %this::JsGlobalObject)
-   (lambda (this pattern flags)
+   (lambda (this pattern flags loc)
       (with-access::JsGlobalObject %this (js-regexp)
 	 (if (and (isa? pattern JsRegExp) (eq? flags (js-undefined)))
 	     pattern
-	     (js-new %this js-regexp pattern flags)))))
+	     (js-new3 %this js-regexp pattern flags loc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-js-regexp-pattern ...                                       */
@@ -133,73 +154,32 @@
    (define (err fmt str)
       (js-raise-syntax-error %this fmt str))
    
-   (define (char-alpha c)
-      (cond
-	 ((char>=? c #\a)
-	  (when (char<=? c #\f)
-	     (+fx 10 (-fx (char->integer c) (char->integer #\a)))))
-	 ((char>=? c #\A)
-	  (when (char<=? c #\F)
-	     (+fx 10 (-fx  (char->integer c) (char->integer #\A)))))
-	 ((char>=? c #\0)
-	  (when (char<=? c #\9)
-	     (-fx (char->integer c) (char->integer #\0))))
-	 (else
-	  #f)))
-   
-   (define (hex2 str j)
-      (let ((n1 (char-alpha (string-ref str j))))
-	 (when n1
-	    (let ((n2 (char-alpha (string-ref str (+fx j 1)))))
-	       (when n2
-		  (+fx (*fx n1 16) n2))))))
-   
-   (define (hex4 str j)
-      (let ((n1 (hex2 str j)))
-	 (when n1
-	    (let ((n2 (hex2 str (+fx j 2))))
-	       (when n2
-		  (+fx (*fx n1 256) n2))))))
-   
-   (define (integer->utf8 n)
-      (cond
-	 ((and (>=fx n #xD800) (<=fx n #xdbff))
-	  ;; MS 9feb2016: don't know what to do as PCRE cannot handle
-	  ;; "red" cells https://en.wikipedia.org/wiki/UTF-8
-	  (ucs2-string->utf8-string
-	     (make-ucs2-string 1 (integer->ucs2 #xd7ff))))
-	 (else
-	  (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
-	     (ucs2-string->utf8-string u)))))
-   
    (let* ((len (string-length str))
-	  (res (make-string (*fx 2 len))))
+	  (res (make-string (*fx 3 len))))
       (let loop ((i 0)
 		 (w 0)
-		 (inrange #f))
+		 (ascii #t))
 	 (let ((j (string-index str "\\[]" i)))
 	    (if (not j)
 		(begin
 		   (blit-string! str i res w (-fx len i))
 		   (string-shrink! res (+fx w (-fx len i)))
-		   res)
+		   (values res (if ascii 'ascii 'utf8)))
 		(let ((tag (string-ref str j)))
 		   (when (>fx j i)
 		      (blit-string! str i res w (-fx j i))
 		      (set! w (+fx w (-fx j i))))
 		   (cond
 		      ((char=? tag #\[)
-		       (string-set! res w tag)
-		       (loop (+fx j 1) (+fx w 1) #t))
+		       (multiple-value-bind (pat rascii j)
+			  (make-js-regexp-range %this str j)
+			  (blit-string! pat 0 res w (string-length pat))
+			  (loop (+fx j 1) (+fx w (string-length pat))
+			     (and ascii rascii))))
 		      ((char=? tag #\])
-		       (if inrange
-			   (begin
-			      (string-set! res w tag)
-			      (loop (+fx j 1) (+fx w 1) #f))
-			   (begin
-			      (string-set! res w #\\)
-			      (string-set! res (+fx w 1) tag)
-			      (loop (+fx j 1) (+fx w 2) #f))))
+		       (string-set! res w #\\)
+		       (string-set! res (+fx w 1) tag)
+		       (loop (+fx j 1) (+fx w 2) ascii))
 		      ((=fx j (-fx len 1))
 		       (err "wrong pattern \"~a\"" str))
 		      (else
@@ -214,19 +194,19 @@
 					 (err "wrong \"\\x\" pattern \"~a\"" str))
 					((=fx n 0)
 					 (blit-string! "\\000" 0 res w 4)
-					 (loop (+fx j 4) (+fx w 4) inrange))
+					 (loop (+fx j 4) (+fx w 4) ascii))
 					((=fx n #x5d)
 					 ;; "]" character
 					 ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
 					 (string-set! res w #\\)
 					 (string-set! res (+fx 1 w) #\])
-					 (loop (+fx j 4) (+fx w 2) inrange))
-					(n
+					 (loop (+fx j 4) (+fx w 2) ascii))
+					(else
 					 (let* ((s (integer->utf8 n))
 						(l (string-length s)))
 					    (blit-string! s 0 res w l)
-					    (loop (+fx j 4) (+fx w l) inrange))
-					 )))))
+					    (loop (+fx j 4) (+fx w l)
+					       (and ascii (<=fx n 127)))))))))
 			     ((#\u)
 			      (if (>=fx j (-fx len 5))
 				  (err "wrong \"\\u\" pattern \"~a\"" str)
@@ -236,40 +216,216 @@
 					 (err "wrong \"\\u\" pattern \"~a\"" str))
 					((=fx n 0)
 					 (blit-string! "\\000" 0 res w 4)
-					 (loop (+fx j 6) (+fx w 4) inrange))
+					 (loop (+fx j 6) (+fx w 4) ascii))
 					((=fx n #x5d)
 					 ;; "]" character
 					 ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
 					 (string-set! res w #\\)
 					 (string-set! res (+fx 1 w) #\])
-					 (loop (+fx j 6) (+fx w 2) inrange))
+					 (loop (+fx j 6) (+fx w 2) ascii))
 					(else
 					 (let* ((s (integer->utf8 n))
 						(l (string-length s)))
 					    (blit-string! s 0 res w l)
-					    (loop (+fx j 6) (+fx w l) inrange)))))))
+					    (loop (+fx j 6) (+fx w l)
+					       (and ascii (<fx n 127)))))))))
 			     ((#\t)
 			      (string-set! res w #\Tab)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     ((#\n)
 			      (string-set! res w #\Newline)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     ((#\v)
 			      (string-set! res w #a011)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     ((#\f)
 			      (string-set! res w #a012)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     ((#\r)
 			      (string-set! res w #\Return)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     ((#\")
 			      (string-set! res w c)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     (else
 			      (string-set! res w #\\)
 			      (string-set! res (+fx w 1) c)
-			      (loop (+fx j 2) (+fx w 2) inrange))))))))))))
+			      (loop (+fx j 2) (+fx w 2) #f))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    make-js-regexp-range ...                                         */
+;*---------------------------------------------------------------------*/
+(define (make-js-regexp-range %this str::bstring i0)
+   
+   (define (ending-range? str w)
+      (and (>fx w 0) (char=? (string-ref str (-fx w 1)) #\-)))
+   
+   (define (starting-range? str i)
+      (and (<fx i (string-length str)) (char=? (string-ref str i) #\-)))
+   
+   (define (err fmt str)
+      (js-raise-syntax-error %this fmt str))
+
+   ;; (string-ref str j) == #\[
+   (let* ((len (string-length str))
+	  (res (make-string (*fx 4 len))))
+      (let loop ((i (+fx i0 1))
+		 (w 0)
+		 (chars '())
+		 (ascii #t))
+	 (let ((j (string-index str "\\]" i)))
+	    (if (not j)
+		(err "wrong pattern \"~a\"" (substring str j))
+		(let ((tag (string-ref str j)))
+		   (when (>fx j i)
+		      (blit-string! str i res w (-fx j i))
+		      (set! w (+fx w (-fx j i))))
+		   (cond
+		      ((char=? tag #\])
+		       (let ((r (string-shrink! res w)))
+			  (if (null? chars)
+			      (values
+				 (string-append "[" r "]") ascii j)
+			      (values
+				 (format "(?:[~a]|~(|))" r chars) ascii j))))
+		      ((=fx j (-fx len 1))
+		       (err "wrong pattern \"~a\"" str))
+		      (else
+		       (let ((c (string-ref str (+fx j 1))))
+			  (case c
+			     ((#\x)
+			      (if (>=fx j (-fx len 3))
+				  (err "wrong \"\\x\" pattern \"~a\"" str)
+				  (let ((n (hex2 str (+fx j 2))))
+				     (cond
+					((not n)
+					 (err "wrong \"\\x\" pattern \"~a\"" str))
+					((=fx n 0)
+					 (blit-string! "\\000" 0 res w 4)
+					 (loop (+fx j 4) (+fx w 4) chars ascii))
+					((=fx n #x5d)
+					 (string-set! res w #\\)
+					 (string-set! res (+fx 1 w) #\])
+					 (loop (+fx j 4) (+fx w 2) chars ascii))
+					((and (>=fx n 128) ascii)
+					 (if (or (ending-range? res w)
+						 (starting-range? str (+fx j 3)))
+					     (let* ((s (integer->utf8 n))
+						    (l (string-length s)))
+						(blit-string! s 0 res w l)
+						(loop (+fx j 4) (+fx w l) chars #f))
+					     (let ((s (integer->utf8 n)))
+						(loop (+fx j 4) w
+						   (cons s chars) ascii))))
+					(else
+					 (let* ((s (integer->utf8 n))
+						(l (string-length s)))
+					    (blit-string! s 0 res w l)
+					    (loop (+fx j 4) (+fx w l)
+					       chars ascii)))))))
+			     ((#\u)
+			      (if (>=fx j (-fx len 5))
+				  (err "wrong \"\\u\" pattern \"~a\"" str)
+				  (let ((n (hex4 str (+fx j 2))))
+				     (cond
+					((not n)
+					 (err "wrong \"\\u\" pattern \"~a\"" str))
+					((=fx n 0)
+					 (blit-string! "\\000" 0 res w 4)
+					 (loop (+fx j 6) (+fx w 4) chars ascii))
+					((=fx n #x5d)
+					 (string-set! res w #\\)
+					 (string-set! res (+fx 1 w) #\])
+					 (loop (+fx j 6) (+fx w 2) chars ascii))
+					((and (>=fx n 128) ascii)
+					 (if (or (ending-range? res w)
+						 (starting-range? str (+fx j 6)))
+					     (let* ((s (integer->utf8 n))
+						    (l (string-length s)))
+						(blit-string! s 0 res w l)
+						(loop (+fx j 6) (+fx w l) chars #f))
+					     (let ((s (integer->utf8 n)))
+						(loop (+fx j 6) w
+						   (cons s chars) ascii))))
+					(else
+					 (let* ((s (integer->utf8 n))
+						(l (string-length s)))
+					    (blit-string! s 0 res w l)
+					    (loop (+fx j 6) (+fx w l)
+					       chars (and ascii (<fx n 127)))))))))
+			     ((#\t)
+			      (string-set! res w #\Tab)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     ((#\n)
+			      (string-set! res w #\Newline)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     ((#\v)
+			      (string-set! res w #a011)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     ((#\f)
+			      (string-set! res w #a012)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     ((#\r)
+			      (string-set! res w #\Return)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     ((#\")
+			      (string-set! res w c)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     (else
+			      (string-set! res w #\\)
+			      (string-set! res (+fx w 1) c)
+			      (loop (+fx j 2) (+fx w 2) chars ascii))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hex2 ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (hex2 str j)
+   (let ((n1 (char-alpha (string-ref str j))))
+      (when n1
+	 (let ((n2 (char-alpha (string-ref str (+fx j 1)))))
+	    (when n2
+	       (+fx (*fx n1 16) n2))))))
+
+;*---------------------------------------------------------------------*/
+;*    hex4 ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (hex4 str j)
+   (let ((n1 (hex2 str j)))
+      (when n1
+	 (let ((n2 (hex2 str (+fx j 2))))
+	    (when n2
+	       (+fx (*fx n1 256) n2))))))
+
+;*---------------------------------------------------------------------*/
+;*    char-alpha ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (char-alpha c)
+   (cond
+      ((char>=? c #\a)
+       (when (char<=? c #\f)
+	  (+fx 10 (-fx (char->integer c) (char->integer #\a)))))
+      ((char>=? c #\A)
+       (when (char<=? c #\F)
+	  (+fx 10 (-fx  (char->integer c) (char->integer #\A)))))
+      ((char>=? c #\0)
+       (when (char<=? c #\9)
+	  (-fx (char->integer c) (char->integer #\0))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    integer->utf8 ...                                                */
+;*---------------------------------------------------------------------*/
+(define (integer->utf8 n)
+   (cond
+      ((and (>=fx n #xD800) (<=fx n #xdfff))
+       ;; MS 9feb2016: don't know what to do as PCRE cannot handle
+       ;; "red" cells https://en.wikipedia.org/wiki/UTF-8
+       (ucs2-string->utf8-string
+	  (make-ucs2-string 1 (integer->ucs2 #xe000))))
+      (else
+       (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
+	  (ucs2-string->utf8-string u)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-construct ...                                          */
@@ -277,23 +433,25 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.4.1    */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-construct %this::JsGlobalObject)
-   (lambda (_ . l)
-      (let ((pattern (if (null? l) (js-undefined) (car l)))
-	    (flags (if (or (null? l) (null? (cdr l))) (js-undefined) (cadr l)))
+   (lambda (_ pattern flags loc)
+      (let (;;(pattern (if (null? l) (js-undefined) (car l)))
+	    ;;(flags (if (or (null? l) (null? (cdr l))) (js-undefined) (cadr l)))
 	    (i #f)
 	    (m #f)
 	    (g #f))
 	 (cond
 	    ((isa? pattern JsRegExp)
-	     (if (eq? flags (js-undefined))
-		 (begin
-		    (when (js-totest (js-get pattern 'global %this))
-		       (set! g -1))
-		    (when (js-totest (js-get pattern 'ignoreCase %this))
-		       (set! i -1))
-		    (when (js-totest (js-get pattern 'multiline %this))
-		       (set! m -1)))
-		 (js-raise-type-error %this "wrong regexp flags ~s" flags))
+	     (with-access::JsRegExp pattern (global)
+		(with-access::JsValueDescriptor global ((global value))
+		   (if (eq? flags (js-undefined))
+		       (begin
+			  (when (js-totest global)
+			     (set! g -1))
+			  (when (js-totest (js-get pattern 'ignoreCase %this))
+			     (set! i -1))
+			  (when (js-totest (js-get pattern 'multiline %this))
+			     (set! m -1)))
+		       (js-raise-type-error %this "wrong regexp flags ~s" flags))))
 	     (set! pattern (js-tostring (js-get pattern 'source %this) %this)))
 	    (else
 	     (if (eq? pattern (js-undefined))
@@ -329,18 +487,24 @@
 	       (lambda (e)
 		  (if (isa? e &io-parse-error)
 		      (with-access::&io-parse-error e (msg)
-			 (js-raise-syntax-error %this
+			 (js-raise-syntax-error/loc %this loc
 			    (format "~a \"~a\"" msg pattern) ""))
 		      (raise e)))
 	       (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
-		  (instantiate::JsRegExp
-		     (__proto__ js-regexp-prototype)
-		     (rx (pregexp (make-js-regexp-pattern %this pattern)
-				     (when (fixnum? i) 'CASELESS)
-				     'JAVASCRIPT_COMPAT
-				     'UTF8
-				     (when (fixnum? m) 'MULTILINE)))
-		     (properties (list lastindex global icase mline source)))))))))
+		  (multiple-value-bind (pat enc)
+		     (make-js-regexp-pattern %this pattern)
+		     (instantiateJsRegExp
+			(__proto__ js-regexp-prototype)
+			(rx (pregexp pat
+			       (when (fixnum? i) 'CASELESS)
+			       'JAVASCRIPT_COMPAT
+			       (if (eq? enc 'ascii)
+				   'JAVASCRIPT_COMPAT
+				   'UTF8)
+			       (when (fixnum? m) 'MULTILINE)))
+			(lastindex lastindex)
+			(global global)
+			(properties (list lastindex global icase mline source))))))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-regexp-prototype! ...                               */
@@ -393,13 +557,6 @@
       :configurable #f
       :enumerable #f
       :hidden-class #t)
-   ;; global
-   (js-bind! %this obj 'global
-      :value #f
-      :writable #f
-      :configurable #f
-      :enumerable #f
-      :hidden-class #t)
    ;; ignoreCase
    (js-bind! %this obj 'ignoreCase
       :value #f
@@ -411,13 +568,6 @@
    (js-bind! %this obj 'multiline
       :value #f
       :writable #f
-      :configurable #f
-      :enumerable #f
-      :hidden-class #t)
-   ;; lastindex
-   (js-bind! %this obj 'lastIndex
-      :value 0
-      :writable #t
       :configurable #f
       :enumerable #f
       :hidden-class #t)
@@ -435,90 +585,94 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.2    */
 ;*---------------------------------------------------------------------*/
 (define (regexp-prototype-exec %this::JsGlobalObject this string::obj)
+   
+   (define (js-substring s start end)
+      (if (=fx end (+fx start 1))
+	  (js-jsstring-fromcharcode %this (char->integer (string-ref s start)) %this)
+	  (js-string->jsstring (substring s start end))))
+   
    (if (not (isa? this JsRegExp))
        (js-raise-type-error %this "Not a RegExp ~s" this)
-       (with-access::JsRegExp this (rx)
-	  (let* ((s (js-tostring string %this))
-		 (len (string-length s))
-		 (lastindex (js-get this 'lastIndex %this))
-		 (i (js-tointeger lastindex %this)) 
-		 (global (js-get this 'global %this)))
-	     (unless global (set! i 0))
-	     (let loop ()
-		(cond
-		   ((or (<fx i 0) (>fx i len))
-		    (js-put! this 'lastIndex 0 #f %this)
-		    (js-null))
-		   ((pregexp-match-positions rx s i)
-		    =>
-		    (lambda (r)
-		       ;; 10
-		       (let ((e (cdar r)))
-			  ;; 11
-			  (when global (js-put! this 'lastIndex e #f %this))
-			  (let* ((n (length r))
-				 (a (with-access::JsGlobalObject %this (js-array)
-				       (js-new %this js-array n)))
-				 (matchindex (caar r)))
-			     ;; 15
-			     (js-define-own-property a 'index
-				(instantiate::JsValueDescriptor
-				   (name 'index)
-				   (value matchindex)
-				   (writable #t)
-				   (enumerable #t)
-				   (configurable #t))
-				#t %this)
-			     ;; 16
-			     (js-define-own-property a 'input
-				(instantiate::JsValueDescriptor
-				   (name 'input)
-				   (value (js-string->jsstring s))
-				   (writable #t)
-				   (enumerable #t)
-				   (configurable #t))
-				#t %this)
-			     ;; 17
-			     (js-define-own-property a 'length
-				(instantiate::JsValueDescriptor
-				   (name 'length)
-				   (value n)
-				   (writable #t)
-				   (enumerable #f)
-				   (configurable #f))
-				#t %this)
-			     ;; 19
-			     (js-define-own-property a 0
-				(instantiate::JsValueDescriptor
-				   (name (js-toname 0 %this))
-				   (value (js-string->jsstring
-					     (substring s (caar r) (cdar r))))
-				   (writable #f)
-				   (enumerable #t)
-				   (configurable #t))
-				#t %this)
-			     ;; 20
-			     (let loop ((c (cdr r))
-					(i 1))
-				(when (pair? c)
-				   (let* ((r (car c))
-					  (v (if (pair? r)
-						 (js-string->jsstring
-						    (substring s (car r) (cdr r)))
-						 (js-undefined))))
-				      (js-define-own-property a i
-					 (instantiate::JsValueDescriptor
-					    (name (js-toname i %this))
-					    (value v)
-					    (writable #f)
-					    (enumerable #t)
-					    (configurable #t))
-					 #t %this))
-				   (loop (cdr c) (+fx i 1))))
-			     a))))
-		   (else
-		    (js-put! this 'lastIndex 0 #f %this)
-		    (js-null))))))))
+       (with-access::JsRegExp this (rx lastindex global properties)
+	  (with-access::JsValueDescriptor lastindex ((lastindex value))
+	     (with-access::JsValueDescriptor global ((global value))
+		(let* ((jss (js-tojsstring string %this))
+		       (s (js-jsstring->string jss))
+		       (len (string-length s))
+		       (i (js-tointeger lastindex %this)) )
+		   (unless global (set! i 0))
+		   (cond
+		      ((or (<fx i 0) (>fx i len))
+		       (set! lastindex 0)
+		       (js-null))
+		      ((pregexp-match-positions rx s i)
+		       =>
+		       (lambda (r)
+			  ;; 10
+			  (let ((e (cdar r)))
+			     ;; 11
+			     (when global (set! lastindex e))
+			     (let* ((n (length r))
+				    (a (with-access::JsGlobalObject %this (js-array)
+					  (js-new %this js-array n)))
+				    (matchindex (caar r)))
+				;; 15
+				(js-define-own-property a 'index
+				   (instantiate::JsValueDescriptor
+				      (name 'index)
+				      (value matchindex)
+				      (writable #t)
+				      (enumerable #t)
+				      (configurable #t))
+				   #t %this)
+				;; 16
+				(js-define-own-property a 'input
+				   (instantiate::JsValueDescriptor
+				      (name 'input)
+				      (value jss)
+				      (writable #t)
+				      (enumerable #t)
+				      (configurable #t))
+				   #t %this)
+				;; 17
+				(js-define-own-property a 'length
+				   (instantiate::JsValueDescriptor
+				      (name 'length)
+				      (value n)
+				      (writable #t)
+				      (enumerable #f)
+				      (configurable #f))
+				   #t %this)
+				;; 19
+				(js-define-own-property a 0
+				   (instantiate::JsValueDescriptor
+				      (name (js-toname 0 %this))
+				      (value (js-substring s (caar r) (cdar r)))
+				      (writable #f)
+				      (enumerable #t)
+				      (configurable #t))
+				   #t %this)
+				;; 20
+				(let loop ((c (cdr r))
+					   (i 1))
+				   (when (pair? c)
+				      (let* ((r (car c))
+					     (v (if (pair? r)
+						    (js-substring s (car r) (cdr r))
+						    (js-undefined))))
+					 (js-define-own-property a i
+					    (instantiate::JsValueDescriptor
+					       (name (js-toname i %this))
+					       (value v)
+					       (writable #f)
+					       (enumerable #t)
+					       (configurable #t))
+					    #t %this))
+				      (loop (cdr c) (+fx i 1))))
+				a))))
+		      (else
+		       (set! lastindex 0)
+		       (js-null)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-regexp-prototype-test ...                                   */
@@ -528,7 +682,50 @@
 (define (make-regexp-prototype-test %this::JsGlobalObject)
    (lambda (this string::obj)
       (not (eq? (regexp-prototype-exec %this this string) (js-null)))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    literal-test-pos ...                                             */
+;*---------------------------------------------------------------------*/
+(define literal-test-pos (vector -1 -1))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-literal-test-string ...                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.3    */
+;*    -------------------------------------------------------------    */
+;*    This function is used when the REGEXP is given as a literal.     */
+;*    In that particular, there is no need to store all the            */
+;*    EXEC variables.                                                  */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-literal-test-string::bool this::JsRegExp str::obj)
+   (with-access::JsRegExp this (rx lastindex global)
+      (with-access::JsValueDescriptor lastindex ((lastindex value))
+	 (let* ((s (js-jsstring->string str))
+		(i (cond
+		      ((not global)
+		       0)
+		      ((or (<fx lastindex 0) (>fx lastindex (string-length s)))
+		       0)
+		      (else
+		       lastindex))))
+	    (=fx (pregexp-match-n-positions! rx
+		    s literal-test-pos i (string-length s))
+	       1)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-literal-test ...                                       */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.3    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.3    */
+;*    This function is used when the REGEXP is given as a literal.     */
+;*    In that particular, there is no need to store all the            */
+;*    EXEC variables.                                                  */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-literal-test::bool this::JsRegExp string::obj %this::JsGlobalObject)
+   (let ((jss (js-tojsstring string %this)))
+      (js-regexp-literal-test-string this jss)))
+
 ;*---------------------------------------------------------------------*/
 ;*    regexp-prototype-compile ...                                     */
 ;*---------------------------------------------------------------------*/

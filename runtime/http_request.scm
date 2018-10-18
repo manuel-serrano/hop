@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/http_request.scm          */
+;*    serrano/prgm/project/hop/3.2.x/runtime/http_request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Oct 31 07:13:32 2016 (serrano)                */
-;*    Copyright   :  2004-16 Manuel Serrano                            */
+;*    Last change :  Tue Jun  5 18:45:46 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -79,7 +79,7 @@
 (define request-eof-exception
    (instantiate::&io-parse-error
       (obj beof)
-      (proc 'request-line-grammar)
+      (proc "request-line-grammar")
       (msg "Illegal premature end-of-file")))
 
 ;*---------------------------------------------------------------------*/

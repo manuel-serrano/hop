@@ -1,0 +1,9 @@
+{
+   "name": "feed",
+   "version": "1.0.0",
+   "description": "FEED Hop.js parser",
+   "private": true,
+   "main": "lib/feed.js",
+   "homepage": "http://hop.inria.fr",
+   "engines": { "hop": ">=3.2.0" }
+}

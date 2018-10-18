@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/ecma51.js       */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/ecma51.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Feb 21 17:49:03 2018 (serrano)                */
+/*    Last change :  Tue Sep 18 08:52:46 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -40,13 +40,11 @@ for( var k in o ) {
    no[ k ] = o[ k ];
 }
 
-assert.equal( count, 5 );
-assert.deepEqual( no, { foo_a: o.foo_a,
+assert.equal( count, 4 );
+assert.deepEqual( no, { foo_a: o.foo_a, 
 			foo_b: o.foo_b,
-			foo_nonenum: o.foo_nonenum,
 			gee_a: o.gee_a,
 			gee_b: o.gee_b } );
-assert.equal( no.foo_nonenum, 50, "defineProperty" );
 
 /*---------------------------------------------------------------------*/
 /*    value of an assignment                                           */
@@ -170,10 +168,10 @@ function bar4( buf ) {
    return arguments[ 0 ];
 }
 
-assert.equal( foo1( 10 ), 55 );
-assert.equal( foo2( 10 ), 10 );
-assert.equal( bar1( 10 ), 55 );
-assert.equal( bar2( 10 ), 55 );
+assert.equal( foo1( 10 ), 55, "foo1" );
+assert.equal( foo2( 10 ), 10, "foo2" );
+assert.equal( bar1( 10 ), 55, "bar1" );
+assert.equal( bar2( 10 ), 55, "bar2" );
 assert.strictEqual( bar3( 1, 2, 3, 4, 5, 6 ), true, "arguments.length" );
 assert.strictEqual( bar4( 10 ), 3, "arguments overriding" );
 
@@ -316,6 +314,37 @@ assert.ok( o.e === 5, "ctor" );
 assert.ok( o.f === o.a, "ctor" );
 
 /*---------------------------------------------------------------------*/
+/*    constructor ...                                                  */
+/*---------------------------------------------------------------------*/
+function CTOR( x ) {
+   this.x = x;
+   this.y = x;
+   this.z = x;
+}
+
+const oo = new CTOR( 1 );
+const ctotor = oo.constructor;
+
+function ctotorcall( n ) {
+   try {
+      ctotor.call( undefined, n );
+      return false;
+   } catch( e ) {
+      return e instanceof TypeError;
+   }
+}
+
+assert.ok( !ctotorcall( 2 ), "ctotor sans object" );
+
+/*---------------------------------------------------------------------*/
+/*    Function properties                                              */
+/*---------------------------------------------------------------------*/
+var p1 = Object.getOwnPropertyDescriptor( ctotor, "length" );
+var p2 = Object.getOwnPropertyDescriptor( ctotor, "name" );
+
+assert.ok( !p2.writable && !p2.enumerable && !p2.configurable );
+
+/*---------------------------------------------------------------------*/
 /*    assignop                                                         */
 /*---------------------------------------------------------------------*/
 var x = 0;
@@ -323,6 +352,17 @@ var a = [1,2,3,4,5];
 a[ x++ ] += 3;;
 
 assert.ok( x === 1, "increment in assignment" );
+
+var y = "foo";
+y++;
+
+assert.ok( isNaN( y ) );
+
+var y = "foo";
+y += 1;
+
+assert.equal( y, "foo1" );
+
 
 /*---------------------------------------------------------------------*/
 /*    literal with prototype                                           */
@@ -356,3 +396,28 @@ assert.ok( protoLit( 20000, 1 ) === 12345, "literal with __proto__" );
    foo();
    var myVar = "foo";
 })();
+
+/*---------------------------------------------------------------------*/
+/*    binding                                                          */
+/*---------------------------------------------------------------------*/
+var Reference = exports.Reference = function Reference() {
+   return Reference;
+}
+
+assert.ok( Reference );
+
+/*---------------------------------------------------------------------*/
+/*    method call                                                      */
+/*---------------------------------------------------------------------*/
+function illmet() {
+   let o = new Object();
+   let b = o.bar;
+   try {
+      let c = b.toString();
+      return false;
+   } catch( e ) {
+      return true;
+   }
+}
+assert.ok( illmet(), "illegal method" );
+

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.1.x/test/hopjs/serv/aux/launchWorkers.js       */
+/*    .../project/hop/3.2.x/test/hopjs/serv/aux/launchWorkers.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Fri Oct 20 13:18:42 2017 (serrano)                */
-/*    Copyright   :  2015-17 Inria                                     */
+/*    Last change :  Wed Feb  7 10:52:28 2018 (serrano)                */
+/*    Copyright   :  2015-18 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    A generic launcher for stress test workers                       */
 /*=====================================================================*/
@@ -17,9 +17,21 @@ function runTest( args ) {
    var timeout = args.timeout;
    var onSuccess = args.onSuccess || process.exit;
    var onTimeout = args.onTimeout || function() {
-      console.log( 'Timeout: %sms, test failed', timeout );
-      console.log( 'Change TIMEOUT value in source file' );
-      onFailure();
+      if( hop.compilerDriver.pending > 0 ) {
+	 hop.compilerDriver.addEventListener( "all", function( e ) {
+	    if( checkCompletion() ) {
+	       process.exit();
+	    } else {
+	       console.log( 'Timeout: %sms, test failed', timeout );
+	       console.log( 'Change TIMEOUT value in source file' );
+	       onFailure();
+	    }
+	 } )
+      } else {
+	 console.log( 'Timeout: %sms, test failed', timeout );
+	 console.log( 'Change TIMEOUT value in source file' );
+	 onFailure();
+      }
    };
    var onFailure = args.onFailure || function() {
       process.exit( 1 );
@@ -63,6 +75,7 @@ function runTest( args ) {
 	 checkCompletion();
 
 	 clearTimeout( configurationTimeout );
+	 
 	 // timeout is set while running tests
 	 setTimeout( onTimeout, timeout ); 
       }

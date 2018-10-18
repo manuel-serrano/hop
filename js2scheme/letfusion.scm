@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/letfusion.scm           */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/letfusion.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 27 13:16:54 2016                          */
-;*    Last change :  Thu Mar  9 08:57:20 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Sun Aug  5 19:55:57 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let fusion merges J2SBlock with variable decarations and         */
 ;*    J2SLetBlock.                                                     */
@@ -32,8 +32,16 @@
    (instantiate::J2SStageProc
       (name "letfusion")
       (comment "Allocate let/const variables to registers")
-      (proc j2s-letfusion!)
+      (proc j2s-letfusion)
       (optional #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-letfusion ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-letfusion this args)
+   (when (isa? this J2SProgram)
+      (j2s-letfusion! this args))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letfusion! ::J2SNode ...                                     */

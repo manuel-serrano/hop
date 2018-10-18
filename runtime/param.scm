@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 22 09:23:02 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Tue Feb  6 18:25:50 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -42,6 +42,9 @@
 	    
 	    (hop-hopc-flags::bstring)
 	    (hop-hopc-flags-set! ::bstring)
+	    
+	    (hop-profile::bool)
+	    (hop-profile-set! ::bool)
 	    
 	    (hop-sofile-enable::bool)
 	    (hop-sofile-enable-set! ::bool)
@@ -427,6 +430,12 @@
    "-O3 --safe")
 
 ;*---------------------------------------------------------------------*/
+;*    hop-profile ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-profile
+   #f)
+
+;*---------------------------------------------------------------------*/
 ;*    hop-sofile-enable                                                */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-sofile-enable
@@ -758,7 +767,7 @@
    '()
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error "hop-http-response-proxy-hook-set!" "Hooks closed" #f)
+	  (error "hop-http-response-proxy-hook-set!" "Hooks closed" v)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
