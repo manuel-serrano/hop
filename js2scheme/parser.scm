@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Oct 18 16:07:40 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 18:11:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1201,7 +1201,10 @@
 			(fro (consume-token! 'ID)))
 		    (if (eq? (token-value fro) 'from)
 			(let ((path (consume-token! 'STRING)))
-			   (tprint "ID=" (token-value id)))
+			   (instantiate::J2SImport
+			      (names (cons '* (token-value id)))
+			      (loc (token-loc token))
+			      (path (token-value path))))
 			(parse-token-error "Illegal import, \"from\" expected"
 			   fro)))
 		 (parse-token-error "Illegal import, \"as\" expected" as))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Oct 18 15:42:38 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 18:14:06 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -72,9 +72,9 @@
       (with-access::J2SImportName name (id alias loc)
 	 (with-access::J2SProgram prgm (exports path)
 	    (let ((decl (find (lambda (export)
-				(with-access::J2SDecl export ((imp id))
-				   (eq? id imp)))
-			  exports)))
+				 (with-access::J2SDecl export ((imp id))
+				    (eq? id imp)))
+			   exports)))
 	       (if decl
 		   (with-access::J2SDecl decl (export)
 		      (with-access::J2SExport export (index)
@@ -94,6 +94,16 @@
 			 (obj id)
 			 (fname (cadr loc))
 			 (location (caddr loc)))))))))
+   
+   (define (export-*::J2SDecl prgm::J2SProgram id loc)
+      (with-access::J2SProgram prgm (exports path)
+	 (instantiate::J2SDeclInit
+	    (loc loc)
+	    (id id)
+	    (binder 'let)
+	    (scope 'global)
+	    (writable #f)
+	    (val (instantiate::J2SUndefined (loc loc))))))
    
    (with-access::J2SProgram prgm ((src path) imports decls)
       (with-access::J2SImport this (path loc respath names)
@@ -121,11 +131,25 @@
 					:verbose (config-get args :verbose 0)
 					:verbmargin margin)))
 			   (with-access::J2SProgram iprgm (exports path)
-			      (set! decls
-				 (append (map (lambda (n)
-						 (export-decl iprgm n))
-					    names)
-				    decls))))))))))))
+			      (cond
+				 ((list? names)
+				  (set! decls
+				     (append (map (lambda (n)
+						     (export-decl iprgm n))
+						names)
+					decls)))
+				 ((and (pair? names) (eq? (car names) '*))
+				  (set! decls
+				     (cons (export-* iprgm (cdr names) loc)
+					decls)))
+				 (else
+				  (raise
+				     (instantiate::&io-parse-error
+					(proc "import")
+					(msg "Illegal import")
+					(obj path)
+					(fname (cadr loc))
+					(location (caddr loc))))))))))))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SNode ...                                           */
