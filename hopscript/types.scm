@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Oct 17 12:33:23 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 10:02:23 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -136,10 +136,6 @@
 	      obj
 	      data)
 
-	   (class JsModule::JsObject
-	      (export (default '()))
-	      (checksum (default 0)))
-	   
 	   (class JsGlobalObject::JsObject
 	      (js-object::JsFunction (default (class-nil JsFunction)))
 	      (js-array::JsFunction (default (class-nil JsFunction)))
@@ -303,6 +299,10 @@
 	      (val (default #f)))
 	   
 	   (class JsJSON::JsObject)
+	   
+	   (class JsModule::JsObject
+	      (exports (default '()))
+	      (checksum (default 0)))
 	   
 	   (class JsWorker::JsObject
 	      (thread::obj (default #unspecified)))

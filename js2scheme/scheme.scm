@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Oct 17 16:55:57 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 08:15:14 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -253,6 +253,12 @@
        (j2s-scheme-var this))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SDeclImport ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SDeclImport mode return conf)
+   #unspecified)
+   
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclInit mode return conf)
@@ -277,6 +283,7 @@
 		(j2s->list this)))))
    
    (cond
+      ((j2s-export? this) #unspecified)
       ((j2s-param? this) (call-next-method))
       ((j2s-let-opt? this) (j2s-scheme-let-opt this))
       ((j2s-let? this) (call-next-method))
@@ -297,9 +304,9 @@
 	  `(js-let-set! ,(j2s-decl-scheme-id decl) ,val ',loc %this))))
 
    (with-access::J2SRef lhs (decl)
-      (with-access::J2SDecl decl (writable writable scope id hint)
+      (with-access::J2SDecl decl (writable writable scope id hint export)
 	 (cond
-	    ((or writable (and (isa? decl J2SDeclInit)))
+	    ((or writable (isa? decl J2SDeclInit))
 	     (cond
 		((and (memq scope '(global %scope)) (in-eval? return))
 		 `(begin
@@ -307,6 +314,11 @@
 			 `',id 'propname
 			 val tyval (strict-mode? mode) conf #f #f)
 		     ,result))
+		((isa? export J2SExport)
+		 (with-access::J2SExport export (index)
+		    `(begin
+			(nodejs-module-set! %exports ,index ,val)
+			,result)))
 		(result
 		 `(begin
 		     ,(set decl hint loc)
@@ -378,8 +390,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SRef mode return conf)
    (with-access::J2SRef this (decl loc type)
-      (with-access::J2SDecl decl (scope id vtype)
+      (with-access::J2SDecl decl (scope id vtype export)
 	 (cond
+	    ((isa? decl J2SDeclImport)
+	     (with-access::J2SDeclImport decl (linkindex import)
+		(with-access::J2SImport import (obj)
+		   `(nodejs-module-ref ,obj ,linkindex))))
+	    ((isa? export J2SExport)
+	     (with-access::J2SExport export (index)
+		`(nodejs-module-ref %exports ,index)))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scheme-id decl))
 	    ((j2s-let? decl)

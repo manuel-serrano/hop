@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Oct 17 18:17:21 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 07:53:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -458,7 +458,13 @@
 	   (final-class J2SImport::J2SStmt
 	      (path::bstring read-only)
 	      (names::obj (default #f))
-	      (respath (default #f)))
+	      (respath (default #f))
+	      (obj (default #f)))
+
+	   (final-class J2SImportName
+	      (loc read-only)
+	      (id::symbol read-only)
+	      (alias::symbol read-only))
 
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
@@ -506,6 +512,7 @@
 	   (j2s-let?::bool ::J2SDecl)
 	   (j2s-const?::bool ::J2SDecl)
 	   (j2s-param?::bool ::J2SDecl)
+	   (j2s-export?::bool ::J2SDecl)
 	   
 	   (j2s-let-opt?::bool ::J2SDecl)
 
@@ -564,7 +571,7 @@
       (case binder
 	 ((var) #t)
 	 ((let let-opt) #t)
-	 ((param class) #f)
+	 ((param class export) #f)
 	 (else (error "j2s-var?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
@@ -574,7 +581,7 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((let let-opt) #t)
-	 ((var param class) #f)
+	 ((var param class export) #f)
 	 (else (error "j2s-let?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
@@ -584,7 +591,7 @@
    (with-access::J2SDecl decl (binder writable id loc)
       (unless writable
 	 (case binder
-	    ((let let-opt) #t)
+	    ((let let-opt export) #t)
 	    ((var param class) #f)
 	    (else (error "j2s-const?" "wrong binder" (vector loc id binder)))))))
 
@@ -595,7 +602,7 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((let-opt) #t)
-	 ((let var param class) #f)
+	 ((let var param class export) #f)
 	 (else (error "j2s-let-opt?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
@@ -625,8 +632,18 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((param) #t)
-	 ((var let const let-opt const-opt class) #f)
+	 ((var let const let-opt const-opt class export) #f)
 	 (else (error "j2s-param?" "wrong binder" (vector loc id binder))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-export? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-export? decl::J2SDecl)
+   (with-access::J2SDecl decl (binder id loc)
+      (case binder
+	 ((export) #t)
+	 ((var let const let-opt const-opt class param) #f)
+	 (else (error "j2s-export?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-id ...                                                    */
