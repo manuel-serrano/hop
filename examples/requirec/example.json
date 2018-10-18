@@ -1,0 +1,6 @@
+{
+   "tags": [ "module" ],
+   "description": "Multitier require forms",
+   "doc": "Shows how to use nodejs compatible require function and module objects.",
+   "files": [ "requirec.js", "mod1.js", "mod2.js" ],
+}

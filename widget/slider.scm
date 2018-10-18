@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/widget/slider.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/widget/slider.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jul 19 16:03:33 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Sun Apr 10 07:35:48 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
 ;*=====================================================================*/
@@ -23,6 +23,7 @@
 	       (max read-only)
 	       (step read-only)
 	       (onchange read-only)
+	       (onclick read-only)
 	       (caption read-only)))
 
    (export  (<SLIDER> . ::obj)))
@@ -37,6 +38,7 @@
 		      (max 100)
 		      (step 1)
 		      (onchange #f)
+		      (onclick #f)
 		      (caption "top")
 		      (attrs))
    (instantiate::html-slider
@@ -48,6 +50,7 @@
       (max max)
       (step step)
       (onchange onchange)
+      (onclick onclick)
       (caption caption)
       (attributes attrs)
       (body '())))
@@ -68,18 +71,25 @@
 ;*    xml-write ::html-slider ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-slider p backend)
-   (with-access::html-slider obj (id klass value min max step onchange caption)
+   (with-access::html-slider obj (id klass value min max step onchange onclick caption)
       (let ((gid (gensym))
-	    (oc (cond
-		   ((isa? onchange xml-tilde)
-		    (xml-tilde->return onchange))
-		   ((string? onchange)
-		    onchange)
-		   (else
-		    ""))))
+	    (ochg (cond
+		     ((isa? onchange xml-tilde)
+		      (xml-tilde->return onchange))
+		     ((string? onchange)
+		      onchange)
+		     (else
+		      "")))
+	    (oclk (cond
+		     ((isa? onclick xml-tilde)
+		      (xml-tilde->return onclick))
+		     ((string? onclick)
+		      onclick)
+		     (else
+		      ""))))
 	 (fprintf p "<script id='~a' type='~a'>" gid (hop-mime-type))
 	 (fprint p
-		 "hop_add_event_listener( '" gid "', 'ready', function( e ) { hop_slider_onchange_set( "
+		 "hop_add_event_listener( '" gid "', 'ready', function( e ) { hop_slider_onclick_set( hop_slider_onchange_set( "
 		 "hop_make_slider( "
 		 "document.getElementById( '" gid "' ), "
 		 "'" klass "', "
@@ -93,6 +103,7 @@
 	 (xml-write-expression value p)
 	 (display ", " p)
 	 (xml-write-expression caption p)
-	 (fprint p "), function(event) { " oc " } ) }, false )"))
+	 (fprint p "), function(event) { " ochg " } ),")
+	 (fprint p "function(event) { " oclk " } ) }, false )"))
       (display "</script>" p)))
 

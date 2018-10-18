@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/html_base.scm             */
+;*    serrano/prgm/project/hop/3.1.x/runtime/html_base.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Fri Mar 30 10:56:18 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Wed Oct  5 06:18:50 2016 (serrano)                */
+;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
 ;*=====================================================================*/
@@ -19,7 +19,8 @@
 
    (import  __hop_xml-types
 	    __hop_xml
-	    __hop_security)
+	    __hop_security
+	    __hop_types)
 
    (export  (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -27,9 +28,11 @@
 	    (<ADDRESS> . ::obj)
 	    (<APPLET> . ::obj)
 	    (<AREA> . ::obj)
+	    (<ARTICLE> . ::obj)
 	    (<B> . ::obj)
 	    (<BASE> . ::obj)
 	    (<BASEFONT> . ::obj)
+	    (<BDI> . ::obj)
 	    (<BDO> . ::obj)
 	    (<BIG> . ::obj)
 	    (<BLOCKQUOTE> . ::obj)
@@ -43,6 +46,7 @@
 	    (<CODE> . ::obj)
 	    (<COL> . ::obj)
 	    (<COLGROUP> . ::obj)
+	    (<DATALIST> . ::obj)
 	    (<DD> . ::obj)
 	    (<DEL> . ::obj)
 	    (<DFN> . ::obj)
@@ -53,7 +57,10 @@
 	    (<EM> . ::obj)
 	    (<EMBED> . ::obj)
 	    (<FIELDSET> . ::obj)
+	    (<FIGURE> . ::obj)
+	    (<FIGCAPTION> . ::obj)
 	    (<FONT> . ::obj)
+	    (<FOOTER> . ::obj)
 	    (<FORM> . ::obj)
 	    (<FRAME> . ::obj)
 	    (<FRAMESET> . ::obj)
@@ -64,6 +71,8 @@
 	    (<H5> . ::obj)
 	    (<H6> . ::obj)
 	    (<HR> . ::obj)
+	    (<HEADER> . ::obj)
+	    (<HGROUP> . ::obj)
 	    (<I> . ::obj)
 	    (<IFRAME> . ::obj)
 	    (<INPUT> . ::obj)
@@ -73,10 +82,13 @@
 	    (<LABEL> . ::obj)
 	    (<LEGEND> . ::obj)
 	    (<LI> . ::obj)
+	    (<MAIN> . ::obj)
 	    (<MAP> . ::obj)
 	    (<MARQUEE> . ::obj)
 	    (<MENU> . ::obj)
+	    (<MENUITEM> . ::obj)
 	    (<META> . ::obj)
+	    (<METER> . ::obj)
 	    (<NAV> . ::obj)
 	    (<NOFRAMES> . ::obj)
 	    (<NOSCRIPT> . ::obj)
@@ -107,8 +119,10 @@
 	    (<TFOOT> . ::obj)
 	    (<TH> . ::obj)
 	    (<THEAD> . ::obj)
+	    (<TIME> . ::obj)
 	    (<TITLE> . ::obj)
 	    (<TR> . ::obj)
+	    (<TRACK> . ::obj)
 	    (<TT> . ::obj)
 	    (<U> . ::obj)
 	    (<UL> . ::obj)
@@ -123,9 +137,11 @@
 (define-xml-element <ADDRESS>)
 (define-xml-element <APPLET>)
 (define-xml xml-empty-element #t <AREA>)
+(define-xml-element <ARTICLE>)
 (define-xml-element <B>)
 (define-xml xml-empty-element #t <BASE>)
 (define-xml xml-empty-element #t <BASEFONT>)
+(define-xml-element <BDI>)
 (define-xml-element <BDO>)
 (define-xml-element <BIG>)
 (define-xml-element <BLOCKQUOTE>)
@@ -139,6 +155,7 @@
 (define-xml-element <CODE>)
 (define-xml xml-empty-element #t <COL>)
 (define-xml-element <COLGROUP>)
+(define-xml-element <DATALIST>)
 (define-xml-element <DD>)
 (define-xml-element <DEL>)
 (define-xml-element <DFN>)
@@ -149,7 +166,10 @@
 (define-xml-element <EM>)
 (define-xml-element <EMBED>)
 (define-xml-element <FIELDSET>)
+(define-xml-element <FIGURE>)
+(define-xml-element <FIGCAPTION>)
 (define-xml-element <FONT>)
+(define-xml-element <FOOTER>)
 (define-xml xml-empty-element #t <FRAME>)
 (define-xml-element <FRAMESET>)
 (define-xml-element <H1>)
@@ -159,6 +179,8 @@
 (define-xml-element <H5>)
 (define-xml-element <H6>)
 (define-xml xml-empty-element #t <HR>)
+(define-xml-element <HEADER>)
+(define-xml-element <HGROUP>)
 (define-xml-element <I>)
 (define-xml-element <IFRAME>)
 (define-xml-element <INS>)
@@ -167,9 +189,12 @@
 (define-xml-element <LABEL>)
 (define-xml-element <LEGEND>)
 (define-xml-element <LI>)
+(define-xml-element <MAIN>)
 (define-xml-element <MAP>)
 (define-xml-element <MARQUEE>)
 (define-xml-element <MENU>)
+(define-xml-element <MENUITEM>)
+(define-xml-element <METER>)
 (define-xml-element <NAV>)
 (define-xml-element <NOFRAMES>)
 (define-xml-element <NOSCRIPT>)
@@ -200,8 +225,10 @@
 (define-xml-element <TFOOT>)
 (define-xml-element <TH>)
 (define-xml-element <THEAD>)
+(define-xml-markup <TIME>)
 (define-xml-markup <TITLE>)
 (define-xml-element <TR>)
+(define-xml-element <TRACK>)
 (define-xml-element <TT>)
 (define-xml-element <U>)
 (define-xml-element <UL>)
@@ -216,13 +243,13 @@
    (instantiate::xml-meta
       (tag 'meta)
       (attributes attrs)
-      (content content)
+      (content (xml-primitive-value content))
       (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FORM> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-tag <FORM> ((id #unspecified string)
+(define-tag <FORM> ((id #unspecified)
 		    (onsubmit #f)
 		    (onreset #f)
 		    (action #f)
@@ -232,40 +259,40 @@
 		    ((isa? onsubmit xml-tilde)
 		     `(:onsubmit ,(xml-tilde->return onsubmit) ,@attrs))
 		    (onsubmit
-		       `(:onsubmit ,onsubmit ,@attrs))
+		     `(:onsubmit ,onsubmit ,@attrs))
 		    (else
-		     attrs)))
+		     (map xml-primitive-value attrs))))
 	  (attrs (cond
 		    ((isa? onreset xml-tilde)
 		     `(:onreset ,(xml-tilde->return onreset) ,@attrs))
 		    (onreset
-		       `(:onreset ,onreset ,@attrs))
+		     `(:onreset ,onreset ,@attrs))
 		    (else
-		     attrs)))
+		     (map xml-primitive-value attrs))))
 	  (attrs (cond
 		    ((isa? action xml-tilde)
 		     `(:action ,(format "javascript: ~a"
 				   (xml-tilde->statement action))
-			 ,@attrs))
+			 ,@(map xml-primitive-value attrs)))
 		    (action
-		       `(:action ,action ,@attrs))
+		     `(:action ,action ,@attrs))
 		    (else
-		     attrs))))
+		     (map xml-primitive-value attrs)))))
       (instantiate::xml-element
 	 (tag 'form)
-	 (id (xml-make-id id 'FORM))
+	 (id (xml-make-id (xml-primitive-value id) 'FORM))
 	 (attributes attrs)
 	 (body body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <INPUT> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-tag <INPUT> ((id #unspecified string)
+(define-tag <INPUT> ((id #unspecified)
 		     (type 'text)
 		     (onkeydown #f)
 		     (attributes))
    (if (or (eq? type 'url) (equal? type "url"))
-       (let* ((id (xml-make-id id 'input))
+       (let* ((id (xml-make-id (xml-primitive-value id) 'input))
 	      (comp "hop_inputurl_keydown( this, event )")
 	      (onkeydown (if onkeydown
 			     (format "~a; ~a" comp
@@ -278,13 +305,14 @@
 	     (id id)
 	     (attributes `(:type ,type
 			     :onkeydown ,(secure-javascript-attr onkeydown)
-			     ,@attributes))
+			     ,@(map xml-primitive-value attributes)))
 	     (body '())))
        (instantiate::xml-empty-element
 	  (tag 'input)
-	  (id (xml-make-id id 'input))
+	  (id (xml-make-id (xml-primitive-value id) 'input))
 	  (attributes `(type: ,type
-			  ,@(if onkeydown `(onkeydown: ,(secure-javascript-attr onkeydown)) '())
-			  ,@attributes))
+			  ,@(if onkeydown
+				`(onkeydown: ,(secure-javascript-attr onkeydown))
+				'())
+			  ,@(map xml-primitive-value attributes)))
 	  (body '()))))
-

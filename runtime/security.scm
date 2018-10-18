@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/security.scm              */
+;*    serrano/prgm/project/hop/3.0.x/runtime/security.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Sat Oct 13 07:47:56 2012 (serrano)                */
-;*    Copyright   :  2009-12 Manuel Serrano                            */
+;*    Last change :  Thu Jul  9 14:28:21 2015 (serrano)                */
+;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
 ;*=====================================================================*/
@@ -29,17 +29,30 @@
 
    (static  (class xml-secure-attribute::xml-tilde))
 
-   (export  (secure-javascript-attr ::obj)
+   (export  (security-close!)
+	    (secure-javascript-attr ::obj)
 
 	    (hop-xml-backend-secure::xml-backend)
 
 	    (hop-security-manager::obj)
 	    (hop-security-manager-set! ::obj)
 
-	    (xml-tree-compare::obj ::obj ::xml-backend)
+	    (xml-tree-compare::obj ::obj ::xml-backend ::obj)
 	    (generic xml-compare a1::obj a2::obj)
 	    (xml-string-sanitize::bstring ::bstring)
 	    (xml-attribute-sanitize::obj ::obj ::keyword)))
+
+
+;*---------------------------------------------------------------------*/
+;*    *security-open* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *security-open* #t)
+
+;*---------------------------------------------------------------------*/
+;*    security-close! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (security-close!)
+   (set! *security-open* #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    secure-javascript-attr ...                                       */
@@ -67,7 +80,7 @@
 (define security-manager-default 
    (instantiate::security-manager
       (name "Unsecure")
-      (xml-sanitize (lambda (xml be) xml))
+      (xml-sanitize (lambda (xml be req) xml))
       (string-sanitize (lambda (s) s))
       (attribute-sanitize (lambda (a id) a))
       (inline-sanitize (lambda (n) n))
@@ -82,6 +95,7 @@
       (name "Secure tree")
       (xml-sanitize xml-tree-compare)
       (string-sanitize (lambda (s) s))
+      (attribute-sanitize (lambda (a id) a))
       (inline-sanitize (lambda (n) n))
       (script-sanitize (lambda (n) n))
       (runtime '())))
@@ -93,10 +107,10 @@
    security-manager-default
    (lambda (v)
       (cond
-	 ((hop-rc-loaded?)
+	 ((not *security-open*)
 	  (error "hop-security-manager-set!"
-		 "Security managers can be specified once hoprc.hop loaded"
-		 #f))
+	     "Cannot set Security managers once the server is up"
+	     v))
 	 ((eq? v 'tree)
 	  security-manager-tree-compare)
 	 ((eq? v 'unsecure)
@@ -133,23 +147,27 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-tree-compare ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (xml-tree-compare::obj xml backend)
+(define (xml-tree-compare::obj xml backend req)
    (let ((p (open-output-string)))
       (xml-write xml p (duplicate::xml-backend backend
 			  (security security-manager-tree-compare)))
       (let* ((s (close-output-port p))
 	     (ast (skip-declaration (string->html s))))
-	 (with-handler
-	    (lambda (e)
-	       (let ((rep (http-error e)))
-		  (if (isa? rep http-response-xml)
-		      (begin
-			 (exception-notify e)
-			 (with-access::http-response-xml rep (xml) xml))
-		      (raise e))))
-	    (begin
-	       (xml-compare (normalize-ast xml) (normalize-ast ast))
-	       xml)))))
+	 (if (isa? req http-request)
+	     (with-handler
+		(lambda (e)
+		   (let ((rep (http-error e req)))
+		      (if (isa? rep http-response-xml)
+			  (begin
+			     (exception-notify e)
+			     (with-access::http-response-xml rep (xml) xml))
+			  (raise e))))
+		(begin
+		   (xml-compare (normalize-ast xml) (normalize-ast ast))
+		   xml))
+	     (begin
+		(xml-compare (normalize-ast xml) (normalize-ast ast))
+		xml)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    skip-declaration ...                                             */

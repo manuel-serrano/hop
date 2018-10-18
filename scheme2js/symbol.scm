@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/symbol.scm              */
+;*    serrano/prgm/project/hop/3.0.x/scheme2js/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Tue Mar 18 09:15:57 2014 (serrano)                */
+;*    Last change :  Tue Mar 18 08:22:55 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2js symbol resolution                                      */

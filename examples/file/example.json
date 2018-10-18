@@ -1,0 +1,6 @@
+{
+   "source": "file.js",
+   "tags": ["io", "http"],
+   "description": "A basic example that shows how to ship files",
+   "doc": "This example shows how using Hop.js responses, fast static content delivery is implemented.",
+}

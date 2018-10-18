@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/widget/colorchooser.hop           */
+;*    serrano/prgm/project/hop/3.0.x/widget/colorchooser.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 12:01:13 2009                          */
-;*    Last change :  Tue Mar 18 09:05:47 2014 (serrano)                */
+;*    Last change :  Fri Feb 21 16:27:51 2014 (serrano)                */
 ;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Color Chooser implementation                                     */

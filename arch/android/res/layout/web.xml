@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/hopstyle"
+    android:padding="4px"
+    android:background="#dd000000"
+    android:layout_width="fill_parent"
+    android:gravity="center_horizontal"
+    android:layout_height="fill_parent" >
+ 
+  <LinearLayout android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+   <ScrollView android:id="@+id/scrollview"
+               android:orientation="vertical"
+               android:layout_width="fill_parent"
+               android:layout_height="fill_parent"
+               android:background="#222222"
+               android:padding="4px"
+               android:textSize="16px"
+               android:layout_marginBottom="0sp"
+               android:scrollbarAlwaysDrawVerticalTrack="true">
+    <WebView  xmlns:android="http://schemas.android.com/apk/res/android"
+	      android:id="@+id/webview"
+	      android:layout_width="fill_parent"
+	      android:layout_height="fill_parent"/>
+   </ScrollView>
+  </LinearLayout>
+</RelativeLayout>

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/out.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/scheme2js/out.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Mon Jan  6 21:18:33 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sun Aug  7 06:36:30 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
 ;*=====================================================================*/
@@ -261,9 +261,11 @@
 			(if (config 'use-strict/function)
 			    "\n\"use strict\";\n" "\n"))
 	       p)))
-      (compile-value-circle obj p host-compiler loc cache)
-      (when (pair? cache)
-	 (display ";})" p))))
+      (multiple-value-bind (res cyclic)
+	 (compile-value-circle obj p host-compiler loc cache)
+	 (when (pair? cache)
+	    (display ";}," p)
+	    (display (if cyclic "false)" "true)") p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-value ...                                               */
@@ -400,9 +402,11 @@
 	  ;; CARE: initially I had "($val)" here. and I suppose there was a
 	  ;; reason I put the parenthesis around. this will probably
 	  ;; come back and bite me...
-	  (template-display p
-	     (?@ (< val 0) "(~@)")
-	     "$val"))
+	  (if (and (flonum? val) (nanfl? val))
+	      (display-string "NaN" p)
+	      (template-display p
+		 (?@ (< val 0) "(~@)")
+		 "$val")))
 	 ((string? val)
 	  (template-display p
 	     (?@ (use-mutable-strings?) "(new sc_String(~@))")
@@ -446,7 +450,8 @@
 	 (else
 	  (compile-cyclic val p))))
    
-   (compile val p))
+   (let ((exp (compile val p)))
+      (values exp (>fx index -1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile ::Const ...                                              */
@@ -675,7 +680,7 @@
 	  (?@ stmt? "~@;\n") ;; should never happen.
 	  "/* WITH */ let"))
       (else
-       (display "/* WITH */" p)
+       (display "/* WITH */ " p)
        (with-access::Frame-alloc this (vars)
 	  (for-each (lambda (v)
 		       (with-access::Named-Var v (js-id)
@@ -1035,7 +1040,7 @@
 	 (cond
 	    ((not (lambda-call? this))
 	     (template-display p
-		(?@ toplevel?
+		(?@ (and debug? toplevel?)
 		   "sc_context=hop_callback_html_context( \"~a\", \"~a\", ~a ); hop_current_stack_context=sc_context; try { ~@ } catch( e ) { hop_callback_handler(e, sc_context); }"
 		   (match-case location
 		      ((at ?fname ?-) fname)

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../2.5.x/arch/android/src/fr/inria/hop/HopPluginTts.java        */
+/*    .../2.6.x/arch/android/src/fr/inria/hop/HopPluginTts.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Tue Feb 18 15:27:59 2014 (serrano)                */
+/*    Last change :  Fri Feb 21 13:30:58 2014 (serrano)                */
 /*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */

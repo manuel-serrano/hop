@@ -1,0 +1,6 @@
+{
+   "tags": ["event"],
+   "description": "Server events",
+   "doc": "This example shows how servers broadcast informations toward clients",
+   "level": 2
+}

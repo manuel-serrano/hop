@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/arch/android/makeapk.sh.in        */
+#*    serrano/prgm/project/hop/3.1.x/arch/android/makeapk.sh.in        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Tue Apr 23 09:05:25 2013 (serrano)                */
-#*    Copyright   :  2010-13 Manuel Serrano                            */
+#*    Last change :  Tue May 24 15:33:58 2016 (serrano)                */
+#*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
 #*=====================================================================*/
@@ -27,17 +27,18 @@ HOPCONSOLELOG=false
 HOPDEBUGLEVEL=
 HOPVERBOSELEVEL=-v
 
-REPOSITORY=/users/serrano/prgm/distrib
+REPOSITORY=$HOME/prgm/distrib
 
 ANDROIDBIGLOOLIB=
 CC=
 
 CONFIGUREOPTS=
 
-ANDROIDROOT=/misc/virtual/android/r07
+ANDROIDROOT=/opt/android
 ANDROIDGIT=$ANDROIDROOT/eclair-git
-ANDROIDSDK=$ANDROIDROOT/android-sdk-linux_x86
-ANDROIDNDK=$ANDROIDROOT/android-ndk-r4b
+ANDROIDSDK=$ANDROIDROOT/android-sdk-linux
+ANDROIDNDK=$ANDROIDROOT/android-ndk-r9d
+ANDROIDTOOLCHAIN=$ANDROIDROOT/toolchain
 
 ANDROIDSDKVERSION=10
 ANDROIDSDKVERSION=16
@@ -47,7 +48,6 @@ AFILE=bglafile
 
 PREFIX=/data/data/fr.inria.hop
 
-REPOSITORY=/users/serrano/prgm/distrib
 if [ "$REPODIR " != " " ]; then
   REPOSITORY=$REPODIR;
 fi
@@ -169,7 +169,8 @@ while : ; do
 
     --)
       shift;
-      CONFIGUREOPTS="$CONFIGUREOPTS $*";;
+      CONFIGUREOPTS="$CONFIGUREOPTS $*";
+      break;;
 
 
     -*)
@@ -214,7 +215,11 @@ if [ "$ANDROIDBIGLOOLIB " = " " ]; then
 fi
 
 if [ "$CC " = " " ]; then
-  CC=$ANDROIDROOT/bigloo$BIGLOOVERSION/arch/android/droid-gcc
+  CC=$ANDROIDTOOLCHAIN/bin/arm-linux-androideabi-gcc
+fi
+
+if [ "$CFLAGS " = " " ]; then
+  CFLAGS=-pie
 fi
 
 #*---------------------------------------------------------------------*/

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/3.1.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sun Aug 16 17:16:13 2015 (serrano)                */
-#*    Copyright   :  2004-15 Manuel Serrano                            */
+#*    Last change :  Sun Nov  5 19:10:21 2017 (serrano)                */
+#*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
 #*=====================================================================*/
@@ -16,6 +16,7 @@ HOPRELEASE	= @RELEASE@
 HOPDEVEL	= @DEVEL@
 HOPBRANCH	= @BRANCH@
 HOPDATE		= @DATE@
+HOPBUILDID	= @BUILDID@
 
 #*---------------------------------------------------------------------*/
 #*    Compilers, tools, and misc configuration                         */
@@ -23,9 +24,12 @@ HOPDATE		= @DATE@
 # the Bigloo compiler
 BIGLOO          = @BIGLOO@
 RELEASE		= @BIGLOOVERSION@
+HOP		= @HOP@
 HOPC		= @HOPC@
 BGLCPP		= @BGLCPP@
-HFLAGS		= --bigloo=$(BIGLOO) -L $(BUILDLIBDIR) --share-dir $(BUILDSHAREDIR) $(EFLAGS) -- -lib-dir $(BUILDLIBDIR)
+CCOMP		= @CC@
+HOSTCC		= @HOSTCC@
+HFLAGS		= --reset-bigloo-options --bigloo=$(BIGLOO) --bigloo-lib-dir=$(BIGLOOLIBDIR) --share-dir $(BUILDSHAREDIR) $(EFLAGS) --
 BACKEND         = @BACKEND@
 LINK		= @LINK@
 BIGLOOLIBDIR	= @BIGLOOLIBDIR@
@@ -38,6 +42,7 @@ JAR		= @JAR@
 FLASHCC		= @FLASHCC@
 GZIP		= @GZIP@
 JAVAC		= @JAVAC@
+CLOSURE		= @CLOSURE@
 
 MODFILE		= 644
 MODDIR		= 755
@@ -46,11 +51,18 @@ MODEXE		= 755
 INSTALL		= @INSTALL@
 
 #*---------------------------------------------------------------------*/
+#*    Misc                                                             */
+#*---------------------------------------------------------------------*/
+MACH		= @BGLMACH@
+ARCH		= @BGLARCH@
+THREADS		= @THREADS@
+NODOC		= @NODOC@
+
+#*---------------------------------------------------------------------*/
 #*    Compilation flags                                                */
 #*---------------------------------------------------------------------*/
 DEBUG		= @DEBUG@
-CCOMP		= @CC@
-BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -srfi hop-$(LINK) $(EFLAGS)
+BCFLAGS		= @BCFLAGS@ -srfi hop-$(LINK) $(EFLAGS)
 BLDFLAGS	= @BLDFLAGS@
 BTFLAGS		= @BTFLAGS@
 BCFLAGSDEV	= @BCFLAGSDEV@
@@ -70,6 +82,7 @@ BIGLOOSSLLIBS	= @BIGLOOSSLLIBS@
 BIGLOOSSLLIBU	= @BIGLOOSSLLIBU@
 
 BSCM2JSFLAGS	= @BSCM2JSFLAGS@
+BHOPCFLAGS	= @BHOPCFLAGS@
 
 #*---------------------------------------------------------------------*/
 #*    Linking                                                          */
@@ -108,6 +121,7 @@ HOPSHAREDIR	= @SHAREDIR@
 HOPMANDIR	= @MANDIR@
 HOPWEBLETSDIR	= @WEBLETSDIR@
 HOPCONTRIBSDIR	= @CONTRIBSDIR@
+HOPDOCDIR	= @DOCDIR@
 
 HOPFILDIR	= hop/$(HOPRELEASE)
 HOPDEMOSDIR	= $(HOPSHAREDIR)/demos
@@ -138,7 +152,7 @@ HOPDISTRIBDIR	= @HOPDISTRIBDIR@
 #*---------------------------------------------------------------------*/
 #*    compile                                                          */
 #*---------------------------------------------------------------------*/
-.PHONY: compile compile2 link
+.PHONY: compile compile2 link mkdir
 
 COLOR		= yes
 
@@ -156,3 +170,14 @@ compile3 = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(5) $(COLOR_OBJ)$(6)$(COLOR_STOP)
 
 heap = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(5) $(6) $(COLOR_DEST)$(7)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5) $(6) $(7)
 link = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(5) $(COLOR_DEST)$(6)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5) $(6)
+
+#*---------------------------------------------------------------------*/
+#*    mkdir                                                            */
+#*---------------------------------------------------------------------*/
+mkdir:
+	if [ ! -f $(DIR) ]; then \
+	   if [ ! -d $(DIR) ]; then \
+             $(MAKE) mkdir DIR=`dirname $(DIR)`; \
+             mkdir $(DIR) && chmod $(MODDIR) $(DIR); \
+           fi \
+        fi

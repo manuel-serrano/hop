@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/3.1.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Jan 28 11:04:29 2014 (serrano)                */
-/*    Copyright   :  2006-14 Manuel Serrano                            */
+/*    Last change :  Fri Jan 26 07:48:15 2018 (serrano)                */
+/*    Copyright   :  2006-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -23,6 +23,14 @@
 /*---------------------------------------------------------------------*/
 function hop_tilde( fun ) {
    this.fun = fun;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_xml_tilde ...                                                */
+/*---------------------------------------------------------------------*/
+function hop_xml_tilde( proc, args ) {
+   this.proc = proc;
+   this.args = args;
 }
 
 /*---------------------------------------------------------------------*/
@@ -107,6 +115,7 @@ function dom_set_child_node( parent, node ) {
 /*---------------------------------------------------------------------*/
 /*    dom_node_elementp ...                                            */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-element?)
            (peephole (postfix ".nodeType == 1"))
            (arity #t))
@@ -114,10 +123,12 @@ function dom_set_child_node( parent, node ) {
 function dom_node_elementp( node ) {
    return node.nodeType == 1;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_node_textp ...                                               */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-text?)
            (peephole (postfix ".nodeType == 3"))
            (arity #t))
@@ -125,10 +136,12 @@ function dom_node_elementp( node ) {
 function dom_node_textp( node ) {
    return node.nodeType == 3;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_node_documentp ...                                           */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-document?)
            (peephole (postfix ".nodeType == 9"))
            (arity #t))
@@ -136,10 +149,12 @@ function dom_node_textp( node ) {
 function dom_node_documentp( node ) {
    return node.nodeType == 9;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_node_commentp ...                                            */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-comment?)
            (peephole (postfix ".nodeType == 8"))
            (arity #t))
@@ -147,10 +162,12 @@ function dom_node_documentp( node ) {
 function dom_node_commentp( node ) {
    return node.nodeType == 8;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_node_document_fragmentp ...                                  */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-document-fragment?)
            (peephole (postfix ".nodeType == 11"))
            (arity #t))
@@ -158,10 +175,12 @@ function dom_node_commentp( node ) {
 function dom_node_document_fragmentp( node ) {
    return node.nodeType == 11;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_node_document_attrp ...                                      */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-attr?)
            (peephole (postfix ".nodeType == 2"))
            (arity #t))
@@ -169,6 +188,7 @@ function dom_node_document_fragmentp( node ) {
 function dom_node_document_attrp( node ) {
    return node.nodeType == 2;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_create ...                                                   */
@@ -310,9 +330,81 @@ function hop_dom_create_msie_radio( name, _ ) {
 			  (cons* (cadr args) (car args) attrs)
 			  listeners))))) */
 
+function hop_dom_create( tag, args ) {
+   var el = document.createElement( tag );
+   var attrs = args[ 0 ];
+   var len = args.length
+   var m;
+
+   function valstr( val, k ) {
+      try {
+	 if( (val instanceof String) || (typeof val == "string") ) {
+	    k( val );
+	 } if( typeof( val ) === "function" ) {
+	    return hop.reactAttribute( function() { k( val() ) } );
+	 } else {
+	    return el[ attr ] = val.toString();
+	 }
+      } catch( e ) {
+	 if( (val instanceof String) || (typeof val == "string") ) {
+	    k( val );
+	 }
+      }
+   } 
+
+   function valfun( val ) {
+      if( val instanceof hop_xml_tilde ) {
+	 if( val.args.length == 0 ) {
+	    return function( event ) {
+	       return val.proc.call( this, event );
+	    }
+	 } else {
+	    return function( event ) {
+	       return val.proc.apply( this, [ event, val.args ] );
+	    }
+	 }
+      } else {
+	 return val;
+      }
+   }
+   
+   // the attributes
+   if( args[ 0 ] instanceof Object ) {
+      for( var attr in args[ 0 ] ) {
+	 var val = args[ 0 ][ attr ];
+	 
+	 if( attr === "class" ) {
+	    valstr( val, function( v ) { el.className = v } );
+	 } else if( attr === "style" ) {
+	    valstr( val, function( v ) { hop_style_attribute_set( el, v ); } );
+	 } else if( attr === "%location" ) {
+	    ; /* ignore */
+	 } else {
+	    m = attr.match( "^on(.*)" );
+	    if( m ) {
+	       hop_add_event_listener( el, m[ 1 ], valfun( val ), true );
+	    } else {
+	       valstr( val, function( v ) { el.setAttribute( attr, v ) } );
+	       try {
+		  valstr( val, function( v ) { el[ attr ] = v } );
+	       } catch( _ ) { ; }
+	    }
+	 }
+      }
+   }
+   
+   // the children
+   for( var i = 1; i < len; i++ ) {
+      dom_add_child( el, args[ i ] );
+   }
+
+   return el;
+}
+
 /*---------------------------------------------------------------------*/
 /*    dom_add_head_script ...                                          */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 function dom_add_head_script( pathname, id ) {
    var head = document.getElementsByTagName( "head" )[ 0 ];
    var script = document.createElement( 'script' );
@@ -324,6 +416,7 @@ function dom_add_head_script( pathname, id ) {
    
    head.appendChild( script );
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_create_lframe ...                                            */
@@ -365,134 +458,345 @@ function hop_create_lflabel( attrs, body ) {
 /*** META (define-macro (<A> . args)
      `(hop_dom_create "a" ,@args)) */
 
+function A( attrs ) {
+   return hop_dom_create( "a", arguments );
+}
+
 /*** META (define-macro (<ABBR> . args)
      `(hop_dom_create "abbr" ,@args)) */
+
+function ABBR( attrs ) {
+   return hop_dom_create( "abbr", arguments );
+}
 
 /*** META (define-macro (<ACRONYM> . args)
      `(hop_dom_create "acronym" ,@args)) */
 
+function ACRONYM( attrs ) {
+   return hop_dom_create( "acronym", arguments );
+}
+
 /*** META (define-macro (<APPLET> . args)
      `(hop_dom_create "applet" ,@args)) */
+
+function APPLET( attrs ) {
+   return hop_dom_create( "applet", arguments );
+}
 
 /*** META (define-macro (<AREA> . args)
      `(hop_dom_create "area" ,@args)) */
 
+function AREA( attrs ) {
+   return hop_dom_create( "area", arguments );
+}
+
 /*** META (define-macro (<B> . args)
      `(hop_dom_create "b" ,@args)) */
+
+function B( attrs ) {
+   return hop_dom_create( "b", arguments );
+}
 
 /*** META (define-macro (<BASE> . args)
      `(hop_dom_create "base" ,@args)) */
 
+function BASE( attrs ) {
+   return hop_dom_create( "base", arguments );
+}
+
 /*** META (define-macro (<BASEFONT> . args)
      `(hop_dom_create "basefont" ,@args)) */
+
+function BASEFONT( attrs ) {
+   return hop_dom_create( "basefont", arguments );
+}
 
 /*** META (define-macro (<BDO> . args)
      `(hop_dom_create "bdo" ,@args)) */
 
+function BDO( attrs ) {
+   return hop_dom_create( "bdo", arguments );
+}
+
 /*** META (define-macro (<BIG> . args)
      `(hop_dom_create "big" ,@args)) */
+
+function BIG( attrs ) {
+   return hop_dom_create( "big", arguments );
+}
 
 /*** META (define-macro (<BLOCKQUOTE> . args)
      `(hop_dom_create "blockquote" ,@args)) */
 
+function BLOCKQUOTE( attrs ) {
+   return hop_dom_create( "blockquote", arguments );
+}
+
 /*** META (define-macro (<BODY> . args)
      `(hop_dom_create "body" ,@args)) */
+
+function BODY( attrs ) {
+   return hop_dom_create( "body", arguments );
+}
 
 /*** META (define-macro (<BR> . args)
      `(hop_dom_create "br" ,@args)) */
 
+function BR( attrs ) {
+   return hop_dom_create( "br", arguments );
+}
+
 /*** META (define-macro (<BUTTON> . args)
      `(hop_dom_create "button" ,@args)) */
+
+function BUTTON( attrs ) {
+   return hop_dom_create( "button", arguments );
+}
 
 /*** META (define-macro (<CANVAS> . args)
      `(hop_dom_create "canvas" ,@args)) */
 
+function CANVAS( attrs ) {
+   return hop_dom_create( "canvas", arguments );
+}
+
 /*** META (define-macro (<CAPTION> . args)
      `(hop_dom_create "caption" ,@args)) */
+
+function CAPTION( attrs ) {
+   return hop_dom_create( "caption", arguments );
+}
 
 /*** META (define-macro (<CENTER> . args)
      `(hop_dom_create "center" ,@args)) */
 
+function CENTER( attrs ) {
+   return hop_dom_create( "center", arguments );
+}
+
 /*** META (define-macro (<CITE> . args)
      `(hop_dom_create "cite" ,@args)) */
+
+function CITE( attrs ) {
+   return hop_dom_create( "cite", arguments );
+}
 
 /*** META (define-macro (<CODE> . args)
      `(hop_dom_create "code" ,@args)) */
 
+function CODE( attrs ) {
+   return hop_dom_create( "code", arguments );
+}
+
 /*** META (define-macro (<COL> . args)
      `(hop_dom_create "col" ,@args)) */
+
+function COL( attrs ) {
+   return hop_dom_create( "col", arguments );
+}
 
 /*** META (define-macro (<COLGROUP> . args)
      `(hop_dom_create "colgroup" ,@args)) */
 
+function COLGROUP( attrs ) {
+   return hop_dom_create( "colgroup", arguments );
+}
+
+/*** META (define-macro (<DATALIST> . args)
+     `(hop_dom_create "datalist" ,@args)) */
+
+function DATALIST( attrs ) {
+   return hop_dom_create( "datalist", arguments );
+}
+
 /*** META (define-macro (<DD> . args)
      `(hop_dom_create "dd" ,@args)) */
+
+function DD( attrs ) {
+   return hop_dom_create( "dd", arguments );
+}
 
 /*** META (define-macro (<DEL> . args)
      `(hop_dom_create "del" ,@args)) */
 
+function DEL( attrs ) {
+   return hop_dom_create( "del", arguments );
+}
+
 /*** META (define-macro (<DFN> . args)
      `(hop_dom_create "dfn" ,@args)) */
+
+function DFN( attrs ) {
+   return hop_dom_create( "dfn", arguments );
+}
 
 /*** META (define-macro (<DIR> . args)
      `(hop_dom_create "dir" ,@args)) */
 
+function DIR( attrs ) {
+   return hop_dom_create( "dir", arguments );
+}
+
 /*** META (define-macro (<DIV> . args)
      `(hop_dom_create "div" ,@args)) */
+
+function DIV( attrs ) {
+   return hop_dom_create( "div", arguments );
+}
 
 /*** META (define-macro (<DL> . args)
      `(hop_dom_create "dl" ,@args)) */
 
+function DL( attrs ) {
+   return hop_dom_create( "dl", arguments );
+}
+
 /*** META (define-macro (<DT> . args)
      `(hop_dom_create "dt" ,@args)) */
+
+function DT( attrs ) {
+   return hop_dom_create( "dt", arguments );
+}
 
 /*** META (define-macro (<EM> . args)
      `(hop_dom_create "em" ,@args)) */
 
+function EM( attrs ) {
+   return hop_dom_create( "em", arguments );
+}
+
 /*** META (define-macro (<FIELDSET> . args)
      `(hop_dom_create "fieldset" ,@args)) */
+
+function FIELDSET( attrs ) {
+   return hop_dom_create( "fieldset", arguments );
+}
+
+/*** META (define-macro (<FIGCAPTION> . args)
+     `(hop_dom_create "figcaption" ,@args)) */
+
+function FIGCAPTION( attrs ) {
+   return hop_dom_create( "figcaption", arguments );
+}
 
 /*** META (define-macro (<FONT> . args)
      `(hop_dom_create "font" ,@args)) */
 
+function FONT( attrs ) {
+   return hop_dom_create( "font", arguments );
+}
+
+/*** META (define-macro (<FOOTER> . args)
+     `(hop_dom_create "footer" ,@args)) */
+
+function FOOTER( attrs ) {
+   return hop_dom_create( "footer", arguments );
+}
+
 /*** META (define-macro (<FORM> . args)
      `(hop_dom_create "form" ,@args)) */
+
+function FORM( attrs ) {
+   return hop_dom_create( "form", arguments );
+}
 
 /*** META (define-macro (<FRAME> . args)
      `(hop_dom_create "frame" ,@args)) */
 
+function FRAME( attrs ) {
+   return hop_dom_create( "frame", arguments );
+}
+
 /*** META (define-macro (<FRAMESET> . args)
      `(hop_dom_create "frameset" ,@args)) */
+
+function FRAMESET( attrs ) {
+   return hop_dom_create( "frameset", arguments );
+}
 
 /*** META (define-macro (<H1> . args)
      `(hop_dom_create "h1" ,@args)) */
 
+function H1( attrs ) {
+   return hop_dom_create( "h1", arguments );
+}
+
 /*** META (define-macro (<H2> . args)
      `(hop_dom_create "h2" ,@args)) */
+
+function H2( attrs ) {
+   return hop_dom_create( "h2", arguments );
+}
 
 /*** META (define-macro (<H3> . args)
      `(hop_dom_create "h3" ,@args)) */
 
+function H3( attrs ) {
+   return hop_dom_create( "h3", arguments );
+}
+
 /*** META (define-macro (<H4> . args)
      `(hop_dom_create "h4" ,@args)) */
+
+function H4( attrs ) {
+   return hop_dom_create( "h4", arguments );
+}
 
 /*** META (define-macro (<H5> . args)
      `(hop_dom_create "h5" ,@args)) */
 
+function H5( attrs ) {
+   return hop_dom_create( "h5", arguments );
+}
+
 /*** META (define-macro (<H6> . args)
      `(hop_dom_create "h6" ,@args)) */
+
+function H6( attrs ) {
+   return hop_dom_create( "h6", arguments );
+}
 
 /*** META (define-macro (<HR> . args)
      `(hop_dom_create "hr" ,@args)) */
 
+function HR( attrs ) {
+   return hop_dom_create( "hr", arguments );
+}
+
+/*** META (define-macro (<HEADER> . args)
+     `(hop_dom_create "header" ,@args)) */
+
+function HEADER( attrs ) {
+   return hop_dom_create( "header", arguments );
+}
+
+/*** META (define-macro (<HGROUP> . args)
+     `(hop_dom_create "hgroup" ,@args)) */
+
+function HGROUP( attrs ) {
+   return hop_dom_create( "hgroup", arguments );
+}
+
 /*** META (define-macro (<HTML> . args)
      `(hop_dom_create "html" ,@args)) */
+
+function HTML( attrs ) {
+   return hop_dom_create( "html", arguments );
+}
 
 /*** META (define-macro (<I> . args)
      `(hop_dom_create "i" ,@args)) */
 
+function I( attrs ) {
+   return hop_dom_create( "i", arguments );
+}
+
 /*** META (define-macro (<IFRAME> . args)
      `(hop_dom_create "iframe" ,@args)) */
+
+function IFRAME( attrs ) {
+   return hop_dom_create( "iframe", arguments );
+}
 
 /*** META (define-macro (<INPUT> . args)
      (let ((k (memq :type args)))
@@ -512,146 +816,360 @@ function hop_create_lflabel( attrs, body ) {
 		 `(hop_dom_create "input" ,@args)))
 	     `(hop_dom_create "input" ,@args)))) )*/
 
+function INPUT( attrs ) {
+   return hop_dom_create( "input", arguments );
+}
+
+
 /*** META (define-macro (<INS> . args)
      `(hop_dom_create "ins" ,@args)) */
+
+function INS( attrs ) {
+   return hop_dom_create( "ins", arguments );
+}
 
 /*** META (define-macro (<ISINDEX> . args)
      `(hop_dom_create "isindex" ,@args)) */
 
+function ISINDEX( attrs ) {
+   return hop_dom_create( "isindex", arguments );
+}
+
 /*** META (define-macro (<KBD> . args)
      `(hop_dom_create "kbd" ,@args)) */
+
+function KBD( attrs ) {
+   return hop_dom_create( "kbd", arguments );
+}
 
 /*** META (define-macro (<LABEL> . args)
      `(hop_dom_create "label" ,@args)) */
 
+function LABEL( attrs ) {
+   return hop_dom_create( "label", arguments );
+}
+
 /*** META (define-macro (<LEGEND> . args)
      `(hop_dom_create "legend" ,@args)) */
+
+function LEGEND( attrs ) {
+   return hop_dom_create( "legend", arguments );
+}
 
 /*** META (define-macro (<LI> . args)
      `(hop_dom_create "li" ,@args)) */
 
+function LI( attrs ) {
+   return hop_dom_create( "li", arguments );
+}
+
 /*** META (define-macro (<LINK> . args)
      `(hop_dom_create "link" ,@args)) */
+
+function LINK( attrs ) {
+   return hop_dom_create( "link", arguments );
+}
 
 /*** META (define-macro (<MAP> . args)
      `(hop_dom_create "map" ,@args)) */
 
+function MAP( attrs ) {
+   return hop_dom_create( "map", arguments );
+}
+
 /*** META (define-macro (<MARQUEE> . args)
      `(hop_dom_create "marquee" ,@args)) */
+
+function MARQUEE( attrs ) {
+   return hop_dom_create( "marquee", arguments );
+}
 
 /*** META (define-macro (<MENU> . args)
      `(hop_dom_create "menu" ,@args)) */
 
+function MENU( attrs ) {
+   return hop_dom_create( "menu", arguments );
+}
+
 /*** META (define-macro (<META> . args)
      `(hop_dom_create "meta" ,@args)) */
+
+function META( attrs ) {
+   return hop_dom_create( "meta", arguments );
+}
+
+/*** METER (define-macro (<METER> . args)
+     `(hop_dom_create "meter" ,@args)) */
+
+function METER( attrs ) {
+   return hop_dom_create( "meter", arguments );
+}
 
 /*** META (define-macro (<NOFRAMES> . args)
      `(hop_dom_create "noframes" ,@args)) */
 
+function NOFRAMES( attrs ) {
+   return hop_dom_create( "noframes", arguments );
+}
+
 /*** META (define-macro (<NOSCRIPT> . args)
      `(hop_dom_create "noscript" ,@args)) */
+
+function NOSCRIPT( attrs ) {
+   return hop_dom_create( "noscript", arguments );
+}
 
 /*** META (define-macro (<OBJECT> . args)
      `(hop_dom_create "object" ,@args)) */
 
+function OBJECT( attrs ) {
+   return hop_dom_create( "object", arguments );
+}
+
 /*** META (define-macro (<OL> . args)
      `(hop_dom_create "ol" ,@args)) */
+
+function OL( attrs ) {
+   return hop_dom_create( "ol", arguments );
+}
 
 /*** META (define-macro (<OPTGROUP> . args)
      `(hop_dom_create "optgroup" ,@args)) */
 
+function OPTGROUP( attrs ) {
+   return hop_dom_create( "optgroup", arguments );
+}
+
 /*** META (define-macro (<OPTION> . args)
      `(hop_dom_create "option" ,@args)) */
+
+function OPTION( attrs ) {
+   return hop_dom_create( "option", arguments );
+}
 
 /*** META (define-macro (<P> . args)
      `(hop_dom_create "p" ,@args)) */
 
+function P( attrs ) {
+   return hop_dom_create( "p", arguments );
+}
+
 /*** META (define-macro (<PARAM> . args)
      `(hop_dom_create "param" ,@args)) */
+
+function PARAM( attrs ) {
+   return hop_dom_create( "param", arguments );
+}
 
 /*** META (define-macro (<PRE> . args)
      `(hop_dom_create "pre" ,@args)) */
 
+function PRE( attrs ) {
+   return hop_dom_create( "pre", arguments );
+}
+
+/*** META (define-macro (<PROGRESS> . args)
+     `(hop_dom_create "progress" ,@args)) */
+
+function PROGRESS( attrs ) {
+   return hop_dom_create( "progress", arguments );
+}
+
 /*** META (define-macro (<Q> . args)
      `(hop_dom_create "q" ,@args)) */
+
+function Q( attrs ) {
+   return hop_dom_create( "q", arguments );
+}
 
 /*** META (define-macro (<S> . args)
      `(hop_dom_create "s" ,@args)) */
 
+function S( attrs ) {
+   return hop_dom_create( "s", arguments );
+}
+
 /*** META (define-macro (<SAMP> . args)
      `(hop_dom_create "samp" ,@args)) */
+
+function SAMP( attrs ) {
+   return hop_dom_create( "samp", arguments );
+}
 
 /*** META (define-macro (<SCRIPT> . args)
      `(hop_dom_create "script" ,@args)) */
 
+function SCRIPT( attrs ) {
+   return hop_dom_create( "script", arguments );
+}
+
+/*** META (define-macro (<SECTION> . args)
+     `(hop_dom_create "section" ,@args)) */
+
+function SECTION( attrs ) {
+   return hop_dom_create( "section", arguments );
+}
+
 /*** META (define-macro (<SELECT> . args)
      `(hop_dom_create "select" ,@args)) */
+
+function SELECT( attrs ) {
+   return hop_dom_create( "select", arguments );
+}
 
 /*** META (define-macro (<SMALL> . args)
      `(hop_dom_create "small" ,@args)) */
 
+function SMALL( attrs ) {
+   return hop_dom_create( "small", arguments );
+}
+
 /*** META (define-macro (<SPAN> . args)
      `(hop_dom_create "span" ,@args)) */
+
+function SPAN( attrs ) {
+   return hop_dom_create( "span", arguments );
+}
 
 /*** META (define-macro (<STRIKE> . args)
      `(hop_dom_create "strike" ,@args)) */
 
+function STRIKE( attrs ) {
+   return hop_dom_create( "strike", arguments );
+}
+
 /*** META (define-macro (<STRONG> . args)
      `(hop_dom_create "strong" ,@args)) */
+
+function STRONG( attrs ) {
+   return hop_dom_create( "strong", arguments );
+}
 
 /*** META (define-macro (<STYLE> . args)
      `(hop_dom_create "style" ,@args)) */
 
+function STYLE( attrs ) {
+   return hop_dom_create( "style", arguments );
+}
+
 /*** META (define-macro (<SUB> . args)
      `(hop_dom_create "sub" ,@args)) */
+
+function SUB( attrs ) {
+   return hop_dom_create( "sub", arguments );
+}
 
 /*** META (define-macro (<SUP> . args)
      `(hop_dom_create "sup" ,@args)) */
 
+function SUP( attrs ) {
+   return hop_dom_create( "sup", arguments );
+}
+
 /*** META (define-macro (<TABLE> . args)
      `(hop_dom_create "table" ,@args)) */
+
+function TABLE( attrs ) {
+   return hop_dom_create( "table", arguments );
+}
 
 /*** META (define-macro (<TBODY> . args)
      `(hop_dom_create "tbody" ,@args)) */
 
+function TBODY( attrs ) {
+   return hop_dom_create( "tbody", arguments );
+}
+
 /*** META (define-macro (<TD> . args)
      `(hop_dom_create "td" ,@args)) */
+
+function TD( attrs ) {
+   return hop_dom_create( "td", arguments );
+}
 
 /*** META (define-macro (<TEXTAREA> . args)
      `(hop_dom_create "textarea" ,@args)) */
 
+function TEXTAREA( attrs ) {
+   return hop_dom_create( "textarea", arguments );
+}
+
 /*** META (define-macro (<TFOOT> . args)
      `(hop_dom_create "tfoot" ,@args)) */
+
+function TFOOT( attrs ) {
+   return hop_dom_create( "tfoot", arguments );
+}
 
 /*** META (define-macro (<TH> . args)
      `(hop_dom_create "th" ,@args)) */
 
+function TH( attrs ) {
+   return hop_dom_create( "th", arguments );
+}
+
 /*** META (define-macro (<THEAD> . args)
      `(hop_dom_create "thead" ,@args)) */
+
+function THEAD( attrs ) {
+   return hop_dom_create( "thead", arguments );
+}
 
 /*** META (define-macro (<TITLE> . args)
      `(hop_dom_create "title" ,@args)) */
 
+function TITLE( attrs ) {
+   return hop_dom_create( "title", arguments );
+}
+
 /*** META (define-macro (<TR> . args)
      `(hop_dom_create "tr" ,@args)) */
+
+function TR( attrs ) {
+   return hop_dom_create( "tr", arguments );
+}
 
 /*** META (define-macro (<TT> . args)
      `(hop_dom_create "tt" ,@args)) */
 
+function TT( attrs ) {
+   return hop_dom_create( "tt", arguments );
+}
+
 /*** META (define-macro (<U> . args)
      `(hop_dom_create "u" ,@args)) */
+
+function U( attrs ) {
+   return hop_dom_create( "u", arguments );
+}
 
 /*** META (define-macro (<UL> . args)
      `(hop_dom_create "ul" ,@args)) */
 
+function UL( attrs ) {
+   return hop_dom_create( "ul", arguments );
+}
+
 /*** META (define-macro (<VAR> . args)
      `(hop_dom_create "var" ,@args)) */
+
+function VAR( attrs ) {
+   return hop_dom_create( "var", arguments );
+}
 
 /*** META (define-macro (<IMG> . args)
      `(hop_dom_create "img" ,@args)) */
 
+function IMG( attrs ) {
+   return hop_dom_create( "img", arguments );
+}
+
 /*** META (define-macro (<HEAD> . args)
      `(hop_dom_create "head" ,@args)) */
+
+function HEAD( attrs ) {
+   return hop_dom_create( "head", arguments );
+}
 
 /*** META (define-macro (<LFRAME> . args)
      `(hop_dom_create_custom hop_create_lframe ,@args)) */
@@ -728,6 +1246,7 @@ function dom_create_sptabhead() {
 /*---------------------------------------------------------------------*/
 /*    DOM functional interface ...                                     */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-add-class!)
            (arity #t)) */
 function dom_add_class( obj, string ) {
@@ -927,10 +1446,12 @@ function dom_get_elements_by_name( doc, name ) {
       return sc_vector2list( doc.getElementsByName( name ) );
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_css_add_style_sheet ...                                      */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export css-add-style-sheet!) (arity #t)) */
 function hop_css_add_style_sheet( document, rules ) {
    try {
@@ -945,10 +1466,12 @@ function hop_css_add_style_sheet( document, rules ) {
       ;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_load_css ...                                                 */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export #t) (arity #t)) */
 function hop_load_css( url ) {
    try {
@@ -971,10 +1494,12 @@ function hop_load_css( url ) {
       ;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_load_jscript ...                                             */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export #t) (arity #t)) */
 function hop_load_jscript( url ) {
    try {
@@ -990,10 +1515,12 @@ function hop_load_jscript( url ) {
       ;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_get_elements_by_class ...                                    */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export #t) (arity -2)) */
 function dom_get_elements_by_class( doc, name ) {
    if( ("getElementsByClassName" in document) &&
@@ -1006,15 +1533,14 @@ function dom_get_elements_by_class( doc, name ) {
    
       if( (doc instanceof String) || (typeof doc == "string") ) {
 	 all = document.getElementsByTagName( "*" );
-	 re = new RegExp( doc + " |" + doc + "$", "g" );
+	 re = new RegExp( "\\b" + doc + "\\b", "g" );
       } else {
 	 all = doc.getElementsByTagName( "*" );
-	 re = new RegExp( name + " |" + name + "$", "g" );
+	 re = new RegExp( "\\b" + name + "\\b", "g" );
       }
 
       for( var i = 0; i < all.length; i++ ) {
 	 if( re.exec( all[ i ].className ) ) {
-	    alert( "got one: " + all[i].id );
 	    res[ n++ ] = all[ i ];
 	 }
       }
@@ -1022,10 +1548,12 @@ function dom_get_elements_by_class( doc, name ) {
       return sc_vector2list( res );
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_get_elements_by_attribute ...                                */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export #t) (arity -2)) */
 function dom_get_elements_by_attribute( doc, name, value ) {
    var res = new Array();
@@ -1065,6 +1593,15 @@ document.getElementsByAttribute = function( name, value ) {
    }
    
    return res;
+}
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    hop_add_reactive_attribute ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_add_reactive_attribute( id, value ) {
+   hop_add_event_listener( id, "ready", function( e ) {
+   } );
 }
 
 /*---------------------------------------------------------------------*/
@@ -1116,6 +1653,7 @@ function hop_node_eval( node, text ) {
 /*---------------------------------------------------------------------*/
 /*    node_style_get ...                                               */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export node-style-get node-style) (arity #t)) */
 function node_style_get( obj, prop ) {
    if( (obj instanceof String) || (typeof obj === "string") )
@@ -1129,10 +1667,12 @@ function node_style_get( obj, prop ) {
    else
       return false;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    node_computed_style_get ...                                      */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export node-computed-style-get node-computed-style)
            (arity #t))
 */
@@ -1152,6 +1692,7 @@ function node_computed_style_get( obj, prop ) {
    else
       return false;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_start_tag ...                                                */
@@ -1161,7 +1702,8 @@ var hop_tags_parent = {
    'tr' : 'tbody',
    'td' : 'tr',
    'th' : 'tr',
-   'li' : 'ul'
+   'li' : 'ul',
+   'body': 'html'
 };
 
 /*---------------------------------------------------------------------*/
@@ -1170,12 +1712,15 @@ var hop_tags_parent = {
 function hop_create_element( html ) {
    var m = html.match( hop_start_tag );
    var tag;
-   
+   var idx = 0;
+
    if( m ) {
       var t = m[ 1 ];
       tag = ( t in hop_tags_parent ) ? hop_tags_parent[ t ] : "div";
+      idx = ( tag == "html" ) ? 1 : 0;
    } else {
       tag = "div";
+      idx = 0;
    }
 
    var el = document.createElement( tag );
@@ -1185,15 +1730,16 @@ function hop_create_element( html ) {
       // As of Feb 2010, webkit based browsers (Feb 2010) requires a deep
       // clone to accept evaluating embedded scripts when the resulting
       // node is inserted in the DOM!
-      if( html.search( /<script[ >]/i ) >= 0 )
-	 return cloneScriptNode( el.childNodes[ 0 ] );
-      else
+      if( html.search( /<script[ >]/i ) >= 0 ) {
+	 return cloneScriptNode( el.childNodes[ idx ] );
+      } else {
 	 // Remove the node otherwise it has a parentNode set to non-null
 	 // which confused functions such as dom_add_child
-	 return el.removeChild( el.childNodes[ 0 ] );
+	 return el.removeChild( el.childNodes[ idx ] );
+      }
    } else {
       // See the remark above for removeChild
-      return el.removeChild( el.childNodes[ 0 ] );
+      return el.removeChild( el.childNodes[ idx ] );
    }
 }
 
@@ -1205,7 +1751,8 @@ function hop_create_element( html ) {
 /*---------------------------------------------------------------------*/
 function hop_create_encoded_element( html ) {
    try {
-      return hop_create_element( decodeURIComponent( html ) );
+      var o = hop_create_element( decodeURIComponent( html ) );
+      return o;
    } catch( e ) {
       /* decoding has hitted an illegal UTF-8 surrogate, decode by hand */
       var i = 0;
@@ -1237,6 +1784,7 @@ function hop_create_encoded_element( html ) {
 /*---------------------------------------------------------------------*/
 /*    hop_innerHTML_set ...                                            */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export innerHTML-set!) (arity #t)) */
 function hop_innerHTML_set( nid, html ) {
    var el;
@@ -1264,23 +1812,34 @@ function hop_innerHTML_set( nid, html ) {
       el.innerHTML = html;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_style_attribute_set ...                                      */
 /*---------------------------------------------------------------------*/
 function hop_style_attribute_set( obj, val ) {
-   var expr;
-   if( (val instanceof String) || (typeof val == "string") )
-      expr = eval( val );
-   
-   for( var p in expr ) {
-      node_style_set( obj, p, expr[ p ] );
+   if( (typeof val == "string") || (val instanceof String) ) {
+      while( val.length > 1 ) {
+	 var m = /[ \n\t]*([^ \n\t:]+)[ \n\t]*:[ \n\t]*([^;]+);?/.exec( val );
+
+	 if( m ) {
+	    node_style_set( obj, m[ 1 ], m[ 2 ] );
+	    val = val.substring( m[ 0 ].length, val.length );
+	 } else {
+	    val = "";
+	 }
+      }
+   } else {
+      for( var p in val ) {
+	 node_style_set( obj, p, val[ p ] );
+      }
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_element_x ...                                                */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export node-bounding-box-x) (arity 1)) */
 function hop_element_x( obj ) {
    if( "getBoundingClientRect" in obj ) {
@@ -1300,10 +1859,12 @@ function hop_element_x( obj ) {
       return res;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_element_y ...                                                */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export node-bounding-box-y) (arity 1)) */
 function hop_element_y( obj ) {
    if( "getBoundingClientRect" in obj ) {
@@ -1323,10 +1884,12 @@ function hop_element_y( obj ) {
       return res;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box ...                                             */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export node-bounding-box) (arity -2)) */
 function hop_bounding_box( e, m ) {
    var  n = (e instanceof String) || (typeof e == "string") ?
@@ -1349,18 +1912,22 @@ function hop_bounding_box( e, m ) {
 	       'height': n.offsetHeight + (2*m) };
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box_to_list ...                                     */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export bounding-box->list) (arity #t)) */
 function hop_bounding_box_to_list( bbox ) {
    return sc_list( bbox.left, bbox.top, bbox.width, bbox.height );
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box_x ...                                           */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export bounding-box-x) (arity -2)) */
 function hop_bounding_box_x( bbox, loc ) {
    if( arguments.length == 1 )
@@ -1373,10 +1940,12 @@ function hop_bounding_box_x( bbox, loc ) {
       return bbox.left + bbox.width;
    return 0;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box_y ...                                           */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export bounding-box-y) (arity -2)) */
 function hop_bounding_box_y( bbox, loc ) {
    if( arguments.length == 1 )
@@ -1389,3 +1958,4 @@ function hop_bounding_box_y( bbox, loc ) {
       return bbox.top + bbox.height;
    return 0;
 }
+#endif

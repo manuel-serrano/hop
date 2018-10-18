@@ -1,0 +1,46 @@
+hzdemo.js
+This weblet demonstrates basic use of hz API to trigger the download and 
+installation of a weblet to a target machine.
+
+The demo runs two web servers.
+The first server (on port 9999) is in charge of delivering the weblet to 
+the client. In the real life, this server will be the store front end, 
+but for the purpose of the demo, run it on the local machine.
+
+launch hop -p 9999
+
+The second server (on any port, 8080 is fine) is in charge of handling 
+user requests (web interface), downloading and installing the weblet from 
+the store server.
+
+launch hop hzdemo.js
+
+then launch a web client and invoke the following url
+http://localhost:8080/hop/hzdemo
+
+The url of the weblet to download is pre-computed (to have an example that 
+just works). 
+Click install and the "foo" weblet will be downloaded from the 9999 server, 
+then stored in the hz download area, then installed in the weblet area.
+
+The hz area is in ~/.config/hop/hz
+There is a database called hz.db, and a download subdir containing the 
+downloaded .hz files
+
+The weblet installation area is in ~/.config/hop/weblets
+This is the place were the weblets are installed.
+
+Go to these directories and check that the weblet has been downloaded 
+and installed.
+Replay the example by first deleting files in the .config/hop/hz and 
+.config/hop/weblets directories then installing them again.
+You may alternatively use the standard (and more sophisticated) hop/hz service 
+(invoked from your browser) to browse the local hz database, reset the cache, 
+install/uninstall a weblet.
+
+Other features of the hop/hz-demo service :
+
+The search button browses the database (regular expression search)
+The find button selects a weblet (exact match)
+
+

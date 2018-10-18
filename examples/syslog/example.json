@@ -1,0 +1,6 @@
+{
+   "tags": [ "system" ],
+   "description": "Unix syslog binding",
+   "service": false,
+   "level": 3.1
+}

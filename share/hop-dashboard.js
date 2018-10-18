@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Mon Jan  6 18:27:13 2014 (serrano)                */
-/*    Copyright   :  2007-14 Manuel Serrano                            */
+/*    Last change :  Sun Aug 11 15:31:56 2013 (serrano)                */
+/*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
 /*=====================================================================*/

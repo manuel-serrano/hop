@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.2.x/weblets/hzbuilder/config.hop.in       */
+;*    .../prgm/project/hop/3.0.x/weblets/hzbuilder/config.hop.in       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jun 10 07:34:38 2008                          */
-;*    Last change :  Wed Mar  2 15:34:55 2011 (serrano)                */
-;*    Copyright   :  2008-11 Manuel Serrano                            */
+;*    Last change :  Fri Oct 24 15:48:41 2014 (serrano)                */
+;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hzbuilder configuration                                          */
 ;*=====================================================================*/
@@ -29,10 +29,16 @@
 
 	   (hzbuilder-hop-skeleton::bstring)
 	   (hzbuilder-hop-skeleton-set! ::bstring)
+	   (hzbuilder-hopscript-skeleton::bstring)
+	   (hzbuilder-hopscript-skeleton-set! ::bstring)
 	   (hzbuilder-config-skeleton::bstring)
 	   (hzbuilder-config-skeleton-set! ::bstring)
+	   (hzbuilder-config-hopscript-skeleton::bstring)
+	   (hzbuilder-config-hopscript-skeleton-set! ::bstring)
 	   (hzbuilder-hss-skeleton::bstring)
 	   (hzbuilder-hss-skeleton-set! ::bstring)
+	   (hzbuilder-hss-hopscript-skeleton::bstring)
+	   (hzbuilder-hss-hopscript-skeleton-set! ::bstring)
 	   (hzbuilder-makefile-skeleton::bstring)
 	   (hzbuilder-makefile-skeleton-set! ::bstring)
 	   (hzbuilder-docpng::bstring)
@@ -45,6 +51,8 @@
 	   (hzbuilder-homepage-skeleton-set! ::bstring)
 	   (hzbuilder-webletinfo-skeleton::bstring)
 	   (hzbuilder-webletinfo-skeleton-set! ::bstring)
+	   (hzbuilder-packagejson-skeleton::bstring)
+	   (hzbuilder-packagejson-skeleton-set! ::bstring)
 	   (hzbuilder-logo-skeleton::bstring)
 	   (hzbuilder-logo-skeleton-set! ::bstring)
 	   (hzbuilder-favicon-skeleton::bstring)
@@ -134,16 +142,34 @@
    (make-file-path (hzbuilder-dir) "etc" "skeleton" "main.hop"))
 
 ;*---------------------------------------------------------------------*/
+;*    hzbuilder-hopscript-skeleton ...                                 */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-hopscript-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "main.js"))
+
+;*---------------------------------------------------------------------*/
 ;*    hzbuilder-config-skeleton ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hzbuilder-config-skeleton
    (make-file-path (hzbuilder-dir) "etc" "skeleton" "config.hop.in"))
 
 ;*---------------------------------------------------------------------*/
+;*    hzbuilder-config-hopscript-skeleton ...                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-config-hopscript-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "config.js.in"))
+
+;*---------------------------------------------------------------------*/
 ;*    hzbuilder-hss-skeleton ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hzbuilder-hss-skeleton
    (make-file-path (hzbuilder-dir) "etc" "skeleton" "default.hss"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-hss-hopscript-skeleton ...                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-hss-hopscript-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "default-hopscript.hss"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hzbuilder-makefile-skeleton ...                                  */
@@ -162,6 +188,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hzbuilder-webletinfo-skeleton
    (make-file-path (hzbuilder-dir) "etc" "skeleton" "weblet.info.in"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-packagejson-skeleton ...                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-packagejson-skeleton
+   (make-file-path (hzbuilder-dir) "etc" "skeleton" "package.json.in"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hzbuilder-logo-skeleton ...                                      */
@@ -222,6 +254,7 @@
    ("Makefile skeleton" string hzbuilder-makefile-skeleton)
    ("Documentation skeleton" string hzbuilder-doc-skeleton)
    ("Weblet.info" string hzbuilder-webletinfo-skeleton)
+   ("package.json" string hzbuilder-packagejson-skeleton)
    ("Home page skeleton" string hzbuilder-homepage-skeleton)
    ("Extra skeletons directory" string hzbuilder-custom-skeletons-dir)
    

@@ -1,0 +1,7 @@
+{
+   "tags": ["asynchrony"],
+   "description": "Asynchronous server response",
+   "doc": "This example how to conbined defered server responses and HTTP keep-alive connections."
+   "files": ["keepalive.js", "keepalive.hss"]
+   "level": 2
+}

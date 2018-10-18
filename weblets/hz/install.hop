@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/weblets/hz/install.hop            */
+;*    serrano/prgm/project/hop/3.0.x/weblets/hz/install.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Tue Jul 17 19:16:32 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Tue Jun 24 11:01:11 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
 ;*=====================================================================*/
@@ -98,11 +98,13 @@
 	    :fail (lambda (xhr)
 		     (with-access::xml-http-request xhr (input-port status)
 			;; raise an error to stop everything
-			(let ((msg (read-string input-port)))
-			   ;; WARNING, MS 19dec2010: this code is incorrect,
-			   ;; READ-STRING is not correct. A true parsing
-			   ;; (with content-length) should be needed here.
-			   (list status url msg))))
+			(if (=fx status 404)
+			    (list status url "File not found")
+			    (let ((msg (read-string input-port)))
+			       ;; WARNING, MS 19dec2010: this code is incorrect,
+			       ;; READ-STRING is not correct. A true parsing
+			       ;; (with content-length) should be needed here.
+			       (list status url msg)))))
 	    :timeout (hz-connection-timeout)
 	    :header header)))
       
@@ -124,29 +126,28 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-install-url url #!key auth weblet override publisher)
    (hz-db-init!)
-   (multiple-value-bind (name version)
-      (package-url-parse url)
-      (let ((r (hz-download-url url :auth auth :weblet weblet :override override)))
-	 (if (and (string? r) (file-exists? r))
-	     ;; now downloaded, install
-	     (let ((w (hz-install-file weblet r name version url)))
-		;; add the publisher to the publisher list
-		(when (and (string? publisher) (not (string-null? publisher)))
-		   (hz-publisher-add! publisher))
-		(reset-autoload!)
-		w)
-	     ;; propagate the failure
-	     r))))
+   (when (string? url)
+      (multiple-value-bind (name version)
+	 (package-url-parse url)
+	 (let ((r (hz-download-url url :auth auth :weblet weblet :override override)))
+	    (if (and (string? r) (file-exists? r))
+		;; now downloaded, install
+		(let ((w (hz-install-file weblet r name version url)))
+		   ;; add the publisher to the publisher list
+		   (when (and (string? publisher) (not (string-null? publisher)))
+		      (hz-publisher-add! publisher))
+		   (reset-autoload!)
+		   w)
+		;; propagate the failure
+		r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz->weblet ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (hz->weblet name version url)
    (let* ((dir (make-file-name (hz-weblets-directory) name))
-	  (p  (make-file-path dir "etc" "weblet.info"))
-	  (i (if (file-exists? p)
-		 (with-input-from-file p read)
-		 `((name ,name) (version ,version)))))
+	  (l (get-weblet-info dir))
+	  (i (if (pair? l) l `((name ,name) (version ,version)))))
       (info->weblet i :name name :version version :url url :dir dir)))
 
 ;*---------------------------------------------------------------------*/

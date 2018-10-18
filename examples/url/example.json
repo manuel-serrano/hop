@@ -1,0 +1,6 @@
+{
+   "tags": [ "html", "url", "web services" ],
+   "description": "Web services with Hop.js",
+   "doc": "Shows how to use remote Web services from hop.js programs",
+   "level": 1
+}

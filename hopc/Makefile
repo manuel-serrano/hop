@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/hopc/Makefile                     */
+#*    serrano/prgm/project/hop/3.1.x/hopc/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Aug 16 17:17:46 2015 (serrano)                */
+#*    Last change :  Tue Oct  3 09:18:18 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -19,30 +19,30 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Target and Project                                               */
 #*---------------------------------------------------------------------*/
-EXEC		= hopc
+EXEC = hopc
 
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hopc_param parseargs main
+MODULES = hopc_param parseargs main driver libdir
 
-INCLUDES	= 
+INCLUDES =  
 
-CLASS_DIR	= o/class_s/bigloo/hop
+CLASS_DIR = o/class_s/bigloo/hop
 
-OBJECTS 	= $(MODULES:%=o/%.o)
-BGL_CLASSES	= $(MODULES:%=$(CLASS_DIR)/%.class)
+OBJECTS = $(MODULES:%=o/%.o)
+BGL_CLASSES = $(MODULES:%=$(CLASS_DIR)/%.class)
 
-SOURCES 	= $(MODULES:%=%.scm)
+SOURCES = $(MODULES:%=%.scm)
 
-COLOR		= 32
+COLOR = 32
 
-BHFLAGS		= -srfi hopc
+BHFLAGS = -srfi hopc
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION 	= $(INCLUDES) $(SOURCES) Makefile
+POPULATION=$(INCLUDES) $(SOURCES) Makefile
 
 #*---------------------------------------------------------------------*/
 #*    The roost executable                                             */
@@ -163,12 +163,13 @@ dep:
 install: install-$(BACKEND)
 
 install-native:
-	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
-	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)/hopc-$(HOPRELEASE)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopc-$(HOPRELEASE)
+	(cd $(DESTDIR)$(HOPBINDIR) && $(RM) -f hopc && ln hopc-$(HOPRELEASE) hopc)
 
 install-jvm:
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
-	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
+	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/hopc.jar
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -190,9 +191,9 @@ clean:
 
 devclean: clean
 
-distclean: clean
-
 cleanall: devclean
+
+distclean: devclean
 
 #*---------------------------------------------------------------------*/
 #*    Dependencies                                                     */

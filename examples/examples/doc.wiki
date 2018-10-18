@@ -1,0 +1,3 @@
+This example uses most Hop.js features and it also shows how to use
+**Bootstrap** and **Jquery**. This is also the program you are currently
+executing for running whole the examples!

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/share/hop-color.scm               */
+;*    serrano/prgm/project/hop/2.2.x/share/hop-color.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 11:31:04 2009                          */
-;*    Last change :  Fri Sep 13 05:57:17 2013 (serrano)                */
-;*    Copyright   :  2009-13 Manuel Serrano                            */
+;*    Last change :  Thu Jan 27 12:32:18 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client side support for color selectors.                         */
 ;*=====================================================================*/

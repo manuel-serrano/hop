@@ -1,20 +1,21 @@
 # Build directories
-bin/
-lib/
-work/
-tmp/
-private/
+/bin/
+/lib/
+/work/
+/tmp/
+/private/
 
 # Object files
 *.o
 **/o/
+**/.libs/
 
 # Env dev
 *.afile
 *.jfile
 *.etags
 *.mco
-.*~
+*~
 
 # Configure generated files
 config.status
@@ -22,8 +23,10 @@ config.status
 etc/Makefile.hopconfig
 etc/hoprc.hop
 etc/hopshrc.hop
+etc/hopjs.el
 
 share/hop-autoconf.js
+share/hop-boot.js
 share/hop-runtime.sch
 
 src/libraries.sch
@@ -34,10 +37,14 @@ runtime/configure_macosx.sch
 runtime/configure_noarch.sch
 
 nodejs/nodejs.sch
+nodejs/_crypto.sch
 
 test/nodejs/HOP.exe
+test/nodejs/log.*
+test/nodejs/LOG
 
 hopscript/hopscript.sch
+hopscript/bglhopscript.h
 
 node_modules/hopc/lib/ast.js
 node_modules/hopc/lib/walk.js
@@ -60,9 +67,20 @@ share/hop-builtin-serializers.js
 share/hop-debug.js
 share/hop-exception.js
 share/hop_[su].js
+share/hopjs_[su].js
+share/flash/player.swf
+share/flash/swfobject.js
+share/**/*.map
 
 # doc
-doc/**/*.hml
+doc/**/*.html
+doc/idx.json
+doc/hss/fontifier.hss
+doc/hss/fontifier.css
+doc/hss/markdown.hss
+doc/hss/markdown.css
+doc/hss/doc.css
+doc/favicon.png
 
 # widget compiled files
 widget/colorchooser.scm
@@ -71,9 +89,11 @@ widget/spage.scm
 widget/spinbutton.scm
 
 # weblets
-weblets/**/config.hop
+weblets/*/config.hop
 weblets/**/weblet.info
 weblets/**/etc/*.wiki
+weblets/home/release.info
+weblets/home/install.wiki
 
 # man pages
 etc/hop.man
@@ -88,7 +108,22 @@ devel/
 old/
 repository/
 contribs/
+examples.old/
+tools/heaptojs.scm
+git.*.tgz
 
 # private files
 arch/android/makeapk.sh
+arch/android/androidemo/config.hop
 arch/debian/makedeb.sh
+
+# testing
+test/hopjs/TEST
+
+# Mercurial/GIT compatibility
+.hg
+.hgtags
+README.hg
+.git.*.tgz
+
+

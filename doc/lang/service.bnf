@@ -1,0 +1,10 @@
+<ServiceDeclaration> -->
+    service <Identifier> ( <FormalParameterListopt> ) 
+       { <FunctionBody> }
+
+<ServiceExpression> -->
+  | <ServiceDeclaration>
+  | service ( <FormalParameterListopt> ) 
+       { <FunctionBody> }
+
+<ServiceImport> --> service <Identier> ()

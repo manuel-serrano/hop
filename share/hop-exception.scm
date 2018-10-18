@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/share/hop-exception.scm           */
+;*    serrano/prgm/project/hop/3.1.x/share/hop-exception.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Jan 30 15:55:11 2014 (serrano)                */
-;*    Copyright   :  2009-14 Manuel Serrano                            */
+;*    Last change :  Thu Nov 16 07:58:35 2017 (serrano)                */
+;*    Copyright   :  2009-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -20,12 +20,13 @@
    
    (export
       hop-name-aliases
-      hop-current-stack-context
+      hop_current_stack_context
+      hop_initial_stack_context
       (hop-callback-handler exc ctx)
       (hop-callback-html-context el file line)
       (hop-callback-listener-context msg)
-      (hop-extend-stack-context stk)
       (hop-get-exception-stack e)
+      (hop-report-exception e stk)
       (bigloo-mangled? str)
       (hop-demangle str)
       (hop-source-map-register! proc))
@@ -38,26 +39,21 @@
    
    (scheme2js-pragma
       (hop-name-aliases (JS "hop_name_aliases"))
-      (hop-current-stack-context (JS "hop_current_stack_context"))
+      (hop_initial_stack_context (JS "hop_initial_stack_context"))
+      (hop_current_stack_context (JS "hop_current_stack_context"))
       (hop-callback-handler (JS "hop_callback_handler"))
       (hop-callback-html-context (JS "hop_callback_html_context"))
       (hop-callback-listener-context (JS "hop_callback_listener_context"))
+      (hop-report-exception (JS "hop_report_exception"))
       (hop-get-exception-stack (JS "hop_get_exception_stack"))
-      (hop-extend-stack-context (JS "hop_extend_stack_context"))
       (hop-mangled? (JS "hop_mangledp"))
       (hop-demangle (JS "hop_demangle"))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-current-stack-context ...                                    */
+;*    hop_current_stack_context ...                                    */
 ;*---------------------------------------------------------------------*/
-(define hop-current-stack-context '())
-
-;*---------------------------------------------------------------------*/
-;*    hop-extend-stack-context ...                                     */
-;*---------------------------------------------------------------------*/
-(define (hop-extend-stack-context stack)
-   (set! hop-current-stack-context (append stack hop-current-stack-context))
-   hop-current-stack-context)
+(define hop_current_stack_context '())
+(define hop_initial_stack_context '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-default-source-map ...                                       */
@@ -221,7 +217,7 @@
 ;*    <EXCEPTION-STACK> ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (<EXCEPTION-STACK> stack skip)
-
+   
    (define (frame-type rest)
       (with-handler
 	 (lambda (e)
@@ -230,7 +226,7 @@
 	    (if (pair? c)
 		(symbol->string (cdr c))
 		"client"))))
-   
+
    (define (frame-klass rest)
       (string-append "hop-exception-frame-"
 	 (frame-type rest)))
@@ -240,26 +236,29 @@
 	  (symbol->string s)
 	  s))
 
+   (define (js-file f)
+      (pregexp-replace "[?]js=.*$" f ""))
+
    (define (<TR:LINE> klass name . src)
       (<TR> :class klass
 	 (<TD> :class "hop-exception-frame-id"
 	    name)
 	 (<TD> :class "hop-exception-frame-line"
 	    src)))
-   
+
    (define (pp-stack stack)
       (map (lambda (f)
 	      (match-case f
 		 ((?name (line-col ?file ?line ?col) . ?rest)
 		  (let ((jsline (assq 'js-line-col rest))
-			(klass (frame-klass rest)))
-		     (if (pair? jsline)
+			(klass (frame-klass rest))
+			(file (js-file file)))
+		     (if (and (pair? jsline)
+			      (string=? ((@ hop_idiom js)) "scheme"))
 			 (list
 			    (<TR:LINE> klass (js-name name)
 			       (<SPAN> :class "hop-exception-js"
-				  (dirname file) "/")
-			       (basename file)
-			       ":" line ":" col)
+				  file ":" line ":" col))
 			    (match-case jsline
 			       ((js-line-col ?jsfile ?jsline ?jscol)
 				(<TR:LINE> "hop-exception-frame-js" ""
@@ -268,26 +267,25 @@
 			    file ":" line ":" col))))
 		 ((?name (line ?file ?line) . ?rest)
 		  (let ((jsline (assq 'js-line rest))
-			(klass (frame-klass rest)))
-		     (if (pair? jsline)
+			(klass (frame-klass rest))
+			(file (js-file file)))
+		     (if (and (pair? jsline)
+			      (string=? ((@ hop_idiom js)) "scheme"))
 			 (list
 			    (<TR:LINE> klass (js-name name)
 			       (<SPAN> :class "hop-exception-js"
-				  (dirname file) "/")
-			       (basename file)
-			       ":" line)
+				  file ":" line))
 			    (match-case jsline
 			       ((js-line ?jsfile ?jsline)
 				(<TR:LINE> "hop-exception-frame-js" ""
 				   jsfile ":" jsline))))
 			 (<TR:LINE> klass (js-name name) file ":" line))))
 		 ((?name (at ?file ?point) . ?rest)
-		  (let ((klass (frame-klass rest)))
+		  (let ((klass (frame-klass rest))
+			(file (js-file file)))
 		     (<TR:LINE> klass (js-name name)
 			(<SPAN> :class "hop-exception-js"
-			   (dirname file) "/")
-			(basename file)
-			"@" point)))
+			   file "@" point))))
 		 ((?name ?loc . ?rest)
 		  (<TR:LINE> (frame-klass rest) (js-name name) loc))
 		 ((?name . ?rest)
@@ -296,30 +294,34 @@
 		  (<TR> (<TH> f)))))
 	 stack))
 
-   (let loop ((l stack)
-	      (s skip))
-      (cond
-	 ((null? l)
-	  "")
-	 ((= s 0)
-	  (<DIV> :data-hss-class "hop-exception-stack"
-	     (<BUTTON> "Show JavaScript frames"
-		:onclick ~(let* ((p this.parentNode)
-				 (c (p.getAttribute "data-debug-mode")))
-			     (if (equal? c "all")
-				 (begin
-				    (innerHTML-set! this "Show JavaScript frames")
-				    (p.setAttribute "data-debug-mode" "hop"))
-				 (begin
-				    (innerHTML-set! this "Hide JavaScript frames")
-				    (p.setAttribute "data-debug-mode" "all")))
-			     (stop-event-propagation event)))
-	     (<TABLE> :data-hss-class "hop-exception-stack"
-		:onclick ~(stop-event-propagation event)
-		(<TR> (<TH> "Execution stack:"))
-		(pp-stack l))))
-	 (else
-	  (loop (cdr l) (- s 1))))))
+  (let loop ((l stack)
+	     (s skip))
+     (cond
+	((null? l)
+	 "")
+	((= s 0)
+	 (<DIV> :data-hss-class "hop-exception-stack"
+	    :data-idiom ((@ hop_idiom js))
+	    :data-debug-mode (if (string=? ((@ hop_idiom js)) "scheme")
+				 "hop" "all")
+	    (if (string=? ((@ hop_idiom js)) "scheme")
+		(<BUTTON> "Show JavaScript frames"
+		   :onclick ~(let* ((p this.parentNode)
+				    (c (p.getAttribute "data-debug-mode")))
+				(if (equal? c "all")
+				    (begin
+				       (innerHTML-set! this "Show JavaScript frames")
+				       (p.setAttribute "data-debug-mode" "hop"))
+				    (begin
+				       (innerHTML-set! this "Hide JavaScript frames")
+				       (p.setAttribute "data-debug-mode" "all")))
+				(stop-event-propagation event))))
+	    (<TABLE> :data-hss-class "hop-exception-stack"
+	       :onclick ~(stop-event-propagation event)
+	       (<TR> (<TH> "Execution stack:"))
+	       (pp-stack l))))
+	(else
+	 (loop (cdr l) (- s 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EXCEPTION> ...                                                  */
@@ -335,11 +337,16 @@
 	    (<DIV> :data-hss-class "hop-exception-title" "Client Error")
 	    ;; error message
 	    (<TABLE> :data-hss-class "hop-exception-msg"
-	       (<TR> (<TH> exc.name))
+	       (<TR> (<TH> (if (and (js-instanceof? exc (@ Object js))
+				    (js-in? "name" exc))
+			       exc.name
+			       (typeof exc))))
 	       (<TR> (<TD> (get-exception-message exc)))
-	       (when (js-in? "scObject" exc)
-		  (<TR>
-		     (<TD> (<TT> (obj->name exc.scObject #f))))))
+	       (let ((name (if (and (js-instanceof? exc (@ Object js))
+				    (js-in? "scObject" exc))
+			       (obj->name exc.scObject #f)
+			       (typeof exc))))
+		  (<TR> (<TD> (<TT> name)))))
 	    ;; call stack
 	    (<EXCEPTION-STACK> stack 0)))))
 
@@ -431,12 +438,13 @@
 				  (string-append
 				     (hop-demangle (substring msg i j))
 				     (substring msg j len)))))))))))
-	       
+
    (cond
+      ((not (isa? e (@ Object js))) (string-append e ""))
       ((isa? e (@ ReferenceError js)) (reference-error e.message))
       ((js-in? "message" e) (demangle-string e.message))
       ((js-in? "description" e) (demangle-string e.description))
-      (else e)))
+      (else (string-append e ""))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-callback-handler ...                                         */
@@ -444,7 +452,6 @@
 ;*    See HOP_CALLBACK, hop-lib.js.                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-handler e ctx)
-;*    (tprint "HOP-CALLBACK-HANDLER ctx=" ctx)                         */
    ;; store the exception for the default handler to display it, don't
    ;; display it now, otherwise we would have to implement a complex
    ;; machinery to prevent hop-onerror-handler to also display it
@@ -452,16 +459,17 @@
       (set! hop-current-exception e)
       (set! hop-current-exception-stack (hop-debug-exception-stack stk)))
    ;; notify the server of the exception and re-throw it
-   (unless (and (js-in? "scClientOnly" e) e.scClientOnly)
-      (with-hop ($(service :name "public/server-debug/exception"
-		     (#!key exc proc msg obj stack))
-		   :exc e
-		   :url (if (js-in? "name" e)
-			    (string-append document.location.href ", " e.name)
-			    document.location.href)
-		   :msg (get-exception-message e)
-		   :obj (if (js-in? "scObject" e) e.scObject #unspecified)
-		   :stack hop-current-exception-stack)))
+   (when (js-instanceof? e (@ Object js))
+      (unless (and (js-in? "scClientOnly" e) e.scClientOnly)
+	 (with-hop ($(service :name "public/server-debug/exception"
+			(#!key exc proc msg obj stack))
+		      :exc e
+		      :url (if (js-in? "name" e)
+			       (string-append document.location.href ", " e.name)
+			       document.location.href)
+		      :msg (get-exception-message e)
+		      :obj (if (js-in? "scObject" e) e.scObject #unspecified)
+		      :stack hop-current-exception-stack))))
    (raise e))
 
 ;*---------------------------------------------------------------------*/
@@ -469,18 +477,18 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-html-context site file line)
    (let ((frame (list site `(at ,file ,line) '(format . "~~~a") '(type . html))))
-      (list frame)))
+      (cons frame hop_initial_stack_context)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-callback-listener-context ...                                */
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-listener-context msg)
    (let ((frame (list msg #f '(format . "~~~a") '(type . html))))
-      (list frame)))
+      (cons frame hop_initial_stack_context)))
 
 ;*---------------------------------------------------------------------*/
 ;*    install the default error handler ...                            */
 ;*---------------------------------------------------------------------*/
 (when (>= (hop-debug) 1)
-   (hop-extend-stack-context (list document.location.href))
+   (set! hop_current_stack_context (list document.location.href))
    (set! window.onerror hop-onerror-handler))

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Aug 16 17:18:57 2015 (serrano)                */
+#*    Last change :  Wed Feb 26 17:47:09 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds HopSh                                   */
 #*=====================================================================*/
@@ -60,7 +60,7 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BLDFLAGS),$(OBJECTS),-o,$@)
+	@ $(call link,$(BIGLOO),$(BCFLAGS) $(BLDFLAGS),$(BCFLAGSDEV),$(OBJECTS),-o,$@)
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
