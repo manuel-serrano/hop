@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Oct 18 07:54:02 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 16:07:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1179,12 +1179,32 @@
 	     (if (null? lst)
 		 (parse-token-error "Illegal empty import" token)
 		 (let ((fro (consume-token! 'ID)))
-		    (when (eq? (token-value fro) 'from)
-		       (let ((path (consume-token! 'STRING)))
-			  (instantiate::J2SImport
-			     (names lst)
-			     (loc (token-loc token))
-			     (path (token-value path)))))))))
+		    (if (eq? (token-value fro) 'from)
+			(let ((path (consume-token! 'STRING)))
+			   (instantiate::J2SImport
+			      (names lst)
+			      (loc (token-loc token))
+			      (path (token-value path))))
+			(parse-token-error "Illegal import, \"from\" expected"
+			   fro))))))
+	 ((STRING)
+	  (let ((path (consume-any!)))
+	     (instantiate::J2SImport
+		(names '())
+		(loc (token-loc token))
+		(path (token-value path)))))
+	 ((*)
+	  (consume-any!)
+	  (let ((as (consume-token! 'ID)))
+	     (if (eq? (token-value as) 'as)
+		 (let* ((id (consume-token! 'ID))
+			(fro (consume-token! 'ID)))
+		    (if (eq? (token-value fro) 'from)
+			(let ((path (consume-token! 'STRING)))
+			   (tprint "ID=" (token-value id)))
+			(parse-token-error "Illegal import, \"from\" expected"
+			   fro)))
+		 (parse-token-error "Illegal import, \"as\" expected" as))))
 	 (else
 	  (parse-token-error "Illegal import" (consume-any!)))))
 

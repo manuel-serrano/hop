@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Oct 18 08:15:14 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 13:33:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -306,7 +306,7 @@
    (with-access::J2SRef lhs (decl)
       (with-access::J2SDecl decl (writable writable scope id hint export)
 	 (cond
-	    ((or writable (isa? decl J2SDeclInit))
+	    ((or writable init? (isa? decl J2SDeclInit))
 	     (cond
 		((and (memq scope '(global %scope)) (in-eval? return))
 		 `(begin
@@ -390,14 +390,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SRef mode return conf)
    (with-access::J2SRef this (decl loc type)
-      (with-access::J2SDecl decl (scope id vtype export)
+      (with-access::J2SDecl decl (scope id vtype export ronly)
 	 (cond
 	    ((isa? decl J2SDeclImport)
 	     (with-access::J2SDeclImport decl (linkindex import)
 		(with-access::J2SImport import (obj)
 		   `(nodejs-module-ref ,obj ,linkindex))))
-	    ((isa? export J2SExport)
-	     (with-access::J2SExport export (index)
+	    ((and (isa? export J2SExport)
+		  (or (not ronly) (not (isa? decl J2SDeclFun))))
+	     (with-access::J2SExport export (index decl)
 		`(nodejs-module-ref %exports ,index)))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scheme-id decl))

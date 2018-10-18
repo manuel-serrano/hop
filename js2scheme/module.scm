@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Oct 18 07:54:14 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 15:42:38 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -56,6 +56,14 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    esimport ::J2SProgram ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (esimport this::J2SProgram prgm::J2SProgram stack args)
+   (call-default-walker)
+   (with-access::J2SProgram this (imports)
+      (set! imports (reverse! imports))))
+
+;*---------------------------------------------------------------------*/
 ;*    esimport ::J2SImport ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esimport this::J2SImport prgm::J2SProgram stack args)
@@ -63,9 +71,21 @@
    (define (export-decl::J2SDeclImport prgm::J2SProgram name::J2SImportName)
       (with-access::J2SImportName name (id alias loc)
 	 (with-access::J2SProgram prgm (exports path)
-	    (let loop ((exports exports)
-		       (idx 0))
-	       (if (null? exports)
+	    (let ((decl (find (lambda (export)
+				(with-access::J2SDecl export ((imp id))
+				   (eq? id imp)))
+			  exports)))
+	       (if decl
+		   (with-access::J2SDecl decl (export)
+		      (with-access::J2SExport export (index)
+			 (instantiate::J2SDeclImport
+			    (loc loc)
+			    (id alias)
+			    (alias id)
+			    (binder 'let)
+			    (writable #f)
+			    (linkindex index)
+			    (import this))))
 		   (raise
 		      (instantiate::&io-parse-error
 			 (proc "import")
@@ -73,22 +93,19 @@
 				 path))
 			 (obj id)
 			 (fname (cadr loc))
-			 (location (caddr loc))))
-		   (with-access::J2SDecl (car exports) ((imp id))
-		      (if (eq? id imp)
-			  (instantiate::J2SDeclImport
-			     (loc loc)
-			     (id alias)
-			     (alias id)
-			     (binder 'let)
-			     (writable #f)
-			     (linkindex idx)
-			     (import this))
-			  (loop (cdr exports) (+fx idx 1)))))))))
+			 (location (caddr loc)))))))))
    
    (with-access::J2SProgram prgm ((src path) imports decls)
       (with-access::J2SImport this (path loc respath names)
-	 (let ((base (dirname (file-name-canonicalize (make-file-name (pwd) src)))))
+	 (let ((base (cond
+			((string=? src "")
+			 (pwd))
+			((char=? (string-ref src 0) #\/)
+			 (dirname src))
+			(else
+			 (dirname
+			    (file-name-canonicalize
+			       (make-file-name (pwd) src)))))))
 	    (set! respath (resolve-module-file path base loc))
 	    (set! imports (cons this imports))
 	    (unless (member respath stack)
@@ -216,7 +233,7 @@
       (raise
 	 (instantiate::&io-file-not-found-error
 	    (proc "resolve")
-	    (msg "Cannot find module")
+	    (msg (format "Cannot find module in ~s" dir))
 	    (obj name)
 	    (fname (cadr loc))
 	    (location (caddr loc)))))
