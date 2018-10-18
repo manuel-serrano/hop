@@ -1,0 +1,6 @@
+{
+   "tags": ["service", "security" ],
+   "description": "Basic authentication",
+   "doc": "This example shows how to implement custom access rules.",
+   "level": 0.2
+}

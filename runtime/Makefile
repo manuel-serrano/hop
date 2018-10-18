@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/3.1.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat Aug 10 07:16:28 2013 (serrano)                */
+#*    Last change :  Tue Sep 12 13:40:08 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -23,8 +23,8 @@ do: build
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hop
-HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) -lhopscheme_s-$(HOPRELEASE) 
-HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) -lhopscheme_u-$(HOPRELEASE) 
+HOPCLOSELIBS_S = $(BGLCLOSELIBS_S)
+HOPCLOSELIBS_U = $(BGLCLOSELIBS_U)
 HOPCLOSELIBS_ES = -lhop_s-$(HOPRELEASE)
 HOPCLOSELIBS_EU = -lhop_u-$(HOPRELEASE)
 
@@ -35,9 +35,9 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 _OBJECTS = param thread misc priv types read module \
            xml xml_types charset dom \
-           html_base html_head html_img \
+           html_base html_head html_img html_react \
            svg mathml \
-           read_js clientc js_comp json cgi \
+           read_js clientc js_comp json \
            css cssmatch hop_rss \
            hop service \
            job mime user password cache \
@@ -47,7 +47,7 @@ _OBJECTS = param thread misc priv types read module \
            http_error http_filter \
            hop_inline \
            event websocket color weblets preferences expanders \
-           security xdomain zeroconf upnp debug
+           security xdomain zeroconf upnp debug watch
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make_lib.o
@@ -83,8 +83,11 @@ include ../etc/Makefile.library
 
 build: $(BACKEND)
 
-native: heap-c lib-c
+native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
+
+heap-c: .afile
+lib-c: .afile
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

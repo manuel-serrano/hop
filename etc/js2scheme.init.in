@@ -1,0 +1,28 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/1.9.x/etc/js2scheme.init.in             */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Apr 21 08:47:34 2008                          */
+;*    Last change :  Mon Apr 21 08:50:03 2008 (serrano)                */
+;*    Copyright   :  2008 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    JS2SCHEME init file.                                             */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    Library                                                          */
+;*---------------------------------------------------------------------*/
+(declare-library! 'js2scheme
+		  :version "@VERSION@"
+		  :module-init '__js2scheme_compile
+		  :module-eval '__js2scheme_makelib
+		  :class-eval "bigloo.js2scheme.make_lib")
+
+;*---------------------------------------------------------------------*/
+;*    Link option                                                      */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo-compile
+    (set! *additional-bigloo-libraries* *additional-bigloo-libraries*))
+   (bigloo-eval
+    #unspecified))

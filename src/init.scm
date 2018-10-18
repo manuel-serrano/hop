@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/src/init.scm                      */
+;*    serrano/prgm/project/hop/3.1.x/src/init.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue Aug 19 10:48:42 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Mon Aug 22 11:38:22 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -33,26 +33,28 @@
 ;*---------------------------------------------------------------------*/
 (define (init-server-socket!)
    (when (socket-server? (hop-server-socket))
-      (socket-shutdown (hop-server-socket)))
+      (socket-close (hop-server-socket)))
    (with-handler
       (lambda (e)
 	 (exception-notify e)
-	 (fprint (current-error-port)
-	    "Cannot start Hop server, exiting...")
+	 (fprint (current-error-port) "Cannot start Hop server, exiting...")
 	 (exit 2))
       (if (hop-enable-https)
 	  (cond-expand
 	     (enable-ssl
-	      (let ((cert (read-certificate "/etc/ssl/certs/hop.pem"))
-		    (pkey (read-private-key "/etc/ssl/private/hop.pem")))
+	      (let ((cert (read-certificate (hop-https-cert)))
+		    (pkey (read-private-key (hop-https-pkey))))
 		 (hop-server-socket-set!
 		    (make-ssl-server-socket (hop-port)
+		       :name (hop-server-listen-addr)
 		       :protocol (hop-https-protocol)
 		       :cert cert :pkey pkey))))
 	     (else
 	      (error "hop" "SSL not supported by this version of Hop" #f)))
 	  (hop-server-socket-set!
-	     (make-server-socket (hop-port) :backlog (hop-somaxconn))))))
+	     (make-server-socket (hop-port)
+		:name (hop-server-listen-addr)
+		:backlog (hop-somaxconn))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *http-method-handlers* ...                                       */
@@ -112,7 +114,7 @@
 	       (websocket-proxy-request? header))
 	  (websocket-proxy-response req))
 	 ((not (authorized-path? req abspath))
-	  (user-access-denied req))
+	  (access-denied req))
 	 ((not (file-exists? abspath))
 	  ;; an error
 	  (http-get-file-not-found req))
@@ -133,7 +135,7 @@
    (with-access::http-request req (abspath query)
       (cond
 	 ((not (authorized-path? req abspath))
-	  (user-access-denied req))
+	  (access-denied req))
 	 ((not (file-exists? abspath))
 	  ;; an error
 	  (http-get-file-not-found req))
@@ -154,12 +156,15 @@
 ;*---------------------------------------------------------------------*/
 (define (http-connect req)
    (with-access::http-request req (host port)
-      (if (isa? req http-proxy-request)
+      (if (and (isa? req http-proxy-request)
+	       (hop-enable-proxying)
+	       (hop-enable-websocket-proxying)
+	       (hop-proxy-ip-allowed? req)
+	       (or (http-request-local? req) (hop-proxy-allow-remote-client)))
 	  ;; okay for proxying connect response (probably used for websocket)
 	  (websocket-proxy-connect! host port req)
 	  ;; refused
-	  (instantiate::http-response-abort
-	     (request req)))))
+	  (instantiate::http-response-abort))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file-not-found ...                                      */
@@ -168,7 +173,7 @@
    (with-access::http-request req (abspath timeout connection)
       (cond
 	 ((hop-service-path? abspath)
-	  (http-service-not-found abspath))
+	  (http-service-not-found abspath req))
 	 ((string=? abspath "/crossdomain.xml")
 	  (set! connection 'close)
 	  (let ((s (format "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -177,7 +182,6 @@
  <allow-access-from domain=\"*\" />
 </cross-domain-policy>" (hop-port))))
 	     (instantiate::http-response-string
-		(request req)
 		(timeout timeout)
 		(content-type "application/xml")
 		(body s))))
@@ -191,12 +195,18 @@
    (with-access::http-request req (abspath query method timeout header)
       (cond
 	 ((string=? query (hop-scm-compile-suffix))
-	  (clientc-response req abspath))
+	  (clientc-response req abspath abspath (hop-scm-compile-suffix)))
+	 ((string-prefix? "js=" query)
+	  (clientc-response req abspath (substring query 3) "js"))
+	 ((string-prefix? "es=" query)
+	  (let ((resp (clientc-response req abspath (substring query 3) "es")))
+	     (with-access::%http-response resp (content-type)
+		(set! content-type "application/javascript")
+		resp)))
 	 ((string=? query (hop-hss-compile-suffix))
 	  (hss-response req abspath))
 	 (else
 	  (instantiate::http-response-file
-	     (request req)
 	     (timeout timeout)
 	     (charset (hop-locale))
 	     (content-type (mime-type abspath "text/plain"))
@@ -216,7 +226,6 @@
 	    ((isa? rep xml)
 	     (instantiate::http-response-xml
 		(backend (hop-xml-backend))
-		(request req)
 		(timeout timeout)
 		(content-type (mime-type abspath "text/plain"))
 		(charset (hop-charset))
@@ -263,7 +272,6 @@
 		   ((and im (string<=? lm im))
 		    ;; not modified
 		    (instantiate::http-response-string
-		       (request req)
 		       (start-line "HTTP/1.1 304 Not Modified")
 		       (content-type (mime-type (prefix abspath) "text/plain"))
 		       (header `((Last-Modified: . ,lm)))
@@ -289,7 +297,6 @@
 	  ;; send a gzipped file with a mime type corresponding
 	  ;; to the ungzipped file
 	  (instantiate::http-response-file
-	     (request req)
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Content-Encoding: . "gzip")
@@ -303,7 +310,6 @@
 	       (accept-gzip? header))
 	  ;; send a gzipped version of the file
 	  (instantiate::http-response-file
-	     (request req)
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Content-Encoding: . "gzip")
@@ -316,7 +322,6 @@
 	  =>
 	  (lambda (icy)
 	     (instantiate::http-response-shoutcast
-		(request req)
 		(timeout -1)
 		(start-line "ICY 200 OK")
 		(header `((Last-Modified: . ,last-modified)
@@ -326,7 +331,6 @@
 	 (else
 	  ;; send a regular file
 	  (instantiate::http-response-file
-	     (request req)
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Accept-Ranges: . "bytes")))
@@ -363,13 +367,15 @@
       (when (hop-enable-webdav)
 	 (set! options (add-options! options (webdav-options))))
       (instantiate::http-response-string
-	 (request req)
 	 (charset (hop-locale))
 	 (header options)
 	 (bodyp #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    log-local-response ...                                           */
+;*    -------------------------------------------------------------    */
+;*    See "Apache Combined Log Format" at:                             */
+;*      http://httpd.apache.org/docs/1.3/logs.html                     */
 ;*---------------------------------------------------------------------*/
 (define (log-local-response port req resp)
    
@@ -378,11 +384,12 @@
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host (u user) method abspath http header)
+   (with-access::http-request req (socket host method abspath http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
-	       (socket-host-address socket)
-	       (if (isa? u user) (with-access::user u (name) name)) "-")
+	 (socket-host-address socket)
+	 (with-access::user (http-request-user req) (name)
+	    name))
       ;; date
       (display "[" port)
       (let* ((d   (current-date))
@@ -390,7 +397,7 @@
 		      (- (date-timezone d) 3600)
 		      (date-timezone d))))
 	 (two-digits (date-day d)) (display "/" port)
-	 (two-digits (date-month d)) (display "/" port)
+	 (display (month-aname (date-month d)) port) (display "/" port)
 	 (display (date-year d) port) (display ":" port)
 	 (two-digits (date-hour d)) (display ":" port)
 	 (two-digits (date-minute d)) (display ":" port)
@@ -430,11 +437,16 @@
 	    (else
 	     (display "-" port))))
       ;; long version (add User-Agent and Referer)
-      (when (>fx (hop-log) 1)
-	 (let ((agent (assq :user-agent header))
-	       (referer (assq :referer header)))
-	    (when (and (pair? agent) (pair? referer))
-	       (fprintf port " ~s ~s" (cdr referer) (cdr agent)))))
+      (when (>=fx (hop-log) 1)
+        (let* ((agent0 (assq :user-agent header))
+               (agent (if (pair? agent0)
+                          (cdr agent0)
+                          "-"))
+               (referer0 (assq :referer header))
+               (referer (if (pair? referer0)
+                            (cdr referer0)
+                            "-")))
+          (fprintf port " ~s ~s" referer agent)))
       (newline port)
       (flush-output-port port)
       resp))
@@ -449,11 +461,11 @@
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host (p port) (u user) method abspath http header)
+   (with-access::http-request req (socket host (p port) method abspath http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
-	       (socket-host-address socket)
-	       (if (isa? u user) (with-access::user u (name) name)) "-")
+	 (socket-host-address socket)
+	 (with-access::user (http-request-user req) (name) name)) 
       ;; date
       (display "[" port)
       (let* ((d   (current-date))
@@ -461,7 +473,7 @@
 		      (- (date-timezone d) 3600)
 		      (date-timezone d))))
 	 (two-digits (date-day d)) (display "/" port)
-	 (two-digits (date-month d)) (display "/" port)
+	 (display (month-aname (date-month d)) port) (display "/" port)
 	 (display (date-year d) port) (display ":" port)
 	 (two-digits (date-hour d)) (display ":" port)
 	 (two-digits (date-minute d)) (display ":" port)
@@ -478,7 +490,7 @@
       ;; Content-length
       (display "-" port)
       ;; Long version (add User-Agent and Referer)
-      (when (>fx (hop-log) 1)
+      (when (>=fx (hop-log) 1)
 	 (let ((agent   (assq :user-agent header))
 	       (referer (assq :referer header)))
 	    (when (and (pair? agent) (pair? referer))
@@ -545,25 +557,29 @@
    
    ;; proxy hooks
    (hop-http-response-proxy-hook-add!
-    (lambda (req resp)
-       (with-access::http-request req (localclientp)
-	  (cond
-	     ((and (not localclientp)
-		   (or (not (hop-proxy-allow-remote-client))
-		       (not (hop-proxy-ip-allowed? req))))
-	      (instantiate::http-response-abort
-		 (request req)))
-	     ((and localclientp (not (hop-proxy-authentication)))
-	      resp)
-	     ((and (not localclientp)
-		   (not (hop-proxy-remote-authentication))
-		   (not (hop-proxy-authentication)))
-	      resp)
-	     (else
-	      (with-access::http-request req (user host port path header)
-		 (if (user-authorized-service? user 'proxy)
-		     resp
-		     (proxy-denied req user host))))))))
+      (lambda (req resp)
+	 (with-access::http-request req (socket)
+	    (if (not socket)
+		;; a inner request
+		resp
+		(let ((localclientp (http-request-local? req)))
+		   (cond
+		      ((and (not localclientp)
+			    (or (not (hop-proxy-allow-remote-client))
+				(not (hop-proxy-ip-allowed? req))))
+		       (instantiate::http-response-abort))
+		      ((and localclientp (not (hop-proxy-authentication)))
+		       resp)
+		      ((and (not localclientp)
+			    (not (hop-proxy-remote-authentication))
+			    (not (hop-proxy-authentication)))
+		       resp)
+		      (else
+		       (with-access::http-request req (host port path header)
+			  (let ((user (http-request-user req)))
+			     (if (user-authorized-service? user 'proxy)
+				 resp
+				 (proxy-denied req user host)))))))))))
    
    ;; logging
    (when (output-port? (hop-log-file))

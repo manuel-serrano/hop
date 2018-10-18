@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/src/hop_param.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/src/hop_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jul 22 14:31:25 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Wed Jun  1 06:56:55 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -62,20 +62,23 @@
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
 	    
+	    (hop-https-cert::bstring)
+	    (hop-https-cert-set! ::bstring)
+	    
+	    (hop-https-pkey::bstring)
+	    (hop-https-pkey-set! ::bstring)
+	    
 	    (hop-fast-server-event-port::int)
 	    (hop-fast-server-event-port-set! ::int)
 	    
 	    (hop-enable-fast-server-event::bool)
 	    (hop-enable-fast-server-event-set! ::bool)
 	    
-	    (hop-enable-repl::bool)
-	    (hop-enable-repl-set! ::bool)
+	    (hop-enable-repl::symbol)
+	    (hop-enable-repl-set! ::symbol)
 	    
 	    (hop-enable-jobs::bool)
 	    (hop-enable-jobs-set! ::bool)
-	    
-	    (hop-https-protocol::symbol)
-	    (hop-https-protocol-set! ::symbol)
 	    
 	    (hop-enable-webdav::bool)
 	    (hop-enable-webdav-set! ::bool)
@@ -88,9 +91,6 @@
 	    
 	    (hop-report-execution-time::bool)
 	    (hop-report-execution-time-set! ::bool)
-	    
-	    (hop-script-file::obj)
-	    (hop-script-file-set! ::obj)
 	    
 	    (hop-get-cache-size::int)
 	    (hop-get-cache-size-set! ::int)
@@ -108,7 +108,16 @@
 	    (hop-server-socket-set! ::obj)
 	    
 	    (hop-client-output-port::output-port)
-	    (hop-client-output-port-set! ::output-port))
+	    (hop-client-output-port-set! ::output-port)
+
+	    (hop-run-server::obj)
+	    (hop-run-server-set! ::obj)
+
+	    (hop-server-listen-addr::obj)
+	    (hop-server-listen-addr-set! ::obj)
+
+	    (hop-javascript::bool)
+	    (hop-javascript-set! ::bool))
 
    (eval    (export-exports)))
 
@@ -259,8 +268,11 @@
 	  (when v (warning "SSL not supporting, disabling https support."))
 	  v))))
 
-(define-parameter hop-https-protocol
-   'tlsv1)
+(define-parameter hop-https-pkey
+   "/etc/ssl/private/hop.pem")
+
+(define-parameter hop-https-cert
+   "/etc/ssl/certs/hop.pem")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-fast-server-event-port ...                                   */
@@ -269,13 +281,13 @@
    (hop-port))
 
 (define-parameter hop-enable-fast-server-event
-   #t)
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-repl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-repl
-   #f)
+   'none)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-jobs ...                                              */
@@ -309,12 +321,6 @@
 ;*    hop-report-execution-time ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-report-execution-time
-   #f)
-
-;*---------------------------------------------------------------------*/
-;*    hop-script-file ...                                              */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-script-file
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -352,4 +358,22 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-client-output-port
    (current-error-port))
+
+;*---------------------------------------------------------------------*/
+;*    hop-run-server ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-run-server
+   #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-listen-addr ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-listen-addr
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-javascript ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-javascript
+   #t)
 

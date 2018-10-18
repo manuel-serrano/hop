@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/etc/hop-autoconf.js.in            */
+/*    serrano/prgm/project/hop/3.1.x/etc/hop-autoconf.js.in            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Jul 26 10:26:02 2013 (serrano)                */
-/*    Copyright   :  2006-13 Manuel Serrano                            */
+/*    Last change :  Fri Apr 29 11:00:56 2016 (serrano)                */
+/*    Copyright   :  2006-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -19,6 +19,7 @@ var undefined;
 /*---------------------------------------------------------------------*/
 /*    Name and version                                                 */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export hop-name) (arity #t)) */
 function hop_name() {
    return "Hop";
@@ -39,85 +40,111 @@ function hop_url() {
    return "@URL@";
 }
 
+/*** META ((export hop-service-base) (arity #t)) */
+function hop_service_base() {
+   return "@HOPSERVICEBASE@";
+}
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    Initial autoconfiguration                                        */
+/*---------------------------------------------------------------------*/
+if( !("defineProperty" in Object) ) {
+   Object.defineProperty = function( obj, key, props ) {
+      obj[ key ] = props.value;
+   }
+}
+
 /*---------------------------------------------------------------------*/
 /*    HopServer                                                        */
 /*---------------------------------------------------------------------*/
-function HopServer( host, ip ) {
-   this.name = hop_name();
-   this.version = hop_version();
-   this.backend = hop_backend();
-   this.url = hop_url();
+function HopServer( host, port, version, ssl, authorization ) {
+#if HOP_SCHEME
+   this.version = version ? version : hop_version();
+#else
+   this.version = version ? version : window.hop.version;
+#endif
    this.host = host;
-   this.ip = ip;
+   this.port = port;
+   this.ssl = ssl;
+   this.authorization = authorization;
+   Object.defineProperty( this, "name", { value: "Hop" } );
+   Object.defineProperty( this, "url", { value: "@URL@" } );
+   Object.defineProperty( this, "backend", { value: "@BACKEND@" } );
+   Object.defineProperty( this, "state", { value: 0, writable: true } );
+}
 
-   this.hop_add_event_listener = hop_add_server_event_listener;
-   this.hop_remove_event_listener = hop_remove_server_event_listener;
+#if HOP_SCHEME
+Object.defineProperty( HopServer.prototype, "sc_toDisplayString", {
+   value: function() { return "[HopServer]"; }
+} );
+Object.defineProperty( HopServer.prototype, "sc_toWriteString", {
+   value: function() { return "[HopServer]"; }
+} );
+#endif
 
-   this.reconnect = function( wait, max ) {
+Object.defineProperty( HopServer.prototype, "toString", {
+   value: function() { return "[HopServer]"; }
+} );
+
+Object.defineProperty( HopServer.prototype, "hop_add_event_listener", {
+   value: hop_add_server_event_listener
+} );
+Object.defineProperty( HopServer.prototype, "hop_remove_event_listener", {
+   value: hop_remove_server_event_listener
+} );
+
+Object.defineProperty( HopServer.prototype, "reconnect", {
+   value: function( wait, max ) {
       if( this.state === 3 ) {
 	 if( "reconnect" in hop_servevt_proxy ) {
 	    hop_servevt_proxy.reconnect( wait, max );
 	 }
       }
    }
-}
+} );
 
-HopServer.prototype.sc_toDisplayString = function() {
-   return "[HopServer]";
-}
-HopServer.prototype.sc_toWriteString = function() {
-   return "[HopServer]";
-}
-   
-HopServer.prototype.toString = function() {
-   return "[HopServer]";
-}
-   
+Object.defineProperty( HopServer.prototype, "addEventListener", {
+   value: function( event, proc, capture ) {
+      return hop_add_event_listener( this, event, proc, capture );
+   }
+} );
+
+Object.defineProperty( HopServer.prototype, "removeEventListener", {
+   value: function( event, proc, capture ) {
+      return hop_remove_event_listener( this, event, proc, capture );
+   }
+} );
+
+Object.defineProperty( HopServer.prototype, "unserializer", {
+   value: function( v ) {
+      var srv = new HopServer( v[ 0 ], v[ 1 ], v[ 4 ], v[ 2 ], v[ 3 ] );
+      var plist = v[ 5 ];
+      
+      while( sc_isPair( plist ) ) {
+	 srv[ sc_keyword2jsstring( plist.__hop_car ) ] = plist.__hop_cdr.__hop_car;
+	 plist = plist.__hop_cdr.__hop_cdr;
+      }
+      
+      return srv;
+   }
+} );
+
+Object.defineProperty( HopServer.prototype, "reactProxy", {
+   value: function( event, defval ) {
+      var proxy = hop.reactProxy( { value: defval } );
+      hop_add_event_listener( this,
+	 event,
+	 function( evt ) { proxy.value = evt.value },
+	 false );
+      return proxy;
+   }
+} );
+
 /*---------------------------------------------------------------------*/
 /*    Hop configuration                                                */
 /*---------------------------------------------------------------------*/
 var hop_enable_location_event = @LOCEVENT@;
-
-/*---------------------------------------------------------------------*/
-/*    hop-service-base                                                 */
-/*    -------------------------------------------------------------    */
-/*    The prefix of all HOP weblets.                                   */
-/*---------------------------------------------------------------------*/
-/*** META ((export hop-service-base) (arity #t)) */
-function hop_service_base() {
-   return "@HOPSERVICEBASE@";
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_get_flash_version ...                                        */
-/*---------------------------------------------------------------------*/
-function hop_get_flash_version() {
-   if( navigator.mimeTypes
-       && navigator.mimeTypes[ "application/x-shockwave-flash" ] ) {
-      var p = navigator.mimeTypes[ "application/x-shockwave-flash" ].enabledPlugin;
-   
-      if( p && p.description ) {
-	 var d = p.description;
-
-	 if( (typeof d == "string") && (d.indexOf( "Shockwave Flash " ) == 0) ) {
-	    return parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
-	 }
-      }
-   } else {
-      try {
-	 if( "ActiveXObject" in window ) {
-	    axo = new ActiveXObject( "ShockwaveFlash.ShockwaveFlash.7" );
-	    var m = axo.GetVariable( "$version" ).match( /.+ ([0-9]+),/ );
-	    if( m != null ) {
-	       return m[ 1 ];
-	    }
-	 }
-      } catch (e) {
-      }
-   }
-
-   return 0;
-}
 
 /*---------------------------------------------------------------------*/
 /*    hop_Config ...                                                   */
@@ -126,6 +153,34 @@ function hop_get_flash_version() {
 /*    deduced by introspection.                                        */
 /*---------------------------------------------------------------------*/
 function hop_Config() {
+   function hop_get_flash_version() {
+      if( navigator.mimeTypes
+	  && navigator.mimeTypes[ "application/x-shockwave-flash" ] ) {
+	 var p = navigator.mimeTypes[ "application/x-shockwave-flash" ].enabledPlugin;
+	 
+	 if( p && p.description ) {
+	    var d = p.description;
+
+	    if( (typeof d == "string") && (d.indexOf( "Shockwave Flash " ) == 0) ) {
+	       return parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
+	    }
+	 }
+      } else {
+	 try {
+	    if( "ActiveXObject" in window ) {
+	       axo = new ActiveXObject( "ShockwaveFlash.ShockwaveFlash.7" );
+	       var m = axo.GetVariable( "$version" ).match( /.+ ([0-9]+),/ );
+	       if( m != null ) {
+		  return m[ 1 ];
+	       }
+	    }
+	 } catch (e) {
+	 }
+      }
+
+      return 0;
+   }
+   
    /* body */
    if( ("body" in document) && (document.body != null) ) {
       this.body = document.body;
@@ -195,7 +250,7 @@ function hop_Config() {
    // because I didn't find a way to convert a Uint8Array into a string
    // that does not blows the stack size on Chrome!
    // this.uint8array = ("Uint8Array" in window);
-   this.uint8array = false;
+   this.uint8array = ("Uint8Array" in window);
 
    /* navigator specific configuration */
    if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
@@ -311,10 +366,16 @@ function hop_Config() {
 	 this.flash_serverevent = false;
       }
    }
-   
+
+#if HOP_SCHEME   
    this.version = hop_version();
    this.backend = hop_backend();
    this.tprint_mode = "both";
+#else
+   this.version = window.hop.version;
+   this.backend = window.hop.backend;
+   this.tprint_mode = "none";
+#endif   
 }
 
 /*---------------------------------------------------------------------*/
@@ -384,10 +445,20 @@ function cloneScriptNode( node ) {
 
       s.id = node.id;
 
-      if( "text" in s ) 
+      if( "src" in node && node.src != "" ) {
+	 s.src = node.src;
+      }
+      if( "onload" in node && node.onload != "" ) {
+	 s.onload = node.onload;
+      }
+      if( "onerror" in node && node.onerror != "" ) {
+	 s.onerror = node.onerror;
+      }
+      if( "text" in s ) {
 	 s.text = node.innerHTML;
-      else
+      } else {
 	 s.appendChild( t );
+      }
 
       return s;
    }
@@ -562,6 +633,21 @@ if( !("HTMLTextAreaElement" in window) ) {
 
 if( !("HTMLSelectElement" in window) ) {
    window.HTMLSelectElement = function() { return false; };
+}
+
+/*---------------------------------------------------------------------*/
+/*    DOMFormElement ...                                               */
+/*---------------------------------------------------------------------*/
+var hop_is_dom_formdata_element;
+
+if( "FormData" in window ) {
+   hop_is_dom_formdata_element = function( o ) {
+      return o && o instanceof FormData;
+   }
+} else {
+   hop_is_dom_formdata_element = function( o ) {
+      return false;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -962,6 +1048,7 @@ function hop_deinline_image( el, src ) {
 /*---------------------------------------------------------------------*/
 /*    mouse coords ...                                                 */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export event-mouse-x) (arity 1)) */
 var hop_event_mouse_x = undefined;
 /*** META ((export event-mouse-y) (arity 1)) */
@@ -1027,10 +1114,12 @@ switch( hop_config.mouse_left_button ) {
 	 return e.button + (1 - hop_config.mouse_left_button);
       }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_window_width/height ...                                      */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export main-window-width) (arity 0)) */
 var hop_main_window_width = undefined;
 /*** META ((export main-window-height) (arity 0)) */
@@ -1067,10 +1156,12 @@ hop_main_window_orientation = function hop_main_window_orientation() {
 var hop_current_window_width = hop_main_window_width;
 /*** META ((export current-window-height) (arity 0)) */
 var hop_current_window_height = hop_main_window_height;
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_screen_dimensions ...                                        */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export screen-dimensions) (arity -1)) */
 function hop_screen_dimensions( unit ) {
    if( !unit ) unit = "cm";
@@ -1095,10 +1186,12 @@ function hop_screen_dimensions( unit ) {
 
    return res;
 }
-   
+#endif
+
 /*---------------------------------------------------------------------*/
 /*    hop_iframe_scroll_height ...                                     */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export iframe-scroll-height) (arity #t)) */
 function hop_iframe_scroll_height( e ) {
    if( "contentDocument" in e && e.contentDocument != undefined ) {
@@ -1111,10 +1204,12 @@ function hop_iframe_scroll_height( e ) {
       }
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_iframe_scroll_width ...                                      */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export iframe-scroll-width) (arity #t)) */
 function hop_iframe_scroll_width( e ) {
    if( "contentDocument" in e && e.contentDocument != undefined ) {
@@ -1127,10 +1222,12 @@ function hop_iframe_scroll_width( e ) {
       }
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_get_selection                                                */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export get-selection) (arity 0)) */
 var hop_get_selection;
 
@@ -1153,6 +1250,7 @@ if( window.getSelection ) {
       }
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_uint8array_to_string ...                                     */

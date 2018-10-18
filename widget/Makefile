@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/widget/Makefile                   */
+#*    serrano/prgm/project/hop/3.1.x/widget/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Nov 30 12:58:57 2011 (serrano)                */
+#*    Last change :  Wed Apr 26 08:50:10 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -46,10 +46,6 @@ BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class) \
               $(_HOBJECTS:%=$(CLASS_DIR)/%.class)
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj) \
-                 $(_HOBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
-BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
-
 SOURCES = $(_OBJECTS:%=%.scm) $(_HOBJECTS:%=%.hop)
 
 INCLUDES = 
@@ -64,20 +60,15 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: build native jvm dotnet distrib distrib-clean
+.PHONY: build native jvm distrib distrib-clean
 
-build: .afile
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(MAKE) $(BACKEND))
+build: .afile $(BACKEND)
 
-native: heap-c lib-c
+native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
-dotnet: heap-jvm lib-dotnet
+
+heap-c: .afile
+lib-c: .afile
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
@@ -105,16 +96,7 @@ getsources:
 #*---------------------------------------------------------------------*/
 .PHONY: predistrib predistrib-src predistrib-clean
 
-predistrib:
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(MAKE) predistrib-src)
-
-predistrib-src: $(SOURCES:%.hop=%.scm)
+predistrib: $(SOURCES:%.hop=%.scm)
 
 predistrib-clean:
 	$(RM) -f $(patsubst %.hop,%.scm,$(filter %hop, $(SOURCES)))

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.5.x/weblets/hzbuilder/hzbuilder.hop       */
+;*    .../prgm/project/hop/3.0.x/weblets/hzbuilder/hzbuilder.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Mar  5 16:59:57 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Fri Jan 16 13:34:24 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
 ;*=====================================================================*/
@@ -41,7 +41,7 @@
 	       ~(define (valid? entry)
 		   (and (string? entry) (> (string-length entry) 0)))
 	       
-	       ~(define (generate-weblet)
+	       ~(define (generate-weblet kind)
 		   (let ((dir (dom-get-element-by-id "hzb-dir"))
 			 (name (dom-get-element-by-id "hzb-name"))
 			 (au (dom-get-element-by-id "hzb-author"))
@@ -85,7 +85,8 @@
 				       mah.value
 				       ho.value
 				       do.value
-				       pu.value)
+				       pu.value
+				       kind)
 			     (lambda (h)
 				(let ((log (dom-get-element-by-id
 					      "hzb-log")))
@@ -118,37 +119,37 @@
 		     (<COLGROUP> (<COL> :width "0*"))
 		     (<TR>
 			(<TD> (<IMG> :class "logo" :src "etc/logo.png")
-			      (<DIV> :class "version"
-				 (<DIV> "HzBuilder v " (hzbuilder-version))
-				 (<DIV> (hzbuilder-date)))
-			      (<DIV> :class "buttons"
-				 (<DIV> :class "button doc"
-				    (<A> :title "Documentation"
-				       :class "doc"
-				       :href "documentation"
-				       :onclick ~(set! this.href ($hzbuilder/documentation))
-				       :target "_blank"
-				       :title "HzBuilder documentation"
-				       (<IMG> :class "doc"
-					  :inline #t
-					  :src (service-resource hzbuilder "etc/doc.png"))
-				       "Help"))
-				 (<DIV> :class "button prefs"
-				    (<A> :title "Preferences"
-				       :class "doc"
-				       :href "preferences"
-				       :onclick ~(set! this.href ($hzbuilder/preferences))
-				       :target "_blank"
-				       :title "HzBuilder preferences"
-				       (<IMG> :class "doc"
-					  :inline #t
-					  :src (service-resource hzbuilder "etc/configure.png"))
-				       "Prefs"))))
+			   (<DIV> :class "version"
+			      (<DIV> "HzBuilder v " (hzbuilder-version))
+			      (<DIV> (hzbuilder-date)))
+			   (<DIV> :class "buttons"
+			      (<DIV> :class "button doc"
+				 (<A> :title "Documentation"
+				    :class "doc"
+				    :href "documentation"
+				    :onclick ~(set! this.href ($hzbuilder/documentation))
+				    :target "_blank"
+				    :title "HzBuilder documentation"
+				    (<IMG> :class "doc"
+				       :inline #t
+				       :src (service-resource hzbuilder "etc/doc.png"))
+				    "Help"))
+			      (<DIV> :class "button prefs"
+				 (<A> :title "Preferences"
+				    :class "doc"
+				    :href "preferences"
+				    :onclick ~(set! this.href ($hzbuilder/preferences))
+				    :target "_blank"
+				    :title "HzBuilder preferences"
+				    (<IMG> :class "doc"
+				       :inline #t
+				       :src (service-resource hzbuilder "etc/configure.png"))
+				    "Prefs"))))
 			(<TD>
 			   (<TABLE> :class "body"
 			      (<TR> (<TD> :id "title"
 				       "HzBuilder  - a simple HOP HZ package creator"))
-			      (<TR> (<TD> (<HZBUILDER>))))))))
+			      (<TR> (<TD> (<HZBUILDER> req))))))))
 	       (<FOOT>))))))
 
 ;*---------------------------------------------------------------------*/
@@ -319,7 +320,7 @@
 		 (default-previewer base path)
 		 (let ((preview ((car previewers) base path)))
 		    (or preview (loop (cdr previewers)))))))
-       (user-access-denied)))
+       (access-denied)))
 
 ;*---------------------------------------------------------------------*/
 ;*    default-previewer ...                                            */
@@ -360,8 +361,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    <HZBUILDER> ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (<HZBUILDER>)
-   (with-access::http-request (current-request) (user)
+(define (<HZBUILDER> req)
+   (let ((user (http-request-user req)))
       (<TABLE> :class "form"
 	 (<COLGROUP> :span 2 :width "50%")
 	 (<TR> :class "form"
@@ -475,10 +476,12 @@
 		  "browse")))
 	 (<TR>
 	    (<TD> :colspan 2 :id "hzb-generate"
-	       (<BUTTON> :onclick ~(generate-weblet)
-		  "Generate the Weblet")
+	       (<BUTTON> :onclick ~(generate-weblet 'hopscript)
+		  "Generate HopScript weblet")
+	       (<BUTTON> :onclick ~(generate-weblet 'hop)
+		  "Generate Hop weblet")
 	       (<BUTTON> :onclick ~(test-weblet)
-		  "Test the Weblet"))))))
+		  "Test the weblet"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUTOSIZE-IMG> ...                                               */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/hopscheme/hop_runtime.scm         */
+;*    serrano/prgm/project/hop/3.0.x/hopscheme/hop_runtime.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov  5 19:11:10 2012                          */
-;*    Last change :  Mon Sep 16 14:43:15 2013 (serrano)                */
-;*    Copyright   :  2012-13 Manuel Serrano                            */
+;*    Last change :  Wed Oct 14 09:23:21 2015 (serrano)                */
+;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScheme runtime interface                                      */
 ;*=====================================================================*/
@@ -57,7 +57,7 @@
 ;*    hopscheme-runtime-resolver ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-runtime-resolver mod files _)
-   (with-trace 1 "hopscheme-runtime-resolver"
+   (with-trace 'hopscheme "hopscheme-runtime-resolver"
       (trace-item "mod=" mod)
       (trace-item "files=" files)
       (if (pair? files)
@@ -85,7 +85,7 @@
 			     f)))))
       (set! *hop-precompiled-modules*
 	 (map (lambda (m)
-		 (precompile-module m resolver))
+		 (precompile-module m resolver '*))
 	    *hop-runtime-modules*))))
 
 ;*---------------------------------------------------------------------*/

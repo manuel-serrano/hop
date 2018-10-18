@@ -30,7 +30,6 @@ The ::http-request class is used for representing HOP requests.
 | userinfo             |  r        |   obj       |                  | the optional user info.       |
 | id                   |  r        |  integer    |                  | an unique request identifier  |
 | proxyp               |  r        |  boolean    |                  | is it a proxy request?        |
-| localclientp         |  r/w      |  boolean    |                  | is the client local?          |
 | hook                 |  r/w      |  procedure  |  //identity//    | a hook to be applied          |
 | transfer-encoding    |  r/w      |  boolean    |                  | the characters encoding       |
 | authorization        |  r/w      |  boolean    |                  | an authentication             |

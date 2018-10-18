@@ -1,39 +1,19 @@
+#!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/etc/hopc.sh.in                    */
+#*    serrano/prgm/project/hop/3.0.x/etc/hopc.sh.in                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
-#*    Creation    :  Sat Jun 20 06:00:04 2009                          */
-#*    Last change :  Sat Jun 20 06:33:12 2009 (serrano)                */
-#*    Copyright   :  2009 Manuel Serrano                               */
+#*    Creation    :  Tue Oct 13 14:06:56 2015                          */
+#*    Last change :  Tue Oct 13 14:09:36 2015 (serrano)                */
+#*    Copyright   :  2015 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
-#*    Driver for .hop compilation                                      */
+#*    Hopc wrapper                                                     */
 #*=====================================================================*/
 
-bindir=@BUILDDIR@/bin
-libdir=@BUILDDIR@/lib
-bigloo=@BIGLOO@
+LD_LIBRARY_PATH=@BUILDLIBDIR@:$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=@BUILDLIBDIR@:$DYLD_LIBRARY_PATH
 
-bglargs=
-src=
-bgl=no
+export LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH
 
-while : ; do
-  case $1 in
-    "")
-      break;;
-    --bigloo)
-      shift;
-      bigloo=$1;;
-    *.hop)
-      src=$1;;
-    *)
-      bglargs="$bglargs $1";;
-  esac
-  shift;
-done
-
-export LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH
-export DYLD_LIBRARY_PATH=$libdir:$DYLD_LIBRARY_PATH;
-
-echo "$bindir/hopc $src | $bigloo $bglargs -"
-$bindir/hopc $src | $bigloo $bglargs -
+exec @HOPC@ "$@"

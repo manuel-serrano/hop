@@ -1,0 +1,7 @@
+{
+   "tags": [ "module" ],
+   "description": "Server side require forms",
+   "doc": "Shows how to use nodejs compatible require function and module objects.",
+   "files": [ "require.js", "mod1.js", "node_modules/mod2.js" ],
+   "service": false 
+}

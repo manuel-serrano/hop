@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/zeroconf.scm              */
+;*    serrano/prgm/project/hop/3.1.x/runtime/zeroconf.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Fri Mar 29 12:35:04 2013 (serrano)                */
-;*    Copyright   :  2011-13 Manuel Serrano                            */
+;*    Last change :  Sun Aug 14 19:30:46 2016 (serrano)                */
+;*    Copyright   :  2011-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
 ;*=====================================================================*/
@@ -65,11 +65,6 @@
 	   (zeroconf-publish! #!key name port type #!rest opts)))
 
 ;*---------------------------------------------------------------------*/
-;*    *zeroconf-backend* ...                                           */
-;*---------------------------------------------------------------------*/
-(define *zeroconf-backend* *zeroconf-backend*)
-
-;*---------------------------------------------------------------------*/
 ;*    zeroconf-register-backend! ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-register-backend! o::zeroconf)
@@ -99,22 +94,45 @@
 ;*    zeroconf-started? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-started?)
-   *zeroconf-started*)
+   (if *zeroconf-started* #t #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-start ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-start)
    (synchronize *zeroconf-mutex*
-      (unless *zeroconf-started*
-	 (set! *zeroconf-started* #t)
-	 (zeroconf-backend-start (zeroconf-backend))
-	 (register-exit-function!
-	    (lambda (ret)
-	       (synchronize *zeroconf-mutex*
-		  (when *zeroconf-started*
-		     (set! *zeroconf-started* #f)
-		     (zeroconf-backend-stop (zeroconf-backend)))))))))
+      (cond
+	 ((not *zeroconf-started*)
+	  (set! *zeroconf-started* (zeroconf-backend))
+	  (zeroconf-backend-start (zeroconf-backend))
+	  (register-exit-function!
+	     (lambda (ret)
+		(synchronize *zeroconf-mutex*
+		   (when *zeroconf-started*
+		      (set! *zeroconf-started* #f)
+		      (zeroconf-backend-stop (zeroconf-backend)))))))
+	 ((and (isa? *zeroconf-started* zeroconf-dummy)
+	       (not (isa? (zeroconf-backend) zeroconf-dummy)))
+	  (zeroconf-restart (zeroconf-backend) *zeroconf-started*)))))
+
+;*---------------------------------------------------------------------*/
+;*    zeroconf-restart ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Lock already acquired                                            */
+;*---------------------------------------------------------------------*/
+(define (zeroconf-restart zc::zeroconf dummy::zeroconf-dummy)
+   (set! *zeroconf-started* zc)
+   (with-access::zeroconf-dummy dummy (publishers subscribers)
+      (for-each (lambda (p)
+		   (apply zeroconf-backend-publish-service! zc p))
+	 publishers)
+      (for-each (lambda (s)
+		   (apply zeroconf-backend-add-service-event-listener! zc s))
+	 subscribers)
+      (set! publishers '())
+      (set! subscribers '()))
+   ;; start the backend
+   (zeroconf-backend-start zc))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-start ...                                       */

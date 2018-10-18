@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/source_map.scm          */
+;*    serrano/prgm/project/hop/3.0.x/scheme2js/source_map.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 26 17:18:45 2013                          */
-;*    Last change :  Thu Aug  1 15:35:36 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Fri Jul 11 09:17:57 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
 ;*=====================================================================*/
@@ -68,91 +68,65 @@
       (let ((segs (sort (lambda (s1 s2) (<fx (car s1) (car s2))) (cdr res)))
 	    (src-linetables (make-vector (hashtable-size sourcetable)))
 	    (dst-linetable (load-file-line-table dst-file)))
-	 ;; >>> TO BE REMOVED
-;* 	 (tprint "TO BE REMOVED: segments dump")                       */
-;* 	 (call-with-output-file (make-file-name "/tmp" (string-append (basename src-file) ".seg")) */
-;* 	    (lambda (p)                                                */
-;* 	       (write segs p)                                          */
-;* 	       (newline p)))                                           */
-;* 	 ;; <<< TO BE REMOVED                                          */
 	 ;; feed the source file lines table
 	 (hashtable-for-each sourcetable
 	    (lambda (k v)
 	       (vector-set! src-linetables v (load-file-line-table k))))
-	 (call-with-output-file (make-file-name "/tmp" (string-append (basename src-file) ".seg.txt"))
-	    (lambda (dbg)
-	       (let ((pdstline 0)
-		     (pdstcol 0)
-		     (psrcline 0)
-		     (psrccol 0)
-		     (pnindex 0)
-		     (pfindex 0))
-		  (let loop ((segs segs)
-			     (pseg #f))
-		     (when (pair? segs)
-			(let* ((seg (car segs))
-			       (pos (car seg))
-			       (loc (cadr seg))
-			       (file (hashtable-get sourcetable (cadr loc)))
-			       (src-linetable (vector-ref src-linetables file)))
-			   (multiple-value-bind (dstline dstbeg dstend)
-			      (linetable-find dst-linetable pdstline pos dst-file)
-			      (multiple-value-bind (srcline srcbeg srcend)
-				 (linetable-find src-linetable psrcline (caddr loc) src-file)
-				 (let ((srccol (-fx (caddr loc) srcbeg))
-				       (dstcol (-fx pos dstbeg)))
-				    ;; 1. zero-based starting colum
-				    (if (or (not pseg) (>fx dstline pdstline))
-					(begin
-					   ;; write as many semi-coma as we have skipped lines
-					   (when (>fx dstline pdstline)
-					      (display (make-string (-fx dstline pdstline) #\;) p)
-					      (set! pdstline dstline))
-					   (display (base64-vlq-encode dstcol) p)
-					   ;; reset the dst colume counter
-					   (set! pdstcol dstcol))
-					(begin
-					   (display "," p)
-					   (display (base64-vlq-encode (-fx dstcol pdstcol)) p)
-					   (set! pdstcol dstcol)))
-				    ;; 2. zero-based index into the sources list
-				    (let* ((path (cadr loc))
-					   (findex (hashtable-get sourcetable path)))
-				       (display (base64-vlq-encode (-fx findex pfindex)) p)
-				       (set! pfindex findex))
-				    ;; 3. zero-based staring line in the src
-				    (display (base64-vlq-encode (-fx srcline psrcline)) p)
-				    (set! psrcline srcline)
-				    ;; 4. zero-based starting colum of the line
-				    (display (base64-vlq-encode (-fx srccol psrccol)) p)
-				    (set! psrccol srccol)
-				    ;; 5. the names
-				    (when (pair? (cddr seg))
-				       (let* ((name (caddr seg))
-					      (nindex (hashtable-get nametable name)))
-					  (display (base64-vlq-encode (-fx nindex pnindex)) p)
-					  (set! pnindex nindex)))
-				    (let* ((file (cadr loc))
-					   (findex (hashtable-get sourcetable file)))
-				       (fprintf dbg "~a: dstcol=~a[~a], file=~a[~a], srcline=~a[~a], srccol=~a[~a] -> [~a~a~a~a~a"
-					  dstline
-					  dstcol (- dstcol pdstcol)
-					  findex (- findex pfindex)
-					  srcline (- srcline psrcline)
-					  srccol (- psrccol psrccol)
-					  (base64-vlq-encode pdstcol)
-					  (base64-vlq-encode pfindex)
-					  (base64-vlq-encode psrcline)
-					  (base64-vlq-encode psrccol)
-					  (if (pair? (cddr seg))
-					      (let* ((nindex (caddr seg))
-						     (nentry (hashtable-get nametable nindex)))
-						 (base64-vlq-encode pnindex))
-					      ""))
-				       (display "]\n" dbg))
-				    (loop (cdr segs) (car segs))))))))))
-	    ))))
-
+	 (let ((pdstline 0)
+	       (pdstcol 0)
+	       (psrcline 0)
+	       (psrccol 0)
+	       (pnindex 0)
+	       (pfindex 0))
+	    (let loop ((segs segs)
+		       (pseg #f))
+	       (when (pair? segs)
+		  (let* ((seg (car segs))
+			 (pos (car seg))
+			 (loc (cadr seg))
+			 (file (hashtable-get sourcetable (cadr loc)))
+			 (src-linetable (vector-ref src-linetables file)))
+		     (multiple-value-bind (dstline dstbeg dstend)
+			(linetable-find dst-linetable pdstline pos dst-file)
+			(multiple-value-bind (srcline srcbeg srcend)
+			   (linetable-find src-linetable psrcline (caddr loc) src-file)
+			   (let ((srccol (-fx (caddr loc) srcbeg))
+				 (dstcol (-fx pos dstbeg)))
+			      ;; 1. zero-based starting colum
+			      (if (or (not pseg) (>fx dstline pdstline))
+				  (begin
+				     ;; write as many semi-coma as we have skipped lines
+				     (when (>fx dstline pdstline)
+					(display (make-string (-fx dstline pdstline) #\;) p)
+					(set! pdstline dstline))
+				     (display (base64-vlq-encode dstcol) p)
+				     ;; reset the dst colume counter
+				     (set! pdstcol dstcol))
+				  (begin
+				     (display "," p)
+				     (display (base64-vlq-encode (-fx dstcol pdstcol)) p)
+				     (set! pdstcol dstcol)))
+			      ;; 2. zero-based index into the sources list
+			      (let* ((path (cadr loc))
+				     (findex (hashtable-get sourcetable path)))
+				 (display (base64-vlq-encode (-fx findex pfindex)) p)
+				 (set! pfindex findex))
+			      ;; 3. zero-based staring line in the src
+			      (display (base64-vlq-encode (-fx srcline psrcline)) p)
+			      (set! psrcline srcline)
+			      ;; 4. zero-based starting colum of the line
+			      (display (base64-vlq-encode (-fx srccol psrccol)) p)
+			      (set! psrccol srccol)
+			      ;; 5. the names
+			      (when (pair? (cddr seg))
+				 (let* ((name (caddr seg))
+					(nindex (hashtable-get nametable name)))
+				    (display (base64-vlq-encode (-fx nindex pnindex)) p)
+				    (set! pnindex nindex)))
+			      (let* ((file (cadr loc))
+				     (findex (hashtable-get sourcetable file)))
+				 (loop (cdr segs) (car segs)))))))))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    linetable-find ...                                               */
 ;*    -------------------------------------------------------------    */

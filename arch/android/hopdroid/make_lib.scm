@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../project/hop/2.4.x/arch/android/hopdroid/make_lib.scm         */
+;*    .../project/hop/3.1.x/arch/android/hopdroid/make_lib.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Thu Nov 22 17:05:08 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Sun Jul 17 14:32:58 2016 (serrano)                */
+;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPDROID heap file.                 */
 ;*=====================================================================*/
@@ -22,7 +22,8 @@
 	   __hopdroid-tts
 	   __hopdroid-mpd
 	   __hopdroid-zeroconf
-	   __hopdroid-system)
+	   __hopdroid-system
+	   __hopdroid-prefs)
 
    (eval   (export-all)
 	   (class androidphone)

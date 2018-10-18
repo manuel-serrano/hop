@@ -1,0 +1,10 @@
+{
+   "tags": [ "wspost" ],
+   "description": "Hop.js service post via websockets",
+   "doc": "Example showing how to use call service via websockets",
+   "files": [ "wsserver.js", "wsclient.js" ],
+   "level": 3,
+   "commands": [ "hop --no-color --no-zeroconf -p $(PORT) --rc-file $(RCFILE) wsserver.js",
+		 "hop --no-color --no-zeroconf -p $(PORT) --rc-file $(RCFILE) -- wsclient.js $(PREPORT)" ],
+   "service": false
+}

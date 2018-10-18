@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/3.1.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Nov 17 10:19:01 2013 (serrano)                */
-#*    Copyright   :  2004-13 Manuel Serrano                            */
+#*    Last change :  Sun Jan 28 08:30:35 2018 (serrano)                */
+#*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -61,14 +61,16 @@ EXTRA		= hop.hss \
                   hop-gauge.scm hop-gauge.hss \
                   hop-font.scm \
                   hop-password.scm \
-                  hop-foot.hss
+                  hop-foot.hss \
+                  hop-nodejs.js base64.js hop-history.js
 
 #*---------------------------------------------------------------------*/
 #*    AUDIO and ICONS                                                  */
 #*---------------------------------------------------------------------*/
 ICONS_HOP	= logo-bg.png dashboard.png \
 		  hop-16x16.png hop-48x48.png hop-32x32.png hop-128x128.png \
-                  hop-api-48x48.png hop-api-16x16.png hop.png hop.svg
+                  hop-api-48x48.png hop-api-16x16.png hop.png hop.svg \
+                  inria.svg favicon-16x16.png
 
 ICONS_ERRORS    = error.png error2.png client-error.png stop.png timeout.png \
                   warning.png privacy.png notfound.png
@@ -139,7 +141,7 @@ POPULATION	= $(RTSCONFIG) $(EXTRA) \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: .afile hop_u.js hop_s.js \
+build: .afile hop_u.js hop_s.js hopjs_u.js hopjs_s.js \
    $(FLASHSRC:%.as=flash/%.swf) $(BACKEND) hop-password.scm
 
 #*---------------------------------------------------------------------*/
@@ -153,94 +155,100 @@ hop-password.scm: ../runtime/password.scm
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
-	$(INSTALL) $(BUILDSHAREDIR)/.afile $(DESTDIR)$(HOPSHAREDIR)/.afile && \
-	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/.afile && \
-	$(INSTALL) $(BUILDSHAREDIR)/hop-runtime.sch $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch && \
-	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch && \
-        for p in hop_u.js hop_s.js hop-autoconf.js $(EXPORTED_RT_JS); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
-	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p && \
-	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$$p.gz 2> /dev/null && \
-          chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
+	mkdir -p $(DESTDIR)$(HOPSHAREDIR)
+	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)
+	chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)
+	chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)
+	$(INSTALL) $(BUILDSHAREDIR)/.afile $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/.afile && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/.afile && \
+	$(INSTALL) $(BUILDSHAREDIR)/hop-runtime.sch $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop-runtime.sch && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop-runtime.sch && \
+        for p in hop_u.js hop_s.js hopjs_u.js hopjs_s.js hop-autoconf.js $(EXPORTED_RT_JS); do \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
+	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p.gz 2> /dev/null && \
+          chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p.gz; \
         done
-	$(INSTALL) ../scheme2js/runtime/runtime_u.js $(DESTDIR)$(HOPSHAREDIR)/runtime_u.js && \
-	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/runtime_u.js && \
-	$(INSTALL) ../scheme2js/runtime/runtime_u.js $(DESTDIR)$(HOPSHAREDIR)/runtime_u.js && \
-	$(GZIP) ../scheme2js/runtime/runtime_u.js -c > $(DESTDIR)$(HOPSHAREDIR)/runtime_u.js.gz && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/runtime_u.js.gz; \
-	$(INSTALL) ../scheme2js/runtime/runtime_s.js $(DESTDIR)$(HOPSHAREDIR)/runtime_s.js && \
-	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/runtime_s.js && \
-	$(INSTALL) ../scheme2js/runtime/runtime_s.js $(DESTDIR)$(HOPSHAREDIR)/runtime_s.js && \
-	$(GZIP) ../scheme2js/runtime/runtime_s.js -c > $(DESTDIR)$(HOPSHAREDIR)/runtime_s.js.gz && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/runtime_s.js.gz; \
+	$(INSTALL) ../scheme2js/runtime/runtime_u.js $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/runtime_u.js && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/runtime_u.js && \
+	$(INSTALL) ../scheme2js/runtime/runtime_u.js $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/runtime_u.js && \
+	$(GZIP) ../scheme2js/runtime/runtime_u.js -c > $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/runtime_u.js.gz && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/runtime_u.js.gz; \
+	$(INSTALL) ../scheme2js/runtime/runtime_s.js $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/runtime_s.js && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/runtime_s.js && \
+	$(INSTALL) ../scheme2js/runtime/runtime_s.js $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/runtime_s.js && \
+	$(GZIP) ../scheme2js/runtime/runtime_s.js -c > $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/runtime_s.js.gz && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/runtime_s.js.gz; \
         for p in $(EXTRA); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
-	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
         done
-	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/icons ]; then \
-	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/icons && \
-	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/icons; \
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/icons ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/icons && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/icons; \
         fi && \
         for p in $(ICONS:%=icons/%); do \
-	  if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` ]; then \
-            mkdir -p $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` && \
-	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p`; \
+	  if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/`dirname $$p` ]; then \
+            mkdir -p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/`dirname $$p` && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/`dirname $$p`; \
           fi && \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
-	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
         done
-	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/buttons ]; then \
-	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/buttons && \
-	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/buttons; \
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/buttons ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/buttons && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/buttons; \
         fi && \
         for p in $(BUTTONS:%=buttons/%); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
-	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
         done
-	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/flash ]; then \
-	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/flash && \
-	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/flash; \
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/flash ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/flash && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/flash; \
         fi && \
         for p in $(FLASHOBJS:%=flash/%); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
-	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
         done && \
 	for p in $(FLASHOPT:%=flash/%); do \
 	  if [ -f $$p ]; then \
-            $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
-            chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+            $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
+            chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
           fi; \
         done
-	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/editor ]; then \
-	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
-	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/editor; \
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor; \
         fi && \
 	for p in $(BUILDSHAREDIR)/editor/*; do \
-          $(INSTALL) $$p $(DESTDIR)$(HOPSHAREDIR)/editor && \
-          chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/editor/`basename $$p`; \
+          $(INSTALL) $$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor && \
+          chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor/`basename $$p`; \
         done
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/.afile && \
-	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/icons && \
-	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/flash && \
-	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/buttons && \
-	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/editor && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/.afile && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/icons && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/flash && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/buttons && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor && \
         for p in $(EXTRA); do \
-	  $(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(EXTRA); \
+	  $(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$(EXTRA); \
         done
-	for p in $(RTSCONFIG) hop-autoconf runtime hop; do \
-	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$$p; \
-	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
+	for p in $(RTSCONFIG) base64.js hop-history.js hop-autoconf runtime hop; do \
+	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
+	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p.gz; \
         done
 
 #*---------------------------------------------------------------------*/
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js $(RTSCONFIG)
+hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
+  hop-exception.js hop-nodejs.js hop-react.js \
+  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -250,10 +258,12 @@ hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js $(R
 	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                | sed -e "s|//[^\"]*$$||g" \
                | sed -e "/^[ \t]*$$/D" \
-               | $(BGLCPP) \
+               | $(BGLCPP) -DHOP_SCHEME\
                >> $@
 
-hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js hop-exception.js hop-debug.js $(RTSCONFIG)
+hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
+  hop-exception.js hop-debug.js hop-nodejs.js hop-react.js \
+  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -264,20 +274,66 @@ hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js hop-exception.js hop
 	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
-                 | $(BGLCPP) -DHOP_RTS_DEBUG \
+                 | $(BGLCPP) -DHOP_SCHEME -DHOP_RTS_DEBUG \
                  >> $@; \
         else \
 	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
-                 | $(BGLCPP) \
+                 | $(BGLCPP) -DHOP_SCHEME \
+                 >> $@; \
+        fi
+
+#*---------------------------------------------------------------------*/
+#*    hop.js ...                                                       */
+#*---------------------------------------------------------------------*/
+hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
+  hop-nodejs.js hop-react.js \
+  hop-builtin-serializers.js 
+	echo "/* Automatically generated file (don't edit) */" > $@
+	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
+	date +'/* %D %I:%H */' >> $@
+	echo >> $@
+	echo "\"use strict\";" >> $@
+	echo >> $@
+	echo "var hop_current_stack_context;" >> $@
+	echo "function hop_callback_handler( e, ctx ) { throw e; }" >> $@
+	echo "function sc_error( proc, msg, obj ) { throw msg; }" >> $@
+	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+               | sed -e "s|//[^\"]*$$||g" \
+               | sed -e "/^[ \t]*$$/D" \
+               | $(BGLCPP) -DHOP_JAVASCRIPT | $(CLOSURE) \
+               >> $@
+
+hopjs_s.js: hop_s.js
+	cp $^ $@
+
+hopjs-serialize.js: hopscheme.js hop-builtin-serializers.js hop-serialize.js
+	echo "/* Automatically generated file (don't edit) */" > $@
+	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
+	date +'/* %D %I:%H */' >> $@
+	echo >> $@
+	echo "\"use strict\";" >> $@
+	echo >> $@
+	if [ "$(DEBUG) " != "yes " ]; then \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) -DHOP_JAVASCRIPT -DHOP_MODULES -DHOP_NOBROWSER \
+                 >> $@; \
+        else \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) -DHOP_JAVASCRIPT -DHOP_MODULES -DHOP_NOBROWSER \
                  >> $@; \
         fi
 
 #*---------------------------------------------------------------------*/
 #*    hop-runtime.sch ...                                              */
 #*---------------------------------------------------------------------*/
-EXPORTED_RT_JS = $(RTSCONFIG) $(filter %.js,$(EXTRA)) hop-autoconf.js
+EXPORTED_RT_JS = $(RTSCONFIG) $(filter %.js,$(EXTRA)) \
+  hop-autoconf.js hop-react.js
 
 SCHEME2JS_RUNTIME = ../scheme2js/runtime
 EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
@@ -302,22 +358,13 @@ flash/%.swf: flash/%.as
 #*    JavaScript compilation                                           */
 #*---------------------------------------------------------------------*/
 hop-exception.js: hop-exception.scm ../runtime/client-exception.sch
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
+	$(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
+	$(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
+
+hop-builtin-serializers.js: $(BUILDETCDIR)/mkserializer.hop
+	($(call compile,$(BIGLOO),-suffix hop ,-L $(BUILDLIBDIR), -static-all-bigloo $<) && ./a.out > $@ && $(RM) -f a.out $(BUILDETCDIR)/mkserializer.o) || ($(RM) -f $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    backends                                                         */
@@ -340,10 +387,10 @@ jvm-list:
 #*---------------------------------------------------------------------*/
 #*    predistrib                                                       */
 #*---------------------------------------------------------------------*/
-predistrib: hop-exception.js hop-debug.js
+predistrib: hop-exception.js hop-debug.js hop-builtin-serializers.js
 
 predistrib-clean:
-	$(RM) hop-exception.js hop-debug.js
+	$(RM) hop-exception.js hop-debug.js hop-builtin-serializers.js
 
 #*---------------------------------------------------------------------*/
 #*    cleaning                                                         */
@@ -352,9 +399,10 @@ predistrib-clean:
 
 clean:
 	$(RM) hop_u.js hop_s.js 
+	$(RM) hopjs_u.js hopjs_s.js 
 	$(RM) hop-runtime.sch 
 
 devclean:
-	$(RM) hop-exception.js hop-debug.js 
+	$(RM) hop-exception.js hop-debug.js hop-builtin-serializers.js
 
 distclean: clean

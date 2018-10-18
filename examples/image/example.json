@@ -1,0 +1,7 @@
+{
+   "source": "image.js",
+   "tags": ["client-side"],
+   "description": "Client side image processing",
+   "doc": "Simple client-side image processing",
+   "level": 1
+}

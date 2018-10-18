@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-14 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-16 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -217,11 +217,15 @@ function sc_withHandlerLambda(handler, body) {
  */
 var sc_circle_cache = new Array;
 
-function sc_circle( len, proc ) {
-   for( var i = 0; i < len; i++ ) {
-      sc_circle_cache[ i ] = false;
+function sc_circle( len, proc, flat ) {
+   if( flat ) {
+      return proc( undefined );
+   } else {
+      for( var i = 0; i < len; i++ ) {
+	 sc_circle_cache[ i ] = false;
+      }
+      return sc_circle_force( sc_circle_cache, proc( sc_circle_cache ) );
    }
-   return sc_circle_force( sc_circle_cache, proc( sc_circle_cache ) );
 }
 
 function sc_circle_delay( i ) {
@@ -1292,21 +1296,37 @@ function sc_Pair(car, cdr) {
 
 if( dynamic_type_check ) {
    Object.defineProperty( Object.prototype, "__hop_car", {
+      enumerable: false,
       get: function() { sc_typeError( "car", "pair", this, 4 ); },
       set: function( v ) { sc_typeError( "set-car!", "pair", this, 4 ); }
    } );
 
    Object.defineProperty( Object.prototype, "__hop_cdr", {
+      enumerable: false,
       get: function() { sc_typeError( "cdr", "pair", this, 4 ); },
       set: function( v ) { sc_typeError( "set-cdr!", "pair", this, 4 ); }
    } );
 
    Object.defineProperty( sc_Pair.prototype, "__hop_car", {
+      enumerable: false,
       get: function() { return this.__safe_hop_car; },
       set: function( v ) { this.__safe_hop_car = v; }
    } );
 
    Object.defineProperty( sc_Pair.prototype, "__hop_cdr", {
+      enumerable: false,
+      get: function() { return this.__safe_hop_cdr; },
+      set: function( v ) { this.__safe_hop_cdr = v; }
+   } );
+   
+   Object.defineProperty( sc_Pair.prototype, "car", {
+      enumerable: true,
+      get: function() { return this.__safe_hop_car; },
+      set: function( v ) { this.__safe_hop_car = v; }
+   } );
+
+   Object.defineProperty( sc_Pair.prototype, "cdr", {
+      enumerable: true,
       get: function() { return this.__safe_hop_cdr; },
       set: function( v ) { this.__safe_hop_cdr = v; }
    } );
@@ -1316,6 +1336,20 @@ function sc_Pair(car, cdr) {
    this.__hop_car = car;
    this.__hop_cdr = cdr;
 }
+
+   // MS TO BE FIXED, if pair are to be bound in JS, __hop_car/car
+   Object.defineProperty( sc_Pair.prototype, "car", {
+      enumerable: true,
+      get: function() { return this.__hop_car; },
+      set: function( v ) { this.__hop_car = v; }
+   } );
+
+   Object.defineProperty( sc_Pair.prototype, "cdr", {
+      enumerable: true,
+      get: function() { return this.__hop_cdr; },
+      set: function( v ) { this.__hop_cdr = v; }
+   } );
+   
 #endif
 
 sc_Pair.prototype.toString = function() {
@@ -1350,6 +1384,21 @@ sc_Pair.prototype.sc_toWriteString = function() {
 };
 // sc_Pair.prototype.sc_toWriteCircleString in IO.js
 
+sc_Pair.prototype.length = function(){
+   return sc_length(this);
+}
+sc_Pair.prototype.reverse = function() {
+   return sc_reverse(this);
+}
+sc_Pair.prototype.forEach = function(p) {
+   return sc_forEach(p,this);
+}
+sc_Pair.prototype.assoc = function(o) {
+   return sc_assoc(o,this);
+}
+sc_Pair.prototype.concat = function() {
+   return sc_dualAppend(this,sc_append.apply(this, arguments));
+}
 /*** META ((export #t) (arity #t)
            (type bool)
            (peephole (safe-postfix " instanceof sc_Pair")))
@@ -2184,21 +2233,48 @@ function sc_list2jsstring(l) {
 
 var sc_Vector = Array;
 
-sc_Vector.prototype.sc_toWriteOrDisplayString = function(writeOrDisplay) {
-    if (this.length === 0) return "#()";
+/* Dont' removed, needed for the JS unmarshalling, (see runtime/json.scm) */
+function sc_vector2array(v) {
+   return v;
+}
+   
+function sc_VectorToWriteOrDisplayString(writeOrDisplay) {
+   if (this.length === 0) return "#()";
 
-    var res = "#(" + writeOrDisplay(this[0]);
-    for (var i = 1; i < this.length; i++)
-	res += " " + writeOrDisplay(this[i]);
-    res += ")";
-    return res;
-};
-sc_Vector.prototype.sc_toDisplayString = function() {
-    return this.sc_toWriteOrDisplayString(sc_toDisplayString);
-};
-sc_Vector.prototype.sc_toWriteString = function() {
+   var res = "#(" + writeOrDisplay(this[0]);
+   for (var i = 1; i < this.length; i++)
+      res += " " + writeOrDisplay(this[i]);
+   res += ")";
+   return res;
+}
+   
+function sc_VectorToDisplayString() {
+   return this.sc_toWriteOrDisplayString(sc_toDisplayString);
+}
+
+function sc_VectorToWriteString() {
     return this.sc_toWriteOrDisplayString(sc_toWriteString);
-};
+}
+
+if( "defineProperty" in Object ) {
+   Object.defineProperty( sc_Vector.prototype, "sc_toWriteOrDisplayString", {
+      value: sc_VectorToWriteOrDisplayString,
+      enumerable: false
+   } );
+   Object.defineProperty( sc_Vector.prototype, "sc_toDisplayString", {
+      value: sc_VectorToDisplayString,
+      enumerable: false
+   } );
+   Object.defineProperty( sc_Vector.prototype, "sc_toWriteString", {
+      value: sc_VectorToWriteString,
+      enumerable: false
+   } );
+} else {
+   sc_Vector.prototype.sc_toWriteOrDisplayString = sc_VectorToWriteOrDisplayString;
+   sc_Vector.prototype.sc_toDisplayString = sc_VectorToDisplayString;
+   sc_Vector.prototype.sc_toWriteString = sc_VectorToWriteString;
+}
+
 
 /*** META ((export vector? array?) (arity #t)
            (type bool))
@@ -3329,11 +3405,13 @@ function sc_jsCall(o, fun) {
            (peephole (jsMethodCall)))
 */
 function sc_jsMethodCall(o, field) {
-    var args = new Array();
-    for (var i = 2; i < arguments.length; i++)
-	args[i-2] = arguments[i];
-    return o[field].apply(o, args);
+   return o[ field ].apply( o, Array.prototype.slice.call( arguments, 2 ) );
 }
+      
+/*     var args = new Array();                                         */
+/*     for (var i = 2; i < arguments.length; i++)                      */
+/* 	args[i-2] = arguments[i];                                      */
+/*     return o[field].apply(o, args);                                 */
 
 /*** META ((export new js-new)
            (arity -2)
@@ -3811,10 +3889,20 @@ function sc_register_class( clazz, name, zuper, hash, allocator, constructor, fi
    }
 
    if( zuper != clazz ) {
-      var constr = clazz.prototype.constructor;
+      var constr = ("prototype" in clazz) ? clazz.prototype.constructor
+	  : function( c ) { return c; };
       
-      clazz.prototype = new zuper();
-      clazz.prototype.constructor = constr;
+      clazz.prototype = sc_class_creator( zuper );
+      Object.defineProperty( clazz.prototype, "constructor", {
+	 value: constr,
+	 enumerable: false,
+	 configurable: false
+      } );
+      Object.defineProperty( clazz.prototype, "__class__", {
+	 value: name,
+	 enumerable: false,
+	 configurable: false
+      } );
 
       for( f in zuper.sc_fields_table ) {
 	 ftable[ zuper.sc_fields_table[ f ].sc_name ] = zuper.sc_fields_table[ f ];
@@ -3826,6 +3914,23 @@ function sc_register_class( clazz, name, zuper, hash, allocator, constructor, fi
    }
 
    sc_allClasses[ name ] = clazz;
+
+   return clazz;
+}
+
+function sc_get_class( cname, sname, hash ) {
+   var cn = sc_string2symbol( sc_jsstring2string( cname ) );
+   var clazz = sc_class_exists( cn );
+
+   if( clazz ) {
+      return clazz;
+   } else {
+      var sn = sc_string2symbol( sc_jsstring2string( sname ) );
+
+      return sc_register_class( new sc_Class(), cn,
+				sc_class_exists( sn ) || sc_Object,
+				hash, undefined, sc_Object, [] )
+   }
 }
 
 /*** META ((export #t) (arity #t) (type bool)) */
@@ -3940,7 +4045,7 @@ function sc_object_class( o ) {
    if( proto ) {
       return proto.constructor;
    } else {
-      return sc_Object;;
+      return sc_Object;
    }
 }
 

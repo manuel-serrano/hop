@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/debug.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/runtime/debug.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Sat Aug 10 09:10:36 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Wed Dec 16 21:37:48 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
 ;*=====================================================================*/
@@ -82,7 +82,6 @@
 	 (file)
 	 (if (file-exists? file)
 	     (instantiate::http-response-file
-		(request (current-request))
 		(file file)
 		(content-type "application/json")
 		(bodyp #t)
@@ -97,7 +96,8 @@
       (if (and (integer? i)
 	       (substring-at? file (hop-scm-compile-suffix) (+fx i 1)))
 	  (let ((cache (clientc-cached-response (substring file 0 i))))
-	     (or (source-map-translate cache file line col) file))
+	     (or (source-map-translate cache file line col)
+		 (values file #f #f)))
 	  file)))
 
 ;*---------------------------------------------------------------------*/
@@ -115,7 +115,7 @@
    (synchronize *smap-mutex*
       (if (string=? (car *smap-cache*) smap)
 	  (cdr *smap-cache*)
-	  (let ((o (json->obj (call-with-input-file smap read-string))))
+	  (let ((o (javascript->obj (call-with-input-file smap read-string))))
 	     (set-car! *smap-cache* smap)
 	     (set-cdr! *smap-cache* o)
 	     o))))
@@ -126,7 +126,7 @@
 (define (source-map-translate cache file line col)
    (when (string? cache)
       (let ((smap (string-append cache ".map")))
-	 (when (file-exists? smap)
+	 (if (file-exists? smap)
 	    (with-handler
 	       (lambda (e)
 		  #f)

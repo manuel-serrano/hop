@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.5.x/arch/android/src/fr/inria/hop/HopDroid.java        */
+/*    .../hop/3.1.x/arch/android/src/fr/inria/hop/HopDroid.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Feb 18 15:13:33 2014 (serrano)                */
-/*    Copyright   :  2010-14 Manuel Serrano                            */
+/*    Last change :  Sun Jul 17 16:16:00 2016 (serrano)                */
+/*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
 /*=====================================================================*/
@@ -90,8 +90,8 @@ public class HopDroid extends Thread {
 	    registerPlugin( new HopPluginZeroconf( this, "zeroconf" ) );
 	    registerPlugin( new HopPluginSystem( this, "system" ) );
 	    registerPlugin( new HopPluginTts( this, "tts" ) );
-	 
 	    registerPlugin( new HopPluginCall( this, "call" ) );
+	    registerPlugin( new HopPluginPrefs( this, "prefs" ) );
 	 }
 
 	 // create the three servers
@@ -146,7 +146,7 @@ public class HopDroid extends Thread {
 		     HopLauncher.MSG_HOP_OUTPUT_AVAILABLE );
 	       }
 	       Thread.sleep( 1000 );
-	    } catch( Throwable _ ) {
+	    } catch( Throwable t ) {
 	       ;
 	    }
 	 } else {
@@ -196,7 +196,7 @@ public class HopDroid extends Thread {
 		  android.os.Message.obtain(
 		     service.handler, HopLauncher.MSG_HOPDROID_FAILED, e ) );
 	    }
-	 } catch( Throwable _ ) {
+	 } catch( Throwable t ) {
 	    ;
 	 }
       }
@@ -244,7 +244,7 @@ public class HopDroid extends Thread {
    private static boolean serverPing( LocalSocketAddress addr ) {
       try {
 	 return execCmd( addr, SERVER_PING_CMD );
-      } catch( Exception _ ) {
+      } catch( Exception e ) {
          return false;
       }
    }
@@ -342,15 +342,9 @@ public class HopDroid extends Thread {
       Log.i( "HopDroid", "serverPlugin connected sock=" + pluginclient );
 
       try {
-	 int count = 0;
-	 
 	 while( true ) {
-	    Log.d( "HopDroid", "~~~ server waiting connection...(" + ++count + ")" );
-	    
 	    final int version = ip.read();
 
-	    Log.d( "HopDroid", "!!! version=" + version + " (" + count + ")" );
-	    
 	    if( version != protocol ) {
 	       if( version != -1 ) {
 		  Log.e( "HopDroid", "serverPlugin protocol error: incompatible version " +
@@ -362,32 +356,21 @@ public class HopDroid extends Thread {
 	    }
 
 	    final int id = read_int32( ip );
-	    Log.d( "HopDroid", ">>> plugin=" + id + "... getting plugin"
-		   + " (" + count + ")");
 	       
 	    try {
 	       HopPlugin p = (HopPlugin)plugins.get( id );
 		  
-	       Log.d( "HopDroid", "!!! plugin=" + id +
-		      "... plugin found: " + p.name
-		      + " (" + count + ")" );
 	       p.server( ip, op );
 /* 	       op.write( " ".getBytes() );                             */
 
-	       Log.d( "HopDroid",
-		      "??? plugin=" + id + "... reading sentinel"
-		      + " (" + count + ")");
 	       final int m = ip.read();
 		  
 	       if( m != 127 ) {
 		  Log.e( "HopDroid", "protocol error: illegal " 
-			 + p.name + " mark: " + m
-			 + " (" + count + ")");
+			 + p.name + " mark: " + m );
 	       }
 	       op.flush();
-	       Log.d( "HopDroid", "<<< plugin=" + id
-		      + " (" + count + ")");
-	    } catch( ArrayIndexOutOfBoundsException _ ) {
+	    } catch( ArrayIndexOutOfBoundsException a ) {
 	       Log.e( "HopDroid", "plugin not found: " + id );
 	       // we got an eof, escape from here
 	       return;
@@ -395,6 +378,7 @@ public class HopDroid extends Thread {
 	 }
       } catch( Throwable e ) {
 	 Log.e( "HopDroid", "serverPlugin error (catched)  " + e );
+	 e.printStackTrace();
 	 if( !pluginserv.isClosed() ) {
 	    try {
 	       pluginclient.close();
@@ -649,8 +633,8 @@ public class HopDroid extends Thread {
       synchronized( eventtable ) {
 	 Integer i = (Integer)eventtable.get( event );
 
-	 Log.i( ">>> HopDroid", "pushEvent event=[" + event + "] value=["
-		+ value + "] i=" + i );
+	 Log.i( "HopDroid", "pushEvent event=[" + event + "] value=["
+		+ value + "]" );
 	 if( (i != null) && (i > 0) ) {
 	    try {
 	       final OutputStream op = eventclient.getOutputStream();
@@ -668,8 +652,6 @@ public class HopDroid extends Thread {
 	       e.printStackTrace();
 	    }
 	 }
-	 Log.i( "<<< HopDroid", "pushEvent event=[" + event + "] value=["
-		+ value + "] i=" + i );
       }
    }
 

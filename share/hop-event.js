@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop-event.js                */
+/*    serrano/prgm/project/hop/3.1.x/share/hop-event.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sat Apr 19 12:36:10 2014 (serrano)                */
-/*    Copyright   :  2007-14 Manuel Serrano                            */
+/*    Last change :  Thu May 18 14:35:52 2017 (serrano)                */
+/*    Copyright   :  2007-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -143,9 +143,9 @@ function hop_add_ready_listener( obj, proc, ttl ) {
    
    if( !el ) {
       if( ttl > 0 ) {
-	 sc_after( hop_ready_timeout, function() {
+	 setTimeout( function() {
 	    return hop_add_ready_listener( obj, proc, ttl - 1 );
-	 } );
+	 }, hop_ready_timeout );
       } else {
 	 hop_elements_ready_counter--;
 	 return sc_error( "add-event-listener!",
@@ -306,7 +306,7 @@ function hop_servevt_envelope_parse( val, xhr ) {
 
    if( m != null ) {
       var k = m [ 1 ];
-      var id = m[ 2 ];
+      var id = decodeURIComponent( m[ 2 ] );
       var text = m[ 3 ];
 
       try {
@@ -321,7 +321,7 @@ function hop_servevt_envelope_parse( val, xhr ) {
 	 } else if( k == "j" ) {
 	    var t = text.match( hop_servevt_envelope_cdata_re );
 	    if( t ) {
-	       hop_trigger_servevt( id, t[ 1 ], t[ 1 ], true );
+	       hop_trigger_servevt( id, t[ 1 ], hop_url_encoded_to_obj( t[ 1 ] ), false );
 	    }
 	 } else if( k == "r" ) {
 	    // register, first event listener added to the server
@@ -342,7 +342,7 @@ function hop_servevt_envelope_parse( val, xhr ) {
 /*---------------------------------------------------------------------*/
 /*    start_servevt_websocket_proxy ...                                */
 /*---------------------------------------------------------------------*/
-function start_servevt_websocket_proxy( key, host, port ) {
+function start_servevt_websocket_proxy( key, host, port, ssl ) {
    var reconnect_debug = 0;
    
    function open_websocket( url ) {
@@ -364,7 +364,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 hop_servevt_proxy.reconnect = reconnect;
 	 hop_servevt_proxy.reconnect_url = url;
 	 hop_servevt_proxy.websocket = ws;
-	 hop_servevt_proxy.opentime = sc_currentSeconds();
+	 hop_servevt_proxy.opentime = Math.round((new Date()).getTime() / 1000);
 	 
 	 if( reconnect_debug > 0 ) {
 	    var s = "";
@@ -413,8 +413,9 @@ function start_servevt_websocket_proxy( key, host, port ) {
    var register = function( id ) {
       if( !(id in hop_servevt_proxy.websocket.registry) ) {
 	 hop_servevt_proxy.websocket.registry[ id ] = true;
-	 var svc = hop_service_base() +
-	    "/public/server-event/register?event=" + id +
+	 var encid = encodeURIComponent( id );
+	 var svc = window.hop.serviceBase +
+	     "/public/server-event/register?event=" + encid +
 	    "&key=" + key  + "&mode=websocket";
 
 	 if( reconnect_debug > 0 ) {
@@ -428,8 +429,9 @@ function start_servevt_websocket_proxy( key, host, port ) {
       if( id in hop_servevt_proxy.websocket.registry ) {
 	 delete hop_servevt_proxy.websocket.registry[ id ];
 	 
-	 var svc = hop_service_base() +
-	    "/public/server-event/unregister?event=" + id +
+	 var encid = encodeURIComponent( id );
+	 var svc = window.hop.serviceBase +
+	    "/public/server-event/unregister?event=" + encid +
 	    "&key=" + key;
 	 
 	 hop_send_request( svc, false, function() { ; }, false, false, [] );
@@ -438,7 +440,6 @@ function start_servevt_websocket_proxy( key, host, port ) {
 
    var reconnect = function( wait, max ) {
       if( hop_server.state != 4 ) {
-//	 reconnect_debug++;
 	 hop_server.state = 4;
 
 	 open_websocket( hop_servevt_proxy.reconnect_url );
@@ -460,8 +461,8 @@ function start_servevt_websocket_proxy( key, host, port ) {
    }
 
    if( !hop_servevt_proxy.websocket ) {
-      var url = "ws://" + host + ":" + port +
-	 hop_service_base() + "/public/server-event/websocket?key=" + key;
+      var url = (ssl ? "wss://" : "ws://") + host + ":" + port +
+	 window.hop.serviceBase + "/public/server-event/websocket?key=" + key;
 
       hop_servevt_proxy.key = key;
       hop_servevt_proxy.host = host;
@@ -484,8 +485,9 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	 if( !(id in registry) ) {
 	    registry[ id ] = true;
 	    
-	    var svc = hop_service_base() +
-	       "/public/server-event/register?event=" + id +
+	    var encid = encodeURIComponent( id );
+	    var svc = window.hop.serviceBase +
+	       "/public/server-event/register?event=" + encid +
 	       "&key=" + key  + "&mode=xhr-multipart";
 	    
 	    var success = function( val, xhr ) {
@@ -533,8 +535,9 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	    
 	    hop_servevt_proxy.httpreq.abort();
 
-	    var svc = hop_service_base() +
-	       "/public/server-event/unregister?event=" + id +
+	    var encid = encodeURIComponent( id );
+	    var svc = window.hop.serviceBase +
+	       "/public/server-event/unregister?event=" + encid +
    	       "&key=" + hop_servevt_proxy.key;
 	 
 	    hop_servevt_proxy.httpreq = hop_send_request( svc, false,
@@ -566,8 +569,9 @@ function start_servevt_ajax_proxy( key ) {
       if( !hop_config.server_event ) hop_config.server_event = "ajax";
       
       var register = function( id ) {
-	 var svc = hop_service_base() +
-	    "/public/server-event/register?event=" + id +
+	 var encid = encodeURIComponent( id );
+	 var svc = window.hop.serviceBase +
+	    "/public/server-event/register?event=" + encid +
 	    "&key=" + key  + "&mode=ajax";
 
 	 var success = function( val, xhr ) {
@@ -632,8 +636,9 @@ function start_servevt_ajax_proxy( key ) {
       var unregister = function( id ) {
 	 hop_servevt_proxy.httpreq.abort();
 
-	 var svc = hop_service_base() +
-	    "/public/server-event/unregister?event=" + id +
+	 var encid = encodeURIComponent( id );
+	 var svc = window.hop.serviceBase +
+	    "/public/server-event/unregister?event=" + encid +
    	    "&key=" + hop_servevt_proxy.key;
 	 
 	 hop_servevt_proxy.httpreq =
@@ -690,8 +695,9 @@ function hop_servevt_signal( val ) {
 /*    servevt_script_url ...                                           */
 /*---------------------------------------------------------------------*/
 function servevt_script_url( id, key, nocache ) {
-   return hop_service_base()
-      + "/public/server-event/register?event=" + id 
+   var encid = encodeURIComponent( id );
+   return window.hop.serviceBase
+      + "/public/server-event/register?event=" + encid 
       + "&key=" + key  + "&mode=ajax&padding=hop_servevt_signal["
       + nocache + "]";
 }
@@ -758,8 +764,9 @@ function start_servevt_script_proxy( key ) {
 
       var unregister = function( id ) {
 	 var script = document.createElement( "script" );
-	 var svc = hop_service_base() +
-	 "/public/server-event/unregister?event=" + id +
+	 var encid = encodeURIComponent( id );
+	 var svc = window.hop.serviceBase +
+	 "/public/server-event/unregister?event=" + encid +
 	 "&key=" + hop_servevt_proxy.key;
 
 	 script.onload = function( e ) {
@@ -907,8 +914,9 @@ function hop_servevt_proxy_flash_init() {
    hop_servevt_proxy.ready = true;
 
    var abort = function( id ) {
-      var svc = hop_service_base() +
-         "/public/server-event/unregister?event=" + id
+      var encid = encodeURIComponent( id );
+      var svc = window.hop.serviceBase +
+         "/public/server-event/unregister?event=" + encid
          + "&key=" + hop_servevt_proxy.key;
       hop_servevt_proxy.httpreq = hop_send_request( svc, false,
 						    function() {;}, false,
@@ -924,7 +932,7 @@ function hop_servevt_proxy_flash_init() {
 	 }
       }
 
-      hop_send_request( hop_service_base() +
+      hop_send_request( window.hop.serviceBase +
 			"/public/server-event/close?key=" + hop_servevt_proxy.key,
 			false,
 			function() {;}, false,
@@ -934,7 +942,8 @@ function hop_servevt_proxy_flash_init() {
    var register = function( id ) {
       if( !(id in registry) ) {
 	 registry[ id ] = true;
-	 var svc = hop_service_base() + "/public/server-event/register?event=" + id
+	 var encid = encodeURIComponent( id );
+	 var svc = window.hop.serviceBase + "/public/server-event/register?event=" + encid
             + "&key=" + hop_servevt_proxy.key + "&mode=flash";
 	 
 	 var success = function( e ) {
@@ -1040,7 +1049,7 @@ function hop_start_servevt_proxy() {
    hop_servevt_proxy.register = function( x ) {};
 
    hop_send_request(
-      hop_service_base() + "/public/server-event/info",
+      window.hop.serviceBase + "/public/server-event/info",
       // asynchronous call
       false,
       // success callback
@@ -1048,10 +1057,10 @@ function hop_start_servevt_proxy() {
 	 var host = v[ 0 ];
 	 var port = v[ 1 ];
 	 var key = v[ 2 ];
-	 
+	 var ssl = v[ 3 ];
 	 if( servevt_websocketp() ) {
 	    // websocket backend
-	    start_servevt_websocket_proxy( key, host, port );
+	    start_servevt_websocket_proxy( key, host, port, ssl );
 	 } else if( servevt_xhr_multipartp() ) {
 	    // xhr_multipart backend
 	    start_servevt_xhr_multipart_proxy( key );
@@ -1091,7 +1100,7 @@ function hop_start_servevt_proxy() {
 /*---------------------------------------------------------------------*/
 /*    hop_trigger_servevt ...                                          */
 /*    -------------------------------------------------------------    */
-/*    This function is invoked by Flash and Ajax upon event reception  */
+/*    This function is invoked upon event reception                    */
 /*---------------------------------------------------------------------*/
 function hop_trigger_servevt( id, text, value, js ) {
    var proc;
@@ -1122,7 +1131,6 @@ function hop_trigger_servevt( id, text, value, js ) {
 	 } catch( exc ) {
 	    throw exc;
 	 }
-	 
 	 if( evt.isStopped ) break;
 	 p2 = p2.__hop_cdr;
       }
@@ -1280,7 +1288,7 @@ function hop_remove_server_listener( event, proc, capture ) {
       }
    }
 
-   // no event is still expected, close the connection
+   // no new events expected, close the connection
    hop_servevt_proxy.unregister( event );
 }
 
@@ -1451,7 +1459,7 @@ hop_add_native_event_listener(
 	 if( hop_elements_ready_counter == 0 ) {
 	    clearInterval( i );
 	    hop_is_ready = true;
-	    
+
 	    while( sc_isPair( hop_window_ready_list ) ) {
 	       if( hop_window_ready_list.__hop_car.enable ) {
 		  window.ready = hop_window_ready_list.__hop_car;

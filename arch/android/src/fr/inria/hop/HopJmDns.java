@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.4.x/arch/android/src/fr/inria/hop/HopJmDns.java        */
+/*    .../hop/3.1.x/arch/android/src/fr/inria/hop/HopJmDns.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:03:59 2012                          */
-/*    Last change :  Wed Feb  6 11:05:57 2013 (serrano)                */
-/*    Copyright   :  2012-13 Manuel Serrano                            */
+/*    Last change :  Sun Jun 19 08:35:22 2016 (serrano)                */
+/*    Copyright   :  2012-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The JmDns (zeroconf) Hop binding                                 */
 /*=====================================================================*/
@@ -86,7 +86,7 @@ public class HopJmDns extends HopZeroconf {
 	 try {
 	    jmdns.close();
 	    jmdns = null;
-	 } catch( Throwable _ ) {
+	 } catch( Throwable t ) {
 	    ;
 	 }
       }

@@ -1,0 +1,7 @@
+{
+   "files": ["hss.js", "hss.hss"],
+   "tags": ["basic", "css"],
+   "description": "Hop.js programmable style sheets",
+   "doc": "Simple HSS example",
+   "level": 0.1
+}

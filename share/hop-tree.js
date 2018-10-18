@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop-tree.js                 */
+/*    serrano/prgm/project/hop/3.0.x/share/hop-tree.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon Jan  6 18:28:01 2014 (serrano)                */
-/*    Copyright   :  2005-14 Manuel Serrano                            */
+/*    Last change :  Wed Jul 15 12:42:53 2015 (serrano)                */
+/*    Copyright   :  2005-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
@@ -812,4 +812,16 @@ if( hop_config.history ) {
 	    } );
       },
       true );
+}
+
+/*---------------------------------------------------------------------*/
+/*    JavaScript interface                                             */
+/*---------------------------------------------------------------------*/
+var HopTree = {
+   open: hop_tree_open,
+   close: hop_tree_close,
+   selection: hop_tree_selection,
+   reset: hop_tree_reset,
+   next: hop_tree_row_select_next,
+   previous: hop_tree_row_select_previous
 }

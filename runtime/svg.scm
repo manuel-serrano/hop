@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/svg.scm                   */
+;*    serrano/prgm/project/hop/3.0.x/runtime/svg.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Fri Apr 20 06:58:51 2012 (serrano)                */
-;*    Copyright   :  2007-12 Manuel Serrano                            */
+;*    Last change :  Thu Nov 19 10:55:34 2015 (serrano)                */
+;*    Copyright   :  2007-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -55,7 +55,9 @@
 	   (<SVG:TEXT> . ::obj)
 	   (<SVG:TEXTPATH> . ::obj)
 	   (<SVG:TREF> . ::obj)
-	   (<SVG:TSPAN> . ::obj)))
+	   (<SVG:TSPAN> . ::obj)
+	   (<SVG:RADIALGRADIENT> . ::obj)
+	   (<SVG:LINEARGRADIENT> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    svg-img-tree-cache ...                                           */
@@ -108,14 +110,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    Standards SVG elements                                           */
 ;*---------------------------------------------------------------------*/
-(define-tag <SVG> ((id #unspecified string)
-		   (xmlns "http://www.w3.org/2000/svg" string)
+(define-tag <SVG> ((id #unspecified)
+		   (xmlns "http://www.w3.org/2000/svg")
 		   (attributes)
 		   body)
    (instantiate::xml-element
       (tag 'svg)
-      (id (xml-make-id id 'svg))
-      (attributes `(:xmlns ,xmlns ,@attributes))
+      (id (xml-make-id (xml-primitive-value id) 'svg))
+      (attributes `(:xmlns ,(xml-primitive-value xmlns)
+		      ,@(map xml-primitive-value attributes)))
       (body body)))
 
 ;; misc
@@ -139,6 +142,9 @@
 (define-xml xml-element #t <SVG:TSPAN> :tag tspan)
 (define-xml xml-element #t <SVG:TREF> :tag tref)
 (define-xml xml-element #t <SVG:TEXTPATH> :tag textPath)
+;; gradients
+(define-xml xml-element #t <SVG:RADIALGRADIENT> :tag radialGradient)
+(define-xml xml-element #t <SVG:LINEARGRADIENT> :tag linearGradient)
 
 ;*---------------------------------------------------------------------*/
 ;*    read-attribute-value ...                                         */
@@ -216,37 +222,40 @@
       (if (string? s)
 	  (string-replace! s #\' #\")
 	  s))
-
+   
    (let loop ((a attr))
       (when (pair? a)
 	 (display " ")
-	 (display (keyword->string! (car a)))
-	 (display "='")
-	 (cond
-	    ((eq? (car a) :id)
-	     (display prefix)
-	     (display (xml-attribute-encode (kwote (cadr a)))))
-	    ((and (eq? (car a) :xlink:href)
-		  (string? (cadr a))
-		  (char=? (string-ref (cadr a) 0) #\#))
-	     (display "#")
-	     (display prefix)
-	     (display
-	      (kwote (substring (cadr a) 1 (string-length (cadr a))))))
-	    ((and (eq? (car a) :style) (string? (cadr a)))
-	     (display
-	      (kwote
-	       (pregexp-replace*
-		"url[(]#" (cadr a) (string-append "url(#" prefix)))))
-	    ((and (string? (cadr a)) (substring-at? (cadr a) "url(#" 0))
-	     (display "url(#")
-	     (display prefix)
-	     (display
-	      (kwote (substring (cadr a) 5 (string-length (cadr a))))))
-	    (else
-	     (display (kwote (xml-attribute-encode (cadr a))))))
-	 (display "'")
-	 (loop (cddr a)))))
+	 (if (and (eq? (car a) :%location) (pair? (cdr a)))
+	     (loop (cddr a))
+	     (begin
+		(display (keyword->string! (car a)))
+		(display "='")
+		(cond
+		   ((eq? (car a) :id)
+		    (display prefix)
+		    (display (xml-attribute-encode (kwote (cadr a)))))
+		   ((and (eq? (car a) :xlink:href)
+			 (string? (cadr a))
+			 (char=? (string-ref (cadr a) 0) #\#))
+		    (display "#")
+		    (display prefix)
+		    (display
+		       (kwote (substring (cadr a) 1 (string-length (cadr a))))))
+		   ((and (eq? (car a) :style) (string? (cadr a)))
+		    (display
+		       (kwote
+			  (pregexp-replace*
+			     "url[(]#" (cadr a) (string-append "url(#" prefix)))))
+		   ((and (string? (cadr a)) (substring-at? (cadr a) "url(#" 0))
+		    (display "url(#")
+		    (display prefix)
+		    (display
+		       (kwote (substring (cadr a) 5 (string-length (cadr a))))))
+		   (else
+		    (display (kwote (xml-attribute-encode (cadr a))))))
+		(display "'")
+		(loop (cddr a)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    show-svg-img-markup-open ...                                     */
@@ -517,11 +526,13 @@
 		       (class #f)
 		       (width #f)
 		       (height #f)
-		       (style "text-align: center" string)
-		       (src #unspecified string)
+		       (style "text-align: center")
+		       (src #unspecified)
 		       (prefix #t boolean)
 		       (display "-moz-inline-box; -moz-box-orient:vertical; display: inline-block")
 		       (attrs))
+   (set! src (xml-primitive-value src))
+   (set! style (xml-primitive-value style))
    (cond
       ((not (string? src))
        (error "<SVG:IMG>" "Illegal image src" src))

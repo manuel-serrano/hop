@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/http_request.scm          */
+;*    serrano/prgm/project/hop/3.1.x/runtime/http_request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Nov  7 09:58:33 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Mon Oct 31 07:13:32 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -30,7 +30,8 @@
 	    __hop_websocket
 	    __hop_event)
    
-   (export  (http-parse-request::http-request ::socket ::int ::int)))
+   (export  (http-parse-request::http-request ::socket ::int ::int)
+	    (http-request-local?::bool ::http-request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
@@ -54,18 +55,23 @@
    (let ((port (socket-input sock))
 	 (out (socket-output sock)))
       (socket-timeout-set! sock timeout timeout)
-      (let* ((req (read/rp request-line-grammar port id out))
-	     (localaddr (socket-local-address sock))
-	     (hostaddr (socket-host-address sock))
-	     (localc (string=? localaddr hostaddr))
-	     (lanc (or localc
-			  (let ((i (string-index-right localaddr #\.)))
-			     (substring=? localaddr hostaddr i)))))
-	 (with-access::http-request req (socket localclientp lanclientp)
+      (let ((req (read/rp request-line-grammar port id out)))
+	 (with-access::http-request req (socket)
 	    (set! socket sock)
-	    (set! localclientp localc)
-	    (set! lanclientp lanc)
 	    req))))
+
+;*---------------------------------------------------------------------*/
+;*    http-request-local? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Is the request initiated by the local host ?                     */
+;*---------------------------------------------------------------------*/
+(define (http-request-local? req::http-request)
+   (with-access::http-request req (socket)
+      ;; assume socket to be a real socket
+      (or (socket-local? socket)
+	  (find (lambda (addr)
+		   (socket-host-address=? socket addr))
+	     (hop-server-addresses)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-eof ...                                                  */
@@ -100,10 +106,19 @@
        (let ((o (the-failure)))
 	  (if (eof-object? o)
 	      (raise request-eof-exception)
-	      (parse-error "request-line-grammar"
-			   "Illegal method"
-			   o
-			   (the-port)))))))
+	      (parse-error "request-line-grammar" "Illegal method"
+		 o (the-port)))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-parse-error-msg ...                                         */
+;*---------------------------------------------------------------------*/
+(define (http-parse-error-msg c port)
+   (if (char? c)
+       (let ((line (http-read-line port)))
+	  (string-for-read
+	     (string-append "{" (string c) "}" (if (string? line) line ""))))
+       c))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-method-request ...                                    */
@@ -129,7 +144,14 @@
                                ((not i)
 				;; file name canonicalization is needed
 				;; for authentication
-				(file-name-canonicalize! (url-decode! path)))
+				(let* ((dpath (uri-decode-component! path))
+				       (i (string-index dpath #\?)))
+				   (if i
+				       (begin
+					  (set! query (substring dpath (+fx i 1)))
+					  (file-name-canonicalize!
+					     (substring dpath 0 i)))
+				       (file-name-canonicalize! dpath))))
                                ((>fx i 0)
                                 (let ((l (string-length path)))
                                    (set! query (substring path (+fx i 1) l)))
@@ -161,8 +183,7 @@
 		      (port (or actual-port port (hop-port))))
 		  (cond
 		     ((not (fixnum? port))
-		      (parse-error "http-parse-method-request"
-			 "Illegal port"
+		      (parse-error "http-parse-method-request" "Illegal port"
 			 (format "~a://~a:~a/~a" scheme host port path)
 			 pi))
 		     ((string? host)
@@ -181,8 +202,7 @@
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization pauth)
-			 (connection connection)
-			 (user user)))
+			 (connection connection)))
 		     (else
 		      (instantiate::http-server-request
 			 (id id)
@@ -191,7 +211,8 @@
 			 (scheme scheme)
 			 (userinfo userinfo)
 			 (path path)
-			 (abspath (charset-convert abspath (hop-charset) (hop-locale)))
+			 (abspath (charset-convert! abspath
+				     (hop-charset) (hop-locale)))
 			 (query query)
 			 (header header)
 			 (port port)
@@ -199,8 +220,7 @@
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization auth)
-			 (connection connection)
-			 (user user))))))))))
+			 (connection connection))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-policy-file-request ...                               */
@@ -221,8 +241,7 @@
 	  (header '())
 	  (port (hop-port))
 	  (host "localhost")
-	  (content-length 10)
-	  (user (anonymous-user)))
+	  (content-length 10))
        (raise (instantiate::&hop-method-error
 		 (proc "request-line-grammar")
 		 (msg "policy file request not understood")
@@ -241,9 +260,8 @@
       ((: "HTTP/" (+ DIGIT) "." (+ DIGIT) "\r\n")
        (the-subsymbol 0 -2))
       (else
-       (parse-error 'http-version-grammar "Illegal character"
-		    (the-failure)
-		    (the-port)))))
+       (parse-error "http-version-grammar" "Illegal character"
+	  (the-failure) (the-port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-sp-grammar ...                                              */
@@ -253,8 +271,6 @@
       (SP
        'sp)
       (else
-       (parse-error 'sp-grammar
-		    "Illegal character"
-		    (the-failure)
-		    (the-port)))))
+       (parse-error "sp-grammar" "Illegal character"
+	  (the-failure) (the-port)))))
       

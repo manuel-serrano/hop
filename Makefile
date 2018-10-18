@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/Makefile                          */
+#*    serrano/prgm/project/hop/3.1.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Aug 16 17:42:03 2015 (serrano)                */
+#*    Last change :  Fri Oct  6 15:29:14 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -21,20 +21,24 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
-                  configure .hoprelease .hgignore .gitignore
-POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay hophz \
+POPULATION	= Makefile LICENSE README INSTALL.md INSTALL.jvm \
+                  configure .hoprelease .hgignore .gitignore README.md \
+                  TODO.md
+POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
+                  src hopc hopsh hopreplay hophz \
                   etc share arch \
-                  weblets widget
+                  weblets widget nodejs node_modules \
+                  examples test tools doc
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib widget share weblets bin \
-  share-afile scheme2js \
-  android
+  share-afile scheme2js hopscript js2scheme nodejs \
+  android node_modules doc test .buildtag
 
-build: bindir libdir lib weblets widget $(BUILDSPECIFIC) bin share
+build: bindir libdir lib weblets widget nodejs doc \
+  $(BUILDSPECIFIC) bin share node_modules
 
 bindir:
 	mkdir -p bin
@@ -47,7 +51,7 @@ bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin hophz-bin
 hopc-bin: lib
 	$(MAKE) -C hopc build
 
-src-bin: lib widget $(BUILDSPECIFIC) 
+src-bin: lib widget $(BUILDSPECIFIC) nodejs
 	$(MAKE) -C src build
 
 hopsh-bin: lib
@@ -59,12 +63,19 @@ hopreplay-bin: lib
 hophz-bin: lib hopc-bin widget
 	$(MAKE) -C hophz build
 
-lib: libdir scheme2js
+lib: libdir scheme2js hopscript
 	$(MAKE) -C hopscheme build
 	$(MAKE) -C runtime build
+	$(MAKE) -C js2scheme build
 
 widget: libdir hopc-bin share-afile
 	$(MAKE) -C widget build
+
+nodejs: libdir hopc-bin hopscript-lib share-afile
+	$(MAKE) -C nodejs build
+
+hopscript-lib: hopc-bin widget
+	$(MAKE) -C hopscript build
 
 share-afile: scheme2js
 	$(MAKE) -C share .afile
@@ -78,6 +89,17 @@ weblets: lib hopc-bin
 scheme2js:
 	$(MAKE) -C scheme2js build
 
+node_modules: libdir hopc-bin hopscript-lib nodejs
+	$(MAKE) -C node_modules build
+
+doc: lib hopc-bin src-bin js2scheme scheme2js hopscript nodejs node_modules
+	if [ "$(NODOC) " != "yes " -a "$(THREADS) " = "yes " ]; then \
+	  $(MAKE) -C doc build; \
+        fi
+
+test:
+	$(MAKE) -C test
+
 build-android: lib
 	$(MAKE) -C arch/android build
 
@@ -88,6 +110,9 @@ dep:
 	$(MAKE) -C scheme2js dep
 	$(MAKE) -C hopscheme dep
 	$(MAKE) -C runtime dep
+	$(MAKE) -C js2scheme dep
+	$(MAKE) -C hopscript dep
+	$(MAKE) -C nodejs dep
 	$(MAKE) -C src dep
 	$(MAKE) -C hopsh dep
 	$(MAKE) -C hopreplay dep
@@ -99,6 +124,9 @@ ude:
 	$(MAKE) -C scheme2js ude
 	$(MAKE) -C hopscheme ude
 	$(MAKE) -C runtime ude
+	$(MAKE) -C js2scheme ude
+	$(MAKE) -C hopscript ude
+	$(MAKE) -C nodejs ude
 	$(MAKE) -C src ude
 	$(MAKE) -C hopsh ude
 	$(MAKE) -C hopreplay ude
@@ -127,11 +155,18 @@ install-quick: hop-dirs install-init
 	$(MAKE) -C widget install && \
 	$(MAKE) -C scheme2js install && \
 	$(MAKE) -C hopscheme install && \
+	$(MAKE) -C js2scheme install && \
+	$(MAKE) -C hopscript install && \
+	$(MAKE) -C nodejs install && \
 	$(MAKE) -C src install && \
 	$(MAKE) -C hopsh install && \
 	$(MAKE) -C hopc install && \
 	$(MAKE) -C hophz install && \
-	$(MAKE) -C etc install
+	$(MAKE) -C node_modules install && \
+	$(MAKE) -C etc install && \
+	if [ "$(NODOC) " != "yes " -a "$(THREADS) " = "yes " ]; then \
+	  $(MAKE) -C doc install; \
+        fi
 
 install-init: hop-dirs
 	$(INSTALL) $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \
@@ -142,38 +177,47 @@ install-init: hop-dirs
         chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init;
 	$(INSTALL) $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init && \
         chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init;
+	$(INSTALL) $(BUILDLIBDIR)/js2scheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/js2scheme.init && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/js2scheme.init;
+	$(INSTALL) $(BUILDLIBDIR)/hopscript.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscript.init && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscript.init;
+	$(INSTALL) $(BUILDLIBDIR)/nodejs.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init;
 
 hop-dirs:
 	if [ ! -d $(DESTDIR)$(HOPBINDIR) ]; then \
-          mkdir -p $(DESTDIR)$(HOPBINDIR) \
-            && chmod $(MODDIR) $(DESTDIR)$(HOPBINDIR); \
+          $(MAKE) mkdir DIR=$(DESTDIR)$(HOPBINDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR) ]; then \
-          mkdir -p $(DESTDIR)$(HOPLIBDIR) \
-            && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR); \
+          $(MAKE) mkdir DIR=$(DESTDIR)$(HOPLIBDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPSHAREDIR) ]; then \
-	  mkdir -p $(DESTDIR)$(HOPSHAREDIR) \
-            && chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR); \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPSHAREDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPETCDIR) ]; then \
-	  mkdir -p $(DESTDIR)$(HOPETCDIR) \
-            && chmod $(MODDIR) $(DESTDIR)$(HOPETCDIR); \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPETCDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/hop ]; then \
-	  mkdir -p $(DESTDIR)$(HOPLIBDIR)/hop \
-           && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR)/hop; \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPLIBDIR)/hop; \
         fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) ]; then \
-	  mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
-           && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPWEBLETSDIR) ]; then \
-	  mkdir -p $(DESTDIR)$(HOPWEBLETSDIR) \
-	   && chmod $(MODDIR) $(DESTDIR)$(HOPWEBLETSDIR); \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPWEBLETSDIR); \
         fi
 
-install-android: hop-dirs
+install-android:
+	mkdir -p $(HOPTMPDIR)/android
+	$(MAKE) install \
+           HOPETCDIR=$(HOPTMPDIR)/android/assets/etc \
+           HOPBINDIR=$(HOPTMPDIR)/android/assets/bin \
+           HOPLIBDIR=$(HOPTMPDIR)/android/assets/hoplib \
+           HOPSHAREDIR=$(HOPTMPDIR)/android/assets/share/hop \
+           HOPMANDIR=$(HOPTMPDIR)/android/assets/man \
+           HOPWEBLETSDIR=$(HOPTMPDIR)/android/assets/hoplib/hop/$branch/weblets \
+           HOPCONTTRIBSDIR=$(HOPTMPDIR)/android/assets/contribs \
+	   INSTALLSPECIFIC=
 	$(INSTALL) $(BUILDLIBDIR)/hopdroid.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopdroid.init && \
         chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopdroid.init;
 	$(MAKE) -C arch/android install
@@ -182,6 +226,10 @@ install-debian: hop-dirs
 	mkdir -p $(DESTDIR)/etc/init.d
 	$(INSTALL) $(BUILDDIR)/arch/debian/init.d/hop $(DESTDIR)/etc/init.d \
 	  && chmod u+rx $(DESTDIR)/etc/init.d/hop
+
+install-doc:
+	$(MAKE) -C doc install
+	$(MAKE) -C examples install
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -194,6 +242,11 @@ uninstall:
 	$(MAKE) -C widget uninstall
 	$(MAKE) -C scheme2js uninstall
 	$(MAKE) -C hopscheme uninstall
+	$(MAKE) -C js2scheme uninstall
+	$(MAKE) -C hopscript uninstall
+	$(MAKE) -C nodejs uninstall
+	$(MAKE) -C node_modules uninstall
+	$(MAKE) -C doc uninstall
 	if [ "$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)" != "/" ]; then \
 	  $(RM) -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
         fi
@@ -211,11 +264,16 @@ clean-quick:
 	$(MAKE) -C weblets clean
 	$(MAKE) -C widget clean
 	$(MAKE) -C share clean
+	$(MAKE) -C node_modules clean
+	$(MAKE) -C doc clean
 
 clean:
 	$(MAKE) -C runtime clean
 	$(MAKE) -C scheme2js clean
 	$(MAKE) -C hopscheme clean
+	$(MAKE) -C js2scheme clean
+	$(MAKE) -C hopscript clean
+	$(MAKE) -C nodejs clean
 	$(MAKE) -C src clean
 	$(MAKE) -C hopsh clean
 	$(MAKE) -C hophz clean
@@ -225,6 +283,8 @@ clean:
 	$(MAKE) -C weblets clean
 	$(MAKE) -C widget clean
 	$(MAKE) -C share clean
+	$(MAKE) -C node_modules clean
+	$(MAKE) -C doc clean
 
 devclean:
 	$(MAKE) -C runtime devclean
@@ -235,6 +295,8 @@ devclean:
 	$(MAKE) -C hopreplay devclean
 	$(MAKE) -C widget devclean
 	$(MAKE) -C share devclean
+	$(MAKE) -C node_modules devclean
+	$(MAKE) -C doc devclean
 
 distclean: clean 
 	$(MAKE) -C runtime distclean
@@ -245,14 +307,16 @@ distclean: clean
 	$(MAKE) -C hopreplay distclean
 	$(MAKE) -C widget distclean
 	$(MAKE) -C share distclean
+	$(MAKE) -C nodejs distclean
+	$(MAKE) -C node_modules distclean
+	$(MAKE) -C doc distclean
+	$(MAKE) -C tools distclean
 	$(RM) -f etc/Makefile.hopconfig
 	$(RM) -f etc/hop.man
 	$(RM) -f etc/hopsh.man
 	$(RM) -f etc/hophz.man
 	$(RM) -f etc/hopreplay.man
-	$(RM) -f lib/hop.init
-	$(RM) -f lib/scheme2js.init
-	$(RM) -f lib/hopscheme.init
+	$(RM) -rf lib
 	$(RM) -f runtime/configure_android.sch
 	$(RM) -f runtime/configure_macosx.sch
 	$(RM) -f runtime/configure_noarch.sch
@@ -294,7 +358,7 @@ distrib-inc-version:
             if [ "$$version " != "$$major " ]; then \
               min=1; \
             else \
-              if [ "$$devel " == "$$state " ]; then \
+              if [ "$$devel " = "$$state " ]; then \
                 min=`expr $$minor + 1`; \
               else \
                 min=1; \
@@ -348,7 +412,7 @@ distrib-native: distrib-tmp
            ./configure && \
            $(MAKE) predistrib && \
            $(MAKE) distclean) && \
-          tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
+          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .git -C $(HOPTMPDIR) hop-$$distrib && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
@@ -391,6 +455,9 @@ distrib-tmp:
           exit 1; \
         fi
 
+.buildtag:
+	$(MAKE) buildid > .buildtag
+
 #*---------------------------------------------------------------------*/
 #*    predistrib:                                                      */
 #*---------------------------------------------------------------------*/
@@ -401,3 +468,4 @@ predistrib:
 	$(MAKE) -C widget predistrib
 	$(MAKE) -C share predistrib
 	$(MAKE) -C hophz predistrib
+	$(MAKE) .buildtag

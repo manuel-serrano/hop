@@ -1,0 +1,152 @@
+#!/bin/bash
+
+BUILDLIBDIR=@BUILDLIBDIR@
+BUILDBINDIR=@BUILDBINDIR@
+
+LD_LIBRARY_PATH=$BUILDLIBDIR:$LD_LIBRARY_PATH;
+export LD_LIBRARY_PATH;
+
+DYLD_LIBRARY_PATH=$BUILDLIBDIR:$DYLD_LIBRARY_PATH;
+export DYLD_LIBRARY_PATH;
+
+PATH=$BUILDBINDIR:$BUILDLIBDIR:$PATH;
+
+TMP=/tmp/$LOGNAME
+
+export PATH;
+
+rest=
+verb=
+basedir=$pwd
+hop=$BUILDBINDIR/hop.sh
+test=
+stoponfailure=no
+gflags="--sofile-policy nte+ -g --clear-libs"
+oflags="--no-zeroconf"
+
+while : ; do
+
+  case $1 in
+    "")
+     break;;
+
+  -h|--help)
+    echo "usage: $0 [-v|-s] [--basedir dir] [--hop hop]";
+    echo "example: $0";
+    exit 0;;
+
+  -v)
+    verb="$verb -v";;
+
+  -v2)
+    verb="$verb -v -v";;
+
+  -s)
+    verb="";;
+
+  -*)
+    rest=$1;;
+
+  --basedir)
+    shift;
+    basedir=$1;;    
+
+  --hop)
+    shift;
+    hop=$1;;    
+
+  --stop-on-failure)
+    stoponfailure="yes";;
+
+  *)
+    test=$1;;
+  esac
+
+  shift
+done   
+
+success=0
+failure=0
+i=0
+
+mkdir -p $TMP
+
+echo "Logs in $TMP/TEST-HOPJS.out"
+echo ""
+
+run() {
+  echo $1 | grep rc.js 2> /dev/null > /dev/null
+  
+  if [ $? != 0 ]; then
+    i=`expr $i + 1`
+
+    echo -n "$i. $path ... "
+    echo "$i. $path ... " >> $TMP/TEST-HOPJS-ALL.out
+    
+    if [ "$verb " != " " ]; then
+      echo ""
+      echo -n "$hop $oflags $* ..."
+    fi
+    $hop $oflags $* > $TMP/TEST-HOPJS.out 2>&1 
+    lastres=$?
+    
+    cat $TMP/TEST-HOPJS.out >> $TMP/TEST-HOPJS-ALL.out
+    echo "" >> $TMP/TEST-HOPJS-ALL.out
+
+    if [ "$lastres" = "0" ]; then
+      echo "ok.";
+      success=`expr $success + 1`
+    else
+      echo "failure !!!"
+      if [ "$verb " != " " ]; then
+        cat $TMP/TEST-HOPJS.out
+      fi
+      failure=`expr $failure + 1`
+      if [ "$stoponfailure" = "yes" ]; then
+	exit 1
+      fi
+    fi
+    /bin/rm -f $TMP/TEST-HOPJS.out
+  fi
+}
+
+/bin/rm -f $TMP/TEST-HOPJS-ALL.out
+touch $TMP/TEST-HOPJS-ALL.out
+
+for path in noserv/*.js; do
+  if [ "$test " = " " -o "$test " = "$path " ]; then
+    if [ -f $path.rc.js ]; then
+      run $path $gflags --no-server --rc-file $path.rc.js
+      run $path --no-server --rc-file $path.rc.js
+    else
+      run $path $gflags -q --no-server
+      run $path -q --no-server
+    fi
+  fi
+done
+
+for path in serv/*.js; do
+  if [ "$test " = " " -o "$test " = "$path " ]; then
+    if [ -f $path.rc.js ]; then
+	if [ -f $path.args ]; then
+	    run $path $gflags -p 0 `cat $path.args` --rc-file $path.rc.js
+	    run $path -p 0 `cat $path.args` --rc-file $path.rc.js
+	else
+	    run $path $gflags -p 0 --rc-file $path.rc.js
+	    run $path -p 0 --rc-file $path.rc.js
+	fi
+    else       
+	if [ -f $path.args ]; then
+	    run $path $gflags -p 0 `cat $path.args` --rc-file passwd.hop
+	    run $path -p 0 `cat $path.args` --rc-file passwd.hop
+	else
+	    run $path $gflags -p 0 --rc-file passwd.hop
+	    run $path -p 0 --rc-file passwd.hop
+	fi
+    fi
+  fi   
+done
+
+echo "`expr $success + $failure` executed"
+echo "   $success success"
+echo "   $failure failure"

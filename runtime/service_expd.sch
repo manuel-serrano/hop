@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/service_expd.sch          */
+;*    serrano/prgm/project/hop/3.1.x/runtime/service_expd.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Aug 16 17:21:28 2015 (serrano)                */
-;*    Copyright   :  2006-15 Manuel Serrano                            */
+;*    Last change :  Sun Jan  8 17:47:58 2017 (serrano)                */
+;*    Copyright   :  2006-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -13,19 +13,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    jscript-funcall ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (jscript-funcall path args)
+(define (jscript-funcall args)
    (if (=fx (bigloo-debug) 0)
-       `((@ format  __r4_output_6_10_3)
-	 "(function () { return hop_apply_url( ~s, arguments ); })" ,path)
+       "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); },
+         sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
+         sc_lambda)"
        (let loop ((args (dsssl-formals->scheme-formals args error))
 		  (arity 0))
 	  (cond
 	     ((null? args)
-	      `((@ format  __r4_output_6_10_3)
-		"(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,arity))
+	      (format "(sc_lambda=function () { return hop_apply_url( ~~s, arguments ); },
+               sc_lambda.resource = function( file ) { return ~~s + \"/\" + file; },
+               sc_lambda.arity=~a,
+               sc_lambda)" arity))
 	     ((not (pair? args))
-	      `((@ format  __r4_output_6_10_3)
-		"(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,(-fx -1 arity)))
+	      (format "(sc_lambda=function () { return hop_apply_url( ~~s, arguments ); },
+                sc_lambda.resource = function( file ) { return ~~s + \"/\" + file; },
+                sc_lambda.arity=~a,
+                sc_lambda)" (-fx -1 arity)))
 	     (else
 	      (loop (cdr args) (+fx arity 1)))))))
 
@@ -34,23 +39,6 @@
 ;*---------------------------------------------------------------------*/
 (define (expand-service id wid url timeout ttl args body)
    
-   (define (pair->list args)
-      (if (list? args)
-	  args
-	  (let loop ((args args))
-	     (cond
-		((null? args) '())
-		((pair? args) (cons (car args) (loop (cdr args))))
-		(else (list args))))))
-
-   (define (args->list args)
-      (filter-map (lambda (f)
-		     (cond
-			((symbol? f) f)
-			((and (pair? f) (symbol? (car f))) (car f))
-			(else #f)))
-		  (pair->list args)))
-
    (define (call args)
       (let loop ((args args)
 		 (state 'plain))
@@ -94,6 +82,8 @@
 	  (path (gensym 'path))
 	  (fun (gensym 'fun))
 	  (file (gensym 'file))
+	  (req (gensym 'req))
+	  (req-for-eval (gensym 'req-for-eval))
 	  (actuals (call args))
 	  (mkurl (if (and (pair? args)
 			  (list? args)
@@ -104,20 +94,32 @@
       `(let* ((,path ,url)
 	      (,file (the-loading-file))
 	      (,fun (lambda ,args ,mkurl))
+	      (,req-for-eval #f)
+	      (current-request (lambda () ,req-for-eval))
 	      (,proc ,(if (pair? body)
-			  `(lambda ,args ,@body)
+			  `(lambda ,(cons req args)
+			      (cond-expand
+				 (bigloo-compile
+				  (let ((current-request (lambda () ,req)))
+				     ,@body))
+				 (else
+				  ;; don't bind curent-request inside the procedure
+				  ;; when evaluating as eval create a closure for
+				  ;; all functions
+				  (set! ,req-for-eval ,req)
+				  ,@body)))
 			  `(if (substring-at? ,path (hop-service-base) 0)
 			       ;; this is a local service, thus an autoload
 			       ;; that must replace the current service
-			       ,(let ((autoload (gensym))
-				      (loop (gensym)))
+			       ,(let ((autoload (gensym 'autoload))
+				      (loop (gensym 'loop)))
 				   `(let ((,autoload #unspecified))
-				       (lambda ,args
+				       (lambda ,(cons req args)
 					   (let ,loop ()
 						(cond
 						   ((eq? ,autoload #t)
 						    (instantiate::http-response-autoload
-						       (request (duplicate::http-server-request (current-request)
+						       (request (duplicate::http-server-request ,req
 								   (query (substring ,mkurl (+fx 1 (string-length ,path))))
 								   (abspath ,mkurl)
 								   (path ,mkurl)))))
@@ -128,25 +130,21 @@
 						    (,loop))
 						   (else
 						    (error "with-hop" "Not autoload found for local service" ,path)))))))
-			       ,(let ((url (gensym)))
-				   `(lambda ,args
+			       ,(let ((url (gensym 'url)))
+				   `(lambda ,(cons req args)
 				       (let ((,url ,mkurl))
 					  ;; a remote wrapper service
 					  (instantiate::http-response-remote
-					     (request (instantiate::http-request
-							 (user (class-nil user))
-							 (port (hop-port))
-							 (path ,path)
-							 (abspath ,path)))
 					     (port (hop-port))
 					     (path ,url))))))))
 	      (,svc (instantiate::hop-service
+		       (ctx 'hop)
 		       (wid ,(if (symbol? wid) `',wid wid))
 		       (id ,id)
 		       (path ,path)
 		       (args ',args)
 		       (proc ,proc)
-		       (javascript ,(jscript-funcall path args))
+		       (javascript ,(jscript-funcall args))
 		       (creation (date->seconds (current-date)))
 		       (timeout ,timeout)
 		       (ttl ,ttl)
@@ -247,13 +245,20 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-with-hop-expander x e)
    
-   (define (with-hop-local svc args success failure auth)
+   (define (with-hop-local svc args success failure auth header)
       `(with-access::hop-service (procedure-attr ,svc) (proc)
-	  (with-hop-local (proc ,@args) ,success ,failure ,auth)))
+	  (let ((req (instantiate::http-server-request
+			(authorization ,auth))))
+	     (with-hop-local (proc req ,@args) ,success ,failure ,auth ,header))))
    
-   (define (with-hop-remote svc args success fail opts)
-      `(with-hop-remote (,svc ,@args) ,success ,fail ,@(reverse! opts)))
-   
+   (define (with-hop-remote svc args success failure opts)
+      `(with-hop-remote (,svc ,@args) ,success ,failure ,@(reverse! opts)))
+
+   (define (with-hop-remote-local host port svc a success fail auth header args)
+      (if (and (not host) (not port))
+	  (with-hop-local svc a success fail auth header)
+	  (with-hop-remote svc a success fail args)))
+
    (match-case x
       ((?- (?svc . ?a) . ?opts)
        ;; a remote call
@@ -264,22 +269,39 @@
 		  (host #f)
 		  (port #f)
 		  (sync #f)
-		  (auth #f))
+		  (auth #f)
+		  (header #f))
 	  (cond
 	     ((null? opts)
-	      (let ((nx (let ((wh (if (and (not host) (not port))
-				      (with-hop-local svc a success fail auth)
-				      (with-hop-remote svc a success fail args))))
-			   (if sync
-			       wh
-			       `(begin ,wh #unspecified)))))
+	      (let ((nx (cond
+			   (sync
+			    (with-hop-remote-local host port svc
+			       a success #f auth header args))
+			   (fail
+			    (let ((failid (gensym 'fail)))
+			       `(let ((,failid ,fail))
+				   (with-handler
+				      (lambda (e)
+					 (if (procedure? ,failid)
+					     (,failid e)
+					     (exception-notify e)))
+				      (begin ,(with-hop-remote-local host port svc
+						 a success failid auth header args)
+					     #unspecified)))))
+			   (else
+			    `(with-handler
+			       exception-notify
+			       (begin
+				  ,(with-hop-remote-local host port svc
+				      a success #f auth header args)
+				  #unspecified))))))
 		 (e (evepairify nx x) e)))
 	     ((not (keyword? (car opts)))
 	      (cond
 		 ((not success)
-		  (loop (cdr opts) args (car opts) fail host port sync auth))
+		  (loop (cdr opts) args (car opts) fail host port sync auth header))
 		 ((not fail)
-		  (loop (cdr opts) args success (car opts) host port sync auth))
+		  (loop (cdr opts) args success (car opts) host port sync auth header))
 		 (else
 		  (error "with-hop"
 		     (format "Illegal optional argument: ~a" (car opts))
@@ -295,31 +317,60 @@
 		 success fail
 		 (cadr opts)
 		 port
-		 sync auth))
+		 sync auth header))
 	     ((eq? (car opts) :port)
 	      (loop (cddr opts)
 		 (cons* (cadr opts) (car opts) args)
 		 success fail
 		 host
 		 (cadr opts)
-		 sync auth))
+		 sync auth header))
 	     ((eq? (car opts) :sync)
 	      (loop (cddr opts)
 		 args
 		 success fail
 		 host port
 		 (cadr opts)
-		 auth))
+		 auth header))
+	     ((eq? (car opts) :asynchronous)
+	      (loop (cddr opts)
+		 args
+		 success fail
+		 host port
+		 (not (cadr opts))
+		 auth header))
 	     ((eq? (car opts) :authorization)
 	      (loop (cddr opts)
 		 (cons* (cadr opts) (car opts) args)
 		 success fail
 		 host port sync
+		 (cadr opts)
+		 header))
+	     ((eq? (car opts) :header)
+	      (loop (cddr opts)
+		 (cons* (cadr opts) (car opts) args)
+		 success fail
+		 host port sync
+		 auth
 		 (cadr opts)))
+	     ((eq? (car opts) :scheme)
+	      (loop (cddr opts)
+		 (cons* (cadr opts) (car opts) args)
+		 success fail
+		 host port sync
+		 auth
+		 header))
+	     ((eq? (car opts) :ssl)
+	      (loop (cddr opts)
+		 (cons* `(if ,(cadr opts) 'https 'http) scheme: args)
+		 success fail
+		 host port sync
+		 auth
+		 header))
 	     (else
 	      (loop (cddr opts)
 		 (cons* (cadr opts) (car opts) args)
-		 success fail host port sync auth)))))
+		 success fail host port sync auth header)))))
       (else
        (error "with-hop" "Illegal form" x))))
    

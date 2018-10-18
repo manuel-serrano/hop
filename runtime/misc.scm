@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/misc.scm                  */
+;*    serrano/prgm/project/hop/3.0.x/runtime/misc.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sun Sep 15 07:05:35 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Sat Dec 12 13:33:30 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
 ;*=====================================================================*/
@@ -49,6 +49,7 @@
 	    (inline input-timeout-set! ::input-port ::int)
 	    (inline output-timeout-set! ::output-port ::int)
 	    (inline socket-timeout-set! ::socket ::int ::int)
+	    (socket-buffers-detach! ::socket)
 	    (call-in-background ::procedure)))
 
 ;*---------------------------------------------------------------------*/
@@ -323,7 +324,6 @@
       (let loop ((ttl (hop-connection-ttl)))
 	 (let ((res (with-handler
 		       (lambda (e)
-			  (exception-notify e)
 			  (if (and (>fx ttl 0) (isa? e &io-timeout-error))
 			      (begin
 				 (hop-verb 1
@@ -341,7 +341,7 @@
 			   (cond-expand
 			      (enable-ssl
 				 (make-ssl-client-socket host port
-				    :protocol 'tls
+				    :protocol (hop-https-protocol)
 				    :timeout tmt))
 			      (else
 			       (error "make-client-socket/timeout"
@@ -415,8 +415,21 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (socket-timeout-set! socket ti to)
    (input-timeout-set! (socket-input socket) ti)
-   (output-timeout-set! (socket-output socket) to))
+   '(output-timeout-set! (socket-output socket) to))
 
+;*---------------------------------------------------------------------*/
+;*    socket-buffers-detach! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    This function duplicates and rebinds the buffer associated       */
+;*    with a socket. It is used by persisent and asynchronous          */
+;*    responses.                                                       */
+;*---------------------------------------------------------------------*/
+(define (socket-buffers-detach! socket::socket)
+   (let ((in (socket-input socket))
+	 (out (socket-output socket)))
+      (input-port-buffer-set! in (string-copy (input-port-buffer in)))
+      (output-port-buffer-set! out (string-copy (output-port-buffer out)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    call-in-background ...                                           */
 ;*    -------------------------------------------------------------    */

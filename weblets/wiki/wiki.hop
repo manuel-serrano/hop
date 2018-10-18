@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/weblets/wiki/wiki.hop             */
+;*    serrano/prgm/project/hop/3.0.x/weblets/wiki/wiki.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jan 10 14:08:29 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 18:00:04 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -48,13 +48,13 @@
 			      (backend be)
 			      (content-type mime-type)
 			      (xml res))))))
-	      (user-access-denied))
+	      (access-denied))
 	  (wiki-query req xml))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-service (wiki/compile #!optional path (xml "html5"))
+(define-service (wiki/compile #!key path (xml "html5"))
    (let ((req (current-request)))
       (if (string? path)
 	  (if (authorized-path? req path)
@@ -64,7 +64,7 @@
 		       (backend be)
 		       (content-type mime-type)
 		       (xml (wiki-view req path #f #t)))))
-	      (user-access-denied))
+	      (access-denied))
 	  (wiki-query req xml))))
 
 ;*---------------------------------------------------------------------*/
@@ -137,7 +137,7 @@
 		       (<DIV> :align "center"
 			  editor))))
 	      (http-file-not-found file))
-	  (user-access-denied))))
+	  (access-denied))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki/edit/editor ...                                             */
@@ -149,7 +149,7 @@
 	  (begin
 	     (run-process editor file :wait #f)
 	     #f)
-	  (user-access-denied))))
+	  (access-denied))))
    
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI:BODY> ...                                                  */
@@ -210,7 +210,7 @@
 	    (<A> :title "Compile"
 	       :class "doc"
 	       :href "compile"
-	       :onclick ~(set! this.href ($wiki/compile $path))
+	       :onclick ~(set! this.href ($wiki/compile :path $path))
 	       :target "_blank"
 	       (<IMG> :class "doc"
 		  :inline #t

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Aug 16 17:21:42 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Wed Jul 12 07:03:54 2017 (serrano)                */
+;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -18,20 +18,23 @@
 	   __hop_xml-types)
    
    (export (class user
+	      (mutex::mutex read-only (default (make-mutex)))
 	      (name::bstring read-only)
 	      (uuid::obj read-only (default #unspecified))
 	      (groups::pair-nil read-only (default '()))
 	      (password::bstring read-only)
 	      (services read-only)
+	      (files read-only)
 	      (directories read-only)
 	      (preferences-filename::obj read-only)
 	      (preferences::pair-nil (default '()))
 	      (data::obj (default #unspecified))
 	      (authentication::symbol read-only (default 'basic)))
-
+	   
 	   (class &hop-method-error::&io-parse-error)
 	   (class &hop-autoload-error::&io-error)
 	   (class &hop-security-error::&error)
+	   (class &hop-authentication-error::&error)
 	   (class &hop-injection-error::&hop-security-error)
 	   
            (abstract-class %http-message
@@ -43,11 +46,8 @@
 	      (timeout::int (default 0)))
 	   
 	   (class http-request::%http-message
+	      (%user (default #f))
 	      (id::int read-only (default -1))
-	      (user::user read-only)
-	      (localclientp::bool (default #f))
-	      (lanclientp::bool (default #f))
-	      (hook::procedure (default (lambda (rep) rep)))
 	      (transfer-encoding (default #f))
 	      (http::symbol (default 'HTTP/1.1))
 	      (host::bstring (default "localhost"))
@@ -64,22 +64,22 @@
 
 	   (final-class http-server-request::http-request
 	      (service::obj (default #unspecified)))
-
+	   
 	   (wide-class http-server-request+::http-server-request
 	      (%env (default #f)))
-
+	   
 	   (class http-proxy-request::http-request)
-
+	   
 	   (class xml-http-request
 	      (status::int read-only)
 	      (header::pair-nil read-only (default '()))
-	      (input-port read-only))
+	      (input-port read-only)
+	      (req::obj read-only))
 	   
 	   (abstract-class %http-response::%http-message
-	      (content-type::obj read-only (default #f))
-	      (request::http-request (default (class-nil http-request)))
+	      (content-type::obj (default #f))
 	      (bodyp::bool read-only (default #t)))
-
+	   
 	   (class http-response-abort::%http-response)
 	   
 	   (class http-response-proxy::%http-response
@@ -95,21 +95,23 @@
 
 	   ;; http-response-remote is a weblet backward compatibiilty type
 	   (class http-response-remote::http-response-proxy)
-
-	   (class http-response-proxy-websocket::http-response-proxy)
+	   
+	   (class http-response-proxy-websocket::http-response-proxy
+	      (request::http-request read-only))
 	   
 	   (class http-response-filter::%http-response
 	      (response::%http-response read-only)
 	      (statusf::procedure (default (lambda (x) x)))
 	      (headerf::procedure (default (lambda (x) x)))
 	      bodyf::procedure)
-
+	   
 	   (abstract-class %http-response-server::%http-response
 	      (server::bstring (default (hop-server-name)))
  	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
-
-	   (class http-response-autoload::%http-response-server)
-
+	   
+	   (class http-response-autoload::%http-response-server
+	      (request::http-request read-only))
+	   
 	   (class http-response-xml::%http-response-server
 	      (backend read-only)
 	      (xml read-only))
@@ -125,54 +127,60 @@
 	   (class http-response-raw::%http-response-server
 	      (connection::obj read-only (default #f))
 	      (proc::procedure read-only))
-
+	   
 	   (class http-response-file::%http-response-server
-	      (file::bstring read-only))
+	      (file::bstring read-only)
+	      (size::elong (default #e-1))
+	      (offset::elong (default #e-1)))
 	   
 	   (class http-response-shoutcast::http-response-file)
 	   
 	   (class http-response-string::%http-response-server
 	      (body::bstring read-only (default "")))
-
+	   
 	   (class http-response-authentication::http-response-string)
-
+	   
 	   (class http-response-websocket::%http-response-server
+	      (request::http-request read-only)
 	      (connection::symbol read-only (default 'Upgrade))
 	      (origin::obj read-only (default #f))
 	      (location::obj read-only (default #f))
 	      (protocol::obj read-only)
 	      (sec read-only (default #f))
-	      (accept read-only (default #f)))
-
-	   (class http-response-error::http-response-string)
-
+	      (accept read-only (default #f))
+	      (onconnect read-only (default #f)))
+	   
 	   (class http-response-cgi::%http-response-server
 	      (cgibin::bstring read-only))
-
+	   
 	   (class http-response-persistent::%http-response
+	      (request::http-request read-only)
 	      (body (default #f)))
+	   
+	   (class http-response-async::%http-response
+	      (async::procedure read-only))
 	   
 	   (class http-response-chunked::%http-response
 	      (body (default #f)))
 	   
 	   (class http-response-put::%http-response-server
 	      (uri::bstring read-only))
-
+	   
 	   (class hop-service
 	      ;; the service identifier (e.g., doc/example)
-	      (id::symbol read-only)
+	      id::symbol
 	      ;; the weblet identifier (e.g., doc)
-	      (wid::symbol read-only)
+	      wid::symbol
 	      ;; the path associated with the service
-	      (path::bstring read-only)
+	      path::bstring
 	      ;; the service formals
 	      (args::obj read-only)
 	      ;; the user procedure associated
-	      (proc::procedure read-only)
+	      (proc::procedure read-only (info '(serialize: #f)))
 	      ;; the JS code calling that service
 	      (javascript::bstring read-only)
 	      ;; a time stamp
-	      (creation::elong read-only)
+	      (creation::elong read-only (default (current-seconds)))
 	      ;; a timeout in second
 	      (timeout::long read-only (default -1))
 	      ;; the number of times the service might be called
@@ -180,11 +188,10 @@
 	      ;; the resource directory (that contains the source file)
 	      (resource::obj (default #f))
 	      ;; the source file
-	      (source::obj read-only (default #f)))
+	      (source::obj read-only (default #f))
+	      ;; ctx (i.e., %this for JavaScript)
+	      (ctx::obj read-only (default #f)))))
 
-	   (http-request-user ::http-request)
-	   (http-request-hook-add! ::http-request ::procedure)))
-   
 ;*---------------------------------------------------------------------*/
 ;*    object-display ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -233,26 +240,6 @@
 	    (print "id  : " id)
 	    (print "path: " path)
 	    (print "args: " args)))))
-
-;*---------------------------------------------------------------------*/
-;*    http-request-user ...                                            */
-;*---------------------------------------------------------------------*/
-(define (http-request-user req)
-   (with-access::http-request req (user)
-      user))
-
-;*---------------------------------------------------------------------*/
-;*    http-request-hook-add! ...                                       */
-;*---------------------------------------------------------------------*/
-(define (http-request-hook-add! req h)
-   (with-access::http-request req (hook)
-      (let ((old-hook hook))
-	 (set! hook (lambda (rep)
-		       (let* ((rep2 (h rep))
-			      (res (if (isa? rep2 %http-response)
-				       rep2
-				       rep)))
-			  (old-hook res)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exception-notify ::&hop-autoload-error ...                       */

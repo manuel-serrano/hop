@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/3.1.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun Aug 16 17:20:07 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Mon Nov 27 08:37:38 2017 (serrano)                */
+;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -13,9 +13,12 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_hop
-
+   
    (library web)
-
+   
+   (cond-expand
+      (enable-ssl (library ssl)))
+   
    (include "verbose.sch")
    
    (import  __hop_param
@@ -29,29 +32,50 @@
 	    __hop_xml-types
 	    __hop_http-error
 	    __hop_http-lib
-	    __hop_weblets)
+	    __hop_weblets
+	    __hop_xml)
    
    (with    __hop_event)
    
    (export  (generic thread-request ::obj)
 	    (generic thread-request-set! ::obj ::obj)
-	    (inline current-request::obj)
-	    (inline current-request-set! ::thread ::obj)
 	    (anonymous-request::http-request)
-	    (request-get::obj ::symbol)
+	    (request-get::obj ::http-request ::symbol)
 	    (request->response::%http-response ::http-request ::obj)
-	    (with-url ::bstring ::obj #!key fail (header '()) (timeout 0))
+	    (with-url ::bstring ::obj
+		      #!key
+		      fail
+		      (header '())
+		      (authorization #f)
+		      (connection 'close)
+		      (timeout 0)
+		      (method 'GET)
+		      (json-parser (lambda (ip ctx) (javascript->obj ip)))
+		      (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
+		      (ctx #f)
+		      body)
 	    (with-hop-remote path success failure
-			     #!key
-			     (host "localhost")
-			     (port (hop-port))
-			     (abspath #f)
-			     (user #f)
-			     (password #f)
-			     (authorization #f)
-			     (anim #f))
-	    (generic with-hop-local obj success fail authorization)
-	    (hop-get-file::obj ::bstring ::obj)))
+	       #!key
+	       (host "localhost")
+	       (port (hop-port))
+	       (abspath #f)
+	       (user #f)
+	       (password #f)
+	       (authorization #f)
+	       (header '())
+	       (anim #f)
+	       (scheme 'http)
+	       (ctx #f)
+	       (json-parser (lambda (ip ctx) (javascript->obj ip)))
+	       (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
+	       args)
+	    (generic with-hop-local obj success fail authorization header)
+	    (hop-get-file::obj ::bstring ::obj)
+	    (open-input-https-socket ::bstring bufinfo timeout)
+	    (hop-http-decode-value ::obj ::symbol ::obj
+	       #!key
+	       (response-type 'arraybuffer)
+	       json-parser x-javascript-parser content-length)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *anonymous-request* ...                                          */
@@ -66,8 +90,7 @@
       (set! *anonymous-request*
 	    (instantiate::http-server-request
 	       (http 'HTTP/1.0)
-	       (connection 'close)
-	       (user (anonymous-user)))))
+	       (connection 'close))))
    *anonymous-request*)
 
 ;*---------------------------------------------------------------------*/
@@ -102,22 +125,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    request-get ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (request-get key)
-   (let ((req (current-request)))
-      (let loop ()
-	 (cond
-	    ((isa? req http-server-request+)
-	     (with-access::http-server-request+ req (%env)
-		(let ((c (assq key %env)))
-		   (if (not (pair? c))
-		       #unspecified
-		       (cdr c)))))
-	    ((isa? req http-server-request)
-	     (widen!::http-server-request+ req
-		(%env (request-env-parse req)))
-	     (loop))
-	    (else
-	     #unspecified)))))
+(define (request-get req key)
+   (let loop ()
+      (cond
+	 ((isa? req http-server-request+)
+	  (with-access::http-server-request+ req (%env)
+	     (let ((c (assq key %env)))
+		(if (not (pair? c))
+		    #unspecified
+		    (cdr c)))))
+	 ((isa? req http-server-request)
+	  (widen!::http-server-request+ req
+	     (%env (request-env-parse req)))
+	  (loop))
+	 (else
+	  #unspecified))))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-env-parse ...                                            */
@@ -143,35 +165,31 @@
 	      (filters (hop-filters)))
       (if (null? filters)
 	  (with-access::http-request m (content-length method path host port
-					  user header userinfo scheme http)
+					  header userinfo scheme http)
 	     (if (or (not (isa? req http-proxy-request))
 		     (not (hop-enable-proxying)))
-		 (hop-request-hook m (http-file-not-found path))
-		 (let* ((n (instantiate::http-response-proxy
-			      (scheme scheme)
-			      (method method)
-			      (host host)
-			      (port port)
-			      (path path)
-			      (userinfo userinfo)
-			      (http http)
-			      (header header)
-			      (bodyp (not (eq? method 'HEAD)))
-			      (content-length content-length)
-			      (request m)
-			      (remote-timeout (hop-read-timeout))
-			      (connection-timeout (hop-connection-timeout))))
-			(r (hop-run-hook (hop-http-response-proxy-hooks) m n)))
-		    (hop-request-hook m r))))
+		 (instantiate::http-response-abort)
+		 (let ((n (instantiate::http-response-proxy
+			     (scheme scheme)
+			     (method method)
+			     (host host)
+			     (port port)
+			     (path path)
+			     (userinfo userinfo)
+			     (http http)
+			     (header header)
+			     (bodyp (not (eq? method 'HEAD)))
+			     (content-length content-length)
+			     (remote-timeout (hop-read-timeout))
+			     (connection-timeout (hop-connection-timeout)))))
+		    (hop-run-hook (hop-http-response-proxy-hooks) m n))))
 	  (let ((n ((cdar filters) m)))
 	     (cond
 		((isa? n %http-response)
-		 (let ((r (hop-run-hook (hop-http-response-server-hooks) m n)))
-		    (hop-request-hook m r)))
+		 (hop-run-hook (hop-http-response-server-hooks) m n))
 		((eq? n m)
 		 (loop m (cdr filters)))
 		((isa? n http-request)
-		 (current-request-set! thread n)
 		 (loop n (cdr filters)))
 		((eq? n 'hop-resume)
 		 (loop m (hop-filters)))
@@ -179,7 +197,7 @@
 		 (loop m (cdr filters))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-run-hooks ...                                                */
+;*    hop-run-hook ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (hop-run-hook hooks m rp)
    (let loop ((hooks hooks)
@@ -187,25 +205,6 @@
       (if (null? hooks)
 	  rp
 	  (loop (cdr hooks) ((car hooks) m rp)))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-request-hook ...                                             */
-;*    -------------------------------------------------------------    */
-;*    Execute the request hook and set the response's request field.   */
-;*---------------------------------------------------------------------*/
-(define (hop-request-hook::%http-response req rep)
-   (cond
-      ((not (isa? req http-request))
-       (error "hop-request-hook" "Illegal request" req))
-      ((not (isa? rep %http-response))
-       (error "hop-request-hook" "Illegal response" rep))
-      (else
-       (with-access::http-request req (hook)
-	  (let* ((rep2 (hook rep))
-		 (res (if (isa? rep2 %http-response) rep2 rep)))
-	     (with-access::%http-response res (request)
-		(set! request req))
-	     res)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    header-content-type ...                                          */
@@ -232,55 +231,167 @@
       s))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-http-decode-value ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hop-http-decode-value obj content-type ctx
+	   #!key
+	   (response-type 'arraybuffer)
+	   json-parser
+	   x-javascript-parser
+	   content-length)
+   
+   (define (get-chars)
+      (cond
+	 ((string? obj) obj)
+	 ((>elong content-length #e0) (read-chars content-length obj))
+	 (else (read-string obj))))
+
+   (case content-type
+      ((application/x-hop)
+       (let* ((chars (get-chars))
+	      (s (if (eq? response-type 'arraybuffer)
+		     chars
+		     (string-hex-intern chars))))
+	  (string->obj s #f ctx)))
+      ((application/x-url-hop)
+       (let ((chars (get-chars)))
+	  (string->obj (url-decode chars) #f ctx)))
+      ((application/x-json-hop)
+       (let ((chars (get-chars)))
+	  (string->obj (byte-array->string (javascript->obj chars)) #f ctx)))
+      ((application/json)
+       (if (string? obj)
+	   (call-with-input-string obj
+	      (lambda (p) (json-parser p ctx)))
+	   (json-parser obj ctx)))
+      ((application/x-javascript)
+       (if (string? obj)
+	   (call-with-input-string obj
+	      (lambda (p) (x-javascript-parser p ctx)))
+	   (x-javascript-parser obj ctx)))
+      ((application/x-frame-hop)
+       (let* ((path (get-chars))
+	      (qi (string-index path #\?))
+	      (query (if qi (substring path (+fx qi 1)) path))
+	      (svc (if qi (substring path 0 qi) #f)))
+	  (let ((args (cgi-args->list query)))
+	     (match-case args
+		((("hop-encoding" . "hop") ("vals" . ?vals))
+		 (cons svc (string->obj vals #f ctx)))
+		((("hop-encoding" . "json") ("vals" . ?vals))
+		 (cons svc
+		    (call-with-input-string vals
+		       (lambda (p) (json-parser p ctx)))))
+		(else
+		 (error "hop-http-decode-value" "bad query" args))))))
+      ((application/x-frame-json)
+       (let* ((path (get-chars))
+	      (qi (string-index path #\?))
+	      (query (if qi (substring path (+fx qi 1)) path))
+	      (svc (if qi (substring path 0 qi) #f)))
+	  (let ((args (cgi-args->list query)))
+	     (match-case args
+		((("hop-encoding" . "hop") ("vals" . ?vals))
+		 (cons svc (string->obj vals #f ctx)))
+		((("hop-encoding" . "json") ("vals" . ?vals))
+		 (cons svc
+		    (call-with-input-string vals
+		       (lambda (p) (json-parser p ctx)))))
+		(else
+		 (error "hop-http-decode-value" "bad query" args))))))
+      ((text/html application/xhtml+xml)
+       (if (string? obj)
+	   (call-with-input-string obj
+	      (lambda (p)
+		 (car (last-pair (parse-html p (string-length obj))))))
+	   (car (last-pair (parse-html obj (elong->fixnum content-length))))))
+      (else
+       (get-chars))))
+   
+;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (make-http-callback proc::symbol req success fail)
+(define (make-http-callback url req success fail user-or-auth ctx responsetype
+	   json-parser x-javascript-parser)
+   
+   (define (default-error-handling status header p)
+      (if (procedure? fail)
+	  (fail (instantiate::xml-http-request
+		   (status status)
+		   (header header)
+		   (input-port p)
+		   (req req)))
+	  (raise
+	     (instantiate::&error
+		(proc url)
+		(msg (format "Illegal status `~a'" status))
+		(obj (when (input-port? p) (read-string p)))))))
+   
    (lambda (p status header clength tenc)
-      (when (and (input-port? p) (>elong clength #e0))
-	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
-      (case status
-	 ((200)
-	  ;; see hop-json-mime-type and hop-bigloo-mime-type
-	  (let ((obj (case (header-content-type header)
-			((application/x-hop)
-			 (string->obj (read-chars clength p)))
-			((application/x-url-hop)
-			 (string->obj (url-decode (read-chars clength p))))
-			((application/x-json-hop)
-			 (string->obj
-			    (byte-array->string 
-			       (javascript->obj (read-chars clength p)))))
-			((application/json)
-			 (json->obj p))
-			((application/x-javascript)
-			 (javascript->obj p))
-			(else
-			 (read-string p)))))
-	     (success obj)))
-	 ((201 204 304)
-	  ;; no message body
-	  (success (instantiate::xml-http-request
-		      (status status)
-		      (header header)
-		      (input-port p))))
-	 ((401 407)
-	  (if (procedure? fail)
-	      (fail (instantiate::xml-http-request
-		       (status status)
-		       (header header)
-		       (input-port p)))
-	      (raise (user-access-denied req))))
-	 (else
-	  (if (procedure? fail)
-	      (fail (instantiate::xml-http-request
-		       (status status)
-		       (header header)
-		       (input-port p)))
-	      (raise
-		 (instantiate::&error
-		    (proc proc)
-		    (msg (format "Illegal status `~a'" status))
-		    (obj (when (input-port? p) (read-string p))))))))))
+      (with-trace 'with-hop "make-http-callback"
+	 (trace-item "status=" status " content-length=" clength)
+	 (when (and (input-port? p) (>elong clength #e0))
+	    (input-port-fill-barrier-set! p (elong->fixnum clength)))
+	 (case status
+	    ((200)
+	     (trace-item "ctype=" (header-content-type header))
+	     (trace-item "header=" header)
+	     ;; see hop-json-mime-type and hop-bigloo-mime-type
+	     (let ((obj (with-handler
+			   (lambda (e)
+			      (if (procedure? fail)
+				  (fail e)
+				  (raise e))
+			      ;; header acts as an error mark, see below 
+			      header)
+			   (hop-http-decode-value p
+			      (header-content-type header) 
+			      ctx
+			      :response-type responsetype
+			      :json-parser json-parser
+			      :x-javascript-parser x-javascript-parser
+			      :content-length clength))))
+		;; eq? obj header only holds on error
+		(unless (eq? obj header)
+		   (success obj))))
+	    ((201 204 304)
+	     ;; no message body
+	     (success (instantiate::xml-http-request
+			 (status status)
+			 (header header)
+			 (input-port p)
+			 (req req))))
+	    ((401 407)
+	     (if (procedure? fail)
+		 (fail (instantiate::xml-http-request
+			  (status status)
+			  (header header)
+			  (input-port p)
+			  (req req)))
+		 (raise
+		    (instantiate::&hop-authentication-error
+		       (proc url)
+		       (msg "Authentication requested by remote server")
+		       (obj user-or-auth)))))
+	    ((500)
+	     (cond
+		((assq :hop-error header)
+		 =>
+		 (lambda (c)
+		    (if (cdr c)
+			(let ((val (string->obj (url-decode (cdr c)) ctx)))
+			   (if (procedure? fail)
+			       (fail val)
+			       (raise
+				  (instantiate::&error
+				     (proc url)
+				     (msg (format "Illegal status `~a'" status))
+				     (obj (when (input-port? p) (read-string p)))))))
+			(default-error-handling status header p))))
+		(else
+		 (default-error-handling status header p))))
+	    (else
+	     (default-error-handling status header p))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-to-hop-id ...                                                */
@@ -298,13 +409,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-url  ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (with-url url success #!key fail (header '()) (timeout 0))
+(define (with-url url success
+		  #!key fail
+		  (header '())
+		  (authorization #f)
+		  (timeout 0)
+		  (method 'GET)
+		  (connection 'close)
+		  (json-parser (lambda (ip ctx) (javascript->obj ip)))
+		  (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
+		  (ctx #f)
+		  body)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
 	     ": " url "\n")
-   (with-trace 2 "with-url"
+   (with-trace 'with-hop "with-url"
       (trace-item "url=" url)
+      (trace-item "method=" method)
       (trace-item "header=" header)
+      (trace-item "body=" body)
       (cond
 	 ((and (procedure? fail) (not (correct-arity? fail 1)))
 	  (error "with-url" "Illegal fail handler" fail))
@@ -313,6 +436,9 @@
 	 (else
 	  (multiple-value-bind (scheme userinfo host port path)
 	     (url-parse url)
+	     (trace-item "host=" host)
+	     (trace-item "port=" port)
+	     (trace-item "path=" path)
 	     (cond
 		((or (string=? scheme "file")
 		     (string=? scheme "string")
@@ -337,32 +463,22 @@
 		(else
 		 (let* ((s (string->symbol scheme))
 			(r (instantiate::http-server-request
-			      (user (anonymous-user))
 			      (scheme s)
 			      (id hop-to-hop-id)
 			      (userinfo userinfo)
 			      (host (or host path))
 			      (port (or port (scheme-default-port s)))
-			      (header header)
+			      (header (cons `(connection: . ,connection) header))
 			      (connection-timeout timeout)
+			      (connection connection)
 			      (timeout timeout)
+			      (method method)
+			      (authorization authorization)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
-			(hdl (make-http-callback 'with-url r suc fail)))
-		    (when (>fx (bigloo-debug) 2)
-		       (with-output-to-port (current-error-port)
-			  (lambda ()
-			     (print "GET " path " HTTP/1.1")
-			     (print "Host: " host)
-			     (print "Port: " port)
-			     (for-each (lambda (h)
-					  (display (keyword->string (car h)))
-					  (display ": ")
-					  (display (cadr h))
-					  (newline))
-				       header))))
-		    (trace-item "remote path=" path)
-		    (http-send-request r hdl)))))))))
+			(hdl (make-http-callback url r suc fail #f ctx 'text
+				json-parser x-javascript-parser)))
+		    (http-send-request r hdl :body body)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-remote ...                                              */
@@ -374,12 +490,22 @@
 	   (abspath #f)
 	   (user #f)
 	   (password #f)
+	   (header '())
 	   (authorization #f)
-	   (anim #f))
+	   (anim #f)
+	   (scheme 'http)
+	   (json-parser (lambda (ip ctx) (javascript->obj ip)))
+	   (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
+	   (ctx #f)
+	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
-      ": " path "\n")
-   (with-trace 2 "with-hop"
+      " " scheme "://" host ":" port
+      (if (and (=fx (hop-verbose) 1) (>fx (string-length path) 80))
+	  (string-append (substring path 0 80) "...")
+	  path)
+      "\n")
+   (with-trace 'with-hop "with-hop-remote"
       (trace-item "host=" host " port=" port " path=" path " abspath=" abspath)
       (trace-item "authorization=" authorization)
       (cond
@@ -391,18 +517,25 @@
 	  (let* ((req (instantiate::http-server-request
 			 (userinfo (when (and (string? user) (string? password))
 				      (string-append user ":" password)))
-			 (user (anonymous-user))
 			 (id hop-to-hop-id)
 			 (host host)
 			 (port port)
 			 (connection 'close)
-			 (header '((hop-serialize: . "arraybuffer")))
+			 (header (cons*
+				    '(hop-serialize: . "x-hop")
+				    '(hop-responsetype: . "arraybuffer")
+				    '(hop-client: . "hop")
+				    header))
+			 (method (if (pair? args) 'post 'put))
 			 (authorization authorization)
+			 (scheme scheme)
 			 (path (or abspath path))))
 		 (suc (or success (lambda (x) x)))
-		 (hdl (make-http-callback 'with-hop req suc fail)))
+		 (hdl (make-http-callback path req suc fail
+			 (or user authorization) ctx 'arraybuffer
+			 json-parser x-javascript-parser)))
 	     (trace-item "remote path=" path)
-	     (http-send-request req hdl))))))
+	     (http-send-request req hdl :args args))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fail-or-raise ...                                                */
@@ -415,7 +548,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (with-hop-local obj success fail auth)
+(define-generic (with-hop-local obj success fail auth header)
    (when (procedure? success) (success obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -424,34 +557,34 @@
 ;*    This method is used for imported services. These services        */
 ;*    are called locally but they are still remote.                    */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-proxy success fail auth)
+(define-method (with-hop-local obj::http-response-proxy success fail auth header)
    (with-access::http-response-proxy obj (path host port)
       (with-hop-remote path success fail
-	 :host host :port port :authorization auth)))
+	 :host host :port port :authorization auth :header header)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-autoload ...                      */
 ;*    -------------------------------------------------------------    */
 ;*    This method is used for imported local services (without body).  */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-autoload success fail auth)
+(define-method (with-hop-local obj::http-response-autoload success fail auth header)
    (with-access::http-response-autoload obj (request)
       (with-access::http-request request (path)
 	 (let ((rep (service-filter request)))
 	    (if (isa? rep %http-response)
-		(with-hop-local rep success fail auth)
+		(with-hop-local rep success fail auth header)
 		(error "with-hop" "Bad auto-loaded local service" path))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::xml ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::xml success fail auth)
+(define-method (with-hop-local obj::xml success fail auth header)
    (when (procedure? success) (success obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-authentication ...                */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local o::http-response-authentication success fail aut)
+(define-method (with-hop-local o::http-response-authentication success fail aut header)
    (when (procedure? success)
       (success (instantiate::&error
 		  (proc "with-hop")
@@ -461,7 +594,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-string ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-string success fail auth)
+(define-method (with-hop-local obj::http-response-string success fail auth header)
    (when (procedure? success)
       (with-access::http-response-string obj (body)
 	 (success body))))
@@ -469,7 +602,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-hop ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-hop success fail auth)
+(define-method (with-hop-local obj::http-response-hop success fail auth header)
    (when (procedure? success)
       (with-access::http-response-hop obj (value)
 	 (success value))))
@@ -477,7 +610,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-xml ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-xml success fail auth)
+(define-method (with-hop-local obj::http-response-xml success fail auth header)
    (when (procedure? success)
       (with-access::http-response-xml obj (xml)
 	 (success xml))))
@@ -485,7 +618,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-procedure ...                     */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-procedure success fail auth)
+(define-method (with-hop-local obj::http-response-procedure success fail auth header)
    (when (procedure? success)
       (with-access::http-response-procedure obj (proc)
 	 (success (with-output-to-string proc)))))
@@ -493,7 +626,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-file ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-file success fail auth)
+(define-method (with-hop-local obj::http-response-file success fail auth header)
    (with-access::http-response-file obj (file)
       (let ((pf (open-input-file file)))
 	 (if (not (input-port? pf))
@@ -515,7 +648,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-cgi ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-cgi success fail auth)
+(define-method (with-hop-local obj::http-response-cgi success fail auth header)
    (fail-or-raise
     fail
     (instantiate::&error
@@ -526,7 +659,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-put ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-put success fail auth)
+(define-method (with-hop-local obj::http-response-put success fail auth header)
    (fail-or-raise
     fail
     (instantiate::&error
@@ -537,7 +670,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-filter ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-filter success fail auth)
+(define-method (with-hop-local obj::http-response-filter success fail auth header)
    (fail-or-raise
     fail 
     (instantiate::&error
@@ -548,7 +681,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-persistent ...                    */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local o::http-response-persistent success fail auth)
+(define-method (with-hop-local o::http-response-persistent success fail auth header)
    (when (procedure? success) (success o)))
 
 ;*---------------------------------------------------------------------*/
@@ -567,11 +700,6 @@
 (define (hop-get-file path thread)
    (let* ((reqi (current-request))
 	  (req (instantiate::http-server-request
-		  (localclientp #t)
-		  (lanclientp #t)
-		  (user (if (isa? reqi http-request)
-			    (with-access::http-request reqi (user) user)
-			    (anonymous-user)))
 		  (path path)))
 	  (rep (request->response req thread)))
       (cond
@@ -595,3 +723,62 @@
 	 (else
 	  #f))))
    
+;*---------------------------------------------------------------------*/
+;*    open-input-https-socket ...                                      */
+;*---------------------------------------------------------------------*/
+(define (open-input-https-socket string bufinfo timeout)
+   
+   (define (parser ip status-code header clen tenc)
+      (when (and (>=fx status-code 200) (<=fx status-code 299))
+	 (cond
+	    ((not (input-port? ip))
+	     (open-input-string ""))
+	    ((and (elong? clen) (>elong clen 0))
+	     (input-port-fill-barrier-set! ip (elong->fixnum clen))
+	     ($input-port-length-set! ip clen)
+	     ip)
+	    (else
+	     ip))))
+
+   (cond-expand
+      (enable-ssl
+       (multiple-value-bind (protocol login host port abspath)
+	  (url-sans-protocol-parse string "https")
+	  (let loop ((ip #f)
+		     (header `((user-agent: ,(hop-user-agent))
+			       (Connection: keep-alive))))
+	     (let* ((sock (http :socket
+			     (make-ssl-client-socket host port
+				:timeout timeout)
+			     :protocol 'https
+			     :host host
+			     :port port
+			     :login login
+			     :path abspath
+			     :timeout timeout
+			     :header header))
+		    (op (socket-output sock)))
+		(if (input-port? ip)
+		    ;; the socket has been re-opened for seek, reuse
+		    ;; the user input-port
+		    (input-port-clone! ip (socket-input sock))
+		    (set! ip (socket-input sock)))
+		(input-port-close-hook-set! ip
+		   (lambda (ip)
+		      (close-output-port op)
+		      (socket-close sock)))
+		(input-port-seek-set! ip
+		   (lambda (ip offset)
+		      (socket-close sock)
+		      (let ((r (string-append "bytes=" (integer->string offset) "-")))
+			 (loop ip `((range: ,r)
+				    (user-agent: "Mozilla/5.0"))))))
+		(with-handler
+		   (lambda (e)
+		      (socket-close sock)
+		      (when (isa? e &http-redirection)
+			 (with-access::&http-redirection e (url)
+			    (open-input-file url bufinfo))))
+		   (http-parse-response ip op parser))))))
+      (else
+       (error "open-input-https-socket" "ssl disable" string))))
