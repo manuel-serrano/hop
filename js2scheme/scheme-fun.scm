@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Oct 18 11:04:47 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 09:15:06 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -229,9 +229,10 @@
 		     ((global %scope)
 		      (global-declfun this val scmid fastid))
 		     ((export)
-		      (with-access::J2SExport export (index)
+		      (with-access::J2SExport export (index id)
 			 (append (regular-declfun this val scmid fastid)
-			    `((nodejs-module-set! %exports ,index ,scmid)))))
+			    `((nodejs-module-set! %exportnames ,index ',id)
+			      (nodejs-module-set! %exportvals ,index ,scmid)))))
 		     (else
 		      (regular-declfun this val scmid fastid)))))))))
 

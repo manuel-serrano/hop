@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/cast.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/cast.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Sep 27 13:13:24 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 08:18:26 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -672,3 +672,10 @@
       (set! exprs (map! (lambda (e) (type-cast! e 'scmstring)) exprs))
       (cast this totype)))
 
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SImportDynamic ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SImportDynamic totype)
+   (with-access::J2SImportDynamic this (path)
+      (set! path (type-cast! path 'string))
+      (cast this totype)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Oct 18 07:53:47 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 08:05:56 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -459,12 +459,20 @@
 	      (path::bstring read-only)
 	      (names::obj (default #f))
 	      (respath (default #f))
-	      (obj (default #f)))
+	      (module (default #f))
+	      (import (default #f)))
 
 	   (final-class J2SImportName
 	      (loc read-only)
 	      (id::symbol read-only)
 	      (alias::symbol read-only))
+
+	   (final-class J2SImportDynamic::J2SExpr
+	      (base::bstring (default (pwd)))
+	      path::J2SExpr)
+
+	   (final-class J2SImport*::J2SExpr
+	      import)
 
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
@@ -1012,6 +1020,7 @@
 (gen-walks J2SDProducer expr)
 (gen-walks J2SDConsumer expr)
 (gen-walks J2SPragma (vals))
+(gen-walks J2SImportDynamic path)
 
 (gen-traversals J2STilde)
 

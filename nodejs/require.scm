@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Oct 19 07:53:17 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 08:16:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -23,7 +23,9 @@
 
    (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
-	   (nodejs-import-module::vector ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
+	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
+	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::bstring)
+	   (nodejs-exports-module::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
@@ -584,11 +586,52 @@
 ;*    -------------------------------------------------------------    */
 ;*    ES6 module import.                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-import-module::vector worker::WorkerHopThread %this::JsGlobalObject %module::JsObject path::bstring)
-   (let ((mod (nodejs-load-module path worker %this %module "hopscript")))
-      (with-access::JsModule mod (exports)
-	 exports)))
-   
+(define (nodejs-import-module::JsModule worker::WorkerHopThread %this::JsGlobalObject %module::JsObject path::bstring)
+   (nodejs-load-module path worker %this %module "hopscript"))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-import-module-dynamic ...                                 */
+;*    -------------------------------------------------------------    */
+;*    As of October 2018, this is still a mere proposal. See           */
+;*    https://github.com/tc39/proposal-dynamic-import                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import-module-dynamic::JsPromise worker::WorkerHopThread
+	   %this::JsGlobalObject %module::JsObject name::bstring base::bstring)
+   (with-access::JsGlobalObject %this (js-promise)
+      (js-new1 %this js-promise
+	 (js-make-function %this
+	    (lambda (this resolve reject)
+	       (with-handler
+		  (lambda (exn)
+		     (js-call1 %this reject (js-undefined) exn))
+		  (let* ((path (nodejs-resolve name %this %module 'body))
+			 (mod (nodejs-import-module worker %this %module path)))
+		     (js-call1 %this resolve (js-undefined)
+			(nodejs-exports-module mod worker %this)))))
+	    2 'import))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-exports-module ...                                        */
+;*---------------------------------------------------------------------*/
+(define (nodejs-exports-module::JsObject mod::JsModule worker::WorkerHopThread %this)
+   (with-access::JsGlobalObject %this (__proto__ js-symbol-tostringtag)
+      (with-access::JsModule mod (exportnames exportvals)
+	 (let ((m (instantiateJsObject
+		     (__proto__ __proto__))))
+	    (js-bind! %this m js-symbol-tostringtag
+	       :value (js-string->jsstring "Module")
+	       :configurable #f :writable #f :enumerable #f)
+	    (let loop ((i (-fx (vector-length exportnames) 1)))
+	       (if (=fx i -1)
+		   m
+		   (begin
+		      (js-bind! %this m (vector-ref exportnames i)
+			 :get (js-make-function %this
+				 (lambda (this) (vector-ref exportvals i))
+				 0 'get)
+			 :configurable #f :writable #f :enumerable #t)
+		      (loop (-fx i 1)))))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-head ...                                                  */
 ;*    -------------------------------------------------------------    */

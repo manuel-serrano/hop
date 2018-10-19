@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Oct 18 18:14:06 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 08:15:06 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -96,14 +96,15 @@
 			 (location (caddr loc)))))))))
    
    (define (export-*::J2SDecl prgm::J2SProgram id loc)
-      (with-access::J2SProgram prgm (exports path)
-	 (instantiate::J2SDeclInit
-	    (loc loc)
-	    (id id)
-	    (binder 'let)
-	    (scope 'global)
-	    (writable #f)
-	    (val (instantiate::J2SUndefined (loc loc))))))
+      (instantiate::J2SDeclInit
+	 (loc loc)
+	 (id id)
+	 (binder 'let-opt)
+	 (scope 'global)
+	 (writable #f)
+	 (val (instantiate::J2SImport*
+		 (loc loc)
+		 (import this)))))
    
    (with-access::J2SProgram prgm ((src path) imports decls)
       (with-access::J2SImport this (path loc respath names)
@@ -150,7 +151,16 @@
 					(obj path)
 					(fname (cadr loc))
 					(location (caddr loc))))))))))))))))
-	 
+
+;*---------------------------------------------------------------------*/
+;*    esimport ::J2SImportDynamic ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (esimport this::J2SImportDynamic prgm::J2SProgram stack args)
+   (with-access::J2SProgram prgm (path)
+      (with-access::J2SImportDynamic this (base)
+	 (set! base path)
+	 (call-default-walker))))
+
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SNode ...                                           */
 ;*---------------------------------------------------------------------*/

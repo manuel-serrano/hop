@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Oct 18 13:33:04 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 08:10:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -281,7 +281,7 @@
 	     (j2s-let-decl-toplevel this mode return conf)
 	     (error "js-scheme" "Should not be here (not global)"
 		(j2s->list this)))))
-   
+
    (cond
       ((j2s-export? this) #unspecified)
       ((j2s-param? this) (call-next-method))
@@ -315,9 +315,10 @@
 			 val tyval (strict-mode? mode) conf #f #f)
 		     ,result))
 		((isa? export J2SExport)
-		 (with-access::J2SExport export (index)
+		 (with-access::J2SExport export (index id)
 		    `(begin
-			(nodejs-module-set! %exports ,index ,val)
+			(nodejs-module-set! %exportvals ,index ,val)
+			(nodejs-module-set! %exportnames ,index ',id)
 			,result)))
 		(result
 		 `(begin
@@ -394,12 +395,12 @@
 	 (cond
 	    ((isa? decl J2SDeclImport)
 	     (with-access::J2SDeclImport decl (linkindex import)
-		(with-access::J2SImport import (obj)
-		   `(nodejs-module-ref ,obj ,linkindex))))
+		(with-access::J2SImport import (import)
+		   `(nodejs-module-ref ,import ,linkindex))))
 	    ((and (isa? export J2SExport)
 		  (or (not ronly) (not (isa? decl J2SDeclFun))))
 	     (with-access::J2SExport export (index decl)
-		`(nodejs-module-ref %exports ,index)))
+		`(nodejs-module-ref %exportvals ,index)))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scheme-id decl))
 	    ((j2s-let? decl)
@@ -2786,6 +2787,24 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SImport mode return conf)
    #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SImportDynamic ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SImportDynamic mode return conf)
+   (with-access::J2SImportDynamic this (loc path base)
+      (epairify loc
+	 `(nodejs-import-module-dynamic %worker %this %module
+	     ,(j2s-scheme path mode return conf) ,base))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SImport* ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SImport* mode return conf)
+   (with-access::J2SImport* this (import loc)
+      (with-access::J2SImport import (module)
+	 (epairify loc
+	    `(nodejs-exports-module ,module %worker %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    throw? ...                                                       */

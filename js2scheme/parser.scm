@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Oct 18 18:11:24 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 08:04:41 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -937,7 +937,6 @@
 			       gen (instantiate::J2SUnresolvedRef
 				      (loc loc)
 				      (id 'this))
-;* 			       (J2SThis (or thisp (current-this)))     */
 			       (J2SHopRef '%this)))))
 		   fun))))))
       
@@ -1208,6 +1207,15 @@
 			(parse-token-error "Illegal import, \"from\" expected"
 			   fro)))
 		 (parse-token-error "Illegal import, \"as\" expected" as))))
+	 ((LPAREN)
+	  (consume-any!)
+	  (let ((path (expression #f #f)))
+	     (consume-token! 'RPAREN)
+	     (instantiate::J2SStmtExpr
+		(loc (token-loc token))
+		(expr (instantiate::J2SImportDynamic
+			 (loc (token-loc token))
+			 (path path))))))
 	 (else
 	  (parse-token-error "Illegal import" (consume-any!)))))
 
@@ -2077,15 +2085,22 @@
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
 	     (cond
+		((and plugins (assq (token-value token) plugins))
+		 =>
+		 (lambda (p)
+		    ((cdr p) token #f parser-controller)))
 		((and (eq? (token-value token) 'async)
 		      (eq? (peek-token-value) 'function))
 		 (async-expression token))
 		((eq? (peek-token-type) '=>)
 		 (arrow-function (list token) (token-loc token)))
-		((and plugins (assq (token-value token) plugins))
-		 =>
-		 (lambda (p)
-		    ((cdr p) token #f parser-controller)))
+		((eq? (token-value token) 'import)
+		 (consume-token! 'LPAREN)
+		 (let ((path (expression #f #f)))
+		    (consume-token! 'RPAREN)
+		    (instantiate::J2SImportDynamic
+		       (loc (token-loc token))
+		       (path path))))
 		(else
 		 (instantiate::J2SUnresolvedRef
 		    (loc (token-loc token))

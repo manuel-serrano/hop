@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Oct 18 08:06:50 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 09:02:57 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -230,11 +230,19 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-module-imports this::J2SProgram)
    (with-access::J2SProgram this (imports)
-      (map (lambda (i idx)
-	      (with-access::J2SImport i (obj respath)
-		 (let ((id (string->symbol (format "%import-~a" idx))))
-		    (set! obj id)
-		    `(define ,id (nodejs-import-module %worker %this %module ,respath)))))
+      (append-map (lambda (im idx)
+		     (with-access::J2SImport im (respath module import)
+			(let ((modid (string->symbol (format "%module-~a" idx)))
+			      (impid (string->symbol (format "%import-~a" idx))))
+			   (set! import impid)
+			   (set! module modid)
+			   (list
+			      `(define ,modid
+				  (nodejs-import-module %worker %this %module
+				     ,respath))
+			      `(define ,impid
+				  (with-access::JsModule ,modid (exportvals)
+				     exportvals))))))
 	 imports (iota (length imports)))))
 
 ;*---------------------------------------------------------------------*/
@@ -242,10 +250,17 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-module-exports this::J2SProgram)
    (with-access::J2SProgram this (exports)
-      `(define %exports
-	  (with-access::JsModule %module (exports)
-	     (set! exports (make-vector ,(length exports) (js-undefined)))
-	     exports))))
+      `(begin
+	  (define %exportvals
+	     (with-access::JsModule %module (exportvals)
+		(set! exportvals
+		   (make-vector ,(length exports) (js-undefined)))
+		exportvals))
+	  (define %exportnames
+	     (with-access::JsModule %module (exportnames)
+		(set! exportnames
+		   (make-vector ,(length exports) (js-undefined)))
+		exportnames)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */
