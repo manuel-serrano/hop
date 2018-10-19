@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct 18 08:27:05 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 07:53:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -470,9 +470,12 @@
 	       #f %this))))
 
    (with-trace 'require (format "nodejs-module ~a ~a" id filename)
-      (with-access::JsGlobalObject %this (js-object __proto__)
+      (with-access::JsGlobalObject %this (js-object __proto__ js-symbol-tostringtag)
 	 (let ((m (instantiateJsModule
 		     (__proto__ __proto__))))
+	    (js-bind! %this m js-symbol-tostringtag
+	       :value (js-string->jsstring "Module")
+	       :configurable #f :writable #f :enumerable #f)
 	    ;; module properties
 	    (module-init! m)
 	    ;; register the module in the current worker thread
