@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Oct 19 08:10:29 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 17:51:00 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2798,13 +2798,24 @@
 	     ,(j2s-scheme path mode return conf) ,base))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SImport* ...                                      */
+;*    j2s-scheme ::J2SImportExpr ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SImport* mode return conf)
-   (with-access::J2SImport* this (import loc)
+(define-method (j2s-scheme this::J2SImportExpr mode return conf)
+   (with-access::J2SImportExpr this (import op loc)
       (with-access::J2SImport import (module)
 	 (epairify loc
-	    `(nodejs-exports-module ,module %worker %this)))))
+	    (if (eq? op '*)
+		`(nodejs-exports-module ,module %worker %this)
+		`(with-access::JsModule ,module (default) default))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SDefaultExport ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SDefaultExport mode return conf)
+   (with-access::J2SDefaultExport this (loc expr)
+      (epairify loc
+	 `(with-access::JsModule %module (default)
+	     (set! default ,(j2s-scheme expr mode return conf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    throw? ...                                                       */

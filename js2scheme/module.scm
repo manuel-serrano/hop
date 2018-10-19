@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Oct 19 08:15:06 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 17:41:40 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -43,10 +43,10 @@
 (define (j2s-esmodule this args)
    (when (isa? this J2SProgram)
       (esimport this this '() args)
-      (esexport this this (make-cell 0)))
-   (with-access::J2SProgram this (imports path)
-      (when (and (null? imports) (>= (config-get args :verbose 0) 2))
-	 (newline (current-error-port))))
+      (esexport this this (make-cell 0) (make-cell #f))
+      (with-access::J2SProgram this (imports path nodes loc)
+	 (when (and (null? imports) (>= (config-get args :verbose 0) 2))
+	    (newline (current-error-port)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -95,15 +95,17 @@
 			 (fname (cadr loc))
 			 (location (caddr loc)))))))))
    
-   (define (export-*::J2SDecl prgm::J2SProgram id loc)
+   (define (export-expr::J2SDecl prgm::J2SProgram id op loc)
       (instantiate::J2SDeclInit
 	 (loc loc)
 	 (id id)
 	 (binder 'let-opt)
 	 (scope 'global)
 	 (writable #f)
-	 (val (instantiate::J2SImport*
+	 (val (instantiate::J2SImportExpr
 		 (loc loc)
+		 (type (if (eq? op '*) 'object 'any))
+		 (op op)
 		 (import this)))))
    
    (with-access::J2SProgram prgm ((src path) imports decls)
@@ -139,9 +141,11 @@
 						     (export-decl iprgm n))
 						names)
 					decls)))
-				 ((and (pair? names) (eq? (car names) '*))
+				 ((and (pair? names)
+				       (memq (car names) '(* default)))
 				  (set! decls
-				     (cons (export-* iprgm (cdr names) loc)
+				     (cons (export-expr iprgm (cdr names)
+					      (car names) loc)
 					decls)))
 				 (else
 				  (raise
@@ -164,22 +168,35 @@
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SNode ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SNode prgm::J2SProgram idx::cell)
+(define-walk-method (esexport this::J2SNode prgm::J2SProgram
+		       idx::cell defexport::cell)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SProgram ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SProgram prgm::J2SProgram idx::cell)
-   (with-access::J2SProgram this (nodes headers decls exports)
-      (for-each (lambda (o) (esexport o this idx)) nodes)
-      (for-each (lambda (o) (esexport o this idx)) decls))
+(define-walk-method (esexport this::J2SProgram prgm::J2SProgram
+		       idx::cell defexport::cell)
+
+   (define (esexport-default loc)
+      (instantiate::J2SDefaultExport
+	 (loc loc)
+	 (expr (J2SAccess (J2SUnresolvedRef 'module) (J2SString "exports")))))
+   
+   (with-access::J2SProgram this (nodes decls exports loc)
+      (for-each (lambda (o) (esexport o this idx defexport)) nodes)
+      (for-each (lambda (o) (esexport o this idx defexport)) decls)
+      (unless (cell-ref defexport)
+	 ;; force a default export if non specified
+	 (set! nodes
+	    (append nodes (list (J2SStmtExpr (esexport-default loc)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SDecl ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SDecl prgm::J2SProgram idx::cell)
+(define-walk-method (esexport this::J2SDecl prgm::J2SProgram
+		       idx::cell defexport::cell)
    (with-access::J2SDecl this (export)
       (when (isa? export J2SExport)
 	 (with-access::J2SExport export (index)
@@ -188,6 +205,25 @@
 	       (set! exports (cons this exports)))
 	    (cell-set! idx (+fx 1 (cell-ref idx)))))))
 
+;*---------------------------------------------------------------------*/
+;*    esexport ::J2SDefaultExport ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (esexport this::J2SDefaultExport prgm::J2SProgram
+		       idx::cell defexport::cell)
+   (with-access::J2SDefaultExport this (loc expr)
+      (if (cell-ref defexport)
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "export")
+		(msg "Duplicate export")
+		(obj #unspecified)
+		(fname (cadr loc))
+		(location (caddr loc))))
+	  (begin
+	     (esexport expr prgm idx defexport)
+	     (cell-set! defexport this)
+	     this))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    resolve-module-file ...                                          */
 ;*    -------------------------------------------------------------    */

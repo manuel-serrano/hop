@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct 19 08:04:41 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 17:38:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1216,6 +1216,16 @@
 		(expr (instantiate::J2SImportDynamic
 			 (loc (token-loc token))
 			 (path path))))))
+	 ((ID)
+	  (let* ((id (token-value (consume-any!)))
+		 (fro (consume-token! 'ID)))
+	     (if (eq? (token-value fro) 'from)
+		 (let ((path (consume-token! 'STRING)))
+		    (instantiate::J2SImport
+		       (names (cons 'default id))
+		       (loc (token-loc token))
+		       (path (token-value path))))
+		 (parse-token-error "Illegal import" fro))))
 	 (else
 	  (parse-token-error "Illegal import" (consume-any!)))))
 
@@ -1270,7 +1280,12 @@
 	 ((function class)
 	  (export-decl (statement)))
 	 ((default)
-	  (tprint "tobeimplemented"))
+	  (let ((loc (token-loc (consume-any!))))
+	     (instantiate::J2SStmtExpr
+		(loc loc)
+		(expr (instantiate::J2SDefaultExport
+			 (loc loc)
+			 (expr (expression #f #f)))))))
 	 (else
 	  (parse-token-error "Illegal export declaration" token))))
 

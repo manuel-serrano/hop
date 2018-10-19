@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Oct 19 09:01:37 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 17:30:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -303,6 +303,7 @@
 	   (class JsModule::JsObject
 	      (exportvals (default '#()))
 	      (exportnames (default '#()))
+	      (default (default #f))
 	      (checksum (default 0)))
 	   
 	   (class JsWorker::JsObject

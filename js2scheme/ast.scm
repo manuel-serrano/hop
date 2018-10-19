@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Oct 19 08:05:56 2018 (serrano)                */
+;*    Last change :  Fri Oct 19 17:39:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -471,9 +471,13 @@
 	      (base::bstring (default (pwd)))
 	      path::J2SExpr)
 
-	   (final-class J2SImport*::J2SExpr
-	      import)
+	   (final-class J2SImportExpr::J2SExpr
+	      import
+	      (op::symbol read-only))
 
+	   (final-class J2SDefaultExport::J2SExpr
+	      expr::J2SExpr)
+	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
 	   (generic walk2 n::J2SNode p::procedure a0 a1)
@@ -1021,6 +1025,7 @@
 (gen-walks J2SDConsumer expr)
 (gen-walks J2SPragma (vals))
 (gen-walks J2SImportDynamic path)
+(gen-walks J2SDefaultExport expr)
 
 (gen-traversals J2STilde)
 
