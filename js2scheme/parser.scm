@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct 19 17:38:57 2018 (serrano)                */
+;*    Last change :  Sat Oct 20 06:54:41 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1172,62 +1172,88 @@
 	    #t declaration? #f)))
 
    (define (import token)
-      (case (peek-token-type)
-	 ((LBRACE)
-	  (let ((lst (import-name-list)))
-	     (if (null? lst)
-		 (parse-token-error "Illegal empty import" token)
-		 (let ((fro (consume-token! 'ID)))
-		    (if (eq? (token-value fro) 'from)
-			(let ((path (consume-token! 'STRING)))
-			   (instantiate::J2SImport
-			      (names lst)
-			      (loc (token-loc token))
-			      (path (token-value path))))
-			(parse-token-error "Illegal import, \"from\" expected"
-			   fro))))))
-	 ((STRING)
-	  (let ((path (consume-any!)))
-	     (instantiate::J2SImport
-		(names '())
-		(loc (token-loc token))
-		(path (token-value path)))))
-	 ((*)
-	  (consume-any!)
-	  (let ((as (consume-token! 'ID)))
-	     (if (eq? (token-value as) 'as)
-		 (let* ((id (consume-token! 'ID))
-			(fro (consume-token! 'ID)))
-		    (if (eq? (token-value fro) 'from)
-			(let ((path (consume-token! 'STRING)))
-			   (instantiate::J2SImport
-			      (names (cons '* (token-value id)))
-			      (loc (token-loc token))
-			      (path (token-value path))))
-			(parse-token-error "Illegal import, \"from\" expected"
-			   fro)))
-		 (parse-token-error "Illegal import, \"as\" expected" as))))
-	 ((LPAREN)
-	  (consume-any!)
-	  (let ((path (expression #f #f)))
-	     (consume-token! 'RPAREN)
-	     (instantiate::J2SStmtExpr
-		(loc (token-loc token))
-		(expr (instantiate::J2SImportDynamic
-			 (loc (token-loc token))
-			 (path path))))))
-	 ((ID)
-	  (let* ((id (token-value (consume-any!)))
-		 (fro (consume-token! 'ID)))
-	     (if (eq? (token-value fro) 'from)
-		 (let ((path (consume-token! 'STRING)))
+      (let loop ((first #t))
+	 (case (peek-token-type)
+	    ((LBRACE)
+	     (let ((lst (import-name-list)))
+		(if (null? lst)
+		    (parse-token-error "Illegal empty import" token)
+		    (let ((fro (consume-token! 'ID)))
+		       (if (eq? (token-value fro) 'from)
+			   (let ((path (consume-token! 'STRING)))
+			      (instantiate::J2SImport
+				 (names lst)
+				 (loc (token-loc token))
+				 (path (token-value path))))
+			   (parse-token-error
+			      "Illegal import, \"from\" expected"
+			      fro))))))
+	    ((STRING)
+	     (if (not first)
+		 (parse-token-error "Illegal import, unexpected string"
+		    (consume-any!))
+		 (let ((path (consume-any!)))
 		    (instantiate::J2SImport
-		       (names (cons 'default id))
+		       (names '())
 		       (loc (token-loc token))
-		       (path (token-value path))))
-		 (parse-token-error "Illegal import" fro))))
-	 (else
-	  (parse-token-error "Illegal import" (consume-any!)))))
+		       (path (token-value path))))))
+	    ((*)
+	     (consume-any!)
+	     (let ((as (consume-token! 'ID)))
+		(if (eq? (token-value as) 'as)
+		    (let* ((id (consume-token! 'ID))
+			   (fro (consume-token! 'ID)))
+		       (if (eq? (token-value fro) 'from)
+			   (let ((path (consume-token! 'STRING)))
+			      (instantiate::J2SImport
+				 (names (cons '* (token-value id)))
+				 (loc (token-loc token))
+				 (path (token-value path))))
+			   (parse-token-error "Illegal import, \"from\" expected"
+			      fro)))
+		    (parse-token-error "Illegal import, \"as\" expected" as))))
+	    ((LPAREN)
+	     (if (not first)
+		 (parse-token-error "Illegal import, unexpected parenthesis"
+		    (consume-any!))
+		 (begin
+		    (consume-any!)
+		    (let ((path (expression #f #f)))
+		       (consume-token! 'RPAREN)
+		       (instantiate::J2SStmtExpr
+			  (loc (token-loc token))
+			  (expr (instantiate::J2SImportDynamic
+				   (loc (token-loc token))
+				   (path path))))))))
+	    ((ID)
+	     (if (not first)
+		 (parse-token-error "Illegal import, duplicated default"
+		    (consume-any!))
+		 (let* ((token (consume-any!))
+			(id (token-value token))
+			(sep (consume-any!)))
+		    (cond
+		       ((and (eq? (token-tag sep) 'ID)
+			     (eq? (token-value sep) 'from))
+			(let ((path (consume-token! 'STRING)))
+			   (instantiate::J2SImport
+			      (names (cons 'default id))
+			      (loc (token-loc token))
+			      (path (token-value path)))))
+		       ((eq? (token-tag sep) 'COMMA)
+			(let ((imp (loop #f)))
+			   (with-access::J2SImport imp (path)
+			      (let ((defi (instantiate::J2SImport
+					     (names (cons 'default id))
+					     (loc (token-loc token))
+					     (path path))))
+				 (instantiate::J2SSeq
+				    (loc (token-loc token))
+				    (nodes (list defi imp)))))))
+		       (else
+			(parse-token-error "Illegal import" sep))))))
+	    (else
+	     (parse-token-error "Illegal import" (consume-any!))))))
 
    (define (import-name-list)
       (consume-any!)
