@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Oct 18 08:01:00 2018 (serrano)                */
+;*    Last change :  Sat Oct 20 08:29:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1084,3 +1084,10 @@
 (define-method (j2s->list this::J2SImport)
    (with-access::J2SImport this (path)
       `(,@(call-next-method) ,path)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SExportVars ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SExportVars)
+   (with-access::J2SExportVars this (refs)
+      `(,@(call-next-method) ,@(map j2s->list refs))))

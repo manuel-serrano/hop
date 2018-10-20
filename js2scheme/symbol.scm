@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Oct 18 08:42:01 2018 (serrano)                */
+;*    Last change :  Sat Oct 20 07:45:59 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -624,6 +624,67 @@
 		   (loc loc)
 		   (decl decl))))))))
 
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SExportVars ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SExportVars env mode withs wenv genv ctx conf)
+   (call-default-walker)
+   (with-access::J2SExportVars this (refs program)
+      (when (isa? program J2SProgram)
+	 (for-each (lambda (ref)
+		      (cond
+			 ((isa? ref J2SRef)
+			  (with-access::J2SRef ref (decl loc)
+			     (with-access::J2SDecl decl (scope id export)
+				(if (eq? scope 'global)
+				    (unless (isa? export J2SExport)
+				       (with-access::J2SProgram program (exports)
+					  (let ((idx (length exports)))
+					     (set! export
+						(instantiate::J2SExport
+						   (id id)
+						   (index idx)
+						   (decl decl)))
+					     (set! exports
+						(cons export exports)))))
+				    (raise
+				       (instantiate::&io-parse-error
+					  (proc "symbol resolution (symbol)")
+					  (msg "Illegal variable export")
+					  (obj id)
+					  (fname (cadr loc))
+					  (location (caddr loc))))))))
+			 ((isa? ref J2SGlobalRef)
+			  (with-access::J2SGlobalRef ref (loc decl)
+			     (with-access::J2SDecl decl (id)
+				(raise
+				   (instantiate::&io-parse-error
+				      (proc "symbol resolution (symbol)")
+				      (msg "Illegal variable export")
+				      (obj id)
+				      (fname (cadr loc))
+				      (location (caddr loc)))))))
+			 ((isa? ref J2SWithRef)
+			  (with-access::J2SWithRef ref (loc id)
+			     (raise
+				(instantiate::&io-parse-error
+				   (proc "symbol resolution (symbol)")
+				   (msg "Illegal variable export")
+				   (obj id)
+				   (fname (cadr loc))
+				   (location (caddr loc))))))
+			 ((isa? ref J2SHopRef)
+			  (with-access::J2SHopRef ref (loc id)
+			     (raise
+				(instantiate::&io-parse-error
+				   (proc "symbol resolution (symbol)")
+				   (msg "Illegal variable export")
+				   (obj id)
+				   (fname (cadr loc))
+				   (location (caddr loc))))))))
+	    refs)))
+   this)
+   
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDecl ...                                           */
 ;*---------------------------------------------------------------------*/

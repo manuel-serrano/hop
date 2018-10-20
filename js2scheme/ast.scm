@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Oct 19 17:39:44 2018 (serrano)                */
+;*    Last change :  Sat Oct 20 07:30:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -477,6 +477,10 @@
 
 	   (final-class J2SDefaultExport::J2SExpr
 	      expr::J2SExpr)
+
+	   (final-class J2SExportVars::J2SStmt
+	      (program (default #f))
+	      (refs::pair-nil read-only))
 	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
@@ -1026,6 +1030,7 @@
 (gen-walks J2SPragma (vals))
 (gen-walks J2SImportDynamic path)
 (gen-walks J2SDefaultExport expr)
+(gen-walks J2SExportVars (refs))
 
 (gen-traversals J2STilde)
 

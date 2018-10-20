@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Oct 20 06:54:41 2018 (serrano)                */
+;*    Last change :  Sat Oct 20 07:18:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1302,7 +1302,23 @@
 		(set! decls (map export-decl decls)))
 	     stmt))
 	 ((LBRACE)
-	  (tprint "tobeimplemented"))
+	  (let ((token (consume-any!)))
+	     (let loop ((refs '()))
+		(let* ((id (consume-token! 'ID))
+		       (ref (instantiate::J2SUnresolvedRef
+			       (loc (token-loc id))
+			       (id (token-value id)))))
+		   (case (peek-token-type)
+		      ((RBRACE)
+		       (consume-any!)
+		       (instantiate::J2SExportVars
+			  (loc (token-loc token))
+			  (refs (cons ref refs))))
+		      ((COMMA)
+		       (consume-any!)
+		       (loop (cons ref refs)))
+		      (else
+		       (parse-token-error "Illegal export" token)))))))
 	 ((function class)
 	  (export-decl (statement)))
 	 ((default)

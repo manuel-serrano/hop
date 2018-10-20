@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Oct 19 17:41:40 2018 (serrano)                */
+;*    Last change :  Sat Oct 20 08:43:14 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -223,7 +223,18 @@
 	     (esexport expr prgm idx defexport)
 	     (cell-set! defexport this)
 	     this))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    esexport ::J2SExportVars ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (esexport this::J2SExportVars prgm::J2SProgram
+		       idx::cell defexport::cell)
+   ;; J2SExportVars cannot be completed before the symbol resolution.
+   ;; For this stage, only the "program" object is stored in the
+   ;; export to help the export handling the symbol.scm
+   (with-access::J2SExportVars this (program)
+      (set! program prgm)))
+
 ;*---------------------------------------------------------------------*/
 ;*    resolve-module-file ...                                          */
 ;*    -------------------------------------------------------------    */
