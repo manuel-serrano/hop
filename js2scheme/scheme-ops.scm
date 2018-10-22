@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Oct 10 08:10:47 2018 (serrano)                */
+;*    Last change :  Mon Oct 22 18:48:11 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -339,11 +339,7 @@
 		 (js-binop-arithmetic loc op left lhs right rhs conf)))
 	   (js-arithmetic-mul loc type lhs rhs mode return conf)))
       ((/)
-       (if (=fx (config-get conf :optim 0) 0)
-	   (with-tmp lhs rhs mode return conf 'any
-	      (lambda (left right)
-		 (js-binop-arithmetic loc op left lhs right rhs conf)))
-	   (js-arithmetic-div loc type lhs rhs mode return conf)))
+       (js-arithmetic-div loc type lhs rhs mode return conf))
 ;*       ((remainder)                                                  */
 ;*        (js-arithmetic-remainder loc type lhs rhs mode return conf)) */
       ((remainderfx remainder)

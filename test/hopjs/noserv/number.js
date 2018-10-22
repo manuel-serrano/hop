@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Fri Feb 23 17:07:21 2018 (serrano)                */
+/*    Last change :  Mon Oct 22 18:30:51 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -144,3 +144,13 @@ assert.equal( testS( 2 ), false );
 assert.equal( testS( 3 ), true );
 assert.equal( testS( 4 ), true );
 
+/*---------------------------------------------------------------------*/
+/*    casts                                                            */
+/*---------------------------------------------------------------------*/
+function foo() {
+   var a = [1,2,3];
+   
+   console.log( a.length/2 >> 0 );
+}
+
+assert.equal( foo(), 1, "integer cast" );
