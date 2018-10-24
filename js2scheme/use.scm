@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Oct 18 11:17:13 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 08:47:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -239,17 +239,17 @@
 ;*    reset-use-count ::J2SDecl ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-use-count this::J2SDecl)
-   (with-access::J2SDecl this (usecnt)
-      (set! usecnt 0))
+   (with-access::J2SDecl this (usecnt binder id)
+      (set! usecnt (if (eq? binder 'export) 1000 0)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-use-count ::J2SDeclInit ...                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-use-count this::J2SDeclInit)
-   (with-access::J2SDeclInit this (usecnt val)
-      (when (>fx usecnt 0)
-	 (set! usecnt 0)
+   (with-access::J2SDeclInit this (usecnt val binder id)
+      (when (or (>fx usecnt 0) (eq? binder 'export))
+	 (set! usecnt (if (eq? binder 'export) 1000 0))
 	 (reset-use-count val)))
    this)
 
@@ -400,8 +400,8 @@
 ;*    usage ::J2SDecl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SDecl ctx deval infun)
-   (with-access::J2SDecl this ((u usage) export)
-      (when (and export (not (memq 'ref u)))
+   (with-access::J2SDecl this ((u usage) exports)
+      (when (and (pair? exports) (not (memq 'ref u)))
 	 (set! u (cons 'ref u))))
    this)
 

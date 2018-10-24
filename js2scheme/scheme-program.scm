@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Oct 19 09:02:57 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 09:14:00 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -47,8 +47,8 @@
 	    `(define (hopscript %this this %scope %module)
 		(define %worker (js-current-worker))
 		(define %cnsts ,scmcnsts)
-		,esexports
 		,@esimports
+		,esexports
 		,@globals
 		,@(exit-body body conf))
 	    ;; for dynamic loading
@@ -68,8 +68,8 @@
 		      '())
 		(define %worker (js-current-worker))
 		(define %cnsts ,scmcnsts)
-		,esexports
 		,@esimports
+		,esexports
 		,@globals
 		,@(exit-body body conf))
 	    ;; for dynamic loading
@@ -80,7 +80,7 @@
 	  (j2s-slave-module module scmcnsts esexports esimports body)
 	  (j2s-master-module module scmcnsts esexports esimports body)))
 
-   (define (j2s-main-module/workers name scmcnsts body)
+   (define (j2s-main-module/workers name scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size %this path
 				       globals)
 	 (let ((module `(module ,(string->symbol name)
@@ -89,9 +89,7 @@
 			      (library nodejs))
 			   (library hop hopscript nodejs)
 			   (cond-expand (enable-libuv (library libuv)))
-			   (main main)))
-	       (esexports (j2s-module-exports this))
-	       (esimports (j2s-module-imports this)))
+			   (main main))))
 	    (list module
 	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
@@ -119,8 +117,8 @@
 			 (define %module
 			    (nodejs-new-module ,(basename path) ,path %worker %this))
 			 (define %cnsts ,scmcnsts)
-			 ,esexports
 			 ,@esimports
+			 ,esexports
 			 ,@globals
 			 ,@(exit-body body conf)))
 		   ,(profilers conf)
@@ -131,8 +129,8 @@
    (with-access::J2SProgram this (module main nodes headers decls
 					 mode name pcache-size call-size
 					 cnsts globals)
-      (let* ((esexports (j2s-module-exports this))
-	     (esimports (j2s-module-imports this))
+      (let* ((esimports (j2s-module-imports this))
+	     (esexports (j2s-module-exports this))
 	     (scmheaders (j2s-scheme headers mode return conf))
 	     (scmdecls (j2s-scheme decls mode return conf))
 	     (scmclos (filter-map (lambda (d)
@@ -147,7 +145,8 @@
  		esexports esimports
 		(flatten-nodes scmnodes)
 		conf)
-	     (let ((body (flatten-nodes (append scmheaders scmdecls scmclos scmnodes))))
+	     (let ((body (flatten-nodes
+			    (append scmheaders scmdecls scmclos scmnodes))))
 		(cond
 		   (module
 		    ;; a module whose declaration is in the source
@@ -166,13 +165,14 @@
 			(define %source (or (the-loading-file) "/"))
 			(define %resource (dirname %source))
 			(define %cnsts ,scmcnsts)
-			,esexports
 			,@esimports
+			,esexports
 			,@globals
 			,@(exit-body body conf)))
 		   (main
 		    ;; generate a main hopscript module 
-		    (j2s-main-module/workers name scmcnsts body))
+		    (j2s-main-module/workers name scmcnsts
+		       esexports esimports body))
 		   (else
 		    ;; generate the module clause
 		    (let ((module `(module ,(string->symbol name)
@@ -214,8 +214,8 @@
 	     (define %module
 		(nodejs-new-module ,(basename path) ,path %worker %this))
 	     (define %cnsts ,scmcnsts)
-	     ,esexports
 	     ,@esimports
+	     ,esexports
 	     ,@globals
 	     ,@toplevel
 	     (define (main args)
@@ -231,36 +231,56 @@
 (define (j2s-module-imports this::J2SProgram)
    (with-access::J2SProgram this (imports)
       (append-map (lambda (im idx)
-		     (with-access::J2SImport im (respath module import)
-			(let ((modid (string->symbol (format "%module-~a" idx)))
-			      (impid (string->symbol (format "%import-~a" idx))))
-			   (set! import impid)
-			   (set! module modid)
+		     (with-access::J2SImport im (respath mvar ivar)
+			(let ((modid (string->symbol
+					(format "%module-~a" idx)))
+			      (impid (string->symbol
+					(format "%import-~a" idx))))
+			   (set! mvar modid)
+			   (set! ivar impid)
 			   (list
 			      `(define ,modid
 				  (nodejs-import-module %worker %this %module
 				     ,respath))
 			      `(define ,impid
-				  (with-access::JsModule ,modid (exportvals)
-				     exportvals))))))
+				  (with-access::JsModule ,modid (evars)
+				     evars))))))
 	 imports (iota (length imports)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-exports ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-module-exports this::J2SProgram)
-   (with-access::J2SProgram this (exports)
-      `(begin
-	  (define %exportvals
-	     (with-access::JsModule %module (exportvals)
-		(set! exportvals
-		   (make-vector ,(length exports) (js-undefined)))
-		exportvals))
-	  (define %exportnames
-	     (with-access::JsModule %module (exportnames)
-		(set! exportnames
-		   (make-vector ,(length exports) (js-undefined)))
-		exportnames)))))
+   (with-access::J2SProgram this (exports imports path)
+      (let ((idx (j2sprogram-get-export-index this))
+	    (reidx -1))
+	 (if (pair? exports)
+	     `(define %evars
+		 (with-access::JsModule %module (evars exports imports)
+		    (set! imports
+		       (vector
+			  ,@(filter-map (lambda (i)
+					   (with-access::J2SImport i (names ivar reindex)
+					      (when (eq? names 'redirect)
+						 (set! reidx (+fx 1 reidx))
+						 (set! reindex reidx)
+						 ivar)))
+			       imports)))
+		    (set! exports
+		       ',(map (lambda (e)
+				 (with-access::J2SExport e (index id decl from)
+				    (with-access::J2SDecl decl ((w writable))
+				       (if from
+					   ;; export redirect
+					   (with-access::J2SImport from (reindex)
+					      (vector id (cons index reindex) w))
+					   (vector id index w)))))
+			    exports))
+		    ,@(if (>fx idx 0)
+			  `((set! evars (make-vector ,idx (js-undefined))))
+			  '())
+		    evars))
+	     #unspecified))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */

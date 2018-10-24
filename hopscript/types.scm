@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Oct 19 17:30:21 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 09:08:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -301,8 +301,9 @@
 	   (class JsJSON::JsObject)
 	   
 	   (class JsModule::JsObject
-	      (exportvals (default '#()))
-	      (exportnames (default '#()))
+	      (evars::vector (default '#()))
+	      (exports::pair-nil (default '()))
+	      (imports::vector (default '#()))
 	      (default (default #f))
 	      (checksum (default 0)))
 	   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Oct 20 08:29:25 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 17:10:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1091,3 +1091,13 @@
 (define-method (j2s->list this::J2SExportVars)
    (with-access::J2SExportVars this (refs)
       `(,@(call-next-method) ,@(map j2s->list refs))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SExport ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SExport)
+   (with-access::J2SExport this (id index from writable)
+      `(,@(call-next-method) ,id
+	  index: ,index
+	  writable: writable
+	  from: ,(typeof from) )))

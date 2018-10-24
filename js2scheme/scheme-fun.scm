@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Oct 19 09:15:06 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 08:55:54 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -205,7 +205,7 @@
 		   `((define ,scmid 
 			,(make-function this)))))))
    
-   (with-access::J2SDeclFun this (loc id scope val usage ronly export)
+   (with-access::J2SDeclFun this (loc id scope val usage ronly exports)
       (let ((val (declfun-fun this)))
 	 (with-access::J2SFun val (params mode vararg body name generator)
 	    (let* ((scmid (j2s-decl-scheme-id this))
@@ -229,10 +229,10 @@
 		     ((global %scope)
 		      (global-declfun this val scmid fastid))
 		     ((export)
-		      (with-access::J2SExport export (index id)
-			 (append (regular-declfun this val scmid fastid)
-			    `((nodejs-module-set! %exportnames ,index ',id)
-			      (nodejs-module-set! %exportvals ,index ,scmid)))))
+		      (with-access::J2SExport (car exports) (index)
+			 (append
+			    (regular-declfun this val scmid fastid)
+			    `((vector-set! %evars ,index ,scmid)))))
 		     (else
 		      (regular-declfun this val scmid fastid)))))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Oct 17 18:28:53 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 11:52:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -360,8 +360,8 @@
    (list 
       j2s-syntax-stage
       j2s-sourcemap-stage
-      j2s-symbol-stage
-      j2s-module-stage))
+      j2s-module-stage
+      j2s-symbol-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-compile-options ...                                          */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/sweep.scm     */
+;*    serrano/prgm/project/hop/hop/js2scheme/sweep.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Aug 14 12:36:37 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 11:22:10 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
@@ -99,16 +99,30 @@
 	 decls)))
    
 ;*---------------------------------------------------------------------*/
+;*    mark ::J2SDecl ...                                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark this::J2SDecl deval stamp)
+   (with-access::J2SDecl this (val id binder)
+      (when (eq? binder 'export)
+	 (use-decl! this stamp))))
+
+
+;*---------------------------------------------------------------------*/
 ;*    mark ::J2SDeclInit ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SDeclInit deval stamp)
-   (with-access::J2SDeclInit this (val id)
+   (with-access::J2SDeclInit this (val id binder)
+      (when (eq? binder 'export)
+	 (use-decl! this stamp))
       (mark val deval stamp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SDeclFun ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SDeclFun deval stamp)
+   (with-access::J2SDeclFun this (binder)
+      (when (eq? binder 'export)
+	 (use-decl! this stamp)))
    #unspecified)
 
 ;*---------------------------------------------------------------------*/

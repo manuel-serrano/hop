@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Oct 19 08:16:16 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 09:05:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -46,9 +46,7 @@
 	   (nodejs-eval ::JsGlobalObject ::JsObject)
 	   (nodejs-function ::JsGlobalObject ::JsObject)
 	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)
-	   (nodejs-plugins-toplevel-loader)
-	   (inline nodejs-module-ref ::vector ::long)
-	   (inline nodejs-module-set! ::vector ::long ::obj)))
+	   (nodejs-plugins-toplevel-loader)))
 
 ;;(define-macro (bigloo-debug) 0)
 
@@ -614,23 +612,65 @@
 ;*    nodejs-exports-module ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-exports-module::JsObject mod::JsModule worker::WorkerHopThread %this)
+   
+   (define (constant? n)
+      (or (number? n) (boolean? n) (string? n) (isa? n JsStringLiteral)))
+   
    (with-access::JsGlobalObject %this (__proto__ js-symbol-tostringtag)
-      (with-access::JsModule mod (exportnames exportvals)
+      (with-access::JsModule mod (evars exports default imports)
 	 (let ((m (instantiateJsObject
 		     (__proto__ __proto__))))
 	    (js-bind! %this m js-symbol-tostringtag
 	       :value (js-string->jsstring "Module")
 	       :configurable #f :writable #f :enumerable #f)
-	    (let loop ((i (-fx (vector-length exportnames) 1)))
-	       (if (=fx i -1)
-		   m
-		   (begin
-		      (js-bind! %this m (vector-ref exportnames i)
-			 :get (js-make-function %this
-				 (lambda (this) (vector-ref exportvals i))
-				 0 'get)
-			 :configurable #f :writable #f :enumerable #t)
-		      (loop (-fx i 1)))))))))
+	    (tprint "nodejs-exports-module " (js-get mod 'filename %this))
+	    (tprint "exports=" exports)
+	    (tprint "imports=" imports)
+	    (for-each (lambda (export)
+			 (let* ((id (vector-ref export 0))
+				(idx (vector-ref export 1))
+				(writable (vector-ref export 2)))
+			    (cond
+			       ((pair? idx)
+				;; a redirect
+				(let* ((j (cdr idx))
+				       (r (vector-ref imports j))
+				       (i (car idx)))
+				   
+				   (js-bind! %this m id
+				      :get (js-make-function %this
+					      (lambda (this)
+						 (tprint
+						    id
+						    " imports=" imports
+						    " r=" r " idx=" idx
+						    " path="
+						    (js-get mod 'filename %this))
+						 (vector-ref r i))
+					      0 'get)
+				      :configurable #f :writable #f)))
+			       ((=fx idx -1)
+				;; named default
+				(js-bind! %this m  id
+				   :get (js-make-function %this
+					   (lambda (this)
+					      default)
+					   0 'get)
+				   :configurable #f :writable #f))
+			       ((and (not writable)
+				     (constant? (vector-ref evars idx)))
+				(js-bind! %this m id
+				   :value (vector-ref evars idx)
+				   :configurable #f :writable #f))
+			       (else
+				(js-bind! %this m  id
+				   :get (js-make-function %this
+					   (lambda (this)
+					      (vector-ref evars idx))
+					   0 'get)
+				   :configurable #f :writable #f)))))
+	       exports)
+	    m))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-head ...                                                  */
@@ -2097,18 +2137,6 @@
 	 (let* ((worker (js-init-main-worker! this #f nodejs-new-global-object))
 		(mod (nodejs-new-module "hopc" "." worker this)))
 	    (make-plugins-loader this mod worker)))))
-
-;*---------------------------------------------------------------------*/
-;*    nodejs-module-ref ...                                            */
-;*---------------------------------------------------------------------*/
-(define-inline (nodejs-module-ref obj index)
-   (vector-ref obj index))
-
-;*---------------------------------------------------------------------*/
-;*    nodejs-module-set! ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (nodejs-module-set! obj index val)
-   (vector-set! obj index val))
 
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Oct 20 07:18:35 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 07:39:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -39,6 +39,8 @@
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
 
+   (define es-module #f)
+   
    (define (with-tilde proc)
       (set! tilde-level (+fx tilde-level 1))
       (let ((res (proc)))
@@ -59,6 +61,12 @@
 	 (loc loc)
 	 (id 'this)
 	 (_scmid 'this)))
+
+   (define export-index -1)
+   
+   (define (get-export-index)
+      (set! export-index (+fx 1 export-index))
+      export-index)
    
    (define (parse-token-error msg token::pair)
       (match-case (token-loc token)
@@ -1172,6 +1180,7 @@
 	    #t declaration? #f)))
 
    (define (import token)
+      (set! es-module #t)
       (let loop ((first #t))
 	 (case (peek-token-type)
 	    ((LBRACE)
@@ -1281,20 +1290,18 @@
 		(parse-token-error "Illegal import" next))))))
 
    (define (export-decl decl::J2SDecl)
-      (with-access::J2SDecl decl (id export binder scope)
+      (with-access::J2SDecl decl (id exports binder scope)
 	 (set! binder 'export)
 	 (set! scope 'export)
-	 (set! export (instantiate::J2SExport
-			 (id id)
-			 (decl decl)))
+	 (set! exports (cons (instantiate::J2SExport
+				(id id)
+				(decl decl)
+				(index (get-export-index)))
+			  exports))
 	 decl))
    
-   (define (export-declinit decl::J2SDeclInit)
-      (with-access::J2SDeclInit decl (export id)
-	 (duplicate::J2SDeclImport decl
-	    (alias id))))
-   
    (define (export token)
+      (set! es-module #t)
       (case (peek-token-type)
 	 ((var let const)
 	  (let ((stmt (statement)))
@@ -1303,20 +1310,37 @@
 	     stmt))
 	 ((LBRACE)
 	  (let ((token (consume-any!)))
-	     (let loop ((refs '()))
-		(let* ((id (consume-token! 'ID))
+	     (let loop ((refs '())
+			(aliases '()))
+		(let* ((tid (consume-token! 'ID))
+		       (id (token-value tid))
 		       (ref (instantiate::J2SUnresolvedRef
-			       (loc (token-loc id))
-			       (id (token-value id)))))
+			       (loc (token-loc tid))
+			       (id id)))
+		       (alias (if (and (eq? (peek-token-type) 'ID)
+				       (eq? (peek-token-value) 'as))
+				  (begin
+				     (consume-any!)
+				     (let ((talias (consume-any!)))
+					(case (token-tag talias)
+					   ((default)
+					    'default)
+					   ((ID)
+					    (token-value talias))
+					   (else
+					    (parse-token-error "Illegal export"
+					       talias)))))
+				  id)))
 		   (case (peek-token-type)
 		      ((RBRACE)
 		       (consume-any!)
 		       (instantiate::J2SExportVars
 			  (loc (token-loc token))
-			  (refs (cons ref refs))))
+			  (refs (cons ref refs))
+			  (aliases (cons alias aliases))))
 		      ((COMMA)
 		       (consume-any!)
-		       (loop (cons ref refs)))
+		       (loop (cons ref refs) (cons alias aliases)))
 		      (else
 		       (parse-token-error "Illegal export" token)))))))
 	 ((function class)
@@ -1328,6 +1352,17 @@
 		(expr (instantiate::J2SDefaultExport
 			 (loc loc)
 			 (expr (expression #f #f)))))))
+	 ((*)
+	  (let* ((* (consume-token! '*))
+		 (fro (consume-token! 'ID)))
+	     (if (eq? (token-value fro) 'from)
+		 (let ((path (consume-token! 'STRING)))
+		    (instantiate::J2SImport
+		       (names 'redirect)
+		       (loc (token-loc token))
+		       (path (token-value path))))
+		 (parse-token-error "Illegal export, \"from\" expected"
+		    fro))))
 	 (else
 	  (parse-token-error "Illegal export declaration" token))))
 
@@ -2621,7 +2656,10 @@
 
    (define (nodes-mode nodes)
       (let ((mode (when (pair? nodes) (javascript-mode-nodes nodes))))
-	 (if (symbol? mode) mode 'normal)))
+	 (cond
+	    ((symbol? mode) mode)
+	    (es-module 'strict)
+	    (else 'normal))))
    
    (define (program dp)
       (set! tilde-level (if dp 1 0))
@@ -3264,3 +3302,6 @@
 			       (parse-error "Duplicate parameter name not allowed in this context" d))))
 	       (cdr l)))
 	 (loop (cdr l)))))
+
+
+
