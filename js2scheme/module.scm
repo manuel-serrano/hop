@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Wed Oct 24 08:12:27 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 06:16:14 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -130,8 +130,14 @@
 		 (op op)
 		 (import this)))))
 
-   (define (reexport this::J2SImport prgm::J2SProgram iprgm::J2SProgram)
-      (with-access::J2SProgram prgm (exports)
+   (define (redirect this::J2SImport prgm::J2SProgram iprgm::J2SProgram)
+      (with-access::J2SProgram prgm (exports imports)
+	 (with-access::J2SImport this (reindex)
+	    (set! reindex
+	       (length (filter (lambda (i)
+				  (with-access::J2SImport i (names)
+				     (eq? names 'redirect)))
+			  imports))))
 	 (with-access::J2SProgram iprgm ((iexports exports))
 	    (set! exports
 	       (append exports
@@ -168,13 +174,13 @@
 				      :module-stack (cons respath stack))))
 			 (module-cache-put! respath iprgm))))))))
 
-   (define (import-module-decls this respath path names loc)
-      (let ((iprgm (import-module respath path loc)))
+   (define (import-module-decls this iprgm)
+      (with-access::J2SImport this (names loc path)
 	 (cond
 	    ((and (pair? names) (memq (car names) '(* default)))
 	     (list (export-expr iprgm (cdr names) (car names) loc)))
 	    ((eq? names 'redirect)
-	     (reexport this prgm iprgm))
+	     (redirect this prgm iprgm))
 	    ((list? names)
 	     (append-map (lambda (n) (import-decl iprgm n)) names))
 	    (else
@@ -187,7 +193,7 @@
 		   (location (caddr loc))))))))
    
    (with-access::J2SProgram prgm ((src path) imports decls)
-      (with-access::J2SImport this (path loc respath names)
+      (with-access::J2SImport this (path loc respath names iprgm)
 	 (let ((base (cond
 			((string=? src "")
 			 (pwd))
@@ -198,11 +204,10 @@
 			    (file-name-canonicalize
 			       (make-file-name (pwd) src)))))))
 	    (set! respath (resolve-module-file path base loc))
-	    (set! imports (cons this imports))
 	    (unless (member respath stack)
-	       (set! decls
-		  (append (import-module-decls this respath path names loc)
-		     decls)))))))
+	       (set! iprgm (import-module respath path loc))
+	       (set! decls (append (import-module-decls this iprgm) decls)))
+	    (set! imports (cons this imports))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    esimport ::J2SImportDynamic ...                                  */

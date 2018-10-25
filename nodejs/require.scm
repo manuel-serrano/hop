@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Oct 24 09:05:42 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 06:05:50 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -995,12 +995,13 @@
 		(when (eq? nodejs-debug-compile 'yes)
 		   (unless (directory? "/tmp/HOP")
 		      (make-directory "/tmp/HOP"))
-		   (tprint "nodejs-compile " filename
-		      " -> " (make-file-name "/tmp/HOP" (string-replace filename #\/ #\_)))
-		   (call-with-output-file
-			 (make-file-name "/tmp/HOP" (string-replace filename #\/ #\_))
-		      (lambda (op)
-			 (pp expr op))))
+		   (let ((tgt (make-file-name "/tmp/HOP"
+				 (string-append
+				    (string-replace (prefix filename) #\/ #\_)
+				    ".scm"))))
+		      (tprint "nodejs-compile " filename " -> " tgt)
+		      (call-with-output-file tgt
+			 (lambda (op) (pp expr op)))))
 		(trace-item "expr=" (format "~s" expr))
 		(unwind-protect
 		   (begin

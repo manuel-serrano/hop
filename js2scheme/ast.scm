@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Oct 24 07:44:31 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 06:27:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -451,12 +451,13 @@
 	      (path read-only))
 
 	   (final-class J2SImport::J2SStmt
-	      (path::bstring read-only)
-	      (names::obj (default #f))
-	      (respath (default #f))
-	      (mvar (default #f))
-	      (ivar (default #f))
-	      (reindex::long (default -1)))
+	      (path::bstring read-only (info '("notraverse")))
+	      (names::obj (default #f) (info '("notraverse")))
+	      (respath (default #f) (info '("notraverse")))
+	      (mvar (default #f) (info '("notraverse")))
+	      (ivar (default #f) (info '("notraverse")))
+	      (reindex::long (default -1) (info '("notraverse")))
+	      (iprgm (default #f) (info '("notraverse"))))
 
 	   (final-class J2SImportName
 	      (loc read-only)

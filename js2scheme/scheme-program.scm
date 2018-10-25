@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Oct 24 09:14:00 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 06:19:41 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -252,18 +252,18 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-module-exports this::J2SProgram)
    (with-access::J2SProgram this (exports imports path)
-      (let ((idx (j2sprogram-get-export-index this))
-	    (reidx -1))
+      (let ((idx (j2sprogram-get-export-index this)))
 	 (if (pair? exports)
 	     `(define %evars
 		 (with-access::JsModule %module (evars exports imports)
+		    ;; todo ici faire la fermeture transitive et alonger la
+		    ;; liste des imports et recalculer les indexes des
+		    ;; imports
 		    (set! imports
 		       (vector
 			  ,@(filter-map (lambda (i)
 					   (with-access::J2SImport i (names ivar reindex)
 					      (when (eq? names 'redirect)
-						 (set! reidx (+fx 1 reidx))
-						 (set! reindex reidx)
 						 ivar)))
 			       imports)))
 		    (set! exports
