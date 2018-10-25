@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Oct 25 06:16:14 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 11:24:36 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -130,20 +130,26 @@
 		 (op op)
 		 (import this)))))
 
-   (define (redirect this::J2SImport prgm::J2SProgram iprgm::J2SProgram)
-      (with-access::J2SProgram prgm (exports imports)
-	 (with-access::J2SImport this (reindex)
-	    (set! reindex
-	       (length (filter (lambda (i)
-				  (with-access::J2SImport i (names)
-				     (eq? names 'redirect)))
-			  imports))))
+   (define (redirect this::J2SImport prgm::J2SProgram iprgm::J2SProgram names)
+      (with-access::J2SProgram prgm (exports imports path)
 	 (with-access::J2SProgram iprgm ((iexports exports))
 	    (set! exports
 	       (append exports
-		  (map (lambda (export)
-			  (duplicate::J2SExport export
-			     (from this)))
+		  (filter-map (lambda (export)
+				 (with-access::J2SExport export (id alias)
+				    (cond
+				       ((null? names)
+					(duplicate::J2SExport export
+					   (from iprgm)))
+				       ((assq alias names)
+					=>
+					(lambda (c)
+					   (duplicate::J2SExport export
+					      (id id)
+					      (alias (cdr c))
+					      (from iprgm))))
+				       (else
+					#f))))
 		     iexports)))))
       '())
 
@@ -179,8 +185,8 @@
 	 (cond
 	    ((and (pair? names) (memq (car names) '(* default)))
 	     (list (export-expr iprgm (cdr names) (car names) loc)))
-	    ((eq? names 'redirect)
-	     (redirect this prgm iprgm))
+	    ((and (pair? names) (eq? (car names) 'redirect))
+	     (redirect this prgm iprgm (cdr names)))
 	    ((list? names)
 	     (append-map (lambda (n) (import-decl iprgm n)) names))
 	    (else
@@ -236,11 +242,10 @@
 	    (expr (J2SAccess (J2SUnresolvedRef 'module)
 		     (J2SString "exports"))))))
    
-   (with-access::J2SProgram this (nodes decls exports loc %info)
-      (set! %info #f)
+   (with-access::J2SProgram this (nodes decls exports loc defexport)
       (for-each (lambda (o) (esexport o this)) nodes)
       (for-each (lambda (o) (esexport o this)) decls)
-      (unless %info
+      (unless defexport
 	 ;; force a default export if non specified
 	 (set! nodes (append nodes (list (esexport-default-stmt loc))))))
    this)
@@ -259,8 +264,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esexport this::J2SDefaultExport prgm::J2SProgram)
    (with-access::J2SDefaultExport this (loc expr)
-      (with-access::J2SProgram prgm (%info)
-	 (if %info
+      (with-access::J2SProgram prgm (defexport)
+	 (if defexport
 	     (raise
 		(instantiate::&io-parse-error
 		   (proc "export")
@@ -268,8 +273,8 @@
 		   (obj #unspecified)
 		   (fname (cadr loc))
 		   (location (caddr loc))))
-	     (with-access::J2SProgram prgm (%info)
-		(set! %info this)
+	     (begin
+		(set! defexport this)
 		(esexport expr prgm)
 		this)))))
 

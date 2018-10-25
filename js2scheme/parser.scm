@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Oct 24 07:39:01 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 13:18:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -151,7 +151,7 @@
    
    (define (peek-token-value)
       (token-value (peek-token)))
-   
+
    (define (at-new-line-token?)
       (eq? *previous-token-type* 'NEWLINE))
    
@@ -167,8 +167,7 @@
 	 (if (eq? (token-tag token) type)
 	     token
 	     (parse-token-error 
-		(format "Expected \"~a\" got \"~a\"" type
-		   (token-tag token))
+		(format "Expected \"~a\" got \"~a\"" type (token-tag token))
 		token))))
    
    (define (consume! type)
@@ -179,6 +178,14 @@
 	 (set! *previous-token-type* (car res))
 	 (set! *peeked-tokens* (cdr *peeked-tokens*))
 	 res))
+
+   (define (consume-oneof! . types)
+      (let ((token (consume-any!)))
+	 (if (memq (token-tag token) types)
+	     token
+	     (parse-token-error
+		(format "Expected \"~(, )\" got \"~a\"" types (token-tag token))
+		token))))
    
    (define (consume-statement-semicolon! where)
       (cond
@@ -193,6 +200,9 @@
 	 (else
 	  (parse-token-error (format "~a, \"\;\", or newline expected" where)
 	     (peek-token)))))
+
+   (define (peek-token-id? val)
+      (and (eq? (peek-token-type) 'ID) (eq? (peek-token-value) val)))
    
    (define (eof?)
       (eq? (peek-token-type) 'EOF))
@@ -1242,8 +1252,7 @@
 			(id (token-value token))
 			(sep (consume-any!)))
 		    (cond
-		       ((and (eq? (token-tag sep) 'ID)
-			     (eq? (token-value sep) 'from))
+		       ((and (eq? (token-tag sep) 'ID) (eq? (token-value sep) 'from))
 			(let ((path (consume-token! 'STRING)))
 			   (instantiate::J2SImport
 			      (names (cons 'default id))
@@ -1267,11 +1276,10 @@
    (define (import-name-list)
       (consume-any!)
       (let loop ((lst '()))
-	 (let* ((token (consume-token! 'ID))
+	 (let* ((token (consume-oneof! 'ID 'default))
 		(loc (token-loc token))
 		(id (token-value token))
-		(alias (if (and (eq? (peek-token-type) 'ID)
-				(eq? (peek-token-value) 'as))
+		(alias (if (peek-token-id? 'as)
 			   (begin
 			      (consume-any!)
 			      (token-value (consume-token! 'ID)))
@@ -1295,6 +1303,7 @@
 	 (set! scope 'export)
 	 (set! exports (cons (instantiate::J2SExport
 				(id id)
+				(alias id)
 				(decl decl)
 				(index (get-export-index)))
 			  exports))
@@ -1312,13 +1321,12 @@
 	  (let ((token (consume-any!)))
 	     (let loop ((refs '())
 			(aliases '()))
-		(let* ((tid (consume-token! 'ID))
+		(let* ((tid (consume-oneof! 'ID 'default))
 		       (id (token-value tid))
 		       (ref (instantiate::J2SUnresolvedRef
 			       (loc (token-loc tid))
 			       (id id)))
-		       (alias (if (and (eq? (peek-token-type) 'ID)
-				       (eq? (peek-token-value) 'as))
+		       (alias (if (peek-token-id? 'as)
 				  (begin
 				     (consume-any!)
 				     (let ((talias (consume-any!)))
@@ -1334,10 +1342,23 @@
 		   (case (peek-token-type)
 		      ((RBRACE)
 		       (consume-any!)
-		       (instantiate::J2SExportVars
-			  (loc (token-loc token))
-			  (refs (cons ref refs))
-			  (aliases (cons alias aliases))))
+		       (if (peek-token-id? 'from)
+			   (begin
+			      (consume-any!)
+			      (let ((path (consume-token! 'STRING)))
+				 (instantiate::J2SImport
+				    (names (cons 'redirect
+					      (map (lambda (r a)
+						      (with-access::J2SUnresolvedRef r (id)
+							 (cons id a)))
+						 (cons ref refs)
+						 (cons alias aliases))))
+				    (loc (token-loc token))
+				    (path (token-value path)))))
+			   (instantiate::J2SExportVars
+			      (loc (token-loc token))
+			      (refs (cons ref refs))
+			      (aliases (cons alias aliases)))))
 		      ((COMMA)
 		       (consume-any!)
 		       (loop (cons ref refs) (cons alias aliases)))
@@ -1358,7 +1379,7 @@
 	     (if (eq? (token-value fro) 'from)
 		 (let ((path (consume-token! 'STRING)))
 		    (instantiate::J2SImport
-		       (names 'redirect)
+		       (names '(redirect))
 		       (loc (token-loc token))
 		       (path (token-value path))))
 		 (parse-token-error "Illegal export, \"from\" expected"

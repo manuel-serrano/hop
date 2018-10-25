@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Oct 24 09:08:13 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 11:51:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -304,6 +304,7 @@
 	      (evars::vector (default '#()))
 	      (exports::pair-nil (default '()))
 	      (imports::vector (default '#()))
+	      (redirects::vector (default '#()))
 	      (default (default #f))
 	      (checksum (default 0)))
 	   

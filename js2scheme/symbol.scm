@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Oct 24 07:44:22 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 14:11:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -668,11 +668,13 @@
 	     (if (eq? alias 'default)
 		(let ((e (instantiate::J2SExport
 			    (id alias)
+			    (alias alias)
 			    (index -1)
 			    (decl decl))))
 		   (set! exports (list e)))
 		(let ((e (instantiate::J2SExport
 			    (id alias)
+			    (alias alias)
 			    (index (j2sprogram-get-export-index program))
 			    (decl decl))))
 		   (set! exports (list e))
@@ -689,6 +691,7 @@
 		exports)
 	     (let ((e (instantiate::J2SExport
 			 (id alias)
+			 (alias alias)
 			 (index -1)
 			 (decl decl))))
 		(set! exports (cons e exports))))
@@ -696,6 +699,7 @@
 	     (with-access::J2SExport (car exports) (index)
 		(let ((e (instantiate::J2SExport
 			    (id alias)
+			    (alias alias)
 			    (index index)
 			    (decl decl))))
 		   (set! exports (cons e exports))

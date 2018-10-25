@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Oct 25 06:27:42 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 14:10:20 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -53,7 +53,8 @@
 	      (direct-eval::bool (default #t))
 	      (source-map (default #f))
 	      (imports::pair-nil (default '()))
-	      (exports::pair-nil (default '())))
+	      (exports::pair-nil (default '()))
+	      (defexport::obj (default #f)))
 
 	   (class J2SDecl::J2SStmt
 	      id::symbol
@@ -477,6 +478,7 @@
 
 	   (final-class J2SExport
 	      (id::symbol read-only)
+	      (alias::symbol read-only)
 	      (index::long (default -1))
 	      (decl (default #f))
 	      (from (default #f)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct 25 06:05:50 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 10:24:54 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -617,15 +617,15 @@
       (or (number? n) (boolean? n) (string? n) (isa? n JsStringLiteral)))
    
    (with-access::JsGlobalObject %this (__proto__ js-symbol-tostringtag)
-      (with-access::JsModule mod (evars exports default imports)
-	 (let ((m (instantiateJsObject
-		     (__proto__ __proto__))))
-	    (js-bind! %this m js-symbol-tostringtag
+      (with-access::JsModule mod (evars exports default imports redirects)
+	 (let ((mod (instantiateJsObject
+		       (__proto__ __proto__))))
+	    (js-bind! %this mod js-symbol-tostringtag
 	       :value (js-string->jsstring "Module")
 	       :configurable #f :writable #f :enumerable #f)
-	    (tprint "nodejs-exports-module " (js-get mod 'filename %this))
-	    (tprint "exports=" exports)
-	    (tprint "imports=" imports)
+;* 	    (tprint "nodejs-exports-module " (js-get mod 'filename %this)) */
+;* 	    (tprint "exports=" exports)                                */
+;* 	    (tprint "imports=" imports)                                */
 	    (for-each (lambda (export)
 			 (let* ((id (vector-ref export 0))
 				(idx (vector-ref export 1))
@@ -633,25 +633,18 @@
 			    (cond
 			       ((pair? idx)
 				;; a redirect
-				(let* ((j (cdr idx))
-				       (r (vector-ref imports j))
-				       (i (car idx)))
-				   
-				   (js-bind! %this m id
+				(let* ((i (car idx))
+				       (j (cdr idx))
+				       (evars (vector-ref redirects j)))
+				   (js-bind! %this mod id
 				      :get (js-make-function %this
 					      (lambda (this)
-						 (tprint
-						    id
-						    " imports=" imports
-						    " r=" r " idx=" idx
-						    " path="
-						    (js-get mod 'filename %this))
-						 (vector-ref r i))
+						 (vector-ref evars i))
 					      0 'get)
 				      :configurable #f :writable #f)))
 			       ((=fx idx -1)
 				;; named default
-				(js-bind! %this m  id
+				(js-bind! %this mod  id
 				   :get (js-make-function %this
 					   (lambda (this)
 					      default)
@@ -659,18 +652,18 @@
 				   :configurable #f :writable #f))
 			       ((and (not writable)
 				     (constant? (vector-ref evars idx)))
-				(js-bind! %this m id
+				(js-bind! %this mod id
 				   :value (vector-ref evars idx)
 				   :configurable #f :writable #f))
 			       (else
-				(js-bind! %this m  id
+				(js-bind! %this mod id
 				   :get (js-make-function %this
 					   (lambda (this)
 					      (vector-ref evars idx))
 					   0 'get)
 				   :configurable #f :writable #f)))))
 	       exports)
-	    m))))
+	    mod))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-head ...                                                  */
