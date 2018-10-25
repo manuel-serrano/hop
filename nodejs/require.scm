@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct 25 10:24:54 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 17:25:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -23,8 +23,8 @@
 
    (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
-	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
-	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::bstring)
+	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj)
+	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::bstring ::obj)
 	   (nodejs-exports-module::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
@@ -584,8 +584,16 @@
 ;*    -------------------------------------------------------------    */
 ;*    ES6 module import.                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-import-module::JsModule worker::WorkerHopThread %this::JsGlobalObject %module::JsObject path::bstring)
-   (nodejs-load-module path worker %this %module "hopscript"))
+(define (nodejs-import-module::JsModule worker::WorkerHopThread
+	   %this::JsGlobalObject %module::JsObject
+	   path::bstring checksum::long loc)
+   (let ((mod (nodejs-load-module path worker %this %module "hopscript")))
+      (with-access::JsModule mod ((mc checksum))
+	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
+	     mod
+	     (js-raise-type-error/loc %this loc
+		"corrupted module ~s"
+		(js-get mod 'filename %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import-module-dynamic ...                                 */
@@ -594,7 +602,8 @@
 ;*    https://github.com/tc39/proposal-dynamic-import                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-import-module-dynamic::JsPromise worker::WorkerHopThread
-	   %this::JsGlobalObject %module::JsObject name::bstring base::bstring)
+	   %this::JsGlobalObject %module::JsObject name::bstring
+	   base::bstring loc)
    (with-access::JsGlobalObject %this (js-promise)
       (js-new1 %this js-promise
 	 (js-make-function %this
@@ -603,7 +612,8 @@
 		  (lambda (exn)
 		     (js-call1 %this reject (js-undefined) exn))
 		  (let* ((path (nodejs-resolve name %this %module 'body))
-			 (mod (nodejs-import-module worker %this %module path)))
+			 (mod (nodejs-import-module worker %this %module
+				 path 0 loc)))
 		     (js-call1 %this resolve (js-undefined)
 			(nodejs-exports-module mod worker %this)))))
 	    2 'import))))
@@ -623,9 +633,6 @@
 	    (js-bind! %this mod js-symbol-tostringtag
 	       :value (js-string->jsstring "Module")
 	       :configurable #f :writable #f :enumerable #f)
-;* 	    (tprint "nodejs-exports-module " (js-get mod 'filename %this)) */
-;* 	    (tprint "exports=" exports)                                */
-;* 	    (tprint "imports=" imports)                                */
 	    (for-each (lambda (export)
 			 (let* ((id (vector-ref export 0))
 				(idx (vector-ref export 1))

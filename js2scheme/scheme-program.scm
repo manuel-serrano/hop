@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Oct 25 16:18:40 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 17:26:55 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -25,7 +25,8 @@
 	   __js2scheme_stage
 	   __js2scheme_scheme
 	   __js2scheme_scheme-fun
-	   __js2scheme_scheme-utils))
+	   __js2scheme_scheme-utils
+	   __js2scheme_checksum))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SProgram ...                                      */
@@ -313,9 +314,11 @@
 		(set! imports
 		   (vector
 		      ,@(map (lambda (im)
-				(with-access::J2SImport im (respath)
+				(with-access::J2SImport im (respath iprgm loc)
 				   `(nodejs-import-module %worker %this %module
-				       ,respath)))
+				       ,respath
+				       ,(j2s-program-checksum! iprgm)
+				       ',loc)))
 			   imports)))
 		imports))
 	 (append
@@ -330,7 +333,7 @@
 ;*    j2s-module-exports ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-module-exports this::J2SProgram)
-
+   
    (define (redirect-index this::J2SProgram id iprgm::J2SProgram loc)
       ;; Find the root program (module) that exports id, and return
       ;; the current index relative to this imports of its evars vector.
@@ -354,25 +357,27 @@
 		       (with-access::J2SProgram this (%info)
 			  (let ((c (assq iprgm %info)))
 			     (cdr c)))))))))
-
+   
    (define (export e::J2SExport)
       (with-access::J2SExport e (index decl from id alias)
 	 (with-access::J2SDecl decl ((w writable) loc)
 	    (if from
 		(vector alias (cons index (redirect-index this id from loc)) w)
 		(vector alias index w)))))
-
-   (with-access::J2SProgram this (exports imports path)
+   
+   (with-access::J2SProgram this (exports imports path checksum)
       (let ((idx (j2sprogram-get-export-index this)))
 	 (if (pair? exports)
 	     `(define %evars
-		 (with-access::JsModule %module (evars exports)
+		 (with-access::JsModule %module (evars exports checksum)
+		    (set! checksum ,(j2s-program-checksum! this))
 		    (set! exports ',(map export exports))
 		    ,@(if (>fx idx 0)
 			  `((set! evars (make-vector ,idx (js-undefined))))
 			  '())
 		    evars))
-	     #unspecified))))
+	     `(with-access::JsModule %module (checksum)
+		 (set! checksum ,(j2s-program-checksum! this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */
@@ -483,3 +488,9 @@
 	    (else
 	     #f))))
    vec)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-program-checksum! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-program-checksum! prgm::J2SProgram)
+   (checksum prgm))

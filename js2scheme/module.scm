@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Oct 25 15:32:12 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 17:25:00 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -124,7 +124,7 @@
 			 (fname (cadr loc))
 			 (location (caddr loc))))))))))
    
-   (define (export-expr::J2SDecl prgm::J2SProgram id op loc)
+   (define (export-expr::J2SDecl prgm::J2SProgram id loc)
       (instantiate::J2SDeclInit
 	 (loc loc)
 	 (id id)
@@ -133,8 +133,7 @@
 	 (writable #f)
 	 (val (instantiate::J2SImportExpr
 		 (loc loc)
-		 (type (if (eq? op '*) 'object 'any))
-		 (op op)
+		 (type 'object)
 		 (import this)))))
 
    (define (redirect this::J2SImport prgm::J2SProgram iprgm::J2SProgram names)
@@ -192,9 +191,7 @@
       (with-access::J2SImport this (names loc path)
 	 (cond
 	    ((and (pair? names) (eq? (car names) '*))
-	     (list (export-expr iprgm (cdr names) (car names) loc)))
-	    ((and (pair? names) (eq? (car names) '(default)))
-	     (list (export-expr iprgm (cdr names) (car names) loc)))
+	     (list (export-expr iprgm (cdr names) loc)))
 	    ((and (pair? names) (eq? (car names) 'redirect))
 	     (redirect this prgm iprgm (cdr names)))
 	    ((list? names)

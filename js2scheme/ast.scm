@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Oct 25 16:13:03 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 17:30:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -469,8 +469,7 @@
 	      path::J2SExpr)
 
 	   (final-class J2SImportExpr::J2SExpr
-	      import
-	      (op::symbol read-only))
+	      import)
 
 	   (final-class J2SExport
 	      (id::symbol read-only)
