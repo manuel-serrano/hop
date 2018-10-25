@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Oct 25 14:10:20 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 16:13:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -53,8 +53,7 @@
 	      (direct-eval::bool (default #t))
 	      (source-map (default #f))
 	      (imports::pair-nil (default '()))
-	      (exports::pair-nil (default '()))
-	      (defexport::obj (default #f)))
+	      (exports::pair-nil (default '())))
 
 	   (class J2SDecl::J2SStmt
 	      id::symbol
@@ -472,9 +471,6 @@
 	   (final-class J2SImportExpr::J2SExpr
 	      import
 	      (op::symbol read-only))
-
-	   (final-class J2SDefaultExport::J2SExpr
-	      expr::J2SExpr)
 
 	   (final-class J2SExport
 	      (id::symbol read-only)
@@ -1036,7 +1032,6 @@
 (gen-walks J2SDConsumer expr)
 (gen-walks J2SPragma (vals))
 (gen-walks J2SImportDynamic path)
-(gen-walks J2SDefaultExport expr)
 (gen-walks J2SExportVars (refs))
 
 (gen-traversals J2STilde)

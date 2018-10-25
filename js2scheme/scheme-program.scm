@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Oct 25 07:36:45 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 16:18:40 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -362,16 +362,12 @@
 		(vector alias (cons index (redirect-index this id from loc)) w)
 		(vector alias index w)))))
 
-   (with-access::J2SProgram this (exports imports path defexport)
+   (with-access::J2SProgram this (exports imports path)
       (let ((idx (j2sprogram-get-export-index this)))
 	 (if (pair? exports)
 	     `(define %evars
 		 (with-access::JsModule %module (evars exports)
-		    (set! exports
-		       ,(if defexport
-			    `',(cons (vector 'default -1 #t)
-				  (map export exports))
-			    `',(map export exports)))
+		    (set! exports ',(map export exports))
 		    ,@(if (>fx idx 0)
 			  `((set! evars (make-vector ,idx (js-undefined))))
 			  '())

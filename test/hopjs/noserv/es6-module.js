@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Oct 24 11:42:37 2018                          */
-/*    Last change :  Thu Oct 25 08:49:14 2018 (serrano)                */
+/*    Last change :  Thu Oct 25 15:30:02 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 module                                               */
@@ -73,22 +73,23 @@ dynload();
 /*---------------------------------------------------------------------*/
 /*    default export                                                   */
 /*---------------------------------------------------------------------*/
-import def, { oo, setX } from "../mod/def.js";
+import def, { oo, setX, default as otherDef } from "../mod/def.js";
 
 console.log( "   def.js");
-assert.deepEqual( def, {x: 10} );
+assert.deepEqual( def, { z: 10 } );
 console.log( "   def.js (alias)");
-assert.deepEqual( oo, {x: 10} );
+assert.deepEqual( oo, { z: 10 } );
+assert.deepEqual( def, otherDef );
 
 console.log( "   def.js (setX)");
 setX( 100 );
-assert.deepEqual( def, {x: 100} );
+assert.deepEqual( def, {z: 100} );
 console.log( "   def.js (setX alias)");
-assert.deepEqual( oo, {x: 100} );
+assert.deepEqual( oo, {z: 100} );
 
 console.log( "   def.js (named default)");
-import allDef from "../mod/def.js";
-assert.deepEqual( allDef[ "default" ], { x: 10 } );
+import * as allDef from "../mod/def.js";
+assert.deepEqual( allDef[ "default" ], { z: 100 } );
 
 /*---------------------------------------------------------------------*/
 /*    redirect                                                         */
@@ -112,11 +113,19 @@ console.log( "   alias-exporter.js");
 import * as arexp from "../mod/alias-exporter.js";
 assert.deepEqual( arexp, { adummy: 7777, e3a: "e3a", e6a: "e5a", e6z: "e5b" } );
 
-console.log( "es6-module tests succeeded." );
-
 /*---------------------------------------------------------------------*/
 /*    default redirect                                                 */
 /*---------------------------------------------------------------------*/
-/* console.log( "   defredirect.js" );                                 */
-/* import * as rdef from "../mod/def-exporter.js";                     */
-/* assert.deepEqual( rdef, { d5a: "d5a", d5b: "d5b", d5c: "d5c" } );   */
+console.log( "   def-exporter.js" );
+import * as rdef from "../mod/def-exporter.js";
+assert.deepEqual( rdef, { "default": { d5a: "d5a", d5b: "d5b", d5c: "d5c" } } );
+
+/*---------------------------------------------------------------------*/
+/*    alias default redirect                                           */
+/*---------------------------------------------------------------------*/
+console.log( "   def-alias.js" );
+import * as adef from "../mod/def-alias.js";
+assert.deepEqual( adef, { "foo": { d5a: "d5a", d5b: "d5b", d5c: "d5c" } } );
+
+console.log( "es6-module tests succeeded." );
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Oct 25 11:24:36 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 15:32:12 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -89,12 +89,13 @@
    
    (define (import-decl::pair-nil iprgm::J2SProgram name::J2SImportName)
       (with-access::J2SImportName name (id alias loc)
-	 (with-access::J2SProgram iprgm (exports path)
+	 (with-access::J2SProgram iprgm (exports path defexport)
 	    (let ((expo (find (lambda (export)
 				 (with-access::J2SExport export ((imp id))
 				    (eq? id imp)))
 			   exports)))
-	       (if expo
+	       (cond
+		  (expo
 		   (with-access::J2SExport expo (decl)
 		      (with-access::J2SDecl decl (exports)
 			 (map (lambda (export)
@@ -107,7 +108,13 @@
 				       (writable #f)
 				       (export export)
 				       (import this))))
-			    exports)))
+			    exports))))
+		  (else
+		   (tprint "NOT EXPORT " id " "
+		      (map (lambda (e)
+			      (with-access::J2SExport e (id alias)
+				 (cons id alias)))
+			 exports))
 		   (raise
 		      (instantiate::&io-parse-error
 			 (proc "import")
@@ -115,7 +122,7 @@
 				 path))
 			 (obj id)
 			 (fname (cadr loc))
-			 (location (caddr loc)))))))))
+			 (location (caddr loc))))))))))
    
    (define (export-expr::J2SDecl prgm::J2SProgram id op loc)
       (instantiate::J2SDeclInit
@@ -138,7 +145,8 @@
 		  (filter-map (lambda (export)
 				 (with-access::J2SExport export (id alias)
 				    (cond
-				       ((null? names)
+				       ((and (null? names)
+					     (not (eq? id 'default)))
 					(duplicate::J2SExport export
 					   (from iprgm)))
 				       ((assq alias names)
@@ -183,7 +191,9 @@
    (define (import-module-decls this iprgm)
       (with-access::J2SImport this (names loc path)
 	 (cond
-	    ((and (pair? names) (memq (car names) '(* default)))
+	    ((and (pair? names) (eq? (car names) '*))
+	     (list (export-expr iprgm (cdr names) (car names) loc)))
+	    ((and (pair? names) (eq? (car names) '(default)))
 	     (list (export-expr iprgm (cdr names) (car names) loc)))
 	    ((and (pair? names) (eq? (car names) 'redirect))
 	     (redirect this prgm iprgm (cdr names)))
@@ -235,19 +245,49 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esexport this::J2SProgram prgm::J2SProgram)
    
-   (define (esexport-default-stmt loc)
-      (J2SStmtExpr
-	 (instantiate::J2SDefaultExport
-	    (loc loc)
-	    (expr (J2SAccess (J2SUnresolvedRef 'module)
-		     (J2SString "exports"))))))
+   (define (esexport-default-stmt index loc)
+      (let ((val (J2SAccess (J2SUnresolvedRef 'module) (J2SString "exports"))))
+	 (co-instantiate ((expo (instantiate::J2SExport
+				   (id 'default)
+				   (alias 'default)
+				   (decl decl)
+				   (index index)))
+			  (decl (instantiate::J2SDeclInit
+				   (loc loc)
+				   (id 'default)
+				   (exports (list expo))
+				   (binder 'export)
+				   (scope 'export)
+				   (val val)))
+			  (ref (instantiate::J2SRef
+				  (loc loc)
+				  (decl decl))))
+	    (values expo
+	       (J2SSeq
+		  (instantiate::J2SVarDecls
+		     (loc loc)
+		     (decls (list decl)))
+		  (instantiate::J2SExportVars
+		     (loc loc)
+		     (refs (list ref))
+		     (aliases (list 'default))))))))
    
-   (with-access::J2SProgram this (nodes decls exports loc defexport)
+   (with-access::J2SProgram this (nodes decls exports loc path)
       (for-each (lambda (o) (esexport o this)) nodes)
       (for-each (lambda (o) (esexport o this)) decls)
-      (unless defexport
+      '(unless (find (lambda (e)
+		       (with-access::J2SExport e (id) (eq? id 'default)))
+		 exports)
 	 ;; force a default export if non specified
-	 (set! nodes (append nodes (list (esexport-default-stmt loc))))))
+	 (multiple-value-bind (expo stmt)
+	    (esexport-default-stmt (length exports) loc)
+	    (tprint "CREATE DEFAULT..." path " "
+	       (map (lambda (e)
+		       (with-access::J2SExport e (id alias)
+			  (cons id alias)))
+		  exports))
+	    (set! exports (cons expo exports))
+	    (set! nodes (append nodes (list stmt))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -260,32 +300,10 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    esexport ::J2SDefaultExport ...                                  */
-;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SDefaultExport prgm::J2SProgram)
-   (with-access::J2SDefaultExport this (loc expr)
-      (with-access::J2SProgram prgm (defexport)
-	 (if defexport
-	     (raise
-		(instantiate::&io-parse-error
-		   (proc "export")
-		   (msg "Duplicate export")
-		   (obj #unspecified)
-		   (fname (cadr loc))
-		   (location (caddr loc))))
-	     (begin
-		(set! defexport this)
-		(esexport expr prgm)
-		this)))))
-
-;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SExportVars ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esexport this::J2SExportVars prgm::J2SProgram)
    (with-access::J2SExportVars this (program aliases)
-      (when (memq 'default aliases)
-	 (with-access::J2SProgram prgm (%info)
-	    (set! %info 'default)))
       (set! program prgm)))
 
 ;*---------------------------------------------------------------------*/

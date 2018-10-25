@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Oct 25 13:18:26 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 15:48:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1253,20 +1253,28 @@
 			(sep (consume-any!)))
 		    (cond
 		       ((and (eq? (token-tag sep) 'ID) (eq? (token-value sep) 'from))
-			(let ((path (consume-token! 'STRING)))
+			(let ((path (consume-token! 'STRING))
+			      (loc (token-loc token)))
 			   (instantiate::J2SImport
-			      (names (cons 'default id))
-			      (loc (token-loc token))
+			      (names (list (instantiate::J2SImportName
+					      (id 'default)
+					      (alias id)
+					      (loc loc))))
+			      (loc loc)
 			      (path (token-value path)))))
 		       ((eq? (token-tag sep) 'COMMA)
 			(let ((imp (loop #f)))
 			   (with-access::J2SImport imp (path)
-			      (let ((defi (instantiate::J2SImport
-					     (names (cons 'default id))
-					     (loc (token-loc token))
-					     (path path))))
+			      (let* ((loc (token-loc token))
+				     (defi (instantiate::J2SImport
+					      (names (list (instantiate::J2SImportName
+							      (id 'default)
+							      (alias id)
+							      (loc loc))))
+					      (loc loc)
+					      (path path))))
 				 (instantiate::J2SSeq
-				    (loc (token-loc token))
+				    (loc loc)
 				    (nodes (list defi imp)))))))
 		       (else
 			(parse-token-error "Illegal import" sep))))))
@@ -1367,12 +1375,27 @@
 	 ((function class)
 	  (export-decl (statement)))
 	 ((default)
-	  (let ((loc (token-loc (consume-any!))))
-	     (instantiate::J2SStmtExpr
-		(loc loc)
-		(expr (instantiate::J2SDefaultExport
-			 (loc loc)
-			 (expr (expression #f #f)))))))
+	  (let ((loc (token-loc (consume-any!)))
+		(val (expression #f #f)))
+	     (co-instantiate ((expo (instantiate::J2SExport
+				      (id 'default)
+				      (alias 'default)
+				      (decl decl)
+				      (index (get-export-index))))
+			      (decl (instantiate::J2SDeclInit
+				       (loc loc)
+				       (id 'default)
+				       (exports (list expo))
+				       (binder 'export)
+				       (scope 'export)
+				       (val val)))
+			      (ref (instantiate::J2SRef
+				      (loc loc)
+				      (decl decl))))
+		(J2SSeq
+		   (instantiate::J2SVarDecls
+		      (loc loc)
+		      (decls (list decl)))))))
 	 ((*)
 	  (let* ((* (consume-token! '*))
 		 (fro (consume-token! 'ID)))

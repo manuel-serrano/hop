@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Oct 24 08:07:32 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 16:11:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -317,11 +317,7 @@
 		((pair? exports)
 		 `(begin
 		     ,(with-access::J2SExport (car exports) (index)
-			 (if (=fx index -1)
-			     ;; named default
-			     `(with-access::JsModule %module (default)
-				 (set! default ,val))
-			     `(vector-set! %evars ,index ,val)))
+			 `(vector-set! %evars ,index ,val))
 		     ,result))
 		(result
 		 `(begin
@@ -400,18 +396,10 @@
 	     (with-access::J2SDeclImport decl (export import)
 		(with-access::J2SExport export (index)
 		   (with-access::J2SImport import (ivar mvar)
-		      (if (=fx index -1)
-			  ;; named default
-			  `(with-access::JsModule ,mvar (default)
-			      default)
-			  `(vector-ref ,ivar ,index))))))
+		      `(vector-ref ,ivar ,index)))))
 	    ((and (pair? exports) (or (not ronly) (not (isa? decl J2SDeclFun))))
 	     (with-access::J2SExport (car exports) (index decl)
-		(if (=fx index -1)
-		    ;; named default
-		    `(with-access::JsModule %module (default)
-			default)
-		    `(vector-ref %evars ,index))))
+		`(vector-ref %evars ,index)))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scheme-id decl))
 	    ((j2s-let? decl)
@@ -2815,18 +2803,7 @@
    (with-access::J2SImportExpr this (import op loc)
       (with-access::J2SImport import (mvar)
 	 (epairify loc
-	    (if (eq? op '*)
-		`(nodejs-exports-module ,mvar %worker %this)
-		`(with-access::JsModule ,mvar (default) default))))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SDefaultExport ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SDefaultExport mode return conf)
-   (with-access::J2SDefaultExport this (loc expr)
-      (epairify loc
-	 `(with-access::JsModule %module (default)
-	     (set! default ,(j2s-scheme expr mode return conf))))))
+	    `(nodejs-exports-module ,mvar %worker %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SExportVars ...                                   */

@@ -6,6 +6,6 @@ export { o as oo }
 
 export { o as default };
 
-export function setX( v ) { o.x = v; }
+export function setX( v ) { o.z = v; }
 
-o = { x: 10 };
+o = { z: 10 };

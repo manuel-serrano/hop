@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Oct 25 14:11:17 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 16:07:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -640,19 +640,20 @@
 			 ((isa? ref J2SRef)
 			  (with-access::J2SRef ref (decl loc)
 			     (with-access::J2SDecl decl (scope id)
-				(if (eq? scope 'global)
+				(if (memq scope '(global export))
 				    (export-decl decl alias program loc)
-				    (export-err id loc)))))
+				    (export-err id loc
+				       (format "bad scope (~s)" scope))))))
 			 ((isa? ref J2SGlobalRef)
 			  (with-access::J2SGlobalRef ref (loc decl)
 			     (with-access::J2SDecl decl (id)
-				(export-err id loc))))
+				(export-err id loc "global ref"))))
 			 ((isa? ref J2SWithRef)
 			  (with-access::J2SWithRef ref (loc id)
-			     (export-err id loc)))
+			     (export-err id loc "with ref")))
 			 ((isa? ref J2SHopRef)
 			  (with-access::J2SHopRef ref (loc id)
-			     (export-err id loc)))))
+			     (export-err id loc "hop ref")))))
 	    refs aliases)))
    this)
 
@@ -660,41 +661,23 @@
 ;*    export-decl ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (export-decl decl::J2SDecl alias::symbol program::J2SProgram loc)
-   (with-access::J2SProgram program ((allexports exports))
+   (with-access::J2SProgram program ((allexports exports) path)
       (with-access::J2SDecl decl (id exports binder)
 	 (set! binder 'export)
 	 (cond
 	    ((null? exports)
-	     (if (eq? alias 'default)
-		(let ((e (instantiate::J2SExport
-			    (id alias)
-			    (alias alias)
-			    (index -1)
-			    (decl decl))))
-		   (set! exports (list e)))
-		(let ((e (instantiate::J2SExport
-			    (id alias)
-			    (alias alias)
-			    (index (j2sprogram-get-export-index program))
-			    (decl decl))))
-		   (set! exports (list e))
-		   (set! allexports (cons e allexports)))))
-	    ((find (lambda (e)
-		      (with-access::J2SExport e ((eid id))
-			 (eq? eid alias)))
-		allexports)
-	     (export-err id loc "Duplicate export"))
-	    ((eq? alias 'default)
-	     (for-each (lambda (e)
-			  (with-access::J2SExport e (index)
-			     (set! index -1)))
-		exports)
 	     (let ((e (instantiate::J2SExport
 			 (id alias)
 			 (alias alias)
-			 (index -1)
+			 (index (j2sprogram-get-export-index program))
 			 (decl decl))))
-		(set! exports (cons e exports))))
+		(set! exports (list e))
+		(set! allexports (cons e allexports))))
+	    ((find (lambda (e)
+		      (with-access::J2SExport e (id)
+			 (eq? id alias)))
+		allexports)
+	     (export-err alias loc (format "duplicate export \"~a\"" id)))
 	    (else
 	     (with-access::J2SExport (car exports) (index)
 		(let ((e (instantiate::J2SExport
@@ -708,11 +691,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    export-error ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (export-err id loc #!optional (msg "Illegal variable export"))
+(define (export-err id loc #!optional msg)
    (raise
       (instantiate::&io-parse-error
 	 (proc "symbol resolution (symbol)")
-	 (msg msg)
+	 (msg (string-append "Illegal variable export"
+		 (if msg (string-append ", " msg) "")))
 	 (obj id)
 	 (fname (cadr loc))
 	 (location (caddr loc)))))
