@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct 26 07:41:23 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 11:40:45 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1309,8 +1309,8 @@
 		(parse-token-error "Illegal import" next))))))
 
    (define (export-decl decl::J2SDecl)
-      (with-access::J2SDecl decl (id exports binder scope)
-	 (set! binder 'export)
+      (with-access::J2SDecl decl (id exports scope)
+	 ;; (set! binder 'export)
 	 (set! scope 'export)
 	 (set! exports (cons (instantiate::J2SExport
 				(id id)
