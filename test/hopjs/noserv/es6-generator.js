@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Fri Jan 12 18:52:08 2018 (serrano)                */
+/*    Last change :  Fri Oct 26 21:40:35 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
@@ -1048,7 +1048,7 @@ function* doc() {
 }
 
 function* dod( j ) {
-   var k =  10;
+   var k = 10;
    var i = 0;
 
    do {

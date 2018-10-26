@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Thu Sep  6 13:44:24 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 21:59:00 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -794,7 +794,7 @@
 			     obj)))
 		 (len (J2SLetOpt '(ref) l
 			 (J2SAccess (J2SRef keys) (J2SString "length"))))
-		 (idx (J2SLetOpt '(ref write) i (J2SNumber 0)))
+		 (idx (J2SLetOpt '(assig ref) i (J2SNumber 0)))
 		 (for (J2SFor (J2SUndefined)
 			 (J2SBinary '< (J2SRef idx) (J2SRef len))
 			 (J2SPostfix '++ (J2SRef idx) (J2SUndefined))
@@ -871,7 +871,7 @@
 		    (block (J2SBlock/w-endloc))
 		    (while (J2SArrow name '() block))
 		    (decl (J2SLetOpt '(call) name while))
-		    (declv (J2SLetOpt '(ref) tname (J2SBool #t)))
+		    (declv (J2SLetOpt '(assig ref) tname (J2SBool #t)))
 		    (conti (J2SArrow name '()
 			      (cps (J2SBlock/w-endloc
 				      (J2SIf (J2SCond test
@@ -1226,7 +1226,7 @@
 	  (let* ((v (gensym '%kkey))
 		 (t (gensym '%ktmp))
 		 (key (J2SLetOpt '(ref) v key))
-		 (tmp (J2SLetOpt '(write ref) t (J2SBool #f)))
+		 (tmp (J2SLetOpt '(assig ref) t (J2SBool #f)))
 		 (seq (J2SSeq*
 			 (map (lambda (clause)
 				 (switch->if key tmp clause))

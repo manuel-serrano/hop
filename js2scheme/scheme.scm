@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Oct 26 14:46:13 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 22:09:00 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -200,7 +200,7 @@
       (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
 	    (cond
-	       ((memq scope '(global %scope))
+	       ((memq scope '(global %scope export))
 		(let ((fun-name (format "function:~a:~a"
 				   (cadr loc) (caddr loc))))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
@@ -239,7 +239,7 @@
    (define (j2s-scheme-let this)
       (with-access::J2SDecl this (loc scope id utype ronly)
 	 (epairify loc
-	    (if (memq scope '(global))
+	    (if (memq scope '(global export))
 		`(define ,(j2s-decl-scheme-id this) (js-make-let))
 		(let ((var (j2s-decl-scheme-id this)))
 		   `(,var (js-make-let)))))))
@@ -277,7 +277,7 @@
    
    (define (j2s-scheme-let-opt this)
       (with-access::J2SDeclInit this (scope id)
-	 (if (memq scope '(global %scope))
+	 (if (memq scope '(global %scope export))
 	     (j2s-let-decl-toplevel this mode return conf)
 	     (error "js-scheme" "Should not be here (not global)"
 		(j2s->list this)))))
@@ -308,7 +308,7 @@
 	 (cond
 	    ((or writable init?)
 	     (cond
-		((and (memq scope '(global %scope)) (in-eval? return))
+		((and (memq scope '(global %scope export)) (in-eval? return))
 		 `(begin
 		     ,(j2s-put! loc '%scope #f (j2s-vtype lhs)
 			 `',id 'propname
@@ -405,7 +405,7 @@
 	    ((j2s-let? decl)
 	     (epairify loc
 		`(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this)))
-	    ((and (memq scope '(global %scope)) (in-eval? return))
+	    ((and (memq scope '(global %scope export)) (in-eval? return))
 	     (epairify loc
 		`(js-global-object-get-name %scope ',id #f %this)))
 	    (else
@@ -843,7 +843,7 @@
 	     `(begin ,@(j2s-nodes* loc nodes mode return conf))))
 	 ((any (lambda (decl::J2SDecl)
 		  (with-access::J2SDecl decl (scope)
-		     (memq scope '(global))))
+		     (memq scope '(global export))))
 	     decls)
 	  ;; top-level or function level block
 	  (epairify loc

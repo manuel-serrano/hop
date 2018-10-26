@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/compile.scm               */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/compile.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Oct 26 06:26:36 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 21:50:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -231,8 +231,8 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
-      j2s-any-stage
       j2s-cps-stage
+      j2s-any-stage
       j2s-constant-stage
       j2s-cast-stage
       j2s-scheme-stage))
@@ -255,8 +255,8 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
-      j2s-any-stage
       j2s-cps-stage
+      j2s-any-stage
       j2s-cast-stage
       j2s-scheme-stage))
 
@@ -277,8 +277,8 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
-      j2s-any-stage
       j2s-cps-stage
+      j2s-any-stage
       j2s-constant-stage
       j2s-scheme-eval-stage))
 

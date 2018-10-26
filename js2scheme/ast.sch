@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Oct 16 09:33:04 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 21:48:06 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -259,6 +259,16 @@
        (params ,params)
        (body ,body)))
 
+(define-macro (J2SArrow/rtype rtype name params body . opts)
+   `(instantiate::J2SArrow
+       (loc loc)
+       (idthis '%_)
+       (mode 'hopscript)
+       (name ,name)
+       (params ,params)
+       (rtype ,rtype)
+       (body ,body)))
+
 (define-macro (J2SBlock . nodes)
    `(instantiate::J2SBlock
        (loc loc)
@@ -415,8 +425,8 @@
 (define-macro (J2SLetOpt usage id val)
    `(instantiate::J2SDeclInit
        (loc loc)
-       (writable #f)
-       (ronly #t)
+       (writable ,(if (memq 'assig (cadr usage)) #t #f))
+       (ronly ,(if (memq 'assig (cadr usage)) #f #t))
        (usecnt 1)
        (binder 'let-opt)
        (usage ,usage)
@@ -429,8 +439,8 @@
 (define-macro (J2SLetOptVtype typ usage id val)
    `(instantiate::J2SDeclInit
        (loc loc)
-       (writable #f)
-       (ronly #t)
+       (writable ,(if (memq 'assig (cadr usage)) #t #f))
+       (ronly ,(if (not (memq 'assig (cadr usage))) #f #t))
        (vtype ,typ)
        (usecnt 1)
        (binder 'let-opt)
