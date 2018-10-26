@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/stage.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/stage.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Thu Sep 27 13:42:27 2018 (serrano)                */
+;*    Last change :  Thu Oct 18 08:22:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -23,6 +23,7 @@
    
    (export (abstract-class J2SStage
 	      (name::bstring read-only)
+	      (footer::bstring read-only (default "\n"))
 	      (comment::bstring read-only)
 	      (optional read-only (default #f))
 	      (before read-only (default #f))
@@ -64,12 +65,13 @@
 		(and (procedure? opt) (opt args))
 		(and (eq? opt #t) (error "stage" "bad opt" stage))
 		(and (pair? opt) (any loop opt))))))
-   
-   (with-access::J2SStage stage (name comment before after)
+
+   (with-access::J2SStage stage (name footer comment before after)
       (if (active? stage)
 	  (begin
 	     (when (>=fx (j2s-verbose) 2)
-		(fprintf (current-error-port) "~3d. ~a" count name))
+		(fprintf (current-error-port) "~a~3d. ~a"
+		   (config-get args :verbmargin "") count name))
 	     (when (procedure? before) (before ast))
 	     (let ((nast (proc ast args)))
 		(when (directory? tmp)
@@ -85,7 +87,8 @@
 			 ((file-exists? file)
 			  (delete-file file)))))
 		(when (procedure? after) (after nast))
-		(when (>=fx (j2s-verbose) 2) (newline (current-error-port)))
+		(when (>=fx (j2s-verbose) 2)
+		   (display footer (current-error-port)))
 		(values nast #t)))
 	  (values ast #f))))
 

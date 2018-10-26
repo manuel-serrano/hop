@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/compile.scm             */
+;*    serrano/prgm/project/hop/hop/js2scheme/compile.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Oct 10 08:24:02 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 06:26:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -62,7 +62,8 @@
 	   __js2scheme_any
 	   __js2scheme_sourcemap
 	   __js2scheme_hintnum
-	   __js2scheme_pce)
+	   __js2scheme_pce
+	   __js2scheme_module)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -78,7 +79,8 @@
 	   (j2s-javascript-driver)
 	   (j2s-javascript-optim-driver)
 	   (j2s-ecmascript5-driver)
-	   (j2s-javascript-debug-driver)))
+	   (j2s-javascript-debug-driver)
+	   (j2s-export-driver)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *builtin-drivers* ...                                            */
@@ -91,7 +93,8 @@
      ("j2s-javascript-driver" ,j2s-javascript-driver)
      ("j2s-javascript-optim-driver" ,j2s-javascript-optim-driver)
      ("j2s-ecmascript5-driver" ,j2s-ecmascript5-driver)
-     ("j2s-javascript-debug-driver" ,j2s-javascript-debug-driver)))
+     ("j2s-javascript-debug-driver" ,j2s-javascript-debug-driver)
+     ("j2s-export-driver" ,j2s-export-driver)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-make-driver ...                                              */
@@ -171,6 +174,7 @@
 	  j2s-hopscript-stage
 	  j2s-loopexit-stage
 	  j2s-bestpractice-stage
+	  j2s-module-stage
 	  j2s-symbol-stage
 	  j2s-multivar-stage
 	  j2s-narrow-stage
@@ -220,6 +224,7 @@
       j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
+      j2s-module-stage
       j2s-symbol-stage
       j2s-letfusion-stage
       j2s-this-stage
@@ -242,6 +247,7 @@
       j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
+      j2s-module-stage
       j2s-symbol-stage
       j2s-letfusion-stage
       j2s-debug-stage
@@ -264,6 +270,7 @@
       j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
+      j2s-module-stage
       j2s-symbol-stage
       j2s-letfusion-stage
       j2s-this-stage
@@ -284,6 +291,7 @@
       j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
+      j2s-module-stage
       j2s-symbol-stage
       j2s-narrow-stage
       j2s-letfusion-stage
@@ -308,6 +316,7 @@
       j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
+      j2s-module-stage
       j2s-symbol-stage
       j2s-letfusion-stage
       j2s-javascript-stage))
@@ -321,6 +330,7 @@
       j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
+      j2s-module-stage
       j2s-symbol-stage
       j2s-letfusion-stage
       j2s-return-stage
@@ -337,10 +347,21 @@
       j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
+      j2s-module-stage
       j2s-symbol-stage
       j2s-letfusion-stage
       j2s-debug-stage
       j2s-javascript-stage))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-export-driver ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-export-driver)
+   (list 
+      j2s-syntax-stage
+      j2s-sourcemap-stage
+      j2s-module-stage
+      j2s-symbol-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-compile-options ...                                          */
@@ -404,6 +425,9 @@
 (define (compile-opts filename in args)
    (let ((o (append args (j2s-compile-options)))
 	 (l (config-get args :optim 0)))
+      ;; misc
+      (unless (memq :commonjs-export o)
+	 (set! o (cons* :commonjs-export #t o)))
       ;; debugging
       (when (or (>= (bigloo-debug) 2)
 		(string-contains (or (getenv "HOPTRACE") "") "j2s:"))

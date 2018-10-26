@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/symbol.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/symbol.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Oct 17 07:45:50 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 13:16:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -35,6 +35,7 @@
    (instantiate::J2SStageProc
       (name "symbol")
       (comment "symbol resolution")
+      (footer "")
       (proc j2s-symbol)))
 
 ;*---------------------------------------------------------------------*/
@@ -59,16 +60,19 @@
 		(hds (append-map (lambda (s) (collect* s)) headers))
 		(vars (append-map (lambda (s) (collect* s)) nodes))
 		(lets (collect-let nodes))
-		(env (append hds vars lets))
+		(env (append decls hds vars lets))
 		(genv (list %this %dummy))
 		(scope (config-get conf :bind-global '%scope))
 		(vdecls (bind-decls! vars env mode scope '() '() genv conf)))
 	    (when (pair? vars)
-	       (set! decls (filter (lambda (d) (isa? d J2SDecl)) vdecls)))
+	       (set! decls
+		  (append decls
+		     (filter (lambda (d) (isa? d J2SDecl)) vdecls))))
 	    (when (pair? lets)
 	       (for-each (lambda (d::J2SDecl)
 			    (with-access::J2SDecl d (scope)
-			       (set! scope 'global)))
+			       (unless (eq? scope 'export)
+				  (set! scope 'global))))
 		  lets)
 	       (set! decls (append decls lets)))
 	    (set! nodes
@@ -76,9 +80,58 @@
 		  nodes))
 	    (set! nodes
 	       (map! (lambda (o) (resolve! o env mode '() '() genv #f conf))
-		  nodes)))))
+		  nodes))
+	    (when (config-get conf :commonjs-export #f)
+	       (commonjs-export this (find-decl 'module env))))))
+   (when (and (>= (config-get conf :verbose 0) 2)
+	      (not (config-get conf :verbmargin #f)))
+      (newline (current-error-port)))
    this)
 
+;*---------------------------------------------------------------------*/
+;*    commonjs-export ...                                              */
+;*    -------------------------------------------------------------    */
+;*    For compatibility with common.js module, this function forces    */
+;*    a default module clause if non is explicitly given. The value    */
+;*    of the forced default module clause is MODULE.EXPORTS.           */
+;*---------------------------------------------------------------------*/
+(define (commonjs-export this::J2SProgram moddecl)
+   
+   (define (export-default-stmt moddecl index loc)
+      (co-instantiate ((expo (instantiate::J2SExport
+				(id 'default)
+				(alias 'default)
+				(decl decl)
+				(index index)))
+		       (decl (instantiate::J2SDecl
+				(loc loc)
+				(id 'default)
+				(vtype 'any)
+				(exports (list expo))
+				(binder 'export)
+				(scope 'export))))
+	 (values expo
+	    ;; Moddecl (the module declaration) is #f if the module has
+	    ;; been parsed for import and not for compilation. In that
+	    ;; case a fake empty code that will never be executed
+	    ;; is enough to get the default declaration correct
+	    (if moddecl
+		(J2SStmtExpr
+		   (J2SAssig (J2SRef decl)
+		      (J2SAccess (J2SRef moddecl)
+			 (J2SString "exports"))))
+		(J2SNop)))))
+   
+   (with-access::J2SProgram this (nodes loc exports)
+      (unless (find (lambda (e)
+		       (with-access::J2SExport e (id) (eq? id 'default)))
+		 exports)
+	 ;; force a default export if non specified
+	 (multiple-value-bind (expo stmt)
+	    (export-default-stmt moddecl (length exports) loc)
+	    (set! exports (cons expo exports))
+	    (set! nodes (append nodes (list stmt)))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    decl-cleanup-duplicate! ...                                      */
 ;*---------------------------------------------------------------------*/
@@ -158,7 +211,8 @@
 	  (append (reverse! acc) (reverse! funs))
 	  (let ((decl (car decls)))
 	     (with-access::J2SDecl decl (id (bscope scope))
-		(set! bscope scope)
+		(unless (eq? bscope 'export)
+		   (set! bscope scope))
 		(let ((old (find-decl id acc)))
 		   (if old
 		       (if (or (isa? decl J2SDeclFun)
@@ -622,14 +676,77 @@
 		   (decl decl))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    resolve! ::J2SDecl ...                                           */
+;*    resolve! ::J2SExportVars ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SDecl env mode withs wenv genv ctx conf)
-   (with-access::J2SDecl this (loc id)
-      (when (eq? mode 'strict)
-	 (check-strict-mode-eval id  "Declaration name" loc))
-      (instantiate::J2SNop
-	 (loc loc))))
+(define-walk-method (resolve! this::J2SExportVars env mode withs wenv genv ctx conf)
+   (call-default-walker)
+   (with-access::J2SExportVars this (refs aliases program)
+      (when (isa? program J2SProgram)
+	 (for-each (lambda (ref alias)
+		      (cond
+			 ((isa? ref J2SRef)
+			  (with-access::J2SRef ref (decl loc)
+			     (with-access::J2SDecl decl (scope id)
+				(if (memq scope '(global export))
+				    (export-decl decl alias program loc)
+				    (export-err id loc
+				       (format "bad scope (~s)" scope))))))
+			 ((isa? ref J2SGlobalRef)
+			  (with-access::J2SGlobalRef ref (loc decl)
+			     (with-access::J2SDecl decl (id)
+				(export-err id loc "global ref"))))
+			 ((isa? ref J2SWithRef)
+			  (with-access::J2SWithRef ref (loc id)
+			     (export-err id loc "with ref")))
+			 ((isa? ref J2SHopRef)
+			  (with-access::J2SHopRef ref (loc id)
+			     (export-err id loc "hop ref")))))
+	    refs aliases)))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    export-decl ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (export-decl decl::J2SDecl alias::symbol program::J2SProgram loc)
+   (with-access::J2SProgram program ((allexports exports) path)
+      (with-access::J2SDecl decl (id exports binder)
+	 (set! binder 'export)
+	 (cond
+	    ((null? exports)
+	     (let ((e (instantiate::J2SExport
+			 (id alias)
+			 (alias alias)
+			 (index (j2sprogram-get-export-index program))
+			 (decl decl))))
+		(set! exports (list e))
+		(set! allexports (cons e allexports))))
+	    ((find (lambda (e)
+		      (with-access::J2SExport e (id)
+			 (eq? id alias)))
+		allexports)
+	     (export-err alias loc (format "duplicate export \"~a\"" id)))
+	    (else
+	     (with-access::J2SExport (car exports) (index)
+		(let ((e (instantiate::J2SExport
+			    (id alias)
+			    (alias alias)
+			    (index index)
+			    (decl decl))))
+		   (set! exports (cons e exports))
+		   (set! allexports (cons e allexports)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    export-error ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (export-err id loc #!optional msg)
+   (raise
+      (instantiate::&io-parse-error
+	 (proc "symbol resolution (symbol)")
+	 (msg (string-append "Illegal variable export"
+		 (if msg (string-append ", " msg) "")))
+	 (obj id)
+	 (fname (cadr loc))
+	 (location (caddr loc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SVarDecls ...                                       */
@@ -648,53 +765,20 @@
 		(loc loc))))))
 
 ;*---------------------------------------------------------------------*/
-;*    check-strict-mode-eval ...                                       */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1       */
+;*    resolve! ::J2SDecl ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (check-strict-mode-eval id msg loc)
-   (cond
-      ((or (eq? id 'eval) (eq? id 'arguments))
-       (raise
-	  (instantiate::&io-parse-error
-	     (proc "symbol resolution (symbol)")
-	     (msg (format "~a eval or arguments is not allowed in strict mode"
-		     msg ))
-	     (obj id)
-	     (fname (cadr loc))
-	     (location (caddr loc)))))
-      ((j2s-strict-reserved-id? id)
-       (raise
-	  (instantiate::&io-parse-error
-	     (proc "symbol resolution (symbol)")
-	     (msg "~a a reserved name is not allowd in strict mode")
-	     (obj id)
-	     (fname (cadr loc))
-	     (location (caddr loc)))))))
-
-;*---------------------------------------------------------------------*/
-;*    check-immutable ...                                              */
-;*---------------------------------------------------------------------*/
-(define (check-immutable decl::J2SDecl loc conf)
-   (with-access::J2SDecl decl (immutable id)
-      (when (and immutable (or (isa? decl J2SDeclClass) (isa? decl J2SDeclFun)))
-	 (cond
-	    ((eq-conf-lang? conf "hopscript")
-	     (raise
-		(instantiate::&io-parse-error
-		   (proc "symbol resolution (symbol)")
-		   (msg "Assignment to constant variable")
-		   (obj id)
-		   (fname (cadr loc))
-		   (location (caddr loc)))))
-	    ((> (bigloo-warning) 1)
-	     (warning/loc loc "Assignment to constant variable."))))))
+(define-walk-method (resolve! this::J2SDecl env mode withs wenv genv ctx conf)
+   (with-access::J2SDecl this (loc id)
+      (when (eq? mode 'strict)
+	 (check-strict-mode-eval id  "Declaration name" loc))
+      (instantiate::J2SNop
+	 (loc loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclInit ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDeclInit env mode withs wenv genv ctx conf)
-   (with-access::J2SDeclInit this (loc id val)
+   (with-access::J2SDeclInit this (loc id val exports)
       (let ((ndecl::J2SDecl (or (find-decl id env) this)))
 	 ;; strict mode restrictions
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1
@@ -727,7 +811,7 @@
 ;*    resolve! ::J2SDeclFun ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDeclFun env mode withs wenv genv ctx conf)
-   (with-access::J2SDecl this (loc)
+   (with-access::J2SDecl this (loc exports id)
       (instantiate::J2SNop
 	 (loc loc))))
 
@@ -1095,3 +1179,47 @@
 		  (obj ref)
 		  (field index)))
 	    this))))
+
+;*---------------------------------------------------------------------*/
+;*    check-immutable ...                                              */
+;*---------------------------------------------------------------------*/
+(define (check-immutable decl::J2SDecl loc conf)
+   (with-access::J2SDecl decl (writable id)
+      (when (and (not writable) (or (isa? decl J2SDeclClass) (isa? decl J2SDeclFun)))
+	 (cond
+	    ((eq-conf-lang? conf "hopscript")
+	     (raise
+		(instantiate::&io-parse-error
+		   (proc "symbol resolution (symbol)")
+		   (msg "Assignment to constant variable")
+		   (obj id)
+		   (fname (cadr loc))
+		   (location (caddr loc)))))
+	    ((> (bigloo-warning) 1)
+	     (warning/loc loc "Assignment to constant variable."))))))
+
+;*---------------------------------------------------------------------*/
+;*    check-strict-mode-eval ...                                       */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1       */
+;*---------------------------------------------------------------------*/
+(define (check-strict-mode-eval id msg loc)
+   (cond
+      ((or (eq? id 'eval) (eq? id 'arguments))
+       (raise
+	  (instantiate::&io-parse-error
+	     (proc "symbol resolution (symbol)")
+	     (msg (format "~a eval or arguments is not allowed in strict mode"
+		     msg ))
+	     (obj id)
+	     (fname (cadr loc))
+	     (location (caddr loc)))))
+      ((j2s-strict-reserved-id? id)
+       (raise
+	  (instantiate::&io-parse-error
+	     (proc "symbol resolution (symbol)")
+	     (msg "~a a reserved name is not allowd in strict mode")
+	     (obj id)
+	     (fname (cadr loc))
+	     (location (caddr loc)))))))
+

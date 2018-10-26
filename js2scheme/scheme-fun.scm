@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-fun.scm          */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-fun.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Sep  5 14:52:15 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 08:55:54 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -168,7 +168,44 @@
 	 (else
 	  expr)))
 
-   (with-access::J2SDeclFun this (loc id scope val usage ronly)
+   (define (global-declfun this val scmid fastid)
+      (with-access::J2SDeclFun this (loc id)
+	 `(begin
+	     ,(beautiful-define
+		 `(define ,fastid
+		     ,(jsfun->lambda val mode return conf
+			 (j2s-declfun-prototype this)
+			 (constructor-only? this))))
+	     ,@(if (optimized-ctor this)
+		   `(,(beautiful-define
+			 `(define ,(j2s-fast-constructor-id id)
+			     ,(j2sfun->ctor val mode return conf
+				 this))))
+		   '())
+	     ,@(if (no-closure? this)
+		   '()
+		   `((define ,scmid #unspecified))))))
+
+   (define (regular-declfun this val scmid fastid)
+      (with-access::J2SDeclFun this (loc id)
+	 `(begin
+	     ,(beautiful-define
+		 `(define ,fastid
+		     ,(jsfun->lambda val mode return conf
+			 (j2s-declfun-prototype this)
+			 (constructor-only? this))))
+	     ,@(if (optimized-ctor this)
+		   `(,(beautiful-define
+			 `(define ,(j2s-fast-constructor-id id)
+			     ,(j2sfun->ctor val mode return conf
+				 this))))
+		   '())
+	     ,@(if (no-closure? this)
+		   '()
+		   `((define ,scmid 
+			,(make-function this)))))))
+   
+   (with-access::J2SDeclFun this (loc id scope val usage ronly exports)
       (let ((val (declfun-fun this)))
 	 (with-access::J2SFun val (params mode vararg body name generator)
 	    (let* ((scmid (j2s-decl-scheme-id this))
@@ -190,38 +227,14 @@
 			     (list def)
 			     (list def `(,scmid ,(make-function this))))))
 		     ((global %scope)
-		      `(begin
-			  ,(beautiful-define
-			      `(define ,fastid
-				  ,(jsfun->lambda val mode return conf
-				      (j2s-declfun-prototype this)
-				      (constructor-only? this))))
-			  ,@(if (optimized-ctor this)
-				`(,(beautiful-define
-				      `(define ,(j2s-fast-constructor-id id)
-					  ,(j2sfun->ctor val mode return conf
-					     this))))
-				'())
-			  ,@(if (no-closure? this)
-				'()
-				`((define ,scmid #unspecified)))))
+		      (global-declfun this val scmid fastid))
+		     ((export)
+		      (with-access::J2SExport (car exports) (index)
+			 (append
+			    (regular-declfun this val scmid fastid)
+			    `((vector-set! %evars ,index ,scmid)))))
 		     (else
-		      `(begin
-			  ,(beautiful-define
-			      `(define ,fastid
-				  ,(jsfun->lambda val mode return conf
-				      (j2s-declfun-prototype this)
-				      (constructor-only? this))))
-			  ,@(if (optimized-ctor this)
-				`(,(beautiful-define
-				      `(define ,(j2s-fast-constructor-id id)
-					  ,(j2sfun->ctor val mode return conf
-					     this))))
-				'())
-			  ,@(if (no-closure? this)
-				'()
-				`((define ,scmid 
-				     ,(make-function this)))))))))))))
+		      (regular-declfun this val scmid fastid)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-closure ...                                           */

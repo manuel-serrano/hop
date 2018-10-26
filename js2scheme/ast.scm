@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Sep 27 11:38:30 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 17:30:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -51,7 +51,9 @@
 	      (headers::pair-nil (default '()) (info '("ast")))
 	      (globals::pair-nil (default '()) (info '("ast")))
 	      (direct-eval::bool (default #t))
-	      (source-map (default #f)))
+	      (source-map (default #f))
+	      (imports::pair-nil (default '()))
+	      (exports::pair-nil (default '())))
 
 	   (class J2SDecl::J2SStmt
 	      id::symbol
@@ -59,7 +61,6 @@
 	      (key (default (ast-decl-key)) (info '("notraverse")))
 	      ;; writable=#f iff decl is const
 	      (writable (default #t) (info '("notraverse")))
-	      (immutable (default #f) (info '("notraverse")))
 	      (ronly (default #f) (info '("notraverse")))
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
@@ -81,7 +82,9 @@
 	      ;; computed variable range
 	      (vrange::obj (default #unspecified) (info '("notraverse")))
 	      ;; variable 
-	      (hint::pair-nil (default '()) (info '("notraverse"))))
+	      (hint::pair-nil (default '()) (info '("notraverse")))
+	      ;; es module export
+	      (exports::pair-nil (default '()) (info '("notraverse"))))
 
 	   (class J2SDeclArguments::J2SDecl)
 	   
@@ -103,6 +106,11 @@
 	   (final-class J2SDeclExtern::J2SDeclInit
 	      (bind::bool read-only (default #f))
 	      (hidden-class::bool read-only (default #t)))
+
+	   (final-class J2SDeclImport::J2SDecl
+	      (alias read-only (default #f) (info '("notraverse")))
+	      (export::obj read-only (info '("notraverse")))
+	      (import::obj read-only (info '("notraverse"))))
 
 	   (abstract-class J2SExpr::J2SNode
 	      (type::symbol (default 'unknown) (info '("notraverse")))
@@ -442,6 +450,39 @@
 	      (expr::J2SExpr (info '("ast")))
 	      (path read-only))
 
+	   (final-class J2SImport::J2SStmt
+	      (path::bstring read-only (info '("notraverse")))
+	      (names::obj (default #f) (info '("notraverse")))
+	      (respath (default #f) (info '("notraverse")))
+	      (mvar (default #f) (info '("notraverse")))
+	      (ivar (default #f) (info '("notraverse")))
+	      (reindex::long (default -1) (info '("notraverse")))
+	      (iprgm (default #f) (info '("notraverse"))))
+
+	   (final-class J2SImportName
+	      (loc read-only)
+	      (id::symbol read-only)
+	      (alias::symbol read-only))
+
+	   (final-class J2SImportDynamic::J2SExpr
+	      (base::bstring (default (pwd)))
+	      path::J2SExpr)
+
+	   (final-class J2SImportExpr::J2SExpr
+	      import)
+
+	   (final-class J2SExport
+	      (id::symbol read-only)
+	      (alias::symbol read-only)
+	      (index::long (default -1))
+	      (decl (default #f))
+	      (from (default #f)))
+
+	   (final-class J2SExportVars::J2SStmt
+	      (refs::pair-nil read-only)
+	      (aliases::pair-nil read-only)
+	      (program (default #f)))
+	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
 	   (generic walk2 n::J2SNode p::procedure a0 a1)
@@ -488,13 +529,16 @@
 	   (j2s-let?::bool ::J2SDecl)
 	   (j2s-const?::bool ::J2SDecl)
 	   (j2s-param?::bool ::J2SDecl)
+	   (j2s-export?::bool ::J2SDecl)
 	   
 	   (j2s-let-opt?::bool ::J2SDecl)
 
 	   (j2s-field-name::obj ::J2SNode)
 	   (inline j2s-field-length?::bool ::J2SNode)
 
-	   (j2sdeclinit-val-fun::J2SExpr ::J2SDeclInit))
+	   (j2sdeclinit-val-fun::J2SExpr ::J2SDeclInit)
+
+	   (j2sprogram-get-export-index::long ::J2SProgram))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -546,7 +590,7 @@
       (case binder
 	 ((var) #t)
 	 ((let let-opt) #t)
-	 ((param class) #f)
+	 ((param class export) #f)
 	 (else (error "j2s-var?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
@@ -556,7 +600,7 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((let let-opt) #t)
-	 ((var param class) #f)
+	 ((var param class export) #f)
 	 (else (error "j2s-let?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
@@ -566,7 +610,7 @@
    (with-access::J2SDecl decl (binder writable id loc)
       (unless writable
 	 (case binder
-	    ((let let-opt) #t)
+	    ((let let-opt export) #t)
 	    ((var param class) #f)
 	    (else (error "j2s-const?" "wrong binder" (vector loc id binder)))))))
 
@@ -577,7 +621,7 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((let-opt) #t)
-	 ((let var param class) #f)
+	 ((let var param class export) #f)
 	 (else (error "j2s-let-opt?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
@@ -607,8 +651,18 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((param) #t)
-	 ((var let const let-opt const-opt class) #f)
+	 ((var let const let-opt const-opt class export) #f)
 	 (else (error "j2s-param?" "wrong binder" (vector loc id binder))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-export? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-export? decl::J2SDecl)
+   (with-access::J2SDecl decl (binder id loc)
+      (case binder
+	 ((export) #t)
+	 ((var let const let-opt const-opt class param) #f)
+	 (else (error "j2s-export?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-id ...                                                    */
@@ -949,7 +1003,6 @@
 (gen-walks J2SParen expr)
 (gen-walks J2SUnary expr)
 (gen-walks J2SBinary lhs rhs)
-(gen-walks J2SDefault body)
 (gen-walks J2SAccess obj field)
 (gen-walks J2SCacheCheck obj)
 (gen-walks J2SCacheUpdate obj)
@@ -977,6 +1030,8 @@
 (gen-walks J2SDProducer expr)
 (gen-walks J2SDConsumer expr)
 (gen-walks J2SPragma (vals))
+(gen-walks J2SImportDynamic path)
+(gen-walks J2SExportVars (refs))
 
 (gen-traversals J2STilde)
 
@@ -1287,3 +1342,23 @@
 	  (with-access::J2SMethod val (function)
 	     function)
 	  val)))
+
+;*---------------------------------------------------------------------*/
+;*    j2sprogram-get-export-index ...                                  */
+;*    -------------------------------------------------------------    */
+;*    Returns the next available index for export.                     */
+;*---------------------------------------------------------------------*/
+(define (j2sprogram-get-export-index::long prgm::J2SProgram)
+   (with-access::J2SProgram prgm (exports)
+      (let loop ((exports exports)
+		 (i -1))
+	 (if (null? exports)
+	     (+fx i 1)
+	     (with-access::J2SExport (car exports) (index from id)
+		(cond
+		   (from
+		    (loop (cdr exports) i))
+		   ((> index i)
+		    (loop (cdr exports) index))
+		   (else
+		    (loop (cdr exports) i))))))))

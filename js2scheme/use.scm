@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/use.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/use.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Aug 10 16:21:36 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 13:08:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -34,11 +34,7 @@
    (instantiate::J2SStageProc
       (name "use")
       (comment "Usage property for all variables")
-      (proc (lambda (n args)
-	       (unless (isa? n J2SProgram)
-		  (tprint "use n=" (typeof n))
-		  (tprint (j2s->list n)))
-	       (j2s-use! n args)))
+      (proc j2s-use!)
       (optional #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -106,8 +102,9 @@
 	    (set! keep #f)
 	    (set! decls
 	       (filter (lambda (d::J2SDecl)
-			  (with-access::J2SDecl d (usecnt id)
+			  (with-access::J2SDecl d (usecnt id scope)
 			     (or (>fx usecnt 0)
+				 (eq? scope 'export)
 				 (and (isa? d J2SDeclInit)
 				      (with-access::J2SDeclInit d (val)
 					 (or (isa? val J2SSvc)
@@ -239,17 +236,17 @@
 ;*    reset-use-count ::J2SDecl ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-use-count this::J2SDecl)
-   (with-access::J2SDecl this (usecnt)
-      (set! usecnt 0))
+   (with-access::J2SDecl this (usecnt scope id)
+      (set! usecnt (if (eq? scope 'export) 1000 0)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-use-count ::J2SDeclInit ...                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-use-count this::J2SDeclInit)
-   (with-access::J2SDeclInit this (usecnt val)
-      (when (>fx usecnt 0)
-	 (set! usecnt 0)
+   (with-access::J2SDeclInit this (usecnt val scope id)
+      (when (or (>fx usecnt 0) (eq? scope 'export))
+	 (set! usecnt (if (eq? scope 'export) 1000 0))
 	 (reset-use-count val)))
    this)
 
@@ -397,13 +394,22 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    usage ::J2SDecl ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (usage this::J2SDecl ctx deval infun)
+   (with-access::J2SDecl this ((u usage) exports)
+      (when (and (pair? exports) (not (memq 'ref u)))
+	 (set! u (cons 'ref u))))
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    usage ::J2SDeclInit ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SDeclInit ctx deval infun)
    (with-access::J2SDeclInit this ((u usage) val)
       (usage val 'ref deval infun)
       (set! u (cons 'init u)))
-   this)
+   (call-next-method))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SReturn ...                                            */

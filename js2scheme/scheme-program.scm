@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-program.scm      */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-program.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Oct  8 14:27:24 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 17:26:55 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -25,14 +25,15 @@
 	   __js2scheme_stage
 	   __js2scheme_scheme
 	   __js2scheme_scheme-fun
-	   __js2scheme_scheme-utils))
+	   __js2scheme_scheme-utils
+	   __js2scheme_checksum))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SProgram ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SProgram mode return conf)
    
-   (define (j2s-master-module module scmcnsts body)
+   (define (j2s-master-module module scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size globals)
 	 (list module
 	    `(%define-pcache ,pcache-size)
@@ -40,19 +41,21 @@
 		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
-	     (when (config-get conf :profile-call #f)
-		`(define %call-log (make-vector ,call-size #l0)))
-	     (when (config-get conf :profile-call #f)
-		`(define %call-locations ',(call-locations this)))
+	    (when (config-get conf :profile-call #f)
+	       `(define %call-log (make-vector ,call-size #l0)))
+	    (when (config-get conf :profile-call #f)
+	       `(define %call-locations ',(call-locations this)))
 	    `(define (hopscript %this this %scope %module)
 		(define %worker (js-current-worker))
 		(define %cnsts ,scmcnsts)
+		,@esimports
+		,esexports
 		,@globals
 		,@(exit-body body conf))
 	    ;; for dynamic loading
 	    'hopscript)))
 
-   (define (j2s-slave-module module scmcnsts body)
+   (define (j2s-slave-module module scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size globals)
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
 	    '(define %source (or (the-loading-file) "/"))
@@ -66,34 +69,37 @@
 		      '())
 		(define %worker (js-current-worker))
 		(define %cnsts ,scmcnsts)
+		,@esimports
+		,esexports
 		,@globals
 		,@(exit-body body conf))
 	    ;; for dynamic loading
 	    'hopscript)))
 
-   (define (j2s-module module scmcnsts body)
+   (define (j2s-module module scmcnsts esexports esimports body)
       (if (config-get conf :worker-slave)
-	  (j2s-slave-module module scmcnsts body)
-	  (j2s-master-module module scmcnsts body)))
+	  (j2s-slave-module module scmcnsts esexports esimports body)
+	  (j2s-master-module module scmcnsts esexports esimports body)))
 
-   (define (j2s-main-module/workers name scmcnsts body)
-      (let ((module `(module ,(string->symbol name)
-			(eval (library hop)
-			   (library hopscript)
-			   (library nodejs))
-			(library hop hopscript nodejs)
-			(cond-expand (enable-libuv (library libuv)))
-			(main main))))
-	 (with-access::J2SProgram this (mode pcache-size call-size %this path globals)
+   (define (j2s-main-module/workers name scmcnsts esexports esimports body)
+      (with-access::J2SProgram this (mode pcache-size call-size %this path
+				       globals)
+	 (let ((module `(module ,(string->symbol name)
+			   (eval (library hop)
+			      (library hopscript)
+			      (library nodejs))
+			   (library hop hopscript nodejs)
+			   (cond-expand (enable-libuv (library libuv)))
+			   (main main))))
 	    (list module
 	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
 	       `(define %pcache
 		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
-		(when (config-get conf :profile-call #f)
-		   `(define %call-log (make-vector ,call-size #l0)))
-		(when (config-get conf :profile-call #f)
-		   `(define %call-locations ',(call-locations this)))
+	       (when (config-get conf :profile-call #f)
+		  `(define %call-log (make-vector ,call-size #l0)))
+	       (when (config-get conf :profile-call #f)
+		  `(define %call-locations ',(call-locations this)))
 	       '(hopjs-standalone-set! #t)
 	       `(define %this (nodejs-new-global-object))
 	       `(define %source ,path)
@@ -112,6 +118,8 @@
 			 (define %module
 			    (nodejs-new-module ,(basename path) ,path %worker %this))
 			 (define %cnsts ,scmcnsts)
+			 ,@esimports
+			 ,esexports
 			 ,@globals
 			 ,@(exit-body body conf)))
 		   ,(profilers conf)
@@ -122,7 +130,9 @@
    (with-access::J2SProgram this (module main nodes headers decls
 					 mode name pcache-size call-size
 					 cnsts globals)
-      (let* ((scmheaders (j2s-scheme headers mode return conf))
+      (let* ((esimports (j2s-module-imports this))
+	     (esexports (j2s-module-exports this))
+	     (scmheaders (j2s-scheme headers mode return conf))
 	     (scmdecls (j2s-scheme decls mode return conf))
 	     (scmclos (filter-map (lambda (d)
 				     (j2s-scheme-closure d mode return conf))
@@ -133,13 +143,15 @@
 	     (j2s-main-sans-worker-module this name
 		scmcnsts
 		(flatten-nodes (append scmheaders scmdecls scmclos))
+ 		esexports esimports
 		(flatten-nodes scmnodes)
 		conf)
-	     (let ((body (flatten-nodes (append scmheaders scmdecls scmclos scmnodes))))
+	     (let ((body (flatten-nodes
+			    (append scmheaders scmdecls scmclos scmnodes))))
 		(cond
 		   (module
 		    ;; a module whose declaration is in the source
-		    (j2s-module module scmcnsts body))
+		    (j2s-module module scmcnsts esexports esimports body))
 		   ((not name)
 		    ;; a mere expression
 		    `(lambda (%this this %scope %module)
@@ -154,30 +166,34 @@
 			(define %source (or (the-loading-file) "/"))
 			(define %resource (dirname %source))
 			(define %cnsts ,scmcnsts)
+			,@esimports
+			,esexports
 			,@globals
 			,@(exit-body body conf)))
 		   (main
 		    ;; generate a main hopscript module 
-		    (j2s-main-module/workers name scmcnsts body))
+		    (j2s-main-module/workers name scmcnsts
+		       esexports esimports body))
 		   (else
 		    ;; generate the module clause
 		    (let ((module `(module ,(string->symbol name)
 				      (library hop hopscript js2scheme nodejs)
 				      (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))))
-		       (j2s-module module scmcnsts body)))))))))
+		       (j2s-module module scmcnsts esexports esimports body)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-main-sans-worker-module ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (j2s-main-sans-worker-module this name scmcnsts toplevel body conf)
-   (let ((module `(module ,(string->symbol name)
-		     (eval (library hop)
-			(library hopscript)
-			(library nodejs))
-		     (library hop hopscript nodejs)
-		     (cond-expand (enable-libuv (library libuv)))
-		     (main main))))
-      (with-access::J2SProgram this (mode pcache-size call-size %this path globals)
+(define (j2s-main-sans-worker-module this name scmcnsts toplevel
+	   esexports esimports body conf)
+   (with-access::J2SProgram this (mode pcache-size call-size %this path globals)
+      (let ((module `(module ,(string->symbol name)
+			(eval (library hop)
+			   (library hopscript)
+			   (library nodejs))
+			(library hop hopscript nodejs)
+			(cond-expand (enable-libuv (library libuv)))
+			(main main))))
 	 `(,module (%define-pcache ,pcache-size)
 	     (define %pcache
 		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
@@ -199,6 +215,8 @@
 	     (define %module
 		(nodejs-new-module ,(basename path) ,path %worker %this))
 	     (define %cnsts ,scmcnsts)
+	     ,@esimports
+	     ,esexports
 	     ,@globals
 	     ,@toplevel
 	     (define (main args)
@@ -207,6 +225,159 @@
 		(bigloo-library-path-set! ',(bigloo-library-path))
 		(set! !process (nodejs-process %worker %this))
 		,@(exit-body body conf))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-module-imports ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-module-imports this::J2SProgram)
+
+   (define (import-iprgm i) (with-access::J2SImport i (iprgm) iprgm))
+   (define (import-mvar i) (with-access::J2SImport i (mvar) mvar))
+
+   (define (evar-ident idx)
+      (string->symbol (format "%import-evars-~a" idx)))
+
+   (define (reindex! this::J2SProgram iprgm::J2SProgram reindex)
+      (with-access::J2SProgram this (%info)
+	 (set! %info (cons (cons iprgm  reindex) %info))))
+
+   (define (module-imports prgm::J2SProgram)
+      (with-access::J2SProgram prgm (imports)
+	 (map (lambda (im idx)
+		 (with-access::J2SImport im (mvar ivar path iprgm)
+		    (let ((impid (evar-ident idx)))
+		       (reindex! this iprgm idx)
+		       (set! mvar `(vector-ref %imports ,idx))
+		       (set! ivar impid)
+		       `(define ,impid
+			   (with-access::JsModule (vector-ref %imports ,idx) (evars)
+			      ,(format "import: ~a" path)
+			      evars)))))
+	    imports (iota (length imports)))))
+
+   (define (redirect-only?::bool iprgm::J2SProgram)
+      ;; true iff iprgm only redirect exports
+      ;; without exporting bindings itself
+      (with-access::J2SProgram iprgm (exports)
+	 (every (lambda (e)
+		   (with-access::J2SExport e (from) from))
+	    exports)))
+      
+   (define (module-import-redirect iprgm::J2SProgram mvar eidx)
+      (with-access::J2SProgram iprgm (imports (ipath path))
+	 (let ((nres '())
+	       (nqueue '()))
+	    (for-each (lambda (im idx)
+			 (with-access::J2SImport im (names iprgm path)
+			    (when (and (pair? names) (eq? (car names) 'redirect))
+			       (unless (redirect-only? iprgm)
+				  (let ((evid (evar-ident eidx)))
+				     (reindex! this iprgm eidx)
+				     (set! eidx (+fx eidx 1))
+				     (let ((x `(with-access::JsModule ,mvar (imports)
+						 (with-access::JsModule
+						       (vector-ref imports ,idx)
+						       (evars)
+						    ,(format "redirect: ~a ~a" ipath path)
+						    evars))))
+					(set! nres (cons x nres)))))
+			       (let ((q (cons iprgm `(vector-ref (with-access::JsModule ,mvar (imports) imports) ,idx))))
+				  (set! nqueue (append! nqueue (list q)))))))
+	       imports (iota (length imports)))
+	    (values nqueue nres))))
+   
+   (define (module-redirect prgm::J2SProgram)
+      (with-access::J2SProgram prgm (imports)
+	 (let loop ((queue (map (lambda (i)
+				   (with-access::J2SImport i (iprgm mvar)
+				      (cons iprgm mvar)))
+			      imports))
+		    (idx (length imports))
+		    (res '())
+		    (stack '()))
+	    (if (null? queue)
+		(reverse! res)
+		(let ((iprgm (caar queue))
+		      (mvar (cdar queue)))
+		   (multiple-value-bind (nqueue nres)
+		      (module-import-redirect iprgm mvar idx)
+		      (loop (append! (cdr queue) nqueue)
+			 (+fx idx (length nres))
+			 (append nres res)
+			 (cons iprgm stack))))))))
+
+   (with-access::J2SProgram this (imports path %info)
+      (set! %info '())
+      (cons
+	 `(define %imports
+	     (with-access::JsModule %module (imports)
+		(set! imports
+		   (vector
+		      ,@(map (lambda (im)
+				(with-access::J2SImport im (respath iprgm loc)
+				   `(nodejs-import-module %worker %this %module
+				       ,respath
+				       ,(j2s-program-checksum! iprgm)
+				       ',loc)))
+			   imports)))
+		imports))
+	 (append
+	    (module-imports this)
+	    `((with-access::JsModule %module (redirects)
+		 (set! redirects
+		    (vector
+		       ,@(map (lambda (i) (evar-ident i)) (iota (length imports)))
+		       ,@(module-redirect this)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-module-exports ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-module-exports this::J2SProgram)
+   
+   (define (redirect-index this::J2SProgram id iprgm::J2SProgram loc)
+      ;; Find the root program (module) that exports id, and return
+      ;; the current index relative to this imports of its evars vector.
+      ;; This function works hand in hand with J2S-MODULE-IMPORTS
+      (with-access::J2SProgram iprgm (path exports)
+	 (let ((x (find (lambda (e)
+			   (with-access::J2SExport e ((eid id))
+			      (eq? eid id)))
+		     exports)))
+	    (if (not x)
+		(raise
+		   (instantiate::&error
+		      (proc path)
+		      (msg "Cannot find redirection")
+		      (obj id)
+		      (fname (cadr loc))
+		      (location (caddr loc))))
+		(with-access::J2SExport x (from)
+		   (if from
+		       (redirect-index this id from loc)
+		       (with-access::J2SProgram this (%info)
+			  (let ((c (assq iprgm %info)))
+			     (cdr c)))))))))
+   
+   (define (export e::J2SExport)
+      (with-access::J2SExport e (index decl from id alias)
+	 (with-access::J2SDecl decl ((w writable) loc)
+	    (if from
+		(vector alias (cons index (redirect-index this id from loc)) w)
+		(vector alias index w)))))
+   
+   (with-access::J2SProgram this (exports imports path checksum)
+      (let ((idx (j2sprogram-get-export-index this)))
+	 (if (pair? exports)
+	     `(define %evars
+		 (with-access::JsModule %module (evars exports checksum)
+		    (set! checksum ,(j2s-program-checksum! this))
+		    (set! exports ',(map export exports))
+		    ,@(if (>fx idx 0)
+			  `((set! evars (make-vector ,idx (js-undefined))))
+			  '())
+		    evars))
+	     `(with-access::JsModule %module (checksum)
+		 (set! checksum ,(j2s-program-checksum! this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */
@@ -317,3 +488,9 @@
 	    (else
 	     #f))))
    vec)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-program-checksum! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-program-checksum! prgm::J2SProgram)
+   (checksum prgm))

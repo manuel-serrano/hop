@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/range.scm     */
+;*    serrano/prgm/project/hop/hop/js2scheme/range.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Sep  5 15:15:45 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 11:50:04 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -2082,6 +2082,18 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SClassElement env::pair-nil conf mode::symbol fix::cell)
    (call-default-walker)
+   (return #f env))
+
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SExportVars ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SExportVars env::pair-nil conf mode::symbol fix::cell)
+   (return #f env))
+
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SImport ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SImport env::pair-nil conf mode::symbol fix::cell)
    (return #f env))
 
 ;*---------------------------------------------------------------------*/

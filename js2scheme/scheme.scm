@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Oct 17 10:19:28 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 18:16:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -253,6 +253,12 @@
        (j2s-scheme-var this))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SDeclImport ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SDeclImport mode return conf)
+   #unspecified)
+   
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclInit mode return conf)
@@ -275,8 +281,9 @@
 	     (j2s-let-decl-toplevel this mode return conf)
 	     (error "js-scheme" "Should not be here (not global)"
 		(j2s->list this)))))
-   
+
    (cond
+      ((j2s-export? this) #unspecified)
       ((j2s-param? this) (call-next-method))
       ((j2s-let-opt? this) (j2s-scheme-let-opt this))
       ((j2s-let? this) (call-next-method))
@@ -297,9 +304,9 @@
 	  `(js-let-set! ,(j2s-decl-scheme-id decl) ,val ',loc %this))))
 
    (with-access::J2SRef lhs (decl)
-      (with-access::J2SDecl decl (writable immutable scope id hint)
+      (with-access::J2SDecl decl (writable writable scope id hint exports)
 	 (cond
-	    ((or writable (and (isa? decl J2SDeclInit) (not immutable)))
+	    ((or writable init? (isa? decl J2SDeclInit))
 	     (cond
 		((and (memq scope '(global %scope)) (in-eval? return))
 		 `(begin
@@ -307,13 +314,18 @@
 			 `',id 'propname
 			 val tyval (strict-mode? mode) conf #f #f)
 		     ,result))
+		((pair? exports)
+		 `(begin
+		     ,(with-access::J2SExport (car exports) (index)
+			 `(vector-set! %evars ,index ,val))
+		     ,result))
 		(result
 		 `(begin
 		     ,(set decl hint loc)
 		     ,result))
 		(else
 		 (set decl hint loc))))
-	    ((and immutable (memq mode '(strict hopscript)))
+	    ((and (not writable) (memq mode '(strict hopscript)))
 	     `(with-access::JsGlobalObject %this (js-type-error)
 		 ,(match-case loc
 		     ((at ?fname ?pos)
@@ -378,8 +390,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SRef mode return conf)
    (with-access::J2SRef this (decl loc type)
-      (with-access::J2SDecl decl (scope id vtype)
+      (with-access::J2SDecl decl (scope id vtype exports ronly)
 	 (cond
+	    ((isa? decl J2SDeclImport)
+	     (with-access::J2SDeclImport decl (export import)
+		(with-access::J2SExport export (index)
+		   (with-access::J2SImport import (ivar mvar)
+		      `(vector-ref ,ivar ,index)))))
+	    ((and (pair? exports) (or (not ronly) (not (isa? decl J2SDeclFun))))
+	     (with-access::J2SExport (car exports) (index decl)
+		`(vector-ref %evars ,index)))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scheme-id decl))
 	    ((j2s-let? decl)
@@ -2760,6 +2780,38 @@
 (define-method (j2s-scheme this::J2SDConsumer mode return conf)
    (with-access::J2SDConsumer this (expr)
       (j2s-scheme expr mode return conf)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SImport ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SImport mode return conf)
+   #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SImportDynamic ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SImportDynamic mode return conf)
+   (with-access::J2SImportDynamic this (loc path base loc)
+      (epairify loc
+	 `(nodejs-import-module-dynamic %worker %this %module
+	     ,(j2s-scheme path mode return conf)
+	     ,base
+	     ',loc))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SImportExpr ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SImportExpr mode return conf)
+   (with-access::J2SImportExpr this (import op loc)
+      (with-access::J2SImport import (mvar)
+	 (epairify loc
+	    `(nodejs-exports-module ,mvar %worker %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SExportVars ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SExportVars mode return conf)
+   #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    throw? ...                                                       */

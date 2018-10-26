@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/dump.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/dump.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Sep 30 15:21:11 2018 (serrano)                */
+;*    Last change :  Wed Oct 24 17:10:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1077,3 +1077,27 @@
 (define-method (j2s->list this::J2STemplate)
    (with-access::J2STemplate this (exprs)
       `(,@(call-next-method) ,@(map j2s->list exprs))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SImport ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SImport)
+   (with-access::J2SImport this (path)
+      `(,@(call-next-method) ,path)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SExportVars ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SExportVars)
+   (with-access::J2SExportVars this (refs)
+      `(,@(call-next-method) ,@(map j2s->list refs))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SExport ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SExport)
+   (with-access::J2SExport this (id index from writable)
+      `(,@(call-next-method) ,id
+	  index: ,index
+	  writable: writable
+	  from: ,(typeof from) )))

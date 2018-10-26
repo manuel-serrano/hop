@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/types.scm               */
+;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Oct 12 19:18:21 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 11:51:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -135,7 +135,7 @@
 	   (class JsWrapper::JsObject
 	      obj
 	      data)
-	   
+
 	   (class JsGlobalObject::JsObject
 	      (js-object::JsFunction (default (class-nil JsFunction)))
 	      (js-array::JsFunction (default (class-nil JsFunction)))
@@ -299,6 +299,14 @@
 	      (val (default #f)))
 	   
 	   (class JsJSON::JsObject)
+	   
+	   (class JsModule::JsObject
+	      (evars::vector (default '#()))
+	      (exports::pair-nil (default '()))
+	      (imports::vector (default '#()))
+	      (redirects::vector (default '#()))
+	      (default (default #f))
+	      (checksum (default 0)))
 	   
 	   (class JsWorker::JsObject
 	      (thread::obj (default #unspecified)))
