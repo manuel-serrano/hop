@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Oct 25 17:25:00 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 05:57:58 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -110,11 +110,6 @@
 				       (import this))))
 			    exports))))
 		  (else
-		   (tprint "NOT EXPORT " id " "
-		      (map (lambda (e)
-			      (with-access::J2SExport e (id alias)
-				 (cons id alias)))
-			 exports))
 		   (raise
 		      (instantiate::&io-parse-error
 			 (proc "import")
@@ -241,50 +236,9 @@
 ;*    esexport ::J2SProgram ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esexport this::J2SProgram prgm::J2SProgram)
-   
-   (define (esexport-default-stmt index loc)
-      (let ((val (J2SAccess (J2SUnresolvedRef 'module) (J2SString "exports"))))
-	 (co-instantiate ((expo (instantiate::J2SExport
-				   (id 'default)
-				   (alias 'default)
-				   (decl decl)
-				   (index index)))
-			  (decl (instantiate::J2SDeclInit
-				   (loc loc)
-				   (id 'default)
-				   (exports (list expo))
-				   (binder 'export)
-				   (scope 'export)
-				   (val val)))
-			  (ref (instantiate::J2SRef
-				  (loc loc)
-				  (decl decl))))
-	    (values expo
-	       (J2SSeq
-		  (instantiate::J2SVarDecls
-		     (loc loc)
-		     (decls (list decl)))
-		  (instantiate::J2SExportVars
-		     (loc loc)
-		     (refs (list ref))
-		     (aliases (list 'default))))))))
-   
    (with-access::J2SProgram this (nodes decls exports loc path)
       (for-each (lambda (o) (esexport o this)) nodes)
-      (for-each (lambda (o) (esexport o this)) decls)
-      '(unless (find (lambda (e)
-		       (with-access::J2SExport e (id) (eq? id 'default)))
-		 exports)
-	 ;; force a default export if non specified
-	 (multiple-value-bind (expo stmt)
-	    (esexport-default-stmt (length exports) loc)
-	    (tprint "CREATE DEFAULT..." path " "
-	       (map (lambda (e)
-		       (with-access::J2SExport e (id alias)
-			  (cons id alias)))
-		  exports))
-	    (set! exports (cons expo exports))
-	    (set! nodes (append nodes (list stmt))))))
+      (for-each (lambda (o) (esexport o this)) decls))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -316,13 +270,13 @@
 	 ((and (file-exists? x) (not (directory? x)))
 	  (file-name-canonicalize x))
 	 (else
-	  (let loop ((suffixes '(".js" ".hop" ".so" ".json" ".hss" ".css")))
-	     (when (pair? suffixes)
-		(let* ((suffix (car suffixes))
+	  (let loop ((sufs '(".js" ".mjs" ".hop" ".so" ".json" ".hss" ".css")))
+	     (when (pair? sufs)
+		(let* ((suffix (car sufs))
 		       (src (string-append x suffix)))
 		   (if (and (file-exists? src) (not (directory? src)))
 		       (file-name-canonicalize src)
-		       (loop (cdr suffixes)))))))))
+		       (loop (cdr sufs)))))))))
 
    (define (resolve-package pkg dir)
       (with-handler

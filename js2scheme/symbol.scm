@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Oct 25 16:07:28 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 06:09:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -79,12 +79,58 @@
 		  nodes))
 	    (set! nodes
 	       (map! (lambda (o) (resolve! o env mode '() '() genv #f conf))
-		  nodes)))))
+		  nodes)))
+	 (when (config-get conf :commonjs-export #f)
+	    (commonjs-export this))))
    (when (and (>= (config-get conf :verbose 0) 2)
 	      (not (config-get conf :verbmargin #f)))
       (newline (current-error-port)))
    this)
 
+;*---------------------------------------------------------------------*/
+;*    commonjs-export ...                                              */
+;*    -------------------------------------------------------------    */
+;*    For compatibility with common.js module, this function forces    */
+;*    a default module clause if non is explicitly given. The value    */
+;*    of the forced default module clause is MODULE.EXPORTS.           */
+;*---------------------------------------------------------------------*/
+(define (commonjs-export this::J2SProgram)
+   
+   (define (export-default-stmt moddecl index loc)
+      (let ((val (J2SAccess (J2SRef moddecl) (J2SString "exports"))))
+	 (co-instantiate ((expo (instantiate::J2SExport
+				   (id 'default)
+				   (alias 'default)
+				   (decl decl)
+				   (index index)))
+			  (decl (instantiate::J2SDeclInit
+				   (loc loc)
+				   (id 'default)
+				   (exports (list expo))
+				   (binder 'export)
+				   (scope 'export)
+				   (val val)))
+			  (ref (instantiate::J2SRef
+				  (loc loc)
+				  (decl decl))))
+	    (values expo (J2SStmtExpr (J2SAssig (J2SRef decl) val))))))
+;* 	       (instantiate::J2SExportVars                             */
+;* 		  (loc loc)                                            */
+;* 		  (refs (list ref))                                    */
+;* 		  (aliases (list 'default)))))))                       */
+   
+   (with-access::J2SProgram this (nodes decls loc exports path)
+      (unless (find (lambda (e)
+		       (with-access::J2SExport e (id) (eq? id 'default)))
+		 exports)
+	 (tprint "decls=" (map (lambda (d) (with-access::J2SDecl d (id) id))
+			     decls))
+	 ;; force a default export if non specified
+	 (multiple-value-bind (expo stmt)
+	    (export-default-stmt (find-decl 'module decls) (length exports) loc)
+	    (set! exports (cons expo exports))
+	    (set! nodes (append nodes (list stmt)))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    decl-cleanup-duplicate! ...                                      */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Oct 24 11:42:37 2018                          */
-/*    Last change :  Thu Oct 25 15:30:02 2018 (serrano)                */
+/*    Last change :  Fri Oct 26 05:54:46 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 module                                               */
@@ -100,18 +100,18 @@ assert.strictEqual( getLog( "exporter.js" ),
 		    "exporter2.js exporter3.js exporter.js" );
 
 console.log( "   exporter.js (vars)");
-assert.deepEqual( rexp, { dummy: 5555, e3a: "e3a", e3b: "e3b", e5a: "e5a", e5b: "e5b", e5c: "e5c" } );
+assert.deepEqual( rexp, { default: {}, dummy: 5555, e3a: "e3a", e3b: "e3b", e5a: "e5a", e5b: "e5b", e5c: "e5c" } );
 
 /*---------------------------------------------------------------------*/
 /*    named redirect                                                   */
 /*---------------------------------------------------------------------*/
 console.log( "   named-exporter.js");
 import * as nrexp from "../mod/named-exporter.js";
-assert.deepEqual( nrexp, { ndummy: 6666, e3a: "e3a", e5a: "e5a", e5z: "e5c" } );
+assert.deepEqual( nrexp, { default: {}, ndummy: 6666, e3a: "e3a", e5a: "e5a", e5z: "e5c" } );
 
 console.log( "   alias-exporter.js");
 import * as arexp from "../mod/alias-exporter.js";
-assert.deepEqual( arexp, { adummy: 7777, e3a: "e3a", e6a: "e5a", e6z: "e5b" } );
+assert.deepEqual( arexp, { default: {}, adummy: 7777, e3a: "e3a", e6a: "e5a", e6z: "e5b" } );
 
 /*---------------------------------------------------------------------*/
 /*    default redirect                                                 */
@@ -126,6 +126,14 @@ assert.deepEqual( rdef, { "default": { d5a: "d5a", d5b: "d5b", d5c: "d5c" } } );
 console.log( "   def-alias.js" );
 import * as adef from "../mod/def-alias.js";
 assert.deepEqual( adef, { "foo": { d5a: "d5a", d5b: "d5b", d5c: "d5c" } } );
+
+/*---------------------------------------------------------------------*/
+/*    common.js                                                        */
+/*---------------------------------------------------------------------*/
+console.log( "   common.js" );
+
+import cdef from "../mod/common.js";
+assert.deepEqual( cdef, { a: 1, b: 2, c: 3 } );
 
 console.log( "es6-module tests succeeded." );
 

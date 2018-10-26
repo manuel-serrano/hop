@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct 25 17:25:48 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 05:57:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1586,7 +1586,7 @@
 
    (define (load-module)
       (cond
-	 ((string-suffix? ".js" filename)
+	 ((or (string-suffix? ".js" filename) (string-suffix? ".mjs" filename))
 	  (load-module-js))
 	 ((string-suffix? ".html" filename)
 	  (load-module-html))
@@ -1774,13 +1774,13 @@
 	 ((string-suffix? ".hz" x)
 	  (resolve-autoload-hz x))
 	 (else
-	  (let loop ((suffixes '(".js" ".hop" ".so" ".json" ".hss" ".css")))
-	     (when (pair? suffixes)
-		(let* ((suffix (car suffixes))
+	  (let loop ((sufs '(".js" ".mjs" ".hop" ".so" ".json" ".hss" ".css")))
+	     (when (pair? sufs)
+		(let* ((suffix (car sufs))
 		       (src (string-append x suffix)))
 		   (if (and (file-exists? src) (not (directory? src)))
 		       (file-name-canonicalize src)
-		       (loop (cdr suffixes)))))))))
+		       (loop (cdr sufs)))))))))
 
    (define (resolve-autoload-hz hz)
       (with-trace 'require "nodejs-resolve.resolve-autoload-hz"

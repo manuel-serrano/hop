@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Oct 24 11:52:22 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 06:26:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -425,6 +425,9 @@
 (define (compile-opts filename in args)
    (let ((o (append args (j2s-compile-options)))
 	 (l (config-get args :optim 0)))
+      ;; misc
+      (unless (memq :commonjs-export o)
+	 (set! o (cons* :commonjs-export #t o)))
       ;; debugging
       (when (or (>= (bigloo-debug) 2)
 		(string-contains (or (getenv "HOPTRACE") "") "j2s:"))
