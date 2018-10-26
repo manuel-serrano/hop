@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Wed Oct 24 11:22:10 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 13:11:18 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
@@ -102,8 +102,8 @@
 ;*    mark ::J2SDecl ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SDecl deval stamp)
-   (with-access::J2SDecl this (val id binder)
-      (when (eq? binder 'export)
+   (with-access::J2SDecl this (val id scope)
+      (when (eq? scope 'export)
 	 (use-decl! this stamp))))
 
 
@@ -111,8 +111,8 @@
 ;*    mark ::J2SDeclInit ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SDeclInit deval stamp)
-   (with-access::J2SDeclInit this (val id binder)
-      (when (eq? binder 'export)
+   (with-access::J2SDeclInit this (val id scope)
+      (when (eq? scope 'export)
 	 (use-decl! this stamp))
       (mark val deval stamp)))
 
@@ -120,8 +120,8 @@
 ;*    mark ::J2SDeclFun ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SDeclFun deval stamp)
-   (with-access::J2SDeclFun this (binder)
-      (when (eq? binder 'export)
+   (with-access::J2SDeclFun this (scope)
+      (when (eq? scope 'export)
 	 (use-decl! this stamp)))
    #unspecified)
 

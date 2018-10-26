@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Oct 26 07:22:56 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 13:16:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -71,7 +71,8 @@
 	    (when (pair? lets)
 	       (for-each (lambda (d::J2SDecl)
 			    (with-access::J2SDecl d (scope)
-			       (set! scope 'global)))
+			       (unless (eq? scope 'export)
+				  (set! scope 'global))))
 		  lets)
 	       (set! decls (append decls lets)))
 	    (set! nodes
