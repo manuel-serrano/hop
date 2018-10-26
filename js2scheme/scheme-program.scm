@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-program.scm        */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-program.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Oct 25 17:26:55 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 19:36:32 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -308,26 +308,30 @@
 
    (with-access::J2SProgram this (imports path %info)
       (set! %info '())
-      (cons
-	 `(define %imports
-	     (with-access::JsModule %module (imports)
-		(set! imports
-		   (vector
-		      ,@(map (lambda (im)
-				(with-access::J2SImport im (respath iprgm loc)
-				   `(nodejs-import-module %worker %this %module
-				       ,respath
-				       ,(j2s-program-checksum! iprgm)
-				       ',loc)))
-			   imports)))
-		imports))
-	 (append
-	    (module-imports this)
-	    `((with-access::JsModule %module (redirects)
-		 (set! redirects
-		    (vector
-		       ,@(map (lambda (i) (evar-ident i)) (iota (length imports)))
-		       ,@(module-redirect this)))))))))
+      (let ((redirect (module-redirect this)))
+	 (if (and (null? imports) (null? redirect))
+	     '()
+	     (cons
+		`(define %imports
+		    (with-access::JsModule %module (imports)
+		       (set! imports
+			  (vector
+			     ,@(map (lambda (im)
+				       (with-access::J2SImport im (respath iprgm loc)
+					  `(nodejs-import-module %worker %this %module
+					      ,respath
+					      ,(j2s-program-checksum! iprgm)
+					      ',loc)))
+				  imports)))
+		       imports))
+		(append
+		   (module-imports this)
+		   `((with-access::JsModule %module (redirects)
+			(set! redirects
+			   (vector
+			      ,@(map (lambda (i) (evar-ident i))
+				   (iota (length imports)))
+			      ,@redirect))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-exports ...                                           */
@@ -366,8 +370,10 @@
 		(vector alias index w)))))
    
    (with-access::J2SProgram this (exports imports path checksum)
-      (let ((idx (j2sprogram-get-export-index this)))
-	 (if (pair? exports)
+      (let ((idx (j2sprogram-get-export-index this))
+	    (cs (j2s-program-checksum! this)))
+	 (cond
+	    ((pair? exports)
 	     `(define %evars
 		 (with-access::JsModule %module (evars exports checksum)
 		    (set! checksum ,(j2s-program-checksum! this))
@@ -375,9 +381,12 @@
 		    ,@(if (>fx idx 0)
 			  `((set! evars (make-vector ,idx (js-undefined))))
 			  '())
-		    evars))
+		    evars)))
+	    ((=fx cs 0)
+	     #unspecified)
+	    (else
 	     `(with-access::JsModule %module (checksum)
-		 (set! checksum ,(j2s-program-checksum! this)))))))
+		 (set! checksum ,cs)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */

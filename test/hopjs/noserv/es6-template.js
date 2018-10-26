@@ -1,5 +1,5 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.1.x/test/hopjs/noserv/es6-template.js     */
+/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-template.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Aug 14 09:43:13 2015                          */

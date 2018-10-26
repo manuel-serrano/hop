@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Oct 16 16:15:48 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 19:16:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1618,6 +1618,7 @@
 		     :es6-let #t
 		     :es6-defaut-value #t
 		     :es6-rest-argument #t
+		     :commonjs-export #f
 		     :parser parser))
 	       (m (js-get scope 'module scope)))
 	    (with-trace 'hopscript-eval "%js-eval-inner"
@@ -1636,8 +1637,9 @@
 ;*    eval-dummy-module ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (eval-dummy-module %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (let ((obj (js-new %this js-object)))
+   (with-access::JsGlobalObject %this (js-object __proto__)
+      (let ((obj (instantiateJsModule
+		    (__proto__ __proto__))))
 	 (js-put! obj 'filename (js-string->jsstring "") #f %this)
 	 obj)))
 

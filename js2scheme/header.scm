@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/header.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/header.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */

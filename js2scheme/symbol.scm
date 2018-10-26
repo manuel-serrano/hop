@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/symbol.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
