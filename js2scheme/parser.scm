@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Oct 18 07:54:02 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 15:48:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -39,6 +39,8 @@
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
 
+   (define es-module #f)
+   
    (define (with-tilde proc)
       (set! tilde-level (+fx tilde-level 1))
       (let ((res (proc)))
@@ -59,6 +61,12 @@
 	 (loc loc)
 	 (id 'this)
 	 (_scmid 'this)))
+
+   (define export-index -1)
+   
+   (define (get-export-index)
+      (set! export-index (+fx 1 export-index))
+      export-index)
    
    (define (parse-token-error msg token::pair)
       (match-case (token-loc token)
@@ -143,7 +151,7 @@
    
    (define (peek-token-value)
       (token-value (peek-token)))
-   
+
    (define (at-new-line-token?)
       (eq? *previous-token-type* 'NEWLINE))
    
@@ -159,8 +167,7 @@
 	 (if (eq? (token-tag token) type)
 	     token
 	     (parse-token-error 
-		(format "Expected \"~a\" got \"~a\"" type
-		   (token-tag token))
+		(format "Expected \"~a\" got \"~a\"" type (token-tag token))
 		token))))
    
    (define (consume! type)
@@ -171,6 +178,14 @@
 	 (set! *previous-token-type* (car res))
 	 (set! *peeked-tokens* (cdr *peeked-tokens*))
 	 res))
+
+   (define (consume-oneof! . types)
+      (let ((token (consume-any!)))
+	 (if (memq (token-tag token) types)
+	     token
+	     (parse-token-error
+		(format "Expected \"~(, )\" got \"~a\"" types (token-tag token))
+		token))))
    
    (define (consume-statement-semicolon! where)
       (cond
@@ -185,6 +200,9 @@
 	 (else
 	  (parse-token-error (format "~a, \"\;\", or newline expected" where)
 	     (peek-token)))))
+
+   (define (peek-token-id? val)
+      (and (eq? (peek-token-type) 'ID) (eq? (peek-token-value) val)))
    
    (define (eof?)
       (eq? (peek-token-type) 'EOF))
@@ -937,7 +955,6 @@
 			       gen (instantiate::J2SUnresolvedRef
 				      (loc loc)
 				      (id 'this))
-;* 			       (J2SThis (or thisp (current-this)))     */
 			       (J2SHopRef '%this)))))
 		   fun))))))
       
@@ -1173,29 +1190,104 @@
 	    #t declaration? #f)))
 
    (define (import token)
-      (case (peek-token-type)
-	 ((LBRACE)
-	  (let ((lst (import-name-list)))
-	     (if (null? lst)
-		 (parse-token-error "Illegal empty import" token)
-		 (let ((fro (consume-token! 'ID)))
-		    (when (eq? (token-value fro) 'from)
-		       (let ((path (consume-token! 'STRING)))
-			  (instantiate::J2SImport
-			     (names lst)
-			     (loc (token-loc token))
-			     (path (token-value path)))))))))
-	 (else
-	  (parse-token-error "Illegal import" (consume-any!)))))
+      (set! es-module #t)
+      (let loop ((first #t))
+	 (case (peek-token-type)
+	    ((LBRACE)
+	     (let ((lst (import-name-list)))
+		(if (null? lst)
+		    (parse-token-error "Illegal empty import" token)
+		    (let ((fro (consume-token! 'ID)))
+		       (if (eq? (token-value fro) 'from)
+			   (let ((path (consume-token! 'STRING)))
+			      (instantiate::J2SImport
+				 (names lst)
+				 (loc (token-loc token))
+				 (path (token-value path))))
+			   (parse-token-error
+			      "Illegal import, \"from\" expected"
+			      fro))))))
+	    ((STRING)
+	     (if (not first)
+		 (parse-token-error "Illegal import, unexpected string"
+		    (consume-any!))
+		 (let ((path (consume-any!)))
+		    (instantiate::J2SImport
+		       (names '())
+		       (loc (token-loc token))
+		       (path (token-value path))))))
+	    ((*)
+	     (consume-any!)
+	     (let ((as (consume-token! 'ID)))
+		(if (eq? (token-value as) 'as)
+		    (let* ((id (consume-token! 'ID))
+			   (fro (consume-token! 'ID)))
+		       (if (eq? (token-value fro) 'from)
+			   (let ((path (consume-token! 'STRING)))
+			      (instantiate::J2SImport
+				 (names (cons '* (token-value id)))
+				 (loc (token-loc token))
+				 (path (token-value path))))
+			   (parse-token-error "Illegal import, \"from\" expected"
+			      fro)))
+		    (parse-token-error "Illegal import, \"as\" expected" as))))
+	    ((LPAREN)
+	     (if (not first)
+		 (parse-token-error "Illegal import, unexpected parenthesis"
+		    (consume-any!))
+		 (begin
+		    (consume-any!)
+		    (let ((path (expression #f #f)))
+		       (consume-token! 'RPAREN)
+		       (instantiate::J2SStmtExpr
+			  (loc (token-loc token))
+			  (expr (instantiate::J2SImportDynamic
+				   (loc (token-loc token))
+				   (path path))))))))
+	    ((ID)
+	     (if (not first)
+		 (parse-token-error "Illegal import, duplicated default"
+		    (consume-any!))
+		 (let* ((token (consume-any!))
+			(id (token-value token))
+			(sep (consume-any!)))
+		    (cond
+		       ((and (eq? (token-tag sep) 'ID) (eq? (token-value sep) 'from))
+			(let ((path (consume-token! 'STRING))
+			      (loc (token-loc token)))
+			   (instantiate::J2SImport
+			      (names (list (instantiate::J2SImportName
+					      (id 'default)
+					      (alias id)
+					      (loc loc))))
+			      (loc loc)
+			      (path (token-value path)))))
+		       ((eq? (token-tag sep) 'COMMA)
+			(let ((imp (loop #f)))
+			   (with-access::J2SImport imp (path)
+			      (let* ((loc (token-loc token))
+				     (defi (instantiate::J2SImport
+					      (names (list (instantiate::J2SImportName
+							      (id 'default)
+							      (alias id)
+							      (loc loc))))
+					      (loc loc)
+					      (path path))))
+				 (instantiate::J2SSeq
+				    (loc loc)
+				    (nodes (list defi imp)))))))
+		       (else
+			(parse-token-error "Illegal import" sep))))))
+	    (else
+	     (parse-token-error "Illegal import" (consume-any!))))))
 
    (define (import-name-list)
       (consume-any!)
       (let loop ((lst '()))
-	 (let* ((token (consume-token! 'ID))
+	 (let* ((token (consume-oneof! 'ID 'default))
 		(loc (token-loc token))
 		(id (token-value token))
-		(alias (if (and (eq? (peek-token-type) 'ID)
-				(eq? (peek-token-value) 'as))
+		(alias (if (peek-token-id? 'as)
 			   (begin
 			      (consume-any!)
 			      (token-value (consume-token! 'ID)))
@@ -1214,20 +1306,19 @@
 		(parse-token-error "Illegal import" next))))))
 
    (define (export-decl decl::J2SDecl)
-      (with-access::J2SDecl decl (id export binder scope)
+      (with-access::J2SDecl decl (id exports binder scope)
 	 (set! binder 'export)
 	 (set! scope 'export)
-	 (set! export (instantiate::J2SExport
-			 (id id)
-			 (decl decl)))
+	 (set! exports (cons (instantiate::J2SExport
+				(id id)
+				(alias id)
+				(decl decl)
+				(index (get-export-index)))
+			  exports))
 	 decl))
    
-   (define (export-declinit decl::J2SDeclInit)
-      (with-access::J2SDeclInit decl (export id)
-	 (duplicate::J2SDeclImport decl
-	    (alias id))))
-   
    (define (export token)
+      (set! es-module #t)
       (case (peek-token-type)
 	 ((var let const)
 	  (let ((stmt (statement)))
@@ -1235,11 +1326,87 @@
 		(set! decls (map export-decl decls)))
 	     stmt))
 	 ((LBRACE)
-	  (tprint "tobeimplemented"))
+	  (let ((token (consume-any!)))
+	     (let loop ((refs '())
+			(aliases '()))
+		(let* ((tid (consume-oneof! 'ID 'default))
+		       (id (token-value tid))
+		       (ref (instantiate::J2SUnresolvedRef
+			       (loc (token-loc tid))
+			       (id id)))
+		       (alias (if (peek-token-id? 'as)
+				  (begin
+				     (consume-any!)
+				     (let ((talias (consume-any!)))
+					(case (token-tag talias)
+					   ((default)
+					    'default)
+					   ((ID)
+					    (token-value talias))
+					   (else
+					    (parse-token-error "Illegal export"
+					       talias)))))
+				  id)))
+		   (case (peek-token-type)
+		      ((RBRACE)
+		       (consume-any!)
+		       (if (peek-token-id? 'from)
+			   (begin
+			      (consume-any!)
+			      (let ((path (consume-token! 'STRING)))
+				 (instantiate::J2SImport
+				    (names (cons 'redirect
+					      (map (lambda (r a)
+						      (with-access::J2SUnresolvedRef r (id)
+							 (cons id a)))
+						 (cons ref refs)
+						 (cons alias aliases))))
+				    (loc (token-loc token))
+				    (path (token-value path)))))
+			   (instantiate::J2SExportVars
+			      (loc (token-loc token))
+			      (refs (cons ref refs))
+			      (aliases (cons alias aliases)))))
+		      ((COMMA)
+		       (consume-any!)
+		       (loop (cons ref refs) (cons alias aliases)))
+		      (else
+		       (parse-token-error "Illegal export" token)))))))
 	 ((function class)
 	  (export-decl (statement)))
 	 ((default)
-	  (tprint "tobeimplemented"))
+	  (let ((loc (token-loc (consume-any!)))
+		(val (expression #f #f)))
+	     (co-instantiate ((expo (instantiate::J2SExport
+				      (id 'default)
+				      (alias 'default)
+				      (decl decl)
+				      (index (get-export-index))))
+			      (decl (instantiate::J2SDeclInit
+				       (loc loc)
+				       (id 'default)
+				       (exports (list expo))
+				       (binder 'export)
+				       (scope 'export)
+				       (val val)))
+			      (ref (instantiate::J2SRef
+				      (loc loc)
+				      (decl decl))))
+		(J2SSeq
+		   (instantiate::J2SVarDecls
+		      (loc loc)
+		      (decls (list decl)))))))
+	 ((*)
+	  (let* ((* (consume-token! '*))
+		 (fro (consume-token! 'ID)))
+	     (if (eq? (token-value fro) 'from)
+		 (let ((path (consume-token! 'STRING)))
+		    (instantiate::J2SImport
+		       (names '(redirect))
+		       (loc (token-loc token))
+		       (path (token-value path))))
+		 (parse-token-error "Illegal export, \"from\" expected"
+		    fro))))
 	 (else
 	  (parse-token-error "Illegal export declaration" token))))
 
@@ -2054,15 +2221,22 @@
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
 	     (cond
+		((and plugins (assq (token-value token) plugins))
+		 =>
+		 (lambda (p)
+		    ((cdr p) token #f parser-controller)))
 		((and (eq? (token-value token) 'async)
 		      (eq? (peek-token-value) 'function))
 		 (async-expression token))
 		((eq? (peek-token-type) '=>)
 		 (arrow-function (list token) (token-loc token)))
-		((and plugins (assq (token-value token) plugins))
-		 =>
-		 (lambda (p)
-		    ((cdr p) token #f parser-controller)))
+		((eq? (token-value token) 'import)
+		 (consume-token! 'LPAREN)
+		 (let ((path (expression #f #f)))
+		    (consume-token! 'RPAREN)
+		    (instantiate::J2SImportDynamic
+		       (loc (token-loc token))
+		       (path path))))
 		(else
 		 (instantiate::J2SUnresolvedRef
 		    (loc (token-loc token))
@@ -2526,7 +2700,10 @@
 
    (define (nodes-mode nodes)
       (let ((mode (when (pair? nodes) (javascript-mode-nodes nodes))))
-	 (if (symbol? mode) mode 'normal)))
+	 (cond
+	    ((symbol? mode) mode)
+	    (es-module 'strict)
+	    (else 'normal))))
    
    (define (program dp)
       (set! tilde-level (if dp 1 0))
@@ -3169,3 +3346,6 @@
 			       (parse-error "Duplicate parameter name not allowed in this context" d))))
 	       (cdr l)))
 	 (loop (cdr l)))))
+
+
+

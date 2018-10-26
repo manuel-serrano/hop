@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/cache.scm                 */
+;*    serrano/prgm/project/hop/hop/runtime/cache.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Wed Aug 12 11:17:04 2015 (serrano)                */
-;*    Copyright   :  2006-15 Manuel Serrano                            */
+;*    Last change :  Wed Oct 24 14:39:07 2018 (serrano)                */
+;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
 ;*=====================================================================*/
@@ -28,6 +28,7 @@
 	      (%table (default #f))
 	      (%head (default #f))
 	      (%tail (default #f))
+	      (%forced (default #f))
 	      (%mutex (default (make-mutex "cache")))
 	      (register::bool (default #t))
 	      (max-entries::long (default 128))
@@ -304,10 +305,10 @@
 ;*    cache-put! ::cache-disk ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (cache-put!::cache-entry c::cache-disk upath::bstring value)
-   (with-access::cache-disk c (%table %head %tail %mutex
+   (with-access::cache-disk c (%table %forced %head %tail %mutex
 				      max-entries current-entries uid
 				      path max-file-size out)
-      (when (and (hop-cache-enable)
+      (when (and (or (hop-cache-enable) %forced)
 		 (or (<=elong max-file-size #e0)
 		     (<elong (file-size upath) max-file-size)))
 	 (synchronize %mutex
@@ -339,10 +340,10 @@
 ;*    cache-put! ::cache-memory ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (cache-put! c::cache-memory upath::bstring value)
-   (with-access::cache-memory c (%table %head %tail %mutex
+   (with-access::cache-memory c (%table %forced %head %tail %mutex
 					max-entries
 					max-file-size)
-      (when (and (hop-cache-enable)
+      (when (and (or (hop-cache-enable) %forced)
 		 (or (<=elong max-file-size #e0)
 		     (<elong (file-size upath) max-file-size)))
 	 (let ((ce (instantiate::cache-entry

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct 18 08:27:05 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 17:25:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -23,7 +23,9 @@
 
    (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
-	   (nodejs-import-module::vector ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
+	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj)
+	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::bstring ::obj)
+	   (nodejs-exports-module::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
@@ -44,9 +46,7 @@
 	   (nodejs-eval ::JsGlobalObject ::JsObject)
 	   (nodejs-function ::JsGlobalObject ::JsObject)
 	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)
-	   (nodejs-plugins-toplevel-loader)
-	   (inline nodejs-module-ref ::vector ::long)
-	   (inline nodejs-module-set! ::vector ::long ::obj)))
+	   (nodejs-plugins-toplevel-loader)))
 
 ;;(define-macro (bigloo-debug) 0)
 
@@ -470,9 +470,12 @@
 	       #f %this))))
 
    (with-trace 'require (format "nodejs-module ~a ~a" id filename)
-      (with-access::JsGlobalObject %this (js-object __proto__)
+      (with-access::JsGlobalObject %this (js-object __proto__ js-symbol-tostringtag)
 	 (let ((m (instantiateJsModule
 		     (__proto__ __proto__))))
+	    (js-bind! %this m js-symbol-tostringtag
+	       :value (js-string->jsstring "Module")
+	       :configurable #f :writable #f :enumerable #f)
 	    ;; module properties
 	    (module-init! m)
 	    ;; register the module in the current worker thread
@@ -581,11 +584,94 @@
 ;*    -------------------------------------------------------------    */
 ;*    ES6 module import.                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-import-module::vector worker::WorkerHopThread %this::JsGlobalObject %module::JsObject path::bstring)
+(define (nodejs-import-module::JsModule worker::WorkerHopThread
+	   %this::JsGlobalObject %module::JsObject
+	   path::bstring checksum::long loc)
    (let ((mod (nodejs-load-module path worker %this %module "hopscript")))
-      (with-access::JsModule mod (exports)
-	 exports)))
+      (with-access::JsModule mod ((mc checksum))
+	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
+	     mod
+	     (js-raise-type-error/loc %this loc
+		"corrupted module ~s"
+		(js-get mod 'filename %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-import-module-dynamic ...                                 */
+;*    -------------------------------------------------------------    */
+;*    As of October 2018, this is still a mere proposal. See           */
+;*    https://github.com/tc39/proposal-dynamic-import                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import-module-dynamic::JsPromise worker::WorkerHopThread
+	   %this::JsGlobalObject %module::JsObject name::bstring
+	   base::bstring loc)
+   (with-access::JsGlobalObject %this (js-promise)
+      (js-new1 %this js-promise
+	 (js-make-function %this
+	    (lambda (this resolve reject)
+	       (with-handler
+		  (lambda (exn)
+		     (js-call1 %this reject (js-undefined) exn))
+		  (let* ((path (nodejs-resolve name %this %module 'body))
+			 (mod (nodejs-import-module worker %this %module
+				 path 0 loc)))
+		     (js-call1 %this resolve (js-undefined)
+			(nodejs-exports-module mod worker %this)))))
+	    2 'import))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-exports-module ...                                        */
+;*---------------------------------------------------------------------*/
+(define (nodejs-exports-module::JsObject mod::JsModule worker::WorkerHopThread %this)
    
+   (define (constant? n)
+      (or (number? n) (boolean? n) (string? n) (isa? n JsStringLiteral)))
+   
+   (with-access::JsGlobalObject %this (__proto__ js-symbol-tostringtag)
+      (with-access::JsModule mod (evars exports default imports redirects)
+	 (let ((mod (instantiateJsObject
+		       (__proto__ __proto__))))
+	    (js-bind! %this mod js-symbol-tostringtag
+	       :value (js-string->jsstring "Module")
+	       :configurable #f :writable #f :enumerable #f)
+	    (for-each (lambda (export)
+			 (let* ((id (vector-ref export 0))
+				(idx (vector-ref export 1))
+				(writable (vector-ref export 2)))
+			    (cond
+			       ((pair? idx)
+				;; a redirect
+				(let* ((i (car idx))
+				       (j (cdr idx))
+				       (evars (vector-ref redirects j)))
+				   (js-bind! %this mod id
+				      :get (js-make-function %this
+					      (lambda (this)
+						 (vector-ref evars i))
+					      0 'get)
+				      :configurable #f :writable #f)))
+			       ((=fx idx -1)
+				;; named default
+				(js-bind! %this mod  id
+				   :get (js-make-function %this
+					   (lambda (this)
+					      default)
+					   0 'get)
+				   :configurable #f :writable #f))
+			       ((and (not writable)
+				     (constant? (vector-ref evars idx)))
+				(js-bind! %this mod id
+				   :value (vector-ref evars idx)
+				   :configurable #f :writable #f))
+			       (else
+				(js-bind! %this mod id
+				   :get (js-make-function %this
+					   (lambda (this)
+					      (vector-ref evars idx))
+					   0 'get)
+				   :configurable #f :writable #f)))))
+	       exports)
+	    mod))))
+
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-head ...                                                  */
 ;*    -------------------------------------------------------------    */
@@ -909,12 +995,13 @@
 		(when (eq? nodejs-debug-compile 'yes)
 		   (unless (directory? "/tmp/HOP")
 		      (make-directory "/tmp/HOP"))
-		   (tprint "nodejs-compile " filename
-		      " -> " (make-file-name "/tmp/HOP" (string-replace filename #\/ #\_)))
-		   (call-with-output-file
-			 (make-file-name "/tmp/HOP" (string-replace filename #\/ #\_))
-		      (lambda (op)
-			 (pp expr op))))
+		   (let ((tgt (make-file-name "/tmp/HOP"
+				 (string-append
+				    (string-replace (prefix filename) #\/ #\_)
+				    ".scm"))))
+		      (tprint "nodejs-compile " filename " -> " tgt)
+		      (call-with-output-file tgt
+			 (lambda (op) (pp expr op)))))
 		(trace-item "expr=" (format "~s" expr))
 		(unwind-protect
 		   (begin
@@ -2051,18 +2138,6 @@
 	 (let* ((worker (js-init-main-worker! this #f nodejs-new-global-object))
 		(mod (nodejs-new-module "hopc" "." worker this)))
 	    (make-plugins-loader this mod worker)))))
-
-;*---------------------------------------------------------------------*/
-;*    nodejs-module-ref ...                                            */
-;*---------------------------------------------------------------------*/
-(define-inline (nodejs-module-ref obj index)
-   (vector-ref obj index))
-
-;*---------------------------------------------------------------------*/
-;*    nodejs-module-set! ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (nodejs-module-set! obj index val)
-   (vector-set! obj index val))
 
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */

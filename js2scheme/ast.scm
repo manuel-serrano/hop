@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Oct 18 07:53:47 2018 (serrano)                */
+;*    Last change :  Thu Oct 25 17:30:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -84,7 +84,7 @@
 	      ;; variable 
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      ;; es module export
-	      (export (default #f) (info '("notraverse"))))
+	      (exports::pair-nil (default '()) (info '("notraverse"))))
 
 	   (class J2SDeclArguments::J2SDecl)
 	   
@@ -109,8 +109,8 @@
 
 	   (final-class J2SDeclImport::J2SDecl
 	      (alias read-only (default #f) (info '("notraverse")))
-	      (linkindex::long read-only (info '("notraverse")))
-	      (import::J2SImport read-only (info '("notraverse"))))
+	      (export::obj read-only (info '("notraverse")))
+	      (import::obj read-only (info '("notraverse"))))
 
 	   (abstract-class J2SExpr::J2SNode
 	      (type::symbol (default 'unknown) (info '("notraverse")))
@@ -450,22 +450,39 @@
 	      (expr::J2SExpr (info '("ast")))
 	      (path read-only))
 
-	   (final-class J2SExport
-	      (id::symbol read-only)
-	      (index::long (default -1))
-	      (decl (default #f)))
-
 	   (final-class J2SImport::J2SStmt
-	      (path::bstring read-only)
-	      (names::obj (default #f))
-	      (respath (default #f))
-	      (obj (default #f)))
+	      (path::bstring read-only (info '("notraverse")))
+	      (names::obj (default #f) (info '("notraverse")))
+	      (respath (default #f) (info '("notraverse")))
+	      (mvar (default #f) (info '("notraverse")))
+	      (ivar (default #f) (info '("notraverse")))
+	      (reindex::long (default -1) (info '("notraverse")))
+	      (iprgm (default #f) (info '("notraverse"))))
 
 	   (final-class J2SImportName
 	      (loc read-only)
 	      (id::symbol read-only)
 	      (alias::symbol read-only))
 
+	   (final-class J2SImportDynamic::J2SExpr
+	      (base::bstring (default (pwd)))
+	      path::J2SExpr)
+
+	   (final-class J2SImportExpr::J2SExpr
+	      import)
+
+	   (final-class J2SExport
+	      (id::symbol read-only)
+	      (alias::symbol read-only)
+	      (index::long (default -1))
+	      (decl (default #f))
+	      (from (default #f)))
+
+	   (final-class J2SExportVars::J2SStmt
+	      (refs::pair-nil read-only)
+	      (aliases::pair-nil read-only)
+	      (program (default #f)))
+	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
 	   (generic walk2 n::J2SNode p::procedure a0 a1)
@@ -519,7 +536,9 @@
 	   (j2s-field-name::obj ::J2SNode)
 	   (inline j2s-field-length?::bool ::J2SNode)
 
-	   (j2sdeclinit-val-fun::J2SExpr ::J2SDeclInit))
+	   (j2sdeclinit-val-fun::J2SExpr ::J2SDeclInit)
+
+	   (j2sprogram-get-export-index::long ::J2SProgram))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -984,7 +1003,6 @@
 (gen-walks J2SParen expr)
 (gen-walks J2SUnary expr)
 (gen-walks J2SBinary lhs rhs)
-(gen-walks J2SDefault body)
 (gen-walks J2SAccess obj field)
 (gen-walks J2SCacheCheck obj)
 (gen-walks J2SCacheUpdate obj)
@@ -1012,6 +1030,8 @@
 (gen-walks J2SDProducer expr)
 (gen-walks J2SDConsumer expr)
 (gen-walks J2SPragma (vals))
+(gen-walks J2SImportDynamic path)
+(gen-walks J2SExportVars (refs))
 
 (gen-traversals J2STilde)
 
@@ -1322,3 +1342,23 @@
 	  (with-access::J2SMethod val (function)
 	     function)
 	  val)))
+
+;*---------------------------------------------------------------------*/
+;*    j2sprogram-get-export-index ...                                  */
+;*    -------------------------------------------------------------    */
+;*    Returns the next available index for export.                     */
+;*---------------------------------------------------------------------*/
+(define (j2sprogram-get-export-index::long prgm::J2SProgram)
+   (with-access::J2SProgram prgm (exports)
+      (let loop ((exports exports)
+		 (i -1))
+	 (if (null? exports)
+	     (+fx i 1)
+	     (with-access::J2SExport (car exports) (index from id)
+		(cond
+		   (from
+		    (loop (cdr exports) i))
+		   ((> index i)
+		    (loop (cdr exports) index))
+		   (else
+		    (loop (cdr exports) i))))))))
