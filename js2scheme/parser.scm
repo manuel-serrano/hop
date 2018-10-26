@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Oct 25 15:48:03 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 07:41:23 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1278,6 +1278,9 @@
 				    (nodes (list defi imp)))))))
 		       (else
 			(parse-token-error "Illegal import" sep))))))
+	    ((DOT)
+	     (token-push-back! token)
+	     (expression-statement))
 	    (else
 	     (parse-token-error "Illegal import" (consume-any!))))))
 
@@ -2231,12 +2234,23 @@
 		((eq? (peek-token-type) '=>)
 		 (arrow-function (list token) (token-loc token)))
 		((eq? (token-value token) 'import)
-		 (consume-token! 'LPAREN)
-		 (let ((path (expression #f #f)))
-		    (consume-token! 'RPAREN)
-		    (instantiate::J2SImportDynamic
-		       (loc (token-loc token))
-		       (path path))))
+		 (case (peek-token-type)
+		    ((LPAREN)
+		     (consume-any!)
+		     (let ((path (expression #f #f)))
+			(consume-token! 'RPAREN)
+			(instantiate::J2SImportDynamic
+			   (loc (token-loc token))
+			   (path path))))
+		    ((DOT)
+		     (consume-any!)
+		     (let ((loc (token-loc token))
+			   (id (consume-token! 'ID)))
+			(if (eq? (token-value id) 'meta)
+			    (access-or-call (J2SHopRef '%import-meta) loc #t)
+			    (parse-token-error "Illegal import" id))))
+		    (else
+		     (parse-token-error "Illegal import" (consume-any!)))))
 		(else
 		 (instantiate::J2SUnresolvedRef
 		    (loc (token-loc token))

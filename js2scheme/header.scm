@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Thu Oct 18 08:28:02 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 10:47:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -71,9 +71,13 @@
    (let ((%require (js-def-extern '%require #t #f 
 		     `(nodejs-require %worker %this %module
 			 ,(config-get conf :language "hopscript"))
-		     :type 'function :scope '%hop)))
+		     :type 'function :scope '%hop))
+	 (%import-meta (js-def-extern '%import-meta #t #f 
+			  `(nodejs-import-meta %worker %this %module ,path)
+			  :type 'object :scope '%hop)))
       (list
 	 %require
+	 %import-meta
 	 (js-def-extern 'global #t #t '%this :type 'object)
 	 (js-def-extern 'GLOBAL #t #f '%this :type 'object)
 	 (js-def-extern 'module #t #t '%module :type 'object :hidden-class #f)

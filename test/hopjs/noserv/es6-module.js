@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Oct 24 11:42:37 2018                          */
-/*    Last change :  Fri Oct 26 05:54:46 2018 (serrano)                */
+/*    Last change :  Fri Oct 26 07:38:52 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 module                                               */
@@ -134,6 +134,16 @@ console.log( "   common.js" );
 
 import cdef from "../mod/common.js";
 assert.deepEqual( cdef, { a: 1, b: 2, c: 3 } );
+
+/*---------------------------------------------------------------------*/
+/*    import.meta                                                      */
+/*---------------------------------------------------------------------*/
+console.log( "   import.meta" );
+
+import.meta.ext = "ext";
+
+assert.ok( typeof import.meta.url === "string" );
+assert.equal( import.meta.ext, "ext" );
 
 console.log( "es6-module tests succeeded." );
 

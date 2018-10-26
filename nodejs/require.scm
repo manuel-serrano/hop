@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Oct 26 05:57:38 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 10:50:54 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -25,6 +25,7 @@
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj)
 	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::bstring ::obj)
+	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-exports-module::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
@@ -617,6 +618,19 @@
 		     (js-call1 %this resolve (js-undefined)
 			(nodejs-exports-module mod worker %this)))))
 	    2 'import))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-import-meta ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import-meta::JsObject worker::WorkerHopThread
+	   %this::JsGlobalObject %module::JsObject url::bstring)
+   (let ((obj (instantiateJsObject
+		 (__proto__ (js-null)))))
+      (js-bind! %this obj 'url
+	 :value (js-string->jsstring url))
+      (js-bind! %this obj 'vendor
+	 :value (js-string->jsstring "hop"))
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-exports-module ...                                        */
