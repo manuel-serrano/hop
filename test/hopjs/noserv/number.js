@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Mon Oct 22 18:30:51 2018 (serrano)                */
+/*    Last change :  Fri Oct 26 14:52:30 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -83,11 +83,11 @@ assert.ok( Math.floor( 2147483647.0 ) > 0, "floor" );
 
 var b = [ 0xff, 0xff, 0xff, 0xff ];
 
-function foo( b ) {
+function fooMaxint( b ) {
   return ((b[0]) | (b[1] << 8) | (b[2] << 16)) + (b[3] * 0x1000000);
 }
 
-assert.ok( foo( b ) === 0xFFFFFFFF, "maxint" );
+assert.ok( fooMaxint( b ) === 0xFFFFFFFF, "maxint" );
 
 /*---------------------------------------------------------------------*/
 /*    parsing                                                          */
@@ -147,10 +147,10 @@ assert.equal( testS( 4 ), true );
 /*---------------------------------------------------------------------*/
 /*    casts                                                            */
 /*---------------------------------------------------------------------*/
-function foo() {
+function fooCast() {
    var a = [1,2,3];
    
-   console.log( a.length/2 >> 0 );
+   return( a.length/2 >> 0 );
 }
 
-assert.equal( foo(), 1, "integer cast" );
+assert.equal( fooCast(), 1, "integer cast" );

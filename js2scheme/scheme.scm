@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Oct 25 18:16:27 2018 (serrano)                */
+;*    Last change :  Fri Oct 26 14:46:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -306,7 +306,7 @@
    (with-access::J2SRef lhs (decl)
       (with-access::J2SDecl decl (writable writable scope id hint exports)
 	 (cond
-	    ((or writable init? (isa? decl J2SDeclInit))
+	    ((or writable init?)
 	     (cond
 		((and (memq scope '(global %scope)) (in-eval? return))
 		 `(begin
