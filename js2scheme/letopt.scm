@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sat Jun  9 16:03:03 2018 (serrano)                */
+;*    Last change :  Sat Oct 27 07:23:12 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -750,14 +750,14 @@
 ;*    node-used* ::J2SDecl ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-used* node::J2SDecl decls store)
-   (if (member node decls) (list node) '()))
+   (if (memq node decls) (list node) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2Ref ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-used* node::J2SRef decls store)
    (with-access::J2SRef node (decl)
-      (if (member decl decls) (list decl) '())))
+      (if (memq decl decls) (list decl) '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2SDeclInit ...                                     */

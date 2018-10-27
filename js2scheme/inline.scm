@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Aug 31 14:59:28 2018 (serrano)                */
+;*    Last change :  Sat Oct 27 07:27:47 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -880,7 +880,7 @@
 	      (else
 	       (with-access::J2SDecl p (usage id writable)
 		  (with-access::J2SNode a (loc)
-		     (let ((d (J2SLetOpt usage (gensym id)
+		     (let ((d (J2SLetOptRo usage (gensym id)
 				 (inline! a
 				    targets leaf limit stack pmethods prgm conf))))
 			(with-access::J2SDecl d ((w writable))

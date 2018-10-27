@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Fri Oct 26 21:48:06 2018 (serrano)                */
+;*    Last change :  Sat Oct 27 07:27:29 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -427,6 +427,17 @@
        (loc loc)
        (writable ,(if (memq 'assig (cadr usage)) #t #f))
        (ronly ,(if (memq 'assig (cadr usage)) #f #t))
+       (usecnt 1)
+       (binder 'let-opt)
+       (usage ,usage)
+       (val ,val)
+       (id ,id)))
+
+(define-macro (J2SLetOptRo usage id val)
+   `(instantiate::J2SDeclInit
+       (loc loc)
+       (writable #f)
+       (ronly #t)
        (usecnt 1)
        (binder 'let-opt)
        (usage ,usage)

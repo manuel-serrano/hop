@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Oct 25 17:30:04 2018 (serrano)                */
+;*    Last change :  Sat Oct 27 07:58:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -658,11 +658,8 @@
 ;*    j2s-export? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-export? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder id loc)
-      (case binder
-	 ((export) #t)
-	 ((var let const let-opt const-opt class param) #f)
-	 (else (error "j2s-export?" "wrong binder" (vector loc id binder))))))
+   (with-access::J2SDecl decl (scope id loc)
+      (eq? scope 'export)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-id ...                                                    */

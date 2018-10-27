@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Oct 26 22:09:00 2018 (serrano)                */
+;*    Last change :  Sat Oct 27 07:49:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -200,7 +200,7 @@
       (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
 	    (cond
-	       ((memq scope '(global %scope export))
+	       ((memq scope '(global %scope))
 		(let ((fun-name (format "function:~a:~a"
 				   (cadr loc) (caddr loc))))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
@@ -239,7 +239,7 @@
    (define (j2s-scheme-let this)
       (with-access::J2SDecl this (loc scope id utype ronly)
 	 (epairify loc
-	    (if (memq scope '(global export))
+	    (if (memq scope '(global))
 		`(define ,(j2s-decl-scheme-id this) (js-make-let))
 		(let ((var (j2s-decl-scheme-id this)))
 		   `(,var (js-make-let)))))))
@@ -277,13 +277,19 @@
    
    (define (j2s-scheme-let-opt this)
       (with-access::J2SDeclInit this (scope id)
-	 (if (memq scope '(global %scope export))
+	 (if (memq scope '(global %scope))
 	     (j2s-let-decl-toplevel this mode return conf)
 	     (error "js-scheme" "Should not be here (not global)"
 		(j2s->list this)))))
 
+   (define (j2s-scheme-export this)
+      (with-access::J2SDeclInit this (exports val)
+	 (with-access::J2SExport (car exports) (index)
+	    `(vector-set! %evars ,index
+		,(j2s-scheme val mode return conf)))))
+   
    (cond
-      ((j2s-export? this) #unspecified)
+      ((j2s-export? this) (j2s-scheme-export this))
       ((j2s-param? this) (call-next-method))
       ((j2s-let-opt? this) (j2s-scheme-let-opt this))
       ((j2s-let? this) (call-next-method))
@@ -761,6 +767,7 @@
 (define (j2s-let-decl-toplevel::pair-nil d::J2SDeclInit mode return conf)
    (with-access::J2SDeclInit d (val usage id hint scope loc)
       (let ((ident (j2s-decl-scheme-id d)))
+	 (tprint "TOPL id=" id)
 	 (cond
 	    ((or (not (isa? val J2SFun))
 		 (isa? val J2SSvc)

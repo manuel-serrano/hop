@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Oct 26 19:36:32 2018 (serrano)                */
+;*    Last change :  Sat Oct 27 07:08:25 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -308,8 +308,14 @@
 
    (with-access::J2SProgram this (imports path %info)
       (set! %info '())
-      (let ((redirect (module-redirect this)))
-	 (if (and (null? imports) (null? redirect))
+      ;; WARNING !!! the evaluation order matters
+      ;; module-imports _must_ be called
+      ;; before module-redirect (as module-imports
+      ;; assigned the mvar properties used by
+      ;; module-redirect).
+      (let* ((mimports (module-imports this))
+	     (mredirects (module-redirect this)))
+	 (if (and (null? imports) (null? mredirects))
 	     '()
 	     (cons
 		`(define %imports
@@ -325,13 +331,13 @@
 				  imports)))
 		       imports))
 		(append
-		   (module-imports this)
+		   mimports
 		   `((with-access::JsModule %module (redirects)
 			(set! redirects
 			   (vector
 			      ,@(map (lambda (i) (evar-ident i))
 				   (iota (length imports)))
-			      ,@redirect))))))))))
+			      ,@mredirects))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-exports ...                                           */

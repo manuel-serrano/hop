@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/require.scm                  */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/require.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Oct 26 10:50:54 2018 (serrano)                */
+;*    Last change :  Sat Oct 27 06:40:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -968,17 +968,17 @@
 			(open-mmap filename read: #t :write #f))))
 	       (unwind-protect
 		  (j2s-compile ast
-			      :driver (nodejs-driver)
-			      :driver-name "nodejs-driver"
-			      :filename filename
-			      :language (or lang "hopscript")
-			      :module-main #f
-			      :mmap-src m
-			      :module-name (symbol->string mod)
-			      :worker-slave worker-slave
-			      :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
-			      :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
-			      :debug (bigloo-debug))
+		     :driver (nodejs-driver)
+		     :driver-name "nodejs-driver"
+		     :filename filename
+		     :language (or lang "hopscript")
+		     :module-main #f
+		     :mmap-src m
+		     :module-name (symbol->string mod)
+		     :worker-slave worker-slave
+		     :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+		     :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+		     :debug (bigloo-debug))
 		  (when (mmap? m)
 		     (close-mmap m)))))))
    
@@ -1013,9 +1013,10 @@
 				 (string-append
 				    (string-replace (prefix filename) #\/ #\_)
 				    ".scm"))))
-		      (tprint "nodejs-compile " filename " -> " tgt)
+		      (tprint "nodejs-compile:\n     " filename "\n  -> " tgt)
 		      (call-with-output-file tgt
-			 (lambda (op) (pp expr op)))))
+			 (lambda (op)
+			    (for-each (lambda (e) (pp e op)) expr)))))
 		(trace-item "expr=" (format "~s" expr))
 		(unwind-protect
 		   (begin
