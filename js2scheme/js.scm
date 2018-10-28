@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/js.scm                    */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/js.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Oct 26 13:17:13 2018 (serrano)                */
+;*    Last change :  Sun Oct 28 08:49:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -761,7 +761,9 @@
    (with-access::J2SHopRef this (id)
       (case id
 	 ((%import-meta)
-	  (list this "import.meta"))
+	  (if (config-get conf :es6-module-client #f)
+	      (list this "import.meta")
+	      '()))
 	 (else
 	  (list this (symbol->string! id))))))
 
@@ -1263,26 +1265,28 @@
    (define (import-name->js this::J2SImportName)
       (with-access::J2SImportName this (id alias)
 	 (list id " as " alias)))
-   
-   (with-access::J2SImport this (names path)
-      (match-case names
-	 (()
-	  (list this "import '" path "';"))
-	 ((redirect)
-	  (list this "export * from " "'" path "';"))
-	 ((redirect . ?aliases)
-	  (cons* this "export {"
-	     (append (append-map* ","
-			(lambda (a)
-			   (if (pair? a)
-			       (list (car a) " as " (cdr a))
-			       a))
-			aliases)
-		`("} from " "'" ,path "';"))))
-	 (else
-	  (cons* this "import {"
-	     (append (append-map* "," import-name->js names)
-		`("} from " "'" ,path "';")))))))
+
+   (if (config-get conf :es6-module-client #f)
+       (with-access::J2SImport this (names path)
+	  (match-case names
+	     (()
+	      (list this "import '" path "';"))
+	     ((redirect)
+	      (list this "export * from " "'" path "';"))
+	     ((redirect . ?aliases)
+	      (cons* this "export {"
+		 (append (append-map* ","
+			    (lambda (a)
+			       (if (pair? a)
+				   (list (car a) " as " (cdr a))
+				   a))
+			    aliases)
+		    `("} from " "'" ,path "';"))))
+	     (else
+	      (cons* this "import {"
+		 (append (append-map* "," import-name->js names)
+		    `("} from " "'" ,path "';"))))))
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SExportVars ...                                       */

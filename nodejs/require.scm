@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Oct 27 06:40:01 2018 (serrano)                */
+;*    Last change :  Sun Oct 28 09:25:41 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -173,7 +173,8 @@
 		  (open-output-file ofile)))
 	  (qr (cond
 		 ((string-prefix? "js=" query) 'js)
-		 ((string-prefix? "el=" query) 'el)
+		 ((string-prefix? "mjs=" query) 'mjs)
+		 ((string-prefix? "es=" query) 'es)
 		 (else 'js)))
 	  (tree (unwind-protect
 		   (module->javascript obj ifile
@@ -329,6 +330,7 @@
 	 :header header
 	 :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 	 :parser 'client-program
+	 :es6-module-client (eq? query 'mjs)
 	 :driver (if (or (<=fx (bigloo-debug) 0) esplainp)
 		     (j2s-javascript-driver)
 		     (j2s-javascript-debug-driver))
@@ -361,7 +363,7 @@
    
    (let ((this (nodejs-new-global-object))
 	 (worker (js-current-worker))
-	 (esplainp (eq? query 'es)))
+	 (esplainp (memq query '(mjs es))))
       (init-dummy-module! this worker)
       (let ((header (unless esplainp
 		       (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"

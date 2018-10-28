@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Aug  1 15:14:48 2018 (serrano)                */
+;*    Last change :  Sun Oct 28 09:05:31 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -768,12 +768,12 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		(body (list "\n" body)))
 	     (default src))))
 
-   (define (require p m inl lang)
-      (<REQUIRE> :type (hop-mime-type)
+   (define (require p m inl lang mtype)
+      (<REQUIRE> :type mtype
 	 :inline inl :src p :mod m :lang lang))
-   
+
    (let ((src (xml-primitive-value src))
-	 (type (xml-primitive-value type))
+	 (mtype (xml-primitive-value type))
 	 (lang (xml-primitive-value lang)))
       (purify
 	 (cond
@@ -781,7 +781,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 	     (default src))
 	    (lang
 	     (let ((file (clientc-resolve-filename src context module)))
-		(require file src inline lang)))
+		(require file src inline lang mtype)))
 	    ((and inline (file-exists? src))
 	     (inl src))
 	    (else
@@ -799,13 +799,13 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		       (attributes)
 		       body)
    
-   (define (default src)
-      (if (string? src)
-	  (let ((src (if (string? lang)
-			 (string-append src "?js=" (or mod src)
-			    "&lang=" lang)
-			 (string-append src "?js=" (or mod src)))))
-	     (when inline (warning "<SCRIPT>" "Cannot inline file -- " src))
+   (define (default path)
+      (if (string? path)
+	  (let* ((l (if (string=? type "module") "?mjs=" "?js="))
+		 (src (if (string? lang)
+			 (string-append path l (or mod path) "&lang=" lang)
+			 (string-append path l (or mod path)))))
+	     (when inline (warning "<SCRIPT>" "Cannot inline file -- " path))
 	     (instantiate::xml-cdata
 		(tag 'script)
 		(attributes `(:src ,src type: ,type ,@attributes))
@@ -838,6 +838,8 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
    (cond
       ((string? src)
        (require src))
+      ((and (pair? src) (string=? type "module"))
+       (map require (cdr src)))
       ((pair? src)
        (cons (instantiate::xml-cdata
 		(tag 'script)
