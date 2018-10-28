@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Oct 24 11:42:37 2018                          */
-/*    Last change :  Sat Oct 27 08:00:49 2018 (serrano)                */
+/*    Last change :  Sun Oct 28 08:42:24 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 module                                               */
@@ -35,6 +35,9 @@ import { GET as evarsGET } from "../mod/evars.js";
 
 console.log( "   evars.js (let, const)");
 assert.strictEqual( checksum, 1088 );
+
+console.log( "   evars.js (class)");
+assert.strictEqual( new evars.KLA().type, "KLA" );
 
 console.log( "   evars.js (alias)");
 assert.strictEqual( K2, 990 );

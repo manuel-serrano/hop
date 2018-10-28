@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Oct 27 07:49:07 2018 (serrano)                */
+;*    Last change :  Sun Oct 28 07:01:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -314,7 +314,7 @@
 	 (cond
 	    ((or writable init?)
 	     (cond
-		((and (memq scope '(global %scope export)) (in-eval? return))
+		((and (memq scope '(global %scope)) (in-eval? return))
 		 `(begin
 		     ,(j2s-put! loc '%scope #f (j2s-vtype lhs)
 			 `',id 'propname
@@ -767,7 +767,6 @@
 (define (j2s-let-decl-toplevel::pair-nil d::J2SDeclInit mode return conf)
    (with-access::J2SDeclInit d (val usage id hint scope loc)
       (let ((ident (j2s-decl-scheme-id d)))
-	 (tprint "TOPL id=" id)
 	 (cond
 	    ((or (not (isa? val J2SFun))
 		 (isa? val J2SSvc)

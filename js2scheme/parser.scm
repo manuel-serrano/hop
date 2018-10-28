@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct 26 11:40:45 2018 (serrano)                */
+;*    Last change :  Sun Oct 28 07:29:20 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1375,8 +1375,13 @@
 		       (loop (cons ref refs) (cons alias aliases)))
 		      (else
 		       (parse-token-error "Illegal export" token)))))))
-	 ((function class)
+	 ((function)
 	  (export-decl (statement)))
+	 ((class)
+	  (let ((stmt (statement)))
+	     (with-access::J2SVarDecls stmt (decls)
+		(set! decls (list (export-decl (car decls))))
+		stmt)))
 	 ((default)
 	  (let ((loc (token-loc (consume-any!)))
 		(val (expression #f #f)))

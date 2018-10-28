@@ -20,3 +20,5 @@ export { checksum };
 const def = {a: 1, b: 2};
 export default def;
 def.a = 10;
+
+export class KLA { constructor() { this.type = "KLA" } };
