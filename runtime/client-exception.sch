@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 10 05:33:45 2013                          */
-;*    Last change :  Mon May 14 16:23:10 2018 (serrano)                */
+;*    Last change :  Sun Oct 28 11:03:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common exception implementation.                                 */
@@ -162,15 +162,19 @@
 			    (hop-source-map file line col)
 			    (if (string? srcfile)
 				;; FF returns a source-mapped stack
-				(list dm
-				   `(line ,srcfile ,srcline)
-				   `(js-line ,file ,(-fx line 1))
-				   `(type . ,(if (string=? dm id) 'js 'client))
-				   '(format . "~~~a"))
-				(list dm
-				   `(line ,file ,(-fx line 1))
-				   `(type . ,(if (string=? dm id) 'js 'client))
-				   '(format . "~~~a")))))
+				(let* ((i (string-index srcfile #\?))
+				       (src (if i (substring srcfile 0 i) srcfile)))
+				   (list dm
+				      `(line ,srcfile ,srcline)
+				      `(js-line ,file ,(-fx line 1))
+				      `(type . ,(if (string=? dm id) 'js 'client))
+				      '(format . "~~~a")))
+				(let* ((i (string-index file #\?))
+				       (src (if i (substring file 0 i) file)))
+				   (list dm
+				      `(line ,file ,(-fx line 1))
+				      `(type . ,(if (string=? dm id) 'js 'client))
+				      '(format . "~~~a"))))))
 		      (list dm)))))))
    
    (define (opera-frame f)
@@ -198,15 +202,19 @@
 			 (multiple-value-bind (srcfile srcline srccol)
 			    (hop-source-map file line col)
 			    (if (string? srcfile)
-				(list dm
-				   `(line-col ,srcfile ,srcline ,srccol)
-				   `(js-line-col ,file ,(-fx line 1), col)
-				   `(type . ,(if (string=? dm id) 'js 'client))
-				   '(format . "~~~a"))
-				(list dm
-				   `(line-col ,file ,(-fx line 1), col)
-				   `(type . ,(if (string=? dm id) 'js 'client))
-				   '(format . "~~~a")))))
+				(let* ((i (string-index file #\?))
+				       (src (if i (substring srcfile 0 i) srcfile)))
+				   (list dm
+				      `(line-col ,src ,srcline ,srccol)
+				      `(js-line-col ,file ,(-fx line 1), col)
+				      `(type . ,(if (string=? dm id) 'js 'client))
+				      '(format . "~~~a")))
+				(let* ((i (string-index file #\?))
+				       (src (if i (substring file 0 i) file)))
+				   (list dm
+				      `(line-col ,src ,(-fx line 1), col)
+				      `(type . ,(if (string=? dm id) 'js 'client))
+				      '(format . "~~~a"))))))
 		      (list dm)))))))
 
    (let* ((stack (car f))

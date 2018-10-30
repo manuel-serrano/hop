@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Thu Aug  2 12:45:30 2018 (serrano)                */
+;*    Last change :  Sun Oct 28 10:57:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
@@ -59,8 +59,11 @@
 	    (newline port)
 	    (match-case loc
 	       ((:filename ?fname :pos ?point . ?-)
-		(let ((frame `("client" (at ,fname ,point))))
-		   (display-trace-stack-source (list frame) port)))
+		(let* ((i (string-index fname #\?))
+		       (file (if i (substring fname 0 i) fname))
+		       (path (if (file-exists? file) file fname)))
+		   (let ((frame `("client" (at ,path ,point))))
+		      (display-trace-stack-source (list frame) port))))
 	       (else
 		(display-trace-stack-source stack port)))
 	    (display "*** CLIENT ERROR: " port)

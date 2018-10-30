@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Oct 28 09:36:22 2018 (serrano)                */
+;*    Last change :  Sun Oct 28 09:57:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -505,7 +505,7 @@
 		      (unless (memq k o)
 			 (set! o (cons* k #t o))))
 	    '(:es6-let :es6-default-value :es6-arrow-function
-	      :es6-rest-argument :es2017-async es6-module)))
+	      :es6-rest-argument :es2017-async :es6-module)))
       
       (let ((v (getenv "HOPCFLAGS")))
 	 (when (string? v)

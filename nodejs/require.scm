@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Oct 28 09:25:41 2018 (serrano)                */
+;*    Last change :  Tue Oct 30 10:23:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -917,7 +917,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile src filename::bstring
 	   %ctxthis %ctxmodule
-	   #!key lang worker-slave)
+	   #!key lang worker-slave commonjs-export)
    
    (define (compile-file filename::bstring mod)
       (with-trace 'require "compile-file"
@@ -938,6 +938,7 @@
 			:worker-slave worker-slave
 			:verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 			:plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+			:commonjs-export commonjs-export
 			:debug (bigloo-debug))
 		     (close-mmap m)))))))
    
@@ -959,6 +960,7 @@
 		  :worker-slave worker-slave
 		  :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 		  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+		  :commonjs-export commonjs-export
 		  :debug (bigloo-debug))))))
 
    (define (compile-ast ast::J2SProgram mod)
@@ -980,6 +982,7 @@
 		     :worker-slave worker-slave
 		     :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 		     :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+		     :commonjs-export commonjs-export
 		     :debug (bigloo-debug))
 		  (when (mmap? m)
 		     (close-mmap m)))))))
@@ -1515,7 +1518,9 @@
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
 	       (let ((hopscript (nodejs-compile filename filename
-				   %ctxthis %ctxmodule :lang lang))
+				   %ctxthis %ctxmodule
+				   :lang lang
+				   :commonjs-export #f))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-new-module (if js-main filename ".")
