@@ -1,0 +1,103 @@
+;; -*- mode: lisp -*-
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/work/elisp/hopjs-config.el.in           */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
+;*    Last change :  Sat Nov 10 15:27:23 2018 (serrano)                */
+;*    Copyright   :  2018 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Hopjs config                                                     */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The package                                                      */
+;*---------------------------------------------------------------------*/
+(provide 'hopjs-config)
+
+;*---------------------------------------------------------------------*/
+;*    configuration                                                    */
+;*---------------------------------------------------------------------*/
+(defconst hopjs-version "@VERSION@")
+
+(defcustom hopjs-doc-dir "@DOCDIR@"
+  "The main directory containing the documentation indexes"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-official-doc-url "@DOCURL@"
+  "The remote URL documentation"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-doc-extra-dir
+  (list "~/.config/hop/weblets")
+  "Directories containing the extra documentation indexes"
+  :type '(repeat (string))
+  :group 'hopjs)
+
+(defcustom hopjs-navigator "firefox"
+  "The navigator to access the documentation"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-special-tags
+  '("link" "LINK" "input" "INPUT" "meta" "META" "img" "IMG")
+  "The special HTML tag that have no close tag"
+  :type '(repeat (string))
+  :group 'hopjs)
+
+(defcustom hopjs-html-doc-url "http://www.w3.org/TR/html4"
+  "The base URL of the HTML4.01 documentation"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-mdn-doc-url "https://developer.mozilla.org"
+  "Mozilla Developper Network base URL"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-node-doc-url "https://nodejs.org/api"
+  "NodeJS API base documentation URL"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-external-docs
+  (list (cons "hop" (concat hopjs-doc-dir "/index.html"))
+	(cons "hop official" hopjs-official-doc-url)
+	(cons "mdn" hopjs-mdn-doc-url)
+	(cons "html4.01" hopjs-html-doc-url)
+	(cons "nodejs" "https://nodejs.org/api/"))
+  "List of available documentations"
+  :type '(repeat (cons string string))
+  :group 'hopjs)
+
+(defcustom hopjs-mode-line-doc-button-p t
+  "If true enables hop quick doc modline button"
+  :type 'boolean
+  :safe 'booleanp
+  :group 'hopjs)
+
+(defcustom hopjs-indent-custom t
+  "Enable/disable custom Hopjs indentation"
+  :type 'boolean
+  :safe 'booleanp
+  :group 'hopjs)
+
+(defcustom hopjs-indent-level 3
+  "Number of spaces for each indentation step in `js-mode'."
+  :type 'integer
+  :safe 'integerp
+  :group 'hopjs)
+
+(defcustom hopjs-indent-level-html 2
+  "Number of spaces for each indentation step in `js-mode'."
+  :type 'integer
+  :safe 'integerp
+  :group 'hopjs)

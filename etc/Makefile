@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Sep 20 19:06:11 2018 (serrano)                */
+#*    Last change :  Sat Nov 10 15:31:19 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -30,10 +30,12 @@ POPULATION	= Makefile Makefile.weblet Makefile.library \
                   js2scheme.init.in hopscript.init.in nodejs.init.in \
                   hopdroid.init.in \
                   hop.man.in hopsh.man.in hopreplay.man.in \
-                  hopc.sh.in hopwidget.init.in hglog.scm hopjs.el.in \
+                  hopc.sh.in hopwidget.init.in hglog.scm \
                   node_crypto_groups.h node_crypto_groups.c \
                   mkserializer.hop hop.sh.in hopc.sh.in \
-                  hop-autoconf.js.in hop-boot.js.in
+                  hop-autoconf.js.in hop-boot.js.in \
+                  hopjs-config.el.in hopjs.el hopjs-indent.el \
+                  hopjs-parse.el hopjs-macro.el 
 
 install:
 	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
@@ -56,8 +58,10 @@ install:
 	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPSHAREDIR)/site-lisp; \
 	  chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/site-lisp; \
 	fi
-	$(INSTALL) hopjs.el $(DESTDIR)$(HOPSHAREDIR)/site-lisp
-	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/site-lisp/hopjs.el
+	for p in hopjs hopjs-config hopjs-parse hopjs-indent hopjs-macro; do \
+	  $(INSTALL) $$p.el $(DESTDIR)$(HOPSHAREDIR)/site-lisp; \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/site-lisp/$$p.el; \
+        done
 
 uninstall:
 	$(RM) -f $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig

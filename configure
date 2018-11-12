@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Oct 26 14:01:37 2018 (serrano)                */
+#*    Last change :  Sat Nov 10 15:30:47 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1344,7 +1344,7 @@ for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST; do
 done
 
 # hopjs
-for file in etc/hopjs.el; do
+for file in etc/hopjs-config.el; do
   rm -f $file 2> /dev/null
   echo ";* Automatically generated file (don't edit) */" > $file
   cat $file.in \

@@ -1,0 +1,331 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/3.2.x/test/elisp/test.js                */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Fri Apr 18 09:42:04 2014                          */
+/*    Last change :  Mon Nov 12 11:33:08 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    hopjs-mode indent tests                                          */
+/*=====================================================================*/
+
+// (let ((path (concat (getenv "PWD") "/../../etc"))) (setq debug-on-error t) (setq load-path (cons path load-path)) (load-library (concat path "/hopjs.el")) (load-library (concat path "/hopjs-parse.el")) (load-library (concat path "/hopjs-indent.el")) (hopjs-mode-hook))
+
+// ok
+const k = { 
+   a: 3,
+   b: 4 + 1,
+   c: "toto",
+   d: { 
+      a: 10,
+      b: [ 1, 2, 3 ],
+      c: foo( 10 ),
+      e: [ foo( 10 ),
+	   bar( 30 ) ]
+   }
+};
+
+// ok
+let u = [   1, 2, 3, 4,
+	    5, 6,
+	    7, 9 ];
+
+// ok
+function foo( a ) {
+   a ?
+      1 : 2;
+}
+
+// ok
+function foo( a ) {
+   a 
+      ? 1 : 2;
+}
+
+// ok 
+function foo() {
+   // toto n'est pas content
+   x = 3;
+}
+
+// ok
+function foo( a, b ) {
+   return foo(
+      bar( a ) );
+}
+      
+// ok
+function foo( a, b ) {
+   return new hh.ctor(
+      new hh.ctor2( a, b ) );
+}
+
+// ok
+function foo( a, b ) {
+   return 
+      new hh.ctor(
+	 new hh.ctor2( a, b ) );
+}
+
+// ok
+service helloServerDate() {
+   return Date.now();
+}
+
+// ok
+service bar() {
+   var ZZZ = 
+      56; var YYY = 3;
+}
+
+// ok
+service bar( x, yyy ) {
+   return xxxx + 
+      yyy;
+}
+
+// ok
+function bar() {
+   function hux( a ) {
+      return
+	 a + 1;
+   }
+   function gee( x, yyy ) {
+      return xxx + yyy;
+      5;
+   }
+   return gee( 1, 2 );
+}
+
+// ok
+function gee( a, b, c ) {
+   function hux( a ) {
+      return hux( a ) +
+	 3;
+   }
+   if( a > b &&
+       a < c ||
+       3 ) {
+      if( c > d ) 
+	 aaa = 3;
+      c = 0;
+   }
+}
+
+// ok
+function glop( x ) {
+   return x  
+      + y;
+}
+
+// ok
+function glop( x ) {
+   let x = glop( 10 )
+      .post( function( snow ) {
+		return 23;
+	     } );
+}
+
+function glop( x ) {
+   let x = glop( 10 )()
+      .post( function( snow ) {
+		return 23;
+	     } );
+}
+
+// ok
+function glop( x ) {
+   let x = glop( 10 )
+      .post( snow => {
+		return 32;
+	     } )
+}
+
+// ok
+function glop( x ) {
+   let x = glop( 10 )
+      .post( (a, b) => {
+		return 32;
+	     } )
+}
+
+// ok
+function glop( x ) {
+   switch( x ) {
+      case 1:
+      case 2: return 3;
+      case 4:
+	return 5;
+      default: return 6;
+   }
+}
+
+// ok
+service hello() {
+   /* toto */var y = 3; var x = FOO(   x, y, z,
+				       4, 5,
+				       4 );
+   try {
+      foo( 1, 2, 
+	   3, bar( x,
+		   y ) );
+      var x = <div>
+	<span>
+	  toto
+	</span>
+	<span>
+	  <span>
+	    <div>
+	    </div>
+	  </span>
+	</span>
+      </div>;
+      var x = <div>
+	<span>
+	  <div>
+	    toto
+	  </div>
+	  tutu
+	</span>
+      </div>;
+      
+      if( x > 3 ) {
+	 x = 3;
+	 y = 6;
+	 z = 5 + 6;
+	 x++;
+      } else {
+	 x = 5;
+	 y--;
+	 x += 1;
+      }
+   }
+}
+
+// ok
+function test() {
+   var sdate = <TD id="sdate">${new Date( Date.now() )}</TD>;
+   var cdate = <TD id="cdate">-</TD>;
+   
+   return <table>
+     <tr>
+       ${date}
+     </tr>
+   </table>
+   x = 3;
+}
+
+// ok
+function test() {
+   return <html>
+     <div x=3>
+       <span>
+       </span>
+     </div>
+   </html>
+}
+
+// ok
+function test() {
+   return <html y=3>
+     <div x=3>
+       <span>
+       </span>
+     </div>
+   </html>
+}
+
+// ok
+function test() {
+   var sdate = <TD id="sdate">${new Date( Date.now() )}</TD>;
+   var cdate = <TD id="cdate">-</TD>;
+   return <HTML>
+     <BUTTON onclick=~{
+		x++;
+	     }
+	     z=${1+2}>
+       <div>
+	 <span>
+	   ceci est un span
+on va voir ce quon va voir
+cest juste du texte...
+	 </span>
+	 <div>
+	   <span>
+	     <table>
+	     </table>
+	   </span>
+	 </div>
+       </div>
+     </BUTTON>
+   </HTML>
+}
+
+// ok
+service glop() {
+   return <DIV>
+     <table>
+     </table>
+   </DIV>
+}
+
+// ok
+service glop() {
+   return <div class="foo"
+	       id="bar">
+}
+
+// ok
+service glop() {
+   return <div onclick=~{
+		  alert( "foo" )
+	       }>
+     yip
+   </div>
+}
+
+// ok
+service glop() {
+   return <div onclick=~{
+		  alert( "foo" )
+	       }>
+     <span>
+       toto
+     </span>
+   </div>
+}
+
+// ok
+service glop() {
+   return <DIV onclick=~{
+		  ${helloServerDate}()
+		     .post( function( snow ) {
+			       ${sdate}.innerHTML = 
+				  new Date( snow ).toString();
+				  ${cdate}.innerHTML = 
+				     new Date( Date.now() ).toString();
+			    } )
+	       }>
+     Click me to update dates...
+     <table>
+       <TR><TH>server date: ${sdate}</TH></TR>
+       <TR><TH>client date: ${cdate}</TH></TR>
+     </TABLE>
+   </DIV>;
+}
+
+// ok
+function foo() {
+   let a = 1, b = 2, c = 3;
+   return a + b + c;
+}
+
+// ok
+const hhparser = function( token ) {
+   const loc = token.location;
+   let pre = false, val = false, access = "present";
+
+//this.consumeToken( this.LPAREN );
+   this.consumeToken( this.DOT );
+}
+	       

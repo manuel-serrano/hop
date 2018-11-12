@@ -16,6 +16,7 @@
 /*---------------------------------------------------------------------*/
 if( !('hop' in window) ) {
    window.hop = {
+      'isServer': false,
       'version': "@VERSION@",
       'buildId': "@BUILDID@",
       'buildTag': "@BUILDTAG@",
