@@ -23,7 +23,7 @@ config.status
 etc/Makefile.hopconfig
 etc/hoprc.hop
 etc/hopshrc.hop
-etc/hopjs.el
+etc/hopjs-config.el
 
 share/hop-autoconf.js
 share/hop-boot.js
