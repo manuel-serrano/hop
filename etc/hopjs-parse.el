@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon Nov 12 11:13:09 2018 (serrano)                */
+;*    Last change :  Mon Nov 12 19:04:15 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -89,7 +89,9 @@
      ;; ctag
      (cons (rx: "</" tagid ">") 'ctag)
      ;; ohtml
-     (cons (rx: "\\(<" tagid "\\)[ \t\n]+" (rxor tagid "[$]{" "/>" ">")) 'ohtml)
+     (cons (rx: "\\(<" tagid "\\)[ \t\n]+" (rxor tagid "[$]{" ">")) 'ohtml)
+     ;; chtml
+     (cons "/>" 'chtml)
      ;; html
      (cons (rx: "<" tagid "/>") 'html)
      )))
@@ -156,7 +158,7 @@
     ((ident)
      (let ((sym (intern (hopjs-parse-token-string tok))))
        (when (memq sym '(function function* service return try catch while if
-				  var let const else new case switch))
+				  var let const else new case switch for))
 	 (aset tok 0 sym))
        tok))
     ((binop)
@@ -249,9 +251,10 @@
 	(if (= (point) (point-min))
 	    (setq hopjs-parse-tokens (list (hopjs-parse-token 'bof 0 0)))
 	  (progn
-	    (previous-line 1)
+	    (forward-line -1)
 	    (end-of-line)
-	    (setq pos (point))))))))
+	    (setq pos (point))))))
+    (message "start %s" hopjs-parse-tokens)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-push-token ...                                       */

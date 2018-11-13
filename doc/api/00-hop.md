@@ -14,6 +14,15 @@ For ease of use, `hop` is defined as a global object and can be used
 directly without require.
 
 
+General configuration
+---------------------
+
+### hop.isServer ###
+[:@glyphicon glyphicon-tag parameter]
+The `isServer` property is true for code executing on a server and false
+for code executing on a client.
+
+
 Server Information
 ------------------
 
@@ -44,6 +53,7 @@ The Hop version.
 ```hopscript
 console.log( "Hop version:", hop.version );
 ```
+
 
 Server Configuration
 --------------------

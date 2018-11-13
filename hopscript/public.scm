@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Oct 26 19:16:17 2018 (serrano)                */
+;*    Last change :  Tue Nov 13 08:38:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -951,12 +951,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-in? %this field obj)
    (if (not (isa? obj JsObject))
-       (js-raise-type-error %this "in: not a object ~s" obj)
+       (js-raise-type-error %this "in: not an object ~s" obj)
        (js-has-property obj (js-toname field %this) %this)))
 
 (define (js-in?/debug %this loc field obj)
    (if (not (isa? obj JsObject))
-       (js-raise-type-error/loc %this loc "in: not a object ~s" obj)
+       (js-raise-type-error/loc %this loc "in: not an object ~s" obj)
        (js-has-property obj (js-toname field %this) %this)))
 
 ;*---------------------------------------------------------------------*/

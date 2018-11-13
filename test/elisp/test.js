@@ -3,13 +3,23 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Mon Nov 12 11:33:08 2018 (serrano)                */
+/*    Last change :  Mon Nov 12 17:47:37 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
 /*=====================================================================*/
 
 // (let ((path (concat (getenv "PWD") "/../../etc"))) (setq debug-on-error t) (setq load-path (cons path load-path)) (load-library (concat path "/hopjs.el")) (load-library (concat path "/hopjs-parse.el")) (load-library (concat path "/hopjs-indent.el")) (hopjs-mode-hook))
+
+
+// ok
+function HopcAstWalker( obj ) {
+   if( obj instanceof Object ) {
+      for( var f in obj ) {
+	 this.f = obj[ f ];
+      }
+   }
+}
 
 // ok
 const k = { 
@@ -22,6 +32,11 @@ const k = {
       c: foo( 10 ),
       e: [ foo( 10 ),
 	   bar( 30 ) ]
+   },
+   glop: function glop( x ) {
+      if( #:isa?( ast, #:J2SNode ) ) {
+	 return x;
+      }
    }
 };
 
@@ -151,7 +166,7 @@ function glop( x ) {
 
 // ok
 function glop( x ) {
-   switch( x ) {
+   switch( obj.x.z ) {
       case 1:
       case 2: return 3;
       case 4:
@@ -302,8 +317,8 @@ service glop() {
 		     .post( function( snow ) {
 			       ${sdate}.innerHTML = 
 				  new Date( snow ).toString();
-				  ${cdate}.innerHTML = 
-				     new Date( Date.now() ).toString();
+			       ${cdate}.innerHTML = 
+				  new Date( Date.now() ).toString();
 			    } )
 	       }>
      Click me to update dates...
@@ -325,7 +340,19 @@ const hhparser = function( token ) {
    const loc = token.location;
    let pre = false, val = false, access = "present";
 
-//this.consumeToken( this.LPAREN );
+   //this.consumeToken( this.LPAREN );
    this.consumeToken( this.DOT );
 }
-	       
+
+// ok
+service main() {
+   return <html>
+     <head>
+       <script src="hiphop" lang="hiphop"/>
+       <script src="./login.hh.js" lang="hiphop"/>
+       <script defer>
+	 const login = require( "./login.hh.js" );
+       </script>
+     </head>
+}
+

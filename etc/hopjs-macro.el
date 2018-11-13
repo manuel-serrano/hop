@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/work/elisp/hopjs-macro.el               */
+;*    serrano/prgm/project/hop/3.2.x/etc/hopjs-macro.el                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  4 15:33:55 2018                          */
-;*    Last change :  Wed Nov  7 11:41:53 2018 (serrano)                */
+;*    Last change :  Mon Nov 12 17:57:13 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hopjs internal macros                                            */
@@ -51,10 +51,10 @@
 ;*    with-debug ...                                                   */
 ;*---------------------------------------------------------------------*/
 (defmacro with-debug (fmt &rest args)
-  `(progn
-     (hopjs-debug 1 ,fmt ,@(reverse (cdr (reverse args))))
-     (let ((__r (progn ,@(last args))))
-       (hopjs-debug -1 (concat ,fmt " -> %s") ,@(reverse (cdr (reverse args))) __r)
-       __r)))
-     
-
+  (if debug-on-error
+      `(progn
+	 (hopjs-debug 1 ,fmt ,@(reverse (cdr (reverse args))))
+	 (let ((__r (progn ,@(last args))))
+	   (hopjs-debug -1 (concat ,fmt " -> %s") ,@(reverse (cdr (reverse args))) __r)
+	   __r))
+    `(progn ,@(last args))))

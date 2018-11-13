@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Sep 12 11:52:43 2018 (serrano)                */
+;*    Last change :  Mon Nov 12 17:21:42 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -267,6 +267,7 @@
 	       `(buildid . ,(hop-build-id))
 	       `(buildtag . ,(hop-build-tag))
 	       `(standalone . ,hopjs-standalone)
+	       `(isServer . #t)
 
 	       ;; server configuration
 	       (define-js httpAuthenticationMethodGet 0

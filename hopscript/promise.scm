@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Jan 12 18:27:00 2018 (serrano)                */
+;*    Last change :  Tue Nov 13 08:37:55 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -285,7 +285,7 @@
       (cond
 	 ((not (isa? this JsObject))
 	  ;; .2
-	  (js-raise-type-error %this "This not a object ~a" (typeof this)))
+	  (js-raise-type-error %this "This not an object ~a" (typeof this)))
 	 (else
 	  ;; .3
 	  (let ((promise (js-promise-alloc/name js-promise "reject")))
@@ -305,7 +305,7 @@
       (cond
 	 ((not (isa? this JsObject))
 	  ;; .2
-	  (js-raise-type-error %this "This not a object ~a" (typeof this)))
+	  (js-raise-type-error %this "This not an object ~a" (typeof this)))
 	 ((and (isa? val JsPromise) (eq? (js-get val 'constructor %this) this))
 	  ;; .3
 	  val)

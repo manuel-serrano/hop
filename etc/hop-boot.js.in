@@ -31,7 +31,8 @@ if( !('hop' in window) ) {
       '%modules': {},
       '%requires': {},
       'List': sc_list,
-      'Cons': sc_cons
+      'Cons': sc_cons,
+      'config': "config"
    };
    window.hop[ '%modules' ].hop = window.hop;
 }

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Mon Nov 12 11:45:03 2018 (serrano)                */
+/*    Last change :  Mon Nov 12 15:08:55 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
@@ -25,9 +25,6 @@ function require( url ) {
    if( window.hop[ '%modules' ][ path ] ) {
       return window.hop[ '%modules' ][ path ];
    } else {
-      console.log( "require url=",url);
-      console.log( "path=", path );
-      console.log( "fun=", window.hop[ '%requires' ][ path ] );
       if( window.hop[ '%requires' ][ path ] ) {
 	 return window.hop[ '%requires' ][ path ]();
       } else {
@@ -44,6 +41,13 @@ function require( url ) {
       }
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    config                                                           */
+/*---------------------------------------------------------------------*/
+window.hop[ '%requires' ][ 'config' ] = function() {
+   return {};
+};
 
 /*---------------------------------------------------------------------*/
 /*    %requireAlias ...                                                */
@@ -167,12 +171,7 @@ hop[ '%require' ] = function( name, mod ) {
 	    || resolveError( name );
       }
       return resolveModules( mod, name )
-            || name;
-   }
-
-   if( !name ) {
-      alert( "PAS NAME..." );
-      alert( "foo" in name );
+         || name;
    }
 
    return require( resolve( name ) );
