@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Nov 13 06:54:22 2018 (serrano)                */
+;*    Last change :  Wed Nov 14 10:14:28 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1186,28 +1186,40 @@ usage: (js-return)  -- [RET]"
   (interactive)
   (cond
    (hopjs-indent-custom
-    (let* ((col0 (current-column))
-	   (col col0))
+    (let ((ccol (current-column))
+	  (mov '()))
       (beginning-of-line)
-      (when (looking-at "[ \t]+")
-	(let* ((p0 (point))
-	       (b (match-beginning 0))
-	       (e (match-end 0))
-	       (end (progn
-		      (goto-char e)
-		      (current-column))))
-	  (if (> end p0)
-	      (setq col -1)
-	    (setq col (- col end))
-	    (delete-region b e))))
-      (let ((icol (indent-to (hopjs-indent (point)))))
+      (let ((icol (hopjs-indent (point))))
+	(beginning-of-line)
+	(when (looking-at "[ \t]+")
+	  (let* ((p (point))
+		 (b (match-beginning 0))
+		 (e (match-end 0))
+		 (ocol (progn
+			 (goto-char e)
+			 (current-column))))
+	    (cond
+	     ((= ocol icol)
+	      (setq mov ccol))
+	     ((> icol ocol)
+	      (if (< ccol ocol)
+		  (setq mov icol)
+		(setq mov (+ icol (- ccol ocol)))))
+	     (t
+	      (delete-region b e)
+	      (if (< ccol ocol)
+		  (setq mov icol)
+		(setq mov (+ icol (- ccol ocol))))))))
+	(indent-to icol)
 	(beginning-of-line)
 	(cond
-	 ((< col 0)
+	 ((= ccol 0)
 	  (when (looking-at "[ \t]+")
 	    (goto-char (match-end 0))))
-	 ((> (+ icol col) 0)
-	  (line-move-to-column (+ icol col)))))))
+	 (mov
+	  (line-move-to-column mov))
+	 ((> ccol 0)
+	  (line-move-to-column ccol))))))
    ((hopjs-old-indent-function)
     (funcall hopjs-old-indent-function))))
 

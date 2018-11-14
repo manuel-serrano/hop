@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Oct 28 08:49:19 2018 (serrano)                */
+;*    Last change :  Wed Nov 14 09:13:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -77,7 +77,13 @@
 				   (lang 'javascript)
 				   (expr header))
 			     headers))))))
-	 
+
+;*---------------------------------------------------------------------*/
+;*    js-id ...                                                        */
+;*---------------------------------------------------------------------*/
+;* (define (js-id sym)                                                 */
+;*    (string-replace (symbol->string! sym) #\% #\$))                  */
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-id ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -304,6 +310,35 @@
    (with-access::J2SReturn this (expr)
       (cons* this "return "
 	 (append (j2s-js expr tildec dollarc mode evalp conf) '(";")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SBindExit ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SBindExit tildec dollarc mode evalp conf)
+   (with-access::J2SBindExit this (lbl stmt)
+      (cond
+	 (lbl
+	  (error "BINDEXIT" "LBLB NOT SUPPORTED" (j2s->list this)))
+	 ((isa? stmt J2SBlock)
+	  (cons* this "((() => "
+	     (append (j2s-js stmt tildec dollarc mode evalp conf)
+		'(")())"))))
+	 (else
+	  (cons* this "(() => { "
+	     (append (j2s-js stmt tildec dollarc mode evalp conf)
+		'("})())")))))))
+	  
+;*       (if (not lbl)                                                 */
+;* 	  (let ((rstmt (return-stmt stmt)))                            */
+;* 	     (cons* this "(() => {"                                    */
+;* 		(append (j2s-js rstmt tildec dollarc mode evalp conf)  */
+;* 		   '("})()")))                                         */
+;* 	     (let* ((res (gensym 'res))                                */
+;* 		    (ret (gensym 'return))                             */
+;* 		    (jstmt (jump-stmt stmt res ret)))                  */
+;* 		(cons* this (format "(() => { let %s; %s: { " res ret) */
+;* 		   (append (j2s-js jstmt tildec dollarc mode evalp conf) */
+;* 		      `(format ("} return %s;})()" res)))))))))        */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SReturnYield ...                                      */
@@ -1311,3 +1346,58 @@
       (cons* this "import("
 	 (append (j2s-js path tildec dollarc mode evalp conf)
 	    '(")")))))
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    return-stmt ...                                                  *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walkt-method (return-stmt node)                             */
+;*    (tail-stmt! node #t                                              */
+;*       (lambda (expr)                                                */
+;* 	 (with-access::J2SStmtExpr expr (loc expr)                     */
+;* 	    (instantiate::J2SReturn                                    */
+;* 	       (loc loc)                                               */
+;* 	       (expr expr))))))                                        */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    tail-stmt! ::J2SNode ...                                         *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (tail-stmt! this::J2SNode compile tail)         */
+;*    ...)                                                             */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    tail-stmt! ::J2SExpr ...                                         *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (tail-stmt! this::J2SExpr compile tail)         */
+;*    this)                                                            */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    tail-stmt! ::J2SSeq ...                                          *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (tail-stmt! this::J2SSeq compile tail)          */
+;*    (when tail                                                       */
+;*       (with-access::J2SSeq this (nodes)                             */
+;* 	 (let ((lp (last-pair nodes)))                                 */
+;* 	    (set-car! lp (tail-stmt! (car lp) compile #t)))))          */
+;*    this)                                                            */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    tail-stmt! ::J2SIf ...                                           *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (tail-stmt! this::J2SIf compile tail)           */
+;*    (when tail                                                       */
+;*       (with-access::J2SIf this (then else)                          */
+;* 	 (set! then (tail-stmt! then compile tail))                    */
+;* 	 (set! else (tail-stmt! else compile tail))))                  */
+;*    this)                                                            */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    tail-stmt! ::J2SSwitch ...                                       *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (tail-stmt! this::J2SSwitch compile tail)            */
+;*    (when tail                                                       */
+;*       (with-access::J2SSwitch this (cases)                          */
+;* 	 (set! cases (map (lambda (c) (tail-stmt! c compile tail)))))) */
+;*    this)                                                            */
+
+
+	    

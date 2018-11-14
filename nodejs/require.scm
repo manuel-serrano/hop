@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Oct 30 10:23:27 2018 (serrano)                */
+;*    Last change :  Tue Nov 13 21:30:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1462,7 +1462,9 @@
 	     :lang lang :worker-slave #t)
 	  (let loop ((sopath (hop-find-sofile filename)))
 	     (cond
-		((string? sopath)
+		((and (string? sopath)
+		      (> (file-modification-time sopath)
+			 (file-modification-time filename)))
 		 (let ((p (hop-dynamic-load sopath)))
 		    (if (and (procedure? p) (=fx (procedure-arity p) 4))
 			p

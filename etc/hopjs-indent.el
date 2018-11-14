@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Mon Nov 12 19:05:51 2018 (serrano)                */
+;*    Last change :  Wed Nov 14 09:54:44 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -195,8 +195,13 @@
 		  (hopjs-parse-consume-token-any) hopjs-indent-level)
 	       (hopjs-indent-column-token tok hopjs-indent-level)))
 	 (hopjs-indent-column-token tok 0))))
+    ((eq (hopjs-parse-peek-token-type) 'semicolon)
+     (hopjs-indent-column-token tok hopjs-indent-level))
+    ((eq (hopjs-parse-peek-token-type) 'ident)
+     (hopjs-indent-column-token
+      (hopjs-parse-peek-token) hopjs-indent-level))
     (t
-     '()))))
+     (hopjs-indent-column-token tok hopjs-indent-level)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-tilde ...                                       */
@@ -290,8 +295,7 @@
 (defun hopjs-indent-new-comment (tok)
   (with-debug
    "hopjs-indent-new-comment %s [%s]" tok (hopjs-parse-token-string tok)
-   (progn
-     (hopjs-indent-new (- (hopjs-parse-token-beginning tok) 1)))))
+   (hopjs-indent-new (- (hopjs-parse-token-beginning tok) 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-qmark ...                                       */
@@ -299,8 +303,9 @@
 (defun hopjs-indent-new-qmark (tok)
   (with-debug
    "hopjs-indent-new-qmark %s [%s]" tok (hopjs-parse-token-string tok)
-   (hopjs-parse-goto-token (hopjs-parse-consume-token-any))
-   (+ (hopjs-indent-new (point)) hopjs-indent-level)))
+   (progn
+     (hopjs-parse-goto-token (hopjs-parse-consume-token-any))
+     (+ (hopjs-indent-new (point)) hopjs-indent-level))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-old-qmark ...                                       */
@@ -324,29 +329,34 @@
    (progn
      (hopjs-parse-goto-token tok 1)
      (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.1 -> %s" (point))
-     (hopjs-parse-backward-sexp)
-     (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.2 -> %s %c" (point) (char-after (- (point) 1)))
-     (if (memq (char-after (- (point) 1)) '(?~ ?$))
-	 (progn
-	   (hopjs-parse-start (point))
-	   (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.3 -> %s"
-			(hopjs-parse-peek-token-type))
-	   (when (memq (hopjs-parse-peek-token-type) '(tilde dollar))
-	     (let ((tok (hopjs-parse-consume-token-any)))
-	       (cond
-		((eq (hopjs-parse-peek-token-type) '=)
-		 (hopjs-parse-consume-token-any)
-		 (when (eq (hopjs-parse-peek-token-type) 'ident)
-		   (hopjs-indent-column-token
-		    (hopjs-parse-consume-token-any) 0)))
-		(t
-		 (hopjs-indent-column-token tok 0))))))
-       (progn
-	 (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.4 %s %s" (point) tok)
+     (let ((pos (hopjs-parse-backward-sexp)))
+       (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.2 -> %s %c" (point) (char-after (- (point) 1)))
+       (cond
+	((memq (char-after (- (point) 1)) '(?~ ?$))
 	 (hopjs-parse-start (point))
-	 (let ((lpos (hopjs-indent-new-lbrace tok)))
-	   (when lpos
-	     (- lpos hopjs-indent-level))))))))
+	 (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.3 -> %s"
+		      (hopjs-parse-peek-token-type))
+	 (when (memq (hopjs-parse-peek-token-type) '(tilde dollar))
+	   (let ((tok (hopjs-parse-consume-token-any)))
+	     (cond
+	      ((eq (hopjs-parse-peek-token-type) '=)
+	       (hopjs-parse-consume-token-any)
+	       (when (eq (hopjs-parse-peek-token-type) 'ident)
+		 (hopjs-indent-column-token
+		  (hopjs-parse-consume-token-any) 0)))
+	      (t
+	       (hopjs-indent-column-token tok 0))))))
+	((memq (char-after (- (point) 1)) '(?\( ?{))
+	 (hopjs-parse-start (+ 1 pos))
+	 (hopjs-indent-column-token (hopjs-parse-peek-token) 0))
+	(t
+	 (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.4 %s %s"
+		      (point) tok)
+	 (hopjs-parse-start (+ (point) 1))
+	 (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.5 %s"
+		      (hopjs-parse-peek-token))
+	 (let ((col (hopjs-indent-new-lbrace (hopjs-parse-consume-token-any))))
+	   (if col (- col hopjs-indent-level) 0))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-old-rbrace ...                                      */
@@ -364,9 +374,20 @@
 (defun hopjs-indent-new-lparen (tok)
   (with-debug
    "hopjs-indent-new-lparen...%s" tok
-   (let ((tok (hopjs-parse-consume-token-any)))
-     (hopjs-debug 0 "hopjs-indent-new-lparen...next=%s" tok)
-     (hopjs-indent-new-literal tok))))
+   (mcond
+    ((hopjs-parse-expr tok)
+     =>
+     #'(lambda (etok)
+	 (hopjs-debug 0 "hopjs-indent-new-lparen etok=%s" etok)
+	 (if etok
+	     (hopjs-indent-column-token etok hopjs-indent-level)
+	   0)))
+    (t
+     0))))
+
+;*    (let ((tok (hopjs-parse-consume-token-any)))                     */
+;*      (hopjs-debug 0 "hopjs-indent-new-lparen...next=%s" tok)        */
+;*      (hopjs-indent-new-literal tok))))                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-rparen ...                                      */
@@ -435,8 +456,11 @@
 			 (if etok
 			     (hopjs-indent-column-token etok 0)
 			   (hopjs-indent-column-token tok 0)))))
-		 ((lbracket)
+		 ((lbracket lbrace)
 		  (hopjs-indent-column-token etok 0))
+		 ((var let const)
+		  (hopjs-indent-column-token
+		   (hopjs-parse-peek-token) hopjs-indent-level))
 		 (t
 		  0)))))
     (t
@@ -480,7 +504,7 @@
 		(hopjs-indent-column-token etok 0))))
 	   ((rparen)
 	    (hopjs-indent-new (hopjs-parse-token-end (hopjs-parse-peek-token))))
-	   ((comma)
+	   ((semicolon comma)
 	    (hopjs-indent-new-semicolon
 	     (hopjs-parse-token-beginning (hopjs-parse-consume-token-any))))
 	   ((var const let)
@@ -514,7 +538,7 @@
 	   ((case)
 	    (hopjs-indent-column-token
 	     (hopjs-parse-consume-token-any)
-	     hopjs-indent-level-html))
+	     hopjs-indent-level))
 	   (t
 	    (hopjs-indent-column-token tok hopjs-indent-level-html)))))
     (t

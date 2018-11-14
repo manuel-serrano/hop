@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Oct 26 13:16:28 2018 (serrano)                */
+;*    Last change :  Wed Nov 14 07:28:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1093,7 +1093,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SNode ...                                           */
 ;*    -------------------------------------------------------------    */
-;*    Collect all the variable declared in a tree.                     */
+;*    Collect all the variables declared in a tree.                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SNode)
    (call-default-walker))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 28 18:01:20 2016                          */
-;*    Last change :  Mon Nov 12 18:20:34 2018 (serrano)                */
+;*    Last change :  Tue Nov 13 20:50:36 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dynamic nodes                                                    */
@@ -50,7 +50,7 @@
 				  (xml-tilde->sexp node)))
 		   body)))
       (if (null? nodes)
-	  (error "<REACT>" "illegal empty react node" id)
+	  (error "<REACT>" "Illegal empty react node" body)
 	  (let ((id (xml-make-id)))
 	     (instantiate::xml-react
 		(tag 'react)

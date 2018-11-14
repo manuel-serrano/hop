@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon Nov 12 19:04:15 2018 (serrano)                */
+;*    Last change :  Wed Nov 14 09:56:32 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -44,9 +44,9 @@
 	 (alpha+ "[[:alpha:][:multibyte:]]")
 	 (alnum+ (rxor "[[:alnum:][:multibyte:]]"))
 	 (id_part_sans "[[:nonascii:]]")
-	 (id_part "[[:alpha:][:multibyte:][:nonascii:]$_]")
+	 (id_part "[[:alnum:][:multibyte:][:nonascii:]$_]")
 	 (id_start "[[:alpha:][:multibyte:][:nonascii:]$_]")
-	 (id_start_u "[[:multibyte:][:alpha:][:nonascii:]$_]")
+	 (id_start_u "[[:multibyte:][:alnum:][:nonascii:]$_]")
 	 (letter "[[:alpha:][:nonascii:]]")
 	 (tagid (rx: "[[:digit:]]*" "[[:alnum:]_]" (rx* "[[:alnum:]_.]*"))))
     (list
@@ -121,9 +121,11 @@
 (defsubst hopjs-parse-token-end (tok) (aref tok 2))
 
 (defsubst hopjs-parse-token-string (tok)
-  (buffer-substring-no-properties
-   (hopjs-parse-token-beginning tok)
-   (hopjs-parse-token-end tok)))
+  (if (eq (hopjs-parse-token-type tok) 'bof)
+      "<BOF>"
+    (buffer-substring-no-properties
+     (hopjs-parse-token-beginning tok)
+     (hopjs-parse-token-end tok))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-goto-token ...                                       */
@@ -242,8 +244,11 @@
 ;*    hopjs-parse-start ...                                            */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-start (pos)
-  (unless (and (consp hopjs-parse-tokens)
-	       (= (hopjs-parse-token-end (car (last hopjs-parse-tokens))) pos))
+  (cond
+   ((and (consp hopjs-parse-tokens)
+	 (= (hopjs-parse-token-end (car (last hopjs-parse-tokens))) pos))
+    (setq hopjs-parse-tokens (last hopjs-parse-tokens)))
+   (t
     (setq hopjs-parse-tokens '())
     (while (nullp hopjs-parse-tokens)
       (setq hopjs-parse-tokens (hopjs-parse-line pos))
@@ -253,8 +258,7 @@
 	  (progn
 	    (forward-line -1)
 	    (end-of-line)
-	    (setq pos (point))))))
-    (message "start %s" hopjs-parse-tokens)))
+	    (setq pos (point)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-push-token ...                                       */
@@ -335,8 +339,9 @@
        (progn
 	 (backward-sexp 1)
 	 (hopjs-debug 0 "hopjs-parse-backward-sexp starting new %s" (point))
-	 (hopjs-parse-start (point))
-	 t)
+	 (let ((pos (point)))
+	   (hopjs-parse-start pos)
+	   pos))
      (error '()))))
 
 ;*---------------------------------------------------------------------*/
@@ -421,16 +426,36 @@
 	  '()))
        ((rbrace)
 	(goto-char (hopjs-parse-token-end tok))
-	(if (hopjs-parse-backward-sexp)
-	    (let* ((tok (hopjs-parse-peek-token))
-		   (etok (hopjs-parse-expr tok)))
-	      (hopjs-debug 0 "hopjs-parse-expr.rbrace %s [%s]" tok
-			   (hopjs-parse-token-string tok))
-	      ;; ${ ... }
-	      (if (and etok (eq (hopjs-parse-token-type etok) 'dollar))
-		  etok
-		tok))
-	  '()))
+	(hopjs-debug 0 "hopjs-parse-expr.rbrace.0 %s [%s]" tok
+		     (hopjs-parse-token-string tok))
+	(mcond
+	 ((hopjs-parse-backward-sexp)
+	  =>
+	  #'(lambda (pos)
+	      (let* ((tok (hopjs-parse-peek-token))
+		     (_ (hopjs-debug 0 "hopjs-parse-expr.rbrace.1 %s [%s]" tok
+				     (hopjs-parse-token-string tok)))
+		     (save-toks hopjs-parse-tokens)
+		     (etok (hopjs-parse-expr tok)))
+		(hopjs-debug 0 "hopjs-parse-expr.rbrace.2 %s [%s]" etok
+			     (when etok (hopjs-parse-token-string etok)))
+		;; ${ ... }
+		(cond
+		 ((and etok (eq (hopjs-parse-token-type etok) 'dollar))
+		  etok)
+		 ((and etok (eq (hopjs-parse-token-type etok) 'lbrace))
+		  etok)
+		 ((eq (hopjs-parse-token-type tok) 'lparen)
+		  (hopjs-parse-start (+ 1 pos))
+		  (hopjs-debug 0 "hopjs-parse-expr.rbrace.3 %s [%s]" (+ 1 pos)
+			       (hopjs-parse-token-string (hopjs-parse-peek-token)))
+		  (hopjs-parse-peek-token))
+		 (t
+		  (hopjs-debug 0 "hopjs-parse-expr.rbrace.4 %s" tok)
+		  (setq hopjs-parse-tokens save-toks)
+		  tok)))))
+	 (t
+	  '())))
        ((ctag)
 	(goto-char (hopjs-parse-token-end tok))
 	(if (hopjs-parse-backward-sexp)

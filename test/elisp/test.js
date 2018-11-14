@@ -3,14 +3,67 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Mon Nov 12 17:47:37 2018 (serrano)                */
+/*    Last change :  Wed Nov 14 08:31:15 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
 /*=====================================================================*/
+"use hiphop";
+"use strict";
 
 // (let ((path (concat (getenv "PWD") "/../../etc"))) (setq debug-on-error t) (setq load-path (cons path load-path)) (load-library (concat path "/hopjs.el")) (load-library (concat path "/hopjs-parse.el")) (load-library (concat path "/hopjs-indent.el")) (hopjs-mode-hook))
 
+// ok
+function foo() {
+   async {
+      return 1;
+   }
+}
+	     
+// ok
+function foo() {
+   var a = 1,
+      b=2;
+   return a+b;
+}
+
+// ok
+function() {
+   var a = 1;
+   var b = 2;
+   {
+      return a+b;
+   }
+}
+
+// ok 
+function() {
+   "foo"; "bar";
+   var x = 3;
+}
+
+// ok
+exports.dummySignalContainer = {};
+a = 3;
+
+// ok
+enableLogin = __hh_module.MODULE(
+   { a: 1 },
+   {"id":"enableLogin","%location":{"filename":"login.hh.js","pos":149},"%tag":"module"},
+   __hh_module.SIGNAL({"%location":{"filename":"login.hh.js","pos":169},"direction":"IN","name":"name"}),
+   __hh_module.SIGNAL({"%location":{"filename":"login.hh.js","pos":178},"direction":"IN","name":"passwd"}),
+   __hh_module.SIGNAL({"%location":{"filename":"login.hh.js","pos":196},"direction":"OUT","name":"loginEnabled"}),
+   __hh_module.LOOPEACH({"%location":{"filename":"login.hh.js","pos":220},
+			 "%tag":"do/every",
+			 "immediate":false,
+			 "apply":function (){
+			    var name;
+			    var passwd;
+			    var hhaxs8671;
+			    var hhaxs8672;
+			 }
+			})
+   );
 
 // ok
 function HopcAstWalker( obj ) {
@@ -170,7 +223,7 @@ function glop( x ) {
       case 1:
       case 2: return 3;
       case 4:
-	return 5;
+	 return 5;
       default: return 6;
    }
 }
