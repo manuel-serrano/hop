@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Nov 14 08:31:15 2018 (serrano)                */
+/*    Last change :  Wed Nov 14 18:24:33 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -12,6 +12,30 @@
 "use strict";
 
 // (let ((path (concat (getenv "PWD") "/../../etc"))) (setq debug-on-error t) (setq load-path (cons path load-path)) (load-library (concat path "/hopjs.el")) (load-library (concat path "/hopjs-parse.el")) (load-library (concat path "/hopjs-indent.el")) (hopjs-mode-hook))
+
+// ok
+function patternChain( fs ) {
+   return hiphop module() {
+      signal exn;
+	 
+      abort( exn.now ) {
+	 ${fs.map( m => hiphop run m( exn ) ) }
+      }
+      if( exn.nw ) { 
+	 // error handling/compension goes here
+      }
+   }
+}
+
+// ok
+hiphop module A( x, y ) {
+   signal x;
+   
+   abort( exn.now ) {
+      run m1();
+      run m2();
+   }
+}
 
 // ok
 function foo() {
@@ -132,7 +156,7 @@ function foo( a, b ) {
 function foo( a, b ) {
    return 
       new hh.ctor(
-	 new hh.ctor2( a, b ) );
+      	 new hh.ctor2( a, b ) );
 }
 
 // ok
@@ -189,32 +213,32 @@ function glop( x ) {
 // ok
 function glop( x ) {
    let x = glop( 10 )
-      .post( function( snow ) {
-		return 23;
-	     } );
+      	 .post( function( snow ) {
+		   return 23;
+	     	} );
 }
 
 function glop( x ) {
    let x = glop( 10 )()
-      .post( function( snow ) {
-		return 23;
-	     } );
+      	 .post( function( snow ) {
+		   return 23;
+	     	} );
 }
 
 // ok
 function glop( x ) {
    let x = glop( 10 )
-      .post( snow => {
-		return 32;
-	     } )
+      	 .post( snow => {
+		   return 32;
+	     	} )
 }
 
 // ok
 function glop( x ) {
    let x = glop( 10 )
-      .post( (a, b) => {
-		return 32;
-	     } )
+      	 .post( (a, b) => {
+		   return 32;
+	     	} )
 }
 
 // ok
