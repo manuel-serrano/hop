@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Nov 15 10:57:05 2018 (serrano)                */
+;*    Last change :  Thu Nov 15 14:31:45 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1042,16 +1042,22 @@ usage: (js-return)  -- [RET]"
     (define-key keymap [mode-line mouse-1]
       (lambda (e)
 	(interactive "e")
-	(popup-menu (cons
-		     "documentation"
-		     (cons
-		      "--single-line"
-		      (mapcar #'(lambda (e)
-				  (vector (car e)
-					  (list 'hopjs-doc-browse-url (cdr e))
-					  :help
-					  (cdr e)))
-			      hopjs-external-docs))))))
+	(let* ((win (get-buffer-window))
+	       (x (- (window-pixel-width win) 200))
+	       (y (- (window-pixel-height win) 250)))
+	  (message "WIN=%s" win)
+	  (popup-menu (cons
+		       "documentation"
+		       (cons
+			"--single-line"
+			(mapcar #'(lambda (e)
+				    (vector (car e)
+					    (list 'hopjs-doc-browse-url (cdr e))
+					    :help
+					    (cdr e)))
+				hopjs-external-docs)))
+		      (popup-menu-normalize-position
+		       `((,x ,y) ,win))))))
     
     (define-key keymap [mode-line mouse-2]
       (lambda (e)
@@ -1060,8 +1066,8 @@ usage: (js-return)  -- [RET]"
 	(hopjs-doc-entry (point))))
     
     (propertize
-     " doc " 'help-echo "mouse-1: all documentations, mouse-2 local documentation"
-     'face '(:background "orange" :foreground "lightgrey" :weight bold)
+     "  doc  " 'help-echo "mouse-1: all documentations, mouse-2 local documentation"
+     'face '(:height 90 :background "orange" :foreground "lightgrey" :weight bold)
      'mouse-face '(:background "orange" :foreground "white" :weight bold)
      'keymap keymap)))
 
@@ -1161,14 +1167,40 @@ usage: (js-return)  -- [RET]"
     (hopjs-tag-matching)
     (hopjs-doc-at-point (point))))
 
+(defun mode-line-fill (face reserve)
+  "Return empty space using FACE and leaving RESERVE space on the right."
+  (unless reserve
+    (setq reserve 20))
+  (when (and window-system (eq 'right (get-scroll-bar-mode)))
+    (setq reserve (- reserve 3)))
+  (propertize
+   " "
+   'display `((space :align-to (- (+ right right-fringe right-margin) ,reserve)))))
+;*    'face face))                                                     */
+
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-mode-line-format ...                                       */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-mode-line-format ()
-  (cons (car mode-line-format)
-	(cons (cadr mode-line-format)
-	      (cons "-"
-		    (cons (hopjs-doc-mode-line) (cddr mode-line-format))))))
+  (let* ((flm (reverse mode-line-format))
+	 (flm-sans-fill (if (equal (car flm) "-%-")
+			    (cdr flm)
+			  flm)))
+    (reverse
+     (cons (hopjs-doc-mode-line)
+	   (cons (mode-line-fill 'mode-line 10)
+		 flm-sans-fill)))))
+
+;* (defun hopjs-mode-line-format ()                                    */
+;*   (cons (car mode-line-format)                                      */
+;* 	(cons (cadr mode-line-format)                                  */
+;* 	      (cons "-"                                                */
+;* 		    (cons (hopjs-doc-mode-line)                        */
+;* 			  (append (cddr mode-line-format)              */
+;* 				  (list (mode-line-fill 'mode-line 10) */
+;* 					"foo")))))))                   */
+
+
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-key-bindings ...                                           */
