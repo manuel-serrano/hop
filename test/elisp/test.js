@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Thu Nov 15 10:56:18 2018 (serrano)                */
+/*    Last change :  Thu Nov 15 15:21:07 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -61,6 +61,127 @@
    ]
 }
 
+// pok
+function mkPromise( name, result, tmt ) {
+   return new Promise( (resolve, reject) => {
+      setTimeout( () => { 
+	 console.log( "in", name );
+	 if( result ) resolve( result ) else reject( false );
+	 return 3;
+      } )
+   } )
+}
+
+// pok
+function mkPromise( name, result, tmt ) {
+   return new Promise( (resolve, reject) => {
+      setTimeout( () => { 
+	 console.log( "in", name );
+	 if( result ) 
+	    resolve( result ) else reject( false );
+	    return 3;
+      } )
+   } )
+}
+
+// ok 
+const p1 = new Promise( (resolve, reject) => {
+   return 3;
+} );
+
+// ok
+function firstPromise( promises ) {
+   return new Promise( (resolve, reject) => {
+      hiphop machine m( resolve, reject ) {
+      	 fork {
+      	    abort( resolve ) {
+	       ${ promises.map( p => 
+		     hiphop { run (promiseToModule( acc ))( ... ) } ) }
+      	    }
+      	 }
+      }
+      
+      m.addEventListener( "resolve", resolve );
+      m.addEventListener( "reject", reject );
+      
+      m.react();
+   } );
+}
+
+
+// ok
+function firstPromise( promises ) {
+   hiphop machine m( resolve, reject ) {
+      fork {
+      	 abort( resolve ) {
+	    ${ promises.map( p => { 
+	       	  hiphop { run (promiseToModule( acc ))( ... ) } } ); }
+      	 }
+      }
+   }
+   
+   return new Promise( (resolve, reject) => {
+      resolve 3;
+   } );
+}
+
+// ok
+function firstPromise( promises ) {
+   return hiphop module( resolve, reject ) {
+      abort( resolve ) {
+      	 ${ promises.map( (p, b) => { 
+	       hiphop { run (promiseToModule( acc ))( ... ) } } ); }
+	 
+      }
+   }
+}
+
+// ok
+function firstPromise( promises ) {
+   return hiphop module( resolve, reject ) {
+      abort( resolve ) {
+      	 ${ promises.map( a => { 
+	       hiphop { run (promiseToModule( acc ))( ... ) } } ); }
+	 
+      }
+   }
+}
+
+// ok
+function promiseToModule( promise ) {
+   return module( resolve, reject ) {
+      async {
+	 promise.then( v => this.react( { resolve: v } ),
+	    v => this.react( { reject: v } ) );
+      } kill {
+	 if( "cancel" in promise ) {
+	    promise.cancel();
+	 }
+      }
+   }
+}
+
+// ok
+function foo( x ) {
+   return function bar( a, b ) {
+      return 3;
+   }
+}
+
+// ok
+function foo( x ) {
+   return function( a, b ) {
+      return 3;
+   }
+}
+
+// ok
+function foo( x ) {
+   return module( a, b ) {
+      return 3;
+   }
+}
+
 // ok
 async function main() {
    const argv = process.argv.slice( hop.standalone ? 1 : 2 );
@@ -110,9 +231,9 @@ function openSMTPConnection( config ) {
 	    config.servers[ i ].host + ":" + config.servers[ i ].port );
 	 return open( server )
 	    .then( conn => { 
-		      debug( "connection succeeded: ", server );
-		      conn.config = server; resolve( conn ) 
-		   },
+	       debug( "connection succeeded: ", server );
+	       conn.config = server; resolve( conn ) 
+	    }, 
 	       err => {
 		  debug( "connection failed: ", server );
 		  loop( resolve, reject, i + 1 );
@@ -362,16 +483,16 @@ function glop( x ) {
 function glop( x ) {
    let x = glop( 10 )
       .post( snow => {
-		return 32;
-	     } )
+	 return 32;
+      } )
 }
 
 // ok
 function glop( x ) {
    let x = glop( 10 )
       .post( (a, b) => {
-		return 32;
-	     } )
+	 return 32;
+      } )
 }
 
 // ok

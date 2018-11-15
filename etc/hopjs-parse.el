@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Thu Nov 15 11:08:17 2018 (serrano)                */
+;*    Last change :  Thu Nov 15 15:34:04 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -443,14 +443,21 @@
 	  (or (hopjs-parse-lhs tok) tok)))
        ((rparen)
 	(goto-char (hopjs-parse-token-end tok))
-	(hopjs-debug 0 "hopjs-parse-expr.rparen point=%s" (point))
+	(hopjs-debug 0 "hopjs-parse-expr.rparen.1 point=%s" (point))
 	(if (hopjs-parse-backward-sexp)
 	    (let* ((tok (hopjs-parse-peek-token))
 		   (etok (hopjs-parse-expr tok)))
-	      (hopjs-debug 0 "hopjs-parse-expr.rparen %s [%s]" tok
-			   (hopjs-parse-token-string tok))
+	      (hopjs-debug 0 "hopjs-parse-expr.rparen.2 %s [%s] -> %s [%s]" tok
+			   (hopjs-parse-token-string tok)
+			   etok
+			   (and etok (hopjs-parse-token-string etok)))
 	      ;; ident ( expr )
 	      (cond
+	       ((eq (hopjs-parse-peek-token-type) '=>)
+		(let ((tok (hopjs-parse-consume-token-any)))
+		  (if (eq (hopjs-parse-peek-token-type) 'ident)
+		      (hopjs-parse-consume-token-any)
+		    (hopjs-parse-args))))
 	       ((not etok)
 		tok)
 	       ((memq (hopjs-parse-token-type etok) '(ident dollar))
