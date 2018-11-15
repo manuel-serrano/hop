@@ -595,7 +595,7 @@ HopFrame.prototype.post = function post( success, opt_or_fail ) {
    if( this.srv instanceof WebSocket ) {
       return WebSocketPost( this, success, opt_or_fail );
    } else if( success ) {
-      if( opt_or_fail instanceof Function || opt_or_fail == undefined ) {
+      if( opt_or_fail instanceof Function || opt_or_fail ==  undefined ) {
 	 return withHOP( svc, success, opt_or_fail, this.options, false, arg );
       } else {
 	 return withHOP( svc, success, false, opt_or_fail, false, arg );
