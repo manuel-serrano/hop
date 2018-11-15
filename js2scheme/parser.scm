@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Nov 15 08:57:29 2018 (serrano)                */
+;*    Last change :  Thu Nov 15 10:19:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -172,7 +172,10 @@
 ;*       (print (make-string (- (length *open-tokens*) 1) #\space) "POPING  " */
 ;* 	 (cdr token) "/" (cdar *open-tokens*) " "                      */
 ;* 	 (token-loc token) "/" (token-loc (car *open-tokens*)) " " (- (length *open-tokens*) 1)) */
-      (set! *open-tokens* (cdr *open-tokens*))
+      (if (null? *open-tokens*)
+	  (error "js2scheme" (format "cannot pop token \"~s\"" (cdr token))
+	     (token-loc token))
+	  (set! *open-tokens* (cdr *open-tokens*)))
       token)
    
    (define (consume-token! type)
@@ -2127,7 +2130,7 @@
 	    (let loop ((rev-stats '()))
 	       (case (peek-token-type)
 		  ((RBRACE)
-		   (consume-any!)
+		   (pop-open-token (consume-any!))
 		   (instantiate::J2SSeq
 		      (loc (token-loc token))
 		      (nodes (reverse! rev-stats))))
@@ -2143,14 +2146,14 @@
 		   (loop (cons (statement) rev-stats))))))))
 
    (define (tilde-expression)
-      (let ((token (consume-any!)))
+      (let ((token (push-open-token (consume-any!))))
 	 (instantiate::J2STilde
 	    (loc (token-loc token))
 	    (stmt (tilde token)))))
 
    (define (dollar-expression)
-      (let* ((ignore (consume-any!))
-	     (expr (expression #f #f)))
+      (push-open-token (consume-any!))
+      (let ((expr (expression #f #f)))
 	 (pop-open-token (consume-token! 'RBRACE))
 	 expr))
 
@@ -2382,7 +2385,7 @@
 	  (consume-any!)
 	  (doctype-expression))
 	 ((TILDE)
-	  (let ((token (consume-any!)))
+	  (let ((token (push-open-token (consume-any!))))
 	     (instantiate::J2STilde
 		(loc (token-loc token))
 		(stmt (tilde token)))))
@@ -2390,9 +2393,9 @@
 	  (if (>fx tilde-level 0)
 	      (with-dollar
 		 (lambda ()
-		    (let* ((ignore (consume-any!))
-			   (expr (expression #f #f))
-			   (ignore-too (consume! 'RBRACE)))
+		    (let* ((ignore (push-open-token (consume-any!)))
+			   (expr (expression #f #f)))
+		       (pop-open-token (consume-token! 'RBRACE))
 		       (instantiate::J2SDollar
 			  (loc (token-loc ignore))
 			  (node expr)))))

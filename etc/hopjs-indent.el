@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Wed Nov 14 19:14:56 2018 (serrano)                */
+;*    Last change :  Thu Nov 15 10:13:02 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -54,6 +54,7 @@
 		      ((rbrace) (hopjs-indent-new-rbrace tok))
 		      ((lparen) (hopjs-indent-new-lparen tok))
 		      ((rparen) (hopjs-indent-new-rparen tok))
+		      ((lbracket) (hopjs-indent-new-lbracket tok))
 		      ((comma) (hopjs-indent-new-comma tok))
 		      ((semicolon) (hopjs-indent-new-semicolon tok))
 		      ((colon) (hopjs-indent-new-colon tok))
@@ -397,6 +398,30 @@
      =>
      #'(lambda (etok)
 	 (hopjs-debug 0 "hopjs-indent-new-lparen etok=%s" etok)
+	 (cond
+	  ((eq (hopjs-parse-token-type etok) 'new)
+	   (hopjs-indent-column-token etok hopjs-indent-level))
+	  ((memq (hopjs-parse-peek-token-type) '(return var let const ident))
+	   (hopjs-indent-column-token
+	    (hopjs-parse-peek-token) hopjs-indent-level))
+	  (etok
+	   (hopjs-indent-column-token etok hopjs-indent-level))
+	  (t
+	   0))))
+    (t
+     0))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-new-lbracket ...                                      */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-new-lbracket (tok)
+  (with-debug
+   "hopjs-indent-new-lbracket...%s" tok
+   (mcond
+    ((hopjs-parse-expr tok)
+     =>
+     #'(lambda (etok)
+	 (hopjs-debug 0 "hopjs-indent-new-lbracket etok=%s" etok)
 	 (cond
 	  ((eq (hopjs-parse-token-type etok) 'new)
 	   (hopjs-indent-column-token etok hopjs-indent-level))
