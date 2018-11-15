@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Nov 14 18:26:01 2018 (serrano)                */
+;*    Last change :  Thu Nov 15 10:57:05 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -43,6 +43,26 @@
      (let ((pos (point)))
        (message "------------- hopjs-parse-line %s -> %s"
 		pos (hopjs-parse-line pos)))))
+
+(define-key (current-local-map)
+  "\C-x\C-e"
+  '(lambda ()
+     (interactive)
+     (let ((pos (point)))
+       (message "------------- hopjs-parse-line %s -> %s"
+		pos (hopjs-parse-line pos)))))
+
+(define-key (current-local-map)
+  "\C-x\C-e"
+  '(lambda ()
+     (interactive)
+     (let ((pos (point)))
+       (message "------------- hopjs-parse-line %s -> %s"
+		pos (hopjs-parse-line pos)))))
+
+(define-key (current-local-map)
+  "\C-x\C-t"
+  'hopjs-indent-test)
 
 ;*---------------------------------------------------------------------*/
 ;*    font-lock ...                                                    */
@@ -1191,41 +1211,47 @@ usage: (js-return)  -- [RET]"
 	  (ocol 0))
       (beginning-of-line)
       (let ((icol (hopjs-indent (point))))
-	(beginning-of-line)
-	(when (looking-at "[ \t]+")
-	  (let* ((p (point))
-		 (b (match-beginning 0))
-		 (e (match-end 0)))
-	    (goto-char e)
-	    (setq ocol (current-column))
-	    (cond
-	     ((= ocol icol)
-	      (setq mov ccol))
-	     ((> icol ocol)
-	      (if (< ccol ocol)
-		  (setq mov icol)
-		(setq mov (+ icol (- ccol ocol)))))
-	     (t
-	      (delete-region b e)
-	      (if (< ccol ocol)
-		  (setq mov icol)
-		(setq mov (+ icol (- ccol ocol))))))))
-	(indent-to icol)
-	(beginning-of-line)
-	(cond
-	 ((= ccol 0)
+	(when icol
+	  (beginning-of-line)
 	  (when (looking-at "[ \t]+")
-	    (goto-char (match-end 0))))
-	 (mov
-	  (line-move-to-column mov))
-	 ((> ccol 0)
-	  (if (= ocol 0)
-	      (progn
-		(end-of-line)
-		(re-search-backward "[^ \t]")
-		(goto-char (+ 1 (match-beginning 0)))
-		(delete-region (+ 1 (match-beginning 0)) (match-end 0)))
-	      (line-move-to-column ccol)))))))
+	    (let* ((p (point))
+		   (b (match-beginning 0))
+		   (e (match-end 0)))
+	      (goto-char e)
+	      (setq ocol (current-column))
+	      (cond
+	       ((= ocol icol)
+		(if (< ccol icol)
+		    (setq mov icol)
+		  (setq mov ccol)))
+	       ((> icol ocol)
+		(if (< ccol ocol)
+		    (setq mov icol)
+		  (setq mov (+ icol (- ccol ocol)))))
+	       (t
+		(delete-region b e)
+		(if (< ccol ocol)
+		    (setq mov icol)
+		  (setq mov (+ icol (- ccol ocol))))))))
+	  (indent-to icol)
+	  (beginning-of-line)
+	  (cond
+	   ((= ccol 0)
+	    (when (looking-at "[ \t]+")
+	      (goto-char (match-end 0))))
+	   (mov
+	    (line-move-to-column mov))
+	   ((> ccol 0)
+	    (cond
+	     ((and (= ocol 0) (> icol 0))
+	      (end-of-line)
+	      (re-search-backward "[^ \t]")
+	      (goto-char (+ 1 (match-beginning 0)))
+	      (delete-region (+ 1 (match-beginning 0)) (match-end 0)))
+	     ((< ccol icol)
+	      (line-move-to-column ccol))
+	     (t
+	      (line-move-to-column ccol)))))))))
    ((hopjs-old-indent-function)
     (funcall hopjs-old-indent-function))))
 

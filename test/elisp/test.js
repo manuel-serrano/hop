@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Nov 14 19:12:45 2018 (serrano)                */
+/*    Last change :  Thu Nov 15 10:56:18 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -11,55 +11,64 @@
 "use hiphop";
 "use strict";
 
-// (let ((path (concat (getenv "PWD") "/../../etc"))) (setq debug-on-error t) (setq load-path (cons path load-path)) (load-library (concat path "/hopjs.el")) (load-library (concat path "/hopjs-parse.el")) (load-library (concat path "/hopjs-indent.el")) (hopjs-mode-hook))
+/*
+(let ((path (concat (getenv "PWD") "/../../etc")))
+  (setq debug-on-error t)
+  (setq load-path (cons path load-path))
+  (load-library (concat path "/hopjs.el"))
+  (load-library (concat path "/hopjs-parse.el"))
+  (load-library (concat path "/hopjs-indent.el"))
+  (hopjs-mode-hook))
 
-// pok
+[\C-x\C-t] for testing
+*/
+
+// ok
 {
-   "servers": [ 
-{
-   "port": 587,
-   "host": "smtp.gmail.com",
-   "requireTLS": true,
-   "authMethod": "LOGIN",
-   "login": {
-	  "user": "YYYY",
-	  "pass": "XXX"
-       }
-},
-	      {
-		 "port": 587,
-		 "host": "mail2-relais-roc.national.inria.fr",
-		 "requireTLS": true,
-		 "authMethod": "LOGIN",
-		 "%login": {
-			 "user": "YYYY",
-			 "pass": "XXXX"
-		      }
-	      } ],
-   
+   "servers": [
+      {
+   	 "port": 587,
+   	 "host": "smtp.gmail.com",
+   	 "requireTLS": true,
+   	 "authMethod": "LOGIN",
+   	 "login": {
+	    "user": "YYYY",
+	    "pass": "XXX"
+       	 }
+      },
+      {
+	 "port": 587,
+	 "host": "mail2-relais-roc.national.inria.fr",
+	 "requireTLS": true,
+    	 "authMethod": "LOGIN",
+	 "%login": {
+	    "user": "YYYY",
+	    "pass": "XXXX"
+	 }
+      } ],
    
    "name": "redrock.inria.fr",
    
    "outOfMail": {
-	      "hours": [ [20, 24] ],
-	      "days": [ "sat", "sun" ]
-	   },
+      "hours": [ [20, 24] ],
+      "days": [ "sat", "sun" ]
+   },
    
    "immediateDelivery": [
-"XXXX",
-"YYYY",
-"AAAA", "BBBBB"
-]
+      "XXXX",
+      "YYYY",
+      "AAAA", "BBBBB"
+   ]
 }
 
-// pok
+// ok
 async function main() {
-   	 const argv = process.argv.slice( hop.standalone ? 1 : 2 );
-   	 const minimist = require( 'minimist' );
-   	 const args = minimist( argv, { names: ["-oi", "-bp", "-oQ", "-os"] });
-      }
-      
-// pok
+   const argv = process.argv.slice( hop.standalone ? 1 : 2 );
+   const minimist = require( 'minimist' );
+   const args = minimist( argv, { names: ["-oi", "-bp", "-oQ", "-os"] });
+}
+
+// ok
 function foo() {
    if( args.g === true ) {
       dbg = {
@@ -68,46 +77,47 @@ function foo() {
       }
       syslog = {
 	 log: function( ...args ) { debug.apply( undefined, args ) },
-LOG_INFO: "info:",
-LOG_ERROR: "error:",
-open: function( path, mode ) { }
+	 LOG_INFO: "info:",
+	 LOG_ERROR: "error:",
+	 open: function( path, mode ) { }
       }
    }
 }
 
-// pok
+// ok
 function openSMTPConnection( config ) {
    
    function open( server ) {
-      syslog.log( syslog.LOG_INFO, "Creating "
-+ ((server.secure || server.requireTLS) ? "SSL" : "")
-	       + " connection to " + server.host );
+      syslog.log( foobar.LOG_INFO, 
+	 "Creating "
+	 + ((server.secure || server.requireTLS) ? "SSL" : "")
+	 + " connection to " + server.host );
       debug( "connecting to " + server.host );
-   return new Promise( function( resolve, reject ) {
-      const conn = new SMTPConnection( server );
-      conn.on( 'error', reject );
-      conn.connect( v => conn.login( server.login, () => resolve( conn ) ) );
-   } );
-}
+      return new Promise( function( resolve, reject ) {
+	 const conn = new SMTPConnection( server );
+	 conn.on( 'error', reject );
+	 conn.connect( v => conn.login( server.login, () => resolve( conn ) ) );
+      } );
+   }
    
    function loop( resolve, reject, i ) {
       debug( "in loop i=", i, " len=", config.servers.length );
       if( i >= config.servers.length ) {
 	 reject( "no server available!" );
       } else {
-		const server = config.servers[ i ];
-		debug( "trying server: ", 
-		       config.servers[ i ].host + ":" + config.servers[ i ].port );
-	 	return open( server )
-	       	      .then( conn => { 
-				debug( "connection succeeded: ", server );
-				conn.config = server; resolve( conn ) 
-			     },
-err => {
-   debug( "connection failed: ", server );
-   loop( resolve, reject, i + 1 );
-} )
-   }
+	 const server = config.servers[ i ];
+	 debug( "trying server: ", 
+	    config.servers[ i ].host + ":" + config.servers[ i ].port );
+	 return open( server )
+	    .then( conn => { 
+		      debug( "connection succeeded: ", server );
+		      conn.config = server; resolve( conn ) 
+		   },
+	       err => {
+		  debug( "connection failed: ", server );
+		  loop( resolve, reject, i + 1 );
+	       } )
+      }
    }
    
    return new Promise( (resolve, reject) => loop( resolve, reject, 0 ) );
@@ -139,7 +149,7 @@ function patternFanoutFanin( f1, f2s, f3 ) {
 function patternChain( fs ) {
    return hiphop module() {
       signal exn;
-	 
+      
       abort( exn.now ) {
 	 ${fs.map( m => hiphop run m( exn ) ) }
       }
@@ -165,7 +175,7 @@ function foo() {
       return 1;
    }
 }
-	     
+
 // ok
 function foo() {
    var a = 1,
@@ -209,7 +219,7 @@ enableLogin = __hh_module.MODULE(
 			    var hhaxs8672;
 			 }
 			})
-   );
+      );
 
 // ok
 function HopcAstWalker( obj ) {
@@ -229,8 +239,9 @@ const k = {
       a: 10,
       b: [ 1, 2, 3 ],
       c: foo( 10 ),
-      e: [ foo( 10 ),
-	   bar( 30 ) ]
+      e: [  foo( 10 ),
+	    bar( 30 ),
+      	    gee( 20 ) ]
    },
    glop: function glop( x ) {
       if( #:isa?( ast, #:J2SNode ) ) {
@@ -267,11 +278,11 @@ function foo( a, b ) {
    return foo(
       bar( a ) );
 }
-      
+
 // ok
 function foo( a, b ) {
    return new hh.ctor(
-      new hh.ctor2( a, b ) );
+      	     new hh.ctor2( a, b ) );
 }
 
 // ok
@@ -335,32 +346,32 @@ function glop( x ) {
 // ok
 function glop( x ) {
    let x = glop( 10 )
-      	 .post( function( snow ) {
-		   return 23;
-	     	} );
+      .post( function( snow ) {
+      	 return 23;
+      } );
 }
 
 function glop( x ) {
    let x = glop( 10 )()
-      	 .post( function( snow ) {
-		   return 23;
-	     	} );
+      .post( function( snow ) {
+      	 return 23;
+      } );
 }
 
 // ok
 function glop( x ) {
    let x = glop( 10 )
-      	 .post( snow => {
-		   return 32;
-	     	} )
+      .post( snow => {
+		return 32;
+	     } )
 }
 
 // ok
 function glop( x ) {
    let x = glop( 10 )
-      	 .post( (a, b) => {
-		   return 32;
-	     	} )
+      .post( (a, b) => {
+		return 32;
+	     } )
 }
 
 // ok
@@ -376,13 +387,13 @@ function glop( x ) {
 
 // ok
 service hello() {
-   /* toto */var y = 3; var x = FOO(   x, y, z,
-				       4, 5,
-				       4 );
+   /* toto */var y = 3; var x = FOO( x, y, z,
+			   4, 5,
+			   4 );
    try {
       foo( 1, 2, 
-	   3, bar( x,
-		   y ) );
+	 3, bar( x,
+	       y ) );
       var x = <div>
 	<span>
 	  toto
@@ -514,11 +525,11 @@ service glop() {
    return <DIV onclick=~{
 		  ${helloServerDate}()
 		     .post( function( snow ) {
-			       ${sdate}.innerHTML = 
-				  new Date( snow ).toString();
-			       ${cdate}.innerHTML = 
-				  new Date( Date.now() ).toString();
-			    } )
+			${sdate}.innerHTML = 
+			   new Date( snow ).toString();
+			${cdate}.innerHTML = 
+			   new Date( Date.now() ).toString();
+		     } )
 	       }>
      Click me to update dates...
      <table>
@@ -538,7 +549,7 @@ function foo() {
 const hhparser = function( token ) {
    const loc = token.location;
    let pre = false, val = false, access = "present";
-
+   
    //this.consumeToken( this.LPAREN );
    this.consumeToken( this.DOT );
 }
