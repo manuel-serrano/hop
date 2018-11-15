@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Nov 14 18:24:33 2018 (serrano)                */
+/*    Last change :  Wed Nov 14 19:12:45 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -12,6 +12,128 @@
 "use strict";
 
 // (let ((path (concat (getenv "PWD") "/../../etc"))) (setq debug-on-error t) (setq load-path (cons path load-path)) (load-library (concat path "/hopjs.el")) (load-library (concat path "/hopjs-parse.el")) (load-library (concat path "/hopjs-indent.el")) (hopjs-mode-hook))
+
+// pok
+{
+   "servers": [ 
+{
+   "port": 587,
+   "host": "smtp.gmail.com",
+   "requireTLS": true,
+   "authMethod": "LOGIN",
+   "login": {
+	  "user": "YYYY",
+	  "pass": "XXX"
+       }
+},
+	      {
+		 "port": 587,
+		 "host": "mail2-relais-roc.national.inria.fr",
+		 "requireTLS": true,
+		 "authMethod": "LOGIN",
+		 "%login": {
+			 "user": "YYYY",
+			 "pass": "XXXX"
+		      }
+	      } ],
+   
+   
+   "name": "redrock.inria.fr",
+   
+   "outOfMail": {
+	      "hours": [ [20, 24] ],
+	      "days": [ "sat", "sun" ]
+	   },
+   
+   "immediateDelivery": [
+"XXXX",
+"YYYY",
+"AAAA", "BBBBB"
+]
+}
+
+// pok
+async function main() {
+   	 const argv = process.argv.slice( hop.standalone ? 1 : 2 );
+   	 const minimist = require( 'minimist' );
+   	 const args = minimist( argv, { names: ["-oi", "-bp", "-oQ", "-os"] });
+      }
+      
+// pok
+function foo() {
+   if( args.g === true ) {
+      dbg = {
+	 fd: fs.openSync( config.log || "/tmp/hopsmtp.log", "a" ),
+	 date: new Date()
+      }
+      syslog = {
+	 log: function( ...args ) { debug.apply( undefined, args ) },
+LOG_INFO: "info:",
+LOG_ERROR: "error:",
+open: function( path, mode ) { }
+      }
+   }
+}
+
+// pok
+function openSMTPConnection( config ) {
+   
+   function open( server ) {
+      syslog.log( syslog.LOG_INFO, "Creating "
++ ((server.secure || server.requireTLS) ? "SSL" : "")
+	       + " connection to " + server.host );
+      debug( "connecting to " + server.host );
+   return new Promise( function( resolve, reject ) {
+      const conn = new SMTPConnection( server );
+      conn.on( 'error', reject );
+      conn.connect( v => conn.login( server.login, () => resolve( conn ) ) );
+   } );
+}
+   
+   function loop( resolve, reject, i ) {
+      debug( "in loop i=", i, " len=", config.servers.length );
+      if( i >= config.servers.length ) {
+	 reject( "no server available!" );
+      } else {
+		const server = config.servers[ i ];
+		debug( "trying server: ", 
+		       config.servers[ i ].host + ":" + config.servers[ i ].port );
+	 	return open( server )
+	       	      .then( conn => { 
+				debug( "connection succeeded: ", server );
+				conn.config = server; resolve( conn ) 
+			     },
+err => {
+   debug( "connection failed: ", server );
+   loop( resolve, reject, i + 1 );
+} )
+   }
+   }
+   
+   return new Promise( (resolve, reject) => loop( resolve, reject, 0 ) );
+}
+
+// ok 
+function patternHuman( request, approval, escalate ) {
+   return hiphop module() {
+      signal req;
+      
+      fork {
+	 run request( req );
+      } par {
+	 every( req.now ) {
+      	 }
+      }
+   }
+}
+
+
+// ok
+function patternFanoutFanin( f1, f2s, f3 ) {
+   run( f1 );
+   fork ${f2s};
+   run f3();
+}
 
 // ok
 function patternChain( fs ) {

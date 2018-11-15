@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Oct 28 07:29:20 2018 (serrano)                */
+;*    Last change :  Thu Nov 15 08:57:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -67,6 +67,13 @@
    (define (get-export-index)
       (set! export-index (+fx 1 export-index))
       export-index)
+
+
+   (define (parse-eof-error token)
+      (parse-token-error "Unexpected end of file"
+	 (if (pair? *open-tokens*)
+	     (car (last-pair *open-tokens*))
+	     token)))
    
    (define (parse-token-error msg token::pair)
       (match-case (token-loc token)
@@ -157,10 +164,16 @@
    
    (define (push-open-token token)
       (set! *open-tokens* (cons token *open-tokens*))
+;*       (print (make-string (- (length *open-tokens*) 1) #\space) "PUSHING " */
+;* 	 (cdr token) " " (token-loc token) " " (- (length *open-tokens*) 1)) */
       token)
    
-   (define (pop-open-token)
-      (set! *open-tokens* (cdr *open-tokens*)))
+   (define (pop-open-token token)
+;*       (print (make-string (- (length *open-tokens*) 1) #\space) "POPING  " */
+;* 	 (cdr token) "/" (cdar *open-tokens*) " "                      */
+;* 	 (token-loc token) "/" (token-loc (car *open-tokens*)) " " (- (length *open-tokens*) 1)) */
+      (set! *open-tokens* (cdr *open-tokens*))
+      token)
    
    (define (consume-token! type)
       (let ((token (consume-any!)))
@@ -292,10 +305,7 @@
 	     ((export) (export (consume-any!)))
 	     (else (statement))))
 	 ((EOF)
-	  (parse-token-error "Unexpected end of file"
-	     (if (pair? *open-tokens*)
-		 (car (last-pair *open-tokens*))
-		 (consume-any!))))
+	  (parse-eof-error (peek-token)))
 	 ((ERROR)
 	  (parse-token-error "Error" (consume-any!)))
 	 ((SOURCEMAP)
@@ -354,7 +364,7 @@
 	    (case (peek-token-type)
 	       ((RBRACE)
 		(let ((etoken (consume-any!)))
-		   (pop-open-token)
+		   (pop-open-token etoken)
 		   (instantiate::J2SBlock
 		      (loc (token-loc token))
 		      (endloc (token-loc etoken))
@@ -511,8 +521,7 @@
       (let ((tif (consume-any!)))
 	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((test (expression #f #f)))
-	    (consume! 'RPAREN)
-	    (pop-open-token)
+	    (pop-open-token (consume-token! 'RPAREN))
 	    (let ((then (statement)))
 	       (case (peek-token-type)
 		  ((else)
@@ -571,8 +580,7 @@
 	 (let ((incr (case (peek-token-type)
 			((RPAREN) #f)
 			(else (expression #f #f)))))
-	    (consume! 'RPAREN)
-	    (pop-open-token)
+	    (pop-open-token (consume-token! 'RPAREN))
 	    (let* ((body (statement)))
 	       (instantiate::J2SFor
 		  (loc loc)
@@ -640,8 +648,7 @@
       (let ((token (consume-token! 'while)))
 	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((test (expression #f #f)))
-	    (consume! 'RPAREN)
-	    (pop-open-token)
+	    (pop-open-token (consume-token! 'RPAREN))
 	    (let ((body (statement)))
 	       (instantiate::J2SWhile
 		  (loc (token-loc token))
@@ -654,8 +661,7 @@
 	 (consume! 'while)
 	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((test (expression #f #f)))
-	    (consume! 'RPAREN)
-	    (pop-open-token)
+	    (pop-open-token (consume-token! 'RPAREN))
 	    (instantiate::J2SDo
 	       (loc loc)
 	       (test test)
@@ -720,8 +726,7 @@
       (let ((token (consume-token! 'with)))
 	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((expr (expression #f #f)))
-	    (consume! 'RPAREN)
-	    (pop-open-token)
+	    (pop-open-token (consume-token! 'RPAREN))
 	    (let ((body (statement)))
 	       (instantiate::J2SWith
 		  (loc (token-loc token))
@@ -732,8 +737,7 @@
       (let ((token (consume-token! 'switch)))
 	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((key (expression #f #f)))
-	    (consume! 'RPAREN)
-	    (pop-open-token)
+	    (pop-open-token (consume-token! 'RPAREN))
 	    (let ((cases (case-block)))
 	       (instantiate::J2SSwitch
 		  (loc (token-loc token))
@@ -746,8 +750,7 @@
 		 (default-case-done? #f))
 	 (case (peek-token-type)
 	    ((RBRACE)
-	     (pop-open-token)
-	     (consume-any!)
+	     (pop-open-token (consume-any!))
 	     (reverse! rev-cases))
 	    ((case)
 	     (loop (cons (case-clause) rev-cases) default-case-done?))
@@ -824,8 +827,7 @@
 	 (case (peek-token-type)
 	    ((ID)
 	     (let ((id (consume! 'ID)))
-		(consume! 'RPAREN)
-		(pop-open-token)
+		(pop-open-token (consume-token! 'RPAREN))
 		(let ((body (block)))
 		   ;; not sure, if 'Param' is a really good choice.
 		   ;; we'll see...
@@ -847,8 +849,7 @@
 			       (instantiate::J2SDecl
 				  (loc loc)
 				  (id id))))))
-		(consume! 'RPAREN)
-		(pop-open-token)
+		(pop-open-token (consume-token! 'RPAREN))
 		(with-access::J2SDecl (car vars) (binder)
 		   (set! binder 'param))
 		(instantiate::J2SCatch
@@ -1497,14 +1498,12 @@
       (push-open-token (consume-token! 'LPAREN))
       (case (peek-token-type)
 	 ((RPAREN)
-	  (consume-any!)
-	  (pop-open-token)
+	  (pop-open-token (consume-any!))
 	  (values '() '()))
 	 ((DOTS)
 	  (consume-any!)
 	  (let ((param (consume-rest-param!)))
-	     (consume-token! 'RPAREN)
-	     (pop-open-token)
+	     (pop-open-token (consume-token! 'RPAREN))
 	     (values (list param) '())))
 	 (else
 	  (multiple-value-bind (param arg)
@@ -1519,8 +1518,7 @@
 			   (begin
 			      (consume-any!)
 			      (let ((param (consume-rest-param!)))
-				 (consume! 'RPAREN)
-				 (pop-open-token)
+				 (pop-open-token (consume-token! 'RPAREN))
 				 (values
 				    (reverse! (cons param rev-params))
 				    (reverse! rev-args))))
@@ -1530,8 +1528,7 @@
 				 (if arg (cons arg rev-args) rev-args)
 				 (+fx idx 1)))))
 		    (begin
-		       (consume! 'RPAREN)
-		       (pop-open-token)
+		       (pop-open-token (consume-token! 'RPAREN))
 		       (values
 			  (reverse! rev-params)
 			  (reverse! rev-args)))))))))
@@ -1582,7 +1579,7 @@
 			     (first #t))
 		     (if (eq? (peek-token-type) 'RBRACE)
 			 (let ((etoken (consume-any!)))
-			    (pop-open-token)
+			    (pop-open-token etoken)
 			    (destructure-fun-params params args
 			       (instantiate::J2SBlock
 				  (loc (token-loc token))
@@ -1615,7 +1612,7 @@
 	    (case (peek-token-type)
 	       ((RBRACE)
 		(let ((etoken (consume-any!)))
-		   (pop-open-token)
+		   (pop-open-token etoken)
 		   (let ((clazz (instantiate::J2SClass
 				   (endloc (token-loc etoken))
 				   (name cname)
@@ -2056,9 +2053,8 @@
 	 (case (peek-token-type)
 	    ((LBRACKET)
 	     (let* ((ignore (push-open-token (consume-any!)))
-		    (field (expression #f #f))
-		    (ignore-too (consume! 'RBRACKET)))
-		(pop-open-token)
+		    (field (expression #f #f)))
+		(pop-open-token (consume-token! 'RBRACKET))
 		(loop (instantiate::J2SAccess
 			 (loc (token-loc ignore))
 			 (obj expr)
@@ -2106,13 +2102,12 @@
       (push-open-token (consume-token! 'LPAREN))
       (if (eq? (peek-token-type) 'RPAREN)
 	  (begin
-	     (consume-any!)
+	     (pop-open-token (consume-any!))
 	     '())
 	  (let loop ((rev-args (list (assig-expr #f #f))))
 	     (if (eq? (peek-token-type) 'RPAREN)
 		 (begin
-		    (consume-any!)
-		    (pop-open-token)
+		    (pop-open-token (consume-any!))
 		    (reverse! rev-args))
 		 (let* ((ignore (consume! 'COMMA))
 			(arg (assig-expr #f #f)))
@@ -2155,8 +2150,8 @@
 
    (define (dollar-expression)
       (let* ((ignore (consume-any!))
-	     (expr (expression #f #f))
-	     (ignore-too (consume! 'RBRACE)))
+	     (expr (expression #f #f)))
+	 (pop-open-token (consume-token! 'RBRACE))
 	 expr))
 
    (define (template-expressions::pair cellp::bool)
@@ -2269,14 +2264,13 @@
 	  (let ((token (push-open-token (consume-any!))))
 	     (if (eq? (peek-token-type) 'RPAREN)
 		 (let ((tok (consume-any!)))
-		    (pop-open-token)
+		    (pop-open-token tok)
 		    (if (eq? (peek-token-type) '=>)
 			;; zero-argument arrow function
 			(arrow-function '() (token-loc token))
 			(parse-token-error "Unexpected token" tok)))
 		 (let ((expr (expression #f #t)))
-		    (consume! 'RPAREN)
-		    (pop-open-token)
+		    (pop-open-token (consume-token! 'RPAREN))
 		    (if (eq? (peek-token-type) '=>)
 			(cond
 			   ((isa? expr J2SAssig)
@@ -2351,7 +2345,7 @@
 	 ((TEMPLATE)
 	  (template-expression))
 	 ((EOF)
-	  (parse-token-error "Unexpected end of file" (peek-token)))
+	  (parse-eof-error (peek-token)))
 	 ((/ /=)
 	  (let ((pattern (read-regexp (peek-token-type))))
 	     ;; consume-any *must* be after having read the reg-exp,
@@ -2419,7 +2413,7 @@
 	     (LPAREN (push-open-token (consume-token! 'LPAREN)))
 	     (str (consume-any!))
 	     (RPAREN (consume-token! 'RPAREN)))
-	 (pop-open-token)
+	 (pop-open-token RPAREN)
 	 (if (memq (car str) '(STRING ESTRING OSTRING))
 	     (call-with-input-string (cdr str)
 		(lambda (ip)
@@ -2434,8 +2428,7 @@
 		    (length 0))
 	    (case (peek-token-type)
 	       ((RBRACKET)
-		(consume-any!)
-		(pop-open-token)
+		(pop-open-token (consume-any!))
 		(instantiate::J2SArray
 		   (loc (token-loc token))
 		   (exprs (reverse! rev-els))
@@ -2453,7 +2446,7 @@
 				(loc (token-loc token))
 				(lhs lhs)))
 		       (rb (consume-token! 'RBRACKET)))
-		   (pop-open-token)
+		   (pop-open-token rb)
 		   (instantiate::J2SArray
 		      (loc (token-loc token))
 		      (exprs (reverse! (cons* dots rev-els)))
@@ -2523,8 +2516,7 @@
 	 ((LBRACKET)
 	  (let* ((token (push-open-token (consume-token! 'LBRACKET)))
 		 (expr (expression #f #f)))
-	     (consume! 'RBRACKET)
-	     (pop-open-token)
+	     (pop-open-token (consume-token! 'RBRACKET))
 	     expr))
 	 (else
 	  (if (j2s-reserved-id? (peek-token-type))
@@ -2688,14 +2680,14 @@
       (push-open-token (consume-token! 'LBRACE))
       (if (eq? (peek-token-type) 'RBRACE)
 	  (let ((token (consume-any!)))
-	     (pop-open-token)
+	     (pop-open-token token)
 	     (instantiate::J2SObjInit
 		(loc (token-loc token))
 		(inits '())))
 	  (let loop ((rev-props (list (property-init '()))))
 	     (if (eq? (peek-token-type) 'RBRACE)
 		 (let ((token (consume-any!)))
-		    (pop-open-token)
+		    (pop-open-token token)
 		    (instantiate::J2SObjInit
 		       (loc (token-loc token))
 		       (inits (reverse! rev-props))))

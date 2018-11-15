@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Wed Nov 14 18:10:52 2018 (serrano)                */
+;*    Last change :  Wed Nov 14 19:14:56 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -135,7 +135,7 @@
 	   ((eq (hopjs-parse-peek-token-type) 'ident)
 	    (hopjs-indent-new-idents hopjs-indent-level))
 	   (t
-	    (hopjs-debug 0 "IDENT.4..%s" itok)
+	    (hopjs-debug 0 "IDENT.4..%s [%s]" itok (hopjs-parse-token-string itok))
 	    (hopjs-indent-column-token itok hopjs-indent-level)))))
        ((function)
 	;; function (args) {
@@ -184,7 +184,7 @@
     ((eq (hopjs-parse-peek-token-type) 'try)
      (hopjs-indent-column-token
       (hopjs-parse-consume-token-any) hopjs-indent-level))
-    ((eq (hopjs-parse-peek-token-type) 'else)
+    ((eq (hopjs-parse-peek-token-type) '(else))
      (let ((tok (hopjs-parse-consume-token-any)))
        (if (eq (hopjs-parse-peek-token-type) 'rbrace)
 	   (hopjs-indent-column-token
@@ -213,8 +213,11 @@
     ((eq (hopjs-parse-peek-token-type) 'semicolon)
      (hopjs-indent-column-token tok hopjs-indent-level))
     ((eq (hopjs-parse-peek-token-type) 'ident)
-     (hopjs-indent-column-token
-      (hopjs-parse-peek-token) hopjs-indent-level))
+     (let ((itok (hopjs-parse-consume-token-any)))
+       (if (eq (hopjs-parse-peek-token-type) 'rbrace)
+	   (hopjs-indent-column-token
+	    (hopjs-parse-peek-token) hopjs-indent-level)
+	 (hopjs-indent-column-token itok hopjs-indent-level))))
     (t
      (hopjs-indent-column-token tok hopjs-indent-level)))))
 
@@ -539,6 +542,12 @@
 	    (hopjs-indent-column-token (hopjs-parse-consume-token-any) 0))
 	   ((ident)
 	    (hopjs-indent-new-idents 0))
+	   ((dollar)
+	    (let ((tok (hopjs-parse-consume-token-any)))
+	      (if (memq (hopjs-parse-peek-token-type)
+			'(return let var const ident))
+		  (hopjs-indent-column-token (hopjs-parse-peek-token) 0)
+		(hopjs-indent-column-token tok 0))))
 	   (t 
 	    (hopjs-indent-column-token etok 0)))))
     (t
@@ -749,10 +758,13 @@
    "hopjs-indent-new-idents...%s" (hopjs-parse-peek-token)
    (letn loop ((tok (hopjs-parse-consume-token-any)))
 	 (let ((next (hopjs-parse-consume-token-any)))
+	   (hopjs-debug 0 "hopjs-indent-new-idents...next=%s" next)
 	   (cond
 	    ((eq (hopjs-parse-token-type next) 'ident)
 	     (funcall loop next))
 	    ((eq (hopjs-parse-token-type next) 'return)
+	     (hopjs-indent-column-token next level))
+	    ((eq (hopjs-parse-token-type next) 'rbrace)
 	     (hopjs-indent-column-token next level))
 	    (t
 	     (hopjs-indent-column-token tok level)))))))

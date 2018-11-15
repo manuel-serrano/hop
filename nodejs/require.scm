@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Nov 13 21:30:38 2018 (serrano)                */
+;*    Last change :  Thu Nov 15 07:12:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1168,7 +1168,7 @@
 			   (let liip ()
 			      (when (pair? socompile-queue)
 				 (let ((e (nodejs-select-socompile socompile-queue)))
-				    (or (hop-find-sofile (car e))
+				    (or (string? (find-new-sofile (car e)))
 					(compile-worker e))
 				    (liip))))
 			   (condition-variable-wait!
@@ -1302,16 +1302,14 @@
 		  (fprint (current-error-port) "**** ERROR: compilation failed " filename)
 		  (exception-notify e))
 	       (when (process? proc)
-		  ;;(synchronize socompile-mutex
-		  (begin
-		     (set! compile-pending (+fx compile-pending 1))
-		     (when (pair? compile-listeners-start)
-			(let ((evt (instantiate::event
-				      (name "start")
-				      (target filename)
-				      (value `(pending: ,compile-pending
-						 command: ,cmd)))))
-			   (apply-listeners compile-listeners-start evt)))))))
+		  (set! compile-pending (+fx compile-pending 1))
+		  (when (pair? compile-listeners-start)
+		     (let ((evt (instantiate::event
+				   (name "start")
+				   (target filename)
+				   (value `(pending: ,compile-pending
+					      command: ,cmd)))))
+			(apply-listeners compile-listeners-start evt))))))
 	 (nodejs-process-wait proc filename)
 	 (synchronize mutex
 	    (if (and socompile-ended (=fx (process-exit-status proc) 0))
@@ -1451,6 +1449,17 @@
 					   socompile-condv)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    find-new-sofile ...                                              */
+;*---------------------------------------------------------------------*/
+(define (find-new-sofile filename)
+   (let ((sopath (hop-find-sofile filename)))
+      (if (string? sopath)
+	  (when (> (file-modification-time sopath)
+		   (file-modification-time filename))
+	     sopath)
+	  sopath)))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load src filename %ctxthis %ctxmodule worker::WorkerHopThread
@@ -1460,11 +1469,9 @@
       (if worker-slave
 	  (nodejs-compile src filename %ctxthis %ctxmodule
 	     :lang lang :worker-slave #t)
-	  (let loop ((sopath (hop-find-sofile filename)))
+	  (let loop ((sopath (find-new-sofile filename)))
 	     (cond
-		((and (string? sopath)
-		      (> (file-modification-time sopath)
-			 (file-modification-time filename)))
+		((string? sopath)
 		 (let ((p (hop-dynamic-load sopath)))
 		    (if (and (procedure? p) (=fx (procedure-arity p) 4))
 			p
