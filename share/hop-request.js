@@ -60,11 +60,11 @@ function hop_apply_form_url( service, args ) {
    var els = args[ 0 ].elements;
 
    for( i = els.length - 1 ; i >=0 ; i-- ) {
-      if( els[ i ].type == "checkbox" ) {
+      if( els[ i ].type === "checkbox" ) {
 	 nargs = sc_cons( els[ i ].checked ? els[ i ].value : false, nargs );
 	 nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
       } else {
-	 if( els[ i ].type == "radio" ) {
+	 if( els[ i ].type === "radio" ) {
 	    if( els[ i ].checked ) {
 	       nargs = sc_cons( els[ i ].value, nargs );
 	       nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
@@ -94,10 +94,10 @@ function hop_apply_url( service, args ) {
       if( !args ) {
 	 return service;
       } else {
-         if( (args.length == 1) && hop_is_dom_form_element( args[ 0 ] ) ) {
+         if( (args.length === 1) && hop_is_dom_form_element( args[ 0 ] ) ) {
 	    return hop_apply_form_url( service, args );
          } else {
-            if( (args.length == 1) && hop_is_dom_formdata_element( args[ 0 ] ) ) {
+            if( (args.length === 1) && hop_is_dom_formdata_element( args[ 0 ] ) ) {
 	       return service;
             } else {
 	       return service
@@ -224,7 +224,7 @@ var hop_anim_container = false;
 /*** META ((export with-hop-default-anim-set!) (arity -2)) */
 function hop_default_anim_set( anim, container ) {
    var old = hop_default_anim;
-   if( typeof( anim ) == "string" ) {
+   if( typeof( anim ) === "string" ) {
       var img = hop_anim_32_32( "custom" ).firstChild;
 
       img.src = anim;
@@ -263,7 +263,7 @@ function hop_stop_anim( xhr ) {
 
       if( xhr.hop_anim != true ) {
 	 xhr.hop_anim.count--;
-	 if( xhr.hop_anim.count == 1 )
+	 if( xhr.hop_anim.count === 1 )
 	    node_style_set( xhr.hop_anim, "display", "none" );
       }
    }
@@ -327,7 +327,7 @@ function hexStringToUint8( str ) {
    }
 
    for( var r = 0, w = 0; r < l; w++ ) {
-      if( str.charAt( r ) == '%' ) {
+      if( str.charAt( r ) === '%' ) {
 	 var d1 = hex_to_num( str.charCodeAt( r + 1 ) );
 	 var d2 = hex_to_num( str.charCodeAt( r + 2 ) );
 	 r += 3;
@@ -453,7 +453,7 @@ function hop_request_unserialize( xhr, svc ) {
 function hop_request_onready( xhr, svc, succ, fail ) {
 
    function xhr_hop_success_callback( succ ) {
-      if( svc.indexOf( "/hop/public/server-debug" ) == 0 ) {
+      if( svc.indexOf( "/hop/public/server-debug" ) === 0 ) {
 	 return succ;
       } else {
 	 return hop_callback( succ, xhr.precontext, "with-hop" );
@@ -461,7 +461,7 @@ function hop_request_onready( xhr, svc, succ, fail ) {
    }
       
    function xhr_hop_failure_callback( fail ) {
-      if( svc.indexOf( "/hop/public/server-debug" ) == 0 ) {
+      if( svc.indexOf( "/hop/public/server-debug" ) === 0 ) {
 	 return fail;
       } else {
 	 /* restore the context at the moment of the xhr */
@@ -658,16 +658,16 @@ function onPostMessage( e ) {
       var i2 = buf.indexOf( 58, i1 + 1 );
       var i3 = buf.indexOf( 58, i2 + 1 );
 
-      if( String.fromCharCode.apply( null, buf.slice( 0, i0 ) ) == "PoST" ) {
+      if( String.fromCharCode.apply( null, buf.slice( 0, i0 ) ) === "PoST" ) {
 	 e.stopPropagation = true;
 	 e.preventDefault = true;
 	 var id = parseInt( String.fromCharCode.apply( null, buf.slice( i0 + 1, i1 ) ) );
 	 var status = parseInt( String.fromCharCode.apply( null, buf.slice( i1 + 1, i2 ) ) );
 	 var ctype = String.fromCharCode.apply( null, buf.slice( i2 + 1, i3 ) ) 
 	 var msg = buf.slice( i3 + 1 );
-	 var val = (ctype == "application/x-frame-hop")
+	 var val = (ctype === "application/x-frame-hop")
 	     ? hop_bytearray_to_obj( msg )
-	     : (ctype == "application/x-frame-json")
+	     : (ctype === "application/x-frame-json")
 	     ? hop_json_parse( String.fromCharCode.apply( null, msg ) )
 	     : String.fromCharCode.apply( null, msg );
 
@@ -792,7 +792,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
 
    function onreadystatechange() {
-      if( this.readyState == 4 ) {
+      if( this.readyState === 4 ) {
 	 return hop_request_onready( this, svc, succ, fail );
       } else {
 	 return false;
@@ -840,7 +840,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 	 var i = svc.indexOf( "?" );
 	 var svcname = i ? svc.substring( 0, i ) : svc;
 
-	 if( svcname.indexOf( "/hop/" ) == 0 ) {
+	 if( svcname.indexOf( "/hop/" ) === 0 ) {
 	    svcname = svcname.substring( 5 );
 	 }
 
@@ -906,7 +906,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 	    xhr.hop_anim_interval =
 	       setInterval( function() {
 		     clearInterval( xhr.hop_anim_interval );
-		     if( xhr.hop_anim == true )
+		     if( xhr.hop_anim === true )
 			xhr.hop_anim = hop_start_anim( svc, a );
 		  }, hop_anim_latency );
 	 } else {
@@ -918,7 +918,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
       }
 
       if( sync ) {
-	 if( xhr.readyState == 4 ) {
+	 if( xhr.readyState === 4 ) {
 	    return xhr.onreadystatechange();
 	 } else {
 	    var exc = new Error( "\"" + svc

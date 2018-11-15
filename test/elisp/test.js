@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Thu Nov 15 15:21:07 2018 (serrano)                */
+/*    Last change :  Thu Nov 15 16:57:02 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -686,4 +686,20 @@ service main() {
        </script>
      </head>
 }
+
+// pok CSS rules
+#title-block-top div {
+   color: red;
+   text-align: center;
+   line-height: 120px;
+}
+
+var web = <impress.row id="row-web"
+		       class="row-stack"
+		       data-scale=4
+		       height=${10 + config.slideHeight}
+		       data-x=${- config.slideWidth * 2}
+		       data-y=${config.slideHeight * 8}>
+  ${title}
+</impress.row>
 
