@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Nov 16 08:59:18 2018 (serrano)                */
+;*    Last change :  Fri Nov 16 12:28:35 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -82,18 +82,21 @@
 	(cons "\\<\\(?:async\\|yield\\|await\\)\\>" 'font-lock-face-hopjs3)
 	(list "#:\\([^ \t\r\n{}(),;=[]*\\)" 1 'font-lock-face-hopjs3)
 	(cons "exports." 'font-lock-keyword-face)
-	(list "\\(require\\)(" 1 'font-lock-keyword-face)
+	(list "\\(require\\)([ \t]*\\(\"[^\"]+\"\\)"
+	      '(1 font-lock-keyword-face)
+	      '(2 font-lock-face-underline))
 	(list (concat "^\\s-*\\(?:service\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
 
 ;*---------------------------------------------------------------------*/
-;*    font-lock-make-face ...                                          */
+;*    hopjs-make-face ...                                              */
 ;*---------------------------------------------------------------------*/
-(defun font-lock-make-face (l)
+(defun hopjs-make-face (l)
   (let ((fname (car l))
 	(color (car (cdr l)))
 	(bgcolor (car (cdr (cdr l))))
 	(italic (car (cdr (cdr (cdr l)))))
-	(bold (car (cdr (cdr (cdr (cdr l)))))))
+	(bold (car (cdr (cdr (cdr (cdr l))))))
+	(underline (car (cdr (cdr (cdr (cdr l)))))))
     (let ((face (copy-face 'default fname)))
       (when color
 	(set-face-foreground face color))
@@ -103,36 +106,40 @@
 	(make-face-italic face))
       (when bold
 	(make-face-bold face))
+      (when underline
+	(set-face-underline face nil))
       face)))
 
 (defvar font-lock-face-hopjs0
-  (font-lock-make-face (list 'font-lock-face-hopjs0 "gray50" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs0 "gray50" nil nil t nil)))
 (defvar font-lock-face-hopjs1
-  (font-lock-make-face (list 'font-lock-face-hopjs1 "slateblue3" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs1 "slateblue3" nil nil t nil)))
 (defvar font-lock-face-hopjs2
-  (font-lock-make-face (list 'font-lock-face-hopjs2 "blue" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs2 "blue" nil nil t nil)))
 (defvar font-lock-face-hopjs3
-  (font-lock-make-face (list 'font-lock-face-hopjs3 "tomato2" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs3 "tomato2" nil nil t nil)))
 (defvar font-lock-face-hopjs4
-  (font-lock-make-face (list 'font-lock-face-hopjs4 "green3" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs4 "green3" nil nil t nil)))
 (defvar font-lock-face-hopjs5
-  (font-lock-make-face (list 'font-lock-face-hopjs5 "red" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs5 "red" nil nil t nil)))
 (defvar font-lock-face-hopjs6
-  (font-lock-make-face (list 'font-lock-face-hopjs6 "BlueViolet" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs6 "BlueViolet" nil nil t nil)))
 (defvar font-lock-face-hopjs7
-  (font-lock-make-face (list 'font-lock-face-hopjs7 "green3" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs7 "green3" nil nil t nil)))
 (defvar font-lock-face-hopjs8
-  (font-lock-make-face (list 'font-lock-face-hopjs8 "Goldenrod" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs8 "Goldenrod" nil nil t nil)))
 (defvar font-lock-face-hopjs9
-  (font-lock-make-face (list 'font-lock-face-hopjs9 "#87910F" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs9 "#87910F" nil nil t nil)))
 (defvar font-lock-face-hopjs10
-  (font-lock-make-face (list 'font-lock-face-hopjs10 "lightslateblue" nil nil)))
+  (hopjs-make-face (list 'font-lock-face-hopjs10 "lightslateblue" nil nil nil)))
 (defvar font-lock-face-hopjs11
-  (font-lock-make-face (list 'font-lock-face-hopjs11 "Orchid" nil nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs11 "Orchid" nil nil t nil)))
 (defvar font-lock-face-hopjs12
-  (font-lock-make-face (list 'font-lock-face-hopjs12 "white" "gray50" nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs12 "white" "gray50" nil t nil)))
 (defvar font-lock-face-hopjs13
-  (font-lock-make-face (list 'font-lock-face-hopjs13 "white" "tomato2" nil t)))
+  (hopjs-make-face (list 'font-lock-face-hopjs13 "white" "tomato2" nil t nil)))
+(defvar font-lock-face-underline
+  (hopjs-make-face (list 'font-lock-face-underline nil nil nil nil t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Highlighting                                                     */

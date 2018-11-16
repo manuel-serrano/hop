@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Fri Nov 16 10:51:40 2018 (serrano)                */
+;*    Last change :  Fri Nov 16 13:05:10 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -218,11 +218,16 @@
 	(let ((tok (hopjs-parse-consume-token-any)))
 	  (hopjs-debug 0 "hopjs-indent-new-lbrace =...%s" tok)
 	  (if (eq (hopjs-parse-peek-token-type) 'ident)
-	      (let ((tok (hopjs-parse-consume-token-any)))
-		(if (memq (hopjs-parse-peek-token-type) '(let const var))
-		    (hopjs-indent-column-token
-		     (hopjs-parse-consume-token-any) hopjs-indent-level)
-		  (hopjs-indent-column-token tok hopjs-indent-level)))
+	      (let ((etok (hopjs-parse-expr (hopjs-parse-peek-token))))
+		(hopjs-debug 0 "hopjs-indent-new-lbrace.2 =...%s" etok)
+		(cond
+		 ((not etok)
+		  (hopjs-indent-column-token tok hopjs-indent-level))
+		 ((memq (hopjs-parse-peek-token-type) '(let const var))
+		  (hopjs-indent-column-token
+		   (hopjs-parse-consume-token-any) hopjs-indent-level))
+		 (t
+		  (hopjs-indent-column-token etok hopjs-indent-level))))
 	    (hopjs-indent-column-token tok 0))))
        ((colon)
 	(let ((tok (hopjs-parse-consume-token-any)))

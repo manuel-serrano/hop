@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Nov 16 10:02:47 2018 (serrano)                */
+/*    Last change :  Fri Nov 16 13:03:24 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -26,6 +26,12 @@ ESC-x: hopjs-indent-test
 or
 (hopjs-indent-test)
 */
+
+// ok
+modules.exports = {
+   name: "lib",
+   author: "me again"
+}
 
 // ok
 function run( tmt, lbl ) {
