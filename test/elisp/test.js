@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Thu Nov 15 16:57:02 2018 (serrano)                */
+/*    Last change :  Fri Nov 16 10:02:47 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -20,8 +20,23 @@
   (load-library (concat path "/hopjs-indent.el"))
   (hopjs-mode-hook))
 
-[\C-x\C-t] for testing
+[\C-x\C-t] for testing 
+or
+ESC-x: hopjs-indent-test
+or
+(hopjs-indent-test)
 */
+
+// ok
+function run( tmt, lbl ) {
+   let last = Date.now();
+   
+   setInterval( () => { 
+      let cur = Date.now();
+      console.log( lbl ) ;
+   },
+      tmt );
+}
 
 // ok
 {
@@ -61,7 +76,7 @@
    ]
 }
 
-// pok
+// ok
 function mkPromise( name, result, tmt ) {
    return new Promise( (resolve, reject) => {
       setTimeout( () => { 
@@ -72,7 +87,7 @@ function mkPromise( name, result, tmt ) {
    } )
 }
 
-// pok
+// ok
 function mkPromise( name, result, tmt ) {
    return new Promise( (resolve, reject) => {
       setTimeout( () => { 

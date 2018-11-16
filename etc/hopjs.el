@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Nov 15 14:31:45 2018 (serrano)                */
+;*    Last change :  Fri Nov 16 08:59:18 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -308,7 +308,8 @@
 (defun hopjs-pos-eolp (pos)
   (save-excursion
     (goto-char pos)
-    (looking-at "\\([^<>]*>\\)?[ \t]*$")))
+;*     (looking-at "\\([^<>]*>\\)?[ \t]*$")                            */
+    (looking-at "[ \t]*$")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-pos-bolp ...                                               */
@@ -377,7 +378,8 @@
 	    (insert "</" tag ">")
 	    (newline-and-indent))))
        (t
-	(insert "</" tag ">"))))
+	(insert "</" tag ">")
+	(newline-and-indent))))
      ((> bra 0)
       ;; no opening tag
       (case (char-after (cadr pe))
@@ -458,7 +460,7 @@ usage: (js-return)  -- [RET]"
 	      ((text ident dots)
 	       (hopjs-parse-consume-token-any)
 	       (funcall loop))
-	      ((rbrace)
+	      ((rbrace rparen)
 	       (hopjs-parse-backward-sexp)
 	       (unless (eq (hopjs-parse-peek-token-type) 'dollar)
 		 (funcall loop)))))
@@ -683,11 +685,10 @@ usage: (js-return)  -- [RET]"
     nil)
    ((hopjs-closing-tag-p (1- (point)))
     (if (> (point) 3)
-	(let* ((tag (buffer-substring-no-properties
-		     (match-beginning 1) (match-end 1)))
-	       (beg (match-beginning 1))
+	(let* ((beg (match-beginning 1))
 	       (end (match-end 1))
-	       (otag (hopjs-find-opening-tag (match-beginning 0))))
+	       (tag (buffer-substring-no-properties beg end))
+	       (otag (hopjs-find-opening-tag beg)))
 	  (cond
 	   ((not otag)
 	    (hopjs-highlight-tag 'hopjs-nomatch-face beg end))
@@ -695,7 +696,7 @@ usage: (js-return)  -- [RET]"
 	    (hopjs-highlight-tag
 	     'hopjs-match-face beg end)
 	    (hopjs-highlight-tag
-	     'hopjs-match-face (match-beginning 1) (match-end 1)))
+	     'hopjs-match-face (match-beginning 0) (match-end 0)))
 	   (t
 	    (hopjs-highlight-tag
 	     'hopjs-nomatch-face beg end)
@@ -1164,8 +1165,14 @@ usage: (js-return)  -- [RET]"
 (defun hopjs-post-command-hook ()
   (interactive)
   (unless (eq this-command 'mouse-drag-region)
-    (hopjs-tag-matching)
-    (hopjs-doc-at-point (point))))
+    (condition-case nil
+	(hopjs-tag-matching)
+      (error
+       (message "ERROR in tag-matching")))
+    (condition-case nil
+	(hopjs-doc-at-point (point))
+      (error
+       (message "ERROR in DOC")))))
 
 (defun mode-line-fill (face reserve)
   "Return empty space using FACE and leaving RESERVE space on the right."

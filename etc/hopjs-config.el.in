@@ -1,10 +1,10 @@
 ;; -*- mode: lisp -*-
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/work/elisp/hopjs-config.el.in           */
+;*    serrano/prgm/project/hop/3.2.x/etc/hopjs-config.el.in            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Sat Nov 10 15:27:23 2018 (serrano)                */
+;*    Last change :  Fri Nov 16 10:45:05 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs config                                                     */
@@ -101,3 +101,23 @@
   :type 'integer
   :safe 'integerp
   :group 'hopjs)
+
+(defcustom hopjs-indent-value-function-body-alignment
+  "Multiplication indent level factor for function body
+ use a double indentation level if we want the closing
+ bracket not be shifted right at the same level as the
+ function call with the value 1 we get:
+    foo( () =>
+       return 3;
+    },
+       3 )
+ with the value 2 we get:
+    foo( () =>
+          return 3;
+       },
+       3 )"
+  1
+  :type 'integer
+  :safe 'integerp
+  :group 'hopjs)
+  

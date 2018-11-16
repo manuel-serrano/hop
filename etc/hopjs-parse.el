@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Thu Nov 15 15:34:04 2018 (serrano)                */
+;*    Last change :  Fri Nov 16 10:10:13 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -419,7 +419,8 @@
 	    ((ident)
 	     (hopjs-parse-consume-token-any))
 	    ((rparen)
-	     (hopjs-parse-args (hopjs-parse-consume-token-any)))
+	     (hopjs-parse-args (hopjs-parse-consume-token-any))
+	     (hopjs-parse-peek-token))
 	    (t
 	     tok))))
        ((binop >)
