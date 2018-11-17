@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Nov 16 13:03:24 2018 (serrano)                */
+/*    Last change :  Fri Nov 16 18:10:49 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -28,6 +28,38 @@ or
 */
 
 // ok
+function readFileAsync( fd ) {
+   var buffer = new Buffer( 10 );
+   buffer.fill( 0 );
+   fs.read( fd, buffer, 0, 10, null, function (err, readCount, data) {
+      console.log("Read %d bytes.", readCount);
+      if( readCount > 0 ) {
+	 fileContent += data.toString().substr(0, readCount);
+  	 readFileAsync(fd);
+      } else {
+ 	 fs.close(fd);
+	 console.log("File content : " + fileContent);
+      }
+   })
+}
+
+// ok
+function readFileAsync( fd ) {
+   var buffer = new Buffer( 10 );
+   buffer.fill( 0 );
+   fs.read( fd, buffer, 0, 10, null, (err, readCount, data) => {
+      console.log("Read %d bytes.", readCount);
+      if( readCount > 0 ) {
+	 fileContent += data.toString().substr(0, readCount);
+	 readFileAsync(fd);
+      }else {
+	 fs.close(fd);
+	 console.log("File content : " + fileContent);
+      }
+   })
+}
+
+// ok
 modules.exports = {
    name: "lib",
    author: "me again"
@@ -49,23 +81,23 @@ function run( tmt, lbl ) {
    "servers": [
       {
    	 "port": 587,
-   	 "host": "smtp.gmail.com",
+  	 "host": "smtp.gmail.com",
    	 "requireTLS": true,
-   	 "authMethod": "LOGIN",
-   	 "login": {
+ 	 "authMethod": "LOGIN",
+  	 "login": {
 	    "user": "YYYY",
-	    "pass": "XXX"
+  	    "pass": "XXX"
        	 }
       },
       {
-	 "port": 587,
-	 "host": "mail2-relais-roc.national.inria.fr",
-	 "requireTLS": true,
-    	 "authMethod": "LOGIN",
-	 "%login": {
+      	 "port": 587,
+      	 "host": "mail2-relais-roc.national.inria.fr",
+      	 "requireTLS": true,
+      	 "authMethod": "LOGIN",
+      	 "%login": {
 	    "user": "YYYY",
 	    "pass": "XXXX"
-	 }
+      	 }
       } ],
    
    "name": "redrock.inria.fr",
@@ -114,8 +146,8 @@ const p1 = new Promise( (resolve, reject) => {
 function firstPromise( promises ) {
    return new Promise( (resolve, reject) => {
       hiphop machine m( resolve, reject ) {
-      	 fork {
-      	    abort( resolve ) {
+	 fork {
+            abort( resolve ) {
 	       ${ promises.map( p => 
 		     hiphop { run (promiseToModule( acc ))( ... ) } ) }
       	    }
@@ -256,7 +288,7 @@ function openSMTPConnection( config ) {
 	       conn.config = server; resolve( conn ) 
 	    }, 
 	       err => {
-		  debug( "connection failed: ", server );
+	       	  debug( "connection failed: ", server );
 		  loop( resolve, reject, i + 1 );
 	       } )
       }
@@ -360,7 +392,7 @@ enableLogin = __hh_module.MODULE(
 			    var hhaxs8671;
 			    var hhaxs8672;
 			 }
-			})
+			 })
       );
 
 // ok
@@ -668,7 +700,7 @@ service glop() {
 		  ${helloServerDate}()
 		     .post( function( snow ) {
 			${sdate}.innerHTML = 
-			   new Date( snow ).toString();
+		     	   new Date( snow ).toString();
 			${cdate}.innerHTML = 
 			   new Date( Date.now() ).toString();
 		     } )
@@ -724,3 +756,16 @@ var web = <impress.row id="row-web"
   ${title}
 </impress.row>
 
+<style>
+  #js-nodejs-module .code tt.filename {		
+     background: ${theme.greyextralight};
+     padding: 2px;
+     position: absolute;
+     top: 5px; 
+     right: 5px;
+     border: 1px solid ${theme.grey};
+     
+     font-size: 18px;
+     color: ${theme.greydark};
+  }
+</style>

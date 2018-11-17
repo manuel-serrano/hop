@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Nov 16 12:28:35 2018 (serrano)                */
+;*    Last change :  Fri Nov 16 19:48:07 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -366,6 +366,7 @@
 	 (end (match-end 0)))
     (cond
      ((and tag (or (not bra) (> end bra)))
+      
       (cond
        ((hopjs-pos-eolp end)
 	;; tag at the beginning of line
@@ -387,7 +388,7 @@
        (t
 	(insert "</" tag ">")
 	(newline-and-indent))))
-     ((> bra 0)
+     ((and bra (> bra 0))
       ;; no opening tag
       (case (char-after (cadr pe))
 	((?{)
