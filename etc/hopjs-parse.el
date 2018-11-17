@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Fri Nov 16 18:32:47 2018 (serrano)                */
+;*    Last change :  Sat Nov 17 18:38:22 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -94,6 +94,8 @@
      (cons "/>" 'chtml)
      ;; html
      (cons (rx: "<" tagid "/>") 'html)
+     ;; end of comment
+     (cons (rxq "*/") 'ecomment)
      )))
 
 (defun foo (pos)
@@ -419,6 +421,20 @@
 	     (hopjs-parse-expr (hopjs-parse-consume-token-any)))
 	    ((new)
 	     (hopjs-parse-consume-token-any))
+	    ((colon)
+	     (let* ((save hopjs-parse-tokens)
+		    (ctok (hopjs-parse-consume-token-any))
+		    (etok (hopjs-parse-expr ctok)))
+	       (if etok
+		   (if (eq (hopjs-parse-peek-token-type) 'qmark)
+		       (let ((qtok (hopjs-parse-consume-token-any)))
+			 (hopjs-parse-expr qtok))
+		     (progn
+		       (setq hopjs-parse-tokens save)
+		       tok))
+		 (progn
+		   (setq hopjs-parse-tokens save)
+		   tok))))
 	    (t
 	     tok))))
        ((dot)

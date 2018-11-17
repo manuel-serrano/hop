@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Nov 16 19:48:07 2018 (serrano)                */
+;*    Last change :  Sat Nov 17 19:07:15 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -366,7 +366,6 @@
 	 (end (match-end 0)))
     (cond
      ((and tag (or (not bra) (> end bra)))
-      
       (cond
        ((hopjs-pos-eolp end)
 	;; tag at the beginning of line
@@ -401,7 +400,45 @@
 	   (unless (hopjs-blank-line-p (point))
 	     (newline-and-indent)))
 	 (hopjs-electric-paren))
-	((?\[) (insert "]")))))))
+	((?\[) (insert "]"))))
+     (t
+      (let ((pos (point)))
+	(hopjs-parse-start (point))
+	(letn loop ((depth 0))
+	      (let ((tok (hopjs-parse-consume-token-any)))
+		(case (hopjs-parse-token-type tok)
+		  ((rbracket rparen rbrace ctag)
+		   (funcall loop (+ depth 1)))
+		  ((lparen lbrace)
+		   (if (= depth 0)
+		       (hopjs-electric-paren)
+		     (funcall loop (- depth 1))))
+		  ((lbracket)
+		   (if (= depth 0)
+		       "]"
+		     (funcall loop (- depth 1))))
+		  ((ohtml otag)
+		   (if (= depth 0)
+		       (let ((str (hopjs-parse-token-string tok)))
+			 (goto-char pos)
+			 (cond
+			  ((hopjs-blank-line-p (point))
+			   (beginning-of-line))
+			  ((hopjs-pos-eolp (hopjs-parse-token-end tok))
+			   (newline)))
+			 (insert "</"
+				 (substring
+				  str
+				  1
+				  (- (length str)
+				     (if (eq (hopjs-parse-token-type tok) 'otag)
+					 1 0)))
+				 ">")
+			 (indent-for-tab-command)
+			 (newline-and-indent))
+		     (funcall loop (- depth 1))))
+		  (t
+		   (funcall loop depth))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-statement ...                                       */

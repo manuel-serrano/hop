@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Nov 16 18:10:49 2018 (serrano)                */
+/*    Last change :  Sat Nov 17 17:11:13 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -26,6 +26,66 @@ ESC-x: hopjs-indent-test
 or
 (hopjs-indent-test)
 */
+
+<style>
+  #id .fll {
+     color: red;
+  }
+</style>
+     
+// ok
+class ActionArg {
+   constructor( machine, accessor_list ) {
+      this.machine = machine;
+      
+      accessor_list.forEach( acc => {
+	 this[ acc.signame ] = {
+	    preval: undefined,
+	    nowval: undefined,
+	    pre: undefined,
+	    now: undefined
+         };
+      } );
+   }
+}
+
+// ok
+function fill( accessor_list, lvl ) {
+   accessor_list.forEach( acc => {
+      let sig = acc.signal;
+      let min_lvl = lvl > sig.ast_node.depth ? sig.ast_node.depth : lvl;
+      
+      this.preValue[ acc.signame ] = acc.signal.pre_value;
+      this.value[ acc.signame ] = acc.signal.value;
+      this.prePresent[ acc.signame ] = acc.signal.pre_gate.value;
+      this.present[ acc.signame ] = sig.gate_list[ min_lvl ].value;
+   } );
+}
+
+// ok
+function() {
+   return raw_signals.map( function(el, i, arr ) {
+      let signalName;
+      let type;
+      let s = el.split( "." );
+      
+      if( s[0] != "this" ) {
+	 throw error.TypeError( "Wrong accessor parsing (1)", loc );
+      } else if( s.length == 2 ) {
+	   s = s[ 1 ].split( '["' );
+	   signalName = s[ 0 ];
+	   type = s[ 1 ].substr( 0, s[ 1 ].length - 2 );
+	} else if( s.length == 3 ) {
+	     signalName = s[ 1 ];
+	     type = s[ 2 ];
+	  } else {
+	     throw error.TypeError( "Wrong accessor parsing (2)", loc );
+	  }
+	  
+	  console.log( "sn=", signalName, "ty=", type );
+	  return makeAccessor( signalName, type, loc );
+   });
+}
 
 // ok
 function readFileAsync( fd ) {
