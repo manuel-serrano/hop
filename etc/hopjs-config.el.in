@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Fri Nov 16 10:50:56 2018 (serrano)                */
+;*    Last change :  Sun Nov 18 13:20:29 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs config                                                     */
@@ -82,6 +82,12 @@
   "If true enables hop quick doc modline button"
   :type 'boolean
   :safe 'booleanp
+  :group 'hopjs)
+
+(defcustom hopjs-mode-line-doc-button-color "#fa9600"
+  "Background color of the mode-line doc button"
+  :type 'string
+  :safe 'stringp
   :group 'hopjs)
 
 (defcustom hopjs-indent-custom t
