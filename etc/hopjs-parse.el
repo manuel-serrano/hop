@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sat Nov 17 18:38:22 2018 (serrano)                */
+;*    Last change :  Sun Nov 18 10:00:31 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -318,6 +318,12 @@
   (hopjs-parse-token-type (hopjs-parse-peek-token)))
 
 ;*---------------------------------------------------------------------*/
+;*    hopjs-parse-peek-token-string ...                                */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-peek-token-string ()
+  (hopjs-parse-token-string (hopjs-parse-peek-token)))
+
+;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-consume-token-any ...                                */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-consume-token-any ()
@@ -387,59 +393,100 @@
    "hopjs-parse-expr tok=%s [%s] peek=%s [%s]"
    tok (hopjs-parse-token-string tok)
    (hopjs-parse-peek-token)
-   (hopjs-parse-token-string (hopjs-parse-peek-token))
+   (hopjs-parse-peek-token-string)
+   (let ((etok (hopjs-parse-expr-simple tok)))
+     (when etok
+       (case (hopjs-parse-peek-token-type)
+	 ((dot)
+	  (let ((dtok (hopjs-parse-consume-token-any)))
+	    (hopjs-debug 0 "hopjs-parse-expr.ident.dot dtok=%s peek=%s same=%s"
+			 dtok (hopjs-parse-peek-token)
+			 (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok))
+	    (if (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok)
+		(or (hopjs-parse-expr (hopjs-parse-peek-token)) tok)
+	      dtok)))
+	 ((binop = >)
+	  (hopjs-parse-expr (hopjs-parse-consume-token-any)))
+	 ((new)
+	  (hopjs-parse-consume-token-any))
+	 ((colon)
+	  ;; check for EXPR ? EXPR : EXPR 
+	  (let* ((save hopjs-parse-tokens)
+		 (ctok (hopjs-parse-consume-token-any))
+		 (etok (hopjs-parse-expr ctok)))
+	    (if etok
+		(if (eq (hopjs-parse-peek-token-type) 'qmark)
+		    (let ((qtok (hopjs-parse-consume-token-any)))
+		      (hopjs-parse-expr qtok))
+		  (progn
+		    (setq hopjs-parse-tokens save)
+		    tok))
+	      (progn
+		(setq hopjs-parse-tokens save)
+		tok))))
+	 (t etok))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-expr-simple ...                                      */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-expr-simple (tok)
+  (with-debug
+   "hopjs-parse-expr-simple tok=%s [%s] peek=%s [%s]"
+   tok (hopjs-parse-token-string tok)
+   (hopjs-parse-peek-token)
+   (hopjs-parse-peek-token-string)
    (save-excursion
      (hopjs-parse-goto-token tok)
      (case (hopjs-parse-peek-token-type)
        ((rbracket)
 	(goto-char (hopjs-parse-token-end tok))
-	(hopjs-debug 0 "hopjs-parse-expr.rbracket point=%s" (point))
+	(hopjs-debug 0 "hopjs-parse-expr-simple.rbracket point=%s" (point))
 	(if (hopjs-parse-backward-sexp)
 	    (let ((tok (hopjs-parse-consume-and-peek-token))
-		  (etok (hopjs-parse-expr tok)))
-	      (hopjs-debug 0 "hopjs-parse-expr.rbracket %s [%s]" tok
+		  (etok (hopjs-parse-expr-simple tok)))
+	      (hopjs-debug 0 "hopjs-parse-expr-simple.rbracket %s [%s]" tok
 			   (hopjs-parse-token-string tok))
 	      (or etok tok))))
        ((new)
 	(hopjs-parse-consume-token-any))
        ((ident)
 	(let ((tok (hopjs-parse-consume-token-any)))
-	  (hopjs-debug 0 "hopjs-parse-expr.ident %s [%s] peek=%s"
+	  (hopjs-debug 0 "hopjs-parse-expr-simple.ident %s [%s] peek=%s"
 		       tok
 		       (hopjs-parse-token-string tok)
 		       (hopjs-parse-peek-token-type))
 	  (case (hopjs-parse-peek-token-type)
-	    ((dot)
-	     (let ((dtok (hopjs-parse-consume-token-any)))
-	       (hopjs-debug 0 "hopjs-parse-expr.ident.dot dtok=%s peek=%s same=%s"
-			    dtok (hopjs-parse-peek-token)
-			    (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok))
-	       (if (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok)
-		   (or (hopjs-parse-expr (hopjs-parse-peek-token)) tok)
-		 dtok)))
-	    ((binop = >)
-	     (hopjs-parse-expr (hopjs-parse-consume-token-any)))
-	    ((new)
-	     (hopjs-parse-consume-token-any))
-	    ((colon)
-	     (let* ((save hopjs-parse-tokens)
-		    (ctok (hopjs-parse-consume-token-any))
-		    (etok (hopjs-parse-expr ctok)))
-	       (if etok
-		   (if (eq (hopjs-parse-peek-token-type) 'qmark)
-		       (let ((qtok (hopjs-parse-consume-token-any)))
-			 (hopjs-parse-expr qtok))
-		     (progn
-		       (setq hopjs-parse-tokens save)
-		       tok))
-		 (progn
-		   (setq hopjs-parse-tokens save)
-		   tok))))
+;* 	    ((dot)                                                     */
+;* 	     (let ((dtok (hopjs-parse-consume-token-any)))             */
+;* 	       (hopjs-debug 0 "hopjs-parse-expr-simple.ident.dot dtok=%s peek=%s same=%s" */
+;* 			    dtok (hopjs-parse-peek-token)              */
+;* 			    (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok)) */
+;* 	       (if (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok) */
+;* 		   (or (hopjs-parse-expr (hopjs-parse-peek-token)) tok) */
+;* 		 dtok)))                                               */
+;* 	    ((binop = >)                                               */
+;* 	     (hopjs-parse-expr (hopjs-parse-consume-token-any)))       */
+;* 	    ((new)                                                     */
+;* 	     (hopjs-parse-consume-token-any))                          */
+;* 	    ((colon)                                                   */
+;* 	     (let* ((save hopjs-parse-tokens)                          */
+;* 		    (ctok (hopjs-parse-consume-token-any))             */
+;* 		    (etok (hopjs-parse-expr ctok)))                    */
+;* 	       (if etok                                                */
+;* 		   (if (eq (hopjs-parse-peek-token-type) 'qmark)       */
+;* 		       (let ((qtok (hopjs-parse-consume-token-any)))   */
+;* 			 (hopjs-parse-expr qtok))                      */
+;* 		     (progn                                            */
+;* 		       (setq hopjs-parse-tokens save)                  */
+;* 		       tok))                                           */
+;* 		 (progn                                                */
+;* 		   (setq hopjs-parse-tokens save)                      */
+;* 		   tok))))                                             */
 	    (t
 	     tok))))
        ((dot)
 	(let ((dtok (hopjs-parse-consume-token-any)))
-	  (hopjs-debug 0 "hopjs-parse-expr.ident.dot dtok=%s peek=%s same=%s"
+	  (hopjs-debug 0 "hopjs-parse-expr-simple.ident.dot dtok=%s peek=%s same=%s"
 		       dtok (hopjs-parse-peek-token)
 		       (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok))
 	  (if (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok)
@@ -447,7 +494,7 @@
 	    dtok)))
        ((=>)
 	(let ((tok (hopjs-parse-consume-token-any)))
-	  (hopjs-debug 0 "hopjs-parse-expr.=> %s peek=%s [%s]"
+	  (hopjs-debug 0 "hopjs-parse-expr-simple.=> %s peek=%s [%s]"
 		       tok
 		       (hopjs-parse-peek-token)
 		       (hopjs-parse-token-string (hopjs-parse-peek-token)))
@@ -463,7 +510,7 @@
 	(hopjs-parse-consume-tokens '(function function* service ident)))
        ((binop >)
 	(let ((tok (hopjs-parse-consume-token-any)))
-	  (hopjs-debug 0 "hopjs-parse-expr.binop %s [%s] peek=%s"
+	  (hopjs-debug 0 "hopjs-parse-expr-simple.binop %s [%s] peek=%s"
 		       tok
 		       (hopjs-parse-token-string tok)
 		       (hopjs-parse-peek-token-type))
@@ -472,7 +519,7 @@
 	(let ((tok (hopjs-parse-consume-token-any)))
 	  (case (hopjs-parse-peek-token-type)
 	    ((binop = >)
-	     (hopjs-debug 0 "hopjs-parse-expr.literal %s"
+	     (hopjs-debug 0 "hopjs-parse-expr-simple.literal %s"
 			  (hopjs-parse-peek-token-type))
 	     (or (hopjs-parse-lhs (hopjs-parse-consume-token-any)) tok))
 	    (t
@@ -482,11 +529,11 @@
 	  (or (hopjs-parse-lhs tok) tok)))
        ((rparen)
 	(goto-char (hopjs-parse-token-end tok))
-	(hopjs-debug 0 "hopjs-parse-expr.rparen.1 point=%s" (point))
+	(hopjs-debug 0 "hopjs-parse-expr-simple.rparen.1 point=%s" (point))
 	(if (hopjs-parse-backward-sexp)
 	    (let* ((tok (hopjs-parse-consume-and-peek-token))
 		   (etok (hopjs-parse-expr tok)))
-	      (hopjs-debug 0 "hopjs-parse-expr.rparen.2 %s [%s] -> %s [%s] peek=%s" tok
+	      (hopjs-debug 0 "hopjs-parse-expr-simple.rparen.2 %s [%s] -> %s [%s] peek=%s" tok
 			   (hopjs-parse-token-string tok)
 			   etok
 			   (and etok (hopjs-parse-token-string etok))
@@ -507,14 +554,14 @@
 	  '()))
        ((rbrace)
 	(goto-char (hopjs-parse-token-end tok))
-	(hopjs-debug 0 "hopjs-parse-expr.rbrace.0 %s [%s]" tok
+	(hopjs-debug 0 "hopjs-parse-expr-simple.rbrace.0 %s [%s]" tok
 		     (hopjs-parse-token-string tok))
 	(mcond
 	 ((hopjs-parse-backward-sexp)
 	  =>
 	  #'(lambda (pos)
 	      (let ((tok (hopjs-parse-consume-token-any)))
-		(hopjs-debug 0 "hopjs-parse-expr.rbrace.1 %s [%s] -> peek=%s [%s]" tok
+		(hopjs-debug 0 "hopjs-parse-expr-simple.rbrace.1 %s [%s] -> peek=%s [%s]" tok
 			     (hopjs-parse-token-string tok)
 			     (hopjs-parse-peek-token)
 			     (hopjs-parse-token-string
@@ -528,19 +575,19 @@
 	(goto-char (hopjs-parse-token-end tok))
 	(if (hopjs-parse-backward-sexp)
 	    (let ((tok (hopjs-parse-consume-and-peek-token)))
-	      (hopjs-debug 0 "hopjs-parse-expr.ctag point=%s %s [%s]"
+	      (hopjs-debug 0 "hopjs-parse-expr-simple.ctag point=%s %s [%s]"
 			   (point) tok (hopjs-parse-token-string tok))
 	      tok)
 	  '()))
        ((=)
 	(hopjs-parse-goto-token (hopjs-parse-consume-token-any))
-	(hopjs-debug 0 "hopjs-parse-expr-= %s" (point))
+	(hopjs-debug 0 "hopjs-parse-expr-simple-= %s" (point))
 	(if (hopjs-parse-backward-sexp)
 	    (progn
-	      (hopjs-debug 0 "hopjs-parse-expr.1= %s" (point))
+	      (hopjs-debug 0 "hopjs-parse-expr-simple.1= %s" (point))
 	      (let ((tok (hopjs-parse-consume-and-peek-token)))
-		(hopjs-debug 0 "hopjs-parse-expr.2= %s" (point))
-		(hopjs-debug 0 "hopjs-parse-expr.= %s [%s]" tok
+		(hopjs-debug 0 "hopjs-parse-expr-simple.2= %s" (point))
+		(hopjs-debug 0 "hopjs-parse-expr-simple.= %s [%s]" tok
 			     (hopjs-parse-token-string tok))
 		tok))
 	  '()))

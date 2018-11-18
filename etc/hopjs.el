@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sat Nov 17 19:07:15 2018 (serrano)                */
+;*    Last change :  Sun Nov 18 10:32:57 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -897,7 +897,7 @@ usage: (js-return)  -- [RET]"
 	     (v (json-read-file file))
 	     (len (length v)))
 	(while (< i len)
-	  (let* ((en (aref v i))
+	  (let* ((en (cons (cons 'title title) (aref v i)))
 		 (k (assq 'key en))
 		 (y (assq 'type en))
 		 (n (string-match (cdr k) "[^.]+$"))
@@ -1012,11 +1012,13 @@ usage: (js-return)  -- [RET]"
 				 (string-equal y "constructor")))
 			(let ((url (assq 'url en)))
 			  (when url
-			    (let* ((proto (assq 'proto en))
-				   (tip (replace-regexp-in-string
-					 "&gt;" ">"
+			    (let* ((title (assq 'title en))
+				   (proto (assq 'proto en))
+				   (tip (concat (cdr title) ": "
 					 (replace-regexp-in-string
-					  "&lt;" "<" (cdr proto)))))
+					  "&gt;" ">"
+					  (replace-regexp-in-string
+					   "&lt;" "<" (cdr proto))))))
 			      (setq urls (cons (cons tip (cdr url)) urls))
 			      (setq tooltip
 				    (if tooltip
@@ -1210,14 +1212,14 @@ usage: (js-return)  -- [RET]"
 (defun hopjs-post-command-hook ()
   (interactive)
   (unless (eq this-command 'mouse-drag-region)
-    (condition-case nil
+    (condition-case err
 	(hopjs-tag-matching)
       (error
-       (message "ERROR in tag-matching")))
-    (condition-case nil
+       (message "ERROR in tag-matching: %s" err)))
+    (condition-case err
 	(hopjs-doc-at-point (point))
       (error
-       (message "ERROR in DOC")))))
+       (message "ERROR in DOC: %s" err)))))
 
 (defun mode-line-fill (face reserve)
   "Return empty space using FACE and leaving RESERVE space on the right."

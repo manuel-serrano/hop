@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sat Nov 17 17:11:13 2018 (serrano)                */
+/*    Last change :  Sun Nov 18 10:07:59 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -32,7 +32,34 @@ or
      color: red;
   }
 </style>
-     
+
+// pok
+function number( G ) {
+   let trap = hiphop {
+      exit: loop {
+	 await( killn.now && numbers.now );
+	 emit numbers( num );
+	 emit killn( prey( numbers.nowval ) );
+	 
+	 if( killn.nowval.indexOf( num ) >= 0 ) {
+	    hop {
+	       num.dead = true;
+	       G.mach.getElementById( "numbers" ).removeChild( trap );
+	    }
+	    break exit;
+	 } else {
+	    if( num.prey && killn.nowval.indexOf( num.prey ) >= 0 ) {
+	       hop { num.init() }
+	    }
+	    hop { num.move() }
+	 }
+      }
+   }
+   
+   return trap;
+}
+
+
 // ok
 class ActionArg {
    constructor( machine, accessor_list ) {
