@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sun Nov 18 10:07:59 2018 (serrano)                */
+/*    Last change :  Sun Nov 18 14:52:28 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -33,7 +33,58 @@ or
   }
 </style>
 
-// pok
+// ok
+function chainAnimationsGenerator (elem, animations ) {
+   try {
+      x = 3;
+   } catch( e ) { 
+      return ret;
+   }
+}
+
+// ok
+function chainAnimationsGenerator (elem, animations ) {
+   return spawn( function* () {
+      let ret = null;
+      try {
+   	 for(const anim of animations) {
+      	    ret = yield anim(elem);
+   	 }
+      } catch(e) { /* ignore and keep going */ }
+      return ret;
+   });
+}
+
+// ok
+function* fibonacci() {
+   let fn1 = 0, let fn2 = 1;
+   
+   while( true ) {  
+      let current = fn1;
+      fn1 = fn2;
+      fn2 = current + fn1;
+      let reset = yield current;
+      if( reset ) {
+	 fn1 = 0;
+	 fn2 = 1;
+      }
+   }
+}
+
+// ok
+function read( fd, chars ) {
+   fs.read( fd, new Buffer( 10 ), 0, 10, null, 
+      (err, readCount, data) => {
+      	 if( readCount > 0 ) {
+	    read( fd, chars + data );
+      	 } else {
+	    fs.close(fd);
+	    console.log("File content : " + fileContent);
+      	 }
+      } )
+}
+
+// ok
 function number( G ) {
    let trap = hiphop {
       exit: loop {

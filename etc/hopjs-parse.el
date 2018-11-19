@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun Nov 18 10:00:31 2018 (serrano)                */
+;*    Last change :  Sun Nov 18 15:03:19 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -161,9 +161,26 @@
      tok)
     ((ident)
      (let ((sym (intern (hopjs-parse-token-string tok))))
-       (when (memq sym '(function function* service return try catch while if
-				  var let const else new case switch for))
-	 (aset tok 0 sym))
+       (case sym
+	 ((service return try catch while if var let const else
+		   new case switch for)
+	  (aset tok 0 sym))
+	 ((function)
+	  (save-excursion
+	    (goto-char (hopjs-parse-token-beginning tok))
+	    (if (looking-at "function[*]")
+		(progn
+		  (aset tok 0 'function*)
+		  (aset tok 2 (match-end 0)))
+	      (aset tok 0 'function))))
+	 ((yield)
+	  (save-excursion
+	    (goto-char (hopjs-parse-token-beginning tok))
+	    (if (looking-at "yield[*]")
+		(progn
+		  (aset tok 0 'yield*)
+		  (aset tok 2 (match-end 0)))
+	      (aset tok 0 'yield)))))
        tok))
     ((binop)
      (case (char-after (hopjs-parse-token-beginning tok))
@@ -182,18 +199,16 @@
 ;*---------------------------------------------------------------------*/
 (defun looking-at-token ()
   (when (looking-at hopjs-parse-lexer)
-    (let ((b (match-beginning 0))
-	  (e (match-end 0))
-	  (token '())
+    (let ((token '())
 	  (i 0)
 	  (l hopjs-parse-regexps)
 	  (end 0))
       (while (consp l)
 	(when (and (looking-at (caar l)) (> (match-end 0) end))
-	  (setq end (match-end 0))
 	  (setq token
 		(hopjs-regexp-to-token
-		 (vector (cdar l) (match-beginning 0) (match-end 0)))))
+		 (vector (cdar l) (match-beginning 0) (match-end 0))))
+	  (setq end (hopjs-parse-token-end token)))
 	(setq i (+ i 1))
 	(setq l (cdr l)))
       token)))
@@ -373,13 +388,16 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-args ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Try to parse an argument list. On success, returns the lost      */
+;*    token of that list. This token is consumed                       */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-args (tok)
   (save-excursion
     (when (eq (hopjs-parse-token-type tok) 'rparen)
       (hopjs-parse-goto-token tok 1)
       (when (hopjs-parse-backward-sexp)
-	(hopjs-parse-consume-and-peek-token)))))
+	(hopjs-parse-consume-token-any)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-expr ...                                             */
@@ -408,6 +426,8 @@
 	 ((binop = >)
 	  (hopjs-parse-expr (hopjs-parse-consume-token-any)))
 	 ((new)
+	  (hopjs-parse-consume-token-any))
+	 ((yield yield*)
 	  (hopjs-parse-consume-token-any))
 	 ((colon)
 	  ;; check for EXPR ? EXPR : EXPR 
@@ -502,8 +522,8 @@
 	    ((ident)
 	     (hopjs-parse-consume-token-any))
 	    ((rparen)
-	     (hopjs-parse-args (hopjs-parse-consume-token-any))
-	     (hopjs-parse-peek-token))
+	     (when (hopjs-parse-args (hopjs-parse-consume-token-any))
+	       (hopjs-parse-peek-token)))
 	    (t
 	     tok))))
        ((function function* service)
@@ -544,7 +564,8 @@
 		(let ((tok (hopjs-parse-consume-token-any)))
 		  (if (eq (hopjs-parse-peek-token-type) 'ident)
 		      (hopjs-parse-consume-token-any)
-		    (hopjs-parse-args))))
+		    (when (hopjs-parse-args)
+		      (hopjs-parse-peek-token)))))
 	       ((not etok)
 		tok)
 	       ((memq (hopjs-parse-token-type etok) '(ident dollar))
