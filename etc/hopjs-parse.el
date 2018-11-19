@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun Nov 18 15:03:19 2018 (serrano)                */
+;*    Last change :  Mon Nov 19 11:54:39 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -48,7 +48,7 @@
 	 (id_start "[[:alpha:][:multibyte:][:nonascii:]$_]")
 	 (id_start_u "[[:multibyte:][:alnum:][:nonascii:]$_]")
 	 (letter "[[:alpha:][:nonascii:]]")
-	 (tagid (rx: "[[:digit:]]*" "[[:alnum:]_]" (rx* "[[:alnum:]_.]*"))))
+	 (tagid (rx: "[[:digit:]]*" "[[:alnum:]_]" (rx* "[[:alnum:]_.:]*"))))
     (list
      ;; blank
      (cons "[ \t\n]+" 'blank)
