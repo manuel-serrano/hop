@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Sun Nov 18 14:54:28 2018 (serrano)                */
+;*    Last change :  Mon Nov 19 14:28:33 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -449,7 +449,7 @@
      (hopjs-parse-goto-token tok 1)
      (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.1 -> %s" (point))
      (let ((pos (hopjs-parse-backward-sexp)))
-       (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.2 -> %s %c"
+       (hopjs-debug 0 "hopjs-indent-new-rbrace sexp.2 -> %s %s"
 		    (point) (char-after (- (point) 1)))
        (cond
 	((memq (char-after (- (point) 2)) '(?~ ?$))
