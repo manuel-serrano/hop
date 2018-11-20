@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Mon Nov 19 14:28:33 2018 (serrano)                */
+;*    Last change :  Tue Nov 20 09:56:28 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -156,6 +156,11 @@
 	    ((return)
 	     (hopjs-indent-column-token
 	      (hopjs-parse-peek-token) hopjs-indent-level))
+	    ((= colon)
+	     (let ((etok (hopjs-parse-expr (hopjs-parse-consume-token-any))))
+	       (if etok
+		   (hopjs-indent-column-token etok hopjs-indent-level)
+		 (hopjs-indent-column-token tok hopjs-indent-level))))
 	    (t
 	     (hopjs-debug 0 "hopjs-indent-new-lbrace args.IDENT.5..%s [%s]"
 			  itok (hopjs-parse-token-string itok))
@@ -271,6 +276,10 @@
 	       (hopjs-indent-column-token (or etok ctok) hopjs-indent-level)))
 	    (t
 	     (hopjs-indent-column-token itok hopjs-indent-level)))))
+       ((text)
+	(beginning-of-line)
+	(skip-chars-forward "\t ")
+	(+ (current-column) hopjs-indent-level))
        (t
 	(hopjs-indent-column-token tok hopjs-indent-level)))))))
 
@@ -628,13 +637,8 @@
   (with-debug
    "hopjs-indent-new-comma...%s peek=%s" tok
    (hopjs-parse-peek-token)
-   (mcond
-;*     ((and (eq (hopjs-parse-peek-token-type) 'rbrace)                */
-;* 	  (hopjs-indent-first-on-linep (hopjs-parse-peek-token)))      */
-;*      (hopjs-indent-column-token (hopjs-parse-peek-token) 0))        */
-    ((hopjs-parse-expr (hopjs-parse-peek-token))
-     =>
-     #'(lambda (etok)
+   (let ((etok (hopjs-parse-expr (hopjs-parse-peek-token))))
+     (if etok
 	 (letn loop ((etok etok))
 	       (hopjs-debug 0 "hopjs-indent-new-comma etok=%s [%s] -> peek=%s"
 			    etok
@@ -654,8 +658,8 @@
 		 ((colon)
 		  (let ((tok (hopjs-parse-consume-token-any)))
 		    (hopjs-debug 0 "hopjs-indent-new-comma expr.colon tok=%s peek=%s"
-			    tok
-			    (hopjs-parse-peek-token))
+				 tok
+				 (hopjs-parse-peek-token))
 		    (let ((etok (hopjs-parse-expr (hopjs-parse-peek-token))))
 		      (hopjs-debug 0 "hopjs-indent-new-comma expr.colon.expr etok=%s peek=%s" etok (hopjs-parse-peek-token))
 		      (if etok
@@ -671,9 +675,8 @@
 		  (hopjs-indent-column-token
 		   (hopjs-parse-peek-token) hopjs-indent-level))
 		 (t
-		  0)))))
-    (t
-     0))))
+		  0)))
+       0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-semicolon ...                                   */
@@ -1088,6 +1091,17 @@
       (beginning-of-line)
       (when (looking-at "[ \t]*[^ \t]")
 	(= (match-end 0) (+ pos 1))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-last-on-linep ...                                   */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-last-on-linep (pos-or-tok)
+  (save-excursion
+    (let ((pos (if (numberp pos-or-tok)
+		   pos-or-tok
+		 (hopjs-parse-token-end pos-or-tok))))
+      (goto-char pos)
+      (looking-at "[ \t]*$"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-pos-column ...                                      */

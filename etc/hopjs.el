@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Nov 19 12:10:41 2018 (serrano)                */
+;*    Last change :  Tue Nov 20 09:38:17 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -357,88 +357,94 @@
 (defun hopjs-close-paren-tag ()
   "Close parenthesis or tag"
   (interactive)
-  (let* ((pe (parse-partial-sexp
-	      (point)
-	      (save-excursion (hopjs-beginning-of-defun) (point))))
-	 (bra (cadr pe))
-	 (tag (when (hopjs-html-p (point)) (hopjs-find-opening-tag (point))))
-	 (beg (match-beginning 0))
-	 (end (match-end 0)))
-    (cond
-     ((and tag (or (not bra) (> end bra)))
-      (cond
-       ((hopjs-pos-eolp end)
-	;; tag at the beginning of line
-	(unless (hopjs-blank-line-p (point))
-	  (indent-for-tab-command)
-	  (insert "\n"))
-	(insert "</" tag ">")
-	(newline-and-indent))
-       ((hopjs-pos-bolp beg)
-	;; tag at the end of line
-	(if (hopjs-same-line-p beg (point))
-	    (insert "</" tag ">")
-	  (progn
-	    (unless (hopjs-blank-line-p (point))
-	      (indent-for-tab-command)
-	      (insert "\n"))
-	    (insert "</" tag ">")
-	    (newline-and-indent))))
-       (t
-	(insert "</" tag ">")
-	(newline-and-indent))))
-     ((and bra (> bra 0))
-      ;; no opening tag
-      (case (char-after (cadr pe))
-	((?{)
-	 (when (save-excursion (goto-char (cadr pe)) (looking-at "{[ \t]*$"))
-	   (unless (hopjs-blank-line-p (point))
-	     (newline-and-indent)))
-	 (hopjs-electric-brace))
-	((?\()
-	 (when (save-excursion (goto-char (cadr pe)) (looking-at "[(][ \t]*$"))
-	   (unless (hopjs-blank-line-p (point))
-	     (newline-and-indent)))
-	 (hopjs-electric-paren))
-	((?\[) (insert "]"))))
-     (t
+;*   (let* ((pe (parse-partial-sexp                                    */
+;* 	      (point)                                                  */
+;* 	      (save-excursion (hopjs-beginning-of-defun) (point))))    */
+;* 	 (bra (cadr pe))                                               */
+;* 	 (tag (when (hopjs-html-p (point)) (hopjs-find-opening-tag (point)))) */
+;* 	 (beg (match-beginning 0))                                     */
+;* 	 (end (match-end 0)))                                          */
+;*     (cond                                                           */
+;*      ((and tag (or (not bra) (> end bra)))                          */
+;*       (cond                                                         */
+;*        ((hopjs-pos-eolp end)                                        */
+;* 	;; tag at the beginning of line                                */
+;* 	(unless (hopjs-blank-line-p (point))                           */
+;* 	  (indent-for-tab-command)                                     */
+;* 	  (insert "\n"))                                               */
+;* 	(insert "</" tag ">")                                          */
+;* 	(newline-and-indent))                                          */
+;*        ((hopjs-pos-bolp beg)                                        */
+;* 	;; tag at the end of line                                      */
+;* 	(if (hopjs-same-line-p beg (point))                            */
+;* 	    (insert "</" tag ">")                                      */
+;* 	  (progn                                                       */
+;* 	    (unless (hopjs-blank-line-p (point))                       */
+;* 	      (indent-for-tab-command)                                 */
+;* 	      (insert "\n"))                                           */
+;* 	    (insert "</" tag ">")                                      */
+;* 	    (newline-and-indent))))                                    */
+;*        (t                                                           */
+;* 	(insert "</" tag ">")                                          */
+;* 	(newline-and-indent))))                                        */
+;*      ((and bra (> bra 0))                                           */
+;*       ;; no opening tag                                             */
+;*       (case (char-after (cadr pe))                                  */
+;* 	((?{)                                                          */
+;* 	 (when (save-excursion (goto-char (cadr pe)) (looking-at "{[ \t]*$")) */
+;* 	   (unless (hopjs-blank-line-p (point))                        */
+;* 	     (newline-and-indent)))                                    */
+;* 	 (hopjs-electric-brace))                                       */
+;* 	((?\()                                                         */
+;* 	 (when (save-excursion (goto-char (cadr pe)) (looking-at "[(][ \t]*$")) */
+;* 	   (unless (hopjs-blank-line-p (point))                        */
+;* 	     (newline-and-indent)))                                    */
+;* 	 (hopjs-electric-paren))                                       */
+;* 	((?\[) (insert "]"))))                                         */
+;*      (t                                                             */
       (let ((pos (point)))
 	(hopjs-parse-start (point))
 	(letn loop ((depth 0))
 	      (let ((tok (hopjs-parse-consume-token-any)))
+		(hopjs-debug 0 "---- close tok=%s depth=%s" tok depth)
 		(case (hopjs-parse-token-type tok)
-		  ((rbracket rparen rbrace ctag)
+		  ((rbracket rparen rbrace ctag chtml)
 		   (funcall loop (+ depth 1)))
-		  ((lparen lbrace)
-		   (if (= depth 0)
-		       (hopjs-electric-paren)
-		     (funcall loop (- depth 1))))
-		  ((lbracket)
-		   (if (= depth 0)
-		       "]"
-		     (funcall loop (- depth 1))))
-		  ((ohtml otag)
-		   (if (= depth 0)
-		       (let ((str (hopjs-parse-token-string tok)))
+		  ((ohtml otag lparen lbracket lbrace tilde dollar)
+		   (if (> depth 0)
+		       (funcall loop (- depth 1))
+		     (progn
 			 (goto-char pos)
 			 (cond
 			  ((hopjs-blank-line-p (point))
 			   (beginning-of-line))
 			  ((hopjs-pos-eolp (hopjs-parse-token-end tok))
 			   (newline)))
-			 (insert "</"
-				 (substring
-				  str
-				  1
-				  (- (length str)
-				     (if (eq (hopjs-parse-token-type tok) 'otag)
-					 1 0)))
-				 ">")
+			 (case (hopjs-parse-token-type tok)
+			   ((ohtml otag)
+			    (let ((str (hopjs-parse-token-string tok)))
+			      (insert "</"
+				      (substring
+				       str
+				       1
+				       (- (length str)
+					  (if (eq (hopjs-parse-token-type tok) 'otag)
+					      1 0)))
+				      ">")))
+			   ((lparen)
+			    (insert ")"))
+			   ((lbracket)
+			    (insert "]"))
+			   (t
+			    (insert "}")))
 			 (indent-for-tab-command)
-			 (newline-and-indent))
-		     (funcall loop (- depth 1))))
+			 (when (or (hopjs-indent-first-on-linep tok)
+				   (hopjs-indent-last-on-linep tok))
+			   (newline-and-indent)))
+		     ))
 		  (t
-		   (funcall loop depth))))))))))
+		   (funcall loop depth)))))))
+;* )))                                                                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-statement ...                                       */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sun Nov 18 14:52:28 2018 (serrano)                */
+/*    Last change :  Tue Nov 20 09:55:44 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -27,6 +27,30 @@ or
 (hopjs-indent-test)
 */
 
+
+// ok
+module.exports = hiphop machine( in A, in B, in R, out O ) {
+   do {
+      fork {
+	 yield;
+      	 emit A();
+      }
+   }
+}
+
+// ok
+abro.css = <style>
+  #hh-abro #listener {
+     opacity: 0;
+     transition: 1s all;
+  }
+  #hh-abro[data-step="1"] #listener {
+     opacity: 1;
+     transition: 1s all;
+  }
+</style>  
+
+// ok
 <style>
   #id .fll {
      color: red;
