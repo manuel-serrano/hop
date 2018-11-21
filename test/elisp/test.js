@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Nov 21 06:08:31 2018 (serrano)                */
+/*    Last change :  Wed Nov 21 10:21:53 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -27,7 +27,30 @@ or
 (hopjs-indent-test)
 */
 
-// ok
+// bad text parsing
+const login = <impress.slide title="Login"
+  			     id="hh-login"
+			     class="hh"
+			     data-y=0>
+  <div class="slide-title"><span class="titlekey">Login: a Case Study</span></div>
+  <div class="javascript code">
+    <tt class="filename">./specification.txt</tt>
+    ${x}
+  </div>
+</impress.slide>
+
+// comma and binop
+function() {
+   if( mach.profile ) {
+      const profend = Date.now();
+      console.error( "reaction duration: " + (profend - profstart),
+	 " comptime: " + (profcomp - profstart),
+	 " propagation: "+ (profpropend - profpropstart),
+	 " exec: " + (profpropend - profexecstart ));
+   }
+}      
+
+// case
 function() {
    switch(msgRecu.type) {
       

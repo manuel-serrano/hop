@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Wed Nov 21 06:15:39 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 11:02:17 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -240,7 +240,7 @@
 	      (progn
 		(goto-char (hopjs-parse-token-end tok))
 		(setq tokens (cons tok tokens)))))
-	   ((looking-at "[^ \t\n;]+")
+	   ((looking-at "[^ \t\n;<>]+")
 	    (let ((tok (hopjs-parse-token
 			'text (match-beginning 0) (match-end 0))))
 	      (setq tokens (cons tok tokens))
@@ -516,7 +516,7 @@
 		       tok
 		       (hopjs-parse-token-string tok)
 		       (hopjs-parse-peek-token-type))
-	  (hopjs-parse-expr (hopjs-parse-consume-token-any))))
+	  (hopjs-parse-expr (hopjs-parse-peek-token))))
        ((number string)
 	(let ((tok (hopjs-parse-consume-token-any)))
 	  (case (hopjs-parse-peek-token-type)
@@ -552,10 +552,8 @@
 		btok)
 	       ((not etok)
 		tok)
-	       ((memq (hopjs-parse-token-type etok) '(ident dollar))
-		etok)
 	       (t
-		tok)))
+		etok)))
 	  '()))
        ((rbrace)
 	(goto-char (hopjs-parse-token-end tok))

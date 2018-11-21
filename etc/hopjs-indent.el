@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Wed Nov 21 06:09:30 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 10:21:40 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -42,7 +42,7 @@
      (let ((tok (hopjs-parse-consume-token-any)))
        (if (eq (hopjs-parse-token-type tok) 'eol-comment)
 	   (hopjs-indent (- (hopjs-parse-token-beginning tok) 1))
-	 0)))))
+	 '())))))
   
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new ...                                             */
@@ -132,7 +132,7 @@
 (defun hopjs-indent-new-as-previous (tok)
   (with-debug
    "hopjs-indent-new-as-previous tok=%s" tok
-   (goto-char (hopjs-parse-token-beginning))
+   (goto-char (hopjs-parse-token-beginning tok))
    (skip-chars-forward " \t")
    (current-column)))
 
