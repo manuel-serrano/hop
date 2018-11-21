@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Tue Nov 20 09:55:44 2018 (serrano)                */
+/*    Last change :  Tue Nov 20 13:32:11 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -26,6 +26,63 @@ ESC-x: hopjs-indent-test
 or
 (hopjs-indent-test)
 */
+
+// ok
+function() {
+   switch(msgRecu.type) {
+      
+      case "abletonPseudo":
+	 break;
+ 	 
+      case "abletonReloadConfAgit":
+	 ableton.initAbletonTable("./pieces/controleAbletonAgitV2.csv");
+	 break;
+	 
+      case "abletonReloadConfMortDuGolem":
+	 ableton.initAbletonTable("./pieces/controleAbletonMortDuGolemV2.csv");
+	 break;
+   }
+}
+
+// pok
+function foo( a, b ) {
+   #:tprint( a );
+   tprint( b );
+}
+
+// ok
+function makeAutomatePossibleMachine () {
+   function creationModule( lesSons ) {
+      return hiphop module automateDesPossibles(in tick, in abletonON)
+	 implements 
+	 automateInt.creationInterfaces(lesSons[0]),
+	 automateInt.creationInterfaces(lesSons[1]),
+	 automateInt.creationInterfaces(lesSons[2])  {
+   	    fork {
+      	       //run spy(...);
+   	    } par {
+      	       every ( immediate abletonON.now) {
+	 	  if ( nowval( abletonON) === 1) {
+	    	     run automateUn.trajetModule( ... );
+	 	  } else if  ( nowval(abletonON) === 2){
+	      	       run automateDeux.trajetModule(...);
+	   	    } else if ( nowval(abletonON) === 3){
+			 run automateTrois.trajetModule(...);
+	     	      }
+      	       }
+   	    }
+	 }
+   }
+   
+   var  machine = new hh.ReactiveMachine( creationModule( par.groupesDesSons) );
+   for (var j=0; j < par.groupesDesSons.length; j ++) {
+      for (var i=0; i < par.groupesDesSons[j].length; i++) {
+	 var signal = par.groupesDesSons[j][i][0] + "OUT";
+	 
+	 if (debug) console.log("Addeventlisterner:signal:",signal);
+      }
+   }
+}
 
 
 // ok

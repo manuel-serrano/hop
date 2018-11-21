@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Mon Oct  8 19:36:13 2018 (serrano)                */
+;*    Last change :  Tue Nov 20 16:06:16 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -125,6 +125,7 @@
 	 (any nop)))
      (array
 	((scmstring ,js->scmstring)
+	 (bool ,(lambda (v expr conf) #t))
 	 (any nop)))
      (arguments
 	((scmstring ,js->scmstring)

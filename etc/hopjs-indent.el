@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Tue Nov 20 09:56:28 2018 (serrano)                */
+;*    Last change :  Tue Nov 20 14:16:06 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -325,7 +325,7 @@
 	    (goto-char (+ 1 (hopjs-parse-token-end (hopjs-parse-peek-token))))
 	    (current-column))
 	   (t
-	    '()))))
+	    (hopjs-indent-column-token etok 0)))))
     (t
      '()))))
 
@@ -674,6 +674,8 @@
 		 ((var let const)
 		  (hopjs-indent-column-token
 		   (hopjs-parse-peek-token) hopjs-indent-level))
+		 ((rparen)
+		  (hopjs-indent-column-token etok 0))
 		 (t
 		  0)))
        0))))
@@ -755,7 +757,9 @@
 		      (hopjs-indent-new pos)
 		    (hopjs-indent-column-token etok 0)))))
 	   ((colon)
-	    (hopjs-indent-new-idents 0))
+	    (if (hopjs-parse-same-linep (hopjs-parse-peek-token) etok)
+		(hopjs-indent-new-idents 0)
+	      (hopjs-indent-column-token etok 0)))
 	   (t
 	    (hopjs-indent-column-token etok 0)))))
     (t

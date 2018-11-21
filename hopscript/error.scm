@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/error.scm     */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/error.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Aug 28 09:07:54 2018 (serrano)                */
+;*    Last change :  Tue Nov 20 14:45:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -565,14 +565,15 @@
 			   (js-get this 'message %this)
 			   (js-undefined)))
 		 (msg6 (if (eq? msg5 (js-undefined))
-			   ""
-			   (js-tostring msg5 %this))))
-	     (cond
-		((js-jsstring-null? name4) (js-string->jsstring msg6))
-		((string=? msg6 "") name4)
-		(else
-		 (js-stringlist->jsstring
-		    (list (js-jsstring->string name4) ": " msg6)))))))
+			   (js-string->jsstring "")
+			   msg5))
+		 (msg7 (if (isa? this JsError)
+			   (with-access::JsError this (fname location)
+			      (js-string->jsstring
+				 (format " (~a:~a)" fname location)))
+			   (js-string->jsstring ""))))
+	     (js-stringlist->jsstring
+		(list name4 ": " msg6 msg7)))))
       
    (js-bind! %this obj 'toString
       :value (js-make-function %this error-prototype-tostring 1 'toString)

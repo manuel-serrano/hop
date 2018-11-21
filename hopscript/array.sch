@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/array.sch     */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/array.sch               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Mon Aug 20 07:53:31 2018 (serrano)                */
+;*    Last change :  Tue Nov 20 17:34:32 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
@@ -79,6 +79,7 @@
 	      (vector-set-ur! ,avec ,i ,v)
 	      (let ((,tmp (js-array-set! ,arr ,i ,v ,throw ,%this)))
 		 (set! ,alen (js-array-ilen ,arr))
+		 (set! ,avec (js-array-vec ,arr))
 		 ,tmp))))
 
    (%make-set idx val set))

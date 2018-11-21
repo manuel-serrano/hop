@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Wed Aug  8 08:02:43 2018 (serrano)                */
+;*    Last change :  Tue Nov 20 16:01:42 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -331,10 +331,20 @@
 ;*    j2sdecl-duplicate ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2sdecl-duplicate p::J2SDecl)
-   (if (isa? p J2SDeclInit)
+   (cond
+      ((isa? p J2SDeclFunType)
+       (with-access::J2SDeclFun p (val)
+	  (duplicate::J2SDeclFunType p
+	     (key (ast-decl-key)))))
+      ((isa? p J2SDeclFun)
+       (with-access::J2SDeclFun p (val)
+	  (duplicate::J2SDeclFun p
+	     (key (ast-decl-key)))))
+      ((isa? p J2SDeclInit)
        (with-access::J2SDeclInit p (val)
 	  (duplicate::J2SDeclInit p
-	     (key (ast-decl-key))))
+	     (key (ast-decl-key)))))
+      (else
        (duplicate::J2SDecl p
-	  (key (ast-decl-key)))))
+	  (key (ast-decl-key))))))
 
