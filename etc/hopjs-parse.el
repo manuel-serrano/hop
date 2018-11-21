@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Wed Nov 21 11:02:17 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 15:46:01 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -467,13 +467,13 @@
      (case (hopjs-parse-peek-token-type)
        ((rbracket)
 	(goto-char (hopjs-parse-token-end tok))
-	(hopjs-debug 0 "hopjs-parse-expr-simple.rbracket point=%s" (point))
+	(hopjs-debug 0 "hopjs-parse-expr-simple.rbracket.1 point=%s" (point))
 	(if (hopjs-parse-backward-sexp)
 	    (let* ((tok (hopjs-parse-consume-and-peek-token))
 		   (etok (hopjs-parse-expr-simple tok)))
-	      (hopjs-debug 0 "hopjs-parse-expr-simple.rbracket %s [%s] etok=%s %s"
+	      (hopjs-debug 0 "hopjs-parse-expr-simple.rbracket.2 %s [%s] etok=%s %s"
 			   tok (hopjs-parse-token-string tok)
-			   etok (hopjs-parse-token-string etok))
+			   etok (and etok (hopjs-parse-token-string etok)))
 	      (or etok tok))))
        ((new)
 	(hopjs-parse-consume-token-any))

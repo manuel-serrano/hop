@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Nov 21 10:21:53 2018 (serrano)                */
+/*    Last change :  Wed Nov 21 15:14:20 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -26,6 +26,44 @@ ESC-x: hopjs-indent-test
 or
 (hopjs-indent-test)
 */
+
+
+// return literal
+exports[ Symbol.compiler ] = (file, options) => {
+   const fd = fs.openSync( options.target, "r" );
+   try {
+      const val = fs.readFileSync( file, "utf8", function ( err, data ) {
+	 if( !err ) {
+	    return {
+	       type: "value",
+	       value: data.replace( /#[^#]*#/g, "" )
+	    };
+	 } else {
+	    return {
+	       type: "error",
+	       value: err
+	    }
+	 }
+      } );
+   } finally {
+      fs.closeSync( fd );
+   }
+}
+
+// indenting arrow function after equal sign
+exports[ Symbol.compiler ] = (file, options) => {
+   const val = fs.readFileSync( "foo.txt" );
+}
+
+// bar function lbrace indent
+ReactiveMachine.prototype.Promise =
+   function( signame ) {
+      return new Promise( function( resolve, reject ) {
+      	 m.addEventListener( signame, function( evt ) {
+	    resolve( evt.signalValue );
+         } );
+      } );
+   };
 
 // bad text parsing
 const login = <impress.slide title="Login"
@@ -634,7 +672,7 @@ enableLogin = __hh_module.MODULE(
 			    var hhaxs8671;
 			    var hhaxs8672;
 			 }
-			 })
+			})
       );
 
 // ok
