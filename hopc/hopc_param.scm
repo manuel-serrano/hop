@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Sep  6 07:48:46 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 08:49:32 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -41,6 +41,8 @@
 	    (hopc-destination-set! ::obj)
 	    (hopc-temp::obj)
 	    (hopc-temp-set! ::obj)
+
+	    (hopc-pipe-filesize-threshold::elong)
 
 	    (hopc-share-directory::bstring)
 	    (hopc-share-directory-set! ::bstring)
@@ -103,6 +105,8 @@
 
 	    (hopc-source-ast::obj)
 	    (hopc-source-ast-set! ::obj)
+	    (hopc-source-ast-file::obj)
+	    (hopc-source-ast-file-set! ::obj)
 	    
 	    (hopc-js-header::obj)
 	    (hopc-js-header-set! ::obj)
@@ -194,6 +198,15 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-temp
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-pipe-filesize-threshold ...                                 */
+;*    -------------------------------------------------------------    */
+;*    The file size threshold above which ast transmitted via          */
+;*    temporary files (otherwise serialized on Bigloo stdin).          */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-pipe-filesize-threshold
+   #e65536)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-share-directory ...                                         */
@@ -321,6 +334,12 @@
 ;*    hopc-source-ast ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-source-ast
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-source-ast-file ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-source-ast-file
    #f)
 
 ;*---------------------------------------------------------------------*/

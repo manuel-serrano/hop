@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Tue Nov 20 13:32:11 2018 (serrano)                */
+/*    Last change :  Wed Nov 21 06:08:31 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -44,7 +44,7 @@ function() {
    }
 }
 
-// pok
+// ok
 function foo( a, b ) {
    #:tprint( a );
    tprint( b );

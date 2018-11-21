@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Nov 15 10:19:25 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 06:46:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2142,6 +2142,14 @@
 			      (nodes (reverse! rev-stats)))
 			   (loop (cons (statement) rev-stats)))
 		       (loop (cons (statement) rev-stats))))
+		  ((class)
+		   (loop (cons (class-declaration) rev-stats)))
+		  ((RESERVED)
+		   (let ((stmt (case (peek-token-value)
+				  ((import) (import (consume-any!)))
+				  ((export) (export (consume-any!)))
+				  (else (statement)))))
+		      (loop (cons stmt rev-stats))))
 		  (else
 		   (loop (cons (statement) rev-stats))))))))
 

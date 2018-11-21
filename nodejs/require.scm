@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Nov 15 07:12:38 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 07:21:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -31,7 +31,8 @@
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-load src ::bstring ::obj ::obj ::WorkerHopThread #!optional lang srcalias)
+	   (nodejs-load src ::bstring ::obj ::obj ::WorkerHopThread
+	      #!key lang srcalias commonjs-export)
 	   (nodejs-bind-export!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-abort-all!)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
@@ -590,7 +591,7 @@
 (define (nodejs-import-module::JsModule worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject
 	   path::bstring checksum::long loc)
-   (let ((mod (nodejs-load-module path worker %this %module "hopscript")))
+   (let ((mod (nodejs-load-module path worker %this %module :commonjs-export #t)))
       (with-access::JsModule mod ((mc checksum))
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
 	     mod
@@ -907,8 +908,9 @@
 ;*    debug-compile-trace ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (debug-compile-trace filename)
-   (when (>=fx (bigloo-debug) 4)
-      (display "** " (current-error-port))
+   (when (or (>=fx (bigloo-debug) 2)
+	     (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile"))
+      (display "compiling: " (current-error-port))
       (display filename (current-error-port))
       (newline (current-error-port))))
 
@@ -939,6 +941,7 @@
 			:verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 			:plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 			:commonjs-export commonjs-export
+			:es6-module-client #t
 			:debug (bigloo-debug))
 		     (close-mmap m)))))))
    
@@ -961,6 +964,7 @@
 		  :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 		  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 		  :commonjs-export commonjs-export
+		  :es6-module-client #t
 		  :debug (bigloo-debug))))))
 
    (define (compile-ast ast::J2SProgram mod)
@@ -983,6 +987,7 @@
 		     :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 		     :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 		     :commonjs-export commonjs-export
+		     :es6-module-client #t
 		     :debug (bigloo-debug))
 		  (when (mmap? m)
 		     (close-mmap m)))))))
@@ -1327,21 +1332,23 @@
 	    (newline op)
 	    (display msg op))))
    
-   (define (make-ksucc sopath sopathtmp)
+   (define (make-ksucc sopath sopathtmp misctmp)
       (lambda ()
 	 (let ((o (string-append (prefix sopathtmp) ".o")))
 	    (when (file-exists? o) (delete-file o))
 	    (rename-file sopathtmp sopath)
+	    (when (and misctmp (file-exists? misctmp)) (delete-file misctmp))
 	    sopath)))
    
-   (define (make-kfail sopath sopathtmp)
+   (define (make-kfail sopath sopathtmp misctmp)
       (lambda ()
 	 (let ((o (string-append (prefix sopathtmp) ".o"))
 	       (c (string-append (prefix sopathtmp) ".c")))
 	    (when (file-exists? o) (delete-file o))
 	    (when (file-exists? c) (delete-file c)))
 	 (when (file-exists? sopath) (delete-file sopath))
-	 (when (file-exists? sopathtmp) (delete-file sopathtmp))))
+	 (when (file-exists? sopathtmp) (delete-file sopathtmp))
+	 (when (and misctmp (file-exists? misctmp)) (delete-file misctmp))))
    
    (with-trace 'sorequire (format "nodejs-socompile ~a" filename)
       (let loop ()
@@ -1370,6 +1377,9 @@
 			  (sopathtmp (make-file-name
 					(dirname sopath)
 					(string-append "#" (basename sopath))))
+			  (astfile (when (isa? src J2SProgram)
+				     (make-file-name (dirname sopath)
+					(string-append (basename filename) ".ast"))))
 			  (cmd `(,(hop-hopc)
 				  ;; bigloo
 				  ,(format "--bigloo=~a" (hop-bigloo))
@@ -1382,7 +1392,11 @@
 				       ((string? src)
 					(list src))
 				       ((isa? src J2SProgram)
-					`(,filename "--ast" ,(string-for-read (obj->string src))))
+					`(,filename "--ast-file" ,astfile))
+;* 				       ((isa? src J2SProgram)          */
+;* 					`(,filename "--ast"            */
+;* 					    ,(string-for-read          */
+;* 						(obj->string src))))   */
 				       (else
 					(error "nodejs-socompile"
 					   (format "bad source format `~a'" (typeof src)) filename)))
@@ -1408,12 +1422,17 @@
 					'())
 				  ;; other options
 				  ,@(call-with-input-string (hop-hopc-flags) port->string-list)))
-			  (ksucc (make-ksucc sopath sopathtmp))
-			  (kfail (make-kfail sopath sopathtmp)))
+			  (ksucc (make-ksucc sopath sopathtmp astfile))
+			  (kfail (make-kfail sopath sopathtmp astfile)))
 		      (make-directories (dirname sopath))
+		      (when astfile
+			 (call-with-output-file astfile
+			    (lambda (out)
+			       (display (obj->string src) out))))
 		      (trace-item "sopath=" sopath)
 		      (trace-item "sopathtmp=" sopathtmp)
 		      (trace-item "cmd=" cmd)
+		      (debug-compile-trace filename)
 		      (hop-verb 3 (hop-color -2 -2 " COMPILE") " "
 			 (format "~( )\n"
 			    (map (lambda (s)
@@ -1463,12 +1482,12 @@
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load src filename %ctxthis %ctxmodule worker::WorkerHopThread
-	   #!optional lang srcalias)
+	   #!key lang srcalias commonjs-export)
 
    (define (loadso-or-compile filename lang worker-slave)
       (if worker-slave
 	  (nodejs-compile src filename %ctxthis %ctxmodule
-	     :lang lang :worker-slave #t)
+	     :lang lang :worker-slave #t :commonjs-export commonjs-export)
 	  (let loop ((sopath (find-new-sofile filename)))
 	     (cond
 		((string? sopath)
@@ -1485,15 +1504,15 @@
 		    ((nte nte1 nte+)
 		     (nodejs-socompile-queue-push filename lang)
 		     (nodejs-compile src filename %ctxthis %ctxmodule
-			:lang lang))
+			:lang lang :commonjs-export commonjs-export))
 		    (else
 		     (nodejs-compile src filename %ctxthis %ctxmodule
-			:lang lang))))
+			:lang lang :commonjs-export commonjs-export))))
 		(else
 		 (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
 		    (nodejs-socompile-queue-push filename lang))
 		 (nodejs-compile src filename %ctxthis %ctxmodule
-		    :lang lang))))))
+		    :lang lang :commonjs-export commonjs-export))))))
 
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
@@ -1651,7 +1670,8 @@
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load-module path::bstring worker::WorkerHopThread
-	   %this %module #!optional (lang "hopscript") compiler)
+	   %this %module
+	   #!key (lang "hopscript") compiler commonjs-export)
    
    (define (load-json path)
       (let ((mod (nodejs-new-module path path worker %this))
@@ -1703,7 +1723,8 @@
 	  (load-json path))
 	 (else
 	  (let ((mod (nodejs-load src path %this %module worker
-			lang srcalias)))
+			:lang lang :srcalias srcalias
+			:commonjs-export commonjs-export)))
 	     (unless (js-get mod 'parent %this)
 		;; parent and children
 		(let* ((children (js-get %module 'children %this))
@@ -1731,7 +1752,8 @@
 	   %this %module #!optional (lang "hopscript") compiler)
    (with-trace 'require (format "nodejs-require-module ~a" name)
       (let* ((path (nodejs-resolve name %this %module 'body))
-	     (mod (nodejs-load-module path worker %this %module lang compiler))
+	     (mod (nodejs-load-module path worker %this %module
+		     :lang lang :compiler compiler))
 	     (exports (js-get mod 'exports %this)))
 	 (trace-item "exports=" (typeof exports))
 	 exports)))

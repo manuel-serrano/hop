@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Oct 23 10:37:03 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 08:15:47 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -76,7 +76,6 @@
 	     (js-binop2 loc op type lhs rhs mode return conf)))
 	 ((and (memq op '(* - / >> << >>> & BIT_OR ^))
 	       (memq type '(int32 uint32)))
-	  (tprint "BINARY-AS " op " " type)
 	  (epairify-deep loc
 	     (js-binop2 loc op type lhs rhs mode return conf)))
 	 (else

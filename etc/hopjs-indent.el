@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Tue Nov 20 14:16:06 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 06:09:30 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -25,11 +25,25 @@
   (with-debug
    "hopjs-indent line=%s pos=%s" (line-number-at-pos pos) pos
    (cond
-    ((hopjs-indent-in-commentp pos) nil)
+    ((hopjs-indent-in-commentp pos) (hopjs-indent-comment pos))
     ((= (point-min) pos) 0)
     ((hopjs-blank-line-p pos) (hopjs-indent-new pos))
     (t (hopjs-indent-old pos)))))
 
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-comment ...                                         */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-comment (pos)
+  (interactive "d")
+  (with-debug
+   "hopjs-indent-new pos=%s" pos
+   (save-excursion
+     (hopjs-parse-start (point))
+     (let ((tok (hopjs-parse-consume-token-any)))
+       (if (eq (hopjs-parse-token-type tok) 'eol-comment)
+	   (hopjs-indent (- (hopjs-parse-token-beginning tok) 1))
+	 0)))))
+  
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new ...                                             */
 ;*    -------------------------------------------------------------    */
@@ -68,10 +82,11 @@
 		      ((=) (hopjs-indent-new-= tok))
 		      ((binop) (hopjs-indent-new-binop tok))
 		      ((return) (hopjs-indent-new-return tok))
-		      ((comment) (hopjs-indent-new-comment tok))
+		      ((eol-comment comment) (hopjs-indent-new-comment tok))
 		      ((qmark) (hopjs-indent-new-qmark tok))
-		      ((=>) (hopjs-indent-new-=> tok)))))
-	   (or col 0)))))))
+		      ((=>) (hopjs-indent-new-=> tok))
+		      (t (hopjs-indent-new-as-previous tok)))))
+	   (or col )))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-old ...                                             */
@@ -110,6 +125,16 @@
       (t
        (hopjs-debug 0 "hopjs-indent-old default...")
        (or (hopjs-indent-new pos) 0))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-new-as-previous ...                                 */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-new-as-previous (tok)
+  (with-debug
+   "hopjs-indent-new-as-previous tok=%s" tok
+   (goto-char (hopjs-parse-token-beginning))
+   (skip-chars-forward " \t")
+   (current-column)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-lbrace ...                                      */

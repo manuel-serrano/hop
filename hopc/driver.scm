@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Oct  8 15:13:51 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 08:36:16 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -272,6 +272,29 @@
 	    (process-wait proc)
             (process-exit-status proc)))
 
+      (define (compile-temp-ast opts comp file temp)
+	 (call-with-output-file temp comp)
+	 (let* ((baseopts (cons "-fread-internal-src"
+			     (append (srfi-opts) opts)))
+		(opts (if (string? file)
+			  (cons* "-fread-internal-src-file-name" file baseopts)
+			  baseopts))
+		(proc (apply run-process (hopc-bigloo)
+			 "-suffix" "ast" temp
+			 opts))
+		(cmd (format "~a -suffix ast ~a ~l" (hopc-bigloo) temp opts))
+		(out (process-input-port proc)))
+	    (signal sigterm
+	       (lambda (sig)
+		  (process-kill proc)
+		  (exit 1)))
+	    (hop-verb 4 cmd "\n")
+	    (unwind-protect
+	       (begin
+		  (process-wait proc)
+		  (process-exit-status proc))
+	       (delete-file temp))))
+
       (define (compile-pipe opts comp file)
          (let* ((baseopts (cons "-fread-internal-src"
 			     (append (srfi-opts) opts)))
@@ -296,9 +319,15 @@
 	    (process-exit-status proc)))
 
       (define (compiler opts comp file temp)
-	 (if (string? temp)
-	     (compile-temp opts comp file temp)
-	     (compile-pipe opts comp file)))
+	 (cond
+	    ((string? temp)
+	     (compile-temp opts comp file temp))
+	    ((> (file-size file) (hopc-pipe-filesize-threshold))
+	     (compile-temp-ast opts comp file
+		(make-file-name (os-tmp)
+		   (string-append (basename file) ".ast"))))
+	    (else
+	     (compile-pipe opts comp file))))
       
       (define (compile-hop in opts file temp)
 	 (compiler
@@ -454,7 +483,7 @@
 	     ((js) 'hopscript)
 	     (else (error "hopc" "Unknown language source" src)))
 	  (hopc-source-language)))
-   
+
    (cond
       ((eq? (hopc-pass) 'client-js)
        (for-each compile-javascript (hopc-sources))
@@ -463,18 +492,20 @@
        (compile (car (hopc-sources))
 	  (string->obj (string-as-read (hopc-source-ast)))
 	  (language (car (hopc-sources)))))
-      ((not (pair? (hopc-sources)))
-       (compile #f (current-input-port)
-	  (if (eq? (hopc-source-language) 'auto)
-	      'hop
-	      (hopc-source-language))))
+      ((and (hopc-source-ast-file) (pair? (hopc-sources)))
+       (compile (car (hopc-sources))
+	  (call-with-input-file (hopc-source-ast-file)
+	     (lambda (in)
+		(string->obj (read-string in))))
+	  (language (car (hopc-sources)))))
       (else
        (let loop ((srcs (hopc-sources)))
 	  (if (null? srcs)
 	      0
 	      (let ((r (call-with-input-file (car srcs)
 			  (lambda (in)
-			     (compile (car srcs) in (language (car srcs)))))))
+			     (compile (car srcs)
+				in (language (car srcs)))))))
 		 (if (=fx r 0)
 		     (loop (cdr srcs))
 		     r)))))))

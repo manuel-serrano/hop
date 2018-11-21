@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Nov 14 09:13:52 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 07:22:50 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1317,6 +1317,9 @@
 				   a))
 			    aliases)
 		    `("} from " "'" ,path "';"))))
+	     ((* . ?alias)
+	      (list this "import * as "
+		 (symbol->string alias) " from '" path "';"))
 	     (else
 	      (cons* this "import {"
 		 (append (append-map* "," import-name->js names)

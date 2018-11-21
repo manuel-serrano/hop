@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Tue Nov 20 13:40:11 2018 (serrano)                */
+;*    Last change :  Wed Nov 21 06:15:39 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -53,7 +53,7 @@
      ;; blank
      (cons "[ \t\n]+" 'blank)
      ;; line comments
-     (cons "//[^\n]*" 'comment)
+     (cons "//[^\n]*" 'eol-comment)
      ;; comments
      (cons "/[*]\\(?:[^*]\\|[*][^/]\\)*[*]+/" 'comment)
      ;; numbers
