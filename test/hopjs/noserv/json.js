@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Aug  8 09:19:39 2018 (serrano)                */
+/*    Last change :  Thu Nov 22 18:34:15 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JSON encoding/decoding                                   */
@@ -24,6 +24,9 @@ var obj = { "Field 1": "It's Me", "Field 2": "It\'s Me Too" }
 assert.deepEqual( obj, JSON.parse( JSON.stringify( obj ) ) );
 
 assert.equal( JSON.stringify( 1/0 ), "Infinity" );
+
+var obj = [ undefined ];
+assert.deepEqual( JSON.stringify( obj ), "[null]" );
 
 /*---------------------------------------------------------------------*/
 /*    parse                                                            */

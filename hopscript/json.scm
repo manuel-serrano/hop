@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/hopscript/json.scm      */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/json.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Aug 28 09:08:39 2018 (serrano)                */
+;*    Last change :  Thu Nov 22 18:32:50 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -358,7 +358,7 @@
 	       ((eq? value #f)
 		(js-ascii->jsstring "false"))
 	       ((eq? value (js-undefined))
-		value)
+		(js-ascii->jsstring "null"))
 	       ((isa? value JsSymbolLiteral)
 		symbol)
 	       (else
