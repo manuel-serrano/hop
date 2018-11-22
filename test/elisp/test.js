@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Nov 21 15:14:20 2018 (serrano)                */
+/*    Last change :  Thu Nov 22 08:51:29 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -27,6 +27,73 @@ or
 (hopjs-indent-test)
 */
 
+// [\C-c\C-c] failure to close after iframe
+const dyn = <impress.slide title="Dynamicity"
+			   id="dyn-title"
+			   class="hh"
+			   data-y=0>
+  ${!Service.exists( "prims" ) ? require( "./prims/prims.js" ):""}
+  
+  <div id="abroMask" class="consoleMask">
+    <iframe src="/hop/prims"/>
+  
+// pok: bad tr closing    
+         <table id="slide-label">
+           <tr>
+	     <td>slow</td>
+	     <td>
+	       <input type=range 
+                      min=0 max=100 value=${100 - speed}
+		      onchange=~{pc.setSpeed( 100 - this.value )}/>
+             </td>
+	     <td>fast</td>
+	   </tr>
+	 </table>
+  
+// pok: dot indentation  
+function addNumber( G ) {
+   G.mach
+      .getElementById( "numbers" )
+      .appendChild( number( G ) )
+      .doit();
+}
+
+// pok: css indent
+#conclusion .slide-title {
+   margin-bottom: 1ex;
+}
+
+// pok: error on [Newline] after push( x );		   
+hiphop machine mach( O ) {
+   signal L = [] combine (x,y) => y.push( x );
+
+
+// pok: bad indent after fork $		   
+function forkLast( funs ) {
+   function par( f ) {
+      return hiphop async L { f( v => { this.notify( v ); } ) };
+   }
+   
+   hiphop machine mach( O ) {
+      signal L;
+      
+      fork ${ funs.map( par ) }
+	   
+      if( L.now ) {
+	 emit O( { resolve: true, val: L.nowval } );
+      } else {
+	 emit O( { resolve: false } );
+      }
+   }
+
+   return new Promise( function( resolve, reject ) {
+      mach.addEventListener( "O", v => {
+	 v.nowval.resolve ? resolve( v.nowval.val ) : reject( undefined )
+      } );
+      mach.react();
+   } );
+}
+		   
 
 // return literal
 exports[ Symbol.compiler ] = (file, options) => {
