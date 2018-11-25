@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Wed Nov 21 15:46:01 2018 (serrano)                */
+;*    Last change :  Sat Nov 24 08:49:56 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -96,6 +96,8 @@
      (cons (rx: "<" tagid "/>") 'html)
      ;; end of comment
      (cons (rxq "*/") 'ecomment)
+     ;; scheme mark
+     (cons (rxq "#:") 'scheme)
      )))
 
 (defun foo (pos)
@@ -129,6 +131,23 @@
      (hopjs-parse-token-beginning tok)
      (hopjs-parse-token-end tok))))
 
+(defun hopjs-parse-token-beginning-tag (tok)
+  (1+ (hopjs-parse-token-beginning tok)))
+
+(defun hopjs-parse-token-end-tag (tok)
+  (if (eq (hopjs-parse-token-type tok) 'ohtml)
+      (hopjs-parse-token-end tok)
+    (1- (hopjs-parse-token-end tok))))
+
+(defun hopjs-parse-token-tag (tok)
+  (if (eq (hopjs-parse-token-type tok) 'ohtml)
+      (buffer-substring-no-properties
+       (1+ (hopjs-parse-token-beginning tok))
+       (hopjs-parse-token-end tok))
+      (buffer-substring-no-properties
+       (1+ (hopjs-parse-token-beginning tok))
+       (1- (hopjs-parse-token-end tok)))))
+  
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-goto-token ...                                       */
 ;*---------------------------------------------------------------------*/
@@ -240,7 +259,7 @@
 	      (progn
 		(goto-char (hopjs-parse-token-end tok))
 		(setq tokens (cons tok tokens)))))
-	   ((looking-at "[^ \t\n;<>]+")
+	   ((looking-at "[^ \t\n;<>{}()[\]]+")
 	    (let ((tok (hopjs-parse-token
 			'text (match-beginning 0) (match-end 0))))
 	      (setq tokens (cons tok tokens))
@@ -358,6 +377,15 @@
 	  tok)))
 
 ;*---------------------------------------------------------------------*/
+;*    hopjs-parse-consume-tokens ...                                   */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-consume-tokens (lst)
+  (letn loop ((tok (hopjs-parse-consume-token-any)))
+	(if (memq (hopjs-parse-peek-token-type) lst)
+	    (funcall loop (hopjs-parse-consume-token-any))
+	  tok)))
+
+;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-consume-token ...                                    */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-consume-token (key)
@@ -420,9 +448,10 @@
 	    (hopjs-debug 0 "hopjs-parse-expr.dot dtok=%s peek=%s same=%s"
 			 dtok (hopjs-parse-peek-token)
 			 (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok))
-	    (if (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok)
-		(or (hopjs-parse-expr (hopjs-parse-peek-token)) tok)
-	      dtok)))
+	    (or (hopjs-parse-expr (hopjs-parse-peek-token)) tok)))
+;* 	    (if (hopjs-parse-same-linep (hopjs-parse-peek-token) dtok) */
+;* 		(or (hopjs-parse-expr (hopjs-parse-peek-token)) tok)   */
+;* 	      dtok)))                                                  */
 	 ((binop = >)
 	  (hopjs-parse-expr (hopjs-parse-consume-token-any)))
 	 ((new)
@@ -451,6 +480,8 @@
 		(progn
 		  (setq hopjs-parse-tokens save)
 		  tok)))))
+	 ((scheme)
+	  (hopjs-parse-consume-token-any))
 	 (t etok))))))
 
 ;*---------------------------------------------------------------------*/
@@ -536,7 +567,8 @@
 	    (let* ((btok (hopjs-parse-consume-token-any))
 		   (tok (hopjs-parse-peek-token))
 		   (_ (hopjs-debug 0 "hopjs-parse-expr-simple.rparen.2 tok=%s peek=%s"
-				   btok tok))
+				   btok tok
+				   (hopjs-parse-token-string tok)))
 		   (etok (hopjs-parse-expr tok)))
 	      (hopjs-debug 0 "hopjs-parse-expr-simple.rparen.3 tok=%s etok=%s peek=%s"
 			   tok etok (hopjs-parse-peek-token))
@@ -546,7 +578,7 @@
 		(let ((tok (hopjs-parse-consume-token-any)))
 		  (if (eq (hopjs-parse-peek-token-type) 'ident)
 		      (hopjs-parse-consume-token-any)
-		    (when (hopjs-parse-args)
+		    (when (hopjs-parse-args tok)
 		      (hopjs-parse-peek-token)))))
 	       ((eq (hopjs-parse-token-type btok) 'text)
 		btok)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Nov 20 14:45:11 2018 (serrano)                */
+;*    Last change :  Fri Nov 23 19:23:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -556,24 +556,23 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.11.4.4
    (define (error-prototype-tostring this)
       (if (not (isa? this JsObject))
-	  (bigloo-type-error "toString" "JsObject" this)
-	  (let* ((name3 (js-get this 'name %this))
-		 (name4 (if (eq? name3 (js-undefined))
-			    (js-ascii->jsstring "Error")
-			    (js-tojsstring name3 %this)))
-		 (msg5 (if (isa? this JsObject)
-			   (js-get this 'message %this)
-			   (js-undefined)))
-		 (msg6 (if (eq? msg5 (js-undefined))
-			   (js-string->jsstring "")
-			   msg5))
-		 (msg7 (if (isa? this JsError)
-			   (with-access::JsError this (fname location)
-			      (js-string->jsstring
-				 (format " (~a:~a)" fname location)))
-			   (js-string->jsstring ""))))
-	     (js-stringlist->jsstring
-		(list name4 ": " msg6 msg7)))))
+          (bigloo-type-error "toString" "JsObject" this)
+          (let* ((name3 (js-get this 'name %this))
+                 (name4 (if (eq? name3 (js-undefined))
+                            (js-ascii->jsstring "Error")
+                            (js-tojsstring name3 %this)))
+                 (msg5 (if (isa? this JsObject)
+                           (js-get this 'message %this)
+                           (js-undefined)))
+                 (msg6 (if (eq? msg5 (js-undefined))
+                           ""
+                           (js-tostring msg5 %this))))
+             (cond
+                ((js-jsstring-null? name4) (js-string->jsstring msg6))
+                ((string=? msg6 "") name4)
+                (else
+                 (js-stringlist->jsstring
+                    (list (js-jsstring->string name4) ": " msg6)))))))
       
    (js-bind! %this obj 'toString
       :value (js-make-function %this error-prototype-tostring 1 'toString)

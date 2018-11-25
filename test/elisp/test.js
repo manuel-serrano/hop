@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Thu Nov 22 08:51:29 2018 (serrano)                */
+/*    Last change :  Sat Nov 24 08:46:18 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -27,29 +27,6 @@ or
 (hopjs-indent-test)
 */
 
-// [\C-c\C-c] failure to close after iframe
-const dyn = <impress.slide title="Dynamicity"
-			   id="dyn-title"
-			   class="hh"
-			   data-y=0>
-  ${!Service.exists( "prims" ) ? require( "./prims/prims.js" ):""}
-  
-  <div id="abroMask" class="consoleMask">
-    <iframe src="/hop/prims"/>
-  
-// pok: bad tr closing    
-         <table id="slide-label">
-           <tr>
-	     <td>slow</td>
-	     <td>
-	       <input type=range 
-                      min=0 max=100 value=${100 - speed}
-		      onchange=~{pc.setSpeed( 100 - this.value )}/>
-             </td>
-	     <td>fast</td>
-	   </tr>
-	 </table>
-  
 // pok: dot indentation  
 function addNumber( G ) {
    G.mach
@@ -58,15 +35,10 @@ function addNumber( G ) {
       .doit();
 }
 
-// pok: css indent
-#conclusion .slide-title {
-   margin-bottom: 1ex;
-}
-
 // pok: error on [Newline] after push( x );		   
 hiphop machine mach( O ) {
    signal L = [] combine (x,y) => y.push( x );
-
+}
 
 // pok: bad indent after fork $		   
 function forkLast( funs ) {
@@ -78,14 +50,13 @@ function forkLast( funs ) {
       signal L;
       
       fork ${ funs.map( par ) }
-	   
-      if( L.now ) {
-	 emit O( { resolve: true, val: L.nowval } );
-      } else {
-	 emit O( { resolve: false } );
-      }
+      	   if( L.now ) {
+	      emit O( { resolve: true, val: L.nowval } );
+      	   } else {
+	      emit O( { resolve: false } );
+      	   }
    }
-
+   
    return new Promise( function( resolve, reject ) {
       mach.addEventListener( "O", v => {
 	 v.nowval.resolve ? resolve( v.nowval.val ) : reject( undefined )
@@ -93,7 +64,6 @@ function forkLast( funs ) {
       mach.react();
    } );
 }
-		   
 
 // return literal
 exports[ Symbol.compiler ] = (file, options) => {
@@ -183,23 +153,23 @@ function makeAutomatePossibleMachine () {
    function creationModule( lesSons ) {
       return hiphop module automateDesPossibles(in tick, in abletonON)
 	 implements 
-	 automateInt.creationInterfaces(lesSons[0]),
-	 automateInt.creationInterfaces(lesSons[1]),
-	 automateInt.creationInterfaces(lesSons[2])  {
-   	    fork {
-      	       //run spy(...);
-   	    } par {
-      	       every ( immediate abletonON.now) {
-	 	  if ( nowval( abletonON) === 1) {
-	    	     run automateUn.trajetModule( ... );
-	 	  } else if  ( nowval(abletonON) === 2){
-	      	       run automateDeux.trajetModule(...);
-	   	    } else if ( nowval(abletonON) === 3){
-			 run automateTrois.trajetModule(...);
-	     	      }
-      	       }
-   	    }
-	 }
+	    automateInt.creationInterfaces(lesSons[0]),
+	    automateInt.creationInterfaces(lesSons[1]),
+	    automateInt.creationInterfaces(lesSons[2]) {
+   	       fork {
+      	       	  //run spy(...);
+   	       } par {
+      	       	  every ( immediate abletonON.now) {
+	 	     if ( nowval( abletonON) === 1) {
+	    	     	run automateUn.trajetModule( ... );
+	 	     } else if  ( nowval(abletonON) === 2){
+	      	       	  run automateDeux.trajetModule(...);
+	   	       } else if ( nowval(abletonON) === 3){
+			    run automateTrois.trajetModule(...);
+	     	      	 }
+      	       	  }
+   	       }
+	    }
    }
    
    var  machine = new hh.ReactiveMachine( creationModule( par.groupesDesSons) );
@@ -222,25 +192,6 @@ module.exports = hiphop machine( in A, in B, in R, out O ) {
       }
    }
 }
-
-// ok
-abro.css = <style>
-  #hh-abro #listener {
-     opacity: 0;
-     transition: 1s all;
-  }
-  #hh-abro[data-step="1"] #listener {
-     opacity: 1;
-     transition: 1s all;
-  }
-</style>  
-
-// ok
-<style>
-  #id .fll {
-     color: red;
-  }
-</style>
 
 // ok
 function chainAnimationsGenerator (elem, animations ) {
@@ -1116,3 +1067,30 @@ var web = <impress.row id="row-web"
      color: ${theme.greydark};
   }
 </style>
+
+// pok: css indent
+<style>
+#conclusion .slide-title {
+   margin-bottom: 1ex;
+}
+</style>
+
+// ok
+abro.css = <style>
+  #hh-abro #listener {
+     	 opacity: 0;
+     transition: 1s all;
+  }
+  #hh-abro[data-step="1"] #listener {
+     opacity: 1;
+     transition: 1s all;
+  }
+</style>  
+
+// ok
+<style>
+  #id .fll {
+     color: red;
+  }
+</style>
+

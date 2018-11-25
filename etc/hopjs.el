@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Nov 20 09:38:17 2018 (serrano)                */
+;*    Last change :  Sat Nov 24 08:45:49 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -352,99 +352,81 @@
 	  (= (point) eol))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hopjs-find-opening-tok ...                                       */
+;*---------------------------------------------------------------------*/
+(defun hopjs-find-opening-tok (pos depth)
+  "Find opening parenthesis or tag"
+  (interactive "d")
+  (hopjs-parse-start pos)
+  (with-debug
+   "hopjs-find-opening-tok pos=%s depth=%s" pos depth
+   (letn loop ((depth depth)
+	       (last '()))
+	 (let ((tok (hopjs-parse-consume-token-any)))
+;* 	   (hopjs-debug 0 "close depth=%s tok=%s [%s]"                 */
+;* 			depth tok (hopjs-parse-token-string tok))      */
+	   (case (hopjs-parse-token-type tok)
+	     ((rbracket rparen rbrace)
+	      (funcall loop (+ depth 1) last))
+	     ((ctag chtml)
+	      (funcall loop (+ depth 1) tok))
+	     ((lparen lbracket lbrace tilde dollar)
+	      (if (> depth 1)
+		  (funcall loop (- depth 1) last)
+		last))
+	     ((otag)
+	      (if (> depth 1)
+		  (funcall loop (- depth 1) tok)
+		tok))
+	     ((ohtml)
+	      (cond
+	       ((<= depth 1)
+		tok)
+	       ((and last (eq (hopjs-parse-token-type last) 'chtml))
+		(funcall loop (- depth 1) tok))
+	       ((memq (hopjs-parse-token-tag tok) hopjs-special-tags)
+		(funcall loop depth '()))
+	       (t
+		(funcall loop (- depth 1) '()))))
+	     (t
+	      (funcall loop depth last)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    hopjs-close-paren-tag ...                                        */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-close-paren-tag ()
   "Close parenthesis or tag"
   (interactive)
-;*   (let* ((pe (parse-partial-sexp                                    */
-;* 	      (point)                                                  */
-;* 	      (save-excursion (hopjs-beginning-of-defun) (point))))    */
-;* 	 (bra (cadr pe))                                               */
-;* 	 (tag (when (hopjs-html-p (point)) (hopjs-find-opening-tag (point)))) */
-;* 	 (beg (match-beginning 0))                                     */
-;* 	 (end (match-end 0)))                                          */
-;*     (cond                                                           */
-;*      ((and tag (or (not bra) (> end bra)))                          */
-;*       (cond                                                         */
-;*        ((hopjs-pos-eolp end)                                        */
-;* 	;; tag at the beginning of line                                */
-;* 	(unless (hopjs-blank-line-p (point))                           */
-;* 	  (indent-for-tab-command)                                     */
-;* 	  (insert "\n"))                                               */
-;* 	(insert "</" tag ">")                                          */
-;* 	(newline-and-indent))                                          */
-;*        ((hopjs-pos-bolp beg)                                        */
-;* 	;; tag at the end of line                                      */
-;* 	(if (hopjs-same-line-p beg (point))                            */
-;* 	    (insert "</" tag ">")                                      */
-;* 	  (progn                                                       */
-;* 	    (unless (hopjs-blank-line-p (point))                       */
-;* 	      (indent-for-tab-command)                                 */
-;* 	      (insert "\n"))                                           */
-;* 	    (insert "</" tag ">")                                      */
-;* 	    (newline-and-indent))))                                    */
-;*        (t                                                           */
-;* 	(insert "</" tag ">")                                          */
-;* 	(newline-and-indent))))                                        */
-;*      ((and bra (> bra 0))                                           */
-;*       ;; no opening tag                                             */
-;*       (case (char-after (cadr pe))                                  */
-;* 	((?{)                                                          */
-;* 	 (when (save-excursion (goto-char (cadr pe)) (looking-at "{[ \t]*$")) */
-;* 	   (unless (hopjs-blank-line-p (point))                        */
-;* 	     (newline-and-indent)))                                    */
-;* 	 (hopjs-electric-brace))                                       */
-;* 	((?\()                                                         */
-;* 	 (when (save-excursion (goto-char (cadr pe)) (looking-at "[(][ \t]*$")) */
-;* 	   (unless (hopjs-blank-line-p (point))                        */
-;* 	     (newline-and-indent)))                                    */
-;* 	 (hopjs-electric-paren))                                       */
-;* 	((?\[) (insert "]"))))                                         */
-;*      (t                                                             */
-      (let ((pos (point)))
-	(hopjs-parse-start (point))
-	(letn loop ((depth 0))
-	      (let ((tok (hopjs-parse-consume-token-any)))
-		(hopjs-debug 0 "---- close tok=%s depth=%s" tok depth)
-		(case (hopjs-parse-token-type tok)
-		  ((rbracket rparen rbrace ctag chtml)
-		   (funcall loop (+ depth 1)))
-		  ((ohtml otag lparen lbracket lbrace tilde dollar)
-		   (if (> depth 0)
-		       (funcall loop (- depth 1))
-		     (progn
-			 (goto-char pos)
-			 (cond
-			  ((hopjs-blank-line-p (point))
-			   (beginning-of-line))
-			  ((hopjs-pos-eolp (hopjs-parse-token-end tok))
-			   (newline)))
-			 (case (hopjs-parse-token-type tok)
-			   ((ohtml otag)
-			    (let ((str (hopjs-parse-token-string tok)))
-			      (insert "</"
-				      (substring
-				       str
-				       1
-				       (- (length str)
-					  (if (eq (hopjs-parse-token-type tok) 'otag)
-					      1 0)))
-				      ">")))
-			   ((lparen)
-			    (insert ")"))
-			   ((lbracket)
-			    (insert "]"))
-			   (t
-			    (insert "}")))
-			 (indent-for-tab-command)
-			 (when (or (hopjs-indent-first-on-linep tok)
-				   (hopjs-indent-last-on-linep tok))
-			   (newline-and-indent)))
-		     ))
-		  (t
-		   (funcall loop depth)))))))
-;* )))                                                                 */
+  (let* ((pos (point))
+	 (tok (hopjs-find-opening-tok pos 1)))
+    (when tok
+      (goto-char pos)
+      (cond
+       ((hopjs-blank-line-p (point))
+	(beginning-of-line))
+       ((hopjs-pos-eolp (hopjs-parse-token-end tok))
+	(newline)))
+      (case (hopjs-parse-token-type tok)
+	((ohtml otag)
+	 (let ((str (hopjs-parse-token-string tok)))
+	   (insert "</"
+		   (substring
+		    str
+		    1
+		    (- (length str)
+		       (if (eq (hopjs-parse-token-type tok) 'otag)
+			   1 0)))
+		   ">")))
+	((lparen)
+	 (insert ")"))
+	((lbracket)
+	 (insert "]"))
+	(t
+	 (insert "}")))
+      (indent-for-tab-command)
+      (when (or (hopjs-indent-first-on-linep tok)
+		(hopjs-indent-last-on-linep tok))
+	(newline-and-indent)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-statement ...                                       */
@@ -649,6 +631,13 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 (defun hopjs-find-opening-tag (pos)
   (save-excursion
+    (let ((tok (hopjs-find-opening-tok pos 0)))
+      (when tok
+	(goto-char (hopjs-parse-token-beginning tok))
+	tok))))
+
+(defun hopjs-find-opening-tag-TOBEREMOVED (pos)
+  (save-excursion
     (goto-char pos)
     (let ((depth 1)
           (res 'loop))
@@ -698,18 +687,26 @@ usage: (js-return)  -- [RET]"
 	(if (re-search-forward hopjs-re-any-tag nil t 1)
 	    (let ((beg (match-beginning 0))
 		  (end (match-end 0)))
+;* 	      (message "hopjs-find-closing-tag beg=%s end=%s [%s] depth=%s" */
+;* 		       beg end (buffer-substring-no-properties beg end) depth) */
 	      (unless (hopjs-in-string-comment-p beg)
 		(goto-char beg)
 		(cond
 		 ((looking-at hopjs-re-standalone-tag)
+;* 		  (message "hopjs-find-closing-tag... standalone")     */
 		  (setq end (match-end 0))
 		  nil)
 		 ((looking-at hopjs-re-open-tag)
+;* 		  (message "hopjs-find-closing-tag... re-open-tag special=%s" */
+;* 			   (member (buffer-substring-no-properties     */
+;* 				    (match-beginning 1) (match-end 1)) */
+;* 				   hopjs-special-tags))                */
 		  (unless (member (buffer-substring-no-properties
 				   (match-beginning 1) (match-end 1))
 				  hopjs-special-tags)
 		    (setq depth (1+ depth))))
 		 ((looking-at hopjs-re-end-tag)
+;* 		  (message "hopjs-find-closing-tag... re-end-tag")     */
 		  (if (= depth 1)
 		      (setq res 'tag)
 		    (setq depth (1- depth))))
@@ -719,8 +716,16 @@ usage: (js-return)  -- [RET]"
 			(looking-at hopjs-re-close-tag)
 			(setq res 
 			      (buffer-substring-no-properties
-			       (match-beginning 1) (match-end 1))))
-		    (setq depth (1- depth))))))
+			       (match-beginning 1) (match-end 1)))
+;* 			(message "hopjs-find-closing-tag GOT IT! beg=%s end=%s [%s] -> [%s]" */
+;* 				 (match-beginning 0) (match-end 0)     */
+;* 				 (buffer-substring-no-properties       */
+;* 				  (match-beginning 0) (match-end 0))   */
+;* 				 res)                                  */
+			)
+		    (progn
+;* 		      (message "hopjs-find-closing-tag... closing")    */
+		      (setq depth (1- depth)))))))
 	      (goto-char end))
 	  (setq res nil)))
       res)))
@@ -740,19 +745,25 @@ usage: (js-return)  -- [RET]"
 	       (end (match-end 1))
 	       (tag (buffer-substring-no-properties beg end))
 	       (otag (hopjs-find-opening-tag beg)))
+	  (message "hopjs-closing-tag-p [%s] -> [%s]" tag (if otag otag ""))
 	  (cond
 	   ((not otag)
 	    (hopjs-highlight-tag 'hopjs-nomatch-face beg end))
-	   ((string-equal tag otag)
+	   ((string-equal (hopjs-parse-token-tag otag) tag)
 	    (hopjs-highlight-tag
 	     'hopjs-match-face beg end)
 	    (hopjs-highlight-tag
-	     'hopjs-match-face (match-beginning 0) (match-end 0)))
+	     'hopjs-match-face
+	     (hopjs-parse-token-beginning-tag otag)
+	     (hopjs-parse-token-end-tag otag)))
 	   (t
+	    (message "hopjs-closing-tag-p ... mismatch")
 	    (hopjs-highlight-tag
 	     'hopjs-nomatch-face beg end)
 	    (hopjs-highlight-tag
-	     'hopjs-nomatch-face (match-beginning 1) (match-end 1)))))
+	     'hopjs-nomatch-face
+	     (hopjs-parse-token-beginning-tag otag)
+	     (hopjs-parse-token-end-tag otag)))))
       (hopjs-unhighlight-tags)))
    ((hopjs-opening-tag-p (point))
     (cond
@@ -764,6 +775,7 @@ usage: (js-return)  -- [RET]"
 	     (beg (match-beginning 1))
 	     (end (match-end 1))
 	     (otag (hopjs-find-closing-tag (match-end 0))))
+	(message "hopjs-opening-tag-p [%s] -> [%s]" tag (if otag otag ""))
 	(cond
 	 ((not otag)
 	  (hopjs-highlight-tag 'hopjs-nomatch-face beg end))

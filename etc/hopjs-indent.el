@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Wed Nov 21 15:15:35 2018 (serrano)                */
+;*    Last change :  Sun Nov 25 07:41:40 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -78,7 +78,8 @@
 		      ((ctag) (hopjs-indent-new-ctag tok))
 		      ((chtml) (hopjs-indent-new-chtml tok))
 		      ((tilde dollar) (hopjs-indent-new-tilde tok))
-		      ((number string ident) (hopjs-indent-new-literal tok))
+		      ((number string) (hopjs-indent-new-literal tok))
+		      ((ident) (hopjs-indent-new-ident tok))
 		      ((=) (hopjs-indent-new-= tok))
 		      ((binop) (hopjs-indent-new-binop tok))
 		      ((return) (hopjs-indent-new-return tok))
@@ -100,7 +101,7 @@
      (cond
       ((looking-at "[ \t]*</")
        (hopjs-debug 0 "hopjs-indent-old ctag...")
-       (or (hopjs-indent-old-ctag (- (match-end 0) 2)) 0))
+       (or (hopjs-indent-old-ctag (match-end 0)) 0))
       ((looking-at "[ \t]*<[^ \t]")
        (hopjs-debug 0 "hopjs-indent-old otag...")
        (hopjs-indent-old-otag (- (match-end 0) 2)))
@@ -359,6 +360,22 @@
 	    (hopjs-indent-column-token etok 0)))))
     (t
      '()))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-new-ident ...                                       */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-new-ident (tok)
+  (with-debug
+   "hopjs-indent-new-ident...%s" tok
+   (letn loop ((tok tok))
+	 (let ((ntok (hopjs-parse-consume-token-any)))
+	   (cond
+	    ((not (hopjs-parse-same-linep ntok tok))
+	     (hopjs-indent-column-token tok hopjs-indent-level))
+	    ((memq (hopjs-parse-token-type ntok) '(ident dot))
+	     (funcall loop ntok))
+	    (t
+	     (hopjs-indent-column-token tok hopjs-indent-level)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-= ...                                           */
@@ -698,10 +715,12 @@
 		  (hopjs-indent-column-token
 		   (hopjs-parse-peek-token) hopjs-indent-level))
 		 ((rparen)
-		  (hopjs-indent-column-token etok 0))
+		  (if (hopjs-parse-same-linep etok tok)
+		      (hopjs-indent-column-token etok 0)
+		      (hopjs-indent-column-token etok hopjs-indent-level)))
 		 (t
-		  0)))
-       0))))
+		  (hopjs-parse-current-line-column))))
+       (hopjs-parse-current-line-column)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-semicolon ...                                   */
@@ -786,7 +805,7 @@
 	   (t
 	    (hopjs-indent-column-token etok 0)))))
     (t
-     (hopjs-parse-previous-line-column)))))
+     (hopjs-indent-current-line-column)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-colon ...                                       */
@@ -939,22 +958,17 @@
    (let* ((col (hopjs-indent-column-token tok 0))
 	  (otag (hopjs-find-opening-tag (- (hopjs-parse-token-end tok) 1))))
      (if otag
-	 (let ((b (match-beginning 0))
-	       (e (match-end 0)))
-	   (hopjs-debug 0 "hopjs-indent-new-ctag...find-opening=[%s]"
-			(buffer-substring-no-properties b e))
-	   (hopjs-parse-start b)
-	   (let ((otok (hopjs-parse-peek-token)))
-	     (hopjs-debug 0 "hopjs-indent-new-ctag opening %s %s [%s] otag=%s peek=%s"
-			  b e (buffer-substring-no-properties b e)
-			  otag otok)
-	     (if (memq (hopjs-parse-token-type otok) '(return var))
-		 (hopjs-indent-column-token otok 0)
-	       (progn
-		 (goto-char b)
-		 (hopjs-debug 0 "hopjs-indent-new-ctag closing cur=%s col=%s"
-			      (current-column) col)
-		 (if (> (current-column) col) col (current-column))))))
+	 (let ((otok (hopjs-parse-peek-token)))
+	   (hopjs-debug 0 "hopjs-indent-new-ctag...find-opening=[%s] peek=%s"
+			(hopjs-parse-token-string otag)
+			otok)
+	   (if (memq (hopjs-parse-token-type otok) '(return var))
+	       (hopjs-indent-column-token otok 0)
+	     (progn
+	       (goto-char (hopjs-parse-token-beginning otag))
+	       (hopjs-debug 0 "hopjs-indent-new-ctag closing cur=%s col=%s"
+			    (current-column) col)
+	       (if (> (current-column) col) col (current-column)))))
        0))))
 
 ;*---------------------------------------------------------------------*/
@@ -964,9 +978,11 @@
   (with-debug
    "hopjs-indent-old-ctag...%s" pos
    (let ((otag (hopjs-find-opening-tag pos)))
+     (hopjs-debug 0 "hopjs-indent-old-ctag otag=%s [%s]" otag
+		  (if otag (hopjs-parse-token-string otag)))
      (if otag
-	 (let ((b (match-beginning 0))
-	       (e (match-end 0)))
+	 (let ((b (hopjs-parse-token-beginning otag))
+	       (e (hopjs-parse-token-end otag)))
 	   (hopjs-debug 0 "hopjs-indent-old-ctag opening.1 b=%s e=%s" b e)
 	   (hopjs-parse-start e)
 	   (let ((col (hopjs-indent-new-otag (hopjs-parse-consume-token-any))))
@@ -1173,13 +1189,13 @@
 	(progn
 	  (set-buffer-modified-p nil)
 	  (goto-char (point-min))
-	  (while loop
+	  (while (eq loop t)
 	    (beginning-of-line)
 	    (condition-case nil
 		(indent-for-tab-command)
 	      (error
 	       (message "indentation error line %s... stopping" line)
-	       (setq loop nil)))
+	       (setq loop 'error)))
 	    (cond
 	     ((buffer-modified-p)
 	      (setq loop nil))
@@ -1187,7 +1203,7 @@
 	      (setq loop nil))
 	     (t
 	      (setq line (+ line 1)))))
-	  (if (buffer-modified-p)
+	  (if (or (eq loop 'error) (buffer-modified-p))
 	      (message "Tests failed line: %s" line)
 	    (progn
 	      (message "All tests passed")
@@ -1205,11 +1221,19 @@
   (+ (current-column) level))
 
 ;*---------------------------------------------------------------------*/
-;*    hopjs-parse-previous-line-column ...                             */
+;*    hopjs-indent-current-line-column ...                             */
 ;*---------------------------------------------------------------------*/
-(defun hopjs-parse-previous-line-column ()
+(defun hopjs-indent-current-line-column ()
   (save-excursion
-    (forward-line -1)
     (beginning-of-line)
     (skip-chars-forward " \t")
     (current-column)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-previous-line-column ...                            */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-previous-line-column ()
+  (save-excursion
+    (forward-line -1)
+    (hopjs-indent-current-line-column)))
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Nov 22 18:32:50 2018 (serrano)                */
+;*    Last change :  Fri Nov 23 19:13:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -358,7 +358,7 @@
 	       ((eq? value #f)
 		(js-ascii->jsstring "false"))
 	       ((eq? value (js-undefined))
-		(js-ascii->jsstring "null"))
+		symbol)
 	       ((isa? value JsSymbolLiteral)
 		symbol)
 	       (else
