@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Sun Nov 18 13:20:29 2018 (serrano)                */
+;*    Last change :  Tue Nov 27 06:53:00 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs config                                                     */
@@ -106,6 +106,13 @@
   "Number of spaces for each indentation step in `js-mode'."
   :type 'integer
   :safe 'integerp
+  :group 'hopjs)
+
+(defcustom hopjs-indent-function-body-strictp t
+  "If true, strictly align function body according to the function
+ opening brace"
+  :type 'boolean
+  :safe 'booleanp
   :group 'hopjs)
 
 (defcustom hopjs-indent-function-body-alignment 1

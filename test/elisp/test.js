@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sat Nov 24 08:46:18 2018 (serrano)                */
+/*    Last change :  Tue Nov 27 06:46:04 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -27,7 +27,31 @@ or
 (hopjs-indent-test)
 */
 
-// pok: dot indentation  
+// pok: literal indent (after new Proxy)
+function func( domain, range ) {
+   return function( info ) {
+      const ri = range(info);
+      const di = domain( !info );
+      return {
+      	 go: function( value ) {
+      	    if( typeof value === "function" ) {
+	       return new Proxy( value, { 
+	       	  apply: function( target, self, args ) {
+		     return ri.go( target( di.go( args[ 0 ] ) ) );
+		  },
+		  toString: function() {
+		     return "<" + "value.toString()" + ">";
+		  }
+	       } )
+      	    } else {
+	       throw "Not a function info=" + info;
+      	    }
+      	 }
+      }
+   }
+}
+
+// ok: dot indentation  
 function addNumber( G ) {
    G.mach
       .getElementById( "numbers" )
@@ -35,12 +59,12 @@ function addNumber( G ) {
       .doit();
 }
 
-// pok: error on [Newline] after push( x );		   
+// ok: error on [Newline] after push( x );		   
 hiphop machine mach( O ) {
    signal L = [] combine (x,y) => y.push( x );
 }
 
-// pok: bad indent after fork $		   
+// ok: bad indent after fork $		   
 function forkLast( funs ) {
    function par( f ) {
       return hiphop async L { f( v => { this.notify( v ); } ) };
@@ -277,27 +301,28 @@ class ActionArg {
       this.machine = machine;
       
       accessor_list.forEach( acc => {
-	 this[ acc.signame ] = {
-	    preval: undefined,
-	    nowval: undefined,
-	    pre: undefined,
-	    now: undefined
-         };
-      } );
+	 			this[ acc.signame ] = {
+	    			   preval: undefined,
+	    			   nowval: undefined,
+	    			   pre: undefined,
+	    			   now: undefined
+         			};
+      			     } );
    }
 }
 
 // ok
 function fill( accessor_list, lvl ) {
-   accessor_list.forEach( acc => {
-      let sig = acc.signal;
-      let min_lvl = lvl > sig.ast_node.depth ? sig.ast_node.depth : lvl;
-      
-      this.preValue[ acc.signame ] = acc.signal.pre_value;
-      this.value[ acc.signame ] = acc.signal.value;
-      this.prePresent[ acc.signame ] = acc.signal.pre_gate.value;
-      this.present[ acc.signame ] = sig.gate_list[ min_lvl ].value;
-   } );
+   accessor_list.forEach( 
+      acc => {
+	 let sig = acc.signal;
+	 let min_lvl = lvl > sig.ast_node.depth ? sig.ast_node.depth : lvl;
+      	 
+      	 this.preValue[ acc.signame ] = acc.signal.pre_value;
+      	 this.value[ acc.signame ] = acc.signal.value;
+      	 this.prePresent[ acc.signame ] = acc.signal.pre_gate.value;
+      	 this.present[ acc.signame ] = sig.gate_list[ min_lvl ].value;
+      } );
 }
 
 // ok
@@ -368,9 +393,9 @@ function run( tmt, lbl ) {
    let last = Date.now();
    
    setInterval( () => { 
-      let cur = Date.now();
-      console.log( lbl ) ;
-   },
+      		   let cur = Date.now();
+      		   console.log( lbl ) ;
+   		},
       tmt );
 }
 
@@ -388,7 +413,7 @@ function run( tmt, lbl ) {
        	 }
       },
       {
-      	 "port": 587,
+   	 "port": 587,
       	 "host": "mail2-relais-roc.national.inria.fr",
       	 "requireTLS": true,
       	 "authMethod": "LOGIN",
@@ -414,75 +439,83 @@ function run( tmt, lbl ) {
 
 // ok
 function mkPromise( name, result, tmt ) {
-   return new Promise( (resolve, reject) => {
-      setTimeout( () => { 
-	 console.log( "in", name );
-	 if( result ) resolve( result ) else reject( false );
-	 return 3;
-      } )
-   } )
+   return new Promise( 
+      (resolve, reject) => {
+	 setTimeout( 
+	    () => { 
+	       console.log( "in", name );
+	       if( result ) resolve( result ) else reject( false );
+	       return 3;
+	    } )
+      } );
 }
 
 // ok
 function mkPromise( name, result, tmt ) {
-   return new Promise( (resolve, reject) => {
-      setTimeout( () => { 
-	 console.log( "in", name );
-	 if( result ) 
-	    resolve( result ) else reject( false );
-	    return 3;
+   return new Promise( 
+      (resolve, reject) => {
+	 setTimeout( 
+	    () => { 
+	       console.log( "in", name );
+	       if( result ) 
+		  resolve( result ) else reject( false );
+		  return 3;
+	    } )
       } )
-   } )
 }
 
 // ok 
-const p1 = new Promise( (resolve, reject) => {
-   return 3;
-} );
+const p1 = new Promise( 
+   (resolve, reject) => {
+      return 3;
+   } );
 
 // ok
 function firstPromise( promises ) {
-   return new Promise( (resolve, reject) => {
-      hiphop machine m( resolve, reject ) {
-	 fork {
-            abort( resolve ) {
-	       ${ promises.map( p => 
-		     hiphop { run (promiseToModule( acc ))( ... ) } ) }
+   return new Promise( 
+      (resolve, reject) => {
+	 hiphop machine m( resolve, reject ) {
+	    fork {
+               abort( resolve ) {
+	       	  ${ promises.map( 
+			p => hiphop { run (promiseToModule( acc ))( ... ) } ) }
+      	       }
       	    }
       	 }
-      }
-      
-      m.addEventListener( "resolve", resolve );
-      m.addEventListener( "reject", reject );
-      
-      m.react();
-   } );
+      	 
+      	 m.addEventListener( "resolve", resolve );
+      	 m.addEventListener( "reject", reject );
+      	 
+      	 m.react();
+      } );
 }
-
 
 // ok
 function firstPromise( promises ) {
    hiphop machine m( resolve, reject ) {
       fork {
       	 abort( resolve ) {
-	    ${ promises.map( p => { 
-	       	  hiphop { run (promiseToModule( acc ))( ... ) } } ); }
+	    ${ promises.map( 
+		  p => { 
+		     hiphop { run (promiseToModule( acc ))( ... ) } 
+		  } ); }
       	 }
       }
    }
    
    return new Promise( (resolve, reject) => {
-      resolve 3;
-   } );
+      			  resolve 3;
+   		       } );
 }
 
 // ok
 function firstPromise( promises ) {
    return hiphop module( resolve, reject ) {
       abort( resolve ) {
-      	 ${ promises.map( (p, b) => { 
-	       hiphop { run (promiseToModule( acc ))( ... ) } } ); }
-	 
+      	 ${ promises.map( 
+	       (p, b) => { 
+	       	  hiphop { run (promiseToModule( acc ))( ... ) } 
+	       } ); }
       }
    }
 }
@@ -491,9 +524,10 @@ function firstPromise( promises ) {
 function firstPromise( promises ) {
    return hiphop module( resolve, reject ) {
       abort( resolve ) {
-      	 ${ promises.map( a => { 
-	       hiphop { run (promiseToModule( acc ))( ... ) } } ); }
-	 
+      	 ${ promises.map( 
+	       a => { 
+		  hiphop { run (promiseToModule( acc ))( ... ) } 
+	       } ); }
       }
    }
 }
@@ -582,11 +616,11 @@ function openSMTPConnection( config ) {
 	    config.servers[ i ].host + ":" + config.servers[ i ].port );
 	 return open( server )
 	    .then( conn => { 
-	       debug( "connection succeeded: ", server );
-	       conn.config = server; resolve( conn ) 
-	    }, 
+	       	      debug( "connection succeeded: ", server );
+	       	      conn.config = server; resolve( conn ) 
+	    	   }, 
 	       err => {
-	       	  debug( "connection failed: ", server );
+		  debug( "connection failed: ", server );
 		  loop( resolve, reject, i + 1 );
 	       } )
       }
@@ -754,7 +788,7 @@ function foo( a, b ) {
 // ok
 function foo( a, b ) {
    return new hh.ctor(
-      	     new hh.ctor2( a, b ) );
+      new hh.ctor2( a, b ) );
 }
 
 // ok
@@ -834,16 +868,16 @@ function glop( x ) {
 function glop( x ) {
    let x = glop( 10 )
       .post( snow => {
-	 return 32;
-      } )
+	 	return 32;
+      	     } )
 }
 
 // ok
 function glop( x ) {
    let x = glop( 10 )
       .post( (a, b) => {
-	 return 32;
-      } )
+	 	return 32;
+      	     } )
 }
 
 // ok
@@ -866,15 +900,20 @@ service hello() {
       foo( 1, 2, 
 	 3, bar( x,
 	       y ) );
-      var x = <div>
+      var z = <div>
 	<span>
 	  toto
 	</span>
+      </div>;
+      var t = <div>
+	<span3>
+	  toto
+	</span3>
 	<span>
-	  <span>
+	  <span2>
 	    <div>
 	    </div>
-	  </span>
+	  </span2>
 	</span>
       </div>;
       var x = <div>
@@ -1038,7 +1077,7 @@ service main() {
      </head>
 }
 
-// pok CSS rules
+// ok CSS rules
 #title-block-top div {
    color: red;
    text-align: center;
@@ -1068,17 +1107,17 @@ var web = <impress.row id="row-web"
   }
 </style>
 
-// pok: css indent
+// ok: css indent
 <style>
-#conclusion .slide-title {
-   margin-bottom: 1ex;
-}
+  #conclusion .slide-title {
+     margin-bottom: 1ex;
+  }
 </style>
 
 // ok
 abro.css = <style>
   #hh-abro #listener {
-     	 opacity: 0;
+     opacity: 0;
      transition: 1s all;
   }
   #hh-abro[data-step="1"] #listener {

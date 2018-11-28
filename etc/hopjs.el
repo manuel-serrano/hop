@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sat Nov 24 08:45:49 2018 (serrano)                */
+;*    Last change :  Tue Nov 27 16:33:39 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -352,53 +352,13 @@
 	  (= (point) eol))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hopjs-find-opening-tok ...                                       */
-;*---------------------------------------------------------------------*/
-(defun hopjs-find-opening-tok (pos depth)
-  "Find opening parenthesis or tag"
-  (interactive "d")
-  (hopjs-parse-start pos)
-  (with-debug
-   "hopjs-find-opening-tok pos=%s depth=%s" pos depth
-   (letn loop ((depth depth)
-	       (last '()))
-	 (let ((tok (hopjs-parse-consume-token-any)))
-;* 	   (hopjs-debug 0 "close depth=%s tok=%s [%s]"                 */
-;* 			depth tok (hopjs-parse-token-string tok))      */
-	   (case (hopjs-parse-token-type tok)
-	     ((rbracket rparen rbrace)
-	      (funcall loop (+ depth 1) last))
-	     ((ctag chtml)
-	      (funcall loop (+ depth 1) tok))
-	     ((lparen lbracket lbrace tilde dollar)
-	      (if (> depth 1)
-		  (funcall loop (- depth 1) last)
-		last))
-	     ((otag)
-	      (if (> depth 1)
-		  (funcall loop (- depth 1) tok)
-		tok))
-	     ((ohtml)
-	      (cond
-	       ((<= depth 1)
-		tok)
-	       ((and last (eq (hopjs-parse-token-type last) 'chtml))
-		(funcall loop (- depth 1) tok))
-	       ((memq (hopjs-parse-token-tag tok) hopjs-special-tags)
-		(funcall loop depth '()))
-	       (t
-		(funcall loop (- depth 1) '()))))
-	     (t
-	      (funcall loop depth last)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    hopjs-close-paren-tag ...                                        */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-close-paren-tag ()
   "Close parenthesis or tag"
   (interactive)
   (let* ((pos (point))
-	 (tok (hopjs-find-opening-tok pos 1)))
+	 (tok (hopjs-parse-find-opening-tok pos 1)))
     (when tok
       (goto-char pos)
       (cond
@@ -631,49 +591,10 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 (defun hopjs-find-opening-tag (pos)
   (save-excursion
-    (let ((tok (hopjs-find-opening-tok pos 0)))
+    (let ((tok (hopjs-parse-find-opening-tok pos 0)))
       (when tok
 	(goto-char (hopjs-parse-token-beginning tok))
 	tok))))
-
-(defun hopjs-find-opening-tag-TOBEREMOVED (pos)
-  (save-excursion
-    (goto-char pos)
-    (let ((depth 1)
-          (res 'loop))
-      (while (eq res 'loop)
-        (if (re-search-backward hopjs-re-any-tag nil t 1)
-            (progn
-              (unless (hopjs-in-string-comment-p (match-beginning 0))
-                (cond
-                 ((looking-at hopjs-re-end-tag)
-                  ;; we still have to check stand alone tag that are confused
-                  ;; with closing tar parts during the re-search
-                  (if (save-excursion
-                        (goto-char (+ (point) 2))
-                        (let ((pt (point)))
-                          (when (re-search-backward
-                                 hopjs-re-standalone-tag nil t 1)
-                            (= (match-end 0) pt))))
-                      (goto-char (match-beginning 0))
-                    (setq depth (1+ depth))))
-                 ((looking-at hopjs-re-close-tag)
-                  (setq depth (1+ depth)))
-                 (t
-                  (looking-at hopjs-re-open-tag)
-                  (unless (member (buffer-substring-no-properties
-                                   (match-beginning 1) (match-end 1))
-                                  hopjs-special-tags)
-                    (if (= depth 1)
-                        (setq res 
-                              (buffer-substring-no-properties
-                               (match-beginning 1) (match-end 1)))
-                      (setq depth (1- depth))))))))
-          (setq res nil)))
-      ;; update the match-beginning math-end cache with the proper open tag
-      (goto-char (match-beginning 0))
-      (looking-at "[^ \t\n]+")
-      res)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-find-closing-tag ...                                       */
