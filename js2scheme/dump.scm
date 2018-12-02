@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/dump.scm                  */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/dump.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Oct 24 17:10:31 2018 (serrano)                */
+;*    Last change :  Sun Dec  2 07:20:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -48,6 +48,15 @@
 		   (string-contains (or (getenv "HOPTRACE") "") "j2s:info")))
 	  `(:%info ,(j2s-info->list %info))
 	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    dump-need-bind-exit-return ...                                   */
+;*---------------------------------------------------------------------*/
+(define (dump-need-bind-exit-return need-bind-exit-return)
+   (if (and (or (>= (bigloo-debug) 3)
+		(string-contains (or (getenv "HOPTRACE") "") "j2s:need-bind-exit-return")))
+       `(:need-bind-exit-return ,need-bind-exit-return)
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-size ...                                                    */
@@ -582,8 +591,7 @@
 		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
-		 ,@(if (>= (bigloo-debug) 3)
-		       `(:need-bind-exit-return ,need-bind-exit-return) '())
+		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 :optimize ,optimize
 		 :mode ,mode
 		 ,@(dump-range this)
@@ -601,8 +609,7 @@
 		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
-		 ,@(if (>= (bigloo-debug) 3)
-		       `(:need-bind-exit-return ,need-bind-exit-return) '())
+		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 :optimize ,optimize
 		 :mode ,mode
 		 ,@(dump-range this)
@@ -616,8 +623,7 @@
 	      ,@(dump-type this)
 	      ,@(dump-rtype this)
 	      ,@(dump-loc loc)
-	      ,@(if (>= (bigloo-debug) 3)
-		    `(:need-bind-exit-return ,need-bind-exit-return) '())
+	      ,@(dump-need-bind-exit-return need-bind-exit-return)
 	      :optimize ,optimize
 	      :mode ,mode
 	      ,@(dump-range this)

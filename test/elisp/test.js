@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Tue Nov 27 06:46:04 2018 (serrano)                */
+/*    Last change :  Sun Dec  2 06:23:57 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -27,7 +27,16 @@ or
 (hopjs-indent-test)
 */
 
-// pok: literal indent (after new Proxy)
+// pok run after lbrace and m.react after rbrace
+function() {
+   const m = hiphop machine() {
+      run User();
+   }
+   
+   m.react();
+}
+
+// ok: literal indent (after new Proxy)
 function func( domain, range ) {
    return function( info ) {
       const ri = range(info);

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Mon Feb  5 14:05:07 2018 (serrano)                */
+;*    Last change :  Sun Dec  2 07:26:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -218,7 +218,8 @@
    (with-access::J2SReturn this (tail from loc expr exit)
       (cond
 	 (target
-	  (set! from target))
+	  (unless (isa? from J2SBindExit)
+	     (set! from target)))
 	 ((config-get args :return-as-exit)
 	  (set! exit #t)
 	  (set! tail #t)
@@ -226,12 +227,13 @@
 	  (set! expr (walk! expr target #f in-handler args)))
 	 (else
 	  (syntax-error this "Illegal \"return\" statement")))
-      (unless tail?
-	 ;; mark the return as non-tail
-	 (set! tail #f)
-	 ;; mark the function as needing a bind-exit
-	 (with-access::J2SFun target (need-bind-exit-return)
-	    (set! need-bind-exit-return #t)))
+      (when (eq? from target)
+	 (unless tail?
+	    ;; mark the return as non-tail
+	    (set! tail #f)
+	    ;; mark the function as needing a bind-exit
+	    (with-access::J2SFun target (need-bind-exit-return)
+	       (set! need-bind-exit-return #t))))
       (set! expr (walk! expr target #f in-handler args)))
    this)
 
@@ -315,9 +317,10 @@
 ;*    untail-return! ::J2SReturn ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (untail-return! this::J2SReturn target)
-   (with-access::J2SReturn this (tail)
-      (with-access::J2SFun target (need-bind-exit-return)
-	 (set! need-bind-exit-return #t))
+   (with-access::J2SReturn this (tail from)
+      (when (eq? from target)
+	 (with-access::J2SFun target (need-bind-exit-return)
+	    (set! need-bind-exit-return #t)))
       (set! tail #f)
       this))
 
