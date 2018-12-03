@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Nov 13 08:38:07 2018 (serrano)                */
+;*    Last change :  Mon Dec  3 08:11:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -37,7 +37,8 @@
 	   __hopscript_private
 	   __hopscript_worker
 	   __hopscript_array
-	   __hopscript_json)
+	   __hopscript_json
+	   __hopscript_proxy)
 
    (with   __hopscript_stringliteral
            __hopscript_expanders)
@@ -591,61 +592,51 @@
 (define (js-call10% %this fun::JsFunction proc::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (gen-calln a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
+(define-macro (gen-call %this fun this . args)
+   `(cond
+       ((isa? ,fun JsFunction)
+	(with-access::JsFunction ,fun (procedure)
+	   (,(string->symbol (format "js-call~a%" (length args)))
+	    ,%this ,fun procedure ,this ,@args)))
+       ((isa? ,fun JsProxy)
+	(,(string->symbol (format "js-call-proxy~a" (length args)))
+	 ,%this ,fun ,this ,@args))
+       (else
+	(js-raise-type-error ,%this
+	   ,(format "call~a: not a function ~~s" (length args)) ,fun))))
+
 (define (js-call0 %this fun this)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call0: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call0% %this fun procedure this))))
+   (gen-call %this fun this))
+
 (define (js-call1 %this fun this a0)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call1: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call1% %this fun procedure this a0))))
+   (gen-call %this fun this a0))
+
 (define (js-call2 %this fun this a0 a1)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call2: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call2% %this fun procedure this a0 a1))))
+   (gen-call %this fun this a0 a1))
+
 (define (js-call3 %this fun this a0 a1 a2)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call3: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call3% %this fun procedure this a0 a1 a2))))
+   (gen-call %this fun this a0 a1 a2))
+
 (define (js-call4 %this fun this a0 a1 a2 a3)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call4: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call4% %this fun procedure this a0 a1 a2 a3))))
+   (gen-call %this fun this a0 a1 a2 a3))
+
 (define (js-call5 %this fun this a0 a1 a2 a3 a4)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call5: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call5% %this fun procedure this a0 a1 a2 a3 a4))))
+   (gen-call %this fun this a0 a1 a2 a3 a4))
+
 (define (js-call6 %this fun this a0 a1 a2 a3 a4 a5)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call6: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call6% %this fun procedure this a0 a1 a2 a3 a4 a5))))
+   (gen-call %this fun this a0 a1 a2 a3 a4 a5))
+
 (define (js-call7 %this fun this a0 a1 a2 a3 a4 a5 a6)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call7: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call7% %this fun procedure this a0 a1 a2 a3 a4 a5 a6))))
+   (gen-call %this fun this a0 a1 a2 a3 a4 a5 a6))
+
 (define (js-call8 %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call8: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7))))
+   (gen-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7))
+
 (define (js-call9 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call9: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call9% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8))))
+   (gen-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+
 (define (js-call10 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call10: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))))
+   (gen-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
 (define (js-calln% %this fun this args)
    (with-access::JsFunction fun (procedure method arity minlen rest len)
@@ -688,148 +679,98 @@
 			     (apply vector (drop args len)) %this)))))))))))
 
 (define (js-calln %this fun this . args)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call: not a function ~s" fun)
-       (js-calln% %this fun this args)))
+   (cond
+      ((isa? fun JsFunction)
+       (js-calln% %this fun this args))
+      ((isa? fun JsProxy)
+       (js-call-proxyn %this fun this args))
+      (else
+       (js-raise-type-error %this "call: not a function ~s" fun))))
+
+(define-macro (gen-call/debug %this loc fun this . args)
+   `(cond
+       ((isa? ,fun JsFunction)
+	(with-access::JsFunction ,fun (procedure)
+	   (let ((env (current-dynamic-env))
+		 (name (js-function-debug-name ,fun)))
+	      ($env-push-trace env name loc)
+	      (let ((aux (,(string->symbol (format "js-call~a%" (length args)))
+			  ,%this ,fun procedure ,this ,@args)))
+		 ($env-pop-trace env)
+		 aux))))
+       ((isa? ,fun JsProxy)
+	(with-access::JsProxy ,fun (target)
+	   (let ((env (current-dynamic-env))
+		 (name (js-proxy-debug-name ,fun)))
+	      ($env-push-trace env name loc)
+	      (let ((aux (,(string->symbol (format "js-call-proxy~a" (length args)))
+			  ,%this ,fun ,this ,@args)))
+		 ($env-pop-trace env)
+		 aux))))
+       (else
+	(js-raise-type-error/loc %this loc
+	   (format "call~a: not a function ~~s ~a" ,(length args) ,loc) ,fun))))
 
 (define (js-call0/debug %this loc fun this)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call0: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call0% %this fun procedure this)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this))
+
 (define (js-call1/debug %this loc fun this a0)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call1: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name))
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call1% %this fun procedure this a0)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this a0))
+
 (define (js-call2/debug %this loc fun this a0 a1)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call2: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call2% %this fun procedure this a0 a1)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this a0 a1))
+
 (define (js-call3/debug %this loc fun this a0 a1 a2)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call3: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call3% %this fun procedure this a0 a1 a2)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this a0 a1 a2))
+
 (define (js-call4/debug %this loc fun this a0 a1 a2 a3)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call4: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call4% %this fun procedure this a0 a1 a2 a3)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this a0 a1 a2 a3))
+
 (define (js-call5/debug %this loc fun this a0 a1 a2 a3 a4)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call5: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call5% %this fun procedure this a0 a1 a2 a3 a4)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4))
+
 (define (js-call6/debug %this loc fun this a0 a1 a2 a3 a4 a5)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call6: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call6% %this fun procedure this a0 a1 a2 a3 a4 a5)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5))
+
 (define (js-call7/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call7: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call7% %this fun procedure this a0 a1 a2 a3 a4 a5 a6)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6))
+
 (define (js-call8/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call8: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7))
+
 (define (js-call9/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call9: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call9% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+
 (define (js-call10/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call10: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
-		($env-pop-trace env)
-		aux)))))
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
 (define (js-calln/debug %this loc fun this . args)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call: not a function ~~s ~a" loc) fun)
+   (cond
+      ((isa? fun JsFunction)
        (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-calln% %this fun this args)))
 		($env-pop-trace env)
-		aux)))))
+		aux))))
+      ((isa? fun JsProxy)
+       (with-access::JsFunction fun (procedure)
+	  (let ((env (current-dynamic-env))
+		(name (js-proxy-debug-name fun)))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call-proxyn %this fun this args)))
+		($env-pop-trace env)
+		aux))))
+      (else
+       (js-raise-type-error/loc %this loc
+	  (format "call: not a function ~~s ~a" loc) fun))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-call-method ...                                               */
 ;*    -------------------------------------------------------------    */
-;*    This function is used when a method is invoked on a non-object   */
-;*    value.                                                           */
+;*    These functions are used when a method is invoked on a           */
+;*    non-object value.                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-call-method0 %this val prop)
    (let ((o (js-toobject %this val)))
@@ -854,7 +795,72 @@
 (define (js-call-methodn %this val prop . args)
    (let ((o (js-toobject %this val)))
       (js-calln% %this (js-get o prop %this) o args)))
-      
+
+;*---------------------------------------------------------------------*/
+;*    js-call-proxy ...                                                */
+;*    -------------------------------------------------------------    */
+;*    These functions are used to invoked trapped proxy functions.     */
+;*---------------------------------------------------------------------*/
+(define-macro (gen-proxy-call %this fun this . args)
+   `(with-access::JsProxy ,fun (target handler)
+       (if (not (isa? target JsFunction))
+	   (js-raise-type-error ,%this
+	      ,(format "call~a: not a function ~~s" (length args))
+	      ,fun)
+	   (let ((xfun (js-get handler 'apply ,%this)))
+	      (if (isa? xfun JsFunction)
+		  (with-access::JsFunction xfun (procedure)
+		     (js-call3% %this xfun procedure ,fun target
+			,this (js-vector->jsarray (vector ,@args) ,%this)))
+		  (with-access::JsFunction target (procedure)
+		     (,(string->symbol (format "js-call~a%" (length args)))
+		      ,%this target procedure ,this ,@args)))))))
+
+(define (js-call-proxy0 %this fun this)
+   (gen-proxy-call %this fun this))
+
+(define (js-call-proxy1 %this fun this a0)
+   (gen-proxy-call %this fun this a0))
+
+(define (js-call-proxy2 %this fun this a0 a1)
+   (gen-proxy-call %this fun this a0 a1))
+
+(define (js-call-proxy3 %this fun this a0 a1 a2)
+   (gen-proxy-call %this fun this a0 a1 a2))
+
+(define (js-call-proxy4 %this fun this a0 a1 a2 a3)
+   (gen-proxy-call %this fun this a0 a1 a2 a3))
+
+(define (js-call-proxy5 %this fun this a0 a1 a2 a3 a4)
+   (gen-proxy-call %this fun this a0 a1 a2 a3 a4))
+
+(define (js-call-proxy6 %this fun this a0 a1 a2 a3 a4 a5)
+   (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5))
+
+(define (js-call-proxy7 %this fun this a0 a1 a2 a3 a4 a5 a6)
+   (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5 a6))
+
+(define (js-call-proxy8 %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7))
+
+(define (js-call-proxy9 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+
+(define (js-call-proxy10 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
+(define (js-call-proxyn %this fun this . args)
+   (with-access::JsProxy fun (target handler)
+      (if (not (isa? target JsFunction))
+	  (js-raise-type-error %this "calln: not a function ~s" fun)
+	  (let ((xfun (js-get handler 'apply %this)))
+	     (if (isa? xfun JsFunction)
+		 (with-access::JsFunction xfun (procedure)
+		    (js-call3% %this xfun procedure fun target
+		       this (js-vector->jsarray (list->vector args) %this)))
+		 (with-access::JsFunction target (procedure)
+		    (js-calln% %this target this args)))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-service/debug ...                                             */
 ;*---------------------------------------------------------------------*/

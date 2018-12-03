@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/types_expd.sch            */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/types_expd.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Oct 17 12:30:39 2018 (serrano)                */
+;*    Last change :  Sun Dec  2 21:05:27 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -212,6 +212,7 @@
 (define-instantiate-expander JsBoolean)
 (define-instantiate-expander JsError)
 (define-instantiate-expander JsDate)
+(define-instantiate-expander JsProxy)
 (define-instantiate-expander JsJSON)
 (define-instantiate-expander JsWorker)
 (define-instantiate-expander JsPromise)

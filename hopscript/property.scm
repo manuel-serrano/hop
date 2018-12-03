@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Oct 17 10:32:57 2018 (serrano)                */
+;*    Last change :  Mon Dec  3 11:14:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -91,7 +91,7 @@
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
 	   
-	   (js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
+	   (generic js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache ::long ::pair-nil)
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 	   
@@ -1481,8 +1481,9 @@
 ;*    Look for the property, if found update the cache and return      */
 ;*    the property value.                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get-lookup o::JsObject name::obj throw::bool %this::JsGlobalObject
-	    cache::JsPropertyCache point::long cspecs::pair-nil)
+(define-generic (js-object-get-lookup o::JsObject name::obj throw::bool
+		   %this::JsGlobalObject
+		   cache::JsPropertyCache point::long cspecs::pair-nil)
 
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage)
       (set! cntmiss (+u32 #u32:1 cntmiss))

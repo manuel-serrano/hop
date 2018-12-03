@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/hopscript/generator.scm     */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/generator.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Tue Aug 14 15:10:01 2018 (serrano)                */
+;*    Last change :  Sun Dec  2 20:51:33 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Native BIgloo support of JavaScript generators                   */
+;*    Native Bigloo support of JavaScript generators                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/6.0/#14.4             */
 ;*=====================================================================*/

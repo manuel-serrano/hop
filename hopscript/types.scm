@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Oct 25 11:51:19 2018 (serrano)                */
+;*    Last change :  Sun Dec  2 20:51:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -178,6 +178,7 @@
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))
+	      (js-proxy::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
 	      (js-symbol-ctor::procedure (default list))
@@ -324,6 +325,10 @@
 	   
 	   (class JsGenerator::JsObject
 	      %next)
+
+	   (class JsProxy::JsObject
+	      (target::JsObject (default (class-nil JsObject)))
+	      (handler::JsObject (default (class-nil JsObject))))
 	   
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)

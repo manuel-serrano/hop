@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/use.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/use.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Oct 26 13:08:09 2018 (serrano)                */
+;*    Last change :  Mon Dec  3 08:05:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -429,6 +429,14 @@
 		      (set! %info this)))
 	 params)
       (usage body 'ref deval this)))
+
+;*---------------------------------------------------------------------*/
+;*    usage ::J2SForIn ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (usage this::J2SForIn ctx deval infun)
+   (with-access::J2SForIn this (lhs obj)
+      (usage obj ctx deval infun)
+      (usage lhs 'assig deval infun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dead-code! ::J2SNode ...                                         */

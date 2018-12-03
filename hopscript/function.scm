@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Oct 12 07:43:02 2018 (serrano)                */
+;*    Last change :  Mon Dec  3 10:51:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -119,6 +119,13 @@
 (define js-function-cmap
    (make-cmap
       `#(,(prop 'prototype (property-flags #f #f #f #f))
+	 ,(prop 'length (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #f #f))
+	 ,(prop 'source (property-flags #f #f #f #f)))))
+
+(define js-function-cmap-sans-prototype
+   (make-cmap
+      `#(,(prop '%null (property-flags #f #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
 	 ,(prop 'name (property-flags #f #f #f #f))
 	 ,(prop 'source (property-flags #f #f #f #f)))))
@@ -405,9 +412,13 @@
 			  (else
 			   #f)))
 		(cmap (if (eq? strict 'normal)
-			  (if (isa? prototype JsObject)
-			      js-function-cmap
-			      js-function-writable-cmap)
+			  (cond
+			     ((isa? prototype JsObject)
+			      js-function-cmap)
+			     ((eq? prototype '())
+			      js-function-cmap-sans-prototype)
+			     (else
+			      js-function-writable-cmap))
 			  (if (isa? prototype JsObject)
 			      js-function-strict-cmap
 			      js-function-writable-strict-cmap)))
@@ -447,20 +458,30 @@
 		  :configurable #t :enumerable #f :writable #t
 		  :hidden-class #t))
 	    (vector-set! els 0
-	       (if (isa? prototype JsObject)
+	       (cond
+		  ((isa? prototype JsObject)
 		   (instantiate::JsValueDescriptor
 		      (name 'prototype)
 		      (enumerable #f)
 		      (configurable #f)
 		      (writable #f)
-		      (value prototype))
+		      (value prototype)))
+		  ((eq? prototype '())
+		   ;; the Proxy global object as no prototype field
+		   (instantiate::JsValueDescriptor
+		      (name '%null)
+		      (enumerable #f)
+		      (configurable #f)
+		      (writable #f)
+		      (value '())))
+		   (else
 		   (instantiate::JsWrapperDescriptor
 		      (name 'prototype)
 		      (enumerable #f)
 		      (configurable #f)
 		      (writable #t)
 		      (value (if construct proto (js-undefined)))
-		      (%set prototype-set))))
+		      (%set prototype-set)))))
 	    ;; length
 	    (vector-set! els 1 length)
 	    ;; name
