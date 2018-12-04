@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Oct 28 09:57:18 2018 (serrano)                */
+;*    Last change :  Tue Dec  4 16:05:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -432,7 +432,10 @@
       (when (or (>= (bigloo-debug) 2)
 		(string-contains (or (getenv "HOPTRACE") "") "j2s:"))
 	 (unless (memq :debug-stage o)
-	    (set! o (cons* :debug-stage #t o))))
+	    (set! o (cons* :debug-stage #t o)))
+	 (when (string-contains (or (getenv "HOPTRACE") "") "j2s:json")
+	    (unless (memq :debug-stage-format o)
+	       (set! o (cons* :debug-stage-format 'json o)))))
       ;; profiling
       (when (config-get args :profile #f)
 	 (unless (memq :profile-call o)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/stage.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/stage.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Thu Oct 18 08:22:37 2018 (serrano)                */
+;*    Last change :  Tue Dec  4 16:05:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -79,11 +79,15 @@
 				  (string-replace name (file-separator) #\_))))
 		      (cond
 			 ((config-get args :debug-stage)
-			  (call-with-output-file file
-			     (lambda (p)
-				(fprint p ";; -*-bee-*-")
-				(fprint p ";; " comment)
-				(pp (j2s->list nast) p))))
+			  (if (eq? (config-get args :debug-stage-format) 'json)
+			      (call-with-output-file (string-append file ".json")
+				 (lambda (op)
+				    (ast->json ast op)))
+			      (call-with-output-file file
+				 (lambda (p)
+				    (fprint p ";; -*-bee-*-")
+				    (fprint p ";; " comment)
+				    (pp (j2s->list nast) p)))))
 			 ((file-exists? file)
 			  (delete-file file)))))
 		(when (procedure? after) (after nast))

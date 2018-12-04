@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Nov 27 16:33:39 2018 (serrano)                */
+;*    Last change :  Tue Dec  4 18:54:18 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1203,6 +1203,7 @@ usage: (js-return)  -- [RET]"
     (define-key map "\C-m" 'hopjs-return)
     (local-unset-key "\ee")
     (define-key map "\e\C-q" 'hopjs-indent-statement)
+    (define-key map (kbd "<C-M-tab>") 'hopjs-pp-buffer)
     (local-unset-key "}")
     (define-key map "}" 'hopjs-electric-brace)
     (local-unset-key ")")
@@ -1218,6 +1219,17 @@ usage: (js-return)  -- [RET]"
 ;; mouse-2
 (define-key hopjs-tooltip-map[(mouse-2)]
   (function hopjs-doc-entry))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-pp-buffer ...                                              */
+;*---------------------------------------------------------------------*/
+(defun hopjs-pp-buffer ()
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "[{,]" (point-max) t)
+      (goto-char (match-end 0))
+      (newline-and-indent))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-old-indent-function ...                                    */

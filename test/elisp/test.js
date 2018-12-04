@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sun Dec  2 06:23:57 2018 (serrano)                */
+/*    Last change :  Tue Dec  4 12:18:45 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -27,13 +27,15 @@ or
 (hopjs-indent-test)
 */
 
-// pok run after lbrace and m.react after rbrace
-function() {
-   const m = hiphop machine() {
-      run User();
-   }
+/*---------------------------------------------------------------------*/
+/*    JavaScript                                                       */
+/*                                                                     */
+/*---------------------------------------------------------------------*/
+// ok bad indent after in-line return
+function( x ) {
+   if( x > 20 ) return false;
    
-   m.react();
+   return true;
 }
 
 // ok: literal indent (after new Proxy)
@@ -66,36 +68,6 @@ function addNumber( G ) {
       .getElementById( "numbers" )
       .appendChild( number( G ) )
       .doit();
-}
-
-// ok: error on [Newline] after push( x );		   
-hiphop machine mach( O ) {
-   signal L = [] combine (x,y) => y.push( x );
-}
-
-// ok: bad indent after fork $		   
-function forkLast( funs ) {
-   function par( f ) {
-      return hiphop async L { f( v => { this.notify( v ); } ) };
-   }
-   
-   hiphop machine mach( O ) {
-      signal L;
-      
-      fork ${ funs.map( par ) }
-      	   if( L.now ) {
-	      emit O( { resolve: true, val: L.nowval } );
-      	   } else {
-	      emit O( { resolve: false } );
-      	   }
-   }
-   
-   return new Promise( function( resolve, reject ) {
-      mach.addEventListener( "O", v => {
-	 v.nowval.resolve ? resolve( v.nowval.val ) : reject( undefined )
-      } );
-      mach.react();
-   } );
 }
 
 // return literal
@@ -135,18 +107,6 @@ ReactiveMachine.prototype.Promise =
       } );
    };
 
-// bad text parsing
-const login = <impress.slide title="Login"
-  			     id="hh-login"
-			     class="hh"
-			     data-y=0>
-  <div class="slide-title"><span class="titlekey">Login: a Case Study</span></div>
-  <div class="javascript code">
-    <tt class="filename">./specification.txt</tt>
-    ${x}
-  </div>
-</impress.slide>
-
 // comma and binop
 function() {
    if( mach.profile ) {
@@ -179,51 +139,6 @@ function() {
 function foo( a, b ) {
    #:tprint( a );
    tprint( b );
-}
-
-// ok
-function makeAutomatePossibleMachine () {
-   function creationModule( lesSons ) {
-      return hiphop module automateDesPossibles(in tick, in abletonON)
-	 implements 
-	    automateInt.creationInterfaces(lesSons[0]),
-	    automateInt.creationInterfaces(lesSons[1]),
-	    automateInt.creationInterfaces(lesSons[2]) {
-   	       fork {
-      	       	  //run spy(...);
-   	       } par {
-      	       	  every ( immediate abletonON.now) {
-	 	     if ( nowval( abletonON) === 1) {
-	    	     	run automateUn.trajetModule( ... );
-	 	     } else if  ( nowval(abletonON) === 2){
-	      	       	  run automateDeux.trajetModule(...);
-	   	       } else if ( nowval(abletonON) === 3){
-			    run automateTrois.trajetModule(...);
-	     	      	 }
-      	       	  }
-   	       }
-	    }
-   }
-   
-   var  machine = new hh.ReactiveMachine( creationModule( par.groupesDesSons) );
-   for (var j=0; j < par.groupesDesSons.length; j ++) {
-      for (var i=0; i < par.groupesDesSons[j].length; i++) {
-	 var signal = par.groupesDesSons[j][i][0] + "OUT";
-	 
-	 if (debug) console.log("Addeventlisterner:signal:",signal);
-      }
-   }
-}
-
-
-// ok
-module.exports = hiphop machine( in A, in B, in R, out O ) {
-   do {
-      fork {
-	 yield;
-      	 emit A();
-      }
-   }
 }
 
 // ok
@@ -276,33 +191,6 @@ function read( fd, chars ) {
       	 }
       } )
 }
-
-// ok
-function number( G ) {
-   let trap = hiphop {
-      exit: loop {
-	 await( killn.now && numbers.now );
-	 emit numbers( num );
-	 emit killn( prey( numbers.nowval ) );
-	 
-	 if( killn.nowval.indexOf( num ) >= 0 ) {
-	    hop {
-	       num.dead = true;
-	       G.mach.getElementById( "numbers" ).removeChild( trap );
-	    }
-	    break exit;
-	 } else {
-	    if( num.prey && killn.nowval.indexOf( num.prey ) >= 0 ) {
-	       hop { num.init() }
-	    }
-	    hop { num.move() }
-	 }
-      }
-   }
-   
-   return trap;
-}
-
 
 // ok
 class ActionArg {
@@ -409,44 +297,6 @@ function run( tmt, lbl ) {
 }
 
 // ok
-{
-   "servers": [
-      {
-   	 "port": 587,
-  	 "host": "smtp.gmail.com",
-   	 "requireTLS": true,
- 	 "authMethod": "LOGIN",
-  	 "login": {
-	    "user": "YYYY",
-  	    "pass": "XXX"
-       	 }
-      },
-      {
-   	 "port": 587,
-      	 "host": "mail2-relais-roc.national.inria.fr",
-      	 "requireTLS": true,
-      	 "authMethod": "LOGIN",
-      	 "%login": {
-	    "user": "YYYY",
-	    "pass": "XXXX"
-      	 }
-      } ],
-   
-   "name": "redrock.inria.fr",
-   
-   "outOfMail": {
-      "hours": [ [20, 24] ],
-      "days": [ "sat", "sun" ]
-   },
-   
-   "immediateDelivery": [
-      "XXXX",
-      "YYYY",
-      "AAAA", "BBBBB"
-   ]
-}
-
-// ok
 function mkPromise( name, result, tmt ) {
    return new Promise( 
       (resolve, reject) => {
@@ -478,68 +328,6 @@ const p1 = new Promise(
    (resolve, reject) => {
       return 3;
    } );
-
-// ok
-function firstPromise( promises ) {
-   return new Promise( 
-      (resolve, reject) => {
-	 hiphop machine m( resolve, reject ) {
-	    fork {
-               abort( resolve ) {
-	       	  ${ promises.map( 
-			p => hiphop { run (promiseToModule( acc ))( ... ) } ) }
-      	       }
-      	    }
-      	 }
-      	 
-      	 m.addEventListener( "resolve", resolve );
-      	 m.addEventListener( "reject", reject );
-      	 
-      	 m.react();
-      } );
-}
-
-// ok
-function firstPromise( promises ) {
-   hiphop machine m( resolve, reject ) {
-      fork {
-      	 abort( resolve ) {
-	    ${ promises.map( 
-		  p => { 
-		     hiphop { run (promiseToModule( acc ))( ... ) } 
-		  } ); }
-      	 }
-      }
-   }
-   
-   return new Promise( (resolve, reject) => {
-      			  resolve 3;
-   		       } );
-}
-
-// ok
-function firstPromise( promises ) {
-   return hiphop module( resolve, reject ) {
-      abort( resolve ) {
-      	 ${ promises.map( 
-	       (p, b) => { 
-	       	  hiphop { run (promiseToModule( acc ))( ... ) } 
-	       } ); }
-      }
-   }
-}
-
-// ok
-function firstPromise( promises ) {
-   return hiphop module( resolve, reject ) {
-      abort( resolve ) {
-      	 ${ promises.map( 
-	       a => { 
-		  hiphop { run (promiseToModule( acc ))( ... ) } 
-	       } ); }
-      }
-   }
-}
 
 // ok
 function promiseToModule( promise ) {
@@ -636,52 +424,6 @@ function openSMTPConnection( config ) {
    }
    
    return new Promise( (resolve, reject) => loop( resolve, reject, 0 ) );
-}
-
-// ok 
-function patternHuman( request, approval, escalate ) {
-   return hiphop module() {
-      signal req;
-      
-      fork {
-	 run request( req );
-      } par {
-	 every( req.now ) {
-      	 }
-      }
-   }
-}
-
-
-// ok
-function patternFanoutFanin( f1, f2s, f3 ) {
-   run( f1 );
-   fork ${f2s};
-   run f3();
-}
-
-// ok
-function patternChain( fs ) {
-   return hiphop module() {
-      signal exn;
-      
-      abort( exn.now ) {
-	 ${fs.map( m => hiphop run m( exn ) ) }
-      }
-      if( exn.nw ) { 
-	 // error handling/compension goes here
-      }
-   }
-}
-
-// ok
-hiphop module A( x, y ) {
-   signal x;
-   
-   abort( exn.now ) {
-      run m1();
-      run m2();
-   }
 }
 
 // ok
@@ -899,6 +641,242 @@ function glop( x ) {
       default: return 6;
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    Plugins                                                          */
+/*---------------------------------------------------------------------*/
+// ok
+module.exports = hiphop machine( in A, in B, in R, out O ) {
+   do {
+      fork {
+	 yield;
+      	 emit A();
+      }
+   }
+}
+
+// ok run after lbrace and m.react after rbrace
+function() {
+   const m = hiphop machine() {
+      run User();
+   }
+   
+   m.react();
+}
+
+// ok: error on [Newline] after push( x );		   
+hiphop machine mach( O ) {
+   signal L = [] combine (x,y) => y.push( x );
+}
+
+// ok: bad indent after fork $		   
+function forkLast( funs ) {
+   function par( f ) {
+      return hiphop async L { f( v => { this.notify( v ); } ) };
+   }
+   
+   hiphop machine mach( O ) {
+      signal L;
+      
+      fork ${ funs.map( par ) }
+      	   if( L.now ) {
+	      emit O( { resolve: true, val: L.nowval } );
+      	   } else {
+	      emit O( { resolve: false } );
+      	   }
+   }
+   
+   return new Promise( function( resolve, reject ) {
+      mach.addEventListener( "O", v => {
+	 v.nowval.resolve ? resolve( v.nowval.val ) : reject( undefined )
+      } );
+      mach.react();
+   } );
+}
+
+// ok
+function makeAutomatePossibleMachine () {
+   function creationModule( lesSons ) {
+      return hiphop module automateDesPossibles(in tick, in abletonON)
+	 implements 
+	    automateInt.creationInterfaces(lesSons[0]),
+	    automateInt.creationInterfaces(lesSons[1]),
+	    automateInt.creationInterfaces(lesSons[2]) {
+   	       fork {
+      	       	  //run spy(...);
+   	       } par {
+      	       	  every ( immediate abletonON.now) {
+	 	     if ( nowval( abletonON) === 1) {
+	    	     	run automateUn.trajetModule( ... );
+	 	     } else if  ( nowval(abletonON) === 2){
+	      	       	  run automateDeux.trajetModule(...);
+	   	       } else if ( nowval(abletonON) === 3){
+			    run automateTrois.trajetModule(...);
+	     	      	 }
+      	       	  }
+   	       }
+	    }
+   }
+   
+   var  machine = new hh.ReactiveMachine( creationModule( par.groupesDesSons) );
+   for (var j=0; j < par.groupesDesSons.length; j ++) {
+      for (var i=0; i < par.groupesDesSons[j].length; i++) {
+	 var signal = par.groupesDesSons[j][i][0] + "OUT";
+	 
+	 if (debug) console.log("Addeventlisterner:signal:",signal);
+      }
+   }
+}
+
+// ok
+function number( G ) {
+   let trap = hiphop {
+      exit: loop {
+	 await( killn.now && numbers.now );
+	 emit numbers( num );
+	 emit killn( prey( numbers.nowval ) );
+	 
+	 if( killn.nowval.indexOf( num ) >= 0 ) {
+	    hop {
+	       num.dead = true;
+	       G.mach.getElementById( "numbers" ).removeChild( trap );
+	    }
+	    break exit;
+	 } else {
+	    if( num.prey && killn.nowval.indexOf( num.prey ) >= 0 ) {
+	       hop { num.init() }
+	    }
+	    hop { num.move() }
+	 }
+      }
+   }
+   
+   return trap;
+}
+
+
+// ok
+function firstPromise( promises ) {
+   return new Promise( 
+      (resolve, reject) => {
+	 hiphop machine m( resolve, reject ) {
+	    fork {
+               abort( resolve ) {
+	       	  ${ promises.map( 
+			p => hiphop { run (promiseToModule( acc ))( ... ) } ) }
+      	       }
+      	    }
+      	 }
+      	 
+      	 m.addEventListener( "resolve", resolve );
+      	 m.addEventListener( "reject", reject );
+      	 
+      	 m.react();
+      } );
+}
+
+// ok
+function firstPromise( promises ) {
+   hiphop machine m( resolve, reject ) {
+      fork {
+      	 abort( resolve ) {
+	    ${ promises.map( 
+		  p => { 
+		     hiphop { run (promiseToModule( acc ))( ... ) } 
+		  } ); }
+      	 }
+      }
+   }
+   
+   return new Promise( (resolve, reject) => {
+      			  resolve 3;
+   		       } );
+}
+
+// ok
+function firstPromise( promises ) {
+   return hiphop module( resolve, reject ) {
+      abort( resolve ) {
+      	 ${ promises.map( 
+	       (p, b) => { 
+	       	  hiphop { run (promiseToModule( acc ))( ... ) } 
+	       } ); }
+      }
+   }
+}
+
+// ok
+function firstPromise( promises ) {
+   return hiphop module( resolve, reject ) {
+      abort( resolve ) {
+      	 ${ promises.map( 
+	       a => { 
+		  hiphop { run (promiseToModule( acc ))( ... ) } 
+	       } ); }
+      }
+   }
+}
+
+// ok 
+function patternHuman( request, approval, escalate ) {
+   return hiphop module() {
+      signal req;
+      
+      fork {
+	 run request( req );
+      } par {
+	 every( req.now ) {
+      	 }
+      }
+   }
+}
+
+
+// ok
+function patternFanoutFanin( f1, f2s, f3 ) {
+   run( f1 );
+   fork ${f2s};
+   run f3();
+}
+
+// ok
+function patternChain( fs ) {
+   return hiphop module() {
+      signal exn;
+      
+      abort( exn.now ) {
+	 ${fs.map( m => hiphop run m( exn ) ) }
+      }
+      if( exn.nw ) { 
+	 // error handling/compension goes here
+      }
+   }
+}
+
+// ok
+hiphop module A( x, y ) {
+   signal x;
+   
+   abort( exn.now ) {
+      run m1();
+      run m2();
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    XML                                                              */
+/*---------------------------------------------------------------------*/
+// bad text parsing
+const login = <impress.slide title="Login"
+  			     id="hh-login"
+			     class="hh"
+			     data-y=0>
+  <div class="slide-title"><span class="titlekey">Login: a Case Study</span></div>
+  <div class="javascript code">
+    <tt class="filename">./specification.txt</tt>
+    ${x}
+  </div>
+</impress.slide>
 
 // ok
 service hello() {
@@ -1142,3 +1120,56 @@ abro.css = <style>
   }
 </style>
 
+/*---------------------------------------------------------------------*/
+/*    Json                                                             */
+/*---------------------------------------------------------------------*/
+// ok
+{
+   "servers": [
+      {
+   	 "port": 587,
+  	 "host": "smtp.gmail.com",
+   	 "requireTLS": true,
+ 	 "authMethod": "LOGIN",
+  	 "login": {
+	    "user": "YYYY",
+  	    "pass": "XXX"
+       	 }
+      },
+      {
+   	 "port": 587,
+      	 "host": "mail2-relais-roc.national.inria.fr",
+      	 "requireTLS": true,
+      	 "authMethod": "LOGIN",
+      	 "%login": {
+	    "user": "YYYY",
+	    "pass": "XXXX"
+      	 }
+      } ],
+   
+   "name": "redrock.inria.fr",
+   
+   "outOfMail": {
+      "hours": [ [20, 24] ],
+      "days": [ "sat", "sun" ]
+   },
+   
+   "immediateDelivery": [
+      "XXXX",
+      "YYYY",
+      "AAAA", "BBBBB"
+   ]
+}
+
+// ok, brace after colon
+{ "__ast__":
+   { "__node__": "J2SProgram", 
+     "exports": 
+	[{ 
+	    "__node__": "J2SExport", 
+	    "id": "default", 
+	    "alias": "default", "from": false}], 
+     "imports": [], 
+     "source-map": false 
+  } 
+}

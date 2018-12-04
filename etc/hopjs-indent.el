@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Sun Dec  2 06:26:14 2018 (serrano)                */
+;*    Last change :  Tue Dec  4 12:21:15 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -772,7 +772,7 @@
     ((hopjs-parse-expr (hopjs-parse-peek-token) t)
      =>
      #'(lambda (etok)
-	 (hopjs-debug 0 "hopjs-indent-new-semicolon...expr etok=%s .tok=%s [%s]"
+	 (hopjs-debug 0 "hopjs-indent-new-semicolon...expr etok=%s tok=%s [%s]"
 		      etok
 		      (hopjs-parse-peek-token)
 		      (hopjs-parse-token-string (hopjs-parse-peek-token)))
@@ -814,7 +814,10 @@
 		  (hopjs-indent-column-token tok 0)
 		(hopjs-indent-new (hopjs-parse-token-beginning tok)))))
 	   ((return new)
-	    (hopjs-indent-column-token (hopjs-parse-consume-token-any) 0))
+	    (let ((rtok (hopjs-parse-consume-token-any)))
+	      (if (hopjs-parse-same-linep (hopjs-parse-peek-token) etok)
+		  (hopjs-indent-current-line-column)
+		(hopjs-indent-column-token rtok 0))))
 	   ((ident)
 	    (hopjs-indent-new-idents 0))
 	   ((dollar)
@@ -858,13 +861,20 @@
     ((hopjs-parse-expr (hopjs-parse-peek-token) t)
      =>
      #'(lambda (etok)
+	 (hopjs-debug 0 "hopjs-indent-new-colon etok=%s [%s] peek=%s"
+		      etok (hopjs-parse-token-string etok)
+		      (hopjs-parse-peek-token))
 	 (case (hopjs-parse-peek-token-type)
-	   ((case)
+	   ((case lbrace)
 	    (hopjs-indent-column-token
 	     (hopjs-parse-consume-token-any)
 	     hopjs-indent-level))
+	   ((comma)
+	    (if (hopjs-indent-first-on-linep etok)
+		(hopjs-indent-column-token etok hopjs-indent-level)
+	      (hopjs-indent-column-token tok hopjs-indent-level)))
 	   (t
-	    (hopjs-indent-column-token tok hopjs-indent-level-html)))))
+	    (hopjs-indent-column-token tok hopjs-indent-level)))))
     (t
      '()))))
 

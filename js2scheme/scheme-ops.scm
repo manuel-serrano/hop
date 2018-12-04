@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Nov 21 08:15:47 2018 (serrano)                */
+;*    Last change :  Mon Dec  3 13:21:11 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -15,6 +15,8 @@
 (module __js2scheme_scheme-ops
 
    (include "ast.sch")
+
+   (library hopscript)
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -1893,7 +1895,7 @@
       ((int53)
        (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
       ((real)
-       (if (flonum? val) (flonum->uint32 val) `(flonum->uint32 ,val)))
+       (if (flonum? val) (js-number-touint32 val) `(flonum->uint32 ,val)))
       (else
        (if (fixnum? val)
 	   (fixnum->uint32 val)

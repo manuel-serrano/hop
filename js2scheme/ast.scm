@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Oct 27 07:58:05 2018 (serrano)                */
+;*    Last change :  Tue Dec  4 16:20:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -16,13 +16,14 @@
    
    (library web)
    
-   (include "walk.sch")
+   (include "walk.sch"
+	    "ast.sch")
 
    (export (abstract-class J2SNode
 	      (loc::pair read-only (info '("notraverse")))
-	      (%info (default #unspecified) (info '("notraverse")))
-	      (%%dump (default #unspecified) (info '("notraverse")))
-	      (%%wstamp (default -1) (info '("notraverse"))))
+	      (%info (default #unspecified) (info '("nojson" "notraverse")))
+	      (%%dump (default #unspecified) (info '("nojson" "notraverse")))
+	      (%%wstamp (default -1) (info '("nojson" "notraverse"))))
 	   
 	   (abstract-class J2SStmt::J2SNode)
 
@@ -92,9 +93,9 @@
 	      (val::J2SExpr (info '("ast"))))
 
 	   (class J2SDeclFun::J2SDeclInit
-	      (parent read-only (default #f))
+	      (parent read-only (default #f) (info '("nojson")))
 	      (expression::bool (default #f))
-	      (hintinfo::obj (default #f) (info '("notraverse"))))
+	      (hintinfo::obj (default #f) (info '("nojson" "notraverse"))))
 
 	   (class J2SDeclFunType::J2SDeclFun)
 
@@ -217,7 +218,7 @@
 	      (idthis::obj (default 'this) (info '("notraverse")))
 	      (idgen read-only (default #f) (info '("notraverse")))
 	      (mode::symbol (default 'normal) (info '("notraverse")))
-	      (decl (default #f) (info '("notraverse")))
+	      (decl (default #f) (info '("jsonref" "notraverse")))
 	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
 	      (vararg::obj (default #f) (info '("notraverse")))
 	      (name::symbol read-only (default '||) (info '("notraverse")))
@@ -247,7 +248,7 @@
 	   (class J2SClass::J2SExpr
 	      (endloc::pair read-only (info '("notraverse")))
 	      (name read-only (info '("notraverse")))
-	      (decl (default #f) (info '("notraverse")))
+	      (decl (default #f) (info '("jsonref" "notraverse")))
 	      (super::J2SExpr (info '("ast")))
 	      (src::bool (default #t) (info '("notraverse")))
 	      (elements::pair-nil (info '("ast"))))
@@ -279,10 +280,10 @@
 	      id::symbol)
 	   
 	   (class J2SGlobalRef::J2SUnresolvedRef
-	      (decl::J2SDecl (info '("nojson"))))
+	      (decl::J2SDecl (info '("jsonref"))))
 	   
 	   (class J2SRef::J2SExpr
-	      (decl::J2SDecl (info '("nojson" "notraverse"))))
+	      (decl::J2SDecl (info '("jsonref" "notraverse"))))
 	   
 	   (class J2SWithRef::J2SExpr
 	      (id::symbol read-only)
@@ -382,8 +383,8 @@
 	      (cmap (default #f)))
 	   
 	   (final-class J2SAccess::J2SExpr
-	      (cache (default #f) (info '("notraverse")))
-	      (cspecs (default '(imap emap cmap pmap amap vtable)) (info '("notraverse")))
+	      (cache (default #f) (info '("nojson" "notraverse")))
+	      (cspecs (default '(imap emap cmap pmap amap vtable)) (info '("nojson" "notraverse")))
 	      (obj::J2SExpr (info '("ast")))
 	      (field::J2SExpr (info '("ast"))))
 
@@ -399,11 +400,11 @@
 	      (obj::J2SExpr (info '("ast"))))
 
 	   (final-class J2SCall::J2SExpr
-	      (profid::long (default -1) (info '("notraverse")))
-	      (cache (default #f) (info '("notraverse")))
-	      (cspecs (default '(pmap vtable)) (info '("notraverse")))
+	      (profid::long (default -1) (info '("nojson" "notraverse")))
+	      (cache (default #f) (info '("nojson" "notraverse")))
+	      (cspecs (default '(pmap vtable)) (info '("nojson" "notraverse")))
 	      (fun::J2SExpr (info '("ast")))
-	      (protocol::symbol (default 'direct) (info '("notraverse")))
+	      (protocol::symbol (default 'direct) (info '("nojson" "notraverse")))
 	      (thisarg::pair-nil (info '("ast")))
 	      (args::pair-nil (default '()) (info '("ast"))))
 	   
@@ -441,12 +442,12 @@
 	      (offset::symbol read-only))
 
 	   (final-class J2SDProducer::J2SExpr
-	      (decl::J2SDecl (info '("nojson")))
+	      (decl::J2SDecl (info '("jsonref")))
 	      (expr::J2SExpr (info '("ast")))
 	      (size::long read-only (info '("notraverse"))))
 
 	   (final-class J2SDConsumer::J2SExpr
-	      (decl::J2SDecl (info '("nojson")))
+	      (decl::J2SDecl (info '("jsonref")))
 	      (expr::J2SExpr (info '("ast")))
 	      (path read-only))
 
@@ -1083,14 +1084,45 @@
        (display this op)
        (display "\" }" op))
       (#unspecified
-       (display "undefined" op))
+       (display "null" op))
       (#t
        (display "true" op))
       (#f
        (display "false" op))
+      ((? interval? )
+       (interval->json this op))
+      ((? vector?)
+       (display "[" op)
+       (let loop ((i 0)
+		  (sep ""))
+	  (if (<fx i (vector-length this))
+	      (begin
+		 (display sep op)
+		 (j2s->json (vector-ref this i) op)
+		 (loop (+fx i 1) ", "))
+	      (display "]" op))))
       (else
        ;; other literal
        (display this op))))
+
+;*---------------------------------------------------------------------*/
+;*    interval->json ...                                               */
+;*---------------------------------------------------------------------*/
+(define (interval->json this op::output-port)
+   (let ((min (interval-min this))
+	 (max (interval-max this)))
+      (cond
+	 ((and (<=llong min *-inf.0*) (>= max *+inf.0*))
+	  (display "null" op))
+	 ((<=llong min *-inf.0*)
+	  (fprintf op "{ \"max\": ~a }" max))
+	 ((>= max *+inf.0*)
+	  (fprintf op "{ \"min\": ~a }" min))
+	 (else
+	  (fprintf op "{ \"min\": ~a, \"max\": ~a }" min max)))))
+
+(define *+inf.0* (exptllong #l2 54))
+(define *-inf.0* (negllong (exptllong #l2 54)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->json ::J2SNode ...                                          */
@@ -1104,32 +1136,17 @@
 	       (let* ((f (vector-ref fields i))
 		      (fi (class-field-info f)))
 		  (unless (and (pair? fi) (member "nojson" fi))
-		     (fprintf op ", \"~a\": " (class-field-name f))
 		     (let ((v ((class-field-accessor f) this)))
-			(j2s->json v op))))
+			(fprintf op ", \"~a\": " (class-field-name f))
+			(cond
+			   ((and (pair? fi) (member "jsonref" fi)
+				 (isa? v J2SDecl))
+			    (with-access::J2SDecl v (key)
+			       (fprintf op "{\"__ref__\": ~a} " key)))
+			   (else
+			    (j2s->json v op))))))
 	       (for (-fx i 1)))))
       (display " }" op)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s->json ::J2SRef ...                                           */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->json this::J2SRef op::output-port)
-   (with-access::J2SRef this (decl)
-      (let ((clazz (object-class this)))
-	 (fprintf op "{ \"__node__\": \"~a\"" (class-name clazz))
-	 (with-access::J2SDecl decl (key)
-	    (fprintf op ", \"decl\": {\"__ref__\": ~a}" key))
-	 (let ((fields (class-all-fields clazz)))
-	    (let for ((i (-fx (vector-length fields) 1)))
-	       (when (>=fx i 0)
-		  (let* ((f (vector-ref fields i))
-			 (fi (class-field-info f)))
-		     (unless (and (pair? fi) (member "nojson" fi))
-			(fprintf op ", \"~a\": " (class-field-name f))
-			(let ((v ((class-field-accessor f) this)))
-			   (j2s->json v op))))
-		  (for (-fx i 1)))))
-	 (display " }" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->json ::J2SPragma ...                                        */
@@ -1141,8 +1158,8 @@
 		  (call-with-output-string
 		     (lambda (op) (write expr op))))
 	 op)
-      (display ", \"vars\": " op)
-      (display (format "\"(~(, ))\"" vars))
+      (display "\", \"vars\": " op)
+      (display (format "\"(~(, ))\"" vars) op)
       (display ", \"vals\": [" op)
       (if (null? vals)
 	  (display "]" op)
@@ -1163,6 +1180,66 @@
       (j2s->json loc op)
       (display " }" op)))
 
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SBindExit ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SBindExit op::output-port)
+   (with-access::J2SBindExit this (lbl stmt)
+      (display "{ \"__node__\": \"J2SBindExit\"," op)
+      (when lbl
+	 (display "\"lbl\": \"" op)
+	 (display lbl op)
+	 (display "\"," op))
+      (display "\"stmt\": " op)
+      (j2s->json stmt op)
+      (display "\"}" op)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SReturn ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SReturn op::output-port)
+   (with-access::J2SReturn this (from expr)
+      (display "{ \"__node__\": \"J2SReturn\"," op)
+      (when (isa? from J2SBindExit)
+	 (with-access::J2SBindExit from (lbl)
+	    (display "\"exit\": \"" op)
+	    (display lbl op)
+	    (display "\"," op)))
+      (display "\"expr\": " op)
+      (j2s->json expr op)
+      (display "}" op)))
+            
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SExport ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SExport op::output-port)
+   (with-access::J2SExport this (id alias index decl from)
+      (display "{ \"__node__\": \"J2SExport\", \"id\": \"" op)
+      (display id op)
+      (display "\"" op)
+      (unless (eq? alias id)
+	 (display ",\"alias\": \"" op)
+	 (display alias op)
+	 (display "\"" op))
+      (when from
+	 (display ",\"from\": " op)
+	 (display from op)
+	 (display "\"" op))
+      (display "}" op)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SImportName ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SImportName op::output-port)
+   (with-access::J2SImportName this (loc id alias)
+      (display "{ \"__node__\": \"J2SImportName\", \"id\": \"" op)
+      (display id op)
+      (display "\", \"alias\": " op)
+      (display alias op)
+      (display ", \"loc\": " op)
+      (j2s->json loc op)
+      (display " }" op)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    json->ast ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -1359,3 +1436,12 @@
 		    (loop (cdr exports) index))
 		   (else
 		    (loop (cdr exports) i))))))))
+
+;*---------------------------------------------------------------------*/
+;*    exptllong ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (exptllong n exp::long)
+   (if (=llong n #l2)
+       (bit-lshllong #l1 exp)
+       (error "exptllong" "wrong number" n)))
+
