@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Dec  2 20:51:11 2018 (serrano)                */
+;*    Last change :  Wed Dec  5 14:37:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -63,7 +63,7 @@
 	      data::obj)
 	   
 	   (class JsPropertyDescriptor
-	      (name::obj read-only)
+	      name::obj
 	      (configurable (default #f))
 	      (enumerable (default #f)))
 	   (class JsDataDescriptor::JsPropertyDescriptor
@@ -76,6 +76,8 @@
 	   (final-class JsWrapperDescriptor::JsDataDescriptor
 	      (value (default (js-undefined)))
 	      %set::procedure)
+	   (final-class JsProxyDescriptor::JsPropertyDescriptor
+	      (proxy::JsObject read-only))
 	   
 	   (final-class JsPropertyCache
 	      (imap::obj (default #f))
@@ -179,6 +181,7 @@
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))
 	      (js-proxy::JsObject (default (class-nil JsObject)))
+	      (js-reflect::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
 	      (js-symbol-ctor::procedure (default list))

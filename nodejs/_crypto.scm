@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Thu Oct 26 05:54:58 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Tue Dec  4 22:28:53 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
 ;*=====================================================================*/
@@ -396,7 +396,10 @@
    
    (define (connection-get-session this)
       (with-access::JsSSLConnection this (ssl)
-	 (js-string->jsfastbuffer (ssl-connection-get-session ssl) %this)))
+	 (let ((sess (ssl-connection-get-session ssl)))
+	    (if (string? sess)
+		(js-string->jsfastbuffer sess %this)
+		(js-raise-type-error %this "Bad session" sess)))))
    
    (define (connection-get-current-cipher this)
       (with-access::JsSSLConnection this (ssl)

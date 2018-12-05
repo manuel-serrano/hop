@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Dec  3 11:14:19 2018 (serrano)                */
+;*    Last change :  Wed Dec  5 13:48:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -33,7 +33,8 @@
 	   __hopscript_function
 	   __hopscript_lib
 	   __hopscript_profile
-	   __hopscript_arithmetic)
+	   __hopscript_arithmetic
+	   __hopscript_proxy)
 
    (use    __hopscript_array
 	   __hopscript_stringliteral
@@ -98,6 +99,8 @@
 	   (js-get-notfound ::obj ::obj ::JsGlobalObject)
 	   
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
+	   (js-get-jsobject ::JsObject ::obj ::obj ::JsGlobalObject)
+	   
 	   (generic js-get-length::obj ::obj ::JsGlobalObject #!optional cache)
 	   (js-get-lengthu32::uint32 ::obj ::JsGlobalObject #!optional cache)
 	   
@@ -663,25 +666,6 @@
 				 (%id (gencmapid)))))
 		   (link-cmap! cmap newmap '__proto__ new flags)
 		   newmap))))))
-		
-;* 		(with-access::JsConstructMap parent (%id)              */
-;* 		   (with-access::JsGlobalObject %this (js-object)      */
-;* 		      (with-access::JsFunction js-object (constrmap)   */
-;* 			 (with-access::JsConstructMap constrmap ((rid %id)) */
-;* 			                                               */
-;* 			    (tprint "find-proto cur=" %cid             */
-;* 			       " parent=" %id " root=" rid))))         */
-;* 		   (js-debug-cmap parent "parent=")                    */
-;* 		   (js-debug-cmap cmap "cmap="))                       */
-;* 		(duplicate::JsConstructMap cmap                        */
-;* 		   (%id (gencmapid))))))))                             */
-	     
-;* 		       (if (eq? parent (js-not-a-cmap))                */
-;* 			   (link-cmap! parent newmap '__proto__ val flags) */
-;* 			   (when (or nextmap (eq? parent (js-not-a-cmap))) */
-;* 			      (tprint "LINKING...")                    */
-;* 			      (link-cmap! parent newmap '__proto__ val flags)) */
-;* 			   newmap)))                                   */
 
 ;*---------------------------------------------------------------------*/
 ;*    cmap-find-transition ...                                         */
@@ -879,7 +863,9 @@
 		(let liip ((,i (-fx (vector-length props) 1)))
 		   (cond
 		      ((=fx ,i -1)
-		       (,fail))
+		       (if (isa? ,o JsProxy)
+			   (,succeed ,o (js-proxy-property-descriptor-index ,o ,p))
+			   (,fail)))
 		      ((eq? (prop-name (vector-ref props ,i)) ,p)
 		       (,succeed ,o ,i))
 		      (else
@@ -897,14 +883,20 @@
 				(with-access::JsPropertyDescriptor d ((,name name))
 				   (eq? ,p ,name)))
 			  ,prop)))
-	     (if ,desc (,succeed ,o ,desc) (,fail))))))
+	     (cond
+		(,desc
+		 (,succeed ,o ,desc))
+		((isa? ,o JsProxy)
+		 (,succeed ,o (js-proxy-property-descriptor ,o ,p)))
+		(else
+		 (,fail)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-find ...                                               */
 ;*    -------------------------------------------------------------    */
-;*    This is a general macro that walks thru the prototype chains     */
-;*    (iff the optional loop argument is provided) looking of a        */
-;*    property. It calls on of the successXXX hooks when found.        */
+;*    This is a general macro that walks thru a prototype chain        */
+;*    (iff the optional loop argument is provided) looking for a       */
+;*    property. It calls one of the successXXX hooks when found.       */
 ;*---------------------------------------------------------------------*/
 (define-macro (jsobject-find o name foundinmap foundinprop notfound . loop)
 
@@ -1153,6 +1145,9 @@
       ((isa? desc JsWrapperDescriptor)
        (with-access::JsWrapperDescriptor desc (value)
 	  value))
+      ((isa? desc JsProxyDescriptor)
+       (with-access::JsProxyDescriptor desc (proxy name)
+	  (js-proxy-property-value proxy obj name %this)))
       (else
        (js-undefined))))
 
@@ -1505,7 +1500,6 @@
 	       (with-access::JsObject obj (elements)
 		  (with-access::JsPropertyCache cache (index owner cntmiss)
 		     (let ((el-or-desc (vector-ref elements i)))
-			
 			(cond
 			   ((isa? el-or-desc JsPropertyDescriptor)
 			    (unless (eq? o obj)
@@ -1531,8 +1525,7 @@
 			    el-or-desc)))))))
 	 ;; property search
 	 (lambda (obj v)
-	    (with-access::JsPropertyCache cache (index owner)
-	       (js-property-value o v %this)))
+	    (js-property-value o v %this))
 	 ;; not found
 	 (lambda ()
 	    (js-get-notfound name throw %this))

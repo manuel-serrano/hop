@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Dec  2 20:53:03 2018 (serrano)                */
+;*    Last change :  Wed Dec  5 22:02:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -29,6 +29,7 @@
 	   __hopscript_promise
 	   __hopscript_generator
 	   __hopscript_proxy
+	   __hopscript_reflect
 	   __hopscript_function
 	   __hopscript_number
 	   __hopscript_math
@@ -296,6 +297,7 @@
 	    (js-init-promise! %this)
 	    (js-init-generator! %this)
 	    (js-init-proxy! %this)
+	    (js-init-reflect! %this)
 	    (js-init-object! %this)
 	    (js-init-object-prototype! %this)
 

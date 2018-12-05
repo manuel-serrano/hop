@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Dec  4 18:54:18 2018 (serrano)                */
+;*    Last change :  Tue Dec  4 22:22:24 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1054,7 +1054,7 @@ usage: (js-return)  -- [RET]"
     
     (propertize
      "  doc  " 'help-echo "mouse-1: all documentations, mouse-2 local documentation"
-     'face `(:height 90 :background ,hopjs-mode-line-doc-button-color  :foreground "white" :weight bold)
+     'face `(:height 85 :background ,hopjs-mode-line-doc-button-color  :foreground "white" :weight bold)
      'mouse-face `(:background ,hopjs-mode-line-doc-button-color :foreground "black" :weight bold)
      'keymap keymap)))
 
