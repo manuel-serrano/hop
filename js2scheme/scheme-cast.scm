@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Nov 20 16:06:16 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 21:40:04 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -45,6 +45,7 @@
 	 (string ,js-int32->string)
 	 (scmstring number->string)
 	 (object ,js-int32->jsobject)
+	 (iterable error)
 	 (any ,js-int32->integer)))
      (uint32
 	((uint29 nop)
@@ -58,6 +59,7 @@
 	 (string ,js-uint32->string)
 	 (scmstring number->string)
 	 (object ,js-uint32->jsobject)
+	 (iterable error)
 	 (any ,js-uint32->integer)))
      (int53
 	((int30 nop)
@@ -68,6 +70,7 @@
 	 (string ,js-fixnum->string)
 	 (scmstring fixnum->string)
 	 (object ,js-number->jsobject)
+	 (iterable error)
 	 (any nop)))
      (integer
 	((int32 ,js-fixnum->int32)
@@ -78,6 +81,7 @@
 	 (int53 nop)
 	 (propname nop)
 	 (number nop)
+	 (iterable error)
 	 (any nop)))
      (number
 	((bool js-totest)
@@ -90,55 +94,68 @@
 	 (scmstring number->string)
 	 (propname nop)
 	 (object ,js-number->jsobject)
+	 (iterable error)
 	 (any nop)))
      (string
 	((propname nop)
 	 (bool ,js-string->bool)
 	 (object ,js-string->jsobject)
 	 (scmstring js-jsstring->string)
+	 (iterable ,(lambda (v expr conf) `(js-jsstring->jsarray ,v %this)))
 	 (any nop)))
      (function
 	((scmstring js-jsstring->string)
+	 (iterable ,(lambda (v expr conf) `(js-jsobject->jsarray ,v %this)))
 	 (any nop)))
      (object
 	((bool ,(lambda (v expr conf) #t))
 	 (array nop)
 	 (scmstring ,js->scmstring)
+	 (iterable ,(lambda (v expr conf) `(js-jsobject->jsarray ,v %this)))
 	 (any nop)))
      (bool
 	((int32 ,js-bool->int32)
 	 (uint32 ,js-bool->uint32)
 	 (object ,js-bool->jsobject)
 	 (scmstring ,js->scmstring)
+	 (iterable error)
 	 (any nop)))
      (null
 	((object ,js-toobject)
 	 (scmstring ,js->scmstring)
+	 (iterable error)
 	 (any nop)))
      (undefined
 	((object ,js-toobject)
 	 (bool ,(lambda (v expr conf) #f))
 	 (scmstring ,js->scmstring)
+	 (iterable error)
 	 (any nop)))
      (regexp
 	((scmstring ,js->scmstring)
+	 (iterable ,(lambda (v expr conf) `(js-jsobject->jsarray ,v %this)))
 	 (any nop)))
      (array
 	((scmstring ,js->scmstring)
 	 (bool ,(lambda (v expr conf) #t))
+	 (iterable nop)
 	 (any nop)))
      (arguments
 	((scmstring ,js->scmstring)
+	 (iterable ,(lambda (v expr conf) `(js-arguments->jsarray ,v %this)))
 	 (any nop)))
      (date
 	((scmstring ,js->scmstring)
+	 (iterable ,(lambda (v expr conf) `(js-jsobject->jsarray ,v %this)))
 	 (any nop)))
      (tilde
 	((scmstring ,js->scmstring)
+	 (iterable error)
 	 (any nop)))
      (scmstring
-	((bool js-string->bool))
-	((any js-string->jsstring)))
+	((bool js-string->bool)
+	 (iterable ,(lambda (v expr conf) `(js-jsstring->jsarray ,v %this)))
+	 (any js-string->jsstring)))
      (real
 	((uint32 js-number-touint32)
 	 (int32 js-number-toint32)
@@ -146,10 +163,12 @@
 	 (number nop)
 	 (string ,js-number->string)
 	 (scmstring ,number->string)
+	 (iterable error)
 	 (any nop)))
      (class
-	 ((scmstring ,js->scmstring)
-	  (any nop)))
+	((scmstring ,js->scmstring)
+	 (iterable ,(lambda (v expr conf) `(js-jsobject->jsarray ,v %this)))
+	 (any nop)))
      (any
 	((propname nop)
 	 (undefined nop)
@@ -165,7 +184,8 @@
 	 (uint32 ,js->uint32)
 	 (integer ,js-any->integer)
 	 (number ,js->number)
-	 (object ,js->object)))))
+	 (object ,js->object)
+	 (iterable ,(lambda (v expr conf) `(js-jsobject->jsarray ,v %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast ancially functions                                          */
@@ -588,9 +608,10 @@
 	      (let ((ten (assq to (cadr fen))))
 		 (if (pair? ten)
 		     (if (symbol? (cadr ten))
-			 (if (eq? (cadr ten) 'nop)
-			     sexp
-			     `(,(cadr ten) ,sexp))
+			 (case (cadr ten)
+			    ((nop) sexp)
+			    ((error) (err))
+			    (else `(,(cadr ten) ,sexp)))
 			 ((cadr ten) sexp expr conf))
 		     (default)))
 	      (default)))))

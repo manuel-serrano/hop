@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Dec  6 14:36:00 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 22:19:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -422,6 +422,7 @@
 	   (final-class J2SNew::J2SExpr
 	      (cache (default #f))
 	      (clazz::J2SNode (info '("ast")))
+	      (protocol::symbol (default 'direct) (info '("nojson" "notraverse")))
 	      (args::pair-nil (info '("ast"))))
 
 	   (abstract-class J2SPropertyInit::J2SNode

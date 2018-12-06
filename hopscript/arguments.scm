@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Oct 17 10:47:07 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 22:43:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -36,6 +36,7 @@
 	   (js-arguments ::JsGlobalObject ::vector)
 	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)
+	   (js-arguments->jsarray ::JsArguments ::JsGlobalObject)
 	   (js-arguments-ref ::JsArguments ::obj ::JsGlobalObject)
 	   (js-arguments-index-ref ::JsArguments ::uint32 ::JsGlobalObject)
 	   (inline js-arguments-length::obj ::JsArguments ::JsGlobalObject)))
@@ -458,6 +459,19 @@
 	 (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-arguments->jsarray ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-arguments->jsarray o::JsArguments %this)
+   (with-access::JsArguments o (vec)
+      (js-vector->jsarray vec %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->jsarray ::JsArray ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-jsobject->jsarray o::JsArguments %this)
+   (js-arguments->jsarray o %this))
+
+;*---------------------------------------------------------------------*/
 ;*    js-freeze ::JsArguments ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-freeze o::JsArguments obj)
@@ -502,3 +516,4 @@
 		      (when (<fx i len)
 			 (proc (js-property-value o (vector-ref vec i) %this))
 			 (loop (+fx i 1))))))))))
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  6 16:35:12 2018                          */
-;*    Last change :  Thu Dec  6 16:35:41 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 19:01:27 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions to deal with spread syntax.                    */
@@ -20,6 +20,8 @@
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
 	   __js2scheme_stage
+	   __js2scheme_scheme
+	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-cast)
 
    (export (spread->array-expr::J2SExpr loc exprs::pair)
@@ -37,7 +39,7 @@
 	     (collect-no-spread exprs)
 	     (if (null? nospread)
 		 (with-access::J2SSpread (car rest) (expr)
-		    (cons expr (exprs->arr-list (cdr rest))))
+		    (cons (j2s-cast-array expr) (exprs->arr-list (cdr rest))))
 		 (with-access::J2SExpr (car nospread) (loc)
 		    (cons (instantiate::J2SArray
 			     (loc loc)
@@ -72,9 +74,7 @@
 	     (collect-no-spread exprs)
 	     (if (null? nospread)
 		 (with-access::J2SSpread (car rest) (expr)
-		    (let ((arr `(jsarray->list
-				   ,(j2s-scheme expr mode return conf)
-				   %this)))
+		    (let ((arr (j2s-iterable->list expr mode return conf)))
 		       (if (null? (cdr rest))
 			   arr
 			   `(append ,arr ,(loop (cdr rest))))))
@@ -92,3 +92,32 @@
 	 ((null? exprs) (values (reverse! nospread) exprs))
 	 ((isa? (car exprs) J2SSpread) (values (reverse! nospread) exprs))
 	 (else (loop (cons (car exprs) nospread) (cdr exprs))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-iterable->list ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-iterable->list expr mode return conf)
+   (with-access::J2SExpr expr (type)
+      (case type
+	 ((array)
+	  `(jsarray->list
+	      ,(j2s-scheme expr mode return conf)
+	      %this))
+	 ((string)
+	  `(jsstring->list
+	      ,(j2s-scheme expr mode return conf)
+	      %this))
+	 (else
+	  `(js-iterable->list
+	      ,(j2s-scheme expr mode return conf)
+	      %this)))))
+	  
+
+;*---------------------------------------------------------------------*/
+;*    j2s-cast-array ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-cast-array expr)
+   (with-access::J2SExpr expr (type loc)
+      (if (eq? type 'array)
+	  expr
+	  (J2SCast 'iterable expr))))

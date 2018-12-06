@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Oct  3 10:49:13 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 21:29:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -44,6 +44,8 @@
 	   (js-jsobject->alist ::JsObject ::JsGlobalObject)
 	   (js-dsssl-args->jsargs ::pair ::JsGlobalObject)
 	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)
+	   (js-iterable->list::pair-nil ::obj ::JsGlobalObject)
+	   (generic js-jsobject->jsarray ::obj ::JsGlobalObject)
 	   (inline fixnums?::bool ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -375,7 +377,29 @@
 ;*---------------------------------------------------------------------*/
 (define (js-procedure->jsobject obj %this)
    (js-make-function %this obj (procedure-arity obj) 'native))
-      
+
+;*---------------------------------------------------------------------*/
+;*    js-iterable->list ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-iterable->list obj %this)
+   (cond
+      ((js-array? obj)
+       (jsarray->list obj %this))
+      ((js-jsstring? obj)
+       (js-jsstring->list obj))
+      (else
+       (error "js-iterable->list"
+	  (format "not implemented yet \"~a\"" (typeof obj)) obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->jsarray ::obj ...                                   */
+;*---------------------------------------------------------------------*/
+(define-generic (js-jsobject->jsarray o::obj %this::JsGlobalObject)
+   (if (js-jsstring? o)
+       (js-jsstring->jsarray o %this)
+       (error "js-jsobjet->jsarray"
+	  (format "not implemented yet \"~a\"" (typeof o)) o)))
+
 ;*---------------------------------------------------------------------*/
 ;*    fixnums? ...                                                     */
 ;*---------------------------------------------------------------------*/

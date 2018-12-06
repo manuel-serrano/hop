@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Dec  6 15:24:06 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 19:02:19 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -33,7 +33,8 @@
 	   __js2scheme_scheme-array
 	   __js2scheme_scheme-class
 	   __js2scheme_scheme-ops
-	   __js2scheme_scheme-arguments))
+	   __js2scheme_scheme-arguments
+	   __js2scheme_scheme-spread))
 
 ;*---------------------------------------------------------------------*/
 ;*    builtin-method ...                                               */
@@ -762,70 +763,3 @@
 			     (args (list (J2SNull) expr)))))
 		(j2s-scheme ncall mode return conf)))))))
 						      
-;*---------------------------------------------------------------------*/
-;*    spread->array-expr::J2SExpr ...                                  */
-;*---------------------------------------------------------------------*/
-(define (spread->array-expr::J2SExpr loc exprs::pair)
-   
-   (define (exprs->arr-list exprs)
-      (if (null? exprs)
-	  '()
-	  (multiple-value-bind (nospread rest)
-	     (collect-no-spread exprs)
-	     (if (null? nospread)
-		 (with-access::J2SSpread (car rest) (expr)
-		    (cons expr (exprs->arr-list (cdr rest))))
-		 (with-access::J2SExpr (car nospread) (loc)
-		    (cons (instantiate::J2SArray
-			     (loc loc)
-			     (len (length nospread))
-			     (exprs nospread))
-		       (exprs->arr-list rest)))))))
-   
-   (let* ((arrlst (exprs->arr-list exprs))
-	  (arr (car arrlst))
-	  (rest (cdr arrlst)))
-      (if (null? rest)
-	  arr
-	  (instantiate::J2SCall
-	     (loc loc)
-	     (fun (instantiate::J2SAccess
-		     (loc loc)
-		     (obj arr)
-		     (field (instantiate::J2SString
-			       (loc loc)
-			       (val "concat")))))
-	     (thisarg (list arr))
-	     (args rest)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-spread->expr-list ...                                        */
-;*---------------------------------------------------------------------*/
-(define (j2s-spread->expr-list exprs mode return conf)
-   (let loop ((exprs exprs))
-      (if (null? exprs)
-	  ''()
-	  (multiple-value-bind (nospread rest)
-	     (collect-no-spread exprs)
-	     (if (null? nospread)
-		 (with-access::J2SSpread (car rest) (expr)
-		    (let ((arr `(jsarray->list
-				   ,(j2s-scheme expr mode return conf)
-				   %this)))
-		       (if (null? (cdr rest))
-			   arr
-			   `(append ,arr ,(loop (cdr rest))))))
-		 `(cons* ,@(map (lambda (n) (j2s-scheme n mode return conf))
-			      nospread)
-		     ,(loop rest)))))))
-
-;*---------------------------------------------------------------------*/
-;*    collect-no-spread ...                                            */
-;*---------------------------------------------------------------------*/
-(define (collect-no-spread exprs)
-   (let loop ((nospread '())
-	      (exprs exprs))
-      (cond
-	 ((null? exprs) (values (reverse! nospread) exprs))
-	 ((isa? (car exprs) J2SSpread) (values (reverse! nospread) exprs))
-	 (else (loop (cons (car exprs) nospread) (cdr exprs))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Dec  2 07:20:22 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 22:24:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -117,6 +117,15 @@
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
 	  `(:type ,type)
 	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    dump-protocol ...                                                */
+;*---------------------------------------------------------------------*/
+(define (dump-protocol protocol)
+   (if (or (>= (bigloo-debug) 2)
+	   (string-contains (or (getenv "HOPTRACE") "") "j2s:protocol"))
+       `(:protocol ,protocol)
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-rtype ...                                                   */
@@ -574,6 +583,13 @@
       `(,@(call-next-method) ,@(map j2s->list exprs))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SSpread ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SSpread)
+   (with-access::J2SSpread this (expr)
+      `(,@(call-next-method) ,(j2s->list expr))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
@@ -828,12 +844,13 @@
 ;*    j2s->list ::J2SCall ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCall)
-   (with-access::J2SCall this (fun thisarg args loc)
+   (with-access::J2SCall this (fun thisarg args loc protocol)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
 	  ,@(dump-range this)
+	  ,@(dump-protocol this)
 	  ,(j2s->list fun)
 	  ,@(dump-cache this)
 	  ,@(if (pair? thisarg) `(:thisarg ,@(map j2s->list thisarg)) '())
@@ -940,8 +957,9 @@
 ;*    j2s->list ::J2SNew ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SNew)
-   (with-access::J2SNew this (clazz args cache)
+   (with-access::J2SNew this (clazz args cache protocol)
       `(,@(call-next-method) ,@(dump-type this)
+	  ,@(dump-protocol this)
 	  ,@(dump-cache this)
 	  ,(j2s->list clazz) ,@(map j2s->list args))))
 

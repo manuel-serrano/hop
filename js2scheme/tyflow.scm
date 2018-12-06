@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Oct  9 17:14:03 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 22:06:37 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -559,6 +559,15 @@
 	 (expr-type-add! this env fix 'array bk))))
 
 ;*---------------------------------------------------------------------*/
+;*    node-type ::J2SSpread ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SSpread env::pair-nil fix::cell)
+   (with-access::J2SSpread this (expr len)
+      (multiple-value-bind (tye enve bke)
+	 (node-type expr env fix)
+	 (expr-type-add! this enve fix tye bke))))
+   
+;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SPragma env::pair-nil fix::cell)
@@ -1092,19 +1101,19 @@
 ;*    detailed in the code below.                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SCall env::pair-nil fix::cell)
-   (with-access::J2SCall this (fun thisarg args)
+   (with-access::J2SCall this (fun thisarg args protocol)
       (multiple-value-bind (tty env bkt)
 	 (if (pair? thisarg)
 	     (node-type (car thisarg) env fix)
 	     (values 'unknown env '()))
 	 (multiple-value-bind (rty env bkc)
-	    (node-type-call fun tty args env fix)
+	    (node-type-call fun protocol tty args env fix)
 	    (expr-type-add! this env fix rty (append bkt bkc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type-call ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (node-type-call callee tty args env fix)
+(define (node-type-call callee protocol tty args env fix)
    
    (define (unknown-call-env env)
       ;; compute a new node-type environment where all mutated globals
@@ -1238,10 +1247,11 @@
       (multiple-value-bind (_ env bk)
 	 (node-type callee env fix)
 	 (return 'any (unknown-call-env env) bk)))
-
+   
    (multiple-value-bind (env bk)
       (node-type-args args env fix)
       (cond
+	 ((eq? protocol 'spread) (type-unknown-call callee env bk))
 	 ((isa? callee J2SFun) (type-inline-call callee args env bk))
 	 ((isa? callee J2SRef) (type-ref-call callee args env bk))
 	 ((isa? callee J2SHopRef) (type-hop-call callee args env bk))
@@ -1280,11 +1290,11 @@
 		(else 'object)))
 	  'object))
    
-   (with-access::J2SNew this (clazz args loc)
+   (with-access::J2SNew this (clazz args loc protocol)
       (multiple-value-bind (_ env bk)
 	 (node-type clazz env fix)
 	 (multiple-value-bind (_ env bk)
-	    (node-type-call clazz 'object args env fix)
+	    (node-type-call clazz protocol 'object args env fix)
 	    (expr-type-add! this env fix (class-type clazz) bk)))))
 
 ;*---------------------------------------------------------------------*/

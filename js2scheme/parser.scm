@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Dec  6 10:55:22 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 22:21:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1981,6 +1981,7 @@
 	     (instantiate::J2SNew
 		(loc (token-loc ignore))
 		(clazz clazz)
+		(protocol (args-protocol args))
 		(args args))))
 	 ((yield)
 	  (yield-expr))
@@ -2083,14 +2084,11 @@
 		    (parse-token-error "Wrong property name" field))))
 	    ((LPAREN)
 	     (if call-allowed?
-		 (let* ((args (arguments))
-			(proto (if (find (lambda (x) (isa? x J2SSpread)) args)
-				   'spread
-				   'direct)))
+		 (let ((args (arguments)))
 		    (loop (instantiate::J2SCall
 			     (loc loc)
 			     (fun expr)
-			     (protocol proto)
+			     (protocol (args-protocol args))
 			     (thisarg (list (J2SUndefined)))
 			     (args args))))
 		 expr))
@@ -3378,5 +3376,8 @@
 	       (cdr l)))
 	 (loop (cdr l)))))
 
-
-
+;*---------------------------------------------------------------------*/
+;*    args-protocol ...                                                */
+;*---------------------------------------------------------------------*/
+(define (args-protocol args)
+   (if (find (lambda (x) (isa? x J2SSpread)) args) 'spread 'direct))

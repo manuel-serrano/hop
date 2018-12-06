@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Dec  6 16:31:18 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 19:02:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -37,7 +37,8 @@
 	   __js2scheme_scheme-math
 	   __js2scheme_scheme-date
 	   __js2scheme_scheme-array
-	   __js2scheme_scheme-arguments)
+	   __js2scheme_scheme-arguments
+	   __js2scheme_scheme-spread)
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
@@ -2544,7 +2545,7 @@
 	 ((any (lambda (n) (isa? n J2SSpread)) args)
 	  (epairify loc
 	     `(apply js-new %this ,(j2s-scheme clazz mode return conf)
-		 ,@(j2s-spread->expr-list args mode return conf))))
+		 ,(j2s-spread->expr-list args mode return conf))))
 	 ((and (new-array? clazz)
 	       (or (=fx (bigloo-debug) 0) (eq? type 'vector)))
 	  (epairify loc

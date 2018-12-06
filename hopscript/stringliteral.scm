@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Oct 16 11:15:43 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 21:48:41 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -23,7 +23,8 @@
 	   __hopscript_public
 	   __hopscript_lib
 	   __hopscript_private
-	   __hopscript_property)
+	   __hopscript_property
+	   __hopscript_array)
 
    (export (js-jsstring-debug msg obj)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
@@ -107,7 +108,9 @@
 	   (js-jsstring-escape ::obj)
 	   (js-jsstring-unescape ::obj ::JsGlobalObject)
 	   (js-jsstring-slice ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-slice ::obj ::obj ::obj ::JsGlobalObject))
+	   (js-jsstring-maybe-slice ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring->jsarray ::obj ::JsGlobalObject)
+	   (js-jsstring->list ::obj))
 
    (cond-expand
       ((not bigloo4.3a)
@@ -2946,6 +2949,62 @@
        (let ((slice (js-get-name/cache this 'slice
 		       #f %this (js-pcache-ref %pcache 30))))
 	  (js-call2 %this slice this start end))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring->jsarray ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring->jsarray o %this)
+   
+   (define (ascii->array val %this)
+      (let* ((len (string-length o))
+	     (vec (make-vector len)))
+	 (let loop ((i 0))
+	    (if (<fx i len)
+		(let ((val (vector-ref prealloc-strings
+			      (char->integer (string-ref-ur o i)))))
+		   (vector-set! vec i val)
+		   (loop (+fx i 1)))
+		(js-vector->jsarray vec %this)))))
+      
+   (define (utf8->array val %this)
+      (let* ((len (string-length val))
+	     (vec (make-vector len)))
+	 (let loop ((i 0))
+	    (if (<fx i len)
+		(let* ((z (utf8-char-size (string-ref val i)))
+		       (s (substring val i (+fx i z))))
+		   (vector-set! vec i (js-string->jsstring s))
+		   (loop (+fx i z)))
+		(js-vector->jsarray vec %this)))))
+   
+   (string-dispatch >array o %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->jsarray ::JsStringLiteral ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-jsobject->jsarray o::JsStringLiteral %this)
+   (js-jsstring->jsarray o %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring->list ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring->list o)
+   
+   (define (ascii->list val)
+      (map! (lambda (c) (vector-ref prealloc-strings (char->integer c)))
+	 (string->list val)))
+   
+   (define (utf8->list val)
+      (let ((len (string-length val)))
+	 (let loop ((i 0)
+		    (acc '()))
+	    (if (<fx i len)
+		(let* ((z (utf8-char-size (string-ref val i)))
+		       (s (substring val i (+fx i z))))
+		   (loop (+fx i z) (cons (js-string->jsstring s) acc)))
+		(reverse! acc)))))
+   
+   (string-dispatch >list o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-for-of ...                                           */
