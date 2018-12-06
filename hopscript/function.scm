@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Dec  3 10:51:13 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 14:29:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -606,7 +606,6 @@
 			       (if (eq? p (js-absent)) (js-undefined) p))
 			  (vector->sublist vec len)))
 		    ;; slow path
-		    ;; CARE (5 jul 2014): MS NOT SURE OF THE SECOND ARGARRAY BELOW
 		    (let ((properties (js-object-properties argarray)))
 		       (js-apply %this this thisarg
 			  (map! (lambda (d)

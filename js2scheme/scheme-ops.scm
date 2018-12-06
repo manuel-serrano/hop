@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec  3 13:21:11 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 14:48:10 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -16,8 +16,6 @@
 
    (include "ast.sch")
 
-   (library hopscript)
-   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
@@ -1895,11 +1893,27 @@
       ((int53)
        (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
       ((real)
-       (if (flonum? val) (js-number-touint32 val) `(flonum->uint32 ,val)))
+       (if (flonum? val) (double->uint32 val) `(flonum->uint32 ,val)))
       (else
        (if (fixnum? val)
 	   (fixnum->uint32 val)
 	   `(if (fixnum? ,val) (fixnum->uint32 ,val) (js-touint32 ,val %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    double->uint32 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (double->uint32::uint32 obj::double)
+   (cond
+      ((or (= obj +inf.0) (= obj -inf.0) (not (= obj obj)))
+       #u32:0)
+      ((<fl obj 0.)
+       (llong->uint32
+	  (+llong (bit-lshllong #l1 32)
+	     (flonum->llong (*fl -1. (floorfl (absfl obj)))))))
+      (else
+       (llong->uint32
+	  (+llong (bit-lshllong #l1 32)
+	     (flonum->llong (floorfl (absfl obj))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    touint32/w-overflow ...                                          */

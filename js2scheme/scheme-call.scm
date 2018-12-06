@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Oct 17 10:06:47 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 15:24:06 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -622,6 +622,8 @@
       (let loop ((fun fun))
 	 (epairify loc
 	    (cond
+	       ((eq? protocol 'spread)
+		(j2s-scheme-call-spread this mode return conf))
 	       ((isa? fun J2SAccess)
 		(call-method this cache cspecs fun args))
 	       ((isa? fun J2SParen)
@@ -704,3 +706,126 @@
 			 10))))
 	    (else
 	     #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-call-spread ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-call-spread this mode return conf)
+   (with-access::J2SCall this (loc profid fun thisarg args)
+      (let ((expr (spread->array-expr loc args)))
+	 (cond
+	    ((and (isa? fun J2SRef)
+		  (with-access::J2SRef fun (decl)
+		     (with-access::J2SDecl decl (usage)
+			(only-usage? '(call new init get) usage))))
+	     (if (isa? expr J2SArray)
+		 ;; fun(...[x,y,z])
+		 (with-access::J2SArray expr (exprs)
+		    (let ((ncall (instantiate::J2SCall
+				    (loc loc)
+				    (fun fun)
+				    (thisarg (list (J2SNull)))
+				    (args exprs))))
+		       (j2s-scheme ncall mode return conf)))
+		 (epairify loc
+		    `(js-apply %this ,(j2s-scheme fun mode return conf)
+			,@(map (lambda (a) (j2s-scheme a mode return conf))
+			     thisarg)
+			,(j2s-spread->expr-list args mode return conf)))))
+	    ((isa? fun J2SAccess)
+	     (with-access::J2SAccess fun (obj field)
+		(let* ((o (gensym 'o))
+		       (axs (duplicate::J2SAccess fun
+			       (obj (J2SHopRef o))))
+		       (ncall (instantiate::J2SCall
+				 (loc loc)
+				 (fun (instantiate::J2SAccess
+					 (loc loc)
+					 (obj axs)
+					 (field (instantiate::J2SString
+						   (loc loc)
+						   (val "apply")))))
+				 (thisarg (list (J2SUndefined)))
+				 (args (list (J2SHopRef o) expr)))))
+		   `(let ((,o ,(j2s-scheme obj mode return conf)))
+		       ,(j2s-scheme ncall mode return conf)))))
+	    (else
+	     (let ((ncall (instantiate::J2SCall
+			     (loc loc)
+			     (fun (instantiate::J2SAccess
+				     (loc loc)
+				     (obj fun)
+				     (field (instantiate::J2SString
+					       (loc loc)
+					       (val "apply")))))
+			     (thisarg (list (J2SUndefined)))
+			     (args (list (J2SNull) expr)))))
+		(j2s-scheme ncall mode return conf)))))))
+						      
+;*---------------------------------------------------------------------*/
+;*    spread->array-expr::J2SExpr ...                                  */
+;*---------------------------------------------------------------------*/
+(define (spread->array-expr::J2SExpr loc exprs::pair)
+   
+   (define (exprs->arr-list exprs)
+      (if (null? exprs)
+	  '()
+	  (multiple-value-bind (nospread rest)
+	     (collect-no-spread exprs)
+	     (if (null? nospread)
+		 (with-access::J2SSpread (car rest) (expr)
+		    (cons expr (exprs->arr-list (cdr rest))))
+		 (with-access::J2SExpr (car nospread) (loc)
+		    (cons (instantiate::J2SArray
+			     (loc loc)
+			     (len (length nospread))
+			     (exprs nospread))
+		       (exprs->arr-list rest)))))))
+   
+   (let* ((arrlst (exprs->arr-list exprs))
+	  (arr (car arrlst))
+	  (rest (cdr arrlst)))
+      (if (null? rest)
+	  arr
+	  (instantiate::J2SCall
+	     (loc loc)
+	     (fun (instantiate::J2SAccess
+		     (loc loc)
+		     (obj arr)
+		     (field (instantiate::J2SString
+			       (loc loc)
+			       (val "concat")))))
+	     (thisarg (list arr))
+	     (args rest)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-spread->expr-list ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-spread->expr-list exprs mode return conf)
+   (let loop ((exprs exprs))
+      (if (null? exprs)
+	  ''()
+	  (multiple-value-bind (nospread rest)
+	     (collect-no-spread exprs)
+	     (if (null? nospread)
+		 (with-access::J2SSpread (car rest) (expr)
+		    (let ((arr `(jsarray->list
+				   ,(j2s-scheme expr mode return conf)
+				   %this)))
+		       (if (null? (cdr rest))
+			   arr
+			   `(append ,arr ,(loop (cdr rest))))))
+		 `(cons* ,@(map (lambda (n) (j2s-scheme n mode return conf))
+			      nospread)
+		     ,(loop rest)))))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-no-spread ...                                            */
+;*---------------------------------------------------------------------*/
+(define (collect-no-spread exprs)
+   (let loop ((nospread '())
+	      (exprs exprs))
+      (cond
+	 ((null? exprs) (values (reverse! nospread) exprs))
+	 ((isa? (car exprs) J2SSpread) (values (reverse! nospread) exprs))
+	 (else (loop (cons (car exprs) nospread) (cdr exprs))))))

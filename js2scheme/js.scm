@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Nov 21 07:22:50 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 16:21:54 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -921,7 +921,14 @@
 (define-method (j2s-js this::J2SArray tildec dollarc mode evalp conf)
    (with-access::J2SArray this (exprs)
       (j2s-js* this "[" "]" "," exprs tildec dollarc mode evalp conf)))
-	 
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SSpread ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SSpread tildec dollarc mode evalp conf)
+   (with-access::J2SSpread this (expr)
+      (cons* this "..." (j2s-js expr tildec dollarc mode evalp conf))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SRegExp ...                                           */
 ;*---------------------------------------------------------------------*/

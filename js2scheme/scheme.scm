@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Oct 28 07:01:49 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 16:31:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2541,6 +2541,10 @@
 	     
    (with-access::J2SNew this (loc cache clazz args type)
       (cond
+	 ((any (lambda (n) (isa? n J2SSpread)) args)
+	  (epairify loc
+	     `(apply js-new %this ,(j2s-scheme clazz mode return conf)
+		 ,@(j2s-spread->expr-list args mode return conf))))
 	 ((and (new-array? clazz)
 	       (or (=fx (bigloo-debug) 0) (eq? type 'vector)))
 	  (epairify loc

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Dec  3 13:26:55 2018 (serrano)                */
+#*    Last change :  Thu Dec  6 14:51:01 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -24,9 +24,9 @@ do: build
 # the library name
 TARGETNAME = js2scheme
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
-  -lhop_s-$(HOPRELEASE) -lhopscript_s-$(HOPRELEASE)
+  -lhop_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
-  -lhop_u-$(HOPRELEASE) -lhopscript_u-$(HOPRELEASE)
+  -lhop_u-$(HOPRELEASE)
 HOPCLOSELIBS_ES = -ljs2scheme_s-$(HOPRELEASE) 
 HOPCLOSELIBS_EU = -ljs2scheme_u-$(HOPRELEASE)
 
@@ -45,7 +45,7 @@ _OBJECTS = lexer header parser html ast dump utils \
   scheme scheme-utils scheme-program \
   scheme-fun scheme-ops scheme-test scheme-class scheme-string scheme-math \
   scheme-date scheme-array scheme-regexp scheme-cast scheme-arguments \
-  scheme-call
+  scheme-call scheme-spread
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

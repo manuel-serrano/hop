@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Oct 17 10:46:28 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 16:09:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -315,18 +315,28 @@
 ;*    jsarray->list ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (jsarray->list o::JsArray %this)
-   (let* ((%this (js-initial-global-object))
-	  (len::uint32 (js-array-length o)))
-      (if (=u32 len (fixnum->uint32 0))
-	  '()
-	  (let loop ((i #u32:0))
-	     (cond
-		((=u32 i len)
-		 '())
-		((js-has-property o (js-toname i %this) %this)
-		 (cons (cons (js-get o i %this) i) (loop (+u32 i #u32:1))))
-		(else
-		 (loop (+u32 i #u32:1))))))))
+   (let ((len::uint32 (js-array-length o)))
+      (if (js-array-full-inlined? o)
+	  (with-access::JsArray o (vec)
+	     (let ((alen::long (uint32->fixnum len)))
+		(if (=fx alen 0)
+		    '()
+		    (let loop ((i (-fx alen 1))
+			       (acc '()))
+		       (if (=fx i 0)
+			   (cons (vector-ref vec i) acc)
+			   (loop (-fx i 1) (cons (vector-ref vec i) acc)))))))
+	  (let ((%this (js-initial-global-object)))
+	     (if (=u32 len (fixnum->uint32 0))
+		 '()
+		 (let loop ((i #u32:0))
+		    (cond
+		       ((=u32 i len)
+			'())
+		       ((js-has-property o (js-toname i %this) %this)
+			(cons (js-get o i %this) (loop (+u32 i #u32:1))))
+		       (else
+			(loop (+u32 i #u32:1))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarray->vector ...                                              */

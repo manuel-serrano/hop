@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Mar  7 13:29:39 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 16:13:49 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -163,7 +163,7 @@
 (define (ws-json-parser ip ctx %this)
    (let ((j (json-parser ip ctx)))
       (if (isa? j JsArray)
-	  (map! car (jsarray->list j %this))
+	  (jsarray->list j %this)
 	  j)))
 
 ;*---------------------------------------------------------------------*/
@@ -362,8 +362,7 @@
 				       ((js-jsstring? proto)
 					(list (js-jsstring->string proto)))
 				       ((isa? proto JsArray)
-					(map (lambda (el)
-						(js-jsstring->string (car el)))
+					(map js-jsstring->string
 					   (jsarray->list proto %this)))))))
 		      (svc (service :name path ()
 			      (let ((req (current-request)))

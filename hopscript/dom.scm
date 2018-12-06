@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Wed Oct 17 10:48:25 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 16:12:31 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -397,7 +397,7 @@
 	 ((children)
 	  (with-access::xml-markup o (body)
 	     (if (isa? v JsArray)
-		 (set! body (map! car (jsarray->list v %this)))
+		 (set! body (jsarray->list v %this))
 		 (js-raise-type-error %this
 		    (format "Bad children (~a)" (typeof v))
 		    v))))

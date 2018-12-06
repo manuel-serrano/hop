@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Dec  6 10:29:43 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 10:55:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -17,10 +17,6 @@
    (include "token.sch"
 	    "ast.sch")
 
-   (static (class J2SSpread
-	      loc
-	      expr))
-	   
    (import __js2scheme_lexer
 	   __js2scheme_html
 	   __js2scheme_ast
@@ -2087,11 +2083,16 @@
 		    (parse-token-error "Wrong property name" field))))
 	    ((LPAREN)
 	     (if call-allowed?
-		 (loop (instantiate::J2SCall
-			  (loc loc)
-			  (fun expr)
-			  (thisarg (list (J2SUndefined)))
-			  (args (arguments))))
+		 (let* ((args (arguments))
+			(proto (if (find (lambda (x) (isa? x J2SSpread)) args)
+				   'spread
+				   'direct)))
+		    (loop (instantiate::J2SCall
+			     (loc loc)
+			     (fun expr)
+			     (protocol proto)
+			     (thisarg (list (J2SUndefined)))
+			     (args args))))
 		 expr))
 	    ((TSTRING TEMPLATE)
 	     (instantiate::J2SCall
@@ -2101,20 +2102,20 @@
 		(args (tag-call-arguments loc))))
 	    (else
 	     expr))))
-   
+
    (define (arguments)
       (push-open-token (consume-token! 'LPAREN))
       (if (eq? (peek-token-type) 'RPAREN)
 	  (begin
 	     (pop-open-token (consume-any!))
 	     '())
-	  (let loop ((rev-args (list (assig-expr #f #f #f))))
+	  (let loop ((rev-args (list (assig-expr #f #f #t))))
 	     (if (eq? (peek-token-type) 'RPAREN)
 		 (begin
 		    (pop-open-token (consume-any!))
 		    (reverse! rev-args))
 		 (let* ((ignore (consume! 'COMMA))
-			(arg (assig-expr #f #f #f)))
+			(arg (assig-expr #f #f #t)))
 		    (loop (cons arg rev-args)))))))
 
    (define (xml-expression tag delim)
@@ -2414,6 +2415,7 @@
 	 ((DOTS)
 	  (if spread?
 	      (instantiate::J2SSpread
+		 (stype 'array)
 		 (loc (token-loc (consume-any!)))
 		 (expr (assig-expr #f #f #f)))
 	      (parse-token-error "Unexpected token" (consume-any!))))

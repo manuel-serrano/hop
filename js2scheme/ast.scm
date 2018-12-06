@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Dec  4 16:20:05 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 14:36:00 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -67,7 +67,7 @@
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))
 	      (useinfun::bool (default #f) (info '("notraverse")))
-	      ;; usage: init, new, ref, assig, get (field), set (field), call
+	      ;; usage: init, new, ref, assig, get (field), set (field), call,
 	      ;; delete
 	      (usage::pair-nil (default '()) (info '("notraverse")))
 	      ;; variable range
@@ -344,6 +344,11 @@
 	   (final-class J2SArray::J2SLiteral
 	      len::int
 	      (exprs::pair-nil (info '("ast"))))
+
+	   (final-class J2SSpread::J2SExpr
+	      ;; static type of the spread
+	      (stype::symbol read-only (info '("notraverse")))
+	      expr::J2SExpr)
 	   
 	   (final-class J2STemplate::J2SExpr
 	      (exprs::pair (info '("ast"))))
@@ -1014,6 +1019,7 @@
 (gen-walks J2SDataPropertyInit name val)
 (gen-walks J2SAccessorPropertyInit name get set)
 (gen-walks J2SArray (exprs))
+(gen-walks J2SSpread expr)
 (gen-walks J2SDeclInit val)
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)

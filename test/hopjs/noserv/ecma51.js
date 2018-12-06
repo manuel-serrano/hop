@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Tue Sep 18 08:52:46 2018 (serrano)                */
+/*    Last change :  Thu Dec  6 14:55:26 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -421,3 +421,15 @@ function illmet() {
 }
 assert.ok( illmet(), "illegal method" );
 
+/*---------------------------------------------------------------------*/
+/*    apply                                                            */
+/*---------------------------------------------------------------------*/
+function Foo( a, b, c ) {
+   return a + b + c;
+}
+
+Foo.apply = function( self, args ) {
+   return 24;
+}
+
+assert.ok( Foo.apply( null, [ 1, 2, 3, 4 ] ) === 24, "apply" );

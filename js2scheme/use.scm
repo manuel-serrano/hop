@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Dec  3 08:05:09 2018 (serrano)                */
+;*    Last change :  Thu Dec  6 15:47:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -332,8 +332,10 @@
 ;*    usage ::J2SCall ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SCall ctx deval infun)
-   (with-access::J2SCall this (fun args)
+   (with-access::J2SCall this (fun args protocol)
       (usage fun 'call deval infun)
+      (when (eq? protocol 'spread)
+	 (usage fun 'get deval infun))
       (for-each (lambda (a) (usage a 'ref deval infun)) args))
    this)
 
