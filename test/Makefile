@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Dec  5 22:11:14 2018 (serrano)                */
+#*    Last change :  Thu Dec  6 10:12:16 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -70,6 +70,7 @@ POPULATION = Makefile \
   hopjs/noserv/es6-async.js \
   hopjs/noserv/es6-proxy.js \
   hopjs/noserv/es6-reflect.js \
+  hopjs/noserv/es6-spread.js \
   hopjs/noserv/worker1.js \
   hopjs/noserv/worker2.js \
   hopjs/noserv/parserFailure1.js \
