@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/vector.scm        */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/vector.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Thu Aug 30 16:27:35 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 18:25:36 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
@@ -307,15 +307,17 @@
 ;*---------------------------------------------------------------------*/
 (define-method (init-array! this::J2SArray decl size)
    (with-access::J2SArray this (exprs loc)
-      (J2SSequence/type* 'vector
-	 (append 
-	    (map (lambda (e i)
-		    (let ((ref (J2SRef decl :type 'vector)))
-		       (J2SAssig
-			  (J2SAccess (J2SRef decl) (J2SNumber i))
-			  e)))
-	       exprs (iota size))
-	    (list (J2SRef decl :type 'vector))))))
+      (if (any (lambda (e) (isa? e J2SSpread)) exprs)
+	  (call-next-method)
+	  (J2SSequence/type* 'vector
+	     (append 
+		(map (lambda (e i)
+			(let ((ref (J2SRef decl :type 'vector)))
+			   (J2SAssig
+			      (J2SAccess (J2SRef decl) (J2SNumber i))
+			      e)))
+		   exprs (iota size))
+		(list (J2SRef decl :type 'vector)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    init-array! ::J2SCast ...                                        */

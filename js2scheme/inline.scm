@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Oct 27 07:27:47 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 15:08:07 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -594,9 +594,11 @@
 	    (J2SLetBlock (list decl)
 	       (inline-ref-call this (J2SRef decl) thisarg args loc)))))
    
-   (with-access::J2SCall this (fun thisarg args type loc cache)
+   (with-access::J2SCall this (fun thisarg args type loc cache protocol)
       (cond
 	 (cache
+	  (call-default-walker))
+	 ((eq? protocol 'spread)
 	  (call-default-walker))
 	 ((isa? fun J2SAccess)
 	  (or (inline-access-call this fun args loc) this))

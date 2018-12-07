@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  6 16:35:12 2018                          */
-;*    Last change :  Thu Dec  6 19:01:27 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 18:04:30 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions to deal with spread syntax.                    */
@@ -112,7 +112,6 @@
 	      ,(j2s-scheme expr mode return conf)
 	      %this)))))
 	  
-
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cast-array ...                                               */
 ;*---------------------------------------------------------------------*/

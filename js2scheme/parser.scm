@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Dec  6 22:21:18 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 16:01:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -485,7 +485,7 @@
 	    ((LBRACE LBRACKET)
 	     (let* ((objectp (eq? (peek-token-type) 'LBRACE))
 		    (loc (token-loc id))
-		    (lhs (if objectp (object-literal #t) (array-literal #t)))
+		    (lhs (if objectp (object-literal #t) (array-literal #t #f)))
 		    (decl (constrinit loc (gensym '%obj) (J2SUndefined)))
 		    (bindings (j2s-destructure lhs decl #t)))
 		(if in-for-init?
@@ -1484,7 +1484,7 @@
 		   (loc loc)
 		   (id id)
 		   (_scmid id))
-		(array-literal #f))))
+		(array-literal #f #f))))
 	 (else
 	  (parse-error "Unexpected token" (consume-any!)))))
 
@@ -1810,7 +1810,7 @@
 	     lhs)))
    
    (define (cond-expr in-for-init? spread?)
-      (let ((expr (binary-expr in-for-init? #t spread?))
+      (let ((expr (binary-expr in-for-init? #f spread?))
 	    (token (peek-token)))
 	 (if (eq? (token-tag token) '?)
 	     (let* ((ignore-? (consume-any!))
@@ -2299,7 +2299,7 @@
 			   (loc (token-loc token))
 			   (expr expr)))))))
 	 ((LBRACKET)
-	  (array-literal destructuring?))
+	  (array-literal destructuring? #t))
 	 ((LBRACE)
 	  (object-literal destructuring?))
 	 ((NaN)
@@ -2411,12 +2411,18 @@
 		 "Invalid ${ ... } statement"
 		 (consume-any!))))
 	 ((DOTS)
-	  (if spread?
+	  (cond
+	     ((and plugins (assq (peek-token-value) plugins))
+	      =>
+	      (lambda (p)
+		 ((cdr p) (consume-any!) #t parser-controller)))
+	     (spread?
 	      (instantiate::J2SSpread
 		 (stype 'array)
 		 (loc (token-loc (consume-any!)))
-		 (expr (assig-expr #f #f #f)))
-	      (parse-token-error "Unexpected token" (consume-any!))))
+		 (expr (assig-expr #f #f #f))))
+	     (else
+	      (parse-token-error "Unexpected token" (consume-any!)))))
 	 (else
 	  (cond
 	     ((and plugins (assq (peek-token-value) plugins))
@@ -2440,10 +2446,25 @@
 		      (expr (read ip)))))
 	     (parse-token-error "Unexpected token" str))))
    
-   (define (array-literal destructuring?)
+   (define (array-literal destructuring? spread?)
       (let ((token (push-open-token (consume-token! 'LBRACKET))))
-	 (let loop ((rev-els '())
-		    (length 0))
+
+	 (define (parse-array-element array-el rev-els length)
+	    (case (peek-token-type)
+	       ((COMMA)
+		(consume-any!)
+		(parse-array (cons array-el rev-els) (+fx length 1)))
+	       ((RBRACKET)
+		(consume! 'RBRACKET)
+		(instantiate::J2SArray
+		   (loc (token-loc token))
+		   (exprs (reverse! (cons array-el rev-els)))
+		   (len (+fx length 1))))
+	       (else
+		(parse-token-error "Unexpected token"
+		   (consume-any!)))))
+	 
+	 (define (parse-array rev-els length)
 	    (case (peek-token-type)
 	       ((RBRACKET)
 		(pop-open-token (consume-any!))
@@ -2453,38 +2474,39 @@
 		   (len length)))
 	       ((COMMA)
 		(let ((token (consume-any!)))
-		   (loop (cons (instantiate::J2SArrayAbsent
-				  (loc (token-loc token)))
-			    rev-els)
+		   (parse-array (cons (instantiate::J2SArrayAbsent
+					 (loc (token-loc token)))
+				   rev-els)
 		      (+fx length 1))))
 	       ((DOTS)
-		(let* ((token (consume-any!))
-		       (lhs (cond-expr #f #f))
-		       (dots (instantiate::J2SDots
-				(loc (token-loc token))
-				(lhs lhs)))
-		       (rb (consume-token! 'RBRACKET)))
-		   (pop-open-token rb)
-		   (instantiate::J2SArray
-		      (loc (token-loc token))
-		      (exprs (reverse! (cons* dots rev-els)))
-		      (len (+ 1 length)))))
-	       (else
-		(let ((array-el (assig-expr #f #f #f)))
-		   (case (peek-token-type)
-		      ((COMMA)
-		       (consume-any!)
-		       (loop (cons array-el rev-els)
-			  (+fx length 1)))
-		      ((RBRACKET)
-		       (consume! 'RBRACKET)
-		       (instantiate::J2SArray
-			  (loc (token-loc token))
-			  (exprs (reverse! (cons array-el rev-els)))
-			  (len (+fx length 1))))
+		(let ((token (consume-any!)))
+		   (cond
+		      (destructuring?
+		       (let* ((lhs (cond-expr #f #f))
+			      (dots (instantiate::J2SDots
+				       (loc (token-loc token))
+				       (lhs lhs)))
+			      (rb (consume-token! 'RBRACKET)))
+			  (pop-open-token rb)
+			  (instantiate::J2SArray
+			     (loc (token-loc token))
+			     (exprs (reverse! (cons* dots rev-els)))
+			     (len (+ 1 length)))))
+		      (spread?
+		       (let* ((array-el (assig-expr #f #f #t))
+			      (spread (instantiate::J2SSpread
+					 (stype 'array)
+					 (loc (token-loc token))
+					 (expr array-el))))
+			  (parse-array-element spread rev-els length)))
 		      (else
 		       (parse-token-error "Unexpected token"
-			  (consume-any!))))))))))
+			  (consume-any!))))))
+	       (else
+		(let ((array-el (assig-expr #f #f #f)))
+		   (parse-array-element array-el rev-els length)))))
+
+	 (parse-array '() 0)))
 
    (define (property-name)
       (case (peek-token-type)

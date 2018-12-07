@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Thu Dec  6 19:04:25 2018 (serrano)                */
+/*    Last change :  Fri Dec  7 20:21:31 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Spread syntax                            */
@@ -55,11 +55,23 @@ function miscd() {
    return sum(...num) === 6;
 }
 
+function misce() {
+   function sum(x, y, z) {
+      return x + (y === undefined ? 20 : 0)+ z;
+   }
+
+   let num = 0;
+   if( num < 10 ) num = [1,,3];
+
+   return sum(...num) === 24;
+}
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
 console.log( "   miscc()"); assert.ok( miscc(), "miscc" );
 console.log( "   miscd()"); assert.ok( miscd(), "miscd" );
+console.log( "   misce()"); assert.ok( misce(), "misce" );
 	    
 /*---------------------------------------------------------------------*/
 /*    mdn ...                                                          */

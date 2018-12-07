@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Dec  6 22:11:10 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 18:10:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -316,17 +316,17 @@
 ;*---------------------------------------------------------------------*/
 (define (jsarray->list o::JsArray %this)
    (let ((len::uint32 (js-array-length o)))
-      (if (js-array-full-inlined? o)
-	  (with-access::JsArray o (vec)
-	     (let ((alen::long (uint32->fixnum len)))
-		(let loop ((i (-fx alen 1))
-			   (acc '()))
-		   (if (=fx i 0)
-		       (cons (vector-ref vec i) acc)
-		       (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
-	  (let ((%this (js-initial-global-object)))
-	     (if (=u32 len (fixnum->uint32 0))
-		 '()
+      (if (=u32 len #u32:0)
+	  '()
+	  (if (js-array-full-inlined? o)
+	      (with-access::JsArray o (vec)
+		 (let ((alen::long (uint32->fixnum len)))
+		    (let loop ((i (-fx alen 1))
+			       (acc '()))
+		       (if (=fx i 0)
+			   (cons (vector-ref vec i) acc)
+			   (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
+	      (let ((%this (js-initial-global-object)))
 		 (let loop ((i #u32:0))
 		    (cond
 		       ((=u32 i len)
@@ -334,7 +334,7 @@
 		       ((js-has-property o (js-toname i %this) %this)
 			(cons (js-get o i %this) (loop (+u32 i #u32:1))))
 		       (else
-			(loop (+u32 i #u32:1))))))))))
+			(cons (js-undefined) (loop (+u32 i #u32:1)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarray->vector ...                                              */
@@ -2367,7 +2367,7 @@
       (js-object-mode-holey-set! arr #t)
       (js-array-update-ilen! arr 0 (fixnum->uint32 (-fx (vector-length vec) 1)))
       arr))
-	     
+
 ;*---------------------------------------------------------------------*/
 ;*    js-empty-vector->jsarray ...                                     */
 ;*---------------------------------------------------------------------*/
