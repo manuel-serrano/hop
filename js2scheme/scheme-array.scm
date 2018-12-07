@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Dec  7 18:03:26 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 21:55:09 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -64,7 +64,7 @@
 		       vec
 		       `(js-vector->jsarray ,vec %this)))))
 	    ((any (lambda (x) (isa? x J2SSpread)) exprs)
-	     (j2s-scheme (spread->array-expr loc exprs) mode return conf))
+	     (j2s-scheme (spread->array-expr loc exprs #t) mode return conf))
 	    ((any (lambda (x) (isa? x J2SArrayAbsent)) exprs)
 	     (let ((vec `(vector ,@sexprs)))
 		(epairify loc

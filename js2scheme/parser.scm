@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec  7 20:46:58 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 21:22:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2481,19 +2481,19 @@
 	       ((DOTS)
 		(let ((token (consume-any!)))
 		   (cond
-		      (destructuring?
-		       (let* ((lhs (cond-expr #f #f))
-			      (dots (instantiate::J2SSpread
-				       (stype 'array)
-				       (loc (token-loc token))
-				       (expr lhs)))
-			      (rb (consume-token! 'RBRACKET)))
-			  (pop-open-token rb)
-			  (instantiate::J2SArray
-			     (loc (token-loc token))
-			     (exprs (reverse! (cons* dots rev-els)))
-			     (len (+ 1 length)))))
-		      (spread?
+;* 		      (destructuring?                                  */
+;* 		       (let* ((lhs (cond-expr #f #f))                  */
+;* 			      (dots (instantiate::J2SSpread            */
+;* 				       (stype 'array)                  */
+;* 				       (loc (token-loc token))         */
+;* 				       (expr lhs)))                    */
+;* 			      (rb (consume-token! 'RBRACKET)))         */
+;* 			  (pop-open-token rb)                          */
+;* 			  (instantiate::J2SArray                       */
+;* 			     (loc (token-loc token))                   */
+;* 			     (exprs (reverse! (cons* dots rev-els)))   */
+;* 			     (len (+ 1 length)))))                     */
+		      ((or destructuring? spread?)
 		       (let* ((array-el (assig-expr #f #f #t))
 			      (spread (instantiate::J2SSpread
 					 (stype 'array)

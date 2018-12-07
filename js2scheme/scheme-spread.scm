@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  6 16:35:12 2018                          */
-;*    Last change :  Fri Dec  7 18:04:30 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 21:33:16 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions to deal with spread syntax.                    */
@@ -24,13 +24,13 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-cast)
 
-   (export (spread->array-expr::J2SExpr loc exprs::pair)
+   (export (spread->array-expr::J2SExpr loc exprs::pair copy?::bool)
 	   (j2s-spread->expr-list exprs mode return conf)))
    
 ;*---------------------------------------------------------------------*/
 ;*    spread->array-expr::J2SExpr ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (spread->array-expr::J2SExpr loc exprs::pair)
+(define (spread->array-expr::J2SExpr loc exprs::pair copy?)
    
    (define (exprs->arr-list exprs)
       (if (null? exprs)
@@ -46,12 +46,51 @@
 			     (len (length nospread))
 			     (exprs nospread))
 		       (exprs->arr-list rest)))))))
-   
+
+   (define (unabsent arr)
+      (cond
+	 ((isa? arr J2SArray)
+	  (with-access::J2SArray arr (exprs)
+	     (set! exprs
+		(map! (lambda (e)
+			 (if (isa? e J2SArrayAbsent)
+			     (with-access::J2SArrayAbsent e (loc)
+				(instantiate::J2SUndefined
+				   (loc loc)))
+			     e))
+		   exprs))
+	     arr))
+	 ((isa? arr J2SCast)
+	  (with-access::J2SCast arr (expr)
+	     (set! expr (unabsent expr))
+	     arr))
+	 (else
+	  arr)))
+
    (let* ((arrlst (exprs->arr-list exprs))
 	  (arr (car arrlst))
 	  (rest (cdr arrlst)))
       (if (null? rest)
-	  arr
+	  (let ((arr (unabsent arr)))
+	     (if copy?
+		 (instantiate::J2SCall
+		    (loc loc)
+		    (fun (instantiate::J2SAccess
+			    (loc loc)
+			    (obj (instantiate::J2SArray
+				    (loc loc)
+				    (len 0)
+				    (exprs '())))
+			    (field (instantiate::J2SString
+				      (loc loc)
+				      (val "concat")))))
+		    (thisarg (list
+				(instantiate::J2SArray
+				   (loc loc)
+				   (len 0)
+				   (exprs '()))))
+		    (args (list arr)))
+		 arr))
 	  (instantiate::J2SCall
 	     (loc loc)
 	     (fun (instantiate::J2SAccess

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Dec  7 20:21:31 2018 (serrano)                */
+/*    Last change :  Fri Dec  7 21:45:26 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Spread syntax                            */
@@ -96,10 +96,55 @@ function mdnc() {
    return new Date(...dateFields).getUTCSeconds() === 0;
 }
 
+function mdnd() {
+   var parts = ['shoulders', 'knees']; 
+   var lyrics = ['head', ...parts, 'and', 'toes']; 
+   
+   return lyrics.join() === ["head", "shoulders", "knees", "and", "toes"].join();
+}
+
+function mdne() {
+   var arr = [1, 2, 3];
+   var arr2 = [...arr]; // like arr.slice()
+   arr2.push(4); 
+   
+   return (arr2.join() === [1, 2, 3, 4].join())
+      && (arr.join() === [1,2,3].join());
+}
+
+function mdnf() {
+   var a = [[1], [2], [3]];
+   var b = [...a];
+   return b.shift().shift() === 1;
+}
+	       
+
+function mdng() {
+   var arr1 = [0, 1, 2];
+   var arr2 = [3, 4, 5];
+   var arr3 = arr1.concat(arr2);
+   arr1 = [...arr1, ...arr2];
+   
+   return arr1.join() === arr3.join();
+}
+
+function mdnh() {
+   var arr1 = [0, 1, 2];
+   var arr2 = [3, 4, 5];
+   arr1 = [...arr2, ...arr1];
+   
+   return arr1.join() === [3, 4, 5, 0, 1, 2].join();
+}
+
 console.log( "mdn" );
 console.log( "   mdna()"); assert.ok( mdna(), "mdna" );
 console.log( "   mdnb()"); assert.ok( mdnb(), "mdnb" );
 console.log( "   mdnc()"); assert.ok( mdnc(), "mdnc" );
+console.log( "   mdnd()"); assert.ok( mdnd(), "mdnd" );
+console.log( "   mdne()"); assert.ok( mdne(), "mdne" );
+console.log( "   mdnf()"); assert.ok( mdnf(), "mdnf" );
+console.log( "   mdng()"); assert.ok( mdng(), "mdng" );
+console.log( "   mdnh()"); assert.ok( mdnh(), "mdnh" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax ...                                                       */
@@ -166,7 +211,7 @@ function kangaxi() {
 }
 
 function kangaxj() {
-   var iterable = (function*(){ yield 1; yield 2; yield 3; }());
+   var iterable = (function*(){ yield "b"; yield "c"; yield "d"; }());
    return ["a", ...iterable, "e"][3] === "d";
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Dec  6 19:02:19 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 21:55:00 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -713,7 +713,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-call-spread this mode return conf)
    (with-access::J2SCall this (loc profid fun thisarg args)
-      (let ((expr (spread->array-expr loc args)))
+      (let ((expr (spread->array-expr loc args #f)))
 	 (cond
 	    ((and (isa? fun J2SRef)
 		  (with-access::J2SRef fun (decl)
