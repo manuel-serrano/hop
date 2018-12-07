@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Dec  6 22:19:58 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 20:51:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -316,8 +316,6 @@
 	   (abstract-class J2SLiteral::J2SExpr)
 
 	   (final-class J2SArrayAbsent::J2SLiteral)
-	   (final-class J2SDots::J2SLiteral
-	      lhs)
 	   
 	   (final-class J2SNull::J2SLiteral)
 	   (final-class J2SUndefined::J2SLiteral)

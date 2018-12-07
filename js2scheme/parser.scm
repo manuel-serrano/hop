@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec  7 16:01:52 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 20:46:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1810,7 +1810,7 @@
 	     lhs)))
    
    (define (cond-expr in-for-init? spread?)
-      (let ((expr (binary-expr in-for-init? #f spread?))
+      (let ((expr (binary-expr in-for-init? #t spread?))
 	    (token (peek-token)))
 	 (if (eq? (token-tag token) '?)
 	     (let* ((ignore-? (consume-any!))
@@ -2483,9 +2483,10 @@
 		   (cond
 		      (destructuring?
 		       (let* ((lhs (cond-expr #f #f))
-			      (dots (instantiate::J2SDots
+			      (dots (instantiate::J2SSpread
+				       (stype 'array)
 				       (loc (token-loc token))
-				       (lhs lhs)))
+				       (expr lhs)))
 			      (rb (consume-token! 'RBRACKET)))
 			  (pop-open-token rb)
 			  (instantiate::J2SArray
@@ -2707,7 +2708,7 @@
 				       (J2SBinary 'OR
 					  (J2SUnresolvedRef (token-value token))
 					  (assig-expr #f #f #f)))
-				    (parse-token-error "Unexpected token"
+				    (parse-token-error "Unexpected \"=\""
 				       (peek-token))))
 			       (else
 				(parse-token-error "Unexpected token"
@@ -3023,9 +3024,9 @@
 	    ((isa? e J2SArrayAbsent)
 	     ;; [ ..., , ... ]
 	     '())
-	    ((isa? e J2SDots)
+	    ((isa? e J2SSpread)
 	     ;; [ ..., ... id ]
-	     (with-access::J2SDots e (loc lhs)
+	     (with-access::J2SSpread e (loc expr)
 		(let ((decl (instantiate::J2SDeclInit
 			       (binder 'let)
 			       (loc loc)
@@ -3035,7 +3036,7 @@
 						   (J2SString "slice"))
 					  (J2SNumber i)))))))
 		   (cons decl
-		      (destructure lhs (J2SRef decl)
+		      (destructure expr (J2SRef decl)
 			 `(spread ,path) bind)))))
 	    ((isa? e J2SAssig)
 	     ;; [ ...., id = def, ... ]
