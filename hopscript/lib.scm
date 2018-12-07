@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Dec  6 21:29:42 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 11:54:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -397,8 +397,22 @@
 (define-generic (js-jsobject->jsarray o::obj %this::JsGlobalObject)
    (if (js-jsstring? o)
        (js-jsstring->jsarray o %this)
-       (error "js-jsobjet->jsarray"
-	  (format "not implemented yet \"~a\"" (typeof o)) o)))
+       (js-raise-type-error %this "call: not an object ~s" o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->jsarray ::JsObject ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (js-jsobject->jsarray o::JsObject %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (let ((fun (js-get o js-symbol-iterator %this))
+	    (acc '()))
+	 (if (isa? fun JsFunction)
+	     (begin
+		(js-for-of-iterator (js-call0 %this fun o) o
+		   (lambda (e) (set! acc (cons e acc))) #f %this)
+		(js-vector->jsarray (list->vector (reverse! acc)) %this))
+	     (js-raise-type-error %this "call: not an interator ~s"
+	       o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fixnums? ...                                                     */
