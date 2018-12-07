@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-fun.scm            */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-fun.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Oct 24 08:55:54 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 20:33:40 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -133,9 +133,7 @@
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
-		     (and (not (memq 'new usage))
-			  (not (memq 'ref usage))
-			  (not (memq 'get usage)))))))))
+		     (not (usage? '(new ref get set) usage))))))))
 
    (define (constructor-only? this::J2SDeclFun)
       (with-access::J2SDeclFun this (usage ronly val)
@@ -144,9 +142,8 @@
 		 (when (isa? val J2SFun)
 		    (with-access::J2SFun val (generator)
 		       (unless generator
-			  (and (memq 'new usage)
-			       (not (memq 'ref usage))
-			       (not (memq 'call usage))))))))))
+			  (and (usage? '(new) usage)
+			       (not (usage? '(ref get call) usage))))))))))
 
    (define (lambda? id)
       (or (memq id '(lambda lambda::obj))
@@ -253,9 +250,7 @@
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
-		     (and (not (memq 'new usage))
-			  (not (memq 'ref usage))
-			  (not (memq 'get usage)))))))))
+		     (not (usage? '(new ref get set) usage))))))))
    
    (define (make-function this::J2SDeclFun)
       (with-access::J2SDeclFun this (loc id scope val ronly usage)
@@ -343,7 +338,7 @@
 			  ,constrsize))))))))
    
    (when (and (isa? this J2SDeclFun) (not (isa? this J2SDeclSvc)))
-      (with-access::J2SDeclFun this (loc id scope val usage ronly)
+      (with-access::J2SDeclFun this (loc id scope val ronly)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator)
 	       (let* ((scmid (j2s-decl-scheme-id this))

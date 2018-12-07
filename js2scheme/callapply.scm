@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Mon Aug  6 15:00:58 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 20:39:19 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Turns indirect CALL and APPLY method calls into direction        */
@@ -59,7 +59,7 @@
 ;*    callapply! ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (callapply! this::J2SCall args)
-
+   
    (define (opt-call this::J2SCall fun::J2SRef)
       (with-access::J2SCall this (loc args)
 	 (with-access::J2SRef fun (decl)
@@ -76,21 +76,26 @@
 		(with-access::J2SArray (cadr args) (exprs)
 		   (J2SMethodCall* fun (list (car args)) exprs))
 		(call-default-walker)))))
-
+   
    (with-access::J2SCall this (fun args thisarg)
       (if (isa? fun J2SAccess)
 	  (with-access::J2SAccess fun (obj field)
 	     (if (and (isa? field J2SString) (isa? obj J2SRef))
-		 (with-access::J2SString field (val)
-		    (cond
-		       ((string=? val "call")
-			(opt-call this obj))
-		       ((and (string=? val "apply")
-			     (pair? args) (pair? (cdr args)) (null? (cddr args))
-			     (isa? (cadr args) J2SArray))
-			(opt-apply this obj))
-		       (else
-			(call-default-walker))))
+		 (with-access::J2SRef obj (decl)
+		    (with-access::J2SDecl decl (usage)
+		       (if (not (usage? '(ref set get) usage))
+			   (with-access::J2SString field (val)
+			      (cond
+				 ((string=? val "call")
+				  (opt-call this obj))
+				 ((and (string=? val "apply")
+				       (pair? args) (pair? (cdr args))
+				       (null? (cddr args))
+				       (isa? (cadr args) J2SArray))
+				  (opt-apply this obj))
+				 (else
+				  (call-default-walker))))
+			   (call-default-walker))))
 		 (call-default-walker)))
 	  (call-default-walker))))
    

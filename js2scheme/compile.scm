@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Dec  4 16:05:18 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 20:38:41 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -182,8 +182,8 @@
 	  j2s-letopt-stage
 	  j2s-unletrec-stage
 	  j2s-this-stage
-	  j2s-callapply-stage
 	  j2s-use-stage
+	  j2s-callapply-stage
 	  j2s-sweep-stage
 	  j2s-ronly-stage
 	  j2s-globvar-stage
