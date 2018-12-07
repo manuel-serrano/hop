@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Dec  5 14:57:39 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 22:36:52 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -127,10 +127,40 @@
    (with-access::JsProxy o (target handler)
       (let ((get (js-get handler 'get %this)))
 	 (if (isa? get JsFunction)
-	     (js-call3 %this get handler target
-		(js-string->jsstring (symbol->string! prop))
-		owner)
+	     (let ((v (js-call3 %this get handler target
+			 (js-string->jsstring (symbol->string! prop))
+			 owner)))
+		(if (null? (js-object-properties target))
+		    v
+		    (proxy-check-property target owner prop %this v)))
 	     (js-get-jsobject target owner prop %this)))))
+
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-property ...                                         */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-property target owner prop %this v)
+   (let ((prop (js-get-own-property target prop %this)))
+      (if (eq? prop (js-undefined))
+	  v
+	  (with-access::JsPropertyDescriptor prop (configurable)
+	     (cond
+		(configurable
+		 v)
+		((isa? prop JsValueDescriptor)
+		 (with-access::JsValueDescriptor prop (writable value)
+		    (if (or writable (js-strict-equal? value v))
+			v
+			(js-raise-type-error %this "Proxy \"get\" inconsitency"
+			   owner))))
+		((isa? prop JsAccessorDescriptor)
+		 (with-access::JsAccessorDescriptor prop (get)
+		    (if (eq? get (js-undefined))
+			(js-raise-type-error %this "Proxy \"get\" inconsitency"
+			   owner)
+			v)))
+		(else
+		 v))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsProxy ...                                             */
