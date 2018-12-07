@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Thu Dec  6 22:43:06 2018 (serrano)                */
+;*    Last change :  Fri Dec  7 22:19:45 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -461,9 +461,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments->jsarray ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-arguments->jsarray o::JsArguments %this)
-   (with-access::JsArguments o (vec)
-      (js-vector->jsarray vec %this)))
+(define (js-arguments->jsarray obj::JsArguments %this)
+   (with-access::JsArguments obj (vec)
+      (js-vector->jsarray
+	 (vector-map (lambda (d) (js-property-value obj d %this))
+	    vec)
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsobject->jsarray ::JsArray ...                               */
