@@ -115,7 +115,7 @@ function kangaxa() {
 }
 
 function kangaxb() {
-   //return [...[1, 2, 3]][2] === 3;
+   return [...[1, 2, 3]][2] === 3;
 }
 
 function kangaxc() {
@@ -124,8 +124,8 @@ function kangaxc() {
 }
 
 function kangaxd() {
-/*    var a = [...[,,]];                                               */
-/*    return "0" in a && "1" in a && '' + a[0] + a[1] === "undefinedundefined"; */
+   var a = [...[,,]];
+   return "0" in a && "1" in a && '' + a[0] + a[1] === "undefinedundefined";
 }
 
 function kangaxe() {
@@ -133,15 +133,19 @@ function kangaxe() {
 }
 
 function kangaxf() {
-/*    return ["a", ..."bcd", "e"][3] === "d";                          */
+   return ["a", ..."bcd", "e"][3] === "d";
 }
 
 function kangaxg() {
-   return true;
+   const src = decodeURIComponent( "%F0%A0%AE%B7%F0%A0%AE%B6" );
+   const tgt = decodeURIComponent( "%F0%A0%AE%B7" );
+   return Array(...src)[0] === tgt;
 }
 
 function kangaxh() {
-   return true;
+   const src = decodeURIComponent( "%F0%A0%AE%B7%F0%A0%AE%B6" );
+   const tgt = decodeURIComponent( "%F0%A0%AE%B7" );
+   return [...src][0] === tgt;
 }
 
 function kangaxi() {
@@ -150,8 +154,8 @@ function kangaxi() {
 }
 
 function kangaxj() {
-/*    var iterable = (function*(){ yield 1; yield 2; yield 3; }());    */
-/*    return ["a", ...iterable, "e"][3] === "d";                       */
+   var iterable = (function*(){ yield 1; yield 2; yield 3; }());
+   return ["a", ...iterable, "e"][3] === "d";
 }
 
 function kangaxk() {
@@ -160,8 +164,8 @@ function kangaxk() {
 }
 
 function kangaxl() {
-/*    var iterable = __createIterableObject(["b", "c", "d"]);   */
-/*    return ["a", ...iterable, "e"][3] === "d";                       */
+   var iterable = __createIterableObject(["b", "c", "d"]);
+   return ["a", ...iterable, "e"][3] === "d";
 }
 
 function kangaxm() {
@@ -170,8 +174,8 @@ function kangaxm() {
 }
 
 function kangaxn() {
-/*    var iterable = __createIterableObject(["b", "c", "d"]);   */
-/*    return ["a", ...Object.create(iterable), "e"][3] === "d";        */
+   var iterable = __createIterableObject(["b", "c", "d"]);
+   return ["a", ...Object.create(iterable), "e"][3] === "d";
 }
 
 function kangaxo() {
@@ -184,18 +188,18 @@ function kangaxo() {
 
 console.log( "kangax" );
 console.log( "   kangaxa()"); assert.ok( kangaxa(), "kangaxa" );
-/* console.log( "   kangaxb()"); assert.ok( kangaxb(), "kangaxb" );    */
+console.log( "   kangaxb()"); assert.ok( kangaxb(), "kangaxb" );
 console.log( "   kangaxc()"); assert.ok( kangaxc(), "kangaxc" );
-/* console.log( "   kangaxd()"); assert.ok( kangaxd(), "kangaxd" );    */
+console.log( "   kangaxd()"); assert.ok( kangaxd(), "kangaxd" );
 console.log( "   kangaxe()"); assert.ok( kangaxe(), "kangaxe" );
-/* console.log( "   kangaxf()"); assert.ok( kangaxf(), "kangaxf" );    */
+console.log( "   kangaxf()"); assert.ok( kangaxf(), "kangaxf" );
 console.log( "   kangaxg()"); assert.ok( kangaxg(), "kangaxg" );
 console.log( "   kangaxh()"); assert.ok( kangaxh(), "kangaxh" );
 console.log( "   kangaxi()"); assert.ok( kangaxi(), "kangaxi" );
-/* console.log( "   kangaxj()"); assert.ok( kangaxj(), "kangaxj" );    */
+console.log( "   kangaxj()"); assert.ok( kangaxj(), "kangaxj" );
 console.log( "   kangaxk()"); assert.ok( kangaxk(), "kangaxk" );
-/* console.log( "   kangaxl()"); assert.ok( kangaxl(), "kangaxl" );    */
+console.log( "   kangaxl()"); assert.ok( kangaxl(), "kangaxl" );
 console.log( "   kangaxm()"); assert.ok( kangaxm(), "kangaxm" );
-/* console.log( "   kangaxn()"); assert.ok( kangaxn(), "kangaxn" );    */
+console.log( "   kangaxn()"); assert.ok( kangaxn(), "kangaxn" );
 console.log( "   kangaxo()"); assert.ok( kangaxo(), "kangaxo" );
 
