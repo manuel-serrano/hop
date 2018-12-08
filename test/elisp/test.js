@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Tue Dec  4 12:18:45 2018 (serrano)                */
+/*    Last change :  Sat Dec  8 14:23:54 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,40 +30,66 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// pok second "&&" indent
-function mdnk() {
-   const object1 = {
-      property1: 42
-   };
-
-   return Reflect.getOwnPropertyDescriptor(object1, 'property1').value === 42
-      && Reflect.getOwnPropertyDescriptor(object1, 'property2') === undefined
-      && Reflect.getOwnPropertyDescriptor(object1, 'property1').writable === true;
+// pok
+function kangaxt() {
+   function F(){}
+   var p1 = Reflect.construct(Promise,[function(resolve, reject) { resolve("foo"); }], F);
+   var p2 = Reflect.construct(Promise,[function(resolve, reject) { reject("quux"); }], F);
+   var score = +(p1 instanceof F && p2 instanceof F);
+   
+   function thenFn(result)  { score += (result === "foo");  check(); }
+   function catchFn(result) { score += (result === "quux"); check(); }
+   function shouldNotRun(result)  { score = -Infinity;   }
+   
+   p1.then = p2.then = Promise.prototype.then;
+   p1.catch = p2.catch = Promise.prototype.catch;
+   
+   p1.then(thenFn, shouldNotRun);
+   p2.then(shouldNotRun, catchFn);
+   p1.catch(shouldNotRun);
+   p2.catch(catchFn);
+   
+   function check() {
+      assert.ok( score === 4, "kangaxt" );
+   }
+   
+   return true;
 }
 
-// pok after if line
-function mdnk() {
-   const object1 = {};
-   if( Reflect.isExtensible(object1) !== true ) return false;
-		
-   Reflect.preventExtensions(object1);
-}
-
-// pok after passed assignment
-function mdnk() {
-   const object1 = {};
-   var passed = Reflect.isExtensible(object1) === true;
-		
-   Reflect.preventExtensions(object1);
-}
-
-// pok after if then branch
+// ok after if then branch
 function mdno() {
    var object1 = {};
    if( Reflect.setPrototypeOf(object1, Object.prototype) !=== true )
       return false;
-      
-      return object1.x;
+   
+   return object1.x;
+}
+
+// ok after passed assignment
+function mdnk() {
+   const object1 = {};
+   var passed = Reflect.isExtensible(object1) === true;
+   
+   Reflect.preventExtensions(object1);
+}
+
+// ok after if line
+function mdnk() {
+   const object1 = {};
+   if( Reflect.isExtensible(object1) !== true ) return false;
+   
+   Reflect.preventExtensions(object1);
+}
+
+// ok second "&&" indent
+function mdnk() {
+   const object1 = {
+      property1: 42
+   };
+   
+   return Reflect.getOwnPropertyDescriptor(object1, 'property1').value === 42
+      && Reflect.getOwnPropertyDescriptor(object1, 'property2') === undefined
+      && Reflect.getOwnPropertyDescriptor(object1, 'property1').writable === true;
 }
 
 // ok bad indent after in-line return

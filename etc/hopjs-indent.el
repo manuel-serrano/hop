@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Tue Dec  4 12:21:15 2018 (serrano)                */
+;*    Last change :  Sat Dec  8 14:34:16 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -815,9 +815,17 @@
 		(hopjs-indent-new (hopjs-parse-token-beginning tok)))))
 	   ((return new)
 	    (let ((rtok (hopjs-parse-consume-token-any)))
-	      (if (hopjs-parse-same-linep (hopjs-parse-peek-token) etok)
-		  (hopjs-indent-current-line-column)
-		(hopjs-indent-column-token rtok 0))))
+	      (hopjs-debug 0
+			   "hopjs-indent-new-semicolon new rtok=%s [%s]"
+			   rtok (hopjs-parse-token-string rtok))
+	      (cond
+	       ((hopjs-parse-same-linep (hopjs-parse-peek-token) rtok)
+		(hopjs-indent-current-line-column))
+	       ((eq (hopjs-parse-peek-token-type) 'rparen)
+		(goto-char (hopjs-parse-token-beginning (hopjs-parse-peek-token)))
+		(hopjs-indent-current-line-column))
+	       (t
+		(hopjs-indent-column-token rtok 0)))))
 	   ((ident)
 	    (hopjs-indent-new-idents 0))
 	   ((dollar)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Dec  8 10:39:53 2018 (serrano)                */
+/*    Last change :  Sat Dec  8 14:10:49 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -199,6 +199,7 @@ function kangaxf() {
    var proxy = new Proxy(proxied, {
       set: function (t, k, v, r) {
     	 passed = t === proxied && k + v === "foobar" && r === proxy;
+	 return true;
       }
    });
    proxy.foo = "bar";
@@ -211,6 +212,7 @@ function kangaxg() {
    var proxy = Object.create(new Proxy(proxied, {
       set: function (t, k, v, r) {
     	 passed = t === proxied && k + v === "foobar" && r === proxy;
+	 return true;
       }
    }));
    proxy.foo = "bar";
@@ -304,6 +306,7 @@ function kangaxl() {
    delete new Proxy(proxied, {
       deleteProperty: function (t, k) {
     	 passed = t === proxied && k === "foo";
+	 return true;
       }
    }).foo;
    return passed;
@@ -545,10 +548,10 @@ function kangaxw() {
       }));
       return false;
    } catch(e) {}
-   retrun true;
+   return true;
 }
 
-function kangax() {
+function kangaxx() {
    var proxied = {};
    var passed = false;
    Object.preventExtensions(

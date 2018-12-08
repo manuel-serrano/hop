@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Tue Nov 27 06:19:28 2018 (serrano)                */
+;*    Last change :  Sat Dec  8 14:30:47 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -62,13 +62,13 @@
 		 "[eE]?-?[0-9]+\\>"
 		 "[+]?[0-9]+\\(?:[.][0-9]+\\)?\\>")
 	   'number)
-     ;; punctuation
+     ;; punctuation ===
      (cons (rxor "[{}()[.;,:?]" (rxq "]")) 'punct)
      ;; binop
-     (cons (rxor "<" ">" (rxq "+") (rxq "-") (rxq "*") "%" "=" "|" "==" "==="
+     (cons (rxor "<" ">" (rxq "+") (rxq "-") (rxq "*") "%" "=" "|" 
 		 "<<" ">>" ">>>" "[&^]") 'binop)
      (cons (rxor "&&" "||") 'binop)
-     (cons (rxor "<=" ">="  "!=" "!==" "[+*%^&-]=" "<<=" ">>=" ">>>=") '=)
+     (cons (rxor "<=" ">="  "!=*" "===*" "[+*%^&-]=" "<<=" ">>=" ">>>=") '=)
      ;; prefix
      (cons (rxor (rx: (rxq "+") (rxq "+")) "--") 'prefix)
      ;; arrow
@@ -527,6 +527,14 @@
 	  (case (hopjs-parse-peek-token-type)
 	    (t
 	     tok))))
+       ((service return try catch while if var let const else
+		 new case switch for yield)
+	(let ((tok (hopjs-parse-consume-token-any)))
+	  (if (eq (hopjs-parse-peek-token-type) 'dot)
+	      (hopjs-parse-expr-simple (hopjs-parse-peek-token) multilinep)
+	    (progn
+	      (hopjs-parse-push-token tok)
+	      '()))))
        ((dot)
 	(let ((dtok (hopjs-parse-consume-token-any)))
 	  (hopjs-debug 0 "hopjs-parse-expr-simple.ident.dot dtok=%s peek=%s same=%s"
