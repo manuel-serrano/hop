@@ -29,8 +29,43 @@ or
 
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
-/*                                                                     */
 /*---------------------------------------------------------------------*/
+// pok second "&&" indent
+function mdnk() {
+   const object1 = {
+      property1: 42
+   };
+
+   return Reflect.getOwnPropertyDescriptor(object1, 'property1').value === 42
+      && Reflect.getOwnPropertyDescriptor(object1, 'property2') === undefined
+      && Reflect.getOwnPropertyDescriptor(object1, 'property1').writable === true;
+}
+
+// pok after if line
+function mdnk() {
+   const object1 = {};
+   if( Reflect.isExtensible(object1) !== true ) return false;
+		
+   Reflect.preventExtensions(object1);
+}
+
+// pok after passed assignment
+function mdnk() {
+   const object1 = {};
+   var passed = Reflect.isExtensible(object1) === true;
+		
+   Reflect.preventExtensions(object1);
+}
+
+// pok after if then branch
+function mdno() {
+   var object1 = {};
+   if( Reflect.setPrototypeOf(object1, Object.prototype) !=== true )
+      return false;
+      
+      return object1.x;
+}
+
 // ok bad indent after in-line return
 function( x ) {
    if( x > 20 ) return false;
