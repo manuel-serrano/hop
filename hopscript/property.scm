@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Dec  5 13:48:31 2018 (serrano)                */
+;*    Last change :  Fri Dec 14 01:27:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1045,32 +1045,58 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.4       */
 ;*---------------------------------------------------------------------*/
 (define (js-from-property-descriptor %this::JsGlobalObject desc owner)
+
+   (define (js-or x y)
+      (if (eq? x (js-undefined)) y x))
+   
+   (define (from-object obj desc)
+      ;; proxy getOwnPropertyDescriptor returns regular objects
+      ;; as property descriptors
+      (js-put! obj 'value
+	 (js-get desc 'value %this) #f %this)
+      (js-put! obj 'get
+	 (js-get desc 'get %this) #f %this)
+      (js-put! obj 'set
+	 (js-get desc 'set %this) #f %this)
+      (js-put! obj 'writable
+	 (js-or (js-get desc 'writable %this) #f) #f %this)
+      (js-put! obj 'enumerable
+	 (js-or (js-get desc 'enumerable %this) #f) #f %this)
+      (js-put! obj 'configurable
+	 (js-or (js-get desc 'configurable %this) #f) #f %this)
+      obj)
+
+   (define (from-desc obj desc)
+      (cond
+	 ((isa? desc JsValueDescriptor)
+	  ;; 3
+	  (with-access::JsValueDescriptor desc (writable value)
+	     (js-put! obj 'value value #f %this)
+	     (js-put! obj 'writable writable #f %this)))
+	 ((isa? desc JsAccessorDescriptor)
+	  ;; 4
+	  (with-access::JsAccessorDescriptor desc (get set)
+	     (js-put! obj 'get get #f %this)
+	     (js-put! obj 'set set #f %this)))
+	 ((isa? desc JsWrapperDescriptor)
+	  ;; hop.js extension
+	  (with-access::JsWrapperDescriptor desc (value writable)
+	     (js-put! obj 'value value #f %this)
+	     (js-put! obj 'writable writable #f %this))))
+      (with-access::JsPropertyDescriptor desc (enumerable configurable)
+	 ;; 5
+	 (js-put! obj 'enumerable enumerable #f %this)
+	 ;; 6
+	 (js-put! obj 'configurable configurable #f %this))
+      obj)
+
    (if (eq? desc (js-undefined))
        desc
        (with-access::JsGlobalObject %this (js-object)
 	  (let ((obj (js-new %this js-object)))
-	     (cond
-		((isa? desc JsValueDescriptor)
-		 ;; 3
-		 (with-access::JsValueDescriptor desc (writable value)
-		    (js-put! obj 'value value #f %this)
-		    (js-put! obj 'writable writable #f %this)))
-		((isa? desc JsAccessorDescriptor)
-		 ;; 4
-		 (with-access::JsAccessorDescriptor desc (get set)
-		    (js-put! obj 'get get #f %this)
-		    (js-put! obj 'set set #f %this)))
-		((isa? desc JsWrapperDescriptor)
-		 ;; hop.js extension
-		 (with-access::JsWrapperDescriptor desc (value writable)
-		    (js-put! obj 'value value #f %this)
-		    (js-put! obj 'writable writable #f %this))))
-	     (with-access::JsPropertyDescriptor desc (enumerable configurable)
-		;; 5
-		(js-put! obj 'enumerable enumerable #f %this)
-		;; 6
-		(js-put! obj 'configurable configurable #f %this))
-	     obj))))
+	     (if (isa? desc JsObject)
+		 (from-object obj desc)
+		 (from-desc obj desc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-to-property-descriptor ...                                    */
@@ -1817,7 +1843,7 @@
 ;*    This function does not need to be generic because PUT only       */
 ;*    stores values on the direct object. It might use the setter      */
 ;*    of one of the object's prototypes but once again, the object     */
-;*    to be used in the setter, is the direct object itself.           */
+;*    to be usedm in the setter, is the direct object itself.          */
 ;*                                                                     */
 ;*    At the first level, special put! form for Array, String, etc.    */
 ;*    are overriden by method of the js-put! function.                 */
@@ -1847,6 +1873,10 @@
 		v)
 	     ;; 8.12.4, setp 2.a
 	     (reject "No setter defined"))))
+
+   (define (update-from-proxy-descriptor! o obj index::long v desc)
+      (with-access::JsProxyDescriptor desc (proxy name)
+	 (js-proxy-property-value-set! proxy obj name %this v)))
 
    (define (update-mapped-object-value! obj cmap i v)
       (with-access::JsObject obj (cmap elements)
@@ -2024,6 +2054,10 @@
 		       (begin
 			  (set! value v)
 			  v)))))
+	    ((and (isa? desc JsProxyDescriptor)
+		  (update-from-proxy-descriptor! o o -1 v desc))
+	     =>
+	     (lambda (x) x))
 	    ((not (js-object-mode-extensible? obj))
 	     ;; 8.12.9, step 3
 	     (reject "sealed object"))

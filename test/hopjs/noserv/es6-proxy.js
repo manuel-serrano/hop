@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Dec  8 14:10:49 2018 (serrano)                */
+/*    Last change :  Fri Dec 14 02:23:02 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -91,11 +91,23 @@ function miscd() {
    return o4.x === "o1true" && o5.x === "o5false";
 }
 
+function misce() {
+   var proxied = { };
+   var passed = false;
+   var prx = new Proxy(proxied, {
+   });
+   var proxy = Object.create(prx);
+   proxy.FOO = "bar";
+   return proxy.hasOwnProperty( "FOO" );
+}
+
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
 console.log( "   miscc()"); assert.ok( miscc(), "miscc" );
 console.log( "   miscd()"); assert.ok( miscd(), "miscd" );
+console.log( "   misce()"); assert.ok( misce(), "misce" );
       
 /*---------------------------------------------------------------------*/
 /*    mdn ...                                                          */

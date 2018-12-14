@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sat Dec  8 14:23:54 2018 (serrano)                */
+/*    Last change :  Sat Dec  8 19:30:11 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,7 +30,15 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// pok
+// pok return after in
+function foo() {
+   try {
+      'foo' in proxy;
+      return false;
+   } catch(e) {}
+}
+
+// ok
 function kangaxt() {
    function F(){}
    var p1 = Reflect.construct(Promise,[function(resolve, reject) { resolve("foo"); }], F);

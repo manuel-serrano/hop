@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Dec  7 22:36:52 2018 (serrano)                */
+;*    Last change :  Sat Dec  8 19:04:00 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -41,7 +41,8 @@
 	   (js-proxy-debug-name::bstring ::JsProxy)
 	   (js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (js-proxy-property-descriptor ::JsProxy ::obj)
-	   (js-proxy-property-value ::JsProxy ::JsObject ::obj ::JsGlobalObject)))
+	   (js-proxy-property-value ::JsProxy ::JsObject ::obj ::JsGlobalObject)
+	   (js-proxy-property-value-set! ::JsProxy ::JsObject ::obj ::JsGlobalObject ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-proxy! ...                                               */
@@ -132,35 +133,24 @@
 			 owner)))
 		(if (null? (js-object-properties target))
 		    v
-		    (proxy-check-property target owner prop %this v)))
+		    (proxy-check-property-value target owner prop %this v 'get)))
 	     (js-get-jsobject target owner prop %this)))))
 
-
 ;*---------------------------------------------------------------------*/
-;*    proxy-check-property ...                                         */
+;*    js-proxy-property-value-set! ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (proxy-check-property target owner prop %this v)
-   (let ((prop (js-get-own-property target prop %this)))
-      (if (eq? prop (js-undefined))
-	  v
-	  (with-access::JsPropertyDescriptor prop (configurable)
-	     (cond
-		(configurable
-		 v)
-		((isa? prop JsValueDescriptor)
-		 (with-access::JsValueDescriptor prop (writable value)
-		    (if (or writable (js-strict-equal? value v))
+(define (js-proxy-property-value-set! o::JsProxy owner::JsObject prop %this::JsGlobalObject v)
+   (with-access::JsProxy o (target handler)
+      (let ((set (js-get handler 'set %this)))
+	 (when (isa? set JsFunction)
+	    (let ((v (js-call4 %this set handler target
+			(js-string->jsstring (symbol->string! prop))
 			v
-			(js-raise-type-error %this "Proxy \"get\" inconsitency"
-			   owner))))
-		((isa? prop JsAccessorDescriptor)
-		 (with-access::JsAccessorDescriptor prop (get)
-		    (if (eq? get (js-undefined))
-			(js-raise-type-error %this "Proxy \"get\" inconsitency"
-			   owner)
-			v)))
-		(else
-		 v))))))
+			owner)))
+	       (if (js-totest v)
+		   v
+		   (js-raise-type-error %this "Proxy \"set\" returns false on property \"~a\""
+		      prop)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsProxy ...                                             */
@@ -192,8 +182,10 @@
    (with-access::JsProxy o (target handler)
       (let ((set (js-get handler 'set %this)))
 	 (if (isa? set JsFunction)
-	     (js-call3 %this set handler target
-		(js-string->jsstring (symbol->string! prop)) v)
+	     (begin
+		(proxy-check-property-value target target prop %this v 'set)
+		(js-call4 %this set handler target
+		   (js-string->jsstring (symbol->string! prop)) v o))
 	     (js-put! target prop v throw %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -203,7 +195,8 @@
    (with-access::JsProxy o (target handler)
       (let ((delete (js-get handler 'deleteProperty %this)))
 	 (if (isa? delete JsFunction)
-	     (js-call1 %this delete target p)
+	     (let ((r (js-call2 %this delete o target p)))
+		(proxy-check-property-delete target p %this r))
 	     (js-delete! target p throw %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -212,9 +205,11 @@
 (define-method (js-has-property o::JsProxy p::obj %this)
    (with-access::JsProxy o (target handler)
       (let ((has (js-get handler 'has %this)))
-	 (when (isa? has JsFunction)
-	    (js-call2 %this has o target
-	       (js-string->jsstring (symbol->string! p)))))))
+	 (if (isa? has JsFunction)
+	     (let ((v (js-call2 %this has o target
+			 (js-string->jsstring (symbol->string! p)))))
+		(or v (proxy-check-property-has target p %this v)))
+	     (js-has-property target p %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-own-property ::JsProxy ...                                */
@@ -222,9 +217,21 @@
 (define-method (js-has-own-property o::JsProxy p::obj %this)
    (with-access::JsProxy o (target handler)
       (let ((has (js-get handler 'has %this)))
-	 (when (isa? has JsFunction)
-	    (js-call2 %this has o target
-	       (js-string->jsstring (symbol->string! p)))))))
+	 (if (isa? has JsFunction)
+	     (js-call2 %this has o target
+		(js-string->jsstring (symbol->string! p)))
+	     (js-has-own-property target p %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property ::JsProxy ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property o::JsProxy p::obj %this)
+   (with-access::JsProxy o (target handler)
+      (let ((get (js-get handler 'getOwnPropertyDescriptor %this)))
+	 (if (isa? get JsFunction)
+	     (let ((desc (js-call2 %this get o target p)))
+		(proxy-check-property-getown target p %this desc))
+	     (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsProxy ...                                          */
@@ -232,4 +239,98 @@
 (define-method (js-for-in obj::JsProxy proc %this)
    (with-access::JsProxy obj (target)
       (js-for-in target proc %this)))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-property-value ...                                   */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-property-value target owner prop %this v get-or-set)
+   (let ((prop (js-get-own-property target prop %this)))
+      (if (eq? prop (js-undefined))
+	  v
+	  (with-access::JsPropertyDescriptor prop (configurable)
+	     (cond
+		(configurable
+		 v)
+		((isa? prop JsValueDescriptor)
+		 (with-access::JsValueDescriptor prop (writable value)
+		    (if (or writable (js-strict-equal? value v))
+			v
+			(js-raise-type-error %this "Proxy \"get\" inconsitency"
+			   owner))))
+		((isa? prop JsAccessorDescriptor)
+		 (with-access::JsAccessorDescriptor prop (get set)
+		    (cond
+		       ((and (eq? get (js-undefined)) (eq? get-or-set 'get))
+			(js-raise-type-error %this "Proxy \"get\" inconsitency"
+			   owner))
+		       ((and (eq? set (js-undefined)) (eq? get-or-set 'set))
+			(js-raise-type-error %this "Proxy \"set\" inconsitency"
+			   owner))
+		       (else
+			v))))
+		(else
+		 v))))))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-property-has ...                                     */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-property-has target prop %this v)
+   (let ((prop (js-get-own-property target prop %this)))
+      (if (eq? prop (js-undefined))
+	  v
+	  (with-access::JsPropertyDescriptor prop (configurable)
+	     (if (and configurable (js-object-mode-extensible? target))
+		 v
+		 (js-raise-type-error %this "Proxy \"has\" inconsitency"
+		    target))))))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-property-delete ...                                  */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-property-delete target prop %this r)
+   (when r
+      (let ((prop (js-get-own-property target prop %this)))
+	 (unless (eq? prop (js-undefined))
+	    (with-access::JsPropertyDescriptor prop (configurable)
+	       (unless configurable
+		  (js-raise-type-error %this "Proxy \"delete\" inconsitency"
+		     target)))))))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-property-getown ...                                  */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-property-getown target prop %this desc)
+   
+   (define (err)
+      (js-raise-type-error %this
+	 "Proxy \"getOwnPropertyDescriptor\" inconsitency"
+	 target))
+   
+   (cond
+      ((eq? desc (js-undefined))
+       (let ((prop (js-get-own-property target prop %this)))
+	  (cond
+	     ((not (eq? prop (js-undefined)))
+	      (with-access::JsPropertyDescriptor prop (configurable)
+		 (if (js-totest configurable)
+		     (if (js-object-mode-extensible? target)
+			 desc
+			 (err))
+		     (err))))
+	     (else
+	      (err)))))
+      ((js-object-mode-extensible? target)
+       (let ((conf (js-get desc 'configurable %this)))
+	  (if (js-totest conf)
+	      desc
+	      (let ((prop (js-get-own-property target prop %this)))
+		 (cond
+		    ((eq? prop (js-undefined))
+		     (err))
+		    ((js-totest (js-get prop 'configurable %this))
+		     (err))
+		    (else
+		     desc))))))
+      (else
+       (err))))
 

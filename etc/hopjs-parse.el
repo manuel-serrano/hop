@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sat Dec  8 14:30:47 2018 (serrano)                */
+;*    Last change :  Sat Dec  8 19:33:09 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -67,7 +67,7 @@
      ;; binop
      (cons (rxor "<" ">" (rxq "+") (rxq "-") (rxq "*") "%" "=" "|" 
 		 "<<" ">>" ">>>" "[&^]") 'binop)
-     (cons (rxor "&&" "||") 'binop)
+     (cons (rxor "&&" "||" "in") 'binop)
      (cons (rxor "<=" ">="  "!=*" "===*" "[+*%^&-]=" "<<=" ">>=" ">>>=") '=)
      ;; prefix
      (cons (rxor (rx: (rxq "+") (rxq "+")) "--") 'prefix)
@@ -524,9 +524,7 @@
 		       tok
 		       (hopjs-parse-token-string tok)
 		       (hopjs-parse-peek-token-type))
-	  (case (hopjs-parse-peek-token-type)
-	    (t
-	     tok))))
+	  tok))
        ((service return try catch while if var let const else
 		 new case switch for yield)
 	(let ((tok (hopjs-parse-consume-token-any)))
