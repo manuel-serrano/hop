@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sat Dec  8 19:33:09 2018 (serrano)                */
+;*    Last change :  Sun Dec 16 20:34:59 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -492,6 +492,8 @@
 		       (hopjs-parse-peek-token)
 		       (hopjs-parse-token-string (hopjs-parse-peek-token)))
 	  (hopjs-parse-expr (hopjs-parse-peek-token) multilinep))
+	 ((rbracket)
+	  (hopjs-parse-expr (hopjs-parse-peek-token) multilinep))
 	 (t etok))))))
 
 ;*---------------------------------------------------------------------*/
@@ -510,7 +512,7 @@
 	(goto-char (hopjs-parse-token-end tok))
 	(hopjs-debug 0 "hopjs-parse-expr-simple.rbracket.1 point=%s" (point))
 	(if (hopjs-parse-backward-sexp)
-	    (let* ((tok (hopjs-parse-consume-and-peek-token))
+	    (let* ((tok (hopjs-parse-consume-token-any))
 		   (etok (hopjs-parse-expr-simple tok multilinep)))
 	      (hopjs-debug 0 "hopjs-parse-expr-simple.rbracket.2 %s [%s] etok=%s %s"
 			   tok (hopjs-parse-token-string tok)
@@ -655,34 +657,44 @@
   (hopjs-parse-start pos)
   (with-debug
    "hopjs-find-opening-tok pos=%s depth=%s" pos depth
-   (letn loop ((depth depth)
-	       (last '()))
-	 (let ((tok (hopjs-parse-consume-token-any)))
-	   (case (hopjs-parse-token-type tok)
-	     ((rbracket rparen rbrace)
-	      (funcall loop (+ depth 1) last))
-	     ((ctag chtml)
-	      (funcall loop (+ depth 1) tok))
-	     ((lparen lbracket lbrace tilde dollar)
-	      (if (> depth 1)
-		  (funcall loop (- depth 1) last)
-		last))
-	     ((otag)
-	      (if (> depth 1)
-		  (funcall loop (- depth 1) tok)
-		tok))
-	     ((ohtml)
-	      (cond
-	       ((<= depth 1)
-		tok)
-	       ((and last (eq (hopjs-parse-token-type last) 'chtml))
-		(funcall loop (- depth 1) tok))
-	       ((memq (hopjs-parse-token-tag tok) hopjs-special-tags)
-		(funcall loop depth '()))
-	       (t
-		(funcall loop (- depth 1) '()))))
+   (let ((depth depth)
+	 (last '())
+	 (res '()))
+     (while (not res)
+       (let ((tok (hopjs-parse-consume-token-any)))
+	 (hopjs-debug 0 "hopjs-parse-find-opening-tok tok=%s [%s]" tok
+		      (hopjs-parse-token-string tok))
+	 (case (hopjs-parse-token-type tok)
+	   ((rbracket rparen rbrace)
+	    (setq depth (+ depth 1)))
+	   ((ctag chtml)
+	    (setq depth (+ depth 1))
+	    (setq last tok))
+	   ((lparen lbracket lbrace tilde dollar)
+	    (if (> depth 1)
+		(setq depth (- depth 1))
+	      (setq res last)))
+	   ((otag)
+	    (if (> depth 1)
+		(progn
+		  (setq depth (- depth 1))
+		  (setq last tok))
+	      (setq res tok)))
+	   ((ohtml)
+	    (cond
+	     ((<= depth 1)
+	      (setq res tok))
+	     ((and last (eq (hopjs-parse-token-type last) 'chtml))
+	      (setq depth (- depth 1))
+	      (setq last tok))
+	     ((memq (hopjs-parse-token-tag tok) hopjs-special-tags)
+	      (setq last '()))
 	     (t
-	      (funcall loop depth last)))))))
+	      (setq depth (- depth 1))
+	      (setq last '()))))
+	   (t
+	    '()))))
+     res)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-same-linep ...                                       */

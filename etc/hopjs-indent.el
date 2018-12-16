@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Sat Dec  8 14:34:16 2018 (serrano)                */
+;*    Last change :  Sun Dec 16 21:17:11 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -71,7 +71,7 @@
      ((lbrace) (hopjs-indent-new-lbrace tok))
      ((rbrace) (hopjs-indent-new-rbrace tok))
      ((lparen) (hopjs-indent-new-lparen tok))
-     ((rparen) (hopjs-indent-new-rparen tok))
+     ((rparen rbracket) (hopjs-indent-new-rparen tok))
      ((lbracket) (hopjs-indent-new-lbracket tok))
      ((comma) (hopjs-indent-new-comma tok))
      ((semicolon) (hopjs-indent-new-semicolon tok))

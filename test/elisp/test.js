@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sat Dec  8 19:30:11 2018 (serrano)                */
+/*    Last change :  Sun Dec 16 21:08:35 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,7 +30,14 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// pok return after in
+// pok map over a literal array
+service reflex ( f ) {
+   [a, b, c]
+      .map( f );
+}
+
+
+// ok return after in
 function foo() {
    try {
       'foo' in proxy;
