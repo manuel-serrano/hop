@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Dec  5 22:02:07 2018 (serrano)                */
+;*    Last change :  Mon Dec 17 09:25:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -792,15 +792,11 @@
 	 :enumerable #f
 	 :hidden-class #f)
       
-      ;; preventExtensions
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.10
-      (define (preventextensions this obj)
-	 (let ((o (js-cast-object obj %this "preventExtensions")))
-	    (js-prevent-extensions o)
-	    obj))
-      
       (js-bind! %this js-object 'preventExtensions
-	 :value (js-make-function %this preventextensions 1 'preventExtensions)
+	 :value (js-make-function %this
+		   (lambda (this obj)
+		      (js-preventextensions obj %this))
+		   1 'preventExtensions)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -871,63 +867,28 @@
 	 :enumerable #f
 	 :hidden-class #f)
       
-      ;; isExtensible
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13
       (define (isextensible this obj)
 	 (let ((o (js-cast-object obj %this "Object.isExtensible")))
 	    (js-object-mode-extensible? o)))
       
       (js-bind! %this js-object 'isExtensible
-	 :value (js-make-function %this isextensible 1 'isExtensible)
+	 :value (js-make-function %this
+		   (lambda (this obj)
+		      (js-extensible? obj %this))
+		   1 'isExtensible)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #f)
       
-      ;; keys
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14
-      (define (keys this obj)
-	 (let ((o (if (isa? obj object)
-		      obj
-		      (js-cast-object obj %this "Object.keys"))))
-	    (js-vector->jsarray (js-properties-name o #t %this) %this)))
-      
       (js-bind! %this js-object 'keys
-	 :value (js-make-function %this keys 1 'keys)
+	 :value (js-make-function %this (lambda (this obj)
+					   (js-ownkeys obj %this))
+		   1 'keys)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #f)))
-
-;*---------------------------------------------------------------------*/
-;*    js-getprototypeof ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-getprototypeof o %this msg)
-   (let ((o (js-cast-object o %this msg)))
-      (with-access::JsObject o (__proto__)
-	 __proto__)))
-
-;*---------------------------------------------------------------------*/
-;*    js-setprototypeof ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-setprototypeof o v %this msg)
-   (let ((o (js-cast-object o %this msg))
-	 (v (js-cast-object v %this msg)))
-      (if (not (js-object-mode-extensible? o))
-	  (js-raise-type-error %this 
-	     "Prototype of non-extensible object mutated" v)
-	  (with-access::JsObject o (__proto__ cmap)
-	     (unless (eq? __proto__ v)
-		(js-invalidate-pcaches-pmap! %this "js-setprototypeof")
-		(unless (eq? cmap (js-not-a-cmap))
-		   (with-access::JsConstructMap cmap (parent single)
-		      (if single
-			  (set! cmap
-			     (duplicate::JsConstructMap cmap
-				(%id (gencmapid))))
-			  (set! cmap
-			     (cmap-next-proto-cmap %this cmap __proto__ v)))))
-		(set! __proto__ v))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-object-prototype! ...                                    */
@@ -1076,6 +1037,20 @@
    (let* ((p (js-tostring v %this))
 	  (o (js-toobject %this this)))
       (js-has-own-property o p %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-extensible? ::JsObject ...                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13    */
+;*---------------------------------------------------------------------*/
+(define-method (js-extensible? obj::JsObject %this)
+   (js-object-mode-extensible? obj))
+
+;*---------------------------------------------------------------------*/
+;*    js-ownkeys ::JsObject ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-ownkeys obj::JsObject %this)
+   (js-vector->jsarray (js-properties-name obj #t %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsObject ...                                       */

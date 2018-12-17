@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Dec  3 08:11:22 2018 (serrano)                */
+;*    Last change :  Mon Dec 17 13:19:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -219,14 +219,40 @@
 	     (if (isa? r JsObject) r o))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-new/proxy ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-new/proxy %this::JsGlobalObject p::JsProxy args::pair-nil)
+   (with-access::JsProxy p (target handler)
+      (let ((ctor (js-get handler 'construct %this)))
+	 (if (isa? ctor JsFunction)
+	     (let ((obj (js-call2 %this ctor p target
+			   (js-vector->jsarray (list->vector args) %this))))
+		(cond
+		   ((not (isa? target JsFunction))
+		    (js-raise-type-error %this
+		       "Proxy \"construct\" inconsistency"
+		       p))
+		   ((not (isa? obj JsObject))
+		    (js-raise-type-error %this
+		       "Proxy \"construct\" result not an object"
+		       obj))
+		   (else
+		    obj)))
+	     (js-raise-type-error %this "new: object is not a function ~s" p)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-new ...                                                       */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.2.2       */
 ;*---------------------------------------------------------------------*/
 (define (js-new %this f . args)
-   (if (isa? f JsFunction)
-       (js-new/function %this f args)
-       (js-raise-type-error %this "new: object is not a function ~s" f)))
+   (cond
+      ((isa? f JsFunction)
+       (js-new/function %this f args))
+      ((isa? f JsProxy)
+       (js-new/proxy %this f args))
+      (else
+       (js-raise-type-error %this "new: object is not a function ~s" f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/debug ...                                                 */
@@ -234,9 +260,13 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.2.2       */
 ;*---------------------------------------------------------------------*/
 (define (js-new/debug %this loc f . args)
-   (if (isa? f JsFunction)
-       (js-new/function %this f args)
-       (js-raise-type-error/loc %this loc "new: object is not a function ~s" f)))
+   (cond
+      ((isa? f JsFunction)
+       (js-new/function %this f args))
+      ((isa? f JsProxy)
+       (js-new/proxy %this f args))
+      (else
+       (js-raise-type-error/loc %this loc "new: object is not a function ~s" f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */
@@ -315,102 +345,141 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new-sans-construct %this ctor)
    ;; used to initialize classes
-   (if (isa? ctor JsFunction)
+   (cond
+      ((isa? ctor JsFunction)
        (with-access::JsFunction ctor (name alloc)
 	  (let ((o (alloc ctor)))
 	     ;; CARE ARITY
-	     (js-new-return ctor o o)))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
+     (js-new-return ctor o o))))
+      ((isa? ctor JsProxy)
+       (js-new/proxy %this ctor '()))
+      (else
+       (js-raise-type-error %this "new: object is not a function ~s" ctor))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-newXXX ...                                                    */
 ;*---------------------------------------------------------------------*/
+(define-macro (gen-new %this ctor . args)
+   `(cond
+       ((isa? ,ctor JsFunction)
+	(with-access::JsFunction ,ctor (constructor construct name alloc)
+	   (if constructor
+	       (constructor ,ctor ,@(if (null? args) '((js-null)) args))
+	       (let ((o (alloc ,ctor)))
+		  ;; CARE ARITY
+		  (let ((r (,(string->symbol (format "js-call~a%" (length args)))
+			    ,%this ,ctor construct o ,@args)))
+		     (js-new-return ,ctor r o))))))
+       ((isa? ,ctor JsProxy)
+	(js-new/proxy ,%this ,ctor (list ,@args)))
+       (else
+	(js-raise-type-error ,%this "new: object is not a function ~s" ,ctor))))
+
 (define (js-new0 %this ctor)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (constructor construct name alloc)
-	  (if constructor
-	      (constructor ctor (js-null))
-	      (let ((o (alloc ctor)))
-		 ;; CARE ARITY
-		 (let ((r (js-call0% %this ctor construct o)))
-		    (js-new-return ctor r o)))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
+   (gen-new %this ctor))
 (define (js-new1 %this ctor a0)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (constructor construct alloc name)
-	  (if constructor
-	      (constructor ctor a0)
-	      (let ((o (alloc ctor)))
-		 ;; CARE ARITY
-		 (let ((r (js-call1% %this ctor construct o a0)))
-		    (js-new-return ctor r o)))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
+   (gen-new %this ctor a0))
 (define (js-new2 %this ctor a0 a1)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (constructor construct alloc name)
-	  (if constructor
-	      (constructor ctor a0 a1)
-	      (let ((o (alloc ctor)))
-		 ;; CARE ARITY
-		 (let ((r (js-call2% %this ctor construct o a0 a1)))
-		    (js-new-return ctor r o)))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
+   (gen-new %this ctor a0 a1))
 (define (js-new3 %this ctor a0 a1 a2)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (constructor construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call3% %this ctor construct o a0 a1 a2)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
+   (gen-new %this ctor a0 a1 a2))
 (define (js-new4 %this ctor a0 a1 a2 a3)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call4% %this ctor construct o a0 a1 a2 a3)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
+   (gen-new %this ctor a0 a1 a2 a3))
 (define (js-new5 %this ctor a0 a1 a2 a3 a4)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call5% %this ctor construct o a0 a1 a2 a3 a4)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
+   (gen-new %this ctor a0 a1 a2 a3 a4))
 (define (js-new6 %this ctor a0 a1 a2 a3 a4 a5)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call6% %this ctor construct o a0 a1 a2 a3 a4 a5)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
+   (gen-new %this ctor a0 a1 a2 a3 a4 a5))
 (define (js-new7 %this ctor a0 a1 a2 a3 a4 a5 a6)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call7% %this ctor construct o a0 a1 a2 a3 a4 a5 a6)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
+   (gen-new %this ctor a0 a1 a2 a3 a4 a5 a6))
 (define (js-new8 %this ctor a0 a1 a2 a3 a4 a5 a6 a7)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call8% %this ctor construct o a0 a1 a2 a3 a4 a5 a6 a7)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
+   (gen-new %this ctor a0 a1 a2 a3 a4 a5 a6 a7))
+
+;* (define (js-new0 %this ctor)                                        */
+;*    (if (isa? ctor JsFunction)                                       */
+;*        (with-access::JsFunction ctor (constructor construct name alloc) */
+;* 	  (if constructor                                              */
+;* 	      (constructor ctor (js-null))                             */
+;* 	      (let ((o (alloc ctor)))                                  */
+;* 		 ;; CARE ARITY                                         */
+;* 		 (let ((r (js-call0% %this ctor construct o)))         */
+;* 		    (js-new-return ctor r o)))))                       */
+;*        (js-raise-type-error %this "new: object is not a function ~s" ctor))) */
+;*                                                                     */
+;* (define (js-new1 %this ctor a0)                                     */
+;*    (if (isa? ctor JsFunction)                                       */
+;*        (with-access::JsFunction ctor (constructor construct alloc name) */
+;* 	  (if constructor                                              */
+;* 	      (constructor ctor a0)                                    */
+;* 	      (let ((o (alloc ctor)))                                  */
+;* 		 ;; CARE ARITY                                         */
+;* 		 (let ((r (js-call1% %this ctor construct o a0)))      */
+;* 		    (js-new-return ctor r o)))))                       */
+;*        (js-raise-type-error %this "new: object is not a function ~s" ctor))) */
+;*                                                                     */
+;* (define (js-new2 %this ctor a0 a1)                                  */
+;*    (if (isa? ctor JsFunction)                                       */
+;*        (with-access::JsFunction ctor (constructor construct alloc name) */
+;* 	  (if constructor                                              */
+;* 	      (constructor ctor a0 a1)                                 */
+;* 	      (let ((o (alloc ctor)))                                  */
+;* 		 ;; CARE ARITY                                         */
+;* 		 (let ((r (js-call2% %this ctor construct o a0 a1)))   */
+;* 		    (js-new-return ctor r o)))))                       */
+;*        (js-raise-type-error %this "new: object is not a function ~s" ctor))) */
+;*                                                                     */
+;* (define (js-new3 %this ctor a0 a1 a2)                               */
+;*    (if (isa? ctor JsFunction)                                       */
+;*        (with-access::JsFunction ctor (constructor construct alloc name) */
+;* 	  (let ((o (alloc ctor)))                                      */
+;* 	     ;; CARE ARITY                                             */
+;* 	     (let ((r (js-call3% %this ctor construct o a0 a1 a2)))    */
+;* 		(js-new-return ctor r o))))                            */
+;*        (js-raise-type-error %this "new: object is not a function ~s" ctor))) */
+;*                                                                     */
+;* (define (js-new4 %this ctor a0 a1 a2 a3)                            */
+;*    (if (isa? ctor JsFunction)                                       */
+;*        (with-access::JsFunction ctor (construct alloc name)         */
+;* 	  (let ((o (alloc ctor)))                                      */
+;* 	     ;; CARE ARITY                                             */
+;* 	     (let ((r (js-call4% %this ctor construct o a0 a1 a2 a3))) */
+;* 		(js-new-return ctor r o))))                            */
+;*        (js-raise-type-error %this "new: object is not a function ~s" ctor))) */
+;*                                                                     */
+;* (define (js-new5 %this ctor a0 a1 a2 a3 a4)                         */
+;*    (if (isa? ctor JsFunction)                                       */
+;*        (with-access::JsFunction ctor (construct alloc name)         */
+;* 	  (let ((o (alloc ctor)))                                      */
+;* 	     ;; CARE ARITY                                             */
+;* 	     (let ((r (js-call5% %this ctor construct o a0 a1 a2 a3 a4))) */
+;* 		(js-new-return ctor r o))))                            */
+;*        (js-raise-type-error %this "new: object is not a function ~s" ctor))) */
+;*                                                                     */
+;* (define (js-new6 %this ctor a0 a1 a2 a3 a4 a5)                      */
+;*    (if (isa? ctor JsFunction)                                       */
+;*        (with-access::JsFunction ctor (construct alloc name)         */
+;* 	  (let ((o (alloc ctor)))                                      */
+;* 	     ;; CARE ARITY                                             */
+;* 	     (let ((r (js-call6% %this ctor construct o a0 a1 a2 a3 a4 a5))) */
+;* 		(js-new-return ctor r o))))                            */
+;*        (js-raise-type-error %this "new: object is not a function ~s" ctor))) */
+;*                                                                     */
+;* (define (js-new7 %this ctor a0 a1 a2 a3 a4 a5 a6)                   */
+;*    (if (isa? ctor JsFunction)                                       */
+;*        (with-access::JsFunction ctor (construct alloc name)         */
+;* 	  (let ((o (alloc ctor)))                                      */
+;* 	     ;; CARE ARITY                                             */
+;* 	     (let ((r (js-call7% %this ctor construct o a0 a1 a2 a3 a4 a5 a6))) */
+;* 		(js-new-return ctor r o))))                            */
+;*        (js-raise-type-error %this "new: object is not a function ~s" ctor))) */
+;*                                                                     */
+;* (define (js-new8 %this ctor a0 a1 a2 a3 a4 a5 a6 a7)                */
+;*    (if (isa? ctor JsFunction)                                       */
+;*        (with-access::JsFunction ctor (construct alloc name)         */
+;* 	  (let ((o (alloc ctor)))                                      */
+;* 	     ;; CARE ARITY                                             */
+;* 	     (let ((r (js-call8% %this ctor construct o a0 a1 a2 a3 a4 a5 a6 a7))) */
+;* 		(js-new-return ctor r o))))                            */
+;*        (js-raise-type-error %this "new: object is not a function ~s" ctor))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply ...                                                     */

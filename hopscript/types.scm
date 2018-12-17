@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Dec  5 14:37:57 2018 (serrano)                */
+;*    Last change :  Mon Dec 17 09:37:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -374,9 +374,13 @@
 	   (inline js-object-inline-elements?::bool ::JsObject)
 	   (inline js-object-inline-ref ::JsObject ::long)
 	   (inline js-object-inline-set! ::JsObject ::long ::obj)
-	   
+
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
+	   
+	   (generic js-extensible?::bool ::obj ::JsGlobalObject)
+	   (generic js-preventextensions ::obj ::JsGlobalObject)
+	   (generic js-ownkeys ::obj ::JsGlobalObject)
 	   
 	   (inline js-undefined?::bool ::obj)
 	   (inline js-undefined)
@@ -744,6 +748,34 @@
 	  (js-donate (cdr obj) worker %this)))
       (else
        obj)))
+
+;*---------------------------------------------------------------------*/
+;*    js-extensible? ...                                               */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13    */
+;*---------------------------------------------------------------------*/
+(define-generic (js-extensible? obj::obj %this)
+   (let ((o (js-cast-object obj %this "Object.isExtensible")))
+      (js-object-mode-extensible? o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-preventextensions ...                                         */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.10    */
+;*---------------------------------------------------------------------*/
+(define-generic (js-preventextensions obj::obj %this)
+   (let ((o (js-cast-object obj %this "Object.preventExtensions")))
+      (js-prevent-extensions o)
+      obj))
+
+;*---------------------------------------------------------------------*/
+;*    js-ownkeys ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14    */
+;*---------------------------------------------------------------------*/
+(define-generic (js-ownkeys obj %this)
+   (let ((o (js-cast-object obj %this "Object.keys")))
+      (js-ownkeys o %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-undefined? ...                                                */

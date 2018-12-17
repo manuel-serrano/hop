@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Dec 14 01:27:47 2018 (serrano)                */
+;*    Last change :  Mon Dec 17 09:24:10 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -180,10 +180,13 @@
 	   (generic js-define-own-property::bool o::JsObject p
 	      desc::JsPropertyDescriptor throw::bool
 	      ::JsGlobalObject)
+
+	   (generic js-getprototypeof o::JsObject ::JsGlobalObject ::obj)
+	   (generic js-setprototypeof o::JsObject ::obj ::JsGlobalObject ::obj)
 	   
 	   (generic js-seal ::JsObject ::obj)
 	   (generic js-freeze ::JsObject ::obj)
-	   (generic js-prevent-extensions ::JsObject)
+	   (js-prevent-extensions ::JsObject)
 	   
 	   (generic js-for-in ::obj ::procedure ::JsGlobalObject)
 	   (generic js-for-of ::obj ::procedure ::bool ::JsGlobalObject)
@@ -2796,6 +2799,36 @@
 		 (propagate-property-descriptor! current desc))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-getprototypeof ...                                            */
+;*---------------------------------------------------------------------*/
+(define-generic (js-getprototypeof o::JsObject %this::JsGlobalObject msg::obj)
+   (let ((o (js-cast-object o %this msg)))
+      (with-access::JsObject o (__proto__)
+	 __proto__)))
+
+;*---------------------------------------------------------------------*/
+;*    js-setprototypeof ...                                            */
+;*---------------------------------------------------------------------*/
+(define-generic (js-setprototypeof o v %this msg)
+   (let ((o (js-cast-object o %this msg))
+	 (v (js-cast-object v %this msg)))
+      (if (not (js-object-mode-extensible? o))
+	  (js-raise-type-error %this 
+	     "Prototype of non-extensible object mutated" v)
+	  (with-access::JsObject o (__proto__ cmap)
+	     (unless (eq? __proto__ v)
+		(js-invalidate-pcaches-pmap! %this "js-setprototypeof")
+		(unless (eq? cmap (js-not-a-cmap))
+		   (with-access::JsConstructMap cmap (parent single)
+		      (if single
+			  (set! cmap
+			     (duplicate::JsConstructMap cmap
+				(%id (gencmapid))))
+			  (set! cmap
+			     (cmap-next-proto-cmap %this cmap __proto__ v)))))
+		(set! __proto__ v))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-replace-own-property! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-replace-own-property! o::JsObject old new)
@@ -2829,7 +2862,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-prevent-extensions ::JsObject ...                             */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-prevent-extensions o::JsObject)
+(define (js-prevent-extensions o::JsObject)
    (js-object-mode-extensible-set! o #f))
 
 ;*---------------------------------------------------------------------*/

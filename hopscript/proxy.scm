@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Dec  8 19:04:00 2018 (serrano)                */
+;*    Last change :  Mon Dec 17 08:53:46 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -241,6 +241,74 @@
       (js-for-in target proc %this)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-define-own-property ::JsProxy ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (js-define-own-property::bool o::JsProxy p
+		  desc::JsPropertyDescriptor throw::bool %this)
+   (with-access::JsProxy o (target handler)
+      (let ((def (js-get handler 'defineProperty %this)))
+	 (if (isa? def JsFunction)
+	     (let ((v (js-call3 %this def o target
+			 (js-string->jsstring (symbol->string! p)) desc)))
+		(proxy-check-property-defprop target o p %this desc v))
+	     (js-define-own-property target p desc throw %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-getprototypeof ::JsProxy ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (js-getprototypeof o::JsProxy %this::JsGlobalObject msg::obj)
+   (with-access::JsProxy o (target handler)
+      (let ((get (js-get handler 'getPrototypeOf %this)))
+	 (if (isa? get JsFunction)
+	     (let ((v (js-call1 %this get o target)))
+		(proxy-check-property-getproto target o %this msg v))
+	     (js-getprototypeof target %this msg)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-setprototypeof ::JsProxy ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (js-setprototypeof o::JsProxy v %this::JsGlobalObject msg::obj)
+   (with-access::JsProxy o (target handler)
+      (let ((set (js-get handler 'setPrototypeOf %this)))
+	 (if (isa? set JsFunction)
+	     (let ((r (js-call2 %this set o target v)))
+		(proxy-check-property-setproto target o v %this msg r))
+	     (js-setprototypeof target v %this msg)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-extensible? ::JsProxy ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-extensible? o::JsProxy %this::JsGlobalObject)
+   (with-access::JsProxy o (target handler)
+      (let ((ise (js-get handler 'isExtensible %this)))
+	 (if (isa? ise JsFunction)
+	     (let ((r (js-call1 %this ise o target)))
+		(proxy-check-is-extensible target o %this r))
+	     (js-extensible? target %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-preventextensions ::JsProxy ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-preventextensions o::JsProxy %this::JsGlobalObject)
+   (with-access::JsProxy o (target handler)
+      (let ((p (js-get handler 'preventExtensions %this)))
+	 (if (isa? p JsFunction)
+	     (let ((r (js-call1 %this p o target)))
+		(proxy-check-preventext target o %this r))
+	     (js-preventextensions target %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-ownkeys ::JsProxy ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-ownkeys o::JsProxy %this::JsGlobalObject)
+   (with-access::JsProxy o (target handler)
+      (let ((ownk (js-get handler 'ownKeys %this)))
+	 (if (isa? ownk JsFunction)
+	     (let ((r (js-call1 %this ownk o target)))
+		(proxy-check-ownkeys target o %this r))
+	     (js-ownkeys target %this)))))
+
+;*---------------------------------------------------------------------*/
 ;*    proxy-check-property-value ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (proxy-check-property-value target owner prop %this v get-or-set)
@@ -255,16 +323,16 @@
 		 (with-access::JsValueDescriptor prop (writable value)
 		    (if (or writable (js-strict-equal? value v))
 			v
-			(js-raise-type-error %this "Proxy \"get\" inconsitency"
+			(js-raise-type-error %this "Proxy \"get\" inconsistency"
 			   owner))))
 		((isa? prop JsAccessorDescriptor)
 		 (with-access::JsAccessorDescriptor prop (get set)
 		    (cond
 		       ((and (eq? get (js-undefined)) (eq? get-or-set 'get))
-			(js-raise-type-error %this "Proxy \"get\" inconsitency"
+			(js-raise-type-error %this "Proxy \"get\" inconsistency"
 			   owner))
 		       ((and (eq? set (js-undefined)) (eq? get-or-set 'set))
-			(js-raise-type-error %this "Proxy \"set\" inconsitency"
+			(js-raise-type-error %this "Proxy \"set\" inconsistency"
 			   owner))
 		       (else
 			v))))
@@ -281,7 +349,7 @@
 	  (with-access::JsPropertyDescriptor prop (configurable)
 	     (if (and configurable (js-object-mode-extensible? target))
 		 v
-		 (js-raise-type-error %this "Proxy \"has\" inconsitency"
+		 (js-raise-type-error %this "Proxy \"has\" inconsistency"
 		    target))))))
 
 ;*---------------------------------------------------------------------*/
@@ -293,7 +361,7 @@
 	 (unless (eq? prop (js-undefined))
 	    (with-access::JsPropertyDescriptor prop (configurable)
 	       (unless configurable
-		  (js-raise-type-error %this "Proxy \"delete\" inconsitency"
+		  (js-raise-type-error %this "Proxy \"delete\" inconsistency"
 		     target)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -303,7 +371,7 @@
    
    (define (err)
       (js-raise-type-error %this
-	 "Proxy \"getOwnPropertyDescriptor\" inconsitency"
+	 "Proxy \"getOwnPropertyDescriptor\" inconsistency"
 	 target))
    
    (cond
@@ -334,3 +402,125 @@
       (else
        (err))))
 
+;*---------------------------------------------------------------------*/
+;*    proxy-check-property-defprop ...                                 */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-property-defprop target owner p %this desc v)
+   (cond
+      ((and (not (js-object-mode-extensible? target))
+	    (eq? (js-get-own-property target p %this) (js-undefined)))
+       (js-raise-type-error %this "Proxy \"defineProperty\" inconsistency"
+	  target))
+      ((and (eq? (js-get desc 'configurable %this) #f)
+	    (let ((odesc (js-get-own-property target p %this)))
+	       (and (not (eq? odesc (js-undefined)))
+		    (not (eq? (js-get odesc 'configurable %this) #f)))))
+       (js-raise-type-error %this "Proxy \"defineProperty\" inconsistency"
+	  target))
+      (else
+       v)))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-property-getproto ...                                */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-property-getproto target owner %this msg v)
+   (cond
+      ((and (not (js-object-mode-extensible? target))
+	    (not (eq? (js-getprototypeof target %this msg) v)))
+       (js-raise-type-error %this "Proxy \"getPrototypeOf\" inconsistency"
+	  target))
+      (else
+       v)))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-property-setproto ...                                */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-property-setproto target owner v %this msg r)
+   (cond
+      ((and (not (js-object-mode-extensible? target))
+	    (not (eq? (js-getprototypeof target %this msg) v)))
+       (js-raise-type-error %this "Proxy \"setPrototypeOf\" inconsistency"
+	  target))
+      (else
+       r)))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-is-extensible ...                                    */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-is-extensible target o %this r)
+   (if (eq? (js-extensible? target %this) r)
+       r
+       (js-raise-type-error %this "Proxy \"isExtensible\" inconsistency"
+	  target)))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-preventext ...                                       */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-preventext target o %this r)
+   (if (eq? r (js-extensible? target %this))
+       (js-raise-type-error %this "Proxy \"preventExtensions\" inconsistency"
+	  target)
+       r))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-ownkeys ...                                          */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-ownkeys target o %this r)
+   
+   (define (err)
+      (js-raise-type-error %this "Proxy \"ownKeys\" inconsistency"
+	 target))
+   
+   (define (all-symbol-or-string? r)
+      (js-for-of r
+	 (lambda (el)
+	    (unless (or (js-jsstring? el) (isa? el JsSymbol))
+	       (err)))
+	 #t %this)
+      #f)
+   
+   (define (find-in? name vec)
+      (let loop ((i (-fx (vector-length vec) 1)))
+	 (cond
+	    ((=fx i -1) #f)
+	    ((js-jsstring=? (vector-ref vec i) name) #t)
+	    (else (loop (-fx i 1))))))
+   
+   (define (same-list names r)
+      (when (=uint32 (fixnum->uint32 (vector-length names))
+	       (js-array-length r))
+	 (js-for-of r
+	    (lambda (el)
+	       (unless (find-in? el names)
+		  (err)))
+	    #t %this)
+	 r))
+   
+   (cond
+      ((not (isa? r JsArray))
+       (err))
+      ((all-symbol-or-string? r)
+       (err))
+      ((null? (js-object-properties target))
+       (if (js-extensible? target %this)
+	   r
+	   (same-list (js-properties-name target #t %this) r)))
+      (else
+       (let ((names (js-properties-name target #t %this)))
+	  (let loop ((i (-fx (vector-length names) 1)))
+	     (if (=fx i -1)
+		 (if (js-extensible? target %this)
+		     r
+		     (same-list names r))
+		 (let* ((name (vector-ref names i))
+			(p (js-get-own-property target name %this)))
+		    (if (eq? p (js-undefined))
+			(loop (-fx i 1))
+			(with-access::JsPropertyDescriptor p (configurable)
+			   (cond
+			      (configurable
+			       (loop (-fx i 1)))
+			      ((find-in? name r)
+			       (loop (-fx i 1)))
+			      (else
+			       (err))))))))))))

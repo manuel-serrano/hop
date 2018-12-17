@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Dec  7 18:10:03 2018 (serrano)                */
+;*    Last change :  Mon Dec 17 10:06:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3215,9 +3215,9 @@
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
-;*    js-prevent-extensions ::JsArray ...                              */
+;*    js-preventextensions ::JsArray ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (js-prevent-extensions o::JsArray)
+(define-method (js-preventextensions o::JsArray %this)
    (with-access::JsArray o (vec length)
       (when (<u32 length (fixnum->uint32 (vector-length vec)))
 	 (vector-shrink! vec (uint32->fixnum length)))
