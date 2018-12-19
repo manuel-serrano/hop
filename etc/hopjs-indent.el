@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Sun Dec 16 21:17:11 2018 (serrano)                */
+;*    Last change :  Wed Dec 19 14:52:35 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -244,13 +244,19 @@
 	     (hopjs-indent-column-token tok hopjs-indent-level)))))
        ((if)
 	;; if (args) {
-	(let ((tok (hopjs-parse-consume-token-any))) 
-	  (hopjs-debug 0 "hopjs-indent-new-lbrace IF.1..%s" tok)
-	      (hopjs-indent-column-token
-	       (if (eq (hopjs-parse-peek-token-type) 'else)
-		   (hopjs-parse-peek-token)
-		 tok)
-	       hopjs-indent-level)))
+	(let ((tok (hopjs-parse-consume-token-any))
+	      (peek (hopjs-parse-peek-token)))
+	  (hopjs-debug 0 "hopjs-indent-new-lbrace IF.1..%s peek=%s [%s]" tok
+		       peek (hopjs-parse-token-string peek))
+	  (if (and (eq (hopjs-parse-token-type peek) 'else)
+		   (hopjs-parse-same-linep peek tok))
+	      (let ((ntok (hopjs-parse-consume-token-any))
+		    (npeek (hopjs-parse-peek-token)))
+		(if (and (eq (hopjs-parse-token-type npeek) 'rbrace)
+			 (hopjs-parse-same-linep npeek peek))
+		    (hopjs-indent-column-token npeek hopjs-indent-level)
+		  (hopjs-indent-column-token ntok hopjs-indent-level)))
+	    (hopjs-indent-column-token tok hopjs-indent-level))))
        ((while switch for)
 	;; if (args) {
 	(hopjs-debug 0 "hopjs-indent-new-lbrace WHILE/SWITCH/FOR.1..%s"

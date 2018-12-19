@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sun Dec 16 21:08:35 2018 (serrano)                */
+/*    Last change :  Wed Dec 19 14:50:06 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,7 +30,22 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// pok map over a literal array
+// pok, else if sequence
+function automata() {
+   tick = tick + 1;
+   console.log("Tick:", tick);
+   if (tick === 5 ) {
+      open("Percussion");
+      percuState = true;
+   } else if (tick > 5) {
+      if (percuState && event("Percussion")) {
+	 return 3;
+      }
+   }
+   return 5;
+}
+
+// ok map over a literal array
 service reflex ( f ) {
    [a, b, c]
       .map( f );
