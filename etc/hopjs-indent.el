@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Wed Dec 19 14:52:35 2018 (serrano)                */
+;*    Last change :  Thu Dec 20 08:13:44 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -947,13 +947,15 @@
 ;*---------------------------------------------------------------------*/
 (defun hopjs-indent-old-otag (pos)
   (with-debug
-   "hopjs-indent-old-otag %s" pos
+   "hopjs-indent-old-otag pos=%s" pos
    (save-excursion
      (forward-line -1)
      (end-of-line)
      (letn loop ()
 	   (hopjs-parse-start (point))
 	   (let ((tok (hopjs-parse-peek-token)))
+	     (hopjs-debug 0 "hopjs-indent-old-tag tok=%s [%s]"
+			  tok (hopjs-parse-token-string tok))
 	     (cond
 	      ((memq (hopjs-parse-token-type tok) '(ident text dots))
 	       (let ((tok tok))
@@ -981,6 +983,8 @@
 	       (goto-char (hopjs-parse-token-end tok))
 	       (backward-sexp 1)
 	       (funcall loop))
+	      ((eq (hopjs-parse-token-type tok) 'html)
+	       (hopjs-indent-column-token tok 0))
 	      (t
 	       (progn
 		 (next-line 1)

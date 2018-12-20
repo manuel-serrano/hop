@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Dec 19 14:50:06 2018 (serrano)                */
+/*    Last change :  Thu Dec 20 08:04:02 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,7 +30,7 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// pok, else if sequence
+// ok, else if sequence
 function automata() {
    tick = tick + 1;
    console.log("Tick:", tick);
@@ -323,18 +323,18 @@ function() {
       if( s[0] != "this" ) {
 	 throw error.TypeError( "Wrong accessor parsing (1)", loc );
       } else if( s.length == 2 ) {
-	   s = s[ 1 ].split( '["' );
-	   signalName = s[ 0 ];
-	   type = s[ 1 ].substr( 0, s[ 1 ].length - 2 );
-	} else if( s.length == 3 ) {
-	     signalName = s[ 1 ];
-	     type = s[ 2 ];
-	  } else {
-	     throw error.TypeError( "Wrong accessor parsing (2)", loc );
-	  }
-	  
-	  console.log( "sn=", signalName, "ty=", type );
-	  return makeAccessor( signalName, type, loc );
+	 s = s[ 1 ].split( '["' );
+	 signalName = s[ 0 ];
+	 type = s[ 1 ].substr( 0, s[ 1 ].length - 2 );
+      } else if( s.length == 3 ) {
+	 signalName = s[ 1 ];
+	 type = s[ 2 ];
+      } else {
+	 throw error.TypeError( "Wrong accessor parsing (2)", loc );
+      }
+      
+      console.log( "sn=", signalName, "ty=", type );
+      return makeAccessor( signalName, type, loc );
    });
 }
 
@@ -800,10 +800,10 @@ function makeAutomatePossibleMachine () {
 	 	     if ( nowval( abletonON) === 1) {
 	    	     	run automateUn.trajetModule( ... );
 	 	     } else if  ( nowval(abletonON) === 2){
-	      	       	  run automateDeux.trajetModule(...);
-	   	       } else if ( nowval(abletonON) === 3){
-			    run automateTrois.trajetModule(...);
-	     	      	 }
+			run automateDeux.trajetModule(...);
+		     } else if ( nowval(abletonON) === 3){
+			run automateTrois.trajetModule(...);
+		     }
       	       	  }
    	       }
 	    }
@@ -1154,6 +1154,18 @@ service main() {
        </script>
      </head>
 }
+
+// ok, stand alone tags
+const App = () => 
+	 <div>
+	   <h2> Shopping Cart Example</h2>
+	   <hr/>
+	   <ProductsContainer/>
+	   <hr/>
+	   <CartContainer/>
+	 </div>;
+
+export default App;
 
 // ok CSS rules
 #title-block-top div {
