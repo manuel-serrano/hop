@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Thu Dec 20 08:04:02 2018 (serrano)                */
+/*    Last change :  Thu Dec 20 08:23:30 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,6 +30,11 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+// ok , indent arrow variable bound function
+const Cart = ( { products, total, onCheckoutClicked }, ... ) => {
+   return 3;
+}
+
 // ok, else if sequence
 function automata() {
    tick = tick + 1;
@@ -1157,15 +1162,13 @@ service main() {
 
 // ok, stand alone tags
 const App = () => 
-	 <div>
-	   <h2> Shopping Cart Example</h2>
-	   <hr/>
-	   <ProductsContainer/>
-	   <hr/>
-	   <CartContainer/>
-	 </div>;
-
-export default App;
+   <div>
+     <h2> Shopping Cart Example</h2>
+     <hr/>
+     <ProductsContainer/>
+     <hr/>
+     <CartContainer/>
+   </div>;
 
 // ok CSS rules
 #title-block-top div {
