@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Fri Dec 21 08:44:10 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 09:03:38 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -451,6 +451,20 @@
 	      dtok)))
 	 ((binop = >)
 	  (hopjs-parse-expr (hopjs-parse-consume-token-any) multilinep))
+	 ((=>)
+	  (let ((tok (hopjs-parse-consume-token-any)))
+	    (hopjs-debug 0 "hopjs-parse-expr.=> %s peek=%s [%s]"
+			 tok
+			 (hopjs-parse-peek-token)
+			 (hopjs-parse-token-string (hopjs-parse-peek-token)))
+	    (case (hopjs-parse-peek-token-type)
+	      ((ident)
+	       (hopjs-parse-consume-token-any))
+	      ((rparen)
+	       (when (hopjs-parse-args (hopjs-parse-consume-token-any))
+		 (hopjs-parse-peek-token)))
+	      (t
+	       tok))))
 	 ((new)
 	  (hopjs-parse-consume-token-any))
 	 ((yield yield*)
@@ -544,19 +558,7 @@
 	      (or (hopjs-parse-expr (hopjs-parse-peek-token) multilinep) tok)
 	    dtok)))
        ((=>)
-	(let ((tok (hopjs-parse-consume-token-any)))
-	  (hopjs-debug 0 "hopjs-parse-expr-simple.=> %s peek=%s [%s]"
-		       tok
-		       (hopjs-parse-peek-token)
-		       (hopjs-parse-token-string (hopjs-parse-peek-token)))
-	  (case (hopjs-parse-peek-token-type)
-	    ((ident)
-	     (hopjs-parse-consume-token-any))
-	    ((rparen)
-	     (when (hopjs-parse-args (hopjs-parse-consume-token-any))
-	       (hopjs-parse-peek-token)))
-	    (t
-	     tok))))
+	tok)
        ((function function* service)
 	(hopjs-parse-consume-tokens '(function function* service ident) multilinep))
        ((binop >)
