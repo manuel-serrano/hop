@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Thu Dec 20 08:26:34 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 08:29:03 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -510,7 +510,10 @@
      (hopjs-debug 0 "hopjs-indent-old-qmark tok=%s" (hopjs-parse-peek-token))
      (let ((etok (hopjs-parse-expr (hopjs-parse-peek-token) t)))
        (hopjs-debug 0 "hopjs-indent-old-qmark etok=%s" etok)
-       (hopjs-indent-column-token etok hopjs-indent-level)))))
+       (if (and (eq (hopjs-parse-token-type etok) 'ident)
+		(memq (hopjs-parse-peek-token-type) '(let var const)))
+	   (hopjs-indent-column-token (hopjs-parse-peek-token) hopjs-indent-level)
+	 (hopjs-indent-column-token etok hopjs-indent-level))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-=> ...                                          */
@@ -705,6 +708,8 @@
 	   ((return if let const var)
 	    (hopjs-indent-column-token
 	     (hopjs-parse-consume-token-any) hopjs-indent-level))
+	   ((qmark)
+	    (hopjs-indent-column-token (hopjs-parse-peek-token) 0))
 	   (t 
 	    (hopjs-indent-column-token etok hopjs-indent-level)))))
     (t
@@ -1025,7 +1030,7 @@
   (with-debug
    "hopjs-indent-new-ctag...%s %s" tok (hopjs-parse-token-string tok)
    (let* ((col (hopjs-indent-column-token tok 0))
-	  (otag (hopjs-find-opening-tag (- (hopjs-parse-token-end tok) 1))))
+	  (otag (hopjs-find-opening-tag (- (hopjs-parse-token-end tok) 1) 0)))
      (if otag
 	 (let ((otok (hopjs-parse-peek-token)))
 	   (hopjs-debug 0 "hopjs-indent-new-ctag...find-opening=[%s] peek=%s"
@@ -1046,7 +1051,7 @@
 (defun hopjs-indent-old-ctag (pos)
   (with-debug
    "hopjs-indent-old-ctag...%s" pos
-   (let ((otag (hopjs-find-opening-tag pos)))
+   (let ((otag (hopjs-find-opening-tag pos 0)))
      (hopjs-debug 0 "hopjs-indent-old-ctag otag=%s [%s]" otag
 		  (if otag (hopjs-parse-token-string otag)))
      (if otag
@@ -1199,7 +1204,7 @@
 ;*    hopjs-indent-find-otag ...                                       */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-indent-find-otag (tok)
-  (when (hopjs-find-opening-tag (- (hopjs-parse-token-end tok) 1))
+  (when (hopjs-find-opening-tag (- (hopjs-parse-token-end tok) 1) 0)
     (cons (match-beginning 0) (match-end 0))))
 
 ;*---------------------------------------------------------------------*/

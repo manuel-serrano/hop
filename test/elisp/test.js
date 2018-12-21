@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Thu Dec 20 08:23:30 2018 (serrano)                */
+/*    Last change :  Fri Dec 21 08:31:46 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,10 +30,32 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+// ok, expression after : ? xml
+const Cart = ( { products, total, onCheckoutClicked }, ... ) => {
+   const hasProducts = products.length > 0;
+   const nodes = hasProducts 
+      ? products.map( product => 
+			 <Product title=${product.title}
+				  price=${product.price}
+				  quantity=${product.quantity}
+				  key=${product.id}/> )
+      : <em>cart</em>;
+   
+   return <div>3</div>;
+}
+
+// ok, colon after question mark
+const Cart = ( { products, total, onCheckoutClicked }, ... ) => {
+   const nodes = hasProducts 
+      ? products.map( product => 0 )
+      : <em>Please add some products to cart.</em>;
+}
+
 // ok , indent arrow variable bound function
 const Cart = ( { products, total, onCheckoutClicked }, ... ) => {
    return 3;
 }
+
 
 // ok, else if sequence
 function automata() {

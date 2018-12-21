@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Dec 21 08:26:45 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 08:56:46 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -747,17 +747,19 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 (make-variable-buffer-local 'forward-sexp-function)
 
-(setq forward-sexp-function
-      #'(lambda (arg)
-	  (interactive)
-	  (cond
-	   ((= arg 1)
-	    (hopjs-forward-sexp))
-	   ((= arg -1)
-	    (hopjs-backward-sexp))
-	   (t 
-	    (let ((forward-sexp-function nil))
-	      (forward-sexp arg))))))
+;*---------------------------------------------------------------------*/
+;*    hopjs-forward-sexp-function ...                                  */
+;*---------------------------------------------------------------------*/
+(defun hopjs-forward-sexp-function (arg)
+  (interactive)
+  (cond
+   ((= arg 1)
+    (hopjs-forward-sexp))
+   ((= arg -1)
+    (hopjs-backward-sexp))
+   (t 
+    (let ((forward-sexp-function nil))
+      (forward-sexp arg)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs doc index                                                  */
@@ -1304,6 +1306,7 @@ usage: (js-return)  -- [RET]"
   (hopjs-syntax)
   ;; key bindings
   (hopjs-key-bindings)
+  (setq forward-sexp-function 'hopjs-forward-sexp-function)
   ;; font lock
   (font-lock-add-keywords nil hopjs-font-lock-keywords)
   ;; custom beginning of defun

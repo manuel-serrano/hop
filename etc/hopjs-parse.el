@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun Dec 16 20:34:59 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 08:44:10 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -627,7 +627,7 @@
        ((ctag)
 	(let ((btok (hopjs-parse-find-opening-tok (hopjs-parse-token-end tok) 0)))
 	  (if btok
-	      (let ((tok (hopjs-parse-consume-and-peek-token)))
+	      (let ((tok (hopjs-parse-peek-token)))
 		(hopjs-debug 0 "hopjs-parse-expr-simple.ctag point=%s %s [%s]"
 			     (point) tok (hopjs-parse-token-string tok))
 		tok)
