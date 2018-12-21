@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sun Oct 28 09:05:31 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 09:31:48 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -92,6 +92,21 @@
 		    (%location #f)
 		    (attr)
 		    body)
+   
+   (define (find-head body)
+      (let loop ((body body)
+		 (err #f))
+	 (when (pair? body)
+	    (cond
+	       ((xml-markup-is? (car body) 'head)
+		(if err
+		    (error "<HTML>" "wrong <HEAD>, not first child" (car body))
+		    (car body)))
+	       ((string? (car body))
+		(loop (cdr body) (or err (string-skip (car body) "\r\t\n "))))
+	       (else
+		(loop (cdr body) #t))))))
+	     
    (let* ((nbody (let loop ((body body))
 		    (cond
 		       ((not (pair? body))
@@ -111,10 +126,8 @@
 			      :%location %location)))
 		    ((xml-markup-is? (car nbody) 'head)
 		     nbody)
-		    ((find (lambda (o) (xml-markup-is? o 'head)) body)
-		     =>
-		     (lambda (n)
-			(error "<HTML>" "wrong <HEAD> element" n)))
+		    ((find-head body)
+		     nbody)
 		    (else
 		     (cons (<HEAD> :idiom idiom :context context
 			      :%location %location)
