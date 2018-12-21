@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Dec 17 13:19:16 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 17:10:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -957,9 +957,9 @@
 			 ((isa? d JsWrapperDescriptor)
 			  (with-access::JsWrapperDescriptor d (value)
 			     value)))))))
-	 (if (not (isa? o JsObject))
-	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
-	     (let loop ((v v))
+	 (let loop ((v v))
+	    (if (not (isa? v JsObject))
+		(js-raise-type-error %this "instanceof: no prototype ~s" v)
 		(with-access::JsObject v ((v __proto__))
 		   (cond
 		      ((eq? o v) #t)
@@ -968,10 +968,10 @@
 
 (define (js-ordinary-instanceof/debug %this loc v f)
    (let ((o (js-get f 'prototype %this)))
-      (if (not (isa? o JsObject))
-	  (js-raise-type-error/loc %this loc
-	     "instanceof: no prototype ~s" v)
-	  (let loop ((v v))
+      (let loop ((v v))
+	 (if (not (isa? v JsObject))
+	     (js-raise-type-error/loc %this loc
+		"instanceof: no prototype ~s" v)
 	     (with-access::JsObject v ((v __proto__))
 		(cond
 		   ((eq? o v) #t)

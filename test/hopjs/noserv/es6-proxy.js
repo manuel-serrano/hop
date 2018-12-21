@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Dec 14 02:23:02 2018 (serrano)                */
+/*    Last change :  Fri Dec 21 15:12:27 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -101,7 +101,6 @@ function misce() {
    return proxy.hasOwnProperty( "FOO" );
 }
 
-
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
@@ -133,8 +132,50 @@ function mdna() {
    return proxy1.eyeCount + proxy1.secret;
 }
 
+function mdnb() {
+   let res = "";
+   
+   let o = new Proxy( {}, {} );
+   
+   var revocable = Proxy.revocable({}, {
+      get: function(target, name) {
+    	 return "[[" + name + "]]";
+      }
+   });
+
+   var proxy = revocable.proxy;
+   
+   res = proxy.foo;
+
+   revocable.revoke();
+
+   try {
+      console.log(proxy.foo); // TypeError is thrown
+      return false;
+   } catch( _e ) {
+      res += ".ok";
+   }
+    
+   try {
+      proxy.foo = 1           // TypeError again
+      return false;
+   } catch( _e ) {
+      res += ".ok";
+   }
+   
+   try {
+      delete proxy.foo;       // still TypeError
+      return false;
+   } catch( _e ) {
+      res += ".ok";
+   }
+      
+   return typeof proxy === "object" && res === "[[foo]].ok.ok.ok";       
+}
+
 console.log( "mdn" );
 console.log( "   mdna()"); mdna();
+console.log( "   mdnb()"); mdnb();
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -728,6 +769,7 @@ function kangaxG() {
 }
 
 function kangaxH() {
+   console.log( JSON.stringify(new Proxy(['foo'], {})) );
    return JSON.stringify(new Proxy(['foo'], {})) === '["foo"]';
 }
 

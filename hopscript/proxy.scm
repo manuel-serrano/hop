@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon Dec 17 08:53:46 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 15:21:20 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -61,16 +61,42 @@
 	    (set! handler h))
 	 this)
 
+      (define js-proxy-revoke
+	 (js-make-function %this
+	    (lambda (this)
+	       (let ((prox (js-get this 'proxy %this)))
+		  (if (isa? prox JsProxy)
+		      (with-access::JsProxy prox (revoked)
+			 (set! revoked #t))
+		      (js-raise-type-error %this
+			 "Not a Revocable proxy" this))))
+	    0 'revoke
+	    :prototype '()))
+
       ;; create a HopScript object
       (define (%js-proxy this . args)
 	 (js-raise-type-error %this "Constructor Proxy requires 'new'" this))
-      
+
+      ;; create a revokable proxy
+      (define (%js-revocable this t h)
+	 (js-plist->jsobject
+	    `(:proxy ,(js-proxy-construct (js-proxy-alloc js-proxy) t h)
+		:revoke ,js-proxy-revoke)
+	    %this))
+
       (set! js-proxy
 	 (js-make-function %this %js-proxy 2 'Proxy
 	    :__proto__ js-function-prototype
 	    :prototype '()
 	    :alloc js-proxy-alloc
 	    :construct js-proxy-construct))
+
+      (js-bind! %this js-proxy 'revocable
+	 :writable #t :configurable #t :enumerable #f
+	 :value (js-make-function %this %js-revocable 2 'revocable
+		   :__proto__ js-function-prototype
+		   :prototype '())
+	 :hidden-class #t)
 
       ;; bind Proxy in the global object
       (js-bind! %this %this 'Proxy
@@ -122,6 +148,14 @@
    0)
 
 ;*---------------------------------------------------------------------*/
+;*    symbol->pname ...                                                */
+;*---------------------------------------------------------------------*/
+(define (symbol->pname obj)
+   (if (symbol? obj)
+       (js-string->jsstring (symbol->string! obj))
+       obj))
+
+;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value o::JsProxy owner::JsObject prop %this::JsGlobalObject)
@@ -129,7 +163,7 @@
       (let ((get (js-get handler 'get %this)))
 	 (if (isa? get JsFunction)
 	     (let ((v (js-call3 %this get handler target
-			 (js-string->jsstring (symbol->string! prop))
+			 (symbol->pname prop)
 			 owner)))
 		(if (null? (js-object-properties target))
 		    v
@@ -144,7 +178,7 @@
       (let ((set (js-get handler 'set %this)))
 	 (when (isa? set JsFunction)
 	    (let ((v (js-call4 %this set handler target
-			(js-string->jsstring (symbol->string! prop))
+			(symbol->pname prop)
 			v
 			owner)))
 	       (if (js-totest v)
@@ -156,42 +190,28 @@
 ;*    js-get ::JsProxy ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsProxy prop %this::JsGlobalObject)
+   (proxy-check-revoked! o "get" %this)
    (js-proxy-property-value o o prop %this))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-object-get-name/cache-miss ::JsProxy ...                      *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-object-get-name/cache-miss o::JsProxy prop::obj  */
-;* 		   throw::bool %this::JsGlobalObject                   */
-;* 		   cache::JsPropertyCache                              */
-;* 		   #!optional (point -1) (cspecs '()))                 */
-;*    (js-get o prop %this))                                           */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-object-get-lookup ::JsProxy ...                               *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-object-get-lookup o::JsProxy prop::obj throw::bool */
-;* 		  %this::JsGlobalObject                                */
-;* 		  cache::JsPropertyCache point::long cspecs::pair-nil) */
-;*    (js-get o prop %this))                                           */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsProxy ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::JsProxy prop v throw %this::JsGlobalObject)
+   (proxy-check-revoked! o "put" %this)
    (with-access::JsProxy o (target handler)
       (let ((set (js-get handler 'set %this)))
 	 (if (isa? set JsFunction)
 	     (begin
 		(proxy-check-property-value target target prop %this v 'set)
 		(js-call4 %this set handler target
-		   (js-string->jsstring (symbol->string! prop)) v o))
+		   (symbol->pname prop) v o))
 	     (js-put! target prop v throw %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-delete! ::JsProxy ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-delete! o::JsProxy p throw %this)
+   (proxy-check-revoked! o "delete" %this)
    (with-access::JsProxy o (target handler)
       (let ((delete (js-get handler 'deleteProperty %this)))
 	 (if (isa? delete JsFunction)
@@ -207,7 +227,7 @@
       (let ((has (js-get handler 'has %this)))
 	 (if (isa? has JsFunction)
 	     (let ((v (js-call2 %this has o target
-			 (js-string->jsstring (symbol->string! p)))))
+			 (symbol->pname p))))
 		(or v (proxy-check-property-has target p %this v)))
 	     (js-has-property target p %this)))))
 
@@ -215,17 +235,19 @@
 ;*    js-has-own-property ::JsProxy ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-own-property o::JsProxy p::obj %this)
+   (proxy-check-revoked! o "has" %this)
    (with-access::JsProxy o (target handler)
       (let ((has (js-get handler 'has %this)))
 	 (if (isa? has JsFunction)
 	     (js-call2 %this has o target
-		(js-string->jsstring (symbol->string! p)))
+		(symbol->pname p))
 	     (js-has-own-property target p %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ::JsProxy ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property o::JsProxy p::obj %this)
+   (proxy-check-revoked! o "getOwn" %this)
    (with-access::JsProxy o (target handler)
       (let ((get (js-get handler 'getOwnPropertyDescriptor %this)))
 	 (if (isa? get JsFunction)
@@ -236,8 +258,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsProxy ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-for-in obj::JsProxy proc %this)
-   (with-access::JsProxy obj (target)
+(define-method (js-for-in o::JsProxy proc %this)
+   (proxy-check-revoked! o "for..in" %this)
+   (with-access::JsProxy o (target)
       (js-for-in target proc %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -245,11 +268,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-define-own-property::bool o::JsProxy p
 		  desc::JsPropertyDescriptor throw::bool %this)
+   (proxy-check-revoked! o "defineProperty" %this)
    (with-access::JsProxy o (target handler)
       (let ((def (js-get handler 'defineProperty %this)))
 	 (if (isa? def JsFunction)
 	     (let ((v (js-call3 %this def o target
-			 (js-string->jsstring (symbol->string! p)) desc)))
+			 (symbol->pname p) desc)))
 		(proxy-check-property-defprop target o p %this desc v))
 	     (js-define-own-property target p desc throw %this)))))
 
@@ -257,6 +281,7 @@
 ;*    js-getprototypeof ::JsProxy ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (js-getprototypeof o::JsProxy %this::JsGlobalObject msg::obj)
+   (proxy-check-revoked! o "getPrototypeOf" %this)
    (with-access::JsProxy o (target handler)
       (let ((get (js-get handler 'getPrototypeOf %this)))
 	 (if (isa? get JsFunction)
@@ -268,6 +293,7 @@
 ;*    js-setprototypeof ::JsProxy ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (js-setprototypeof o::JsProxy v %this::JsGlobalObject msg::obj)
+   (proxy-check-revoked! o "setPrototypeOf" %this)
    (with-access::JsProxy o (target handler)
       (let ((set (js-get handler 'setPrototypeOf %this)))
 	 (if (isa? set JsFunction)
@@ -279,6 +305,7 @@
 ;*    js-extensible? ::JsProxy ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-extensible? o::JsProxy %this::JsGlobalObject)
+   (proxy-check-revoked! o "isExtensible" %this)
    (with-access::JsProxy o (target handler)
       (let ((ise (js-get handler 'isExtensible %this)))
 	 (if (isa? ise JsFunction)
@@ -290,6 +317,7 @@
 ;*    js-preventextensions ::JsProxy ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-preventextensions o::JsProxy %this::JsGlobalObject)
+   (proxy-check-revoked! o "preventExtensions" %this)
    (with-access::JsProxy o (target handler)
       (let ((p (js-get handler 'preventExtensions %this)))
 	 (if (isa? p JsFunction)
@@ -301,12 +329,23 @@
 ;*    js-ownkeys ::JsProxy ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-ownkeys o::JsProxy %this::JsGlobalObject)
+   (proxy-check-revoked! o "ownKeys" %this)
    (with-access::JsProxy o (target handler)
       (let ((ownk (js-get handler 'ownKeys %this)))
 	 (if (isa? ownk JsFunction)
 	     (let ((r (js-call1 %this ownk o target)))
 		(proxy-check-ownkeys target o %this r))
 	     (js-ownkeys target %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-check-revoked! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (proxy-check-revoked! o::JsProxy action %this::JsGlobalObject)
+   (with-access::JsProxy o (revoked)
+      (when revoked
+	 (js-raise-type-error %this
+	    (format "Cannot perform \"~s\" on a revoked proxy" action)
+	    (js-string->jsstring (typeof o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    proxy-check-property-value ...                                   */

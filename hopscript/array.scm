@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Dec 17 10:06:25 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 17:29:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -421,7 +421,8 @@
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.5.1
 	 (js-bind! %this js-array 'isArray
 	    :value (js-make-function %this
-		      (lambda (this arg) (js-array? arg))
+		      (lambda (this arg)
+			 (or (js-array? arg) (js-proxy-array? arg)))
 		      1 'isArray)
 	    :writable #t
 	    :enumerable #f

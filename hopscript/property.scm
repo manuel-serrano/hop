@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Dec 17 09:24:10 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 18:08:14 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2057,10 +2057,11 @@
 		       (begin
 			  (set! value v)
 			  v)))))
-	    ((and (isa? desc JsProxyDescriptor)
-		  (update-from-proxy-descriptor! o o -1 v desc))
-	     =>
-	     (lambda (x) x))
+	    ((isa? desc JsProxyDescriptor)
+	     (or (update-from-proxy-descriptor! o o -1 v desc)
+		 (if (js-object-mode-extensible? obj)
+		     (extend-object!)
+		     (reject "sealed object"))))
 	    ((not (js-object-mode-extensible? obj))
 	     ;; 8.12.9, step 3
 	     (reject "sealed object"))

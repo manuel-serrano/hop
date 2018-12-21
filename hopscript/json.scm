@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Nov 23 19:13:06 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 17:43:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -366,7 +366,7 @@
 		(cond
 		   ((isa? value JsFunction)
 		    (js-undefined))
-		   ((isa? value JsArray)
+		   ((or (js-array? value) (js-proxy-array? value))
 		    (let ((res (lst holder value mind "[" "]"
 				  (lambda (i)
 				     (str i value stack

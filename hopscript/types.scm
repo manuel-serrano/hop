@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Dec 17 09:37:05 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 15:22:10 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -331,7 +331,8 @@
 
 	   (class JsProxy::JsObject
 	      (target::JsObject (default (class-nil JsObject)))
-	      (handler::JsObject (default (class-nil JsObject))))
+	      (handler::JsObject (default (class-nil JsObject)))
+	      (revoked::bool (default #f)))
 	   
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
@@ -412,6 +413,7 @@
 	   (inline js-array?::bool ::obj)
 	   (inline js-function?::bool ::obj)
 	   (inline js-symbol?::bool ::obj)
+	   (js-proxy-array?::bool ::obj)
 
 	   (inline js-object-cmap ::JsObject)
 	   
@@ -957,6 +959,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-symbol? o)
    (isa? o JsSymbolLiteral))
+
+;*---------------------------------------------------------------------*/
+;*    js-proxy-array? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-proxy-array? obj)
+   (when (isa? obj JsProxy)
+      (with-access::JsProxy obj (target)
+	 (js-array? target))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-cmap ...                                               */
