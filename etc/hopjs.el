@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Dec 21 08:00:19 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 08:26:45 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1013,6 +1013,8 @@ usage: (js-return)  -- [RET]"
 				      (cdr e)))
 			  hopjs-doc-url)))))
    ((posix-string-match "http[s]?://" hopjs-doc-url)
+    (hopjs-doc-browse-url  hopjs-doc-url))
+   ((posix-string-match "file://" hopjs-doc-url)
     (hopjs-doc-browse-url  hopjs-doc-url))
    ((eq (aref hopjs-doc-url 0) ?/)
     (hopjs-doc-browse-url (format "file://%s" hopjs-doc-url)))
