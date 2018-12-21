@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Dec 21 08:31:46 2018 (serrano)                */
+/*    Last change :  Fri Dec 21 18:33:19 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,6 +30,22 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+// pok, && after array assignment
+function kangaxr() {
+   return RegExp.prototype.exec.call(obj, "foobarbaz")[0] === "baz"
+      && obj.lastIndex === 9 && obj instanceof F;
+}
+
+// ok, empty lines and tabs
+function mdnn() {
+   const object1 = {};
+   if( Reflect.isExtensible(object1) !== true ) return false;
+   
+   
+   Reflect.preventExtensions(object1);
+}
+
+
 // ok, expression after : ? xml
 const Cart = ( { products, total, onCheckoutClicked }, ... ) => {
    const hasProducts = products.length > 0;
@@ -43,6 +59,7 @@ const Cart = ( { products, total, onCheckoutClicked }, ... ) => {
    
    return <div>3</div>;
 }
+
 
 // ok, colon after question mark
 const Cart = ( { products, total, onCheckoutClicked }, ... ) => {
@@ -818,8 +835,8 @@ function makeAutomatePossibleMachine () {
       return hiphop module automateDesPossibles(in tick, in abletonON)
 	 implements 
 	    automateInt.creationInterfaces(lesSons[0]),
-	    automateInt.creationInterfaces(lesSons[1]),
-	    automateInt.creationInterfaces(lesSons[2]) {
+      	    automateInt.creationInterfaces(lesSons[1]),
+      	    automateInt.creationInterfaces(lesSons[2]) {
    	       fork {
       	       	  //run spy(...);
    	       } par {

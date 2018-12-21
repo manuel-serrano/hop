@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Dec 21 18:28:27 2018 (serrano)                */
+/*    Last change :  Fri Dec 21 18:39:46 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Reflect object                           */
@@ -103,7 +103,7 @@ function mdnk() {
 
    return Reflect.getOwnPropertyDescriptor(object1, 'property1').value === 42
       && Reflect.getOwnPropertyDescriptor(object1, 'property2') === undefined
-		 && Reflect.getOwnPropertyDescriptor(object1, 'property1').writable === true;
+      && Reflect.getOwnPropertyDescriptor(object1, 'property1').writable === true;
 }
 
 function mdnl() {
@@ -121,20 +121,20 @@ function mdnm() {
    };
    
    return Reflect.has(object1, 'property1') === true
-		  && Reflect.has(object1, 'property2') === false
-		     	     && Reflect.has(object1, 'toString') === true;
+      && Reflect.has(object1, 'property2') === false
+      && Reflect.has(object1, 'toString') === true;
 }
 
 function mdnn() {
    const object1 = {};
    if( Reflect.isExtensible(object1) !== true ) return false;
+   		
+   Reflect.preventExtensions(object1);
 		
-		Reflect.preventExtensions(object1);
+   if( Reflect.isExtensible(object1) ) return false;
 		
-		if( Reflect.isExtensible(object1) ) return false;
-		
-		const object2 = Object.seal({});
-		return !Reflect.isExtensible(object2);
+   const object2 = Object.seal({});
+   return !Reflect.isExtensible(object2);
 }
 
 function mdno() {
@@ -146,7 +146,7 @@ function mdno() {
    var array1 = [];
    
    return Reflect.ownKeys(object1).join() === "property1,property2"
-				   && Reflect.ownKeys(array1).join() === "length";
+      && Reflect.ownKeys(array1).join() === "length";
 }
 
 function mdnp() {
@@ -176,13 +176,13 @@ function mdnr() {
    
    if( Reflect.setPrototypeOf(object1, Object.prototype) !== true )
       return false;
-      
-      if( Reflect.setPrototypeOf(object1, null) !== true )
-	 return false;
-	 
-	 const object2 = {};
-	 
-	 return Reflect.setPrototypeOf(Object.freeze(object2), null) === false;
+   
+   if( Reflect.setPrototypeOf(object1, null) !== true )
+      return false;
+   
+   const object2 = {};
+   
+   return Reflect.setPrototypeOf(Object.freeze(object2), null) === false;
 }
 
 console.log( "mdn" );
