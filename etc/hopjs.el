@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Dec  4 22:22:24 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 08:00:19 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -236,15 +236,15 @@
   '())
 
 (defun hopjs-debug (shift fmt &rest l)
-  (when (> shift 0)
-    (setq hopjs-debug-level (+ hopjs-debug-level shift)))
   (when hopjs-debug
+    (when (> shift 0)
+      (setq hopjs-debug-level (+ hopjs-debug-level shift)))
     (apply 'message
 	   (hopjs-debug-format
 	    fmt (cond ((> shift 0) "> ") ((< shift 0) "< ") (t "- ")))
-	   l))
-  (when (< shift 0)
-    (setq hopjs-debug-level (+ hopjs-debug-level shift))))
+	   l)
+    (when (< shift 0)
+      (setq hopjs-debug-level (+ hopjs-debug-level shift)))))
 
 (defun hopjs-debug-format (fmt mark )
   (cl-case hopjs-debug-level
@@ -267,7 +267,7 @@
     ((16) (concat "               " mark fmt))
     (t (concat "         ~" mark fmt))))
    
-(defconst hopjs-debug (or t (getenv "EMACSDEBUG")))
+(defconst hopjs-debug (or debug-on-error (getenv "EMACSDEBUG")))
 
 (defvar hopjs-debug-level 0)
 (setq hopjs-debug-level 0)
@@ -589,12 +589,9 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-find-opening-tag ...                                       */
 ;*---------------------------------------------------------------------*/
-(defun hopjs-find-opening-tag (pos)
+(defun hopjs-find-opening-tag (pos depth)
   (save-excursion
-    (let ((tok (hopjs-parse-find-opening-tok pos 0)))
-      (when tok
-	(goto-char (hopjs-parse-token-beginning tok))
-	tok))))
+    (hopjs-parse-find-opening-tok pos depth)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-find-closing-tag ...                                       */
@@ -665,8 +662,8 @@ usage: (js-return)  -- [RET]"
 	(let* ((beg (match-beginning 1))
 	       (end (match-end 1))
 	       (tag (buffer-substring-no-properties beg end))
-	       (otag (hopjs-find-opening-tag beg)))
-	  (message "hopjs-closing-tag-p [%s] -> [%s]" tag (if otag otag ""))
+	       (otag (hopjs-find-opening-tag beg 0)))
+	  (hopjs-debug 0 "hopjs-closing-tag-p [%s] -> [%s]" tag (if otag otag ""))
 	  (cond
 	   ((not otag)
 	    (hopjs-highlight-tag 'hopjs-nomatch-face beg end))
@@ -678,7 +675,7 @@ usage: (js-return)  -- [RET]"
 	     (hopjs-parse-token-beginning-tag otag)
 	     (hopjs-parse-token-end-tag otag)))
 	   (t
-	    (message "hopjs-closing-tag-p ... mismatch")
+	    (hopjs-debug 0 "hopjs-closing-tag-p ... mismatch")
 	    (hopjs-highlight-tag
 	     'hopjs-nomatch-face beg end)
 	    (hopjs-highlight-tag
@@ -696,7 +693,7 @@ usage: (js-return)  -- [RET]"
 	     (beg (match-beginning 1))
 	     (end (match-end 1))
 	     (otag (hopjs-find-closing-tag (match-end 0))))
-	(message "hopjs-opening-tag-p [%s] -> [%s]" tag (if otag otag ""))
+	(hopjs-debug 0 "hopjs-opening-tag-p [%s] -> [%s]" tag (if otag otag ""))
 	(cond
 	 ((not otag)
 	  (hopjs-highlight-tag 'hopjs-nomatch-face beg end))
@@ -719,6 +716,7 @@ usage: (js-return)  -- [RET]"
 ;*    hopjs-forward-sexp ...                                           */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-forward-sexp ()
+  (interactive "d")
   (if (hopjs-opening-tag-p (point))
       (if (looking-at hopjs-re-standalone-tag)
 	  (goto-char (match-end 0))
@@ -734,10 +732,11 @@ usage: (js-return)  -- [RET]"
 ;*    hopjs-backward-sexp ...                                          */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-backward-sexp ()
+  (interactive "d")
   (if (hopjs-closing-tag-p (1- (point)))
-      (let ((otag (hopjs-find-opening-tag (match-beginning 0))))
+      (let ((otag (hopjs-find-opening-tag (match-beginning 0) 1)))
 	(if otag
-	    (goto-char (match-beginning 0))
+	    (goto-char (hopjs-parse-token-beginning otag))
 	  (let ((backward-sexp-function nil))
 	    (forward-sexp -1))))
     (let ((forward-sexp-function nil))
