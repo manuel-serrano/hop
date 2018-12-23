@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Dec 21 18:39:46 2018 (serrano)                */
+/*    Last change :  Fri Dec 21 19:10:45 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Reflect object                           */
@@ -318,7 +318,7 @@ function kangaxr() {
    function F(){}
    var obj = Reflect.construct(RegExp, ["baz","g"], F);
    return RegExp.prototype.exec.call(obj, "foobarbaz")[0] === "baz"
-  						      && obj.lastIndex === 9 && obj instanceof F;
+      && obj.lastIndex === 9 && obj instanceof F;
 }
 
 function kangaxs() {

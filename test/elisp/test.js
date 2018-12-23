@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Dec 21 18:33:19 2018 (serrano)                */
+/*    Last change :  Sun Dec 23 07:48:47 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,7 +30,16 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// pok, && after array assignment
+// nok, do/while
+function parseInterfaceIntflist( x, y ) {
+   do {
+      x++;
+   } while( x < 10 )
+   
+   return y;
+}
+
+// ok, && after array assignment
 function kangaxr() {
    return RegExp.prototype.exec.call(obj, "foobarbaz")[0] === "baz"
       && obj.lastIndex === 9 && obj instanceof F;

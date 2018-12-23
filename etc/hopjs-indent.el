@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Fri Dec 21 18:37:42 2018 (serrano)                */
+;*    Last change :  Sun Dec 23 07:51:03 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -257,7 +257,7 @@
 		    (hopjs-indent-column-token npeek hopjs-indent-level)
 		  (hopjs-indent-column-token ntok hopjs-indent-level)))
 	    (hopjs-indent-column-token tok hopjs-indent-level))))
-       ((while switch for)
+       ((while switch for do)
 	;; if (args) {
 	(hopjs-debug 0 "hopjs-indent-new-lbrace WHILE/SWITCH/FOR.1..%s"
 		     (hopjs-parse-peek-token))
@@ -281,7 +281,7 @@
      (case (hopjs-parse-peek-token-type)
        ((=>)
 	(hopjs-indent-new-=> (hopjs-parse-consume-token-any)))
-       ((try catch return)
+       ((try catch return do)
 	(hopjs-indent-column-token
 	 (hopjs-parse-consume-token-any) hopjs-indent-level))
        ((else)
@@ -682,14 +682,14 @@
     ((hopjs-parse-expr (hopjs-parse-push-token tok) t)
      =>
      #'(lambda (etok)
-	 (hopjs-debug 0 "hopjs-indent-new-rparen...expr.etok=%s peek=%s"
+	 (hopjs-debug 0 "hopjs-indent-new-rparen.expr.etok=%s peek=%s"
 		      etok
 		      (hopjs-parse-peek-token))
 	 (case (hopjs-parse-peek-token-type)
 	   ((=)
 	    (if (hopjs-parse-expr (hopjs-parse-consume-token-any) t)
 		(progn
-		  (hopjs-debug 0 "hopjs-indent-new-rparen...expr.%s"
+		  (hopjs-debug 0 "hopjs-indent-new-rparen.expr..=.%s"
 			       (hopjs-parse-peek-token-type))
 		  (case (hopjs-parse-peek-token-type)
 		    ((var return)
@@ -702,7 +702,7 @@
 		      (hopjs-parse-consume-token-any) 0))))
 	      (hopjs-indent-column-token etok 0)))
 	   ((rparen)
-	    (hopjs-debug 0 "hopjs-indent-new-rparen...rparen %s"
+	    (hopjs-debug 0 "hopjs-indent-new-rparen.expr.rparen %s"
 			 (hopjs-parse-peek-token))
 	    (hopjs-indent-new-rparen (hopjs-parse-consume-token-any)))
 	   ((return if let const var)
@@ -710,6 +710,23 @@
 	     (hopjs-parse-consume-token-any) hopjs-indent-level))
 	   ((qmark)
 	    (hopjs-indent-column-token (hopjs-parse-peek-token) 0))
+	   ((while)
+	    (hopjs-parse-consume-token-any)
+	    (hopjs-debug 0 "hopjs-indent-new-rparen..expr.while %s"
+			 (hopjs-parse-peek-token))
+	    (if (eq (hopjs-parse-peek-token-type) 'rbrace)
+		;; might be a do/while loop
+		(let ((pos (progn
+			     (goto-char (hopjs-parse-token-end (hopjs-parse-peek-token)))
+			     (hopjs-parse-backward-sexp))))
+		  (goto-char pos)
+		  (hopjs-parse-start (1- (point)))
+		  (hopjs-debug 0 "hopjs-indent-new-rparen..expr.while.2 %s"
+			     (hopjs-parse-peek-token))
+		  (if (eq (hopjs-parse-peek-token-type) 'do)
+		      (hopjs-indent-column-token (hopjs-parse-peek-token) 0)
+		    (hopjs-indent-column-token etok hopjs-indent-level)))
+	      (hopjs-indent-column-token etok hopjs-indent-level)))
 	   (t 
 	    (hopjs-indent-column-token etok hopjs-indent-level)))))
     (t
