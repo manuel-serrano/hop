@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sun Dec 23 07:48:47 2018 (serrano)                */
+/*    Last change :  Sun Dec 23 08:21:29 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,7 +30,19 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// nok, do/while
+// switch default
+function parse() {
+   switch( this.peekToken() ) {
+      case this.ID:
+	 return 1;
+      case this.DOLLAR:
+	 return 2;
+      default:
+   	 throw tokenTypeError( this.consumeAny() );
+   }
+}
+
+// ok, do/while
 function parseInterfaceIntflist( x, y ) {
    do {
       x++;
