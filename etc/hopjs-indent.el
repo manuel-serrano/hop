@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Sun Dec 23 08:22:30 2018 (serrano)                */
+;*    Last change :  Tue Dec 25 07:52:31 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -36,12 +36,12 @@
 (defun hopjs-indent-comment (pos)
   (interactive "d")
   (with-debug
-   "hopjs-indent-new pos=%s" pos
+   "hopjs-indent-comment pos=%s" pos
    (save-excursion
      (hopjs-parse-start (point))
      (let ((tok (hopjs-parse-consume-token-any)))
        (if (eq (hopjs-parse-token-type tok) 'eol-comment)
-	   (hopjs-indent (- (hopjs-parse-token-beginning tok) 1))
+	   (hopjs-indent-new-token tok)
 	 '())))))
   
 ;*---------------------------------------------------------------------*/
@@ -52,14 +52,16 @@
 ;*---------------------------------------------------------------------*/
 (defun hopjs-indent-new (pos)
   (interactive "d")
-  (if (<= pos (point-min))
-      0
-    (save-excursion
-      (goto-char pos)
-      (forward-line -1)
-      (end-of-line)
-      (hopjs-parse-start (point))
-      (hopjs-indent-new-token (hopjs-parse-consume-token-any)))))
+  (with-debug
+   "hopjs-indent-new pos=%s" pos
+   (if (<= pos (point-min))
+       0
+     (save-excursion
+       (goto-char pos)
+       (forward-line -1)
+       (end-of-line)
+       (hopjs-parse-start (point))
+       (hopjs-indent-new-token (hopjs-parse-consume-token-any))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-token ...                                       */
@@ -487,7 +489,8 @@
 (defun hopjs-indent-new-comment (tok)
   (with-debug
    "hopjs-indent-new-comment %s [%s]" tok (hopjs-parse-token-string tok)
-   (hopjs-indent-new (- (hopjs-parse-token-beginning tok) 1))))
+   (hopjs-indent-new-token (hopjs-parse-consume-token-any))))
+;*    (hopjs-indent-new (- (hopjs-parse-token-beginning tok) 1))))     */
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-qmark ...                                       */

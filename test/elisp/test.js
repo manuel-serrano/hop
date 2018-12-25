@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sun Dec 23 08:21:29 2018 (serrano)                */
+/*    Last change :  Tue Dec 25 07:50:21 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,7 +30,13 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// switch default
+// comment after opening brace
+function F( a, 
+	    b ) { // this is a comment
+   return 3;
+}
+
+// ok, switch default
 function parse() {
    switch( this.peekToken() ) {
       case this.ID:
