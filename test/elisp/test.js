@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Dec 26 07:49:52 2018 (serrano)                */
+/*    Last change :  Wed Dec 26 09:27:52 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,14 +30,68 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// top level module clauses
+// pok, nested switches
+function s() {
+   while( true ) {
+      switch( this.peekToken().type ) {
+	 case this.RPAREN:
+	    this.consumeAny();
+   	    const attrs = astutils.J2SObjInit( loc, inits );
+	    return astutils.J2SCall( loc, hhref( loc, "RUN" ), null,
+	       [ attrs ].concat( accessors ) );
+	    
+	 case this.ID:
+	    const a = this.consumeAny();
+	    
+	    switch( this.peekToken().type ) {
+	       case this.COMMA:
+		  this.consumeAny();
+		  inits.push( astutils.J2SDataPropertyInit(
+		  		 a.loc, astutils.J2SString( a.loc, a.id ),
+		  		 astutils.J2SString( a.loc, "" ) ) );
+		  break;
+		  
+	       case this.EGAL:
+		  this.consumeAny();
+		  const { expr, acessor } = this.parseHHExpression();
+		  break;
+		  
+	       default:
+		  const as = this.consumeToken( this.ID );
+	    }
+	    break;
+	    
+	       case this.DOTS:
+	       this.consumeAny();
+	       inits.push( astutils.J2SDataPropertyInit(
+		  	      a.loc, astutils.J2SString( a.loc, "autocomplete" ),
+		  	      astutils.J2SBool( a.loc, true ) ) );     
+	       break;
+	       
+	    default:
+	       throw tokenTypeError( this.consumeAny() );
+      }
+   }
+}
+
+// pok, argument alignment
+function align() {
+   const assigframe = 
+      astutils.J2SStmtExpr( 
+      loc, 
+      astutils.J2SAssig( 
+	 loc, hhref( loc, "runFrame" ), 
+	 astutils.J2SRef( loc, param ) ) );
+}
+
+// ok, top level module clauses
 function topl() {
    export * from "./machine.js";
    
    return 3;
 }
 
-// comment after opening brace
+// ok, comment after opening brace
 function F( a, 
 	    b ) { // this is a comment
    return 3;

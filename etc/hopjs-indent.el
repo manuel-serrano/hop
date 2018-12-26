@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Wed Dec 26 07:51:32 2018 (serrano)                */
+;*    Last change :  Wed Dec 26 09:28:45 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -927,16 +927,17 @@
      (forward-line -1)
      (end-of-line)
      (hopjs-parse-start (point))
-     (letn loop ()
-	   (let ((tok (hopjs-parse-consume-token-any)))
-	     (hopjs-debug 0 "hopjs-indent-old-case peek=%s" tok)
-	     (case (hopjs-parse-token-type tok)
-	       ((case)
-		(hopjs-indent-column-token tok 0))
-	       ((switch)
-		(hopjs-indent-column-token tok hopjs-indent-level))
-	       (t
-		(funcall loop))))))))
+     (let ((keep t))
+       (while keep
+	 (let ((tok (hopjs-parse-consume-token-any)))
+	   (hopjs-debug 0 "hopjs-indent-old-case peek=%s" tok)
+	   (case (hopjs-parse-token-type tok)
+	     ((case)
+	      (setq keep '())
+	      (hopjs-indent-column-token tok 0))
+	     ((switch)
+	      (setq keep '())
+	      (hopjs-indent-column-token tok hopjs-indent-level)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-otag ...                                        */

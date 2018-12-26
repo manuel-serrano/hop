@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Dec 25 08:16:32 2018 (serrano)                */
+;*    Last change :  Wed Dec 26 08:02:59 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2795,7 +2795,8 @@
 	     el)))
 
    (set! parser-controller
-      (vector #unspecified #unspecified
+      (vector primary
+	 (lambda (d s) (with-tilde (lambda () (primary d s))))
 	 peek-token consume-token! consume-any!
 	 expression statement block cond-expr
 	 (lambda () (with-tilde (lambda () (cond-expr #f #f))))))
