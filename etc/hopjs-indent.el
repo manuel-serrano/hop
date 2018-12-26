@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Tue Dec 25 07:52:31 2018 (serrano)                */
+;*    Last change :  Wed Dec 26 07:51:32 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -880,6 +880,8 @@
 	    (if (hopjs-parse-same-linep (hopjs-parse-peek-token) etok)
 		(hopjs-indent-new-idents 0)
 	      (hopjs-indent-column-token etok 0)))
+	   ((from)
+	    (hopjs-indent-current-line-column))
 	   (t
 	    (hopjs-indent-column-token etok 0)))))
     (t

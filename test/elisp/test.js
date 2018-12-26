@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Tue Dec 25 07:50:21 2018 (serrano)                */
+/*    Last change :  Wed Dec 26 07:49:52 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,6 +30,13 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+// top level module clauses
+function topl() {
+   export * from "./machine.js";
+   
+   return 3;
+}
+
 // comment after opening brace
 function F( a, 
 	    b ) { // this is a comment

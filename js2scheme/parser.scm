@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec  7 21:22:48 2018 (serrano)                */
+;*    Last change :  Tue Dec 25 08:16:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2108,13 +2108,16 @@
 	     (pop-open-token (consume-any!))
 	     '())
 	  (let loop ((rev-args (list (assig-expr #f #f #t))))
-	     (if (eq? (peek-token-type) 'RPAREN)
-		 (begin
-		    (pop-open-token (consume-any!))
-		    (reverse! rev-args))
-		 (let* ((ignore (consume! 'COMMA))
+	     (case (peek-token-type)
+		((RPAREN)
+		 (pop-open-token (consume-any!))
+		 (reverse! rev-args))
+		((COMMA)
+		 (let* ((ignore (consume-any!))
 			(arg (assig-expr #f #f #t)))
-		    (loop (cons arg rev-args)))))))
+		    (loop (cons arg rev-args))))
+		(else
+		 (parse-token-error "Illegal argument epxression" (peek-token)))))))
 
    (define (xml-expression tag delim)
       (html-parser input-port
@@ -2481,18 +2484,6 @@
 	       ((DOTS)
 		(let ((token (consume-any!)))
 		   (cond
-;* 		      (destructuring?                                  */
-;* 		       (let* ((lhs (cond-expr #f #f))                  */
-;* 			      (dots (instantiate::J2SSpread            */
-;* 				       (stype 'array)                  */
-;* 				       (loc (token-loc token))         */
-;* 				       (expr lhs)))                    */
-;* 			      (rb (consume-token! 'RBRACKET)))         */
-;* 			  (pop-open-token rb)                          */
-;* 			  (instantiate::J2SArray                       */
-;* 			     (loc (token-loc token))                   */
-;* 			     (exprs (reverse! (cons* dots rev-els)))   */
-;* 			     (len (+ 1 length)))))                     */
 		      ((or destructuring? spread?)
 		       (let* ((array-el (assig-expr #f #f #t))
 			      (spread (instantiate::J2SSpread
