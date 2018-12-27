@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Dec 26 08:02:59 2018 (serrano)                */
+;*    Last change :  Thu Dec 27 17:43:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1973,16 +1973,30 @@
    (define (new-expr loc destructuring? spread?)
       (case (peek-token-type)
 	 ((new)
-	  (let* ((ignore (consume-any!))
-		 (clazz (new-expr (token-loc ignore) #f #f))
-		 (args (if (eq? (peek-token-type) 'LPAREN)
-			   (arguments)
-			   '())))
-	     (instantiate::J2SNew
-		(loc (token-loc ignore))
-		(clazz clazz)
-		(protocol (args-protocol args))
-		(args args))))
+	  (let ((ignore (consume-any!)))
+	     (if (eq? (peek-token-type) 'DOT)
+		 (begin
+		    (consume-any!)
+		    (let ((tok (consume-token! 'ID)))
+		       (if (eq? (token-value tok) 'target)
+			   (let ((loc (token-loc tok)))
+			      (instantiate::J2SPragma
+				 (loc loc)
+				 (lang 'javascript)
+				 (expr "new.target")))
+			   (parse-token-error
+			      (format "Illegal identifier (~a)"
+				 (token-value tok))
+			      tok))))
+		 (let* ((clazz (new-expr (token-loc ignore) #f #f))
+			(args (if (eq? (peek-token-type) 'LPAREN)
+				  (arguments)
+				  '())))
+		    (instantiate::J2SNew
+		       (loc (token-loc ignore))
+		       (clazz clazz)
+		       (protocol (args-protocol args))
+		       (args args))))))
 	 ((yield)
 	  (yield-expr))
 	 ((await)

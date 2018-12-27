@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Dec  7 20:38:41 2018 (serrano)                */
+;*    Last change :  Thu Dec 27 18:51:34 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -63,7 +63,8 @@
 	   __js2scheme_sourcemap
 	   __js2scheme_hintnum
 	   __js2scheme_pce
-	   __js2scheme_module)
+	   __js2scheme_module
+	   __js2scheme_newtarget)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -210,6 +211,7 @@
 	  j2s-dead-stage
 	  j2s-constrsize-stage
 	  j2s-unthis-stage
+	  j2s-newtarget-stage
 	  j2s-scheme-stage))
       (else
        (j2s-plain-driver))))
@@ -235,6 +237,7 @@
       j2s-any-stage
       j2s-constant-stage
       j2s-cast-stage
+      j2s-newtarget-stage
       j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/
@@ -258,6 +261,7 @@
       j2s-cps-stage
       j2s-any-stage
       j2s-cast-stage
+      j2s-newtarget-stage
       j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/
