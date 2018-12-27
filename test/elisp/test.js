@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Dec 26 09:27:52 2018 (serrano)                */
+/*    Last change :  Thu Dec 27 17:07:38 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,7 +30,7 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// pok, nested switches
+// ok, nested switches
 function s() {
    while( true ) {
       switch( this.peekToken().type ) {
@@ -61,27 +61,27 @@ function s() {
 	    }
 	    break;
 	    
-	       case this.DOTS:
-	       this.consumeAny();
-	       inits.push( astutils.J2SDataPropertyInit(
-		  	      a.loc, astutils.J2SString( a.loc, "autocomplete" ),
-		  	      astutils.J2SBool( a.loc, true ) ) );     
-	       break;
-	       
-	    default:
-	       throw tokenTypeError( this.consumeAny() );
+	 case this.DOTS:
+	    this.consumeAny();
+	    inits.push( astutils.J2SDataPropertyInit(
+			   a.loc, astutils.J2SString( a.loc, "autocomplete" ),
+			   astutils.J2SBool( a.loc, true ) ) );     
+	    break;
+	    
+	 default:
+	    throw tokenTypeError( this.consumeAny() );
       }
    }
 }
 
-// pok, argument alignment
+// ok, argument alignment
 function align() {
    const assigframe = 
       astutils.J2SStmtExpr( 
-      loc, 
-      astutils.J2SAssig( 
-	 loc, hhref( loc, "runFrame" ), 
-	 astutils.J2SRef( loc, param ) ) );
+      	 loc, 
+      	 astutils.J2SAssig( 
+	    loc, hhref( loc, "runFrame" ), 
+	    astutils.J2SRef( loc, param ) ) );
 }
 
 // ok, top level module clauses

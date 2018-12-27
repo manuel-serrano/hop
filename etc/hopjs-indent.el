@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Wed Dec 26 09:28:45 2018 (serrano)                */
+;*    Last change :  Thu Dec 27 17:07:01 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -592,8 +592,9 @@
     ((hopjs-parse-expr tok nil)
      =>
      #'(lambda (etok)
-	 (hopjs-debug 0 "hopjs-indent-new-lparen etok=%s [%s]" etok
-		      (hopjs-parse-token-string etok))
+	 (hopjs-debug 0 "hopjs-indent-new-lparen etok=%s [%s] peek=%s" etok
+		      (hopjs-parse-token-string etok)
+		      (hopjs-parse-peek-token))
 	 (cond
 	  ((memq (hopjs-parse-peek-token-type) '(return var let const ident))
 	   (if (hopjs-parse-same-linep (hopjs-parse-peek-token) etok)
@@ -601,7 +602,9 @@
 		(hopjs-parse-peek-token) hopjs-indent-level)
 	     (hopjs-indent-column-token etok hopjs-indent-level)))
 	  ((eq (hopjs-parse-peek-token-type) '=)
-	   (hopjs-indent-new-token (hopjs-parse-consume-token-any)))
+	   (if (hopjs-parse-same-linep (hopjs-parse-peek-token) etok)
+	       (hopjs-indent-new-token (hopjs-parse-consume-token-any))
+	     (hopjs-indent-column-token etok hopjs-indent-level)))
 	  (etok
 	   (hopjs-indent-column-token etok hopjs-indent-level))
 	  (t
@@ -927,17 +930,29 @@
      (forward-line -1)
      (end-of-line)
      (hopjs-parse-start (point))
-     (let ((keep t))
-       (while keep
+     (let ((r '()))
+       (while (not r)
 	 (let ((tok (hopjs-parse-consume-token-any)))
 	   (hopjs-debug 0 "hopjs-indent-old-case peek=%s" tok)
 	   (case (hopjs-parse-token-type tok)
+	     ((rbrace)
+	      (goto-char (hopjs-parse-token-end tok))
+	      (hopjs-parse-start (1- (hopjs-parse-backward-sexp)))
+	      (if (eq (hopjs-parse-peek-token-type) 'rparen)
+		  (let ((tok (hopjs-parse-consume-token-any)))
+		    (goto-char (hopjs-parse-token-end tok))
+		    (hopjs-parse-start (1- (hopjs-parse-backward-sexp)))
+		    (message "glop %s" (hopjs-parse-peek-token))
+		    (when (eq (hopjs-parse-peek-token-type) 'switch)
+		      (message "ICI...")
+		      (hopjs-parse-consume-token-any)))))
 	     ((case)
-	      (setq keep '())
-	      (hopjs-indent-column-token tok 0))
+	      (setq r (hopjs-indent-column-token tok 0)))
 	     ((switch)
-	      (setq keep '())
-	      (hopjs-indent-column-token tok hopjs-indent-level)))))))))
+	      (setq r (hopjs-indent-column-token tok hopjs-indent-level)))
+	     ((bof)
+	      (setq r 0)))))
+       r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-otag ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Wed Dec 26 07:51:17 2018 (serrano)                */
+;*    Last change :  Thu Dec 27 17:05:05 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -450,7 +450,10 @@
 		(or (hopjs-parse-expr (hopjs-parse-peek-token) multilinep) tok)
 	      dtok)))
 	 ((binop = >)
-	  (hopjs-parse-expr (hopjs-parse-consume-token-any) multilinep))
+	  (if (or multilinep
+		  (hopjs-parse-same-linep (hopjs-parse-peek-token) etok))
+	      (hopjs-parse-expr (hopjs-parse-consume-token-any) multilinep)
+	    etok))
 	 ((=>)
 	  (let ((tok (hopjs-parse-consume-token-any)))
 	    (hopjs-debug 0 "hopjs-parse-expr.=> %s peek=%s [%s]"
