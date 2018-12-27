@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Dec  6 16:21:54 2018 (serrano)                */
+;*    Last change :  Thu Dec 27 09:13:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -79,19 +79,15 @@
 			     headers))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-id ...                                                        */
-;*---------------------------------------------------------------------*/
-;* (define (js-id sym)                                                 */
-;*    (string-replace (symbol->string! sym) #\% #\$))                  */
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-js-id ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-js-id::bstring decl::J2SDecl)
    (with-access::J2SDecl decl (_scmid id key)
       (if (symbol? _scmid)
-	  (string-append (string-replace (symbol->string! _scmid) #\% #\$)
-	     "$$" (fixnum->string key))
+	  (if (eq? _scmid 'this)
+	      "this"
+	      (string-append (string-replace (symbol->string! _scmid) #\% #\$)
+		 "$$" (fixnum->string key)))
 	  (let ((s (symbol->string! id)))
 	     (if (char=? (string-ref s 0) #\%)
 		 (string-append (string-replace s #\% #\$)
