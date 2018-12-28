@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Tue Jun 19 07:31:42 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:50:25 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
@@ -218,7 +218,7 @@
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-udp
 	       (js-make-function %this UDP 0 "UDP"
-		  :alloc (lambda (o) #unspecified)
+		  :alloc (lambda (%this o) #unspecified)
 		  :prototype (get-udp-proto)
 		  :construct UDP))
 	    (js-put! obj 'UDP js-udp #f %this)

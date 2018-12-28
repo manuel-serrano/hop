@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Dec  6 14:29:31 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:48:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -198,7 +198,7 @@
 	    (len -1)
 	    (procedure (lambda l (js-undefined)))
 	    (method (lambda l (js-undefined)))
-	    (alloc (lambda (_) #unspecified))
+	    (alloc (lambda (%this _) #unspecified))
 	    (construct (lambda (constructor args)
 			  (js-raise-type-error %this "not a constructor ~s"
 			     js-function-prototype)))
@@ -326,7 +326,7 @@
 	   arity (minlen -1) src rest
 	   (constrsize 3) constrmap (maxconstrsize 100) method (shared-cmap #t))
    
-   (define (js-not-a-constructor constr)
+   (define (js-not-a-constructor %this constr)
       (with-access::JsFunction constr (name)
 	 (js-raise-type-error %this (format "~s not a constructor ~~a" name)
 	    name)))
@@ -391,11 +391,9 @@
 	     (if (eq? strict 'normal)
 		 js-function-prototype
 		 js-function-strict-prototype))))
-   
+
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 ;; MS CARE: replace js-function-prototype with
-	 ;; JsGlobalObject js-function-prototype!
 	 (let* ((constr (or construct list))
 		(fname (if (symbol? name) (symbol->string! name) name))
 		(els (if (eq? strict 'normal)
@@ -433,7 +431,7 @@
 			(src src)
 			(alloc (cond
 				  (alloc alloc)
-				  (construct (lambda (_) #unspecified))
+				  (construct (lambda (%this _) #unspecified))
 				  (else js-not-a-constructor)))
 			(constrsize constrsize)
 			(constrmap constrmap)

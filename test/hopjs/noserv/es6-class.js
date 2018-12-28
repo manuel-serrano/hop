@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Sat Sep  9 12:00:48 2017 (serrano)                */
-/*    Copyright   :  2017 Manuel Serrano                               */
+/*    Last change :  Fri Dec 28 09:10:21 2018 (serrano)                */
+/*    Copyright   :  2017-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
 /*=====================================================================*/
@@ -121,27 +121,29 @@ function basicg() {
    }
 }
 
+function basich() {
+   class kla {
+      constructor() {
+	 return false;
+      }
+   }
+   
+   try {
+      return kla();
+   } catch( e ) {
+      return true;
+   }
+}
+
 console.log( "basic" );
-console.log( "   basica()" );
-assert.ok( basica(), "basica" );
-
-console.log( "   basicb()" );
-assert.ok( basicb(), "basicb" );
-
-console.log( "   basicc()" );
-assert.ok( basicc(), "basicc" );
-
-console.log( "   basicd()" );
-assert.ok( basicd(), "basicd" );
-
-console.log( "   basice()" );
-assert.ok( basice(), "basice" );
-
-console.log( "   basicf()" );
-assert.ok( basicf(), "basicf" );
-
-console.log( "   basicg()" );
-assert.ok( basicg(), "basicg" );
+console.log( "   basica()" ); assert.ok( basica(), "basica" );
+console.log( "   basicb()" ); assert.ok( basicb(), "basicb" );
+console.log( "   basicc()" ); assert.ok( basicc(), "basicc" );
+console.log( "   basicd()" ); assert.ok( basicd(), "basicd" );
+console.log( "   basice()" ); assert.ok( basice(), "basice" );
+console.log( "   basicf()" ); assert.ok( basicf(), "basicf" );
+console.log( "   basicg()" ); assert.ok( basicg(), "basicg" );
+console.log( "   basich()" ); assert.ok( basich(), "basich" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */

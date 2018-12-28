@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 17 17:07:03 2014                          */
-;*    Last change :  Thu Oct 26 05:55:48 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Fri Dec 28 09:50:05 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs child processes bindings                                  */
 ;*=====================================================================*/
@@ -75,7 +75,7 @@
 	 `((Process . ,(js-make-function %this
 			  (lambda (this) this)
 			  1 'Process
-			  :alloc (lambda (o)
+			  :alloc (lambda (%this o)
 				    (instantiateJsHandle
 				       (handle (nodejs-new-process))
 				       (__proto__ process-prototype))))))

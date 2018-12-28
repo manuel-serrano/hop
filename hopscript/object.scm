@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Dec 17 09:25:31 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 06:50:15 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -570,7 +570,7 @@
 
       ;; Object.constructor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.2.1
-      (define (js-object-constructor f value)
+      (define (js-object-constructor %this f value)
 	 (with-access::JsGlobalObject %this (js-string js-boolean js-number)
 	    (cond
 	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
@@ -596,7 +596,7 @@
 
       (define (js-object-construct f . arg)
 	 (with-access::JsGlobalObject %this (js-object)
-	    (js-object-constructor js-object
+	    (js-object-constructor %this js-object
 	       (if (pair? arg) (car arg) (js-undefined)))))
       
       (with-access::JsObject js-function ((js-function-prototype __proto__))
@@ -606,7 +606,7 @@
 	       :constrsize 3 :maxconstrsize 4
 	       :prototype %prototype
 	       :construct js-object-construct
-	       :constructor js-object-constructor
+;* 	       :constructor js-object-constructor                      */
 	       :shared-cmap #f)))
       
       ;; getPrototypeOf

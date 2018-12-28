@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Thu Oct 26 05:56:13 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Fri Dec 28 09:50:19 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
 ;*=====================================================================*/
@@ -151,7 +151,7 @@
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-tty
 	       (js-make-function %this TTY 0 "TTY"
-		  :alloc (lambda (o) #unspecified)
+		  :alloc (lambda (%this o) #unspecified)
 		  :prototype (get-tty-proto)
 		  :construct TTY))
 	    (js-put! obj 'isTTY

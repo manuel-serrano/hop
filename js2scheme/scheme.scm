@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Dec  6 19:02:08 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:41:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2491,8 +2491,8 @@
 		  (with-access::J2SDecl decl (scope)
 		     (eq? scope '%scope)))
 	     (if (cancall? decl)
-		 `(js-object-alloc-fast ,fun)
-		 `(js-object-alloc-super-fast ,fun))
+		 `(js-object-alloc-fast %this ,fun)
+		 `(js-object-alloc-super-fast %this ,fun))
 	     `(js-object-alloc ,fun))))
       
    (define (j2s-new-fast cache clazz args)

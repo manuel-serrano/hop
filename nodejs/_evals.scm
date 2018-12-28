@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Thu Oct 26 05:55:03 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Fri Dec 28 09:49:34 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
 ;*=====================================================================*/
@@ -157,7 +157,7 @@
 	 (__proto__ nodescript-proto)))
    
    (let ((obj (js-make-function %this NodeScript 3 "NodeScript"
-		 :alloc (lambda (o) #unspecified)
+		 :alloc (lambda (%this o) #unspecified)
 		 :prototype nodescript-proto
 		 :construct NodeScript)))
       (js-put! obj 'createContext createContext #f %this)

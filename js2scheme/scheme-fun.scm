@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Dec 27 18:45:26 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 06:43:19 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -46,7 +46,7 @@
       (with-access::J2SDeclFun this (loc id scope val ronly usage)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator
-					constrsize method)
+					constrsize method new-target)
 	       (let* ((fastid (j2s-fast-id id))
 		      (lparams (length params))
 		      (arity (if vararg -1 (+fx 1 lparams)))
@@ -62,12 +62,12 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc js-object-alloc
+			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :prototype ,(j2s-fun-prototype val)
 			  :__proto__ ,(j2s-fun-__proto__ val)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new) usage)))
+			  :constrmap ,(usage? '(new ref) usage)))
 		     (src
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
@@ -76,10 +76,10 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc js-object-alloc
+			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new) usage)
+			  :constrmap ,(usage? '(new ref) usage)
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -91,7 +91,7 @@
 			  :minlen ,minlen
 			  :strict ',mode 
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new) usage)
+			  :constrmap ,(usage? '(new ref) usage)
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -102,21 +102,21 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc js-object-alloc
+			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new) usage)
+			  :constrmap ,(usage? '(new ref) usage)
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
-		     ((usage? '(new) usage)
+		     ((or (usage? '(new ref) usage) new-target)
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
 			  :rest ,(eq? vararg 'rest)
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc js-object-alloc
+			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :constrmap #t))
@@ -258,7 +258,7 @@
       (with-access::J2SDeclFun this (loc id scope val ronly usage)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator
-					constrsize method)
+					constrsize method new-target)
 	       (let* ((fastid (j2s-fast-id id))
 		      (lparams (length params))
 		      (arity (if vararg -1 (+fx 1 lparams)))
@@ -274,12 +274,12 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc js-object-alloc
+			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :prototype ,(j2s-fun-prototype val)
 			  :__proto__ ,(j2s-fun-__proto__ val)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new) usage)))
+			  :constrmap ,(usage? '(new ref) usage)))
 		     (src
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
@@ -288,10 +288,10 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc js-object-alloc
+			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new) usage)
+			  :constrmap ,(usage? '(new ref) usage)
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -303,7 +303,7 @@
 			  :minlen ,minlen
 			  :strict ',mode 
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new) usage)
+			  :constrmap ,(usage? '(new ref) usage)
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -314,21 +314,21 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc js-object-alloc
+			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new) usage)
+			  :constrmap ,(usage? '(new ref) usage)
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
-		     ((usage? '(new) usage)
+		     ((or (usage? '(new) usage) new-target)
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
 			  :rest ,(eq? vararg 'rest)
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc js-object-alloc
+			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :constrmap #t))
@@ -583,8 +583,8 @@
       (with-access::J2SFun this (body)
 	 (let ((f (j2s-decl-scheme-id decl)))
 	    (if (cancall? body)
-		`(js-object-alloc-fast ,f)
-		`(js-object-alloc-super-fast ,f)))))
+		`(js-object-alloc-fast %this ,f)
+		`(js-object-alloc-super-fast %this ,f)))))
    
    (with-access::J2SFun this (loc body vararg mode params generator thisp)
       (with-access::J2SDecl thisp (id)
@@ -638,7 +638,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2sfun->scheme this::J2SFun tmp ctor mode return conf)
    (with-access::J2SFun this (loc name params mode vararg mode generator
-				constrsize method)
+				constrsize method new-target)
       (let* ((id (j2sfun-id this))
 	     (lparams (length params))
 	     (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
@@ -649,7 +649,7 @@
 	     (__proto__ (j2s-fun-__proto__ this)))
 	 (epairify-deep loc
 	    (cond
-	       ((or src prototype __proto__ method)
+	       ((or src prototype __proto__ method new-target)
 		`(js-make-function %this ,tmp ,len
 		    ,(symbol->string! (or name (j2s-decl-scheme-id id)))
 		    :src ,src
@@ -659,7 +659,7 @@
 		    :__proto__ ,__proto__
 		    :strict ',mode
 		    :minlen ,minlen
-		    :alloc js-object-alloc
+		    :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 		    :construct ,ctor
 		    :constrsize ,constrsize
 		    :method ,(when method

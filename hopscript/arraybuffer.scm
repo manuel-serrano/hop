@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Wed Oct 17 10:47:29 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:25:49 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -153,18 +153,18 @@
 
 	 (define (%js-arraybuffer this . items)
 	    (apply js-arraybuffer-construct 
-	       (js-arraybuffer-alloc js-arraybuffer %this)
+	       (js-arraybuffer-alloc %this js-arraybuffer)
 	       items))
 
 	 (set! js-arraybuffer
 	    (js-make-function %this %js-arraybuffer 1 'ArrayBuffer
 	       :__proto__ js-function-prototype
 	       :prototype js-arraybuffer-prototype
-	       :alloc (lambda (ctor) (js-arraybuffer-alloc ctor %this))
+	       :alloc js-arraybuffer-alloc
 	       :construct (lambda (this . items)
 			     (apply js-arraybuffer-construct this items))))
 
-	 (define (js-arraybuffer-alloc constructor::JsFunction %this)
+	 (define (js-arraybuffer-alloc %this constructor::JsFunction)
 	    (instantiateJsArrayBuffer
 	       (cmap (js-not-a-cmap))
 	       (__proto__ (js-get constructor 'prototype %this))))

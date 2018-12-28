@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Thu Oct 26 05:55:54 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Fri Dec 28 09:50:11 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
 ;*=====================================================================*/
@@ -263,7 +263,7 @@
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-tcp
 	       (js-make-function %this TCP 0 "TCP"
-		  :alloc (lambda (o) #unspecified)
+		  :alloc (lambda (%this o) #unspecified)
 		  :prototype (get-tcp-proto)
 		  :construct TCP))
 	    (js-put! obj 'TCP js-tcp #f %this)

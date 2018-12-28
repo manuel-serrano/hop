@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Oct 17 10:47:56 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:25:59 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -543,10 +543,10 @@
 
 	 (define (%js-typedarray this . items)
 	    (js-typedarray-construct 
-	       (js-typedarray-alloc js-typedarray %this)
+	       (js-typedarray-alloc %this js-typedarray)
 	       items))
 
-	 (define (js-typedarray-alloc constructor::JsFunction %this)
+	 (define (js-typedarray-alloc %this constructor::JsFunction)
 	    (let ((o (allocate-instance (symbol-append 'Js name))))
 	       (with-access::JsTypedArray o (cmap bpe __proto__ elements)
 		  (js-object-properties-set! o '())
@@ -562,7 +562,7 @@
 	    (js-make-function %this %js-typedarray 1 name
 	       :__proto__ js-function-prototype
 	       :prototype js-typedarray-prototype
-	       :alloc (lambda (ctor) (js-typedarray-alloc ctor %this))
+	       :alloc js-typedarray-alloc
 	       :construct (lambda (this . items)
 			     (js-typedarray-construct this items))))
 
@@ -1086,10 +1086,10 @@
 	 
 	 (define (%js-dataview this . items)
 	    (js-dataview-construct 
-	       (js-dataview-alloc js-dataview %this)
+	       (js-dataview-alloc %this js-dataview)
 	       items))
 	 
-	 (define (js-dataview-alloc constructor::JsFunction %this)
+	 (define (js-dataview-alloc %this constructor::JsFunction)
 	    (instantiateJsDataView
 	       (cmap (js-not-a-cmap))
 	       (__proto__ (js-get constructor 'prototype %this))))
@@ -1098,7 +1098,7 @@
 	    (js-make-function %this %js-dataview 1 'DataView
 	       :__proto__ js-function-prototype
 	       :prototype js-dataview-prototype
-	       :alloc (lambda (ctor) (js-dataview-alloc ctor %this))
+	       :alloc js-dataview-alloc
 	       :construct (lambda (this . items)
 			     (js-dataview-construct this items))))
 

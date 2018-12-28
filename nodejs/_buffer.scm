@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Mon Oct  8 14:26:36 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:49:24 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -274,7 +274,7 @@
 
       (with-access::JsFunction buf (alloc)
 	 (set! alloc
-	    (lambda (ctor)
+	    (lambda (%this ctor)
 	       ;; see makeFastBuffer below for the complete JavaScript
 	       ;; land JsTypedArray initialization
 	       (js-buffer-constr proto %this))))
@@ -557,7 +557,7 @@
    
    (define js-slowbuffer
       (js-make-function %this slowbuffer-constr 1 "SlowBuffer"
-	 :alloc (lambda (o) #unspecified)
+	 :alloc (lambda (%this o) #unspecified)
 	 :construct slowbuffer-constr
 	 :prototype slowbuffer-proto))
 

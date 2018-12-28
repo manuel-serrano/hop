@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Dec  6 22:24:08 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 07:01:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -595,7 +595,8 @@
 (define-method (j2s->list this::J2SFun)
    (with-access::J2SFun this (name thisp argumentsp params body decl mode
 				rtype optimize
-				need-bind-exit-return idthis generator loc)
+				need-bind-exit-return new-target
+				idthis generator loc)
       (cond
 	 ((isa? decl J2SDeclFun)
 	  (with-access::J2SDecl decl (key usage scope)
@@ -610,6 +611,7 @@
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 :optimize ,optimize
 		 :mode ,mode
+		 ,@(if new-target '(:new-target #t) '())
 		 ,@(dump-range this)
 		 :thisp ,(when thisp (j2s->list thisp))
 		 :argumentsp ,(when argumentsp (j2s->list argumentsp))
@@ -628,6 +630,7 @@
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 :optimize ,optimize
 		 :mode ,mode
+		 ,@(if new-target '(:new-target #t) '())
 		 ,@(dump-range this)
 		 :thisp ,(when thisp (j2s->list thisp))
 		 :argumentsp ,(when argumentsp (j2s->list argumentsp))
@@ -642,6 +645,7 @@
 	      ,@(dump-need-bind-exit-return need-bind-exit-return)
 	      :optimize ,optimize
 	      :mode ,mode
+	      ,@(if new-target '(:new-target #t) '())
 	      ,@(dump-range this)
 	      :thisp ,(when thisp (j2s->list thisp))
 	      :argumentsp ,(when argumentsp (j2s->list argumentsp))

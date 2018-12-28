@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Jun 10 13:30:49 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:49:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -863,7 +863,7 @@
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
 	 `((FSEvent . ,(js-make-function %this fs-event 0 "FSEvent"
-			  :alloc (lambda (o) #unspecified)
+			  :alloc (lambda (%this o) #unspecified)
 			  :construct fs-event)))
 	 %this)))
 

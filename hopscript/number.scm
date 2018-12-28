@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Oct  8 14:20:39 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 06:50:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -106,16 +106,22 @@
 	       (val 0)
 	       (__proto__ __proto__)))
 
-	 (define (js-number-constructor f value)
-	    (with-access::JsFunction f (constrmap)
-	       (instantiateJsNumber
-		  (cmap constrmap)
-		  (__proto__ (js-object-get-name/cache f 'prototype
-				#f %this
-				(js-pcache-ref %pcache 0)))
-		  (val (if (eq? value (js-null)) 0 (js-tonumber value %this))))))
+;* 	 (define (js-number-constructor %this f value)                 */
+;* 	    (with-access::JsFunction f (constrmap)                     */
+;* 	       (instantiateJsNumber                                    */
+;* 		  (cmap constrmap)                                     */
+;* 		  (__proto__ (js-object-get-name/cache f 'prototype    */
+;* 				#f %this                               */
+;* 				(js-pcache-ref %pcache 0)))            */
+;* 		  (val (if (eq? value (js-null)) 0 (js-tonumber value %this)))))) */
+
+	 (define (js-number-construct this . args)
+	    (when (pair? args)
+	       (with-access::JsNumber this (val)
+		  (set! val (js-tonumber (car args) %this))))
+	    this)
 		
-	 (define (js-number-alloc constructor::JsFunction)
+	 (define (js-number-alloc %this constructor::JsFunction)
 	    (instantiateJsNumber
 	       (__proto__ (js-object-get-name/cache constructor 'prototype
 			     #f %this
@@ -140,7 +146,8 @@
 	    (js-make-function %this %js-number 1 'Number
 	       :__proto__ js-function-prototype
 	       :prototype js-number-prototype
-	       :constructor js-number-constructor
+	       :construct js-number-construct
+;* 	       :constructor js-number-constructor                      */
 	       :alloc js-number-alloc
 	       :constrmap (instantiate::JsConstructMap)
 	       :shared-cmap #f))

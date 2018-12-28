@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/hopscript/boolean.scm       */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/boolean.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Aug 28 09:07:41 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:28:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -82,7 +82,7 @@
 	       (val #f)
 	       (__proto__ __proto__)))
 	 
-	 (define (js-boolean-alloc constructor::JsFunction)
+	 (define (js-boolean-alloc %this constructor::JsFunction)
 	    (instantiateJsBoolean
 	       (__proto__ (js-get constructor 'prototype %this))))
 

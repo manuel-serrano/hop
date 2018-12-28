@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Thu Oct 26 05:55:08 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Fri Dec 28 09:49:44 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
 ;*=====================================================================*/
@@ -330,7 +330,7 @@
 	(mkdir . ,(js-make-function %this mkdir 3 "mkdir"))
 	(readdir . ,(js-make-function %this readdir 1 "readdir"))
 	(Stats . ,(js-make-function %this (lambda (this) this) 0 "Stats"
-		     :alloc (lambda (o) #unspecified)
+		     :alloc (lambda (%this o) #unspecified)
 		     :prototype (get-process-fs-stats %this)))
 	(close . ,(js-make-function %this close 2 "close"))
 	(utimes . ,(js-make-function %this utimes 4 "utimes"))
@@ -341,6 +341,6 @@
 	(open . ,(js-make-function %this open 4 "open"))
 	(read . ,(js-make-function %this read 6 "read"))
 	(StatWatcher . ,(js-make-function %this fs-watcher 0 "StatWatcher"
-			   :alloc (lambda (o) #unspecified)
+			   :alloc (lambda (%this o) #unspecified)
 			   :construct fs-watcher)))
       %this))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Thu Oct 26 05:55:32 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Fri Dec 28 09:49:51 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
 ;*=====================================================================*/
@@ -206,6 +206,6 @@
 		  (lambda (this . args) #unspecified) 1 'Pipe
 		  :construct pipe
 		  :prototype pipe-prototype
-		  :alloc (lambda (o) #unspecified)))
+		  :alloc (lambda (%this o) #unspecified)))
 	    (js-put! obj 'Pipe js-pipe #t %this)
 	    obj))))

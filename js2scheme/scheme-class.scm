@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Oct 17 08:56:27 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:38:35 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -290,8 +290,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    A constructor needs a super check, if it cannot be proved        */
 ;*    statically that                                                  */
-;*      i) it always calls the super constructor                       */
-;*      ii) the call the super preceeds all "this" accesses            */
+;*      1) it always calls the super constructor                       */
+;*      2) the call the super preceeds all "this" accesses             */
 ;*---------------------------------------------------------------------*/
 (define (need-super-check? val::J2SFun)
    (with-access::J2SFun val (body)

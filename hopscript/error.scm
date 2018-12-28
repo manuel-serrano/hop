@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Nov 23 19:23:49 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:29:00 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -162,7 +162,7 @@
 	       (__proto__ __proto__)
 	       (msg (js-ascii->jsstring ""))))
 	 
-	 (define (js-error-alloc constructor::JsFunction)
+	 (define (js-error-alloc %this constructor::JsFunction)
 	    (with-access::JsFunction constructor (name)
 	       (instantiateJsError
 		  (name (js-string->jsstring name))

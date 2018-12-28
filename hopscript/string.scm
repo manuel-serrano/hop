@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct 17 16:38:52 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:31:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -164,7 +164,7 @@
 			  (set-string! (js-string->jsstring str))))))))
 
 	 ;; string allocation
-	 (define (js-string-alloc::JsString constructor::JsFunction)
+	 (define (js-string-alloc::JsString %this constructor::JsFunction)
 	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
 	       (__proto__ (js-object-get-name/cache constructor 'prototype #f

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Dec 21 17:29:27 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:28:12 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -413,7 +413,7 @@
 	    (js-make-function %this (%js-array %this) 1 'Array
 	       :__proto__ js-function-prototype
 	       :prototype js-array-prototype
-	       :alloc (lambda (ctor) (js-array-alloc-ctor ctor %this))
+	       :alloc js-array-alloc-ctor
 	       :construct (lambda (this . is)
 			     (js-array-construct %this this is))))
 	 
@@ -2242,7 +2242,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-alloc ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-array-alloc-ctor::JsArray constructor::JsFunction %this)
+(define (js-array-alloc-ctor::JsArray %this constructor::JsFunction)
    (with-access::JsGlobalObject %this (js-array js-array-prototype)
       (let ((proto (if (eq? constructor js-array)
 		       js-array-prototype

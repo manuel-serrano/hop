@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Nov 13 08:37:55 2018 (serrano)                */
+;*    Last change :  Fri Dec 28 09:30:14 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -197,14 +197,14 @@
 		      o))))))
    
    ;; promise allocation
-   (define (js-promise-alloc::JsPromise constructor::JsFunction)
+   (define (js-promise-alloc::JsPromise %this constructor::JsFunction)
       (instantiateJsPromise
 	 (worker (js-current-worker))
 	 (%this %this)
 	 (__proto__ (js-get constructor 'prototype %this))))
    
-   (define (js-promise-alloc/name::JsPromise constructor::JsFunction name)
-      (let ((promise (js-promise-alloc constructor)))
+   (define (js-promise-alloc/name::JsPromise %this constructor::JsFunction name)
+      (let ((promise (js-promise-alloc %this constructor)))
 	 (with-access::JsPromise promise (%name)
 	    (set! %name name)
 	    promise)))
@@ -222,7 +222,7 @@
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.all
    ;; http://www.ecma-international.org/ecma-262/6.0/25.4.4.1 
    (define (js-promise-all this iterable)
-      (let* ((promise (js-promise-alloc/name js-promise "all"))
+      (let* ((promise (js-promise-alloc/name %this js-promise "all"))
 	     (it (iterable->vector promise iterable)))
 	 (when (vector? it)
 	    (let ((count (vector-length it)))
@@ -254,7 +254,7 @@
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.race
    (define (js-promise-race this iterable)
-      (let* ((promise (js-promise-alloc/name js-promise "race"))
+      (let* ((promise (js-promise-alloc/name %this js-promise "race"))
 	     (it (iterable->vector promise iterable)))
 	 (when (vector? it)
 	    (let ((len (vector-length it)))
@@ -288,7 +288,7 @@
 	  (js-raise-type-error %this "This not an object ~a" (typeof this)))
 	 (else
 	  ;; .3
-	  (let ((promise (js-promise-alloc/name js-promise "reject")))
+	  (let ((promise (js-promise-alloc/name %this js-promise "reject")))
 	     (with-handler
 		(lambda (e) e)
 		(js-promise-reject promise val))
@@ -311,7 +311,7 @@
 	  val)
 	 (else
 	  ;; .4
-	  (let ((promise (js-promise-alloc/name js-promise "resolve")))
+	  (let ((promise (js-promise-alloc/name %this js-promise "resolve")))
 	     (with-handler
 		(lambda (e) e)
 		(js-promise-resolve promise val))
@@ -323,7 +323,7 @@
       :hidden-class #t)
    
    ;; prototype properties
-   (init-builtin-promise-prototype! %this js-promise-alloc js-promise-prototype)
+   (init-builtin-promise-prototype! %this js-promise-prototype)
 
    (with-access::JsGlobalObject %this (js-symbol-species)
       (js-bind! %this js-promise js-symbol-species
@@ -375,7 +375,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/6.0/#25.4.4.2         */
 ;*---------------------------------------------------------------------*/
-(define (init-builtin-promise-prototype! %this::JsGlobalObject js-promise obj)
+(define (init-builtin-promise-prototype! %this::JsGlobalObject obj)
 
    (define (then-catch this onfullfilled onrejected)
       ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.5.3
