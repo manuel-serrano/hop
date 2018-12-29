@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Dec 28 09:48:31 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 08:58:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -44,7 +44,9 @@
 	      (constrsize 3) constrmap (maxconstrsize 100)
 	      method (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
-	      ::int ::obj ::int ::int ::symbol ::bool ::int)))
+	      ::int ::obj ::int ::int ::symbol ::bool ::int)
+
+	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsFunction ...                               */
@@ -557,16 +559,6 @@
 	  (js-raise-type-error %this "toString: not a function ~s"
 	     (js-typeof this)))))
 
-   (define (vector->sublist vec len)
-      (if (=fx (vector-length vec) len)
-	  (vector->list vec)
-	  (let loop ((i (-fx len 1))
-		     (acc '()))
-	     (if (=fx i -1)
-		 acc
-		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
-
-   
    (js-bind! %this obj 'toString
       :value (js-make-function %this tostring 0 "toString"
 		:prototype (js-undefined))
@@ -585,50 +577,8 @@
    ;; apply
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.3
    (define (prototype-apply this::obj thisarg argarray)
-      (cond
-	 ((not (isa? this JsFunction))
-	  (js-raise-type-error %this
-	     "apply: argument not a function ~s" this))
-	 ((or (eq? argarray (js-null)) (eq? argarray (js-undefined)))
-	  (js-call0 %this this thisarg))
-	 ((not (isa? argarray JsObject))
-	  (js-raise-type-error %this
-	     "apply: argument not an object ~s" argarray))
-	 ((isa? argarray JsArray)
-	  (let ((len (js-get argarray 'length %this)))
-	     (with-access::JsArray argarray (vec)
-		(if (>fx (vector-length vec) 0)
-		    ;; fast path
-		    (js-apply %this this thisarg
-		       (map (lambda (p)
-			       (if (eq? p (js-absent)) (js-undefined) p))
-			  (vector->sublist vec len)))
-		    ;; slow path
-		    (let ((properties (js-object-properties argarray)))
-		       (js-apply %this this thisarg
-			  (map! (lambda (d)
-				   (js-property-value argarray argarray %this))
-			     (filter (lambda (d)
-					(with-access::JsPropertyDescriptor d (name)
-					   (js-isindex? (js-toindex name))))
-				properties))))))))
-	 (else
-	  ;; slow path
-	  (let ((len (uint32->fixnum
-			(js-touint32
-			   (js-get argarray 'length %this)
-			   %this))))
-	     ;; assumes here a fixnum length as an iteration over the range
-	     ;; 1..2^32-1 is not computable with 2014 computer's performance
-	     (let loop ((i 0)
-			(acc '()))
-		(if (=fx i len)
-		    ;; fast path
-		    (js-apply %this this thisarg (reverse! acc))
-		    ;; slow path
-		    (loop (+fx i 1)
-		       (cons (js-get argarray i %this) acc))))))))
-   
+      (js-apply-array %this this thisarg argarray))
+
    (js-bind! %this obj 'apply
       :value (js-make-function %this prototype-apply 2 "apply"
 		:prototype (js-undefined))
@@ -686,3 +636,64 @@
       :set thrower-set
       :enumerable #f :configurable #f
       :hidden-class #t))
+
+;*---------------------------------------------------------------------*/
+;*    js-apply-array ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-apply-array %this::JsGlobalObject this thisarg argarray)
+   
+   (define (vector->sublist vec len)
+      (if (=fx (vector-length vec) len)
+	  (vector->list vec)
+	  (let loop ((i (-fx len 1))
+		     (acc '()))
+	     (if (=fx i -1)
+		 acc
+		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
+
+   (cond
+      ((not (isa? this JsFunction))
+       (js-raise-type-error %this
+	  "apply: argument not a function ~s" this))
+      ((or (eq? argarray (js-null)) (eq? argarray (js-undefined)))
+       (js-call0 %this this thisarg))
+      ((not (isa? argarray JsObject))
+       (js-raise-type-error %this
+	  "apply: argument not an object ~s" argarray))
+      ((isa? argarray JsArray)
+       (let ((len (js-get argarray 'length %this)))
+	  (with-access::JsArray argarray (vec)
+	     (if (>fx (vector-length vec) 0)
+		 ;; fast path
+		 (js-apply %this this thisarg
+		    (map (lambda (p)
+			    (if (eq? p (js-absent)) (js-undefined) p))
+		       (vector->sublist vec len)))
+		 ;; slow path
+		 (let ((properties (js-object-properties argarray)))
+		    (js-apply %this this thisarg
+		       (map! (lambda (d)
+				(js-property-value argarray argarray %this))
+			  (filter (lambda (d)
+				     (with-access::JsPropertyDescriptor d (name)
+					(js-isindex? (js-toindex name))))
+			     properties))))))))
+      (else
+       ;; slow path
+       (let ((len (uint32->fixnum
+		     (js-touint32
+			(js-get argarray 'length %this)
+			%this))))
+	  ;; assumes here a fixnum length as an iteration over the range
+	  ;; 1..2^32-1 is not computable with 2014 computer's performance
+	  (let loop ((i 0)
+		     (acc '()))
+	     (if (=fx i len)
+		 ;; fast path
+		 (js-apply %this this thisarg (reverse! acc))
+		 ;; slow path
+		 (loop (+fx i 1)
+		    (cons (js-get argarray i %this) acc))))))))
+
+   
+   

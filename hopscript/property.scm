@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Dec 21 18:08:14 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 10:15:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2812,7 +2812,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-setprototypeof o v %this msg)
    (let ((o (js-cast-object o %this msg))
-	 (v (js-cast-object v %this msg)))
+	 (v (if (eq? v '()) v (js-cast-object v %this msg))))
       (if (not (js-object-mode-extensible? o))
 	  (js-raise-type-error %this 
 	     "Prototype of non-extensible object mutated" v)

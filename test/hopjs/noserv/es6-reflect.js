@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Dec 21 19:10:45 2018 (serrano)                */
+/*    Last change :  Sat Dec 29 09:38:56 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Reflect object                           */
@@ -84,7 +84,6 @@ function mdnh() {
 }
 
 function mdni() {
-   console.log( Reflect.get(['zero', 'one'], 1) );
    return Reflect.get(['zero', 'one'], 1) === "one";
 }
 
