@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Fri Dec 28 07:20:30 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 05:45:31 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
@@ -51,7 +51,31 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    make-new-target-decl ...                                         */
+;*---------------------------------------------------------------------*/
+(define (make-new-target-decl loc)
+   (let ((decl (J2SLetOptRo '(ref) 'new-target
+		  (J2SPragma
+		     '(with-access::JsGlobalObject %this (js-new-target)
+		       (let ((nt js-new-target))
+			  (set! js-new-target (js-undefined))
+			  nt))))))
+      (with-access::J2SDecl decl (_scmid)
+	 (set! _scmid 'new-target))
+      decl))
+
+;*---------------------------------------------------------------------*/
+;*    body-bind-new-target ...                                         */
+;*---------------------------------------------------------------------*/
+(define (body-bind-new-target body decl)
+   (with-access::J2SNode body (loc)
+      (J2SLetBlock (list decl)
+	 body)))
+   
+;*---------------------------------------------------------------------*/
 ;*    newtarget! ::J2SPragma ...                                       */
+;*    -------------------------------------------------------------    */
+;*    See also scheme/scheme-class.scm.                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SPragma fun)
    (with-access::J2SPragma this (lang expr loc)
@@ -59,11 +83,7 @@
 	  (if fun
 	      (with-access::J2SFun fun (%info)
 		 (unless (isa? %info J2SDecl)
-		    (set! %info
-		       (J2SLetOpt '(ref) 'new-target
-			  (J2SPragma
-			     '(with-access::JsGlobalObject %this (js-new-target)
-			       js-new-target)))))
+		    (set! %info (make-new-target-decl loc)))
 		 (J2SRef %info))
 	      (J2SUndefined))
 	  this)))
@@ -77,14 +97,8 @@
       (set! body (newtarget! body this))
       (when %info
 	 (with-access::J2SFun this (loc new-target)
-	    (set! new-target #t)
-	    (set! body
-	       (J2SLetBlock (list %info)
-		  (J2SStmtExpr
-		     (J2SPragma
-			'(with-access::JsGlobalObject %this (js-new-target)
-			  (set! js-new-target (js-undefined)))))
-		  body))))
+	    (set! new-target %info)
+	    (set! body (body-bind-new-target body %info))))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -101,4 +115,41 @@
 		(set! body (newtarget! body #f)))
 	     (newtarget! fun fun))))
    this)
+   
+;*---------------------------------------------------------------------*/
+;*    newtarget! ::J2SClass ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Force a new-target insertion for class constructor as it will    */
+;*    be used to check that ctor are only called with new.             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (newtarget! this::J2SClass fun)
+
+   (define (constructor? prop::J2SDataPropertyInit)
+      (with-access::J2SDataPropertyInit prop (name)
+	 (when (isa? name J2SLiteralValue)
+	    (with-access::J2SLiteralValue name (val)
+	       (equal? val "constructor")))))
+   
+   (define (find-constructor elements)
+      (find (lambda (m)
+	       (with-access::J2SClassElement m (prop static)
+		  (unless static
+		     (when (isa? prop J2SDataPropertyInit)
+			(constructor? prop)))))
+	 elements))
+
+   (call-default-walker)
+
+   (with-access::J2SClass this (elements)
+      (let ((ctor (find-constructor elements)))
+	 (when ctor
+	    (with-access::J2SClassElement ctor (prop)
+	       (with-access::J2SDataPropertyInit prop (val)
+		  (with-access::J2SFun val (new-target body loc)
+		     (unless new-target
+			(set! new-target (make-new-target-decl loc))
+			(set! body (body-bind-new-target body new-target)))))))))
+   
+   this)
+   
    

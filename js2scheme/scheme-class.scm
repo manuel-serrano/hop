@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Fri Dec 28 09:38:35 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 05:47:18 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -143,7 +143,7 @@
 			       ,(symbol->string! cname)
 			       :src ,(when src (class-src loc this conf))
 			       :strict ',mode
-			       :alloc js-instance-alloc
+			       :alloc js-object-alloc/new-target
 			       :construct ,ctor
 			       :prototype  ,proto
 			       :arity ,(+fx 1 length)
@@ -171,7 +171,7 @@
 		      (with-access::J2SDataPropertyInit prop (val)
 			 (with-access::J2SFun val (constrsize params thisp)
 			    (make-class name super elements
-			       (ctor->lambda val mode return conf #f #t super)
+			       (ctor->lambda val name mode return conf #f #t super)
 			       (length params) constrsize
 			       src loc)))))
 		  (super
@@ -184,22 +184,58 @@
 		      0 0 src loc))
 		  (else
 		   (make-class name super elements
-		      '(lambda (this)
-			(let ((%nothis (js-check-class-instance this ',loc %this)))
-			   %nothis))
+		      `(lambda (this)
+			  (with-access::JsGlobalObject %this (js-new-target)
+			     (if (eq? js-new-target (js-undefined))
+				 (js-raise-type-error/loc %this ',loc
+				    (format
+				       "Class constructor '~a' cannot be invoked without 'new'"
+				       ',name)
+				    (js-undefined))
+				 (begin
+				    (set! js-new-target (js-undefined))
+				    this))))
 		      0 0 src loc))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    ctor-check-instance ...                                          */
+;*---------------------------------------------------------------------*/
+(define (ctor-check-instance name new-target body loc)
+   
+   (define (err name loc)
+      (J2SStmtExpr
+	 (J2SPragma
+	    `(js-raise-type-error/loc %this ',loc
+		,(format
+		    "Class constructor '~a' cannot be invoked without 'new'"
+		    name)
+		(js-undefined)))))
+   
+   (cond
+      ((isa? body J2SLetBlock)
+       (with-access::J2SLetBlock body (nodes loc)
+	  (set! nodes
+	     (list
+		(J2SIf (J2SPragma/type 'bool '(eq? new-target (js-undefined)))
+		   (err name loc)
+		   (J2SSeq* nodes))))
+	  body))
+       (raise
+	  (instantiate::&io-parse-error
+	     (proc "internal error (scheme-class)")
+	     (msg "body should be a J2SLetBlock")
+	     (obj (j2s->list body))
+	     (fname (cadr loc))
+	     (location (caddr loc))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    ctor->lambda ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (ctor->lambda val::J2SFun mode return conf proto ctor-only super)
-   
-   (define (check-instance this loc)
-      (instantiate::J2SStmtExpr
-	 (loc loc)
-	 (expr (instantiate::J2SPragma
-		  (loc loc)
-		  (expr `(js-check-class-instance ,this ',loc %this))))))
+(define (ctor->lambda val::J2SFun name mode return conf proto ctor-only super)
+
+   (define (check-body-instance body)
+      (with-access::J2SFun val (new-target loc)
+	 (ctor-check-instance name new-target body loc)))
    
    (define (unthis this loc)
       (instantiate::J2SStmtExpr
@@ -230,7 +266,7 @@
 		      (decls (list decl))
 		      (nodes (list (unthis idthis loc)
 				(J2STry
-				   body
+				   (J2SBlock (check-body-instance body))
 				   (J2SNop)
 				   (returnthis thisp loc))))))))
 	    ((symbol? super)
@@ -242,8 +278,11 @@
 		      (loc loc)
 		      (endloc endloc)
 		      (decls (list decl))
-		      (nodes (list body))))))))
-      (jsfun->lambda val mode return conf proto ctor-only)))
+		      (nodes (list (check-body-instance body)))))))
+	    (else
+	     (set! body (J2SBlock (check-body-instance body)))))))
+   
+      (jsfun->lambda val mode return conf proto ctor-only))
 
 ;*---------------------------------------------------------------------*/
 ;*    class-src ...                                                    */
@@ -277,7 +316,8 @@
 		       (string->symbol (format "js-call~a" len))))
 	     (ctor (gensym 'ctor))
 	     (tmp (gensym 'tmp)))
-	 `(with-access::JsObject %nothis (__proto__)
+	 `(with-access::JsGlobalObject %this (js-new-target)
+	     (set! js-new-target new-target)
 	     (let ((,tmp (,call ,j2s-unresolved-call-workspace
 			    %superctor
 			    %nothis
@@ -469,3 +509,9 @@
 (define-method (super-call this::J2SReturn)
    (with-access::J2SReturn this (expr)
       (super-call expr)))
+
+;*---------------------------------------------------------------------*/
+;*    super-call ::J2SPragma ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (super-call this::J2SPragma)
+   #unspecified)

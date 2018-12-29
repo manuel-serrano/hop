@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Dec 28 06:33:40 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 06:11:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -65,7 +65,7 @@
 	   (inline js-object-alloc ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc-fast ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc-super-fast ::JsGlobalObject ::JsFunction)
-	   (inline js-instance-alloc ::JsGlobalObject ::JsFunction)
+	   (inline js-object-alloc/new-target ::JsGlobalObject ::JsFunction)
 	   
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
 	   (js-apply-service% ::procedure obj args::pair-nil ::int)
@@ -150,7 +150,6 @@
 	   (inline js-eqir?::bool ::obj ::long)
 	   (inline js-null-or-undefined?::bool ::obj)
 
-	   (js-check-class-instance ::obj ::obj ::JsGlobalObject)
 	   (js-super ::obj ::obj ::JsGlobalObject)
 	   
 	   (%js-eval-hss ::input-port ::JsGlobalObject ::obj ::obj)
@@ -307,12 +306,12 @@
       (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-instance-alloc ...                                            */
+;*    js-object-alloc/new-target ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-instance-alloc %this ctor::JsFunction)
-   (let ((obj (js-object-alloc %this ctor)))
-      (js-object-mode-instance-set! obj #t)
-      obj))
+(define-inline (js-object-alloc/new-target %this ctor::JsFunction)
+   (with-access::JsGlobalObject %this (js-new-target)
+      (set! js-new-target ctor)
+      (js-object-alloc %this ctor)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-return ...                                                */
@@ -1447,16 +1446,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-null-or-undefined? obj)
    (or (eq? obj (js-undefined)) (eq? obj (js-null))))
-
-;*---------------------------------------------------------------------*/
-;*    js-check-class-instance ...                                      */
-;*---------------------------------------------------------------------*/
-(define (js-check-class-instance obj loc %this)
-   (if (and (isa? obj JsObject) (js-object-mode-instance? obj))
-       (begin
-	  (js-object-mode-instance-set! obj #f)
-	  obj)
-       (js-raise-type-error/loc %this loc "Class constructor cannot be invoked without `new'" obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-super ...                                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Dec 27 19:15:50 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 07:45:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -356,9 +356,6 @@
 	   (inline js-object-mode-hasinstance?::bool ::JsObject)
 	   (inline js-object-mode-hasinstance-set! ::JsObject ::bool)
 	   
-	   (inline js-object-mode-instance?::bool ::JsObject)
-	   (inline js-object-mode-instance-set! ::JsObject ::bool)
-	   
 	   (inline js-object-mode-holey?::bool ::JsObject)
 	   (inline js-object-mode-holey-set! ::JsObject ::bool)
 	   
@@ -368,7 +365,6 @@
 	   (inline JS-OBJECT-MODE-INLINE::uint32)
 	   (inline JS-OBJECT-MODE-GETTER::uint32)
 	   (inline JS-OBJECT-MODE-HASINSTANCE::uint32)
-	   (inline JS-OBJECT-MODE-INSTANCE::uint32)
 	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
@@ -455,10 +451,9 @@
 (define-inline (JS-OBJECT-MODE-INLINE) #u32:8)
 (define-inline (JS-OBJECT-MODE-GETTER) #u32:16)
 (define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
-(define-inline (JS-OBJECT-MODE-INSTANCE) #u32:64)
-(define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:128)
-(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:256)
-(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:512)
+(define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:64)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:128)
+(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:256)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-macro (JS-OBJECT-MODE-SEALED) #u32:2)
@@ -466,10 +461,9 @@
 (define-macro (JS-OBJECT-MODE-INLINE) #u32:8)
 (define-macro (JS-OBJECT-MODE-GETTER) #u32:16)
 (define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
-(define-macro (JS-OBJECT-MODE-INSTANCE) #u32:64)
-(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:128)
-(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:256)
-(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:512)
+(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:64)
+(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:128)
+(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:256)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -530,16 +524,6 @@
       (if flag
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-HASINSTANCE))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-HASINSTANCE))))))
-
-(define-inline (js-object-mode-instance? o)
-   (=u32 (bit-andu32 (JS-OBJECT-MODE-INSTANCE) (js-object-mode o))
-      (JS-OBJECT-MODE-INSTANCE)))
-
-(define-inline (js-object-mode-instance-set! o flag)
-   (js-object-mode-set! o
-      (if flag
-	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-INSTANCE))
-	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-INSTANCE))))))
 
 (define-inline (js-object-mode-holey? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-JSARRAYHOLEY) (js-object-mode o))
