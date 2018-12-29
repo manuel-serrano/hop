@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Dec 29 10:15:58 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 19:25:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1281,7 +1281,7 @@
       (filter-map (lambda (n)
 		     (when (isa? n JsSymbolLiteral)
 			n))
-	 (js-properties-names o #t %this))))
+	 (js-properties-names o #f %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Dec 29 06:11:55 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 19:36:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -70,7 +70,7 @@
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
 	   (js-apply-service% ::procedure obj args::pair-nil ::int)
 	   (js-apply-rest% ::JsGlobalObject ::procedure this ::pair-nil ::int ::int)
-	   
+	   (js-apply% ::JsGlobalObject ::JsFunction ::procedure obj ::pair-nil)	   
 	   (js-call0 ::JsGlobalObject fun::obj this)
 	   (js-call1 ::JsGlobalObject fun::obj this a0)
 	   (js-call2 ::JsGlobalObject fun::obj this a0 a1)
@@ -200,7 +200,7 @@
 ;*    js-new/function ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-new/function %this::JsGlobalObject f::JsFunction args::pair-nil)
-   (with-access::JsFunction f (construct arity alloc name)
+   (with-access::JsFunction f (construct alloc)
       (case (length args)
 	 ((0)
 	  (js-new0 %this f))

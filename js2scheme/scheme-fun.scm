@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Dec 28 06:43:19 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 18:59:41 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -144,7 +144,7 @@
 		     (and (usage? '(new) usage)
 			  (not (usage? '(ref get call) usage))
 			  (begin
-			     (tprint "remove #f here")
+			     ;; (tprint "remove #f here")
 			     #f))))))))
 
    (define (lambda? id)

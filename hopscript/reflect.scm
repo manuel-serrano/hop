@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  5 22:00:24 2018                          */
-;*    Last change :  Sat Dec 29 08:54:31 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 19:36:08 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Reflect object.              */
@@ -52,9 +52,22 @@
       (define (js-reflect-apply this target thisarg argarray)
 	 (js-apply-array %this target thisarg argarray))
 
-      (define (js-reflect-construct this target argarray)
-	 (apply js-new %this target (js-iterable->list  argarray %this)))
-
+      (define (js-reflect-construct this target argarray newtarget)
+	 (cond
+	    ((eq? newtarget (js-undefined))
+	     (apply js-new %this target (js-iterable->list argarray %this)))
+	    ((isa? target JsFunction)
+	     (with-access::JsFunction target (construct alloc)
+		(let* ((o (alloc %this newtarget))
+		       (t (js-apply% %this target construct o
+			     (js-iterable->list argarray %this)))
+		       (r (if (isa? t JsObject) t o))
+		       (p (js-get newtarget 'prototype %this)))
+		   (js-setprototypeof r p %this "construct")
+		   r)))
+	    (else
+	     (js-raise-type-error %this "Not a function ~s" target))))
+      
       (define (js-reflect-defprop this target prop attr)
 	 (let ((name (js-toname prop %this)))
 	    (js-define-own-property target name
