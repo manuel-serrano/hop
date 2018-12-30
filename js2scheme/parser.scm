@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Dec 30 08:42:24 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 09:46:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1678,7 +1678,7 @@
       (let* ((loc (token-loc (peek-token)))
 	     (gen (when (eq? (peek-token-type) '*)
 		     (consume-any!) '*))
-	     (name-or-get (property-name)))
+	     (name-or-get (property-name #f)))
 	 (if (isa? name-or-get J2SNode)
 	     (multiple-value-bind (params args)
 		(function-params)
@@ -1701,7 +1701,7 @@
 		      (loc loc)
 		      (static static?)
 		      (prop prop))))
-	     (let ((name (property-name)))
+	     (let ((name (property-name #f)))
 		(multiple-value-bind (params args)
 		   (function-params)
 		   (let* ((body (fun-body params args 'strict))
@@ -1730,7 +1730,7 @@
 			 (static static?)
 			 (prop prop))))))))
    
-   (define (expression::J2SExpr in-for-init? destructuring?)
+   (define (expression in-for-init? destructuring?)
       (let ((assig (assig-expr in-for-init? destructuring? #f)))
 	 (let loop ((rev-exprs (list assig)))
 	    (cond
@@ -1816,7 +1816,7 @@
    
    (define (cond-expr in-for-init? destructuring? spread?)
       ;; MS CARE 30dec2018
-      ;;(let ((expr (binary-expr in-for-init? #t spread?))
+      ;; (let ((expr (binary-expr in-for-init? #t spread?))
       (let ((expr (binary-expr in-for-init? destructuring? spread?))
 	    (token (peek-token)))
 	 (if (eq? (token-tag token) '?)
@@ -2317,6 +2317,8 @@
 			       (arrow-function exprs (token-loc token))))
 			   ((or (isa? expr J2SObjInit) (isa? expr J2SArray))
 			    (arrow-function (list expr) (token-loc token)))
+			   ((isa? expr J2SDecl)
+			    (arrow-function (list expr) (token-loc token)))
 			   (else
 			    (parse-node-error "bad arrow parameter" expr)))
 			(instantiate::J2SParen
@@ -2325,7 +2327,9 @@
 	 ((LBRACKET)
 	  (array-literal destructuring? #t))
 	 ((LBRACE)
-	  (object-literal destructuring?))
+	  ;; MS CARE: 30dec2018
+	  ;; (object-literal destructuring?)
+	  (object-literal #t))
 	 ((NaN)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2SNumber
@@ -2527,7 +2531,7 @@
 
 	 (parse-array '() 0)))
 
-   (define (property-name)
+   (define (property-name destructuring?)
       (case (peek-token-type)
 	 ;; IDs are automatically transformed to strings.
 	 ((ID RESERVED service)
@@ -2577,6 +2581,11 @@
 		 (expr (expression #f #f)))
 	     (pop-open-token (consume-token! 'RBRACKET))
 	     expr))
+	 ((DOTS)
+	  (if destructuring?
+	      (consume-any!)
+	      (parse-token-error "Unexpected token in property name name"
+		 (peek-token))))
 	 (else
 	  (if (j2s-reserved-id? (peek-token-type))
 	      (let ((token (consume-any!)))
@@ -2589,7 +2598,7 @@
 			(val (symbol->string (token-value token)))))))
 	      (parse-token-error "Wrong property name" (peek-token))))))
    
-   (define (object-literal destructuringp::bool)
+   (define (object-literal destructuring?::bool)
       
       (define (find-prop name props)
 	 (find (lambda (prop)
@@ -2671,10 +2680,10 @@
       
       (define (property-init props)
 	 (let* ((token (peek-token))
-		(tokname (property-name))
-		(name (when (pair? tokname) (cdr tokname))))
-	    (case name
-	       ((get set)
+		(tokname (property-name destructuring?))
+		(name (when (pair? tokname) (token-value tokname))))
+	    (cond
+	       ((memq name '(get set))
 		(case (peek-token-type)
 		   ((ID RESERVED service)
 		    (property-accessor tokname name props))
@@ -2704,6 +2713,15 @@
 		    (if (j2s-reserved-id? (peek-token-type))
 			(property-accessor tokname name props)
 			(parse-token-error "Wrong property name" (peek-token))))))
+	       ((and (pair? tokname) (eq? (token-tag tokname) 'DOTS))
+		(instantiate::J2SDataPropertyInit
+		   (loc (token-loc tokname))
+		   (name (instantiate::J2SUndefined
+			    (loc (token-loc tokname))))
+		   (val (instantiate::J2SSpread
+			   (loc (token-loc tokname))
+			   (stype 'object)
+			   (expr (primary #f #t))))))
 	       (else
 		(let* ((loc (token-loc token))
 		       (val (case (peek-token-type)
@@ -2720,7 +2738,7 @@
 				(consume-any!)
 				(assig-expr #f #f #f))
 			       ((=)
-				(if destructuringp
+				(if destructuring?
 				    (begin
 				       (consume-any!)
 				       (J2SBinary 'OR
@@ -2735,7 +2753,7 @@
 		      (loc loc)
 		      (name tokname)
 		      (val val)))))))
-      
+
       (push-open-token (consume-token! 'LBRACE))
       (if (eq? (peek-token-type) 'RBRACE)
 	  (let ((token (consume-any!)))

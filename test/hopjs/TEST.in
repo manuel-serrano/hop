@@ -95,10 +95,10 @@ run() {
     echo "" >> $TMP/TEST-HOPJS-ALL.out
 
     if [ "$lastres" = "0" ]; then
-      echo "ok.";
+      echo -e "\x1B[33m\x1B[1mok.\x1B[0m"
       success=`expr $success + 1`
     else
-      echo "failure !!!"
+      echo -e "\x1B[32m\x1B[1mfailure!\x1B[0m"
       if [ "$verb " != " " ]; then
         cat $TMP/TEST-HOPJS.out
       fi

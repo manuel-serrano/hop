@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Dec 27 09:13:32 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 10:56:10 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -566,16 +566,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDataPropertyInit tildec dollarc mode evalp conf)
    (with-access::J2SDataPropertyInit this (name val)
-      (if (isa? name J2SString)
+      (cond
+	 ((isa? name J2SString)
 	  (cons this
 	     (append (j2s-js name tildec dollarc mode evalp conf)
 		'(":")
-		(j2s-js val j2s-js-attribute-tilde dollarc mode evalp conf)))
+		(j2s-js val j2s-js-attribute-tilde dollarc mode evalp conf))))
+	 ((and (isa? name J2SUndefined) (isa? val J2SSpread))
+	  (with-access::J2SSpread val (expr)
+	     (cons* this "..." (j2s-js expr tildec dollarc mode evalp conf))))
+	 (else
 	  (cons this
 	     (cons "["
 		(append (j2s-js name tildec dollarc mode evalp conf)
 		   '("]:")
-		   (j2s-js val j2s-js-attribute-tilde dollarc mode evalp conf)))))))
+		   (j2s-js val j2s-js-attribute-tilde dollarc mode evalp conf))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SAccessorPropertyInit ...                             */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Dec 28 09:41:08 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 11:05:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2411,7 +2411,8 @@
 			  (cond
 			     ((isa? i J2SDataPropertyInit)
 			      (with-access::J2SDataPropertyInit i (loc name val)
-				 (if (is-proto? name)
+				 (cond
+				    ((is-proto? name)
 				     ;; __proto__ field is special during
 				     ;; initialization, it must be assigned
 				     ;; using the generic js-put! function
@@ -2419,14 +2420,21 @@
 					"__proto__" 'propname
 					(j2s-scheme val mode return conf)
 					(j2s-vtype val)
-					(strict-mode? mode) conf #f #f)
+					(strict-mode? mode) conf #f #f))
+				    ((isa? name J2SUndefined)
+				     (with-access::J2SDataPropertyInit i (val)
+					(with-access::J2SSpread val (expr)
+					   `(js-object-literal-spread-assign! ,tmp
+					       ,(j2s-scheme expr mode return conf)
+					       %this))))
+				    (else
 				     (epairify loc
 					`(js-bind! %this ,tmp
 					    ,(j2s-propname name)
 					    :value ,(j2s-scheme val mode return conf)
 					    :writable #t
 					    :enumerable #t
-					    :configurable #t)))))
+					    :configurable #t))))))
 			     (else
 			      (with-access::J2SAccessorPropertyInit i (loc name get set)
 				 (epairify loc
@@ -2447,7 +2455,8 @@
 	     (if (every (lambda (i)
 			   (when (isa? i J2SDataPropertyInit)
 			      (with-access::J2SDataPropertyInit i (name)
-				 (not (is-proto? name)))))
+				 (and (not (is-proto? name))
+				      (not (isa? name J2SUndefined))))))
 		    inits)
 		 (literal->jsobj inits)
 		 (new->jsobj loc inits))))))

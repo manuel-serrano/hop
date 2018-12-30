@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Dec 29 19:25:49 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 11:37:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -64,6 +64,7 @@
 	   
 	   (js-names->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
+	   (js-object-literal-spread-assign! ::JsObject ::obj ::JsGlobalObject)
 
 	   (js-object-unmap! ::JsObject)
 	   (js-toname::obj ::obj ::JsGlobalObject)
@@ -836,6 +837,40 @@
 			 (else
 			  (js-invalidate-cache-method! cmap i)))
 		      (loop (-fx i 1)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-literal-spread-assign! ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-object-literal-spread-assign! target::JsObject src %this::JsGlobalObject)
+	 
+   (define (idx-cmp a b)
+      (<=fx (string-natural-compare3
+	       (symbol->string! a)
+	       (symbol->string! b))
+	 0))
+
+   (unless (or (null? src) (eq? src (js-undefined)))
+      (let* ((fro (js-toobject %this src))
+	     (names (js-properties-names fro #t %this))
+	     (keys '())
+	     (idx '()))
+	 ;; keys have to be sorted as specified in
+	 ;; section 9.1.12
+	 (for-each (lambda (name)
+		      (if (js-isindex? (js-toindex name))
+			  (set! idx (cons name idx))
+			  (set! keys (cons name keys))))
+	    names)
+	 (for-each (lambda (k)
+		      (let ((val (js-get fro k %this)))
+			 (js-put! target k val #t %this)))
+	    (sort idx-cmp idx))
+	 (for-each (lambda (k)
+		      (let ((val (js-get fro k %this)))
+			 (js-put! target k val #t %this)))
+	    (reverse! keys))))
+
+   target)
 
 ;*---------------------------------------------------------------------*/
 ;*    property-index-vector ...                                        */

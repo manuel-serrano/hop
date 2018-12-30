@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Dec  7 21:45:26 2018 (serrano)                */
+/*    Last change :  Sun Dec 30 09:22:49 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Spread syntax                            */
@@ -12,6 +12,22 @@
 "use hopscript";
 
 var assert = require( "assert" );
+
+/*---------------------------------------------------------------------*/
+/*    equal ...                                                        */
+/*---------------------------------------------------------------------*/
+function equal( o1, o2 ) {
+   
+   function eq( x, y ) {
+      if( x === y ) return true;
+      if( typeof( x ) === typeof( y ) && typeof( x ) === "object" ) return equal( x, y );
+      return false;
+   }
+   
+   for( let k in o1 ) if( !eq( o1[ k ], o2[ k ] ) ) return false;
+   for( let k in o2 ) if( !eq( o1[ k ], o2[ k ] ) ) return false;
+   return true;
+}
 
 /*---------------------------------------------------------------------*/
 /*    misc ...                                                         */
@@ -66,12 +82,45 @@ function misce() {
    return sum(...num) === 24;
 }
 
+function miscf() {
+   const o = { a: 1, b: 2 };
+   const p = { e: 3, a: 5, ... o, f: 10 };
+   let r = 0;
+   
+   for( let k in p ) { r += p[ k ] };
+   
+   return r === 16; 
+   
+}
+
+function miscg() {
+   const r = { ... {a: 10}, ... {a: 20} };
+   
+   return equal( r, { a: 20 } );
+}
+
+function misch() {
+   const r = { ... {a: 10}, ... {a: 20}, a: 30 };
+   
+   return equal( r, { a: 30 } );
+}
+
+function misci() {
+   const t = { ... "abcd" };
+   
+   return equal( t, { '0': 'a', '1': 'b', '2': 'c', '3': 'd' } );
+}
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
 console.log( "   miscc()"); assert.ok( miscc(), "miscc" );
 console.log( "   miscd()"); assert.ok( miscd(), "miscd" );
 console.log( "   misce()"); assert.ok( misce(), "misce" );
+console.log( "   miscf()"); assert.ok( miscf(), "miscf" );
+console.log( "   miscg()"); assert.ok( miscg(), "miscg" );
+console.log( "   misch()"); assert.ok( misch(), "misch" );
+console.log( "   misci()"); assert.ok( misci(), "misci" );
 	    
 /*---------------------------------------------------------------------*/
 /*    mdn ...                                                          */
@@ -136,6 +185,29 @@ function mdnh() {
    return arr1.join() === [3, 4, 5, 0, 1, 2].join();
 }
 
+function mdni() {
+   var obj1 = { foo: 'bar', x: 42 };
+   var obj2 = { foo: 'baz', y: 13 };
+   
+   var clonedObj = { ...obj1 };
+   var mergedObj = { ...obj1, ...obj2 };
+   
+   return equal( clonedObj, { foo: "bar", x: 42 } )
+      && equal( mergedObj, { foo: "baz", x: 42, y: 13 } );
+}
+
+function mdnj() {
+   var obj1 = { foo: 'bar', x: 42 };
+   var obj2 = { foo: 'baz', y: 13 };
+   const merge = ( ...objects ) => ( { ...objects } );
+   
+   var m1 = merge( obj1, obj2 );
+   var m2 = merge( {}, obj1, obj2 );
+   
+   return equal( m1, { 0: { foo: 'bar', x: 42 }, 1: { foo: 'baz', y: 13 } } )
+      && equal( m2, { 0: {}, 1: { foo: 'bar', x: 42 }, 2: { foo: 'baz', y: 13 } } );
+}
+
 console.log( "mdn" );
 console.log( "   mdna()"); assert.ok( mdna(), "mdna" );
 console.log( "   mdnb()"); assert.ok( mdnb(), "mdnb" );
@@ -145,6 +217,8 @@ console.log( "   mdne()"); assert.ok( mdne(), "mdne" );
 console.log( "   mdnf()"); assert.ok( mdnf(), "mdnf" );
 console.log( "   mdng()"); assert.ok( mdng(), "mdng" );
 console.log( "   mdnh()"); assert.ok( mdnh(), "mdnh" );
+console.log( "   mdni()"); assert.ok( mdni(), "mdni" );
+console.log( "   mdnj()"); assert.ok( mdnj(), "mdnj" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax ...                                                       */
