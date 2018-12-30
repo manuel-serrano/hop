@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Dec 28 09:25:59 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 17:35:00 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -211,7 +211,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-set! ::JsUint8ClampedArray ...                     */
 ;*---------------------------------------------------------------------*/
-(define (js-u8clampledarray-ref  buf::u8vector i::int)
+(define (js-u8clampledarray-ref buf::u8vector i::int)
    (uint8->fixnum (u8vector-ref buf i)))
 
 (define (js-u8clampledarray-set! buf::u8vector i::int v::obj %this::JsGlobalObject)
@@ -331,38 +331,90 @@
 ;*    js-init-arraybufferview! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-init-arraybufferview! %this)
-   (with-access::JsGlobalObject %this (js-int8array)
-      (set! js-int8array (js-init-typedarray! %this 'Int8Array 1)))
-   (with-access::JsGlobalObject %this (js-uint8array)
-      (set! js-uint8array (js-init-typedarray! %this 'Uint8Array 1)))
-   (with-access::JsGlobalObject %this (js-uint8clampedarray)
-      (set! js-uint8clampedarray (js-init-typedarray! %this 'Uint8ClampedArray 1)))
-   (with-access::JsGlobalObject %this (js-int16array)
-      (set! js-int16array (js-init-typedarray! %this 'Int16Array 2)))
-   (with-access::JsGlobalObject %this (js-uint16array)
-      (set! js-uint16array (js-init-typedarray! %this 'Uint16Array 2)))
-   (with-access::JsGlobalObject %this (js-int32array)
-      (set! js-int32array (js-init-typedarray! %this 'Int32Array 4)))
-   (with-access::JsGlobalObject %this (js-uint32array)
-      (set! js-uint32array (js-init-typedarray! %this 'Uint32Array 4)))
-   (with-access::JsGlobalObject %this (js-float32array)
-      (set! js-float32array (js-init-typedarray! %this 'Float32Array 4)))
-   (with-access::JsGlobalObject %this (js-float64array)
-      (set! js-float64array (js-init-typedarray! %this 'Float64Array 8)))
-   (with-access::JsGlobalObject %this (js-dataview)
-      (set! js-dataview (js-init-dataview! %this))))
+   (with-access::JsGlobalObject %this (__proto__ js-function js-object)
+      (let ((proto (instantiateJsObject
+		      (__proto__ __proto__))))
+	 (js-init-typedarray-prototype! proto %this)
+	 (with-access::JsGlobalObject %this (js-int8array)
+	    (set! js-int8array
+	       (js-init-typedarray! %this 'Int8Array 1 proto)))
+	 (with-access::JsGlobalObject %this (js-uint8array)
+	    (set! js-uint8array
+	       (js-init-typedarray! %this 'Uint8Array 1 proto)))
+	 (with-access::JsGlobalObject %this (js-uint8clampedarray)
+	    (set! js-uint8clampedarray
+	       (js-init-typedarray! %this 'Uint8ClampedArray 1 proto)))
+	 (with-access::JsGlobalObject %this (js-int16array)
+	    (set! js-int16array
+	       (js-init-typedarray! %this 'Int16Array 2 proto)))
+	 (with-access::JsGlobalObject %this (js-uint16array)
+	    (set! js-uint16array
+	       (js-init-typedarray! %this 'Uint16Array 2 proto)))
+	 (with-access::JsGlobalObject %this (js-int32array)
+	    (set! js-int32array
+	       (js-init-typedarray! %this 'Int32Array 4 proto)))
+	 (with-access::JsGlobalObject %this (js-uint32array)
+	    (set! js-uint32array
+	       (js-init-typedarray! %this 'Uint32Array 4 proto)))
+	 (with-access::JsGlobalObject %this (js-float32array)
+	    (set! js-float32array
+	       (js-init-typedarray! %this 'Float32Array 4 proto)))
+	 (with-access::JsGlobalObject %this (js-float64array)
+	    (set! js-float64array
+	       (js-init-typedarray! %this 'Float64Array 8 proto)))
+	 (with-access::JsGlobalObject %this (js-dataview)
+	    (set! js-dataview (js-init-dataview! %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-typedarray-prototype! ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-init-typedarray-prototype! proto %this)
+
+   (define (js-typedarray-includes this::obj val idx)
+      
+      (define (startidx len idx)
+	 (if (eq? idx (js-undefined))
+	     #u32:0
+	     (let ((id (js-toint32 idx %this)))
+		(cond
+		   ((>=s32 i 0) (int32->uint32 i))
+		   ((>u32 (int32->uint32 (negs32 i)) len) #u32:0)
+		   (else (-u32 len (int32->uint32 (negs32 i))))))))
+      
+      (if (isa? this JsTypedArray)
+	  (when (number? val)
+	     (with-access::JsTypedArray this (vref buffer bpe byteoffset)
+		(let ((len (js-typedarray-lengthu32 this %this))
+		      (vref (js-typedarray-ref this)))
+		   (with-access::JsArrayBuffer buffer (data)
+		      (let ((data data))
+			 (let loop ((i (startidx len idx)))
+			    (cond
+			       ((>=u32 i len)
+				#f)
+			       ((= (vref data (uint32->fixnum (+u32 (/u32 byteoffset bpe) i))) val)
+				#t)
+			       (else
+				#f))))))))
+	  (js-raise-type-error %this "Object must be a TypedArray" this)))
+   
+   (js-bind! %this proto 'includes
+      :value (js-make-function %this js-typedarray-includes 1 'includes)
+      :configurable #t
+      :writable #t
+      :enumerable #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-typedarray! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-init-typedarray! %this name::symbol bp::int)
+(define (js-init-typedarray! %this name::symbol bp::int proto)
    (with-access::JsGlobalObject %this (__proto__ js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 ;; builtin ArrayBufferview prototype
 	 (define js-typedarray-prototype
 	    (instantiateJsObject
-	       (__proto__ __proto__)))
+	       (__proto__ proto)))
 
 	 (define (js-create-from-arraybuffer this::JsTypedArray
 		    buf::JsArrayBuffer off::uint32 len::uint32)
@@ -682,7 +734,7 @@
 ;*    js-get-own-property ::JsTypedArray ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property o::JsTypedArray p %this::JsGlobalObject)
-   (with-access::JsTypedArray o (vref byteoffset bpe length buffer frozen)
+   (with-access::JsTypedArray o (byteoffset bpe length buffer frozen)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((not (js-isindex? i))
@@ -704,7 +756,7 @@
 ;*    js-get-typedarray ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-get-typedarray o::JsTypedArray p %this)
-   (with-access::JsTypedArray o (buffer vref data byteoffset length bpe)
+   (with-access::JsTypedArray o (buffer byteoffset length bpe)
       (let ((i::uint32 (js-toindex p)))
 	 (when (and (js-isindex? i) (<uint32 i length))
 	    (let ((vref (js-typedarray-ref o)))
@@ -757,15 +809,6 @@
       (if (or (not *optimize-length*) (=u32 length #u32:0))
 	  (call-next-method)
 	  (uint32->fixnum length))))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-get-lengthu32 ::JsTypedArray ...                              *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-get-lengthu32 o::JsTypedArray %this #!optional cache) */
-;*    (with-access::JsTypedArray o (length)                            */
-;*       (if (or (not *optimize-length*) (=u32 length #u32:0))         */
-;* 	  (call-next-method)                                           */
-;* 	  length)))                                                    */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-lengthu32 ...                                      */

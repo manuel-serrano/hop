@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun Dec 30 16:33:37 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 16:46:31 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -441,7 +441,7 @@
    (hopjs-parse-peek-token)
    (hopjs-parse-peek-token-string)
    (let ((etok (hopjs-parse-expr-simple tok multilinep)))
-     (when etok
+     (while etok
        (case (hopjs-parse-peek-token-type)
 	 ((dot)
 	  (let ((dtok (hopjs-parse-consume-token-any)))
@@ -473,7 +473,7 @@
 	      (t
 	       tok))))
 	 ((new)
-	  (hopjs-parse-consume-token-any))
+	  (setq etok (hopjs-parse-consume-token-any)))
 	 ((yield yield*)
 	  (hopjs-parse-consume-token-any))
 	 ((colon)

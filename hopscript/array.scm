@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Dec 30 16:02:40 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 17:03:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2118,37 +2118,61 @@
 
    ;; includes
    ;; https://www.ecma-international.org/ecma-262/7.0/#sec-array.prototype.includes
-   (define (array-prototype-includes this::obj val t)
+   (define (array-prototype-includes this::obj val idx)
       
-      (define (vector-includes o::JsArray len::uint32 proc t i::uint32)
+      (define (vector-includes o::JsArray len::uint32 i::uint32)
 	 (with-access::JsArray o (vec ilen)
 	    (let loop ((i i))
 	       (cond
 		  ((>=u32 i ilen)
 		   (if (js-object-mode-inline? o)
 		       #f
-		       (array-includes o len proc t i)))
-		  ((eqv? (vector-ref vec (uint32->fixnum i)) val)
+		       (array-includes o len i)))
+		  ((js-strict-equal? (vector-ref vec (uint32->fixnum i)) val)
+		   #t)
+		  ((and (flonum? val)
+			(nanfl? val)
+			(flonum? (vector-ref vec (uint32->fixnum i)))
+			(nanfl? (vector-ref vec (uint32->fixnum i))))
 		   #t)
 		  (else
 		   (loop (+u32 i 1)))))))
       
-      (define (array-includes o::JsArray len::uint32 proc t i::uint32)
+      (define (array-includes o len::uint32 i::uint32)
 	 (let loop ((i i))
 	    (if (>=u32 i len)
 		#f
 		(let* ((pv (js-get-property-value o o (js-toname i %this) %this))
 		       (v (if (js-absent? pv) (js-undefined) pv)))
-		   (if (eqv? pv val)
-		       #t
-		       (loop (+u32 i 1)))))))
+		   (cond
+		      ((js-strict-equal? v val)
+		       #t)
+		      ((and (flonum? v) (nanfl? v) (flonum? val) (nanfl? val))
+		       #t)
+		      (else
+		       (loop (+u32 i 1))))))))
       
-      (array-prototype-iterator %this this #unspecified t
-	 array-includes vector-includes))
+      (define (startidx len i)
+	 (cond
+	    ((>=s32 i 0) (int32->uint32 i))
+	    ((>u32 (int32->uint32 (negs32 i)) len) #u32:0)
+	    (else (-u32 len (int32->uint32 (negs32 i))))))
+      
+      (let ((o (js-toobject %this this))
+	    (i (if (eq? idx (js-undefined)) #u32:0 (js-toint32 idx %this))))
+	 (cond
+	    ((not (js-array? o))
+	     (let ((len (js-get-lengthu32 o %this)))
+		(array-includes o len (startidx len i))))
+	    (else
+	     (with-access::JsArray o (length vec ilen)
+		(if (js-array-inlined? o)
+		    (vector-includes o length (startidx length i))
+		    (array-includes o length (startidx length i))))))))
    
    (js-bind! %this js-array-prototype 'includes
       :value (js-make-function %this
-		array-prototype-find-index 1 'includes
+		array-prototype-includes 1 'includes
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)

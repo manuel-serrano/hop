@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Dec 30 15:12:30 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 16:54:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2630,44 +2630,43 @@
 			   (string=? val name)))))
 	    props))
       
-      (define (property-accessor tokname name props)
-	 (let ((id (consume-any!)))
-	    (multiple-value-bind (params args)
-	       (function-params)
-	       (let* ((body (fun-body params args current-mode))
-		      (mode (or (javascript-mode body) current-mode))
-		      (loc (token-loc tokname))
-		      (fun (instantiate::J2SFun
-			      (mode mode)
-			      (loc loc)
-			      (thisp (new-decl-this loc))
-			      (params params)
-			      (name (loc->funname "get" loc))
-			      (vararg (rest-params params))
-			      (body body)))
-		      (oprop (find-prop (symbol->string! (cdr id)) props))
-		      (prop (or oprop
-				(instantiate::J2SAccessorPropertyInit
-				   (loc (token-loc tokname))
-				   (get (instantiate::J2SUndefined
-					   (loc (token-loc id))))
-				   (set (instantiate::J2SUndefined
-					   (loc (token-loc id))))
-				   (name (instantiate::J2SString
-					    (loc (token-loc id))
-					    (val (symbol->string (cdr id)))))))))
-		  (with-access::J2SAccessorPropertyInit prop (get set)
-		     (if (eq? name 'get)
-			 (if (isa? get J2SUndefined)
-			     (set! get fun)
-			     (parse-token-error "Wrong property"
-				(peek-token)))
-			 (if (isa? set J2SUndefined)
-			     (set! set fun)
-			     (parse-token-error "Wrong property"
-				(peek-token))))
-		     ;; return a prop only if new
-		     (unless oprop prop))))))
+      (define (property-accessor id tokname name props)
+	 (multiple-value-bind (params args)
+	    (function-params)
+	    (let* ((body (fun-body params args current-mode))
+		   (mode (or (javascript-mode body) current-mode))
+		   (loc (token-loc tokname))
+		   (fun (instantiate::J2SFun
+			   (mode mode)
+			   (loc loc)
+			   (thisp (new-decl-this loc))
+			   (params params)
+			   (name (loc->funname "get" loc))
+			   (vararg (rest-params params))
+			   (body body)))
+		   (oprop (find-prop (symbol->string! (token-value id)) props))
+		   (prop (or oprop
+			     (instantiate::J2SAccessorPropertyInit
+				(loc (token-loc tokname))
+				(get (instantiate::J2SUndefined
+					(loc (token-loc id))))
+				(set (instantiate::J2SUndefined
+					(loc (token-loc id))))
+				(name (instantiate::J2SString
+					 (loc (token-loc id))
+					 (val (symbol->string (token-value id)))))))))
+	       (with-access::J2SAccessorPropertyInit prop (get set)
+		  (if (eq? name 'get)
+		      (if (isa? get J2SUndefined)
+			  (set! get fun)
+			  (parse-token-error "Wrong property"
+			     (peek-token)))
+		      (if (isa? set J2SUndefined)
+			  (set! set fun)
+			  (parse-token-error "Wrong property"
+			     (peek-token))))
+		  ;; return a prop only if new
+		  (unless oprop prop)))))
 
       (define (dynamic-property-accessor loc propname name props)
 	 (multiple-value-bind (params args)
@@ -2708,7 +2707,13 @@
 	       ((memq name '(get set))
 		(case (peek-token-type)
 		   ((ID RESERVED service)
-		    (property-accessor tokname name props))
+		    (property-accessor (consume-any!) tokname name props))
+		   ((STRING ESTRING OSTRING)
+		    (let* ((tok (consume-any!))
+			   (id (make-token 'ID
+				  (string->symbol (token-value tok))
+				  (token-loc tok))))
+		       (property-accessor id tokname name props)))
 		   ((:)
 		    (let* ((ignore (consume-any!))
 			   (loc (token-loc ignore))
@@ -2733,7 +2738,7 @@
 		       (val (function #f token '__proto__))))
 		   (else
 		    (if (j2s-reserved-id? (peek-token-type))
-			(property-accessor tokname name props)
+			(property-accessor (consume-any!) tokname name props)
 			(parse-token-error "Wrong property name" (peek-token))))))
 	       ((and (pair? tokname) (eq? (token-tag tokname) 'DOTS))
 		(instantiate::J2SDataPropertyInit

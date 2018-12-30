@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Sun Dec 30 15:57:46 2018 (serrano)                */
+/*    Last change :  Sun Dec 30 16:40:41 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 arrays                                    */
@@ -93,9 +93,9 @@ assert.ok( kangaxfill(), true );
 function includesa() {
    return [1, 2, 3].includes(1)
       && ![1, 2, 3].includes(4)
-		    && ![1, 2, 3].includes(1, 1)
-		    && [NaN].includes(NaN)
-		    && Array(1).includes();
+      && ![1, 2, 3].includes(1, 1)
+      && [NaN].includes(NaN)
+      && Array(1).includes();
 }
 
 function includesb() {
@@ -143,10 +143,10 @@ function includesf() {
 }
 
 console.log( "include" );
-console.log( "   includesa" ); console.ok( includesa(), "includesa" )
-console.log( "   includesb" ); console.ok( includesb(), "includesb" )
-console.log( "   includesc" ); console.ok( includesc(), "includesc" )
-console.log( "   includesd" ); console.ok( includesd(), "includesd" )
-console.log( "   includese" ); console.ok( includese(), "includese" )
-console.log( "   includesf" ); console.ok( includesf(), "includesf" )
+console.log( "   includesa" ); assert.ok( includesa(), "includesa" )
+console.log( "   includesb" ); assert.ok( includesb(), "includesb" )
+console.log( "   includesc" ); assert.ok( includesc(), "includesc" )
+console.log( "   includesd" ); assert.ok( includesd(), "includesd" )
+console.log( "   includese" ); assert.ok( includese(), "includese" )
+console.log( "   includesf" ); assert.ok( includesf(), "includesf" )
 
