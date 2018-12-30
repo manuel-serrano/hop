@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Dec  6 22:06:37 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 15:16:49 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1346,7 +1346,7 @@
 			    'unknown)
 			   (else
 			    'unknown)))
-		       ((- *)
+		       ((- * **)
 			(cond
 			   ((or (eq? typl 'real) (eq? typr 'real))
 			    'real)

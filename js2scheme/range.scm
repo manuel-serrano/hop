@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/range.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/range.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Oct 26 11:50:04 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 15:18:02 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -682,6 +682,25 @@
 		      (max ma0 ma1 (interval-max left) (interval-max right))
 		      (interval-merge-types left right))))
 	 (widening left right intr))))
+   
+;*---------------------------------------------------------------------*/
+;*    interval-exptt ...                                               */
+;*---------------------------------------------------------------------*/
+(define (interval-expt left right)
+   (when (and (interval? left) (interval? right))
+      (let* ((i0 (expt (llong->flonum (interval-min left)) (llong->flonum (interval-min right))))
+	     (i1 (expt (llong->flonum (interval-min left)) (llong->flonum (interval-max right))))
+	     (a0 (expt (llong->flonum (interval-max left)) (llong->flonum (interval-max right))))
+	     (a1 (expt (llong->flonum (interval-max left)) (llong->flonum (interval-min right))))
+	     (i (min i0 i1))
+	     (a (max a0 a1))
+	     (intv (when (and (integer? i) (integer? a))
+		      (interval
+			 (flonum->llong (min i a))
+			 (flonum->llong (max i a))))))
+	 (if intv
+	     (widening left right intv)
+	     *infinity-intv*))))
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-div ...                                                 */
@@ -1529,6 +1548,8 @@
 	     (expr-range-add! this env fix (interval-sub intl intr)))
 	    ((*)
 	     (expr-range-add! this env fix (interval-mul intl intr)))
+	    ((**)
+	     (expr-range-add! this env fix (interval-expt intl intr)))
 	    ((/)
 	     (expr-range-add! this env fix (interval-div intl intr)))
 	    ((%)

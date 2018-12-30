@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.1.x/test/hopjs/noserv/es6-array.js        */
+/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-array.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Thu Apr 13 08:20:13 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Sun Dec 30 13:24:33 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 arrays                                    */
 /*=====================================================================*/
@@ -62,7 +62,7 @@ function fille() {
    return a.lastIndexOf( 2 ) === 9 && a[ 5 ] === 2 && a[ 0 ] === 2;
 }
 
-function kangaxa() {
+function kangaxfill() {
    // https://kangax.github.io/compat-table/es6/
    return typeof Array.prototype.fill === "function";
 }
@@ -85,7 +85,7 @@ console.log( "   fille()");
 assert.ok( fille() );
 
 console.log( "   kangaxfill()");
-assert.ok( kangaxa(), true );
+assert.ok( kangaxfill(), true );
 
 
 

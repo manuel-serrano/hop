@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Dec  6 14:48:10 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 15:30:14 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -338,11 +338,10 @@
 	      (lambda (left right)
 		 (js-binop-arithmetic loc op left lhs right rhs conf)))
 	   (js-arithmetic-mul loc type lhs rhs mode return conf)))
+      ((**)
+       (js-arithmetic-expt loc type lhs rhs mode return conf))
       ((/)
        (js-arithmetic-div loc type lhs rhs mode return conf))
-;*        (js-arithmetic-div loc type lhs rhs mode return conf))       */
-;*       ((remainder)                                                  */
-;*        (js-arithmetic-remainder loc type lhs rhs mode return conf)) */
       ((remainderfx remainder)
        (with-tmp lhs rhs mode return conf 'any
 	  (lambda (left right)
@@ -1451,6 +1450,18 @@
 			 (box left tl conf)
 			 (box right tr conf)
 			 #f)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-arithmetic-expt ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-arithmetic-expt loc type lhs::J2SExpr rhs::J2SExpr
+	   mode return conf)
+   (with-tmp lhs rhs mode return conf '**
+      (lambda (left right)
+	 (let ((tl (j2s-vtype lhs))
+	       (tr (j2s-vtype rhs)))
+	    (epairify loc
+	       `(expt ,(asreal left tl) ,(asreal right tr)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arithmetic-div ...                                            */

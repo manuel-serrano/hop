@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Dec 30 09:46:40 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 15:12:30 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1750,7 +1750,7 @@
    
    (define (assig-operator? x)
       (case x
-	 ((= *= /= %= += -= <<= >>= >>>= &= ^= BIT_OR=)
+	 ((= *= /= %= += -= <<= >>= >>>= &= ^= BIT_OR= **=)
 	  #t)
 	 (else #f)))
    
@@ -1842,10 +1842,10 @@
 	 ((< > <= >= instanceof in) 7)
 	 ((<< >> >>>) 8)
 	 ((+ -) 9)
-	 ((* / %) 10)
+	 ((* / % **) 10)
 	 (else #f)))
 
-   ;; left-associative binary expressions
+   ;; left-associative binary expressions, but ** that is right-associative
    (define (binary-expr in-for-init? destructuring? spread?)
       (let binary-aux ((level 1))
 	 (if (> level 10)
@@ -1854,6 +1854,28 @@
 		(let* ((type (peek-token-type))
 		       (new-level (op-level type)))
 		   (cond
+		      ((eq? type '**)
+		       (let ((token (consume-any!)))
+			  (cond
+			     ((isa? expr J2SBinary)
+			      (with-access::J2SBinary expr (lhs rhs)
+				 (set! rhs
+				    (instantiate::J2SBinary
+				       (loc (token-loc token))
+				       (op '**)
+				       (lhs rhs)
+				       (rhs (binary-aux level))))
+				 expr))
+			     ((and (isa? expr J2SNumber)
+				   (with-access::J2SNumber expr (val)
+				      (< val 0)))
+			      (parse-token-error "Unexpected token"  token))
+			     (else
+			      (instantiate::J2SBinary
+				       (loc (token-loc token))
+				       (op '**)
+				       (lhs expr)
+				       (rhs (binary-aux level)))))))
 		      ((and in-for-init? (eq? type 'in))
 		       expr)
 		      ((not new-level)

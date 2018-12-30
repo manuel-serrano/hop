@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Dec 28 07:11:33 2018 (serrano)                */
+/*    Last change :  Sun Dec 30 13:21:55 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 6 features                               */
@@ -123,3 +123,47 @@ console.log( "   miscd()"); assert.ok( miscd(), "miscd" );
 console.log( "   misce()"); assert.ok( misce(), "misce" );
 console.log( "   miscf()"); assert.ok( miscf(), "miscf" );
 console.log( "   miscg()"); assert.ok( miscg(), "miscg" );
+
+/*---------------------------------------------------------------------*/
+/*    mdn                                                              */
+/*---------------------------------------------------------------------*/
+function mdna() {
+   return -(2 ** 2) === -4
+      && (2 ** 3) === 8
+      && (3 ** 2) === 9
+      && (3 ** 2.5) === 15.588457268119896
+      && (10 ** -1) === 0.1
+      && isNaN( NaN ** 2 )
+      && (2 ** 3 ** 2) === 512
+      && (2 ** (3 ** 2)) === 512
+      && ((2 ** 3) ** 2) === 64;
+}
+
+console.log( "mdn" );
+console.log( "   mdna()"); assert.ok( mdna(), "mdna" );
+
+/*---------------------------------------------------------------------*/
+/*    kangax                                                           */
+/*---------------------------------------------------------------------*/
+function kangaxa() {
+   return 2 ** 3 === 8 && -(5 ** 2) === -25 && (-5) ** 2 === 25;
+}
+
+function kangaxb() {
+   var a = 2; a **= 3; return a === 8;
+}
+
+function kangaxc() {
+   if (2 ** 3 !== 8) { return false; }
+   try {
+      Function("-5 ** 2")();
+   } catch(e) {
+      return true;
+   }
+}
+
+console.log( "kangax" );
+console.log( "   kangaxa()"); assert.ok( kangaxa(), "kangaxa" );
+console.log( "   kangaxb()"); assert.ok( kangaxb(), "kangaxb" );
+console.log( "   kangaxc()"); assert.ok( kangaxc(), "kangaxc" );
+
