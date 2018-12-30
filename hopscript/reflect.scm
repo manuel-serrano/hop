@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  5 22:00:24 2018                          */
-;*    Last change :  Sat Dec 29 19:36:08 2018 (serrano)                */
+;*    Last change :  Sat Dec 29 20:02:27 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Reflect object.              */
@@ -56,6 +56,8 @@
 	 (cond
 	    ((eq? newtarget (js-undefined))
 	     (apply js-new %this target (js-iterable->list argarray %this)))
+	    ((not (isa? newtarget JsObject))
+	     (js-raise-type-error %this "construct: Not an object ~s" newtarget)
 	    ((isa? target JsFunction)
 	     (with-access::JsFunction target (construct alloc)
 		(let* ((o (alloc %this newtarget))
@@ -66,7 +68,7 @@
 		   (js-setprototypeof r p %this "construct")
 		   r)))
 	    (else
-	     (js-raise-type-error %this "Not a function ~s" target))))
+	     (js-raise-type-error %this "construct: Not a function ~s" target))))
       
       (define (js-reflect-defprop this target prop attr)
 	 (let ((name (js-toname prop %this)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Dec 27 17:43:21 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 08:42:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -999,8 +999,10 @@
 			   (id id)
 			   (_scmid id)
 			   (binder 'param)))))
+		 ((isa? p J2SDecl)
+		  p)
 		 (else
-		  (parse-node-error "Unexpected token" p))))
+		  (parse-node-error "Unexpected token in arrow parameter list" p))))
 	 args (iota (length args))))
 
    (define (arrow-body params::pair-nil args::pair-nil)
@@ -1030,7 +1032,8 @@
 	    (name '||)
 	    (mode 'strict)
 	    (params params)
-	    (body (arrow-body params args)))))
+	    (body (arrow-body params args))
+	    (vararg (rest-params params)))))
 
    (define (rest-params params)
       (when (pair? params)
@@ -1733,7 +1736,9 @@
 	    (cond
 	       ((eq? (peek-token-type) 'COMMA)
 		(consume-any!)
-		(loop (cons (assig-expr in-for-init? #f #f) rev-exprs)))
+		(loop
+		   (cons (assig-expr in-for-init? destructuring? #f)
+		      rev-exprs)))
 	       ((null? (cdr rev-exprs))
 		(car rev-exprs))
 	       (else
@@ -1758,7 +1763,7 @@
 		(op (string->symbol s)))
 	    op))
       
-      (let ((lhs (cond-expr in-for-init? spread?)))
+      (let ((lhs (cond-expr in-for-init? destructuring? spread?)))
 	 (if (assig-operator? (peek-token-type))
 	     (let* ((op (consume-any!))
 		    (rhs (assig-expr in-for-init? #f #f)))
@@ -1809,8 +1814,10 @@
 		       (rhs rhs)))))
 	     lhs)))
    
-   (define (cond-expr in-for-init? spread?)
-      (let ((expr (binary-expr in-for-init? #t spread?))
+   (define (cond-expr in-for-init? destructuring? spread?)
+      ;; MS CARE 30dec2018
+      ;;(let ((expr (binary-expr in-for-init? #t spread?))
+      (let ((expr (binary-expr in-for-init? destructuring? spread?))
 	    (token (peek-token)))
 	 (if (eq? (token-tag token) '?)
 	     (let* ((ignore-? (consume-any!))
@@ -2438,6 +2445,12 @@
 		 (stype 'array)
 		 (loc (token-loc (consume-any!)))
 		 (expr (assig-expr #f #f #f))))
+	     (destructuring?
+	      (consume-any!)
+	      (let ((param (consume-rest-param!)))
+		 (if (eq? (peek-token-type) 'RPAREN)
+		     param
+		     (parse-token-error "Expecting ')'" (consume-any!)))))
 	     (else
 	      (parse-token-error "Unexpected token" (consume-any!)))))
 	 (else
@@ -2813,7 +2826,7 @@
 	 (lambda (d s) (with-tilde (lambda () (primary d s))))
 	 peek-token consume-token! consume-any!
 	 expression statement block cond-expr
-	 (lambda () (with-tilde (lambda () (cond-expr #f #f))))))
+	 (lambda () (with-tilde (lambda () (cond-expr #f #f #f))))))
 
    (define (main-parser input-port conf)
       (case (config-get conf :parser #f)

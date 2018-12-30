@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Dec 28 07:01:44 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 09:07:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -596,7 +596,7 @@
    (with-access::J2SFun this (name thisp argumentsp params body decl mode
 				rtype optimize
 				need-bind-exit-return new-target
-				idthis generator loc)
+				idthis generator loc vararg)
       (cond
 	 ((isa? decl J2SDeclFun)
 	  (with-access::J2SDecl decl (key usage scope)
@@ -615,6 +615,7 @@
 		 ,@(dump-range this)
 		 :thisp ,(when thisp (j2s->list thisp))
 		 :argumentsp ,(when argumentsp (j2s->list argumentsp))
+		 :vararg (typeof vararg)
 		 ,@(dump-size this)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
@@ -634,6 +635,7 @@
 		 ,@(dump-range this)
 		 :thisp ,(when thisp (j2s->list thisp))
 		 :argumentsp ,(when argumentsp (j2s->list argumentsp))
+		 :vararg (typeof vararg)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
@@ -649,6 +651,7 @@
 	      ,@(dump-range this)
 	      :thisp ,(when thisp (j2s->list thisp))
 	      :argumentsp ,(when argumentsp (j2s->list argumentsp))
+	      ,@(if vararg `(:vararg ,vararg) '())
 	      ,(map j2s->list params) ,(j2s->list body))))))
 
 ;*---------------------------------------------------------------------*/
