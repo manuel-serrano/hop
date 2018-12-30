@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sun Dec 30 17:35:00 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 19:03:31 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -375,7 +375,7 @@
       (define (startidx len idx)
 	 (if (eq? idx (js-undefined))
 	     #u32:0
-	     (let ((id (js-toint32 idx %this)))
+	     (let ((i (js-toint32 idx %this)))
 		(cond
 		   ((>=s32 i 0) (int32->uint32 i))
 		   ((>u32 (int32->uint32 (negs32 i)) len) #u32:0)
