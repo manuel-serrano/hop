@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Thu Dec 27 17:07:01 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 16:38:57 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -465,13 +465,16 @@
        (if tok
 	   (progn
 	     (hopjs-debug 0
-			  "hopjs-indent-old-binop %s [%s] peek=%s"
+			  "hopjs-indent-old-binop %s [%s] peek=[%s]"
 			  tok (hopjs-parse-token-string tok)
 			  (hopjs-parse-peek-token-type))
 	     (case (hopjs-parse-peek-token-type)
 	       ((return var let const)
 		(hopjs-indent-column-token
 		 (hopjs-parse-consume-token-any) (+ hopjs-indent-level)))
+	       ((binop)
+		(hopjs-indent-column-token
+		 (hopjs-parse-consume-token-any) 0))
 	       (t (hopjs-indent-column-token tok 0))))
 	 0)))))
 

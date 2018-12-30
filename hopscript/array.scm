@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Dec 28 09:28:12 2018 (serrano)                */
+;*    Last change :  Sun Dec 30 16:02:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2112,6 +2112,43 @@
    (js-bind! %this js-array-prototype 'findIndex
       :value (js-make-function %this
 		array-prototype-find-index 1 'findIndex
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+
+   ;; includes
+   ;; https://www.ecma-international.org/ecma-262/7.0/#sec-array.prototype.includes
+   (define (array-prototype-includes this::obj val t)
+      
+      (define (vector-includes o::JsArray len::uint32 proc t i::uint32)
+	 (with-access::JsArray o (vec ilen)
+	    (let loop ((i i))
+	       (cond
+		  ((>=u32 i ilen)
+		   (if (js-object-mode-inline? o)
+		       #f
+		       (array-includes o len proc t i)))
+		  ((eqv? (vector-ref vec (uint32->fixnum i)) val)
+		   #t)
+		  (else
+		   (loop (+u32 i 1)))))))
+      
+      (define (array-includes o::JsArray len::uint32 proc t i::uint32)
+	 (let loop ((i i))
+	    (if (>=u32 i len)
+		#f
+		(let* ((pv (js-get-property-value o o (js-toname i %this) %this))
+		       (v (if (js-absent? pv) (js-undefined) pv)))
+		   (if (eqv? pv val)
+		       #t
+		       (loop (+u32 i 1)))))))
+      
+      (array-prototype-iterator %this this #unspecified t
+	 array-includes vector-includes))
+   
+   (js-bind! %this js-array-prototype 'includes
+      :value (js-make-function %this
+		array-prototype-find-index 1 'includes
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Sun Dec 30 13:24:33 2018 (serrano)                */
+/*    Last change :  Sun Dec 30 15:57:46 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 arrays                                    */
@@ -87,5 +87,66 @@ assert.ok( fille() );
 console.log( "   kangaxfill()");
 assert.ok( kangaxfill(), true );
 
+/*---------------------------------------------------------------------*/
+/*    includes                                                         */
+/*---------------------------------------------------------------------*/
+function includesa() {
+   return [1, 2, 3].includes(1)
+      && ![1, 2, 3].includes(4)
+		    && ![1, 2, 3].includes(1, 1)
+		    && [NaN].includes(NaN)
+		    && Array(1).includes();
+}
 
+function includesb() {
+   var arr = ['a', 'b', 'c'];
+
+   return !arr.includes('c', 3)
+      && !arr.includes('c', 100);
+}
+
+function includesc() {
+   var arr = ['a', 'b', 'c'];
+
+   return arr.includes('a', -100)
+      && arr.includes('b', -100)
+      && arr.includes('c', -100)
+      && ! arr.includes('a', -2);
+}
+
+function includesd() {
+   return (function() {
+      return ([].includes.call(arguments, 'a'))
+  	 && !([].includes.call(arguments, 'd'));
+   })('a','b','c');
+}
+
+function includese() {
+   var passed = 0;
+   return [].includes.call(
+      { get "0"() { passed = NaN; return 'foo'; },
+        get "11"() { passed += 1; return 0; },
+        get "19"() { passed += 1; return 'foo'; },
+        get "21"() { passed = NaN; return 'foo'; },
+        get length() { passed += 1; return 24; }
+      }, 'foo', 6) === true && passed === 3;
+}
+
+function includesf() {
+   return [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array,
+	   Int32Array, Uint32Array, Float32Array, Float64Array]
+      .every(function(TypedArray){
+	 return new TypedArray([1, 2, 3]).includes(1)
+	    && !new TypedArray([1, 2, 3]).includes(4)
+		&& !new TypedArray([1, 2, 3]).includes(1, 1);
+      });
+}
+
+console.log( "include" );
+console.log( "   includesa" ); console.ok( includesa(), "includesa" )
+console.log( "   includesb" ); console.ok( includesb(), "includesb" )
+console.log( "   includesc" ); console.ok( includesc(), "includesc" )
+console.log( "   includesd" ); console.ok( includesd(), "includesd" )
+console.log( "   includese" ); console.ok( includese(), "includese" )
+console.log( "   includesf" ); console.ok( includesf(), "includesf" )
 

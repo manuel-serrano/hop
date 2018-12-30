@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Thu Dec 27 17:07:38 2018 (serrano)                */
+/*    Last change :  Sun Dec 30 16:22:00 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,6 +30,20 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+// ok, ! in expr
+function includesa() {
+   return ![1, 2, 3].includes(1)
+      && ![1, 2, 3].includes(4)
+      && ![1, 2, 3].includes(1, 1);
+}
+
+// ok, ! in expr
+function includesa() {
+   return !x
+      && !y
+      && !z;
+}
+
 // ok, nested switches
 function s() {
    while( true ) {
