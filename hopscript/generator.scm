@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Sun Dec  2 20:51:33 2018 (serrano)                */
+;*    Last change :  Mon Dec 31 09:59:50 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -40,6 +40,7 @@
 	   js-yield-cmap
 	   (js-make-generator::JsGenerator ::procedure ::JsObject ::JsGlobalObject)
 	   (js-make-iterator ::object ::JsGlobalObject)
+	   (js-make-map-iterator ::object ::procedure ::JsGlobalObject)
 	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)))
 
@@ -87,10 +88,25 @@
 (define (js-init-generator! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype js-generatorfunction-prototype js-symbol-iterator js-symbol-tostringtag)
 
+      (define js-gen-proto-proto
+	 (let ((proto (instantiateJsObject
+		       (cmap (instantiate::JsConstructMap))
+		       (__proto__ __proto__))))
+	    (js-bind! %this proto js-symbol-iterator
+	       :value (js-make-function %this
+			 (lambda (this)
+			    this)
+			 0 '@@iterator
+			 :prototype (js-undefined))
+	       :writable #t :enumerable #f :configurable #t)
+	    proto))
+      
       (define js-gen-proto
 	 (instantiateJsObject
 	    (cmap (instantiate::JsConstructMap))
-	    (__proto__ __proto__)))
+;* 	    (__proto__ __proto__)                                      */
+	    (__proto__ js-gen-proto-proto)
+	    ))
 
       (define js-genfun-proto
 	 (instantiateJsObject
@@ -165,13 +181,13 @@
 		   1 'throw)
 	 :hidden-class #t)
 
-      (js-bind! %this js-gen-proto js-symbol-iterator
-	 :configurable #t :enumerable #f :writable #t
-	 :value (js-make-function %this
-		   (lambda (this val)
-		      this)
-		   0 '@@iterator
-		   :prototype (js-undefined)))
+;*       (js-bind! %this js-gen-proto js-symbol-iterator               */
+;* 	 :configurable #t :enumerable #f :writable #t                  */
+;* 	 :value (js-make-function %this                                */
+;* 		   (lambda (this val)                                  */
+;* 		      this)                                            */
+;* 		   0 '@@iterator                                       */
+;* 		   :prototype (js-undefined)))                         */
 
       (js-bind! %this js-gen-proto js-symbol-tostringtag
 	 :configurable #t :enumerable #f :writable #f
@@ -221,6 +237,21 @@
 		   (%js-eval ip 'eval %this this %this)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-put! ::JsGenerator ...                                        */
+;*    -------------------------------------------------------------    */
+;*    The first time [[PUT]] is called on a generator it is            */
+;*    de-optimized (see JS-MAKE-CONSTRUCT).                            */
+;*---------------------------------------------------------------------*/
+(define-method (js-put! this::JsGenerator prop v throw %this)
+   (with-access::JsGenerator this (cmap elements)
+      (when (and (null? (js-object-properties this)) (isa? cmap JsConstructMap))
+	 ;; de-optimze the generator first
+	 (set! cmap (js-not-a-cmap))
+	 (set! elements '#()))
+      ;; regular [[PUT]] invocation
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-make-generator ...                                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generators use a special encoding. They directly point to the    */
@@ -238,24 +269,9 @@
 	    (%next proc)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-put! ::JsGenerator ...                                        */
-;*    -------------------------------------------------------------    */
-;*    The first time [[PUT]] is called on a generator it is            */
-;*    de-optimized (see JS-MAKE-CONSTRUCT).                            */
+;*    js-make-map-iterator ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put! this::JsGenerator prop v throw %this)
-   (with-access::JsGenerator this (cmap elements)
-      (when (and (null? (js-object-properties this)) (isa? cmap JsConstructMap))
-	 ;; de-optimze the generator first
-	 (set! cmap (js-not-a-cmap))
-	 (set! elements '#()))
-      ;; regular [[PUT]] invocation
-      (call-next-method)))
-
-;*---------------------------------------------------------------------*/
-;*    js-make-iterator ...                                             */
-;*---------------------------------------------------------------------*/
-(define (js-make-iterator obj %this)
+(define (js-make-map-iterator obj proc %this)
    (letrec ((%gen (js-make-generator
 		     (lambda (%v %e)
 			(let ((i 0))
@@ -265,7 +281,7 @@
 				     (js-generator-yield %gen
 					(js-undefined) #t
 					loop %this)
-				     (let ((val (js-get obj i %this)))
+				     (let ((val (proc i (js-get obj i %this))))
 					(set! i (+fx i 1))
 					(js-generator-yield %gen
 					   val #f
@@ -274,6 +290,12 @@
 			js-generator-prototype)
 		     %this)))
       %gen))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-iterator ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-make-iterator obj %this)
+   (js-make-map-iterator obj (lambda (key val) val) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-generator-yield ...                                           */

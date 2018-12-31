@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sun Dec 30 19:03:31 2018 (serrano)                */
+;*    Last change :  Mon Dec 31 06:14:40 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -402,7 +402,18 @@
       :value (js-make-function %this js-typedarray-includes 1 'includes)
       :configurable #t
       :writable #t
-      :enumerable #f))
+      :enumerable #f)
+
+   (let ((not-implemented (js-not-implemented %this)))
+      (for-each (lambda (id)
+		   (js-bind! %this proto id
+		      :value (js-make-function %this not-implemented 1 id)
+		      :configurable #t
+		      :writable #t
+		      :enumerable #f))
+	 '(copyWithin entries every fill filter find findIndex forEach
+	   indexOf join keys reduce reduceRight reverse set slice some
+	   sort subarray toLocaleString toString values @@iterator))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-typedarray! ...                                          */
@@ -1361,6 +1372,14 @@
 	 (js-bind! %this %this 'DataView
 	    :configurable #f :enumerable #f :value js-dataview
 	    :hidden-class #t)
+
+	 (js-bind! %this %this 'from
+	    :configurable #f :enumerable #f :value (js-not-implemented %this)
+	    :hidden-class #t)
+	    
+	 (js-bind! %this %this 'of
+	    :configurable #f :enumerable #f :value (js-not-implemented %this)
+	    :hidden-class #t)
 	 
 	 js-dataview)))
 	 
@@ -1378,3 +1397,10 @@
 		      (when (<u32 i length)
 			 (proc (vref %data (uint32->fixnum i)))
 			 (loop (+u32 i 1))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-not-implemented ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-not-implemented %this)
+   (lambda (js-not-implemented this::obj)
+      (js-raise-type-error %this "Not implemented" this)))

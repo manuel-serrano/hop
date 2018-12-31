@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Dec 29 07:45:02 2018 (serrano)                */
+;*    Last change :  Mon Dec 31 07:00:33 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -190,6 +190,7 @@
 	      (js-symbol-species (default (js-undefined)))
 	      (js-symbol-hasinstance (default (js-undefined)))
 	      (js-symbol-tostringtag (default (js-undefined)))
+	      (js-symbol-unscopables (default (js-undefined)))
 	      (js-main (default (js-null)))
 	      (js-call (default #f))
 	      (js-apply (default #f))

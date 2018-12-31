@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Dec 28 06:50:15 2018 (serrano)                */
+;*    Last change :  Mon Dec 31 11:10:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1031,12 +1031,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-prototype-hasownproperty ...                           */
 ;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.5 */  */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.5     */
 ;*---------------------------------------------------------------------*/
 (define (js-object-prototype-hasownproperty this v %this)
-   (let* ((p (js-tostring v %this))
-	  (o (js-toobject %this this)))
-      (js-has-own-property o p %this)))
+   ;; the conversion TopRopertyKey is implemented by js-has-has-own-property
+   (js-has-own-property (js-toobject %this this) v %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-extensible? ::JsObject ...                                    */

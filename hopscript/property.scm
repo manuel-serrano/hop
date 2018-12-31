@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Dec 30 11:37:01 2018 (serrano)                */
+;*    Last change :  Mon Dec 31 11:09:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -182,8 +182,8 @@
 	      desc::JsPropertyDescriptor throw::bool
 	      ::JsGlobalObject)
 
-	   (generic js-getprototypeof o::JsObject ::JsGlobalObject ::obj)
-	   (generic js-setprototypeof o::JsObject ::obj ::JsGlobalObject ::obj)
+	   (generic js-getprototypeof o::obj ::JsGlobalObject ::obj)
+	   (generic js-setprototypeof o::obj ::obj ::JsGlobalObject ::obj)
 	   
 	   (generic js-seal ::JsObject ::obj)
 	   (generic js-freeze ::JsObject ::obj)
@@ -1003,6 +1003,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toname ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    www.ecma-international.org/ecma-262/7.0/#sec-topropertykey       */
 ;*---------------------------------------------------------------------*/
 (define (js-toname p %this)
    (let loop ((p p))
@@ -1332,7 +1334,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.6       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property::bool o::JsObject name::obj %this)
-   (jsobject-find o name
+   (jsobject-find o (js-toname name %this)
       ;; cmap search
       (lambda (o i) #t)
       ;; property search
@@ -1355,7 +1357,7 @@
 ;*    js-has-own-property ::JsObject ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-own-property o::JsObject p::obj %this)
-   (jsobject-find o (string->symbol p)
+   (jsobject-find o (js-toname p %this)
       ;; cmap search
       (lambda (owner i) #t)
       ;; prototype search
@@ -2837,17 +2839,27 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-getprototypeof ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-getprototypeof o::JsObject %this::JsGlobalObject msg::obj)
-   (let ((o (js-cast-object o %this msg)))
-      (with-access::JsObject o (__proto__)
-	 __proto__)))
+(define-generic (js-getprototypeof o %this::JsGlobalObject msg::obj)
+   (js-getprototypeof (js-cast-object o %this msg) %this msg))
+
+;*---------------------------------------------------------------------*/
+;*    js-getprototypeof ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (js-getprototypeof o::JsObject %this::JsGlobalObject msg::obj)
+   (with-access::JsObject o (__proto__)
+      __proto__))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-setprototypeof ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-setprototypeof o v %this msg)
-   (let ((o (js-cast-object o %this msg))
-	 (v (if (eq? v '()) v (js-cast-object v %this msg))))
+(define-generic (js-setprototypeof o v %this::JsGlobalObject msg)
+   (js-setprototypeof (js-cast-object o %this msg) v %this msg))
+
+;*---------------------------------------------------------------------*/
+;*    js-setprototypeof ::JsObject ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (js-setprototypeof o::JsObject v %this msg)
+   (let ((v (if (eq? v '()) v (js-cast-object v %this msg))))
       (if (not (js-object-mode-extensible? o))
 	  (js-raise-type-error %this 
 	     "Prototype of non-extensible object mutated" v)

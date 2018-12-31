@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Dec  7 22:19:45 2018 (serrano)                */
+;*    Last change :  Mon Dec 31 11:30:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -92,7 +92,7 @@
 		    (display "])" op)
 		    (begin
 		       (display "," op)
-		       (when (js-has-property o (js-toname i %this) %this)
+		       (when (js-has-property o i %this)
 			  (hop->javascript (js-get o i %this)
 			     op compile isexpr))
 		       (loop (+u32 i (fixnum->uint32 1))))))))))

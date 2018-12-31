@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Dec 29 19:36:40 2018 (serrano)                */
+;*    Last change :  Mon Dec 31 11:16:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -127,7 +127,7 @@
 	   (js-toindex::uint32 ::obj)
 	   (inline js-isindex?::bool ::uint32)
 	   (inline js-index?::bool ::obj)
-	   
+
 	   (generic js-tostring::bstring ::obj ::JsGlobalObject)
 	   (js-tostring-safe::bstring ::obj ::JsGlobalObject)
 	   (js-tojsstring::obj ::obj ::JsGlobalObject)
@@ -880,9 +880,9 @@
 			 ((isa? d JsWrapperDescriptor)
 			  (with-access::JsWrapperDescriptor d (value)
 			     value)))))))
-	 (let loop ((v v))
-	    (if (not (isa? v JsObject))
-		(js-raise-type-error %this "instanceof: no prototype ~s" v)
+	 (if (not (isa? o JsObject))
+	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
+	     (let loop ((v v))
 		(with-access::JsObject v ((v __proto__))
 		   (cond
 		      ((eq? o v) #t)
@@ -891,15 +891,14 @@
 
 (define (js-ordinary-instanceof/debug %this loc v f)
    (let ((o (js-get f 'prototype %this)))
-      (let loop ((v v))
-	 (if (not (isa? v JsObject))
-	     (js-raise-type-error/loc %this loc
-		"instanceof: no prototype ~s" v)
-	     (with-access::JsObject v ((v __proto__))
-		(cond
-		   ((eq? o v) #t)
-		   ((eq? v (js-null)) #f)
-		   (else (loop v))))))))
+      (if (not (isa? o JsObject))
+          (js-raise-type-error/loc %this loc "instanceof: no prototype ~s" v)
+          (let loop ((v v))
+             (with-access::JsObject v ((v __proto__))
+                (cond
+                   ((eq? o v) #t)
+                   ((eq? v (js-null)) #f)
+                   (else (loop v))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-instanceof? ...                                               */
@@ -950,12 +949,12 @@
 (define (js-in? %this field obj)
    (if (not (isa? obj JsObject))
        (js-raise-type-error %this "in: not an object ~s" obj)
-       (js-has-property obj (js-toname field %this) %this)))
+       (js-has-property obj field %this)))
 
 (define (js-in?/debug %this loc field obj)
    (if (not (isa? obj JsObject))
        (js-raise-type-error/loc %this loc "in: not an object ~s" obj)
-       (js-has-property obj (js-toname field %this) %this)))
+       (js-has-property obj field %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-let ...                                                  */

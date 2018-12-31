@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Dec 30 17:03:02 2018 (serrano)                */
+;*    Last change :  Mon Dec 31 06:22:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -480,6 +480,18 @@
 		      :prototype (js-undefined))
 	    :enumerable #f
 	    :hidden-class #t)
+
+	 ;; of
+	 ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.of
+	 (define (array-of this::obj . items)
+	    (js-vector->jsarray (list->vector items) %this))
+	 
+	 (js-bind! %this js-array 'of
+	    :value (js-make-function %this array-of
+		      0 'of
+		      :prototype (js-undefined))
+	    :enumerable #f
+	    :hidden-class #t)
 	 
 	 ;; init the prototype properties
 	 (init-builtin-array-prototype! %this js-array js-array-prototype)
@@ -488,6 +500,15 @@
 	 (js-bind! %this %this 'Array
 	    :configurable #f :enumerable #f :value js-array
 	    :hidden-class #t)
+
+	 ;; @@species
+	 ;; www.ecma-international.org/ecma-262/6.0/#sec-get-array-@@species
+	 (with-access::JsGlobalObject %this (js-symbol-species)
+	    (js-bind! %this js-array js-symbol-species
+	       :get (js-make-function %this (lambda (this) js-array)
+		       0 '|get [Symbol.species]|)
+	       :enumerable #f
+	       :configurable #t))
 
 	 js-array)))
 
@@ -1026,7 +1047,83 @@
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
+
+   ;; copyWithin
+   ;; https://www.ecma-international.org/ecma-262/7.0/#sec-array.prototype.copywithin
+   (define (array-prototype-copywithin this::obj target start end)
+      (let* ((o (js-toobject %this this))
+	     (len (js-get-length o %this))
+	     (relativetarget (js-tointeger target %this))
+	     (to (if (< relativetarget 0)
+		     (max (+ len relativetarget) 0)
+		     (min relativetarget len)))
+	     (relativestart (js-tointeger start %this))
+	     (from (if (< relativestart 0)
+		       (max (+ len relativestart) 0)
+		       (min relativestart len)))
+	     (relativeend (if (eq? end (js-undefined))
+			      len
+			      (js-tointeger end %this)))
+	     (final (if (< relativeend 0)
+			(max (+ len relativeend) 0)
+			(min relativeend len)))
+	     (count (min (- final from) (- len to)))
+	     (direction 1))
+	 ;; step 10
+	 (when (and (< from to) (< to (+ from count)))
+	    (set! direction -1)
+	    (set! from (- (+ from count) 1))
+	    (set! o (- (- to count) 1)))
+	 (if (and (js-array? o) (js-array-inlined? o))
+	     (with-access::JsArray o (vec)
+		(let loop ((from (->fixnum from))
+			   (to (->fixnum to))
+			   (count count))
+		   (when (>fx count 0)
+		      ;; step 12.d
+		      (let ((fromval (vector-ref vec from)))
+			 (vector-set! vec to fromval))
+		      ;; step 12.3
+		      (loop (+ from direction)
+			 (+ to direction)
+			 (-fx count 1)))))
+	     (let loop ((from from)
+			(to to)
+			(count count))
+		(when (>fx count 0)
+		   (let ((toi (js-tointeger to %this))
+			 (fromi (js-tointeger from %this)))
+		      (if (js-has-property o fromi %this)
+			  ;; step 12.d
+			  (let ((fromval (js-get o fromi %this)))
+			     (js-put! o toi fromval #f %this))
+			  ;; step 12.3
+			  (js-delete! o toi #t %this))
+		      (loop (+ from direction)
+			 (+ to direction)
+			 (-fx count 1))))))
+	 o))
+
+   (js-bind! %this js-array-prototype 'copyWithin
+      :value (js-make-function %this array-prototype-copywithin 2 'copyWithin
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+
+   ;; entries
+   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.entries
+   (define (array-prototype-entries this::obj)
+      (js-make-map-iterator (js-toobject %this this)
+	 (lambda (key val)
+	    (js-vector->jsarray (vector key val) %this))
+	 %this))
    
+   (js-bind! %this js-array-prototype 'entries
+      :value (js-make-function %this array-prototype-entries 0 'entries
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+
    ;; join
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.5
    (define (array-prototype-join this::obj separator)
@@ -2039,6 +2136,17 @@
       :enumerable #f
       :hidden-class #t)
 
+   ;; fill
+   ;; http://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.fill
+   (define (array-prototype-fill this::obj value start end)
+      (js-array-maybe-fill this value start end %this))
+   
+   (js-bind! %this js-array-prototype 'fill
+      :value (js-make-function %this array-prototype-fill 1 'fill
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
    ;; find
    ;; http://www.ecma-international.org/ecma-262/7.0/#sec-indexed-collections#sec-array.prototype.find
    (define (array-prototype-find this::obj proc t)
@@ -2257,7 +2365,7 @@
       :enumerable #f
       :hidden-class #t)
    
-   ;; iterator
+   ;; @@iterator
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-22.1.3.30
    (define (array-prototype-array-values this::obj)
       (js-make-iterator this %this))
@@ -2270,16 +2378,20 @@
 	 :enumerable #f
 	 :hidden-class #t))
 
-   ;; fill
-   ;; http://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.fill
-   (define (array-prototype-fill this::obj value start end)
-      (js-array-maybe-fill this value start end %this))
-   
-   (js-bind! %this js-array-prototype 'fill
-      :value (js-make-function %this array-prototype-fill 1 'fill
-		:prototype (js-undefined))
-      :enumerable #f
-      :hidden-class #t))
+   ;; @@unscopable
+   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-22.1.3.31
+   (with-access::JsGlobalObject %this (__proto__ js-symbol-unscopables)
+      (let ((unscopables (instantiateJsObject
+			    (__proto__ __proto__))))
+	 (for-each (lambda (id)
+		      (js-bind! %this unscopables id
+			 :value #t :writable #f :enumerable #f :configurable #t))
+	    '(copyWithin entries fill find findIndex keys values))
+	 
+	 (js-bind! %this js-array-prototype js-symbol-unscopables
+	    :value unscopables
+	    :enumerable #f
+	    :hidden-class #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-array ...                                                    */

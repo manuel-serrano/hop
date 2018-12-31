@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  5 22:00:24 2018                          */
-;*    Last change :  Sun Dec 30 11:42:45 2018 (serrano)                */
+;*    Last change :  Mon Dec 31 11:31:59 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Reflect object.              */
@@ -92,7 +92,7 @@
 	 (js-getprototypeof target %this "getPrototypeOf"))
 
       (define (js-reflect-hasown this target prop)
-	 (js-has-property target (js-toname prop %this) %this))
+	 (js-has-property target prop %this))
 	 
       (define (js-reflect-is-extensible this target)
 	 (js-extensible? target %this))

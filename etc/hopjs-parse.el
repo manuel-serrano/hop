@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun Dec 30 16:46:31 2018 (serrano)                */
+;*    Last change :  Mon Dec 31 09:22:06 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -441,7 +441,7 @@
    (hopjs-parse-peek-token)
    (hopjs-parse-peek-token-string)
    (let ((etok (hopjs-parse-expr-simple tok multilinep)))
-     (while etok
+     (when etok
        (case (hopjs-parse-peek-token-type)
 	 ((dot)
 	  (let ((dtok (hopjs-parse-consume-token-any)))
@@ -473,9 +473,9 @@
 	      (t
 	       tok))))
 	 ((new)
-	  (setq etok (hopjs-parse-consume-token-any)))
+	  (hopjs-parse-expr-unop (hopjs-parse-consume-token-any) multilinep))
 	 ((yield yield*)
-	  (hopjs-parse-consume-token-any))
+	  (hopjs-parse-expr-unop (hopjs-parse-consume-token-any) multilinep))
 	 ((colon)
 	  (hopjs-debug 0 "hopjs-parse-expr.colon etok=%s [%s] peek=%s [%s] same=%s"
 		       etok (hopjs-parse-token-string etok)
@@ -543,6 +543,16 @@
 		  etok)))
 	    '()))
 	 (t etok))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-expr-unop ...                                        */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-expr-unop (tok multilinep)
+  (let ((peek (hopjs-parse-peek-token)))
+    (if (and (memq (hopjs-parse-token-type peek) '(unop))
+	     (or multilinep (hopjs-parse-same-linep peek tok)))
+	(hopjs-parse-consume-token-any)
+      tok)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-expr-simple ...                                      */
