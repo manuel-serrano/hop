@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Dec 29 18:59:41 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan  1 06:19:24 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
 ;*=====================================================================*/
@@ -142,10 +142,11 @@
 	       (with-access::J2SFun val (generator)
 		  (unless generator
 		     (and (usage? '(new) usage)
-			  (not (usage? '(ref get call) usage))
-			  (begin
-			     ;; (tprint "remove #f here")
-			     #f))))))))
+			  (not (usage? '(ref get call) usage)))))))))
+   ;; CARE CONSTRUCTOR-ONLY? #f
+;* 			  (begin                                       */
+;* 			     ;; (tprint "remove #f here")              */
+;* 			     #f))))))))                                */
 
    (define (lambda? id)
       (or (memq id '(lambda lambda::obj))
