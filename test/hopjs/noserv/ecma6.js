@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sun Dec 30 13:21:55 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Tue Jan  1 06:37:49 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 6 features                               */
 /*=====================================================================*/
@@ -139,8 +139,23 @@ function mdna() {
       && ((2 ** 3) ** 2) === 64;
 }
 
+function mdnb() {
+   var test = { a: 1 };   
+   
+   console.log( 0/0, Object.is(NaN, 0/0) );
+   return Object.is('foo', 'foo')
+      && !Object.is('foo', 'bar')
+      && !Object.is([], [])
+      && Object.is(test, test)
+      && Object.is(null, null)
+      && !Object.is(0, -0)
+      && Object.is(-0, -0)
+      && Object.is(NaN, 0/0);          
+}
+
 console.log( "mdn" );
 console.log( "   mdna()"); assert.ok( mdna(), "mdna" );
+console.log( "   mdnb()"); assert.ok( mdnb(), "mdnb" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -162,8 +177,15 @@ function kangaxc() {
    }
 }
 
+function kangaxd() {
+   return typeof Object.is === 'function' &&
+      Object.is(NaN, NaN) &&
+      !Object.is(-0, 0);
+}
+ 
 console.log( "kangax" );
 console.log( "   kangaxa()"); assert.ok( kangaxa(), "kangaxa" );
 console.log( "   kangaxb()"); assert.ok( kangaxb(), "kangaxb" );
 console.log( "   kangaxc()"); assert.ok( kangaxc(), "kangaxc" );
+console.log( "   kangaxd()"); assert.ok( kangaxd(), "kangaxd" );
 

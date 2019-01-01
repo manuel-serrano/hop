@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Dec 31 11:10:58 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan  1 06:44:45 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
 ;*                                                                     */
@@ -809,6 +809,20 @@
 	       ((proc (vector-ref v i)) (loop (-fx i 1)))
 	       (else #f))))
       
+      ;; is
+      ;; https://www.ecma-international.org/ecma-262/6.0/#sec-object.is
+      (define (is this x y)
+	 ;; SameValue algorithm
+	 (or (eq? x y)
+	     (js-eqstring? x y)
+	     (and (flonum? x) (flonum? y)
+		  (or (and (=fl x y) (=fx (signbitfl x) (signbitfl y)))
+		      (and (nanfl? x) (nanfl? y))))))
+
+      (js-bind! %this js-object 'is
+	 :value (js-make-function %this is 2 'is)
+	 :enumerable #f :configurable #t :writable #t :hidden-class #f)
+	    
       ;; isSealed
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.11
       (define (issealed this o)
@@ -866,7 +880,9 @@
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #f)
-      
+
+      ;; isExtensible
+      ;; https://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13
       (define (isextensible this obj)
 	 (let ((o (js-cast-object obj %this "Object.isExtensible")))
 	    (js-object-mode-extensible? o)))
@@ -880,7 +896,9 @@
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #f)
-      
+
+      ;; keys
+      ;; https://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14
       (js-bind! %this js-object 'keys
 	 :value (js-make-function %this (lambda (this obj)
 					   (js-ownkeys obj %this))
