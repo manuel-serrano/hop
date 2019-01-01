@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Dec 31 11:09:35 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan  1 07:46:53 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
 ;*    deleting).                                                       */
@@ -2932,21 +2932,22 @@
 (define-method (js-for-in obj::JsObject proc %this)
    
    (define env '())
-   
-   (define (vfor-each proc vec vecname)
-      (let ((len (vector-length vecname)))
-	 (let loop ((i 0))
-	    (when (<fx i len)
-	       (proc (vector-ref vec i) (vector-ref vecname i))
-	       (loop (+fx i 1))))))
-   
-   (define (in-mapped-property el-or-descr prop)
-      (when (and prop (flags-enumerable? (prop-flags prop)))
+
+   (define (in-mapped-property prop)
+      (when prop
 	 (let ((name (prop-name prop)))
 	    (when (symbol? name)
 	       (unless (memq name env)
 		  (set! env (cons name env))
-		  (proc (js-string->jsstring (symbol->string! name))))))))
+		  (when (flags-enumerable? (prop-flags prop))
+		     (proc (js-symbol->jsstring name))))))))
+
+   (define (vfor-in vecname)
+      (let ((len (vector-length vecname)))
+	 (let loop ((i 0))
+	    (when (<fx i len)
+	       (in-mapped-property (vector-ref vecname i))
+	       (loop (+fx i 1))))))
    
    (define (in-property p)
       (when (isa? p JsPropertyDescriptor)
@@ -2955,14 +2956,15 @@
 	       (unless (memq name env)
 		  (set! env (cons name env))
 		  (when (eq? enumerable #t)
-		     (proc (js-string->jsstring (symbol->string! name)))))))))
+		     (proc (js-symbol->jsstring name))))))))
 
    (let loop ((o obj))
       (with-access::JsObject o (cmap __proto__ elements)
-	 (if (not (eq? cmap (js-not-a-cmap)))
-	     (with-access::JsConstructMap cmap (props)
-		(vfor-each in-mapped-property elements props))
-	     (for-each in-property (js-object-properties o)))
+	 (when (js-object-mode-enumerable? o)
+	    (if (not (eq? cmap (js-not-a-cmap)))
+		(with-access::JsConstructMap cmap (props)
+		   (vfor-in props))
+		(for-each in-property (js-object-properties o))))
 	 (when (isa? __proto__ JsObject)
 	    (loop __proto__)))))
 

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Dec  6 21:48:41 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan  1 09:34:33 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
 ;*=====================================================================*/
@@ -32,6 +32,7 @@
 	   (inline js-utf8->jsstring::JsStringLiteralUTF8 ::bstring)
 	   (js-string->jsstring::obj ::bstring)
 	   (js-stringlist->jsstring ::pair-nil)
+	   (inline js-symbol->jsstring::obj ::symbol)
 	   (inline js-jsstring->string::bstring ::obj)
 	   (inline js-jsstring?::bool ::obj)
 	   (js-jsstring-character-ref ::obj ::uint32)
@@ -366,6 +367,17 @@
 	     (if (null? (cdr lav))
 		 (js-jsstring-append (car lav) acc)
 		 (loop (cdr lav) (js-jsstring-append (car lav) acc))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-symbol->jsstring ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-symbol->jsstring sym::symbol)
+   (let ((o (c-symbol-plist sym)))
+      (if (null? o)
+	  (let ((s (js-string->jsstring (symbol->string! sym))))
+	     (set-symbol-plist sym s)
+	     s)
+	  o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->string ...                                          */
@@ -1028,36 +1040,36 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-ref o index::uint32)
    
-   (define (ascii-string-ref val fxpos)
-      (if (>=fx fxpos (string-length val))
+   (define (ascii-string-ref val index)
+      (if (>=u32 index (fixnum->uint32 (string-length val)))
 	  (js-undefined)
 	  (vector-ref prealloc-strings
-	     (char->integer (string-ref-ur val fxpos)))))
+	     (char->integer (string-ref-ur val (uint32->fixnum index))))))
    
-   (define (utf8-string-ref val fxpos)
-      (if (>=fx fxpos (utf8-codeunit-length val))
+   (define (utf8-string-ref val index)
+      (if (>=u32 index (fixnum->uint32 (utf8-codeunit-length val)))
 	  (js-undefined)
-	  (js-utf8-ref o val fxpos)))
+	  (js-utf8-ref o val (uint32->fixnum index))))
 
-   (string-dispatch string-ref o (uint32->fixnum index)))
+   (string-dispatch string-ref o index))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-ref-as-string ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-ref-as-string o index::uint32)
    
-   (define (ascii-string-ref val fxpos)
-      (if (>=fx fxpos (string-length val))
+   (define (ascii-string-ref val index)
+      (if (>=u32 index (fixnum->uint32 (string-length val)))
 	  "undefined"
 	  (vector-ref prealloc-strings
-	     (char->integer (string-ref-ur val fxpos)))))
+	     (char->integer (string-ref-ur val (uint32->fixnum index))))))
    
-   (define (utf8-string-ref val fxpos)
-      (if (>=fx fxpos (utf8-codeunit-length val))
+   (define (utf8-string-ref val index)
+      (if (>=u32 index (fixnum->uint32 (utf8-codeunit-length val)))
 	  "undefined"
-	  (js-utf8-ref o val fxpos)))
+	  (js-utf8-ref o val (uint32->fixnum index))))
 
-   (string-dispatch string-ref o (uint32->fixnum index)))
+   (string-dispatch string-ref o index))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string-ref ...                                                */

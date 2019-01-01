@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Dec 31 07:00:33 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan  1 10:14:09 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -360,6 +360,9 @@
 	   (inline js-object-mode-holey?::bool ::JsObject)
 	   (inline js-object-mode-holey-set! ::JsObject ::bool)
 	   
+	   (inline js-object-mode-enumerable?::bool ::JsObject)
+	   (inline js-object-mode-enumerable-set! ::JsObject ::bool)
+	   
 	   (inline JS-OBJECT-MODE-EXTENSIBLE::uint32)
 	   (inline JS-OBJECT-MODE-SEALED::uint32)
 	   (inline JS-OBJECT-MODE-FROZEN::uint32)
@@ -369,6 +372,7 @@
 	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
+	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
 
 	   (inline js-object-inline-elements?::bool ::JsObject)
 	   (inline js-object-inline-ref ::JsObject ::long)
@@ -455,6 +459,7 @@
 (define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:64)
 (define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:128)
 (define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:256)
+(define-inline (JS-OBJECT-MODE-ENUMERABLE) #u32:512)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-macro (JS-OBJECT-MODE-SEALED) #u32:2)
@@ -465,6 +470,7 @@
 (define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:64)
 (define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:128)
 (define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:256)
+(define-macro (JS-OBJECT-MODE-ENUMERABLE) #u32:512)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -535,6 +541,16 @@
       (if flag
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYHOLEY))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-JSARRAYHOLEY))))))
+
+(define-inline (js-object-mode-enumerable? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-ENUMERABLE) (js-object-mode o))
+      (JS-OBJECT-MODE-ENUMERABLE)))
+
+(define-inline (js-object-mode-enumerable-set! o flag)
+   (js-object-mode-set! o
+      (if flag
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-ENUMERABLE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-ENUMERABLE))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-elements? ...                                   */

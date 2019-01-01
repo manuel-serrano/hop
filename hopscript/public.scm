@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Dec 31 11:16:16 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan  1 09:39:27 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/
@@ -1185,7 +1185,7 @@
       ((eq? obj #f) "false")
       ((eq? obj (js-null)) "null")
       ((number? obj) (js-number->string obj))
-      ((symbol? obj) (symbol->string! obj))
+      ((symbol? obj) (js-symbol->jsstring obj))
       (else (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -1197,7 +1197,7 @@
       ((eq? obj #t) "true")
       ((eq? obj #f) "false")
       ((number? obj) (js-number->string obj))
-      ((symbol? obj) (symbol->string! obj))
+      ((symbol? obj) (js-symbol->jsstring obj))
       (else (js-tostring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -1695,7 +1695,7 @@
       ((js-jsstring? obj)
        (js-jsstring->string obj))
       ((symbol? obj)
-       (symbol->string! obj))
+       (js-symbol->jsstring obj))
       ((number? obj)
        (number->string obj))
       (else
