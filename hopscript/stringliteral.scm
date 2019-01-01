@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan  1 09:34:33 2019 (serrano)                */
+;*    Last change :  Tue Jan  1 13:41:20 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -372,12 +372,7 @@
 ;*    js-symbol->jsstring ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-symbol->jsstring sym::symbol)
-   (let ((o (c-symbol-plist sym)))
-      (if (null? o)
-	  (let ((s (js-string->jsstring (symbol->string! sym))))
-	     (set-symbol-plist sym s)
-	     s)
-	  o)))
+   (js-string->jsstring (symbol->string! sym)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->string ...                                          */
