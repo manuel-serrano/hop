@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Dec 31 06:22:38 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan  1 09:27:54 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
 ;*=====================================================================*/
@@ -724,7 +724,7 @@
 		  (else (<fx idx (-fx (bit-lsh 1 32) 1)))))
 	  (vector-ref vec idx))
 	 ((and (js-object-mode-holey? arr)
-	       (<fx idx (vector-length vec))
+	       (<u32 (fixnum->uint32 idx) (fixnum->uint32 (vector-length vec)))
 	       (cond-expand
 		  ((or bint30 bint32) #t)
 		  (else (<fx idx (-fx (bit-lsh 1 32) 1)))))
