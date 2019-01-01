@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jan  1 10:14:09 2019 (serrano)                */
+;*    Last change :  Tue Jan  1 12:41:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -370,9 +370,10 @@
 	   (inline JS-OBJECT-MODE-GETTER::uint32)
 	   (inline JS-OBJECT-MODE-HASINSTANCE::uint32)
 	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
+	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
-	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
+	   
 
 	   (inline js-object-inline-elements?::bool ::JsObject)
 	   (inline js-object-inline-ref ::JsObject ::long)
@@ -443,12 +444,14 @@
 (define-inline (js-object-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
       (bit-oru32 (JS-OBJECT-MODE-INLINE)
-	 (JS-OBJECT-MODE-JSOBJECTTAG))))
+	 (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	    (JS-OBJECT-MODE-ENUMERABLE)))))
 
 (define-inline (js-array-default-mode)
    (bit-oru32 (js-object-default-mode)
       (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
-	 (JS-OBJECT-MODE-JSARRAYTAG))))
+	 (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	    (JS-OBJECT-MODE-ENUMERABLE)))))
 
 (define-inline (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-inline (JS-OBJECT-MODE-SEALED) #u32:2)
@@ -457,9 +460,10 @@
 (define-inline (JS-OBJECT-MODE-GETTER) #u32:16)
 (define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
 (define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:64)
-(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:128)
-(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:256)
-(define-inline (JS-OBJECT-MODE-ENUMERABLE) #u32:512)
+(define-inline (JS-OBJECT-MODE-ENUMERABLE) #u32:128)
+;; WARNING: music be the two last constants (see js-array?)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:256)
+(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:512)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-macro (JS-OBJECT-MODE-SEALED) #u32:2)
@@ -468,9 +472,9 @@
 (define-macro (JS-OBJECT-MODE-GETTER) #u32:16)
 (define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
 (define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:64)
-(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:128)
-(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:256)
-(define-macro (JS-OBJECT-MODE-ENUMERABLE) #u32:512)
+(define-macro (JS-OBJECT-MODE-ENUMERABLE) #u32:128)
+(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:256)
+(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:512)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
