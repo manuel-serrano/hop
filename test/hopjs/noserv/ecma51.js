@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Dec  6 14:55:26 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Sat Jan  5 07:10:25 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
 /*=====================================================================*/
@@ -342,7 +342,7 @@ assert.ok( !ctotorcall( 2 ), "ctotor sans object" );
 var p1 = Object.getOwnPropertyDescriptor( ctotor, "length" );
 var p2 = Object.getOwnPropertyDescriptor( ctotor, "name" );
 
-assert.ok( !p2.writable && !p2.enumerable && !p2.configurable );
+assert.ok( !p2.writable && !p2.enumerable && p2.configurable );
 
 /*---------------------------------------------------------------------*/
 /*    assignop                                                         */
@@ -433,3 +433,70 @@ Foo.apply = function( self, args ) {
 }
 
 assert.ok( Foo.apply( null, [ 1, 2, 3, 4 ] ) === 24, "apply" );
+
+/*---------------------------------------------------------------------*/
+/*    seal and freeze                                                  */
+/*---------------------------------------------------------------------*/
+function testSeal() {
+   var o1 = { a: 10 };
+   
+   Object.seal( o1 );
+   o1.a = 100;
+   
+   var o2 = { __proto__: o1 };
+   const o2a = o2.a;
+   
+   o2.a = 50;
+
+   return o2a + o2.a === 150;
+}
+
+function testSealReadOnly() {
+   var o1 = {};
+   
+   Object.defineProperty( o1, "a", { value: 100, writable: false } );
+   
+   Object.seal( o1 );
+   
+   var o2 = { __proto__: o1 };
+   const o2a = o2.a;
+   
+   o2.a = 50;
+
+   return o2a + o2.a === 200;
+}
+
+function testSealReadOnlyStrict() {
+   "use strict";
+   var o1 = {};
+   
+   Object.defineProperty( o1, "a", { value: 100, writable: false } );
+   
+   Object.seal( o1 );
+   
+   var o2 = { __proto__: o1 };
+   const o2a = o2.a;
+   
+   o2.a = 50;
+
+   return o2a + o2.a === 200;
+}
+
+function testFreeze() {
+   var o1 = { a: 10 };
+   
+   Object.freeze( o1 );
+   o1.a = 100;
+   
+   var o2 = { __proto__: o1 };
+   const o2a = o2.a;
+   
+   o2.a = 50;
+   
+   return o2a + o2.a === 20;
+}
+
+assert.ok( testSeal(), "seal" );
+assert.ok( testSealReadOnly(), "sealReadOnly" );
+assert.throws( testSealReadOnlyStrict, "sealReadOnlyStrict" );
+assert.ok( testFreeze(), "freeze" );

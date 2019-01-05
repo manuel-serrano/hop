@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Jan  1 06:44:45 2019 (serrano)                */
+;*    Last change :  Fri Jan  4 18:52:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -52,6 +52,7 @@
    (with   __hopscript_dom)
    
    (export (js-initial-global-object)
+	   (js-hop-builtin? ::obj ::obj)
 	   (js-new-global-object::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -261,13 +262,21 @@
 (define (js-new-global-object)
    ;; before all, initialize the builtin object prototype
    ;; and then create the global object
-   (let* ((%prototype (instantiateJsObject
+   (let* ((%void (instantiate::JsGlobalObject
+		     (cmap (make-cmap '#()))
+		     (__proto__ (js-null))))
+	  (%prototype (instantiateJsObject
 			 (cmap (instantiate::JsConstructMap))
-			 (__proto__ (js-null))
-			 (elements (make-vector 20))))
+;* 			 (__proto__ (js-null))                         */
+			 (__proto__ (js-hop-builtin %void))
+			 (elements (make-vector 40))))
 	  (%this (instantiateJsGlobalObject
 		    (cmap (make-cmap '#()))
 		    (__proto__ %prototype))))
+      ;; freeze the void object
+      (js-object-properties-set! %void '())
+      (js-freeze %void %void)
+      (js-seal %void %void)
       ;; for bootstrap, first allocat hasInstance symbol
       (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 	 (set! js-symbol-hasinstance
@@ -451,25 +460,6 @@
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
-	    ;; html_base
-	    (js-bind-tags! %this %this
-	       A ABBR ACRONYM ADDRESS APPLET AREA ARTICLE B BASE
-	       BASEFONT BDI BDO BIG BLOCKQUOTE BODY BR BUTTON
-	       CANVAS CAPTION CENTER CITE CODE COL COLGROUP
-	       DATALIST DD DEL DETAILS DFN DIR DIV DL DT EM EMBED FIELDSET
-	       FIGURE FIGCAPTION FONT FOOTER FORM FRAME FRAMESET
-	       H1 H2 H3 H4 H5 H6
-	       HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
-	       LI MAIN MAP MARQUEE MENU MENUITEM META METER NAV NOFRAMES NOSCRIPT
-	       OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
-	       Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
-	       STRONG SUB SUMMARY SUP TABLE TBODY TD TEXTAREA TFOOT TH
-	       THEAD TIME TITLE TR TT U UL VAR REACT)
-
-	    ;; html5
-	    (js-bind-tags! %this %this
-	       AUDIO VIDEO TRACK)
-
 	    ;; html
 	    (define (js-html-html %this)
 	       (js-make-function %this
@@ -492,38 +482,6 @@
 	    (js-bind! %this %this 'SCRIPT
 	       :value (js-html-script %this) :enumerable #f :hidden-class #f)
 
-	    ;; html_head
-	    (js-bind-tags! %this %this
-	       LINK STYLE)
-
-	    (js-bind-tags! %this %this IMG)
-
-	    ;; svg
-	    (js-bind-svg-tags! %this %this
-	       SVG SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
-	       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
-	       SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
-	       SVG:TEXTPATH SVG:TREF SVG:TSPAN
-	       SVG:RADIALGRADIENT SVG:LINEARGRADIENT)
-
-	    (js-bind-tag! %this %this SVG:IMG)
-
-	    ;; mathml
-	    (js-bind-tags! %this %this
-	       MATH MATH:MSTYLE MATH:MI MATH:MN MATH:MO
-	       MATH:MROW MATH:MUNDER MATH:MOVER MATH:MUNDEROVER
-	       MATH:MSUP MATH:MSUB MATH:MSUBSUP MATH:MFRAC
-	       MATH:MROOT MATH:MSQRT MATH:MTEXT MATH:MTABLE
-	       MATH:MTR MATH:MTD MATH:MPADDED MATH:TEX)
-
-	    (js-bind! %this %this '!--
-	       :value (js-make-function %this
-			 (lambda (this data)
-			    (instantiate::xml-comment
-			       (data data)))
-			 1 '<!--)
-	       :enumerable #f :writable #f :configurable #f :hidden-class #f)
-
 	    (define (string->xml-tilde body)
 	       (let ((expr (js-tostring body %this)))
 		  (instantiateJsWrapper
@@ -533,7 +491,7 @@
 			     (lang 'javascript)
 			     (%js-expression expr)
 			     (body (vector body '() '() '() expr #f)))))))
-	    
+
 	    ;; tilde object
 	    (js-bind! %this %this 'Tilde
 	       :value (js-make-function %this
@@ -545,8 +503,146 @@
 				       (string->xml-tilde body)))
 	       :enumerable #f :writable #f :configurable #f :hidden-class #f)
 
+;* 	    ;; html_base                                               */
+;* 	    (js-bind-tags! %this %this                                 */
+;* 	       A ABBR ACRONYM ADDRESS APPLET AREA ARTICLE B BASE       */
+;* 	       BASEFONT BDI BDO BIG BLOCKQUOTE BODY BR BUTTON          */
+;* 	       CANVAS CAPTION CENTER CITE CODE COL COLGROUP            */
+;* 	       DATALIST DD DEL DETAILS DFN DIR DIV DL DT EM EMBED FIELDSET */
+;* 	       FIGURE FIGCAPTION FONT FOOTER FORM FRAME FRAMESET       */
+;* 	       H1 H2 H3 H4 H5 H6                                       */
+;* 	       HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND */
+;* 	       LI MAIN MAP MARQUEE MENU MENUITEM META METER NAV NOFRAMES NOSCRIPT */
+;* 	       OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS          */
+;* 	       Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE        */
+;* 	       STRONG SUB SUMMARY SUP TABLE TBODY TD TEXTAREA TFOOT TH */
+;* 	       THEAD TIME TITLE TR TT U UL VAR REACT)                  */
+;*                                                                     */
+;* 	    ;; html5                                                   */
+;* 	    (js-bind-tags! %this %this                                 */
+;* 	       AUDIO VIDEO TRACK)                                      */
+;*                                                                     */
+;* 	    ;; html_head                                               */
+;* 	    (js-bind-tags! %this %this                                 */
+;* 	       LINK STYLE)                                             */
+;*                                                                     */
+;* 	    (js-bind-tags! %this %this IMG)                            */
+;*                                                                     */
+;* 	    ;; svg                                                     */
+;* 	    (js-bind-svg-tags! %this %this                             */
+;* 	       SVG SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER */
+;* 	       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G */
+;* 	       SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT     */
+;* 	       SVG:TEXTPATH SVG:TREF SVG:TSPAN                         */
+;* 	       SVG:RADIALGRADIENT SVG:LINEARGRADIENT)                  */
+;*                                                                     */
+;* 	    (js-bind-tag! %this %this SVG:IMG)                         */
+;*                                                                     */
+;* 	    ;; mathml                                                  */
+;* 	    (js-bind-tags! %this %this                                 */
+;* 	       MATH MATH:MSTYLE MATH:MI MATH:MN MATH:MO                */
+;* 	       MATH:MROW MATH:MUNDER MATH:MOVER MATH:MUNDEROVER        */
+;* 	       MATH:MSUP MATH:MSUB MATH:MSUBSUP MATH:MFRAC             */
+;* 	       MATH:MROOT MATH:MSQRT MATH:MTEXT MATH:MTABLE            */
+;* 	       MATH:MTR MATH:MTD MATH:MPADDED MATH:TEX)                */
+;*                                                                     */
+;* 	    (js-bind! %this %this '!--                                 */
+;* 	       :value (js-make-function %this                          */
+;* 			 (lambda (this data)                           */
+;* 			    (instantiate::xml-comment                  */
+;* 			       (data data)))                           */
+;* 			 1 '<!--)                                      */
+;* 	       :enumerable #f :writable #f :configurable #f :hidden-class #f) */
+;*                                                                     */
+
+;* 	    (js-init-hop-builtin! %this %this)                         */
+	    
 	    ;; return the newly created object
 	    %this))))
+
+;*---------------------------------------------------------------------*/
+;*    %builtin ...                                                     */
+;*---------------------------------------------------------------------*/
+(define %builtin #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    js-hop-builtin ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-hop-builtin %this)
+   (when  (eq? %builtin #unspecified)
+      (let ((obj (instantiateJsObject
+		    (cmap (instantiate::JsConstructMap))
+		    (__proto__ (js-null))
+		    (elements (make-vector 180)))))
+	 
+	 (js-init-hop-builtin! %this obj)
+	 (js-prevent-extensions obj)
+
+	 (set! %builtin obj)))
+   %builtin)
+
+;*---------------------------------------------------------------------*/
+;*    js-hop-builtin? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-hop-builtin? this obj)
+   (eq? obj %builtin))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-hop-builtin! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-init-hop-builtin! %this builtin::JsObject)
+   ;; html_base
+   (js-bind-tags! %this builtin
+      A ABBR ACRONYM ADDRESS APPLET AREA ARTICLE B BASE
+      BASEFONT BDI BDO BIG BLOCKQUOTE BODY BR BUTTON
+      CANVAS CAPTION CENTER CITE CODE COL COLGROUP
+      DATALIST DD DEL DETAILS DFN DIR DIV DL DT EM EMBED FIELDSET
+      FIGURE FIGCAPTION FONT FOOTER FORM FRAME FRAMESET
+      H1 H2 H3 H4 H5 H6
+      HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
+      LI MAIN MAP MARQUEE MENU MENUITEM META METER NAV NOFRAMES NOSCRIPT
+      OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
+      Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
+      STRONG SUB SUMMARY SUP TABLE TBODY TD TEXTAREA TFOOT TH
+      THEAD TIME TITLE TR TT U UL VAR REACT)
+   
+   ;; html_head
+   (js-bind-tags! %this builtin
+      LINK STYLE)
+   
+   (js-bind-tags! %this builtin IMG)
+   
+   ;; html5
+   (js-bind-tags! %this builtin
+      AUDIO VIDEO TRACK)
+   
+   ;; svg
+   (js-bind-svg-tags! %this builtin
+      SVG SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
+      SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
+      SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
+      SVG:TEXTPATH SVG:TREF SVG:TSPAN
+      SVG:RADIALGRADIENT SVG:LINEARGRADIENT)
+   
+   (js-bind-tag! %this builtin SVG:IMG)
+   
+   ;; mathml
+   (js-bind-tags! %this builtin
+      MATH MATH:MSTYLE MATH:MI MATH:MN MATH:MO
+      MATH:MROW MATH:MUNDER MATH:MOVER MATH:MUNDEROVER
+      MATH:MSUP MATH:MSUB MATH:MSUBSUP MATH:MFRAC
+      MATH:MROOT MATH:MSQRT MATH:MTEXT MATH:MTABLE
+      MATH:MTR MATH:MTD MATH:MPADDED MATH:TEX)
+   
+   (js-bind! %this builtin '!--
+      :value (js-make-function %this
+		(lambda (this data)
+		   (instantiate::xml-comment
+		      (data data)))
+		1 '<!--)
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+
+   builtin)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-object! ...                                              */
@@ -1173,6 +1269,7 @@
 		   (set! configurable #f)))
       (js-object-properties o))
    (js-object-mode-extensible-set! o #f)
+   (js-object-mode-sealed-set! o #t)
    (with-access::JsObject o (cmap)
       (unless (eq? cmap (js-not-a-cmap))
 	 (with-access::JsConstructMap cmap (props)
@@ -1199,6 +1296,7 @@
 
    (for-each js-freeze-property! (js-object-properties o))
    (js-object-mode-extensible-set! o #f)
+   (js-object-mode-frozen-set! o #t)
    (with-access::JsObject o (cmap)
       (unless (eq? cmap (js-not-a-cmap))
 	 (with-access::JsConstructMap cmap (props)

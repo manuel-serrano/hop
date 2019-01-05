@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Dec  7 21:55:00 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Fri Jan  4 15:45:44 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
 ;*=====================================================================*/
@@ -39,23 +39,31 @@
 ;*---------------------------------------------------------------------*/
 ;*    builtin-method ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-struct builtin-method jsname met ttype args %this)
+(define-struct builtin-method jsname met ttype args %this predicate)
 (define-struct builtin-function id scmid args %this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-builtin-methods ...                                          */
 ;*---------------------------------------------------------------------*/
 (define j2s-builtin-methods
-   ;; jsname, scmname|procedure, (this.types), [optional-args] %this
+   ;; jsname, scmname|procedure, (this.types), [opt-args], %this, [opt-predicate]
    (map (lambda (e)
-	   (apply builtin-method e))
-      `(;; string methods
+	   (match-case e
+	      ((?jsname ?met ?ttype ?args ?%this)
+	       (builtin-method jsname met ttype args %this #f))
+	      ((?jsname ?met ?ttype ?args ?%this ?pred)
+	       (builtin-method jsname met ttype args %this pred))
+	      (else
+	       (error "hopc" "bad builtin method specification" e))))
+      `(;; string and array methods
+	("indexOf" js-array-indexof array (any (any 0)) %this)
+	("indexOf" js-jsstring-indexof string (string (any 0)) %this)
+	;; string methods
 	("fromCharCode" ,js-jsstring-fromcharcode String (any) %this)
 	("charAt" js-jsstring-charat string (any) %this)
 	("charAt" js-jsstring-maybe-charat any (any) %this)
 	("charCodeAt" ,j2s-jsstring-charcodeat string (any) %this)
 	("charCodeAt" js-jsstring-maybe-charcodeat any (any) %this)
-	("indexOf" js-jsstring-indexof string (string (any 0)) %this)
 	("indexOf" js-jsstring-maybe-indexof any (any (any 0)) %this)
 	("lastIndexOf" js-jsstring-lastindexof string (string (any +nan.0)) %this)
 	("lastIndexOf" js-jsstring-maybe-lastindexof string (any (any +nan.0)) %this)
@@ -93,14 +101,14 @@
 	;; array methods
 ;* 	("concat" js-array-concat array (any) %this)                   */
 ;* 	("concat" js-array-maybe-concat any (any) %this)               */
-	("push" js-array-push array (any) %this)
-	("push" js-array-maybe-push any (any) %this)
-	("pop" js-array-pop array () %this)
-	("pop" js-array-maybe-pop any () %this)
 ;* 	("slice" js-array-slice array () %this)                        */
 ;* 	("slice" js-array-maybe-slice any () %this)                    */
-	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this)
-	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this)
+	("push" js-array-push array (any) %this ,j2s-array-plain?)
+	("push" js-array-maybe-push any (any) %this ,j2s-array-plain?)
+	("pop" js-array-pop array () %this ,j2s-array-plain?)
+	("pop" js-array-maybe-pop any () %this ,j2s-array-plain?)
+	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this ,j2s-array-plain?)
+	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this ,j2s-array-plain?)
 	;; functions
 	("call" ,j2s-call function (any any) #f))))
 
@@ -173,6 +181,26 @@
 	  #f))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-array-plain? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-plain? mode return conf)
+   (let ((array (config-get conf :array)))
+      (if (isa? array J2SDeclExtern)
+	  (with-access::J2SDeclExtern array (usage)
+	     (only-usage? usage '(new init call)))
+	  #t)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-string-plain? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-string-plain? mode return conf)
+   (let ((string (config-get conf :string)))
+      (if (isa? string J2SDeclExtern)
+	  (with-access::J2SDeclExtern string (usage)
+	     (only-usage? usage '(new init call)))
+	  #t)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCall mode return conf)
@@ -235,8 +263,10 @@
 					    (params (builtin-method-args m)))
 				    (cond
 				       ((null? args)
-					(or (null? params)
-					    (every pair? params)))
+					(when (or (null? params)
+						  (every pair? params))
+					   (let ((p (builtin-method-predicate m)))
+					      (or (not p) (p mode return conf)))))
 				       ((null? params)
 					#f)
 				       (else

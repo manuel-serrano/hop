@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Dec 29 08:58:53 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Fri Jan  4 19:27:34 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
 ;*    -------------------------------------------------------------    */
@@ -122,21 +122,21 @@
    (make-cmap
       `#(,(prop 'prototype (property-flags #f #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #t #f))
 	 ,(prop 'source (property-flags #f #f #f #f)))))
 
 (define js-function-cmap-sans-prototype
    (make-cmap
       `#(,(prop '%null (property-flags #f #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #t #f))
 	 ,(prop 'source (property-flags #f #f #f #f)))))
 
 (define js-function-strict-cmap
    (make-cmap
       `#(,(prop 'prototype (property-flags #f #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #t #f))
 	 ,(prop 'source (property-flags #f #f #f #f))
 	 ,(prop 'arguments (property-flags #f #f #f #f))
 	 ,(prop 'caller (property-flags #f #f #f #f)))))
@@ -145,14 +145,14 @@
    (make-cmap
       `#(,(prop 'prototype (property-flags #t #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #t #f))
 	 ,(prop 'source (property-flags #f #f #f #f)))))
 
 (define js-function-writable-strict-cmap
    (make-cmap
       `#(,(prop 'prototype (property-flags #t #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #t #f))
 	 ,(prop 'source (property-flags #f #f #f #f))
 	 ,(prop 'arguments (property-flags #f #f #f #f))
 	 ,(prop 'caller (property-flags #f #f #f #f)))))

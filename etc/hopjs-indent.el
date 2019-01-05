@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Sun Dec 30 16:38:57 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Thu Jan  3 19:42:46 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
 ;*=====================================================================*/
@@ -1175,12 +1175,14 @@
 	       (hopjs-indent-column-token etok level))
 	 (hopjs-indent-column-token tok level))))
     ((eq (hopjs-parse-token-type tok) 'lparen)
-     (hopjs-debug 0 "hopjs-indent-function-body lparen=%s peek=%s"
+     (hopjs-debug 0 "hopjs-indent-function-body strictness=%s lparen=%s peek=%s"
+		  hopjs-indent-function-body-strictness-level
 		  (hopjs-parse-peek-token)
 		  (hopjs-parse-peek-token-string))
-     (if hopjs-indent-function-body-strictp
-	 (hopjs-indent-column-token ftok level)
-       (hopjs-indent-function-expression tok level)))
+     (case hopjs-indent-function-body-strictness-level
+       ((0) (hopjs-indent-column-token ftok level))
+       ((1) (hopjs-indent-function-expression tok (* 2 level)))
+       (t (hopjs-indent-function-expression tok level))))
     (t
      (hopjs-debug 0 "hopjs-indent-function-body peek=%s %s"
 		  (hopjs-parse-peek-token)

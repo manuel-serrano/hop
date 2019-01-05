@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Oct  8 14:22:38 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Sat Jan  5 06:37:07 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
 ;*=====================================================================*/
@@ -585,6 +585,98 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.2    */
 ;*---------------------------------------------------------------------*/
 (define (regexp-prototype-exec %this::JsGlobalObject this string::obj)
+   
+   (define (js-substring s start end)
+      (if (=fx end (+fx start 1))
+	  (js-jsstring-fromcharcode %this (char->integer (string-ref s start)) %this)
+	  (js-string->jsstring (substring s start end))))
+   
+   (if (not (isa? this JsRegExp))
+       (js-raise-type-error %this "Not a RegExp ~s" this)
+       (with-access::JsRegExp this (rx lastindex global properties)
+	  (with-access::JsValueDescriptor lastindex ((lastindex value))
+	     (with-access::JsValueDescriptor global ((global value))
+		(let* ((jss (js-tojsstring string %this))
+		       (s (js-jsstring->string jss))
+		       (len (string-length s))
+		       (i (js-tointeger lastindex %this)) )
+		   (unless global (set! i 0))
+		   (cond
+		      ((or (<fx i 0) (>fx i len))
+		       (set! lastindex 0)
+		       (js-null))
+		      ((pregexp-match-positions rx s i)
+		       =>
+		       (lambda (r)
+			  ;; 10
+			  (let ((e (cdar r)))
+			     ;; 11
+			     (when global (set! lastindex e))
+			     (let* ((n (length r))
+;* 				    (vec ($create-vector n))           */
+;* 				    (a (js-vector->jsarray vec %this)) */
+				    (a (with-access::JsGlobalObject %this (js-array)
+					  (js-new %this js-array n)))
+				    (matchindex (caar r)))
+				;; 15
+				(js-define-own-property a 'index
+				   (instantiate::JsValueDescriptor
+				      (name 'index)
+				      (value matchindex)
+				      (writable #t)
+				      (enumerable #t)
+				      (configurable #t))
+				   #t %this)
+				;; 16
+				(js-define-own-property a 'input
+				   (instantiate::JsValueDescriptor
+				      (name 'input)
+				      (value jss)
+				      (writable #t)
+				      (enumerable #t)
+				      (configurable #t))
+				   #t %this)
+				;; 17
+				(js-define-own-property a 'length
+				   (instantiate::JsValueDescriptor
+				      (name 'length)
+				      (value n)
+				      (writable #t)
+				      (enumerable #f)
+				      (configurable #f))
+				   #t %this)
+				;; 19
+				(js-define-own-property a 0
+				   (instantiate::JsValueDescriptor
+				      (name (js-toname 0 %this))
+				      (value (js-substring s (caar r) (cdar r)))
+				      (writable #t)
+				      (enumerable #t)
+				      (configurable #t))
+				   #t %this)
+				;; 20
+				(let loop ((c (cdr r))
+					   (i 1))
+				   (when (pair? c)
+				      (let* ((r (car c))
+					     (v (if (pair? r)
+						    (js-substring s (car r) (cdr r))
+						    (js-undefined))))
+					 (js-define-own-property a i
+					    (instantiate::JsValueDescriptor
+					       (name (js-toname i %this))
+					       (value v)
+					       (writable #t)
+					       (enumerable #t)
+					       (configurable #t))
+					    #t %this))
+				      (loop (cdr c) (+fx i 1))))
+				a))))
+		      (else
+		       (set! lastindex 0)
+		       (js-null)))))))))
+
+(define (regexp-prototype-exec-TOBEREMOVED-2018-01-05 %this::JsGlobalObject this string::obj)
    
    (define (js-substring s start end)
       (if (=fx end (+fx start 1))

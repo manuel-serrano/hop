@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon Dec 31 09:22:06 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Fri Jan  4 18:06:49 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
 ;*=====================================================================*/
@@ -65,7 +65,7 @@
      ;; punctuation
      (cons (rxor "[{}()[.;,:?]" (rxq "]")) 'punct)
      ;; unop
-     (cons (rxq "!") 'unop)
+     (cons (rxor (rxq "!") (rxq "~")) 'unop)
      ;; binop
      (cons (rxor "<" ">" (rxq "+") (rxq "-") (rxq "*") "%" "=" "|" 
 		 "<<" ">>" ">>>" "[&^]") 'binop)
@@ -104,17 +104,6 @@
      ;; css ident
      (cons (rx: cssid_start (rx* cssid_part)) 'cssident)
      )))
-
-(defun foo (pos)
-  (interactive "d")
-  (message "XXXpos=%s" pos)
-  (when (looking-at )
-    (message "%s %s [%s]- %s %s [%s]" (match-beginning 0) (match-end 0)
-	     (buffer-substring-no-properties
-	      (match-beginning 0) (match-end 0))
-	     (match-beginning 1) (match-end 1)
-	     (buffer-substring-no-properties
-	      (match-beginning 1) (match-end 1)))))
 
 (defconst hopjs-parse-lexer
   (apply 'rxor (mapcar 'car hopjs-parse-regexps)))
@@ -204,7 +193,9 @@
 		(progn
 		  (aset tok 0 'yield*)
 		  (aset tok 2 (match-end 0)))
-	      (aset tok 0 'yield)))))
+	      (aset tok 0 'yield))))
+	 ((typeof)
+	  (aset tok 0 'unop)))
        tok))
     ((binop)
      (case (char-after (hopjs-parse-token-beginning tok))

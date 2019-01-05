@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Dec 31 06:08:23 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Fri Jan  4 17:55:32 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -2476,9 +2476,15 @@
 (define-method (j2s-scheme this::J2SNew mode return conf)
    
    (define (new-array? clazz)
-      (when (isa? clazz J2SUnresolvedRef)
-	 (with-access::J2SUnresolvedRef clazz (id)
-	    (eq? id 'Array))))
+      (cond
+	 ((isa? clazz J2SUnresolvedRef)
+	  (with-access::J2SUnresolvedRef clazz (id)
+	     (eq? id 'Array)))
+	 ((isa? clazz J2SRef)
+	  (with-access::J2SRef clazz (decl)
+	     (when (isa? decl J2SDeclExtern)
+		(with-access::J2SDeclExtern decl (id ronly)
+		   (when (and (eq? id 'Array) ronly))))))))
 
    (define (constructor-no-return? decl)
       ;; does this constructor ever return something else than UNDEF?

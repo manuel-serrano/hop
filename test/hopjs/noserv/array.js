@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/trashcan/array.js                                        */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/array.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Wed Jun  6 19:29:06 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Fri Jan  4 14:56:13 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
 /*=====================================================================*/
@@ -117,13 +117,21 @@ assert.ok( props(), "length.configurable" );
 var a1 = [ 1, 2 ];
 
 Object.defineProperty( a1, "length", { value: 3, writable: false } );
-assert.throws( () => a1.push( "toto" ), undefined, "ronly length" );
+assert.throws( () => a1.push( "toto" ), undefined, "ronly length on push" );
 
 var a2 = [ 1, 2 ];
 
 Object.defineProperty( a2, "length", { value: 2, writable: false } );
-assert.throws( () => a2.push( "toto" ), undefined, "ronly length" );
-assert.throws( () => a2.pop(), undefined, "ronly length" );
+assert.throws( () => a2.push( "toto" ), undefined, "ronly length on push" );
+assert.throws( () => a2.pop(), undefined, "ronly length on pop" );
+
+var a3 = [ 1, 2 ];
+Object.defineProperty( a1, "length", { value: 3, writable: false } );
+a3.push = function( a ) { return true; };
+a3.pop = function( a ) { return true; };
+
+assert.ok( a3.push( "toto" ), "push overriden" );
+assert.ok( a3.pop( "toto" ), "pop overriden" );
 
 /*---------------------------------------------------------------------*/
 /*    iterations                                                       */
@@ -331,3 +339,44 @@ function expansion() {
 }
 
 assert.ok( expansion(), "expansion" );
+
+/*---------------------------------------------------------------------*/
+/*    optimization                                                     */
+/*---------------------------------------------------------------------*/
+function optimInObject() {
+   const a = new Array( 10 );
+   a[ 0 ] = 10;
+   
+   a.fill = function() { }
+   
+   a.fill( 20 );
+   
+   return a[ 0 ] === 10;
+}
+
+function optimInProto() {
+   const a = new Array( 10 );
+   a[ 0 ] = 10;
+   
+   Array.prototype.fill = function() { }
+   
+   a.fill( 20 );
+   
+   return a[ 0 ] === 10;
+}
+
+function optimInNewProto() {
+   const a = new Array( 10 );
+   a[ 0 ] = 10;
+   const p = { fill: function() {}, __proto__: Array.prototype };
+   
+   a.__proto__ = p;
+   
+   a.fill( 20 );
+   
+   return a[ 0 ] === 10;
+}
+
+assert.ok( optimInObject(), "optimInObject" );
+assert.ok( optimInProto(), "optimInProto" );
+assert.ok( optimInProto(), "optimInNewProto" );

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat Oct 27 07:08:25 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Fri Jan  4 11:01:01 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
 ;*=====================================================================*/
@@ -116,7 +116,8 @@
 			    (with-access::JsGlobalObject %this (js-object)
 			       (js-new0 %this js-object)))
 			 (define %module
-			    (nodejs-new-module ,(basename path) ,path %worker %this))
+			    (nodejs-new-module ,(basename path) ,(absolute path)
+			       %worker %this))
 			 (define %cnsts ,scmcnsts)
 			 ,@esimports
 			 ,esexports
@@ -132,6 +133,9 @@
 					 cnsts globals)
       (let* ((esimports (j2s-module-imports this))
 	     (esexports (j2s-module-exports this))
+	     (conf (cons* :array (j2s-find-extern-decl headers 'Array)
+		      :string (j2s-find-extern-decl headers 'String)
+		      conf))
 	     (scmheaders (j2s-scheme headers mode return conf))
 	     (scmdecls (j2s-scheme decls mode return conf))
 	     (scmclos (filter-map (lambda (d)
@@ -213,7 +217,8 @@
 	     (define %worker
 		(js-init-main-worker! %this #f nodejs-new-global-object))
 	     (define %module
-		(nodejs-new-module ,(basename path) ,path %worker %this))
+		(nodejs-new-module ,(basename path) ,(absolute path)
+		   %worker %this))
 	     (define %cnsts ,scmcnsts)
 	     ,@esimports
 	     ,esexports
@@ -509,3 +514,19 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-program-checksum! prgm::J2SProgram)
    (checksum prgm))
+
+;*---------------------------------------------------------------------*/
+;*    absolute ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (absolute path)
+   (make-file-name (pwd) path))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-find-extern-decl ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-find-extern-decl decls searchid)
+   (find (lambda (d)
+	    (when (isa? d J2SDeclExtern)
+	       (with-access::J2SDeclExtern d (id)
+		  (eq? id searchid))))
+      decls))

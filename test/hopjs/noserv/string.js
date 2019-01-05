@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Oct 16 08:09:16 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Fri Jan  4 10:43:28 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
 /*=====================================================================*/
@@ -187,3 +187,5 @@ assert.equal( re2.lastIndex, 6 );
 
 assert.equal( str1.replace( re2, function( s ) { return "!" + s + "!" } ), "foo!bar!gee!bar!" );
 assert.equal( re2.lastIndex, 0 );
+
+assert.equal( "foo".indexOf( "" ), 0, "indexOf with empty string" );

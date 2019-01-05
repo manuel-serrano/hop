@@ -1,11 +1,12 @@
+;* Automatically generated file (don't edit) */
 ;; -*- mode: lisp -*-
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/etc/hopjs-config.el.in            */
+;*    serrano/prgm/project/hop/3.2.x/etc/hopjs-config.el               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Tue Nov 27 06:53:00 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Thu Jan  3 19:47:48 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs config                                                     */
 ;*=====================================================================*/
@@ -18,15 +19,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    configuration                                                    */
 ;*---------------------------------------------------------------------*/
-(defconst hopjs-version "@VERSION@")
+(defconst hopjs-version "3.2.0")
 
-(defcustom hopjs-doc-dir "@DOCDIR@"
+(defcustom hopjs-doc-dir "/usr/local/share/doc/hop/3.2.0"
   "The main directory containing the documentation indexes"
   :type 'string
   :safe 'stringp
   :group 'hopjs)
 
-(defcustom hopjs-official-doc-url "@DOCURL@"
+(defcustom hopjs-official-doc-url "http://hop-dev.inria.fr/home/lang.html"
   "The remote URL documentation"
   :type 'string
   :safe 'stringp
@@ -108,11 +109,11 @@
   :safe 'integerp
   :group 'hopjs)
 
-(defcustom hopjs-indent-function-body-strictp t
+(defcustom hopjs-indent-function-body-strictness-level 1
   "If true, strictly align function body according to the function
  opening brace"
-  :type 'boolean
-  :safe 'booleanp
+  :type 'integer
+  :safe 'integerp
   :group 'hopjs)
 
 (defcustom hopjs-indent-function-body-alignment 1

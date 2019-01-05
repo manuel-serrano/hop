@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jan  1 10:12:46 2019 (serrano)                */
+;*    Last change :  Fri Jan  4 18:15:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2018,7 +2018,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-bind-export! ...                                          */
 ;*    -------------------------------------------------------------    */
-;*    Bind the exported binding into a global object.                  */
+;*    Bind the exported bindings into a global object.                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-bind-export! %this %scope e . bindings)
    
@@ -2039,12 +2039,11 @@
 	    (with-access::JsPropertyDescriptor p (name)
 	       (proc name))))
       
-      (let loop ((o obj))
-	 (with-access::JsObject o (cmap __proto__)
-	    (if (not (eq? cmap (js-not-a-cmap)))
-		(with-access::JsConstructMap cmap (props)
-		   (vfor-each in-mapped-property props))
-		(for-each in-property (js-object-properties o))))))
+      (with-access::JsObject obj (cmap __proto__)
+	 (if (not (eq? cmap (js-not-a-cmap)))
+	     (with-access::JsConstructMap cmap (props)
+		(vfor-each in-mapped-property props))
+	     (for-each in-property (js-object-properties obj)))))
    
    ;; e start being undefined during the first steps of the rts boot
    (when (isa? e JsObject)
@@ -2056,7 +2055,6 @@
 		   :value (js-get e k %this)
 		   :writable #t :enumerable #f :configurable #f
 		   :hidden-class #f)))
-		;;(js-put! %scope k  #f %this)
 	  (for-each (lambda (k)
 		       (js-bind! %this %scope k
 			  :get (js-make-function %this

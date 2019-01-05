@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Dec 30 15:16:49 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Fri Jan  4 17:51:54 2019 (serrano)                */
+;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
 ;*    -------------------------------------------------------------    */
@@ -1203,11 +1203,18 @@
 	     (type-unknown-call callee env bk)))))
    
    (define (is-global? obj ident)
-      (when (isa? obj J2SGlobalRef)
-	 (with-access::J2SGlobalRef obj (id decl)
-	    (when (eq? id ident)
-	       (with-access::J2SDecl decl (ronly)
-		  ronly)))))
+      (cond
+	 ((isa? obj J2SGlobalRef)
+	  (with-access::J2SGlobalRef obj (id decl)
+	     (when (eq? id ident)
+		(with-access::J2SDecl decl (ronly)
+		   ronly))))
+	 ((isa? obj J2SRef)
+	  (with-access::J2SRef obj (decl)
+	     (when (isa? decl J2SDeclExtern)
+		(with-access::J2SDeclExtern decl (id ronly)
+		   (when (eq? id ident)
+		      ronly)))))))
    
    (define (type-method-call callee args env bk)
       ;; type a method call: O.m( ... )
@@ -1281,21 +1288,33 @@
 (define-walk-method (node-type this::J2SNew env::pair-nil fix::cell)
    
    (define (class-type clazz)
-      (if (isa? clazz J2SUnresolvedRef)
+      (cond
+	 ((isa? clazz J2SUnresolvedRef)
 	  (with-access::J2SUnresolvedRef clazz (id)
 	     (case id
 		((Array) 'array)
 		((Date) 'date)
 		((RegExp) 'regexp)
-		(else 'object)))
-	  'object))
+		(else 'object))))
+	 ((isa? clazz J2SRef)
+	  (with-access::J2SRef clazz (decl)
+	     (when (isa? decl J2SDeclExtern)
+		(with-access::J2SDeclExtern decl (id ronly)
+		   (when ronly
+		      (case id
+			 ((Array) 'array)
+			 ((Date) 'date)
+			 ((RegExp) 'regexp)
+			 (else 'object)))))))
+	 (else
+	  'object)))
    
    (with-access::J2SNew this (clazz args loc protocol)
       (multiple-value-bind (_ env bk)
 	 (node-type clazz env fix)
 	 (multiple-value-bind (_ env bk)
 	    (node-type-call clazz protocol 'object args env fix)
-	    (expr-type-add! this env fix (class-type clazz) bk)))))
+	    (expr-type-add! this env fix (or (class-type clazz) 'object) bk)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SUnary ...                                         */

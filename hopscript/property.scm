@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jan  1 07:46:53 2019 (serrano)                */
+;*    Last change :  Sat Jan  5 06:56:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -247,6 +247,7 @@
 		       " length=" (vector-length elements)
 		       " inline=" (js-object-inline-elements? obj)
 		       " size=" size
+		       " extensible=" (js-object-mode-extensible? obj)
 		       " mlengths=" (vector-length methods)
 		       "\n  elements=" (vector-map
 					  (lambda (v)
@@ -1994,11 +1995,15 @@
 			  (update-mapped-object-value! obj cmap i v)) 
 			 (else
 			  (reject "Read-only property"))))
-		     ((not (js-object-mode-extensible? obj))
+		     ((js-object-mode-frozen? obj)
 		      ;; 8.12.9, step 3
-		      (reject "sealed object"))
+		      (reject "frozen object"))
 		     ((not (isa? el-or-desc JsPropertyDescriptor))
 		      ;; 8.12.5, step 6
+		      (extend-object!))
+		     ((and (not (js-object-mode-extensible? obj))
+			   (not (js-object-mode-sealed? obj)))
+		      ;; special hop situation to handle hop-builtin object
 		      (extend-object!))
 		     (else
 		      (with-access::JsDataDescriptor el-or-desc (writable)

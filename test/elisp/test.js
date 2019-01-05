@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Mon Dec 31 13:39:02 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Thu Jan  3 19:40:17 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
 /*=====================================================================*/
@@ -30,6 +30,10 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+json.forEach( entry => { 
+      console.log( entry );
+   } );
+
 // ok !new
 function bangnew() {
    return new TypedArray([1, 2, 3]).includes(1)
@@ -160,10 +164,10 @@ const Cart = ( { products, total, onCheckoutClicked }, ... ) => {
    const hasProducts = products.length > 0;
    const nodes = hasProducts 
       ? products.map( product => 
-			 <Product title=${product.title}
-				  price=${product.price}
-				  quantity=${product.quantity}
-				  key=${product.id}/> )
+	      <Product title=${product.title}
+		       price=${product.price}
+		       quantity=${product.quantity}
+		       key=${product.id}/> )
       : <em>cart</em>;
    
    return <div>3</div>;
@@ -442,13 +446,13 @@ class ActionArg {
       this.machine = machine;
       
       accessor_list.forEach( acc => {
-	 			this[ acc.signame ] = {
-	    			   preval: undefined,
-	    			   nowval: undefined,
-	    			   pre: undefined,
-	    			   now: undefined
-         			};
-      			     } );
+	    this[ acc.signame ] = {
+	       preval: undefined,
+	       nowval: undefined,
+	       pre: undefined,
+	       now: undefined
+	    };
+      	 } );
    }
 }
 
@@ -534,9 +538,9 @@ function run( tmt, lbl ) {
    let last = Date.now();
    
    setInterval( () => { 
-      		   let cur = Date.now();
-      		   console.log( lbl ) ;
-   		},
+      	 let cur = Date.now();
+      	 console.log( lbl ) ;
+      },
       tmt );
 }
 
@@ -657,9 +661,9 @@ function openSMTPConnection( config ) {
 	    config.servers[ i ].host + ":" + config.servers[ i ].port );
 	 return open( server )
 	    .then( conn => { 
-	       	      debug( "connection succeeded: ", server );
-	       	      conn.config = server; resolve( conn ) 
-	    	   }, 
+	       	  debug( "connection succeeded: ", server );
+	       	  conn.config = server; resolve( conn ) 
+	       }, 
 	       err => {
 		  debug( "connection failed: ", server );
 		  loop( resolve, reject, i + 1 );
@@ -863,16 +867,16 @@ function glop( x ) {
 function glop( x ) {
    let x = glop( 10 )
       .post( snow => {
-	 	return 32;
-      	     } )
+	    return 32;
+      	 } )
 }
 
 // ok
 function glop( x ) {
    let x = glop( 10 )
       .post( (a, b) => {
-	 	return 32;
-      	     } )
+	    return 32;
+      	 } )
 }
 
 // ok
@@ -1033,8 +1037,8 @@ function firstPromise( promises ) {
    }
    
    return new Promise( (resolve, reject) => {
-      			  resolve 3;
-   		       } );
+      	 resolve 3;
+      } );
 }
 
 // ok

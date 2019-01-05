@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan  1 09:34:33 2019 (serrano)                */
+;*    Last change :  Tue Jan  1 13:41:20 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -372,12 +372,7 @@
 ;*    js-symbol->jsstring ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-symbol->jsstring sym::symbol)
-   (let ((o (c-symbol-plist sym)))
-      (if (null? o)
-	  (let ((s (js-string->jsstring (symbol->string! sym))))
-	     (set-symbol-plist sym s)
-	     s)
-	  o)))
+   (js-string->jsstring (symbol->string! sym)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->string ...                                          */
@@ -1196,10 +1191,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-indexof this search position %this)
    
-   (define (ascii-indexof str::bstring)
-      (let* ((pat (js-jsstring->string search))
-	     (patlen (string-length pat))
-	     (ulen (string-length str))
+   (define (ascii-indexof str::bstring pat patlen)
+      (let* ((ulen (string-length str))
 	     (n (-fx ulen patlen))
 	     (c0 (string-ref pat 0))
 	     (idx (if (eq? position (js-undefined))
@@ -1226,10 +1219,8 @@
 			      (let ((t (bm-table pat)))
 				 (bm-string t str j)))))))))))
    
-   (define (utf8-indexof str::bstring)
-      (let* ((pat (js-jsstring->string search))
-	     (patlen (string-length pat))
-	     (ulen (string-length str))
+   (define (utf8-indexof str::bstring pat patlen)
+      (let* ((ulen (string-length str))
 	     (n (-fx ulen patlen))
 	     (c0 (string-ref pat 0))
 	     (idx (if (eq? position (js-undefined))
@@ -1257,7 +1248,11 @@
 				 (string-index->utf8-string-index str
 				    (bm-string t str j))))))))))))
 
-   (string-dispatch indexof this))
+      (let* ((pat (js-jsstring->string search))
+	     (patlen (string-length pat)))
+	 (if (=fx patlen 0)
+	     0
+	     (string-dispatch indexof this pat patlen))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-indexof ...                                    */
@@ -1267,6 +1262,8 @@
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-indexof this (js-tostring search %this) position %this))
+	 ((js-array? this)
+	  (js-array-indexof this search position %this))
 	 ((isa? this JsObject)
 	  (js-call2 %this
 	     (js-get-name/cache this 'indexOf #f %this (js-pcache-ref %pcache 1))
