@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Jan  5 11:10:08 2019 (serrano)                */
+;*    Last change :  Sun Jan  6 19:40:33 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1000,7 +1000,7 @@
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
 	 (set! %idxstr r)
 	 (set! %idxutf8 u)
-;* 	 (tprint "return-utf8 r=" r " u=" u " s=" s)                   */
+;* 	 (tprint "return-utf8 r=" r " u=" u " s=" s " -> " (char->integer c)) */
 	 (cond
 	    ((=fx s 1)
 	     (char->integer c))
@@ -1016,7 +1016,7 @@
    
    (define (rollback-utf8 this str i)
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
-;* 	 (tprint "*** ROLLBACK i=" i " idxstr=" %idxstr " idxutf8=" %idxutf8) */
+;* 	 (tprint "*********** ROLLBACK i=" i " idxstr=" %idxstr " idxutf8=" %idxutf8) */
 	 (let loop ((r %idxstr)
 		    (j %idxutf8))
 	    (let liip ((r r)
@@ -1030,8 +1030,8 @@
 		  (else
 		   (let* ((c (string-ref-ur str r))
 			  (u (codepoint-length c)))
-;* 		      (tprint "unroll r=" r " i=" i " j=" j)           */
-		      (if (=fx (-fx j u) i)
+;* 		      (tprint "unroll r=" r " i=" i " j=" j " u=" u)   */
+		      (if (<fx (-fx j u) i)
 			  (return-utf8 this str i j c s r j)
 			  (loop (-fx r 1) (-fx j u))))))))))
    

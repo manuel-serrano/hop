@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Tue Oct 16 09:10:27 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Sun Jan  6 17:53:11 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
 ;*    -------------------------------------------------------------    */
@@ -544,12 +544,18 @@
 		 (pretest (expand-pce-pretest ncaches loc)))
 	     (with-access::J2SLetBlock lblock (decls nodes)
 		(let* ((ndecls (map (lambda (d)
-				       (with-access::J2SDeclInit d (vtype loc)
+				       (with-access::J2SDeclInit d (vtype loc usage)
 					  (duplicate::J2SDeclInit d
+					     (ronly #f)
+					     (writable #t)
+					     (usage (cons 'assig usage))
 					     (val (neutral vtype loc)))))
 				  decls))
 		       (assig+ (map (lambda (d)
-				       (with-access::J2SDeclInit d (vtype loc val)
+				       (with-access::J2SDeclInit d (vtype loc val writable usage ronly)
+					  (set! usage (cons 'assig usage))
+					  (set! writable #t)
+					  (set! ronly #f)
 					  (J2SAssig/type vtype
 					     (J2SRef d :type vtype) val)))
 				  decls))

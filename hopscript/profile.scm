@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue Oct  9 08:43:35 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Sun Jan  6 17:35:51 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
 ;*=====================================================================*/
@@ -772,15 +772,28 @@
       (let ((field (find-class-field JsPropertyCache fieldname)))
          (if field
              (let ((proc (class-field-accessor field)))
-                (apply +
+                (apply +llong-va
                    (append-map (lambda (fc)
 				  (vmap (lambda (n) (->llong (proc n)))
 				     (filecache-caches fc)))
                       filecaches)))
              (error "filecache-sum-field" "cannot find field" fieldname))))
+
+   (define (+llong-va . l)
+      (cond
+	 ((null? l)
+	  #l0)
+	 ((null? (cdr l))
+	  (car l))
+	 (else
+	  (let loop ((acc (car l))
+		     (l (cdr l)))
+	     (if (null? l)
+		 acc
+		 (loop (+llong (car l) acc) (cdr l)))))))
    
    (define (filecaches-hits::llong filecaches)
-      (apply +
+      (apply +llong-va
 	 (append-map (lambda (fc) (vmap pcache-hits (filecache-caches fc)))
 	    filecaches)))
 
@@ -924,13 +937,13 @@
 			 (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
 			    (if (and (= point xpoint) (eq? xusage usage))
 				(begin
-				   (set! cntmiss (+ cntmiss xcntmiss))
-				   (set! cntimap (+ cntimap xcntimap))
-				   (set! cntemap (+ cntemap xcntemap))
-				   (set! cntcmap (+ cntcmap xcntcmap))
-				   (set! cntpmap (+ cntpmap xcntpmap))
-				   (set! cntamap (+ cntamap xcntamap))
-				   (set! cntvtable (+ cntvtable xcntvtable))
+				   (set! cntmiss (+u32 cntmiss xcntmiss))
+				   (set! cntimap (+u32 cntimap xcntimap))
+				   (set! cntemap (+u32 cntemap xcntemap))
+				   (set! cntcmap (+u32 cntcmap xcntcmap))
+				   (set! cntpmap (+u32 cntpmap xcntpmap))
+				   (set! cntamap (+u32 cntamap xcntamap))
+				   (set! cntvtable (+u32 cntvtable xcntvtable))
 				   (loop (+fx i 1) old res))
 				(loop (+fx i 1) x (cons old res)))))))))))
 
