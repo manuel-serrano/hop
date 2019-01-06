@@ -20,6 +20,12 @@
  ;; hop incompatibility with the new (2019-01-05) hop builtin object
  "15.2.3.2-2-31.js" 
  "15.2.3.6-4-625gs.js"
+ ;; Incompabible with ES6 RegExp properties
+ "15.2.3.3-4-212.js" 
+ "15.2.3.3-4-213.js"
+ "15.2.3.3-4-214.js"
+ "15.2.3.3-4-215.js"
+ ;; 
  "S15.2_A1.js"
  "S15.3.2.1_A3_T8.js"
  "S15.3.4.3_A7_T8.js"

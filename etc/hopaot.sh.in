@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Sun Jan  6 08:18:28 2019 (serrano)                */
+#*    Last change :  Sun Jan  6 09:51:08 2019 (serrano)                */
 #*    Copyright   :  2015-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Hop wrapper to precompile a whole application.                   */
@@ -18,6 +18,7 @@ export DYLD_LIBRARY_PATH
 
 source=
 target=a.out
+hophopcflags=
 hopcflags=
 hopflags=
 
@@ -26,7 +27,7 @@ while : ; do
     "")
       break;;
     
-    "-o")
+    -o)
       shift;
       target=$1;;
 
@@ -34,6 +35,7 @@ while : ; do
       if [ "$source " = " " ]; then
         source=$1
       else
+	hophopcflags="$hophopcflags $1"
 	hopcflags="$hopcflags $1"
       fi
       ;;
@@ -44,18 +46,22 @@ while : ; do
     --libs-dir)
       shift
       libsdir=$1
+      hophopcflags="--libs-dir $libsdir $hophopcflags"
       hopcflags="--libs-dir $libsdir $hopcflags"
       hopflags="--libs-dir $libsdir $hopflags";;
-    
-    -*)
-      if [ "$1" != "--help" ]; then
-	hopcflags="$hopcflags $1";
-      else
-        echo "Usage: hopaot [options] [-o TARGET] [--libs-dir DIR]" >&2;
-      fi
-      ;;
+
+    --js-cspecs)
+      shift
+      jscspecs=$1
+      hophopcflags="--js-cspecs \"$jscspecs\" $hophopcflags"
+      hopcflags=--js-cspecs "$jscspecs" $hopcflags;;
+      
+    --help)
+      echo "Usage: hopaot [options] [-o TARGET] [--libs-dir DIR]" >&2;
+      exit 1;;
 
     *)
+      hophopcflags="$hophopcflags $1"
       hopcflags="$hopcflags $1";;
   esac
   shift;
@@ -67,6 +73,8 @@ if [ "$source " = " " ]; then
   exit 1;
 fi
 
-@HOP@ --no-server --sofile-policy aot $hopflags --hopc-flags "$hopcflags" $source\
+echo "HOPC [$hopcflags]"
+
+@HOP@ --no-server --sofile-policy aot $hopflags --hopc-flags "$hophopcflags" $source \
   && @HOPC@ $hopcflags $source -o $target
 

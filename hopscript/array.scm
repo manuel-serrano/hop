@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jan  5 20:43:15 2019 (serrano)                */
+;*    Last change :  Sun Jan  6 11:18:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -399,7 +399,8 @@
 	    (instantiateJsArray
 	       (vec '#())
 	       (__proto__ __proto__)
-	       (cmap js-array-cmap)
+	       (cmap (js-not-a-cmap))
+	       ;;(cmap js-array-cmap)
 	       (properties (list
 			      ;; cannot be defined with js-bind! because
 			      ;; of bootstrap specificities
@@ -2422,8 +2423,8 @@
       (bigloo-c
        (with-access::JsGlobalObject %this (js-array-prototype)
 	  ($js-make-jsarray (uint32->fixnum len) len
-	     ;;(js-not-a-cmap)
-	     js-array-cmap
+	     (js-not-a-cmap)
+	     ;;js-array-cmap
 	     js-array-prototype
 	     (js-absent) (js-array-default-mode))))
       (else

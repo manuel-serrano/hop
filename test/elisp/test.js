@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Thu Jan  3 19:40:17 2019 (serrano)                */
+/*    Last change :  Sun Jan  6 10:23:25 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,6 +30,15 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+// pok const
+const K = 10;
+const N = K / 10;
+
+function foo() {
+   return undefined;
+}
+
+// ok arrow									 
 json.forEach( entry => { 
       console.log( entry );
    } );
