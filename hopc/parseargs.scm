@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Nov 21 08:40:40 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Sun Jan  6 07:53:15 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -193,6 +193,8 @@
 	     (unless (member lang '("hop" "hopscript"))
 		(error "hopc" "Unknown language, see -help" lang))
 	     (hopc-source-language-set! (string->symbol lang)))
+	    (("--libs-dir" ?DIR (help "Generate libs-dir directive (main only)"))
+	     (hopc-libs-dir-set! DIR))
 	    (section "JavaScript dialect and features")
 	    (("--js-worker" (help "Enable JavaScript workers"))
 	     (hopc-js-worker-set! #t))

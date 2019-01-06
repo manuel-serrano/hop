@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Fri Jan  4 18:06:49 2019 (serrano)                */
+;*    Last change :  Sat Jan  5 09:59:44 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -79,6 +79,8 @@
      (cons "[.][.][].]" 'dots)
      ;; strings
      (cons (rxor "\"\\([^\"\\]\\|\\\\.\\)*\"" "'[^']*'" "`[^`]*`") 'string)
+     ;; regexp
+     (cons "/[^*].*/[gimuy]?" 'regexp)
      ;; tilde escape
      (cons "~{" 'tilde)
      ;; dollar escape

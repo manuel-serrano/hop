@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jan  4 17:51:54 2019 (serrano)                */
+;*    Last change :  Sat Jan  5 20:06:15 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1212,9 +1212,9 @@
 	 ((isa? obj J2SRef)
 	  (with-access::J2SRef obj (decl)
 	     (when (isa? decl J2SDeclExtern)
-		(with-access::J2SDeclExtern decl (id ronly)
+		(with-access::J2SDeclExtern decl (id usage)
 		   (when (eq? id ident)
-		      ronly)))))))
+		      (not (usage? usage '(assig))))))))))
    
    (define (type-method-call callee args env bk)
       ;; type a method call: O.m( ... )
@@ -1299,8 +1299,8 @@
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
 	     (when (isa? decl J2SDeclExtern)
-		(with-access::J2SDeclExtern decl (id ronly)
-		   (when ronly
+		(with-access::J2SDeclExtern decl (id usage)
+		   (when (not (usage? usage '(assig)))
 		      (case id
 			 ((Array) 'array)
 			 ((Date) 'date)

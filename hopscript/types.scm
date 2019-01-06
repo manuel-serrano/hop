@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Jan  4 15:16:18 2019 (serrano)                */
+;*    Last change :  Sun Jan  6 05:34:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -288,8 +288,10 @@
 	   
 	   (class JsRegExp::JsObject
 	      rx::obj
-	      (lastindex::JsValueDescriptor read-only)
-	      (global::JsValueDescriptor read-only))
+	      (source read-only)
+	      (flags::uint32 read-only))
+;* 	      (lastindex::JsValueDescriptor read-only)                 */
+;* 	      (global::JsValueDescriptor read-only))                   */
 	   
 	   (class JsBoolean::JsObject
 	      (val::bool (default #t)))
@@ -377,6 +379,14 @@
 	   (inline JS-OBJECT-MODE-PLAIN::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
+
+	   (inline JS-REGEXP-FLAG-IGNORECASE::uint32)
+	   (inline JS-REGEXP-FLAG-MULTILINE::uint32)
+	   (inline JS-REGEXP-FLAG-GLOBAL::uint32)
+
+	   (inline js-regexp-flags-ignorecase?::bool ::uint32)
+	   (inline js-regexp-flags-multiline?::bool ::uint32)
+	   (inline js-regexp-flags-global?::bool ::uint32)
 
 	   (inline js-object-inline-elements?::bool ::JsObject)
 	   (inline js-object-inline-ref ::JsObject ::long)
@@ -572,6 +582,23 @@
       (if flag
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-ENUMERABLE))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-ENUMERABLE))))))
+
+;*---------------------------------------------------------------------*/
+;*    regexp                                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (JS-REGEXP-FLAG-IGNORECASE) #u32:1)
+(define-inline (JS-REGEXP-FLAG-MULTILINE) #u32:2)
+(define-inline (JS-REGEXP-FLAG-GLOBAL) #u32:4)
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-flags-XXX ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-regexp-flags-ignorecase? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-IGNORECASE)) #u32:0))
+(define-inline (js-regexp-flags-multiline? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-MULTILINE)) #u32:0))
+(define-inline (js-regexp-flags-global? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-GLOBAL)) #u32:0))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-elements? ...                                   */

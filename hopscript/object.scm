@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jan  4 18:52:12 2019 (serrano)                */
+;*    Last change :  Sat Jan  5 10:32:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -260,7 +260,7 @@
 ;*    js-new-global-object ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-new-global-object)
-   ;; before all, initialize the builtin object prototype
+   ;; 2018-01-05: before all, initialize the builtin object prototype
    ;; and then create the global object
    (let* ((%void (instantiate::JsGlobalObject
 		     (cmap (make-cmap '#()))
@@ -702,7 +702,6 @@
 	       :constrsize 3 :maxconstrsize 4
 	       :prototype %prototype
 	       :construct js-object-construct
-;* 	       :constructor js-object-constructor                      */
 	       :shared-cmap #f)))
       
       ;; getPrototypeOf

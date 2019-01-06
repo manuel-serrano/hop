@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Nov 21 08:49:32 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Sun Jan  6 07:53:54 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -84,6 +84,9 @@
 
 	    (hopc-source-language::symbol)
 	    (hopc-source-language-set! ::symbol)
+
+	    (hopc-libs-dir::obj)
+	    (hopc-libs-dir-set! ::obj)
 
 	    (hopc-optim-level::int)
 	    (hopc-optim-level-set! ::int)
@@ -291,6 +294,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-source-language
    'auto)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-libs-dir ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-libs-dir
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-optim-level ...                                             */

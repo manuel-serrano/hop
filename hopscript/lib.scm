@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Fri Dec  7 11:54:01 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Sun Jan  6 06:59:29 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
 ;*=====================================================================*/
@@ -60,7 +60,8 @@
 		  ((isa? el JsRegExp)
 		   ;; patch the regexp prototype
 		   (with-access::JsGlobalObject %this (js-regexp-prototype)
-		      (with-access::JsRegExp el (__proto__)
+		      (with-access::JsRegExp el (__proto__ cmap)
+			 (set! cmap js-regexp-cmap)
 			 (set! __proto__ js-regexp-prototype))))
 		  ((vector? el)
 		   (vector-set! cnsts i

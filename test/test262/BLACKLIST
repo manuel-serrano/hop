@@ -17,6 +17,8 @@
  "S13.2.2_A1[78]_T[0-9]+.js"
  "S13.2.2_A19_T7.js"
  "S15.2.2.1_A2_T4.js"
+ ;; hop incompatibility with the new (2019-01-05) hop builtin object
+ "15.2.3.2-2-31.js" 
  "15.2.3.6-4-625gs.js"
  "S15.2_A1.js"
  "S15.3.2.1_A3_T8.js"
@@ -29,7 +31,7 @@
  ;; incompatible with ES6 destructuring args
  "S12.1_A4_T2.js"
  "S12.6.4_A15.js"
- ;; Hop binds a global variable called OBJECT (for HTML)
+ ;; hop binds a global variable called OBJECT (for HTML)
  "S11.8.6_A2.1_T3.js"
  "S11.8.6_A2.4_T3.js"
  ;; on purpose failures

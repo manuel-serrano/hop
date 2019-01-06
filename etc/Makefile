@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Nov 10 15:31:19 2018 (serrano)                */
-#*    Copyright   :  2006-18 Manuel Serrano                            */
+#*    Last change :  Sun Jan  6 07:33:58 2019 (serrano)                */
+#*    Copyright   :  2006-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -62,6 +62,10 @@ install:
 	  $(INSTALL) $$p.el $(DESTDIR)$(HOPSHAREDIR)/site-lisp; \
 	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/site-lisp/$$p.el; \
         done
+	cp ../bin/hopaot.sh $(DESTDIR)$(HOPBINDIR)/hopaot
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopaot
+	cp ../bin/hopaot.sh $(DESTDIR)$(HOPBINDIR)/hopaot-$(HOPRELEASE)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopaot-$(HOPRELEASE)
 
 uninstall:
 	$(RM) -f $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
@@ -69,6 +73,8 @@ uninstall:
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hop.1
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopsh.1
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopreplay.1
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/hopaot
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/hopaot-$(HOPRELEASE)
 
 clean:
 

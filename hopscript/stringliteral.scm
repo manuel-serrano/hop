@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan  1 13:41:20 2019 (serrano)                */
+;*    Last change :  Sat Jan  5 11:10:08 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -120,8 +120,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
-(%define-pcache 31)
-(define %pcache (js-make-pcache-table 31 "hopscript/stringliteral.scm"))
+(%define-pcache 33)
+(define %pcache (js-make-pcache-table 33 "hopscript/stringliteral.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -234,7 +234,7 @@
       (utf8
        (js-utf8->jsstring (substring s start end)))
       (else
-       (substring s start end))))
+       (js-ascii->jsstring (substring s start end)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-debug ...                                            */
@@ -398,6 +398,11 @@
 	    ((0) 0)
 	    ((1) (begin (string-set! buffer i (string-ref s 0)) 1))
 	    (else (begin (blit-string! s 0 buffer i len) len)))))
+
+   (define (len s)
+      (if (string? s)
+	  (string-length s)
+	  (js-string-literal-length s)))
 
    (with-access::JsStringLiteral js (left right weight)
       (cond
@@ -610,18 +615,18 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-codeunit-length js)
    (cond
-      ((string? js)
-       (fixnum->uint32 (string-length js)))
-      ((isa? js JsStringLiteralASCII)
-       (with-access::JsStringLiteralASCII js (right left weight)
-	  (if (not right)
-	      weight
-	      (js-string-literal-length js))))
-      (else
+      ((isa? js JsStringLiteralUTF8)
        (with-access::JsStringLiteralUTF8 js (%culen)
 	  (when (=u32 %culen #u32:0)
 	     (set! %culen (utf8-codeunit-length (js-jsstring->string js))))
-	  %culen))))
+	  %culen))
+      ((string? js)
+       (fixnum->uint32 (string-length js)))
+      (else
+       (with-access::JsStringLiteralASCII js (right left weight)
+	  (if (not right)
+	      weight
+	      (js-string-literal-length js))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    display-js-string ...                                            */
@@ -976,7 +981,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    codepoint-length ...                                             */
 ;*    -------------------------------------------------------------    */
-;*    Returns the number of code units of this code point.             */
+;*    Returns the number of UTF16 code units of this code point.       */
 ;*---------------------------------------------------------------------*/
 (define (codepoint-length c)
    (case (char->integer c)
@@ -990,45 +995,84 @@
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
 (define (utf8-codeunit-ref this::JsStringLiteralUTF8 str i::long)
+   
+   (define (return-utf8 this str i j c s r u)
+      (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
+	 (set! %idxstr r)
+	 (set! %idxutf8 u)
+;* 	 (tprint "return-utf8 r=" r " u=" u " s=" s)                   */
+	 (cond
+	    ((=fx s 1)
+	     (char->integer c))
+	    ((char=? c (integer->char #xf8))
+	     (utf8-left-replacement-codeunit str r))
+	    ((char=? c (integer->char #xfc))
+	     (utf8-right-replacement-codeunit str r))
+	    (else
+	     (let* ((utf8 (substring str r (+fx r s)))
+		    (ucs2 (utf8-string->ucs2-string utf8)))
+;* 		(tprint "ucs2=" (ucs2-string-length ucs2) " j=" j)     */
+		(ucs2->integer (ucs2-string-ref ucs2 j)))))))
+   
+   (define (rollback-utf8 this str i)
+      (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
+;* 	 (tprint "*** ROLLBACK i=" i " idxstr=" %idxstr " idxutf8=" %idxutf8) */
+	 (let loop ((r %idxstr)
+		    (j %idxutf8))
+	    (let liip ((r r)
+		       (s 1))
+	       (cond
+		  ((<fx r 0)
+		   +nan.0)
+		  ((=fx (bit-and (char->integer (string-ref-ur str r)) #xc0)
+		      #x80)
+		   (liip (-fx r 1) (+fx s 1)))
+		  (else
+		   (let* ((c (string-ref-ur str r))
+			  (u (codepoint-length c)))
+;* 		      (tprint "unroll r=" r " i=" i " j=" j)           */
+		      (if (=fx (-fx j u) i)
+			  (return-utf8 this str i j c s r j)
+			  (loop (-fx r 1) (-fx j u))))))))))
+   
    (let ((len (string-length str)))
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
 	 ;; adjust with respect to the last position
-	 (let loop ((r (if (>=fx i %idxutf8) %idxstr 0))
-		    (j (if (>=fx i %idxutf8) (-fx i %idxutf8) i)))
-	    (if (>=fx r len)
-		+nan.0
-		(let* ((c (string-ref-ur str r))
-		       (s (utf8-char-size c))
-		       (u (codepoint-length c)))
-		   (cond
-		      ((>=fx j u)
-		       (loop (+fx r s) (-fx j u)))
-		      (else
-		       (set! %idxutf8 (-fx i j))
-		       (set! %idxstr r)
-		       (cond
-			  ((=fx s 1)
-			   (char->integer c))
-			  ((char=? c (integer->char #xf8))
-			   (utf8-left-replacement-codeunit str r))
-			  ((char=? c (integer->char #xfc))
-			   (utf8-right-replacement-codeunit str r))
-			  (else
-			   (let* ((utf8 (substring str r (+fx r s)))
-				  (ucs2 (utf8-string->ucs2-string utf8)))
-			      (ucs2->integer (ucs2-string-ref ucs2 j)))))))))))))
+;* 	 (tprint "codeuint i=" i " idxutf8=" %idxutf8 " %idxstr=" %idxstr */
+;* 	    " r=" (if (>=fx i %idxutf8) %idxstr 0)                     */
+;* 	    " j=" (if (>=fx i %idxutf8) (-fx i %idxutf8) i))           */
+	 (if (and (<fx i %idxutf8)
+		  (>fx i 0)
+		  (>=fx i (- %idxutf8 i)))
+	     ;; rollback utf8 indexes
+	     (rollback-utf8 this str i)
+	     ;; look forward
+	     (let loop ((r (if (>=fx i %idxutf8) %idxstr 0))
+			(j (if (>=fx i %idxutf8) (-fx i %idxutf8) i)))
+		(if (>=fx r len)
+		    +nan.0
+		    (let* ((c (string-ref-ur str r))
+			   (s (utf8-char-size c))
+			   (u (codepoint-length c)))
+		       (if (>=fx j u)
+			   (loop (+fx r s) (-fx j u))
+			   (return-utf8 this str i j c s r (-fx i j))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-ref ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-utf8-ref this::JsStringLiteralUTF8 str::bstring index::long)
    (let ((n (utf8-codeunit-ref this str index)))
-      (if (<=fx n 255)
-	  (vector-ref prealloc-strings n)
+      (cond
+	 ((not (fixnum? n))
+	  n)
+	 ((<=fx n 255)
+	  (vector-ref prealloc-strings n))
+	 (else
 	  (js-utf8->jsstring
 	     (ucs2-string->utf8-string
 		(ucs2-string
-		   (integer->ucs2 n)))))))
+		   (integer->ucs2 n))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-ref ...                                              */
@@ -1042,7 +1086,7 @@
 	     (char->integer (string-ref-ur val (uint32->fixnum index))))))
    
    (define (utf8-string-ref val index)
-      (if (>=u32 index (fixnum->uint32 (utf8-codeunit-length val)))
+      (if (>=u32 index (js-jsstring-codeunit-length o))
 	  (js-undefined)
 	  (js-utf8-ref o val (uint32->fixnum index))))
 
@@ -1060,7 +1104,7 @@
 	     (char->integer (string-ref-ur val (uint32->fixnum index))))))
    
    (define (utf8-string-ref val index)
-      (if (>=u32 index (fixnum->uint32 (utf8-codeunit-length val)))
+      (if (>=u32 index (js-jsstring-codeunit-length o))
 	  "undefined"
 	  (js-utf8-ref o val (uint32->fixnum index))))
 
@@ -1100,7 +1144,7 @@
 	  (js-ascii->jsstring (make-string 1 (string-ref-ur val fxpos)))))
    
    (define (utf8-string-character-ref val fxpos)
-      (if (>=fx fxpos (utf8-codeunit-length val))
+      (if (=u32 (fixnum->uint32 fxpos) (js-jsstring-codeunit-length o))
 	  (js-undefined)
 	  (utf8-string-ref val fxpos)))
    
@@ -1502,12 +1546,12 @@
 	  (cond
 	     ((<fx position 0)
 	      (js-ascii->jsstring ""))
-	     ((>=fx position (utf8-codeunit-length val))
+	     ((>=u32 (fixnum->uint32 position) (js-jsstring-codeunit-length this))
 	      (js-ascii->jsstring ""))
 	     (else
 	      (js-utf8-ref this val position)))
 	  (let ((pos (js-tointeger position %this)))
-	     (if (or (< pos 0) (>= pos (utf8-codeunit-length val)))
+	     (if (or (< pos 0) (>= pos (js-jsstring-codeunit-length this)))
 		 (js-ascii->jsstring "")
 		 (js-utf8-ref this val (->fixnum pos))))))
 
@@ -2146,7 +2190,7 @@
 		  (js-substring/enc s (car m) (cdr m) enc)
 		  (js-ascii->jsstring "")))
 	 matches))
-   
+
    (let* ((s (js-jsstring->string this))
 	  (len (string-length s))
 	  (enc (isa? this JsStringLiteralUTF8))
@@ -2307,228 +2351,6 @@
 (define (js-jsstring-replace this::obj searchvalue replacevalue %this)
    (js-jsstring-maybe-replace this searchvalue replacevalue %this))
 
-(define (js-jsstring-replace-TOBEREMOVED-21aug2018 this::obj searchvalue replacevalue %this)
-   
-   (define (digit->number c)
-      (-fx (char->integer c) (char->integer #\0)))
-   
-   (define (digit10->number c1 c2)
-      (+fx (*fx (digit->number c1) 10) (digit->number c2)))
-   
-   (define (table22::pair-nil fmt::bstring match string::bstring init::bstring)
-      (let ((stop (-fx (string-length fmt) 1)))
-	 (let loop ((i 0)
-		    (j 0)
-		    (segments '()))
-	    (cond
-	       ((>=fx i stop)
-		(reverse (cons* init (substring fmt j (+fx stop 1)) segments)))
-	       ((not (char=? (string-ref fmt i) #\$))
-		(loop (+fx i 1) j segments))
-	       (else
-		(let ((segments (cons (substring fmt j i) segments)))
-		   (case (string-ref fmt (+fx i 1))
-		      ((#\$)
-		       (loop (+fx i 2) (+fx i 2)
-			  (cons "$" segments)))
-		      ((#\&)
-		       (let ((seg (js-get match (js-toname 0 %this) %this)))
-			  (loop (+fx i 2) (+fx i 2)
-			     (cons (js-jsstring->string seg) segments))))
-		      ((#\`)
-		       (let* ((k (js-get-name/cache match 'index
-				    #f %this (js-pcache-ref %pcache 12)))
-			      (portion (substring string 0 k)))
-			  (loop (+fx i 2) (+fx i 2)
-			     (cons portion segments))))
-		      ((#\')
-		       (let* ((k (js-get-name/cache match 'index
-				    #f %this (js-pcache-ref %pcache 13)))
-			      (s (js-get match (js-toname 0 %this) %this))
-			      (l (js-jsstring-lengthfx s))
-			      (portion (substring string (+fx k l))))
-			  (loop (+fx i 2) (+fx i 2)
-			     (cons portion segments))))
-		      ((#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)
-		       (let ((len (-fx (js-get-length match %this) 1)))
-			  (if (or (=fx i (-fx stop 1))
-				  (not (char-numeric? (string-ref fmt (+fx i 2)))))
-			      (let ((n (digit->number (string-ref fmt (+fx i 1)))))
-				 (if (>fx n len)
-				     (loop (+fx i 2) j segments)
-				     (let ((s (js-get match n %this)))
-					(loop (+fx i 2) (+fx i 2)
-					   (if (js-jsstring? s)
-					       (cons (js-jsstring->string s)
-						  segments)
-					       segments)))))
-			      (let ((n (digit10->number
-					  (string-ref fmt (+fx i 1))
-					  (string-ref fmt (+fx i 2)))))
-				 (if (>fx n len)
-				     (let ((n (digit->number (string-ref fmt (+fx i 1)))))
-					(if (>=fx n len)
-					    (loop (+fx i 3) j segments)
-					    (let ((s (js-get match n %this)))
-					       (loop (+fx i 2) (+fx i 2)
-						  (if (js-jsstring? s)
-						      (cons (js-jsstring->string s)
-							 segments)
-						      segments)))))
-				     (let ((s (js-get match n %this)))
-					(loop (+fx i 3) (+fx i 3)
-					   (if (js-jsstring? s)
-					       (cons (js-jsstring->string s)
-						  segments)
-					       segments))))))))
-		      (else
-		       (loop (+fx i 2) j segments)))))))))
-   
-   (define (matches->string-list::pair-nil a)
-      (let ((len (js-get-length a %this)))
-	 (let loop ((i 1)
-		    (l '()))
-	    (if (=fx i len)
-		(reverse! l)
-		(let ((v (js-get a (js-toname i %this) %this)))
-		   (loop (+fx i 1)
-		      (cons (if (eq? v (js-undefined)) (js-ascii->jsstring "") v)
-			 l)))))))
-
-   (with-access::JsGlobalObject %this (js-regexp js-array)
-      (let ((string (js-jsstring->string this)))
-	 (cond
-	    ((not (isa? searchvalue JsRegExp))
-	     (let* ((searchstr (js-tojsstring searchvalue %this))
-		    (i (string-contains string
-			  (js-jsstring->string searchstr) 0)))
-		(cond
-		   ((not i)
-		    string)
-		   ((isa? replacevalue JsFunction)
-		    (let ((str (js-jsstring->string string)))
-		       (js-stringlist->jsstring
-			  (list
-			     (substring str 0 i)
-			     (js-tostring
-				(js-call3 %this replacevalue (js-undefined)
-				   searchstr i string) %this)
-			     (substring str
-				(+fx i (js-jsstring-lengthfx searchstr)))))))
-		   (else
-		    (let ((newstring (js-tostring replacevalue %this))
-			  (a (js-new %this js-array 1))
-			  (str (js-jsstring->string string)))
-		       (js-put! a 'input string #f %this)
-		       (js-put! a (js-toname 0 %this) searchstr #f %this)
-		       (js-stringlist->jsstring
-			  (cons (substring str 0 i)
-			     (table22 newstring a str
-				(substring str (+fx i (js-jsstring-lengthfx searchstr)))))))))))
-	    ((not (js-get-name/cache searchvalue 'global
-		     #f %this (js-pcache-ref %pcache 14)))
-	     (let* ((proto (js-get-name/cache js-regexp 'prototype
-			      #f %this (js-pcache-ref %pcache 15)))
-		    (exec (js-get-name/cache proto 'exec
-			     #f %this (js-pcache-ref %pcache 16)))
-		    (res (js-call1 %this exec searchvalue string)))
-		(cond
-		   ((eq? res (js-null))
-		    string)
-		   ((isa? replacevalue JsFunction)
-		    (let ((i (js-get-name/cache res 'index
-				#f %this (js-pcache-ref %pcache 17)))
-			  (str (js-jsstring->string string)))
-		       (js-stringlist->jsstring
-			  (list
-			     (substring str 0 i)
-			     (js-tostring
-				(js-apply %this replacevalue (js-undefined)
-				   (cons (js-get res (js-toname 0 %this) %this)
-				      (append (matches->string-list res)
-					 (list i this))))
-				%this)
-			     (substring str
-				(+fx i (js-jsstring-lengthfx (js-get res (js-toname 0 %this) %this))))))))
-		   (else
-		    (let ((newstring (js-tostring replacevalue %this))
-			  (i (js-get-name/cache res 'index
-				#f %this (js-pcache-ref %pcache 18)))
-			  (str (js-jsstring->string string)))
-		       (js-stringlist->jsstring 
-			  (cons (substring str 0 i)
-			     (table22 newstring res str
-				(substring str
-				   (+fx i (js-jsstring-lengthfx (js-get res (js-toname 0 %this) %this))))))))))))
-	    (else
-	     (with-access::JsRegExp searchvalue (lastindex)
-		(with-access::JsValueDescriptor lastindex ((lastindex value))
-		   (let* ((previousLastIndex 0)
-			  (proto (js-get-name/cache js-regexp 'prototype
-				    #f %this (js-pcache-ref %pcache 19)))
-			  (exec (js-get-name/cache proto 'exec
-				   #f %this (js-pcache-ref %pcache 20))))
-		      (set! lastindex 0)
-		      (let loop ((n 0)
-				 (ms '()))
-			 (let ((result (js-call1 %this exec searchvalue string)))
-			    (if (eq? result (js-null))
-				(cond
-				   ((null? ms)
-				    this)
-				   ((isa? replacevalue JsFunction)
-				    (let loop ((matches (reverse! ms))
-					       (res this)
-					       (offset 0))
-				       (if (null? matches)
-					   res
-					   (let* ((m (car matches))
-						  (i (js-get-name/cache m 'index
-							#f %this (js-pcache-ref %pcache 21)))
-						  (l (js-jsstring-lengthfx (js-get m (js-toname 0 %this) %this)))
-						  (v (js-tostring
-							(js-apply %this replacevalue
-							   (js-undefined)
-							   (cons
-							      (js-get m (js-toname 0 %this) %this)
-							      (append (matches->string-list m)
-								 (list i this))))
-							%this)))
-					      (let ((str (js-jsstring->string res)))
-						 (loop (cdr matches)
-						    (js-stringlist->jsstring
-						       (list (substring str 0 (+fx offset i))
-							  v
-							  (substring str (+fx offset (+fx i l)))))
-						    (+fx offset (-fx (string-length v) l))))))))
-				   (else
-				    (let ((newstring (js-tostring replacevalue %this))
-					  (str (js-jsstring->string string)))
-				       (let loop ((matches (reverse! ms))
-						  (res this)
-						  (offset 0))
-					  (if (null? matches)
-					      res
-					      (let* ((m (car matches))
-						     (i (js-get-name/cache m 'index
-							   #f %this (js-pcache-ref %pcache 22)))
-						     (l (js-jsstring-lengthfx (js-get m (js-toname 0 %this) %this)))
-						     (sres (js-jsstring->string res))
-						     (v (apply utf8-string-append* (table22 newstring m str ""))))
-						 (loop (cdr matches)
-						    (js-stringlist->jsstring
-						       (list (substring sres 0 (+fx offset i))
-							  v
-							  (substring sres (+fx offset (+fx i l)))))
-						    (+fx offset (-fx (string-length v) l)))))))))
-				(let ((thisIndex lastindex))
-				   (if (= thisIndex previousLastIndex)
-				       (begin
-					  (set! lastindex (+ thisIndex 1))
-					  (set! previousLastIndex (+ 1 thisIndex)))
-				       (set! previousLastIndex thisIndex))
-				   (loop (+fx 1 n) (cons result ms))))))))))))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-replace ...                                    */
 ;*    -------------------------------------------------------------    */
@@ -2550,24 +2372,27 @@
 	 ((js-jsstring? this)
 	  (cond
 	     ((isa? searchvalue JsRegExp)
-	      (with-access::JsRegExp searchvalue (rx global lastindex)
-		 (with-access::JsValueDescriptor lastindex ((lastindex value))
-		    (with-access::JsValueDescriptor global ((global value))
-		       (let ((res (cond
-				     ((fun1? replacevalue)
-				      (js-jsstring-replace-regexp-fun1 this rx
-					 lastindex global
-					 (fun1 replacevalue) %this))
-				     ((js-jsstring? replacevalue)
-				      (js-jsstring-replace-regexp-string this rx
-					 lastindex global
-					 replacevalue %this))
-				     (else
-				      (js-jsstring-replace-regexp this rx
-					 lastindex global
-					 replacevalue %this)))))
-			  (when global (set! lastindex 0))
-			  res)))))
+	      (with-access::JsRegExp searchvalue (rx flags)
+		 (let* ((lastindex (js-object-get-name/cache searchvalue 'lastIndex
+				      #f %this (js-pcache-ref %pcache 31)))
+			(global (js-regexp-flags-global? flags))
+			(res (cond
+				((fun1? replacevalue)
+				 (js-jsstring-replace-regexp-fun1 this rx
+				    lastindex global
+				    (fun1 replacevalue) %this))
+				((js-jsstring? replacevalue)
+				 (js-jsstring-replace-regexp-string this rx
+				    lastindex global
+				    replacevalue %this))
+				(else
+				 (js-jsstring-replace-regexp this rx
+				    lastindex global
+				    replacevalue %this)))))
+		    (when global
+		       (js-object-put-name/cache! searchvalue 'lastIndex 0
+		       #f %this (js-pcache-ref %pcache 31)))
+		    res)))
 	     ((js-jsstring? searchvalue)
 	      (js-jsstring-replace-string this #t searchvalue replacevalue %this))
 	     (else
@@ -2597,38 +2422,44 @@
 		       #f %this (js-pcache-ref %pcache 24)))
 	     (exec (js-get-name/cache proto 'exec
 		      #f %this (js-pcache-ref %pcache 25))))
-	 (with-access::JsRegExp rx (lastindex global)
-	    (with-access::JsValueDescriptor global ((global value))
-	       (with-access::JsValueDescriptor lastindex ((lastindex value))
-		  ;; 7
-		  (if (not global)
-		      (js-call1 %this exec rx s)
-		      ;; 8
-		      (let ((previousLastIndex 0)
-			    (a (js-null)))
-			 (set! lastindex 0)
-			 (let loop ((n 0))
-			    (let ((result (js-call1 %this exec rx s)))
-			       (if (eq? result (js-null))
-				   a
-				   (let ((thisIndex lastindex))
-				      (if (= thisIndex previousLastIndex)
-					  (begin
-					     (set! lastindex (+ thisIndex 1))
-					     (set! previousLastIndex (+ 1 thisIndex)))
-					  (set! previousLastIndex thisIndex))
-				      (when (eq? a (js-null))
-					 (set! a (js-new %this js-array 1)))
-				      (let ((matchStr (js-get result 0 %this)))
-					 (js-define-own-property a n
-					    (instantiate::JsValueDescriptor
-					       (name (js-toname n %this))
-					       (value matchStr)
-					       (writable #t)
-					       (enumerable #t)
-					       (configurable #t))
-					    #f %this))
-				      (loop (+fx 1 n))))))))))))))
+	 (with-access::JsRegExp rx (flags)
+	    (let ((lastindex (js-object-get-name/cache rx 'lastIndex
+				#f %this (js-pcache-ref %pcache 32)))
+		  (global (js-regexp-flags-global? flags)))
+	       ;; 7
+	       (if (not global)
+		   (js-call1 %this exec rx s)
+		   ;; 8
+		   (let ((previousLastIndex 0)
+			 (a (js-null)))
+		      (set! lastindex 0)
+		      (js-object-put-name/cache! rx 'lastIndex lastindex
+			 #f %this (js-pcache-ref %pcache 32))
+		      (let loop ((n 0))
+			 (let ((result (js-call1 %this exec rx s)))
+			    (if (eq? result (js-null))
+				a
+				(let ((thisIndex lastindex))
+				   (if (= thisIndex previousLastIndex)
+				       (begin
+					  (set! lastindex (+ thisIndex 1))
+					  (js-object-put-name/cache! rx 'lastIndex lastindex
+					     #f %this (js-pcache-ref %pcache 32))
+					  
+					  (set! previousLastIndex (+ 1 thisIndex)))
+				       (set! previousLastIndex thisIndex))
+				   (when (eq? a (js-null))
+				      (set! a (js-new %this js-array 1)))
+				   (let ((matchStr (js-get result 0 %this)))
+				      (js-define-own-property a n
+					 (instantiate::JsValueDescriptor
+					    (name (js-toname n %this))
+					    (value matchStr)
+					    (writable #t)
+					    (enumerable #t)
+					    (configurable #t))
+					 #f %this))
+				   (loop (+fx 1 n)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-match ...                                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Thu Jan  3 19:42:46 2019 (serrano)                */
+;*    Last change :  Sat Jan  5 10:01:36 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -83,7 +83,7 @@
      ((ctag) (hopjs-indent-new-ctag tok))
      ((chtml) (hopjs-indent-new-chtml tok))
      ((tilde dollar) (hopjs-indent-new-tilde tok))
-     ((number string) (hopjs-indent-new-literal tok))
+     ((number string regexp) (hopjs-indent-new-literal tok))
      ((ident) (hopjs-indent-new-ident tok))
      ((=) (hopjs-indent-new-= tok))
      ((binop) (hopjs-indent-new-binop tok))
@@ -298,7 +298,7 @@
 	(hopjs-indent-new-= (hopjs-parse-consume-token-any)))
        ((colon)
 	(let ((tok (hopjs-parse-consume-token-any)))
-	  (if (memq (hopjs-parse-peek-token-type) '(ident string number))
+	  (if (memq (hopjs-parse-peek-token-type) '(ident string regexp number))
 	      (let ((tok (hopjs-parse-consume-token-any)))
 		(if (memq (hopjs-parse-peek-token-type) '(let const var))
 		    (hopjs-indent-column-token
@@ -375,7 +375,7 @@
 	 (case (hopjs-parse-peek-token-type)
 	   ((rbrace)
 	    (hopjs-indent-column-token (hopjs-parse-peek-token) 0))
-	   ((number string)
+	   ((number string regexp)
 	    (hopjs-indent-new-literal (hopjs-parse-consume-token-any)))
 	   ((return var)
 	    (let ((rtok (hopjs-parse-peek-token)))
@@ -638,7 +638,7 @@
 	   0))))
     ((eq (hopjs-parse-peek-token-type) 'colon)
      (let ((tok (hopjs-parse-consume-token-any)))
-       (if (memq (hopjs-parse-peek-token-type) '(ident string number))
+       (if (memq (hopjs-parse-peek-token-type) '(ident string regexp number))
 	   (let ((tok (hopjs-parse-consume-token-any)))
 	     (if (memq (hopjs-parse-peek-token-type) '(let const var))
 		 (hopjs-indent-column-token
@@ -1049,7 +1049,7 @@
 	   (case (hopjs-parse-token-type tok)
 	    ((otag ohtml)
 	     (hopjs-indent-new-otag tok))
-	    ((number string)
+	    ((number string regexp)
 	     (when (hopjs-indent-new-literal tok)
 	       (funcall loop)))
 	    ((ident)

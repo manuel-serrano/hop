@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Nov 21 08:36:16 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Sun Jan  6 07:54:46 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -207,6 +207,7 @@
 		  :long-size (hopc-long-size)
 		  :int-size (hopc-int-size)
 		  :plugins-loader (hopc-plugins-loader)
+		  :libs-dir (hopc-libs-dir)
 		  :debug (bigloo-debug)
 		  (hopc-j2s-flags)))))
       
@@ -237,6 +238,7 @@
 		  :long-size (hopc-long-size)
 		  :int-size (hopc-int-size)
 		  :plugins-loader (hopc-plugins-loader)
+		  :libs-dir (hopc-libs-dir)
 		  :debug (bigloo-debug)
 		  (hopc-j2s-flags)))))
       
@@ -391,6 +393,7 @@
 			:long-size (hopc-long-size)
 			:int-size (hopc-int-size)
 			:plugins-loader (hopc-plugins-loader)
+			:libs-dir (hopc-libs-dir)
 			:debug (bigloo-debug)
 			(hopc-j2s-flags))))
 	       file

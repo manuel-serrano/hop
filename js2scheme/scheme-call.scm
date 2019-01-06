@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Jan  4 15:45:44 2019 (serrano)                */
+;*    Last change :  Sat Jan  5 20:50:59 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -103,12 +103,14 @@
 ;* 	("concat" js-array-maybe-concat any (any) %this)               */
 ;* 	("slice" js-array-slice array () %this)                        */
 ;* 	("slice" js-array-maybe-slice any () %this)                    */
+	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this ,j2s-array-plain?)
+	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this ,j2s-array-plain?)
+	("join" js-array-join array (any) %this ,j2s-array-plain?)
+	("join" js-array-maybe-join any (any) %this ,j2s-array-plain?)
 	("push" js-array-push array (any) %this ,j2s-array-plain?)
 	("push" js-array-maybe-push any (any) %this ,j2s-array-plain?)
 	("pop" js-array-pop array () %this ,j2s-array-plain?)
 	("pop" js-array-maybe-pop any () %this ,j2s-array-plain?)
-	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this ,j2s-array-plain?)
-	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this ,j2s-array-plain?)
 	;; functions
 	("call" ,j2s-call function (any any) #f))))
 
@@ -187,7 +189,7 @@
    (let ((array (config-get conf :array)))
       (if (isa? array J2SDeclExtern)
 	  (with-access::J2SDeclExtern array (usage)
-	     (only-usage? usage '(new init call)))
+	     (only-usage? '(new init call) usage))
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -197,7 +199,7 @@
    (let ((string (config-get conf :string)))
       (if (isa? string J2SDeclExtern)
 	  (with-access::J2SDeclExtern string (usage)
-	     (only-usage? usage '(new init call)))
+	     (only-usage? '(new init call) usage))
 	  #t)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Jan  4 11:01:01 2019 (serrano)                */
+;*    Last change :  Sun Jan  6 07:56:24 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -104,6 +104,8 @@
 	       `(define %this (nodejs-new-global-object))
 	       `(define %source ,path)
 	       '(define %resource (dirname %source))
+	       (when (config-get conf :libs-dir #f)
+		  `(hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
 	       `(define (main args)
 		   (define %worker
 		      (js-init-main-worker! %this #f nodejs-new-global-object))
@@ -224,6 +226,9 @@
 	     ,esexports
 	     ,@globals
 	     ,@toplevel
+	     ,@(if (config-get conf :libs-dir #f)
+		   `((hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
+		   '())
 	     (define (main args)
 		,(profilers conf)
 		(hopscript-install-expanders!)

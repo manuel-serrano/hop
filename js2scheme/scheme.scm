@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan  4 17:55:32 2019 (serrano)                */
+;*    Last change :  Sat Jan  5 20:03:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2483,8 +2483,8 @@
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
 	     (when (isa? decl J2SDeclExtern)
-		(with-access::J2SDeclExtern decl (id ronly)
-		   (when (and (eq? id 'Array) ronly))))))))
+		(with-access::J2SDeclExtern decl (id usage)
+		   (when (and (eq? id 'Array) (not (usage? usage '(assig)))))))))))
 
    (define (constructor-no-return? decl)
       ;; does this constructor ever return something else than UNDEF?
