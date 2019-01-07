@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jan  6 11:18:02 2019 (serrano)                */
+;*    Last change :  Mon Jan  7 13:08:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3710,8 +3710,8 @@
 		(loop (+ k 1)))))))
    
    (with-access::JsArray this (vec ilen)
-      (let ((n (js-tointeger indx %this))
-	    (len::uint32 (js-get-lengthu32 this %this)))
+      (let* ((len::uint32 (js-get-lengthu32 this %this))
+	     (n (js-tointeger indx %this)))
 	 (if (<=uint32 len n)
 	     -1
 	     (let ((k (if (< n 0)
