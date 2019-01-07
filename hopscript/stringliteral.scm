@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Jan  6 19:40:33 2019 (serrano)                */
+;*    Last change :  Mon Jan  7 18:06:32 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2437,6 +2437,9 @@
 			 #f %this (js-pcache-ref %pcache 32))
 		      (let loop ((n 0))
 			 (let ((result (js-call1 %this exec rx s)))
+			    (set! lastindex
+			       (js-object-get-name/cache rx 'lastIndex
+				  #f %this (js-pcache-ref %pcache 32)))
 			    (if (eq? result (js-null))
 				a
 				(let ((thisIndex lastindex))
@@ -2445,7 +2448,6 @@
 					  (set! lastindex (+ thisIndex 1))
 					  (js-object-put-name/cache! rx 'lastIndex lastindex
 					     #f %this (js-pcache-ref %pcache 32))
-					  
 					  (set! previousLastIndex (+ 1 thisIndex)))
 				       (set! previousLastIndex thisIndex))
 				   (when (eq? a (js-null))
