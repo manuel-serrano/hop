@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Oct 12 19:20:08 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Mon Jan  7 05:46:04 2019 (serrano)                */
+;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -692,9 +692,9 @@
 	     (lambda (tmp)
 		`(let ((,o ,obj))
 		    (if (js-object? ,o)
-			(js-object-put-name/cache! ,o ,prop ,val ,throw ,%this
+			(js-object-put-name/cache! ,o ,prop ,tmp ,throw ,%this
 			   ,@rest)
-			(js-put! ,o ,prop ,val ,throw ,%this)))))))
+			(js-put! ,o ,prop ,tmp ,throw ,%this)))))))
       (else
        (error "js-put-name/cache!" "bad form" x))))
    
