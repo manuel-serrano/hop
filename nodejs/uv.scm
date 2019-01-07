@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Jun 29 16:50:59 2018 (serrano)                */
+;*    Last change :  Fri Dec 21 10:31:11 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1063,19 +1063,20 @@
 	     (js-put! exn 'path path #f %this)
 	     (!js-callback2 'open %worker %this
 		callback (js-undefined) exn #f))))
-
-   (if (isa? callback JsFunction)
-       (uv-fs-open (js-jsstring->string path) flags :mode mode
-	  :loop (worker-loop %worker)
-	  :callback open-callback)
-       (let ((res (uv-fs-open (js-jsstring->string path) flags :mode mode)))
-	  (if (isa? res UvFile)
-	      (uvfile->int %worker res)
-	      (let ((exn (fs-errno-exn
-			    (format "open '~a'" (js-jsstring->string path))
-			    res %this)))
-		 (js-put! exn 'path path #f %this)
-		 (js-raise exn))))))
+   
+   (let ((name (js-tostring path %this)))
+      (if (isa? callback JsFunction)
+	  (uv-fs-open name flags :mode mode
+	     :loop (worker-loop %worker)
+	     :callback open-callback)
+	  (let ((res (uv-fs-open name flags :mode mode)))
+	     (if (isa? res UvFile)
+		 (uvfile->int %worker res)
+		 (let ((exn (fs-errno-exn
+			       (format "open '~a'" name)
+			       res %this)))
+		    (js-put! exn 'path name #f %this)
+		    (js-raise exn)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fs-close ...                                              */
