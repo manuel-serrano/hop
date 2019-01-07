@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Dec 30 15:30:14 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Mon Jan  7 10:41:53 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
 ;*=====================================================================*/
@@ -892,9 +892,11 @@
    (define (equality-string op lhs tl rhs tr mode return conf flip)
       (with-tmp-flip flip lhs rhs mode return conf 'any
 	 (lambda (left right)
-	    (if (eq? op '!==)
-		`(not (js-eqstring? ,left ,right))
-		`(js-eqstring? ,left ,right)))))
+	    (if (or (type-cannot? tl '(string)) (type-cannot? tr '(string)))
+		(eq? op '!==)
+		(if (eq? op '!==)
+		    `(not (js-eqstring? ,left ,right))
+		    `(js-eqstring? ,left ,right))))))
 		
    (define (typeof-expr expr mode return conf)
       (cond

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Dec 28 09:49:24 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Mon Jan  7 07:50:26 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
 ;*=====================================================================*/
@@ -311,7 +311,11 @@
 ;*    string-utf8-normalize-utf16                                      */
 ;*---------------------------------------------------------------------*/
 (define (string-utf8-normalize-utf16 str::bstring start end)
-   (utf8-normalize-utf16 str #t start end))
+   (multiple-value-bind (str enc)
+      (utf8-normalize-utf16 str #t start end)
+      (if (eq? enc 'ascii)
+	  (js-ascii->jsstring str)
+	  (js-utf8->jsstring str))))
 
 ;*---------------------------------------------------------------------*/
 ;*    8bits-encode-utf8 ...                                            */
@@ -693,8 +697,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (js-utf8->jsstring
-		  (string-utf8-normalize-utf16 data start end))))
+	       (string-utf8-normalize-utf16 data start end)))
 	 2 "utf8Slice")
       #f %this)
    

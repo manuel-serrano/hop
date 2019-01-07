@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jan  5 06:56:40 2019 (serrano)                */
+;*    Last change :  Mon Jan  7 10:08:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1640,7 +1640,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-get/cache o prop::obj %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (if (or (not (js-jsstring? prop)) (not (isa? o JsObject)))
+   (if (or (not (js-jsstring? prop)) (not (js-object? o)))
        (js-get o prop %this)
        (let ((propname (string->symbol (js-jsstring->string prop))))
 	  (with-access::JsPropertyCache cache (name)

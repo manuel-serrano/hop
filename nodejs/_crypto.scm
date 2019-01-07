@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Tue Dec  4 22:28:53 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Mon Jan  7 07:50:43 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
 ;*=====================================================================*/
@@ -1264,8 +1264,7 @@
 		 (blit-string-ascii-clamp! data 0 string 0 len))
 	      (js-string->jsstring string)))
 	  ((utf8 utf-8)
-	   (js-string->jsstring
-	      (string-utf8-normalize-utf16 data 0 (string-length data))))
+	   (string-utf8-normalize-utf16 data 0 (string-length data)))
 	  ((binary)
 	   (js-string->jsstring
 	      (8bits-encode-utf8 data 0 (string-length data))))

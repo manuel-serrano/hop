@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Jan  5 20:06:15 2019 (serrano)                */
+;*    Last change :  Mon Jan  7 10:56:22 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -672,6 +672,12 @@
    (with-access::J2SGlobalRef this (decl id)
       (with-access::J2SDecl decl (utype usage)
 	 (cond
+	    ((eq? id 'undefined)
+	     (decl-vtype-add! decl 'undefined fix)
+	     (expr-type-add! this env fix 'undefined))
+	    ((memq id '(Math String Error Regex Date Function Array Promise))
+	     (decl-vtype-add! decl 'object fix)
+	     (expr-type-add! this env fix 'object))
 	    ((not (eq? utype 'unknown))
 	     (decl-vtype-add! decl utype fix)
 	     (expr-type-add! this env fix utype))
@@ -680,12 +686,6 @@
 		(call-next-method)
 		(decl-vtype-add! decl tyv fix)
 		(return tyv env bk)))
-	    ((memq id '(Math String Error Regex Date Function Array Promise))
-	     (decl-vtype-add! decl 'object fix)
-	     (expr-type-add! this env fix 'object))
-	    ((eq? id 'undefined)
-	     (decl-vtype-add! decl 'undefined fix)
-	     (expr-type-add! this env fix 'undefined))
 	    (else
 	     (decl-vtype-add! decl 'any fix)
 	     (expr-type-add! this env fix 'any))))))

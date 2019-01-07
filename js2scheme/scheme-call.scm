@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jan  5 20:50:59 2019 (serrano)                */
+;*    Last change :  Mon Jan  7 11:44:01 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -252,7 +252,13 @@
 	     #t)
 	    ((isa? obj J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef obj (id)
-		(eq? ty id)))))
+		(eq? ty id)))
+	    ((isa? obj J2SRef)
+	     (with-access::J2SRef obj (decl)
+		(when (isa? decl J2SDeclExtern)
+		   (with-access::J2SDeclExtern decl (id usage)
+		      (when (eq? id ty)
+			 (not (usage? usage '(assig))))))))))
       
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)

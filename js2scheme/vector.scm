@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Fri Dec  7 18:25:36 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Mon Jan  7 11:29:57 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
 ;*    -------------------------------------------------------------    */
@@ -253,10 +253,17 @@
 (define-method (vector-init-size this::J2SNew)
    
    (define (is-array? clazz)
-      (when (isa? clazz J2SGlobalRef)
-	 (with-access::J2SGlobalRef clazz (decl)
-	    (with-access::J2SDecl decl (id)
-	       (eq? id 'Array)))))
+      (cond
+	 ((isa? clazz J2SGlobalRef)
+	  (with-access::J2SGlobalRef clazz (decl)
+	     (with-access::J2SDecl decl (id)
+		(eq? id 'Array))))
+	 ((isa? clazz J2SRef)
+	  (with-access::J2SRef clazz (decl)
+	     (when (isa? decl J2SDeclExtern)
+		(with-access::J2SDeclExtern decl (id usage)
+		   (when (eq? id 'Array)
+		      (not (usage? usage '(assig))))))))))
       
    (with-access::J2SNew this (clazz args)
       (when (and (is-array? clazz) (pair? args) (null? (cdr args)))
