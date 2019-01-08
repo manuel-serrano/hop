@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Jan  6 05:34:32 2019 (serrano)                */
+;*    Last change :  Tue Jan  8 07:43:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -290,8 +290,6 @@
 	      rx::obj
 	      (source read-only)
 	      (flags::uint32 read-only))
-;* 	      (lastindex::JsValueDescriptor read-only)                 */
-;* 	      (global::JsValueDescriptor read-only))                   */
 	   
 	   (class JsBoolean::JsObject
 	      (val::bool (default #t)))

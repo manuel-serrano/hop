@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-string.scm      */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-string.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue May  1 15:31:21 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan  8 07:42:24 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
 ;*=====================================================================*/
@@ -96,7 +96,7 @@
 	    (unless vararg
 	       (=fx (length params) 1)))))
    
-   (define (replace tmp rx index global)
+   (define (replace tmp rx global)
       (let ((replacevalue (cadr args)))
 	 (cond
 	    ((fun1? replacevalue)
@@ -132,14 +132,12 @@
 			      (integer? (string-index flags #\g)))))
 		(tmp obj
 		   (lambda (tmp)
-		      (replace tmp `(vector-ref-ur %cnsts ,index) 0 global))))))
+		      (replace tmp `(vector-ref-ur %cnsts ,index) global))))))
        (let ((regexp (j2s-scheme (uncast (car args)) mode return conf)))
 	  (tmp obj
 	     (lambda (tmp)
-		`(with-access::JsRegExp ,regexp (rx lastindex global)
-		    (with-access::JsValueDescriptor lastindex ((lastindex value))
-		       (with-access::JsValueDescriptor global ((global value))
-			  ,(replace tmp 'rx 'lastindex 'global)))))))))
+		`(with-access::JsRegExp ,regexp (rx flags)
+		    ,(replace tmp 'rx (list 'js-regexp-flags-global? 'flags))))))))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace-string ...                                    */
