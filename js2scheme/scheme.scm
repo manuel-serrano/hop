@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Jan  5 20:03:59 2019 (serrano)                */
+;*    Last change :  Tue Jan  8 17:32:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -953,6 +953,12 @@
 	  (j2s-scheme (car nodes) mode return conf))
 	 ((undefined? (car nodes))
 	  (loop (cdr nodes)))
+	 ((any (lambda (n) (isa? n J2SDeclFun)) nodes)
+	  (epairify loc
+	     `(let ()
+		 ,@(cdr
+		      (flatten-begin
+			 (j2s-scheme nodes mode return conf))))))
 	 (else
 	  (epairify loc
 	     (flatten-begin

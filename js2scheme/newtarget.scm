@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Sat Dec 29 05:45:31 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Tue Jan  8 15:36:33 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
 ;*=====================================================================*/
@@ -151,5 +151,3 @@
 			(set! body (body-bind-new-target body new-target)))))))))
    
    this)
-   
-   
