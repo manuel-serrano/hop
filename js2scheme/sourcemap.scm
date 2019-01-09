@@ -270,16 +270,19 @@
 	 vec))
    
    (define (read-file-lnums path)
-      (call-with-input-file path
-	 (lambda (ip)
-	    (let loop ((i 0)
-		       (line 1)
-		       (acc '(0)))
-	       (if (eof-object? ip)
-		   (list->vector (reverse! acc))
-		   (if (char=? (read-char ip) #\Newline)
-		       (loop (+fx i 1) (+fx line 1) (cons (+fx i 1) acc))
-		       (loop (+fx i 1) line acc)))))))
+      (with-handler
+	 (lambda (e)
+	    '#())
+	 (call-with-input-file path
+	    (lambda (ip)
+	       (let loop ((i 0)
+			  (line 1)
+			  (acc '(0)))
+		  (if (eof-object? ip)
+		      (list->vector (reverse! acc))
+		      (if (char=? (read-char ip) #\Newline)
+			  (loop (+fx i 1) (+fx line 1) (cons (+fx i 1) acc))
+			  (loop (+fx i 1) line acc))))))))
    
    (if (file-exists? path)
        (read-mmap-lnums path)
