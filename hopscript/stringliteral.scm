@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Jan  7 18:06:32 2019 (serrano)                */
+;*    Last change :  Wed Jan  9 09:20:28 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -96,6 +96,7 @@
 	   (js-jsstring-replace-regexp-string ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
 	   (js-jsstring-replace-string ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-replace ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-prototype-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-match ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-match ::obj ::obj ::JsGlobalObject)
@@ -120,8 +121,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
-(%define-pcache 33)
-(define %pcache (js-make-pcache-table 33 "hopscript/stringliteral.scm"))
+(%define-pcache 34)
+(define %pcache (js-make-pcache-table 34 "hopscript/stringliteral.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -2349,56 +2350,55 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-replace this::obj searchvalue replacevalue %this)
-   (js-jsstring-maybe-replace this searchvalue replacevalue %this))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring-maybe-replace ...                                    */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
-;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-replace this searchvalue replacevalue %this)
-
+   
    (define (fun1? v)
       (when (isa? v JsFunction)
 	 (with-access::JsFunction v (procedure)
 	    (correct-arity? procedure 2))))
-
+   
    (define (fun1 v)
       (with-access::JsFunction v (procedure)
 	 procedure))
+   
+   (cond
+      ((isa? searchvalue JsRegExp)
+       (with-access::JsRegExp searchvalue (rx flags)
+	  (let* ((lastindex (js-object-get-name/cache searchvalue 'lastIndex
+			       #f %this (js-pcache-ref %pcache 31)))
+		 (global (js-regexp-flags-global? flags))
+		 (res (cond
+			 ((fun1? replacevalue)
+			  (js-jsstring-replace-regexp-fun1 this rx
+			     lastindex global
+			     (fun1 replacevalue) %this))
+			 ((js-jsstring? replacevalue)
+			  (js-jsstring-replace-regexp-string this rx
+			     lastindex global
+			     replacevalue %this))
+			 (else
+			  (js-jsstring-replace-regexp this rx
+			     lastindex global
+			     replacevalue %this)))))
+	     (when global
+		(js-object-put-name/cache! searchvalue 'lastIndex 0
+		   #f %this (js-pcache-ref %pcache 31)))
+	     res)))
+      ((js-jsstring? searchvalue)
+       (js-jsstring-replace-string this #t searchvalue replacevalue %this))
+      (else
+       (js-jsstring-replace-string this #t (js-tostring searchvalue %this) replacevalue %this)
+       )))
 
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-prototype-replace ...                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-prototype-replace this searchvalue replacevalue %this)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
-	  (cond
-	     ((isa? searchvalue JsRegExp)
-	      (with-access::JsRegExp searchvalue (rx flags)
-		 (let* ((lastindex (js-object-get-name/cache searchvalue 'lastIndex
-				      #f %this (js-pcache-ref %pcache 31)))
-			(global (js-regexp-flags-global? flags))
-			(res (cond
-				((fun1? replacevalue)
-				 (js-jsstring-replace-regexp-fun1 this rx
-				    lastindex global
-				    (fun1 replacevalue) %this))
-				((js-jsstring? replacevalue)
-				 (js-jsstring-replace-regexp-string this rx
-				    lastindex global
-				    replacevalue %this))
-				(else
-				 (js-jsstring-replace-regexp this rx
-				    lastindex global
-				    replacevalue %this)))))
-		    (when global
-		       (js-object-put-name/cache! searchvalue 'lastIndex 0
-		       #f %this (js-pcache-ref %pcache 31)))
-		    res)))
-	     ((js-jsstring? searchvalue)
-	      (js-jsstring-replace-string this #t searchvalue replacevalue %this))
-	     (else
-	      ;(js-jsstring-replace this searchvalue replacevalue %this)
-	      (js-jsstring-replace-string this #t (js-tostring searchvalue %this) replacevalue %this)
-	      )))
+	  (js-jsstring-replace this searchvalue replacevalue %this))
 	 ((isa? this JsString)
 	  (with-access::JsString this (val)
 	     (loop val)))
@@ -2406,6 +2406,23 @@
 	  (loop (js-tojsstring this %this)))
 	 (else
 	  (loop (js-tojsstring (js-toobject %this this) %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-replace ...                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-replace this searchvalue replacevalue %this)
+   (cond
+      ((js-jsstring? this)
+       (js-jsstring-replace this searchvalue replacevalue %this))
+      ((isa? this JsString)
+       (with-access::JsString this (val)
+	  (js-jsstring-replace val searchvalue replacevalue %this)))
+      (else
+       (js-call2 %this
+	  (js-get-name/cache this 'replace #f %this (js-pcache-ref %pcache 33))
+	  this searchvalue replacevalue))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-match ...                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jan  7 13:08:03 2019 (serrano)                */
+;*    Last change :  Wed Jan  9 09:17:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -768,7 +768,8 @@
 ;*    js-array-string-ref ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-string-ref arr::JsArray idx::obj %this)
-   (let ((n (string->integer idx)))
+   (let* ((s (js-jsstring->string idx))
+	  (n (string->integer s)))
       (if (or (>fx n 0) (eq? idx (js-integer->jsstring 0)))
 	  (js-array-fixnum-ref arr n %this)
 	  (js-get arr idx %this))))
@@ -883,7 +884,8 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-string-set! arr::JsArray idx::obj val throw %this)
    (with-access::JsArray arr (vec ilen)
-      (let ((n (string->integer idx)))
+      (let* ((s (js-jsstring->string idx))
+	     (n (string->integer s)))
 	 (if (or (>fx n 0) (eq? idx (js-integer->jsstring 0)))
 	     (js-array-fixnum-set! arr n val throw %this)
 	     (js-array-put! arr idx val throw %this)))))
@@ -1152,7 +1154,7 @@
 	     (js-tostring el %this)))
 
       (if (js-array? this)
-	  (js-array-initial-join this separator %this)
+	  (js-array-prototype-join this separator %this)
 	  (let* ((o (js-toobject %this this))
 		 (lenval::uint32 (js-get-lengthu32 o %this))
 		 (sep (if (eq? separator (js-undefined))
@@ -1190,7 +1192,7 @@
 		    (js-delete! o indx #t %this)
 		    (js-put-length! o (js-uint32-tointeger indx) #f #f %this)
 		    el))))
-	  (js-array-initial-pop this %this)))
+	  (js-array-prototype-pop this %this)))
    
    (js-bind! %this js-array-prototype 'pop
       :value (js-make-function %this array-prototype-pop 0 'pop
@@ -1212,7 +1214,7 @@
 		n))
 	  (begin
 	     (for-each (lambda (item)
-			  (js-array-initial-push this item %this))
+			  (js-array-prototype-push this item %this))
 		items)
 	     (js-get-length this %this))))
 ;* 	  (with-access::JsArray this (length)                          */
@@ -1752,10 +1754,10 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.14
    (define (array-prototype-indexof this::obj el . indx)
       (if (js-array? this)
-	  (js-array-initial-indexof this el
+	  (js-array-prototype-indexof this el
 	     (if (pair? indx) (car indx) 0)
 	     %this)
-	  (js-array-initial-indexof (js-toobject %this this) el
+	  (js-array-prototype-indexof (js-toobject %this this) el
 	     (if (pair? indx) (car indx) 0)
 	     %this)))
 
@@ -2109,7 +2111,7 @@
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.fill
    (define (array-prototype-fill this::obj value start end)
       (if (js-array? this)
-	  (js-array-initial-fill this value start end %this)
+	  (js-array-prototype-fill this value start end %this)
 	  (let* ((o (js-toobject %this this))
 		 (len (js-get-length o %this))
 		 (relativestart (js-tointeger start %this))
@@ -3447,9 +3449,9 @@
 		    (array-forof o length proc #u32:0)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-initial-join ...                                        */
+;*    js-array-prototype-join ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-array-initial-join o::JsArray separator %this)
+(define (js-array-prototype-join o::JsArray separator %this)
    
    (define (el->string el)
       (if (or (eq? el (js-undefined)) (eq? el (js-null)))
@@ -3477,7 +3479,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-join this::JsArray separator %this)
    (if (js-object-mode-plain? this)
-       (js-array-initial-join this separator %this)
+       (js-array-prototype-join this separator %this)
        (js-call1 %this
 	  (js-get-name/cache this 'join #f %this (js-pcache-ref %pcache 1))
 	  this separator)))
@@ -3493,9 +3495,9 @@
 	  this separator)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-initial-fill ...                                        */
+;*    js-array-prototype-fill ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-array-initial-fill this::JsArray value start end %this)
+(define (js-array-prototype-fill this::JsArray value start end %this)
    (let* ((len::uint32 (js-get-lengthu32 this %this))
 	  (k (if (eq? start (js-undefined))
 		 #u32:0
@@ -3546,7 +3548,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-fill this::JsArray value start end %this)
    (if (js-object-mode-plain? this)
-       (js-array-initial-fill this value start end %this)
+       (js-array-prototype-fill this value start end %this)
        (js-call3 %this
 	  (js-get-name/cache this 'fill #f %this (js-pcache-ref %pcache 4))
 	  this value start end)))
@@ -3562,11 +3564,11 @@
 	  this value start end)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-initial-push ...                                        */
+;*    js-array-prototype-push ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    This is the method initial bound in Array.prototype.             */
 ;*---------------------------------------------------------------------*/
-(define (js-array-initial-push o::JsArray item %this::JsGlobalObject)
+(define (js-array-prototype-push o::JsArray item %this::JsGlobalObject)
    (with-access::JsArray o (length ilen vec)
       (let ((n length))
 	 (cond
@@ -3601,7 +3603,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-push o::JsArray item %this::JsGlobalObject)
    (if (js-object-mode-plain? o)
-       (js-array-initial-push o item %this)
+       (js-array-prototype-push o item %this)
        (js-call1 %this
 	  (js-get-name/cache o 'push #f %this (js-pcache-ref %pcache 6))
 	  o item)))
@@ -3617,9 +3619,9 @@
 	  this item)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-initial-pop ...                                         */
+;*    js-array-prototype-pop ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-array-initial-pop o %this)
+(define (js-array-prototype-pop o %this)
    (with-access::JsArray o (length ilen vec)
       (let ((len::uint32 (js-get-lengthu32 o %this)))
 	 (cond
@@ -3648,7 +3650,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-pop o::JsArray %this)
    (if (js-object-mode-plain? o)
-       (js-array-initial-pop o %this)
+       (js-array-prototype-pop o %this)
        (js-call0 %this
 	  (js-get-name/cache o 'pop #f %this (js-pcache-ref %pcache 8))
 	  o)))
@@ -3664,11 +3666,11 @@
 	  this)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-initial-indexof ...                                     */
+;*    js-array-prototype-indexof ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    The THIS argument is intentionally not required to be a JsArray  */
 ;*---------------------------------------------------------------------*/
-(define (js-array-initial-indexof this::JsObject el indx %this)
+(define (js-array-prototype-indexof this::JsObject el indx %this)
    
    (define (vector-indexof::int arr vec k::int len::int)
       (let loop ((k k))
@@ -3737,7 +3739,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-indexof o::JsArray el indx %this)
    (if (js-object-mode-plain? o)
-       (js-array-initial-indexof o el indx %this)
+       (js-array-prototype-indexof o el indx %this)
        (js-call2 %this
 	  (js-get-name/cache o 'indexOf #f %this (js-pcache-ref %pcache 10))
 	  o el indx)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Dec 28 09:31:53 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Wed Jan  9 09:20:26 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
 ;*    -------------------------------------------------------------    */
@@ -455,7 +455,7 @@
    ;; replace
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11
    (define (replace this::obj searchvalue replacevalue)
-      (js-jsstring-replace (js-cast-string %this this)
+      (js-jsstring-prototype-replace (js-cast-string %this this)
 	 searchvalue replacevalue %this))
 
       
