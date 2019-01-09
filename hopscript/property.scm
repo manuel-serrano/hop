@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jan  7 10:08:09 2019 (serrano)                */
+;*    Last change :  Wed Jan  9 14:04:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2699,7 +2699,7 @@
 	  (cond
 	     ((not (js-object-mode-extensible? o))
 	      ;; 3
-	      (reject (format "~a not extensible" (js-tostring o %this))))
+	      (reject (format "\"~a\" not extensible" (js-tostring o %this))))
 	     (else
 	      ;; 4
 	      (let ((ndesc (cond
@@ -2762,13 +2762,13 @@
 		((eq? (configurable desc) #t)
 		 ;; 7.a
 		 (reject
-		    (format "~a.~a configurability mismatch"
+		    (format "\"~a.~a\" configurability mismatch"
 		       (js-tostring o %this) name)))
 		((and (boolean? (enumerable desc))
 		      (not (eq? (enumerable current) (enumerable desc))))
 		 ;; 7.b
 		 (reject
-		    (format "~a.~a enumerability mismatch"
+		    (format "\"~a.~a\" enumerability mismatch"
 		       (js-tostring o %this) name)))))
 	  (unless rejected
 	     (cond
@@ -2782,7 +2782,7 @@
 		    ((eq? (configurable current) #f)
 		     ;; 9.a
 		     (reject
-			(format "~a.~a configurability mismatch"
+			(format "\"~a.~a\" configurability mismatch"
 			   (js-tostring o %this) name)))
 		    ((isa? current JsDataDescriptor)
 		     ;; 9.b
@@ -2807,14 +2807,14 @@
 			      (eq? (writable desc) #t))
 			 ;; 10.a.i
 			 (reject
-			    (format "~a.~a read-only"
+			    (format "\"~a.~a\" read-only"
 			       (js-tostring o %this) name)))
 			((eq? (writable current) #f)
 			 ;; 10.a.ii
 			 (if (and (isa? desc JsValueDescriptor)
 				  (not (same-value (value desc) (value current))))
 			     (reject
-				(format "~a.~a value mismatch"
+				(format "\"~a.~a\" value mismatch"
 				   (js-tostring o %this) name))
 			     #t))
 			(else
@@ -2827,12 +2827,12 @@
 		     (cond
 			((and (set desc) (not (equal? (set current) (set desc))))
 			 (reject
-			    (format "~a.~a setter mismatch"
+			    (format "\"~a.~a\" setter mismatch"
 			       (js-tostring o %this) name)))
 			((and (get desc)
 			      (not (equal? (get current) (get desc))))
 			 (reject
-			    (format "~a.~a getter mismatch"
+			    (format "\"~a.~a\" getter mismatch"
 			       (js-tostring o %this) name)))
 			(else
 			 (propagate-accessor-descriptor! current desc)))
