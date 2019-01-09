@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jan  5 10:14:36 2019 (serrano)                */
+;*    Last change :  Wed Jan  9 06:58:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -435,65 +435,66 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.4.1    */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-construct %this::JsGlobalObject)
-   (lambda (_ pattern flags loc)
-      (cond
-	 ((isa? pattern JsRegExp)
-	  (with-access::JsRegExp pattern ((rxflags flags) source)
-	     (if (eq? flags (js-undefined))
-		 (set! flags rxflags)
-		 (js-raise-type-error %this "wrong regexp flags ~s" flags))
-	     (set! pattern source)))
-	 (else
-	  (if (eq? pattern (js-undefined))
-	      (set! pattern "")
-	      (set! pattern (js-tostring pattern %this)))
-	  (unless (eq? flags (js-undefined))
-	     (let* ((f (js-tostring flags %this))
-		    (i (string-index f #\i))
-		    (m (string-index f #\m))
-		    (g (string-index f #\g)))
-		(set! flags
-		   (bit-oru32
-		      (if (integer? i)
-			  (JS-REGEXP-FLAG-IGNORECASE)
-			  #u32:0)
+   (lambda (_ pattern uflags loc)
+      (let ((flags #u32:0))
+	 (cond
+	    ((isa? pattern JsRegExp)
+	     (with-access::JsRegExp pattern ((rxflags flags) source)
+		(if (eq? uflags (js-undefined))
+		    (set! flags rxflags)
+		    (js-raise-type-error %this "wrong regexp flags ~s" uflags))
+		(set! pattern source)))
+	    (else
+	     (if (eq? pattern (js-undefined))
+		 (set! pattern "")
+		 (set! pattern (js-tostring pattern %this)))
+	     (unless (eq? uflags (js-undefined))
+		(let* ((f (js-tostring uflags %this))
+		       (i (string-index f #\i))
+		       (m (string-index f #\m))
+		       (g (string-index f #\g)))
+		   (set! flags
 		      (bit-oru32
-			 (if (integer? m)
-			     (JS-REGEXP-FLAG-MULTILINE)
+			 (if (integer? i)
+			     (JS-REGEXP-FLAG-IGNORECASE)
 			     #u32:0)
-			 (if (integer? g)
-			     (JS-REGEXP-FLAG-GLOBAL)
-			     #u32:0))))
-		(when (or (string-skip f "igm")
-			  (and (integer? i)
-			       (string-index f #\i (+fx 1 i)))
-			  (and (integer? m)
-			       (string-index f #\m (+fx 1 m)))
-			  (and (integer? g)
-			       (string-index f #\g (+fx 1 g))))
-		   (js-raise-syntax-error %this "Illegal flags \"~a\"" f))))))
-      (with-handler
-	 (lambda (e)
-	    (if (isa? e &io-parse-error)
-		(with-access::&io-parse-error e (msg)
-		   (js-raise-syntax-error/loc %this loc
-		      (format "~a \"~a\"" msg pattern) ""))
-		(raise e)))
-	 (multiple-value-bind (pat enc)
-	    (make-js-regexp-pattern %this pattern)
-	    (let ((rx (pregexp pat
-			 (when (js-regexp-flags-ignorecase? flags) 'CASELESS)
-			 'JAVASCRIPT_COMPAT
-			 (if (eq? enc 'ascii) 'JAVASCRIPT_COMPAT 'UTF8)
-			 (when (js-regexp-flags-multiline? flags) 'MULTILINE))))
-	       (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
-		  (instantiateJsRegExp
-		     (cmap js-regexp-cmap)
-		     (__proto__ js-regexp-prototype)
-		     (elements (vector 0))
-		     (rx rx)
-		     (source pattern)
-		     (flags flags))))))))
+			 (bit-oru32
+			    (if (integer? m)
+				(JS-REGEXP-FLAG-MULTILINE)
+				#u32:0)
+			    (if (integer? g)
+				(JS-REGEXP-FLAG-GLOBAL)
+				#u32:0))))
+		   (when (or (string-skip f "igm")
+			     (and (integer? i)
+				  (string-index f #\i (+fx 1 i)))
+			     (and (integer? m)
+				  (string-index f #\m (+fx 1 m)))
+			     (and (integer? g)
+				  (string-index f #\g (+fx 1 g))))
+		      (js-raise-syntax-error %this "Illegal flags \"~a\"" f))))))
+	 (with-handler
+	    (lambda (e)
+	       (if (isa? e &io-parse-error)
+		   (with-access::&io-parse-error e (msg)
+		      (js-raise-syntax-error/loc %this loc
+			 (format "~a \"~a\"" msg pattern) ""))
+		   (raise e)))
+	    (multiple-value-bind (pat enc)
+	       (make-js-regexp-pattern %this pattern)
+	       (let ((rx (pregexp pat
+			    (when (js-regexp-flags-ignorecase? flags) 'CASELESS)
+			    'JAVASCRIPT_COMPAT
+			    (if (eq? enc 'ascii) 'JAVASCRIPT_COMPAT 'UTF8)
+			    (when (js-regexp-flags-multiline? flags) 'MULTILINE))))
+		  (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
+		     (instantiateJsRegExp
+			(cmap js-regexp-cmap)
+			(__proto__ js-regexp-prototype)
+			(elements (vector 0))
+			(rx rx)
+			(source pattern)
+			(flags flags)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-regexp-prototype! ...                               */
