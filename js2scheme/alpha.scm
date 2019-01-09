@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Tue Nov 20 16:01:42 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Wed Jan  9 13:00:58 2019 (serrano)                */
+;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
 ;*=====================================================================*/
@@ -33,6 +33,12 @@
 ;*    j2s-alpha ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-alpha node olds news)
+   (j2s-alpha/proc node olds news alpha))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-alpha/proc ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-alpha/proc node olds news proc::procedure)
    (for-each (lambda (old new)
 		(with-access::J2SDecl old (%info)
 		   (set! %info
@@ -40,7 +46,7 @@
 			 (new new)
 			 (%oinfo %info)))))
       olds news)
-   (let ((newbody (alpha node)))
+   (let ((newbody (proc node)))
       (for-each (lambda (old)
 		   (with-access::J2SDecl old (%info)
 		      (with-access::AlphaInfo %info (%oinfo)
@@ -260,6 +266,36 @@
 	 (duplicate::J2SFun this
 	    (params nparams)
 	    (body (j2s-alpha body params nparams))))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SBlock ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SBlock)
+   
+   (define (alpha-node-or-decl n)
+      (cond
+	 ((not (isa? n J2SDecl))
+	  (alpha n))
+	 ((isa? n J2SDeclInit)
+	  (with-access::J2SDeclInit n (%info)
+	     (with-access::AlphaInfo %info (new)
+		(with-access::J2SDeclInit new (val)
+		   (set! val (alpha val)))
+		new)))
+	 (else
+	  (with-access::J2SDecl n (%info)
+	     (with-access::AlphaInfo %info (new)
+		new)))))
+   
+   (with-access::J2SBlock this (nodes %info)
+      (let* ((decls (filter (lambda (d) (isa? d J2SDecl)) nodes))
+	     (ndecls (map j2sdecl-duplicate decls)))
+	 (if (pair? decls)
+	     (j2s-alpha/proc this decls ndecls
+		(lambda (this::J2SBlock)
+		   (duplicate::J2SBlock this
+		      (nodes (map alpha-node-or-decl nodes)))))
+	     (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SLetBlock ...                                          */

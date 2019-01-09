@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jan  8 17:32:57 2019 (serrano)                */
+;*    Last change :  Wed Jan  9 12:39:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -822,7 +822,8 @@
 	       ((or (not ronly) (usage? '(ref get new set) usage))
 		(with-access::J2SFun val (decl)
 		   (if (isa? decl J2SDecl)
-		       (let ((tmp (gensym 'f))
+		       (let ((id (j2sfun-id val))
+			     (tmp (j2s-fast-id id))
 			     (proc (gensym 'p))
 			     (^tmp (j2s-decl-scheme-id decl))
 			     (fun (jsfun->lambda val mode return conf
