@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Dec 30 16:54:48 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Wed Jan  9 11:24:56 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -315,7 +315,9 @@
 	  (let ((tok (consume-any!)))
 	     (if (eof?)
 		 (begin
-		    (set! source-map (token-value tok))
+		    (set! source-map
+		       (make-file-name (dirname (input-port-name input-port))
+			  (token-value tok)))
 		    'source-map)
 		 (parse-token-error "Unexpected source-map" tok))))
 	 (else

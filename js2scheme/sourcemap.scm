@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Sat Jun  2 19:52:27 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Wed Jan  9 11:19:31 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
 ;*=====================================================================*/
@@ -52,10 +52,12 @@
 	    (let* ((smap (read-source-map source-map))
 		   (mappings (assq-get 'mappings smap))
 		   (sources (assq-get 'sources smap))
-		   (root (assq-get 'sourceRoot smap))
+		   (base (dirname source-map))
+		   (root (or (assq-get 'sourceRoot smap) base))
 		   (file (assq-get 'file smap)))
 	       (when (and mappings sources file)
-		  (let* ((positions (read-line-positions file))
+		  (let* ((positions (read-line-positions
+				       (make-file-name root file)))
 			 (translations (make-vector (vector-length positions)))
 			 (srcs (vector-map!
 				  (lambda (f)
@@ -66,8 +68,6 @@
 					(cons p (read-line-positions p))))
 				  sources)))
 		     (decode-mappings! mappings srcs positions translations)
-;* 		     (tprint "positions=" positions " file=" file)     */
-;* 		     (tprint "*** translations " translations " " path) */
 		     (set! nodes
 			(map! (lambda (n) (sourcemap! n translations path))
 			   nodes))))))))
@@ -240,7 +240,9 @@
 ;*    read-source-map ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (read-source-map smap)
-   (javascript->obj (call-with-input-file smap read-string)))
+   (if (file-exists? smap)
+       (javascript->obj (call-with-input-file smap read-string))
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-line-positions ...                                          */
@@ -486,13 +488,15 @@
 ;*    in a table.                                                      */
 ;*---------------------------------------------------------------------*/
 (define (load-file-line-table file::bstring)
-   (call-with-input-file file
-      (lambda (p)
-	 (let loop ((lines '())
-		    (i 0))
-	    (let ((line (read-line p)))
-	       (if (eof-object? line)
-		   (list->vector (reverse! lines))
-		   (let ((j (input-port-position p)))
-		      (loop (cons (cons i j) lines) j))))))))
+   (if (file-exists? file)
+       (call-with-input-file file
+	  (lambda (p)
+	     (let loop ((lines '())
+			(i 0))
+		(let ((line (read-line p)))
+		   (if (eof-object? line)
+		       (list->vector (reverse! lines))
+		       (let ((j (input-port-position p)))
+			  (loop (cons (cons i j) lines) j)))))))
+       '()))
 		   
