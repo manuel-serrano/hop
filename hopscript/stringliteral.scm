@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jan  9 09:20:28 2019 (serrano)                */
+;*    Last change :  Wed Jan  9 10:25:01 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1948,7 +1948,7 @@
    
    (define (digit10->number c1 c2)
       (+fx (*fx (digit->number c1) 10) (digit->number c2)))
-
+   
    (let ((stop (-fx (string-length fmt) 1)))
       (let loop ((i 0)
 		 (j 0)
@@ -1959,52 +1959,58 @@
 	    ((not (char=? (string-ref fmt i) #\$))
 	     (loop (+fx i 1) j res))
 	    (else
-	     (let ((res (js-jsstring-append res (js-substring fmt j i))))
-		(case (string-ref fmt (+fx i 1))
-		   ((#\$)
+	     (case (string-ref fmt (+fx i 1))
+		((#\$)
+		 (let ((res (js-jsstring-append res (js-substring fmt j i))))
 		    (loop (+fx i 2) (+fx i 2)
-		       (js-jsstring-append res (js-ascii->jsstring "$"))))
-		   ((#\&)
-		    (let ((portion (js-substring string (caar match) (cdar match))))
-		       (loop (+fx i 2) (+fx i 2)
-			  (js-jsstring-append res portion))))
-		   ((#\`)
-		    (let ((portion (js-substring string 0 (caar match))))
-		       (loop (+fx i 2) (+fx i 2)
-			  (js-jsstring-append res portion))))
-		   ((#\')
-		    (let ((portion (js-substring string (cdar match)
-				      (string-length string))))
-		       (loop (+fx i 2) (+fx i 2)
-			  (js-jsstring-append res portion))))
-		   ((#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)
-		    (let ((len (length match)))
-		       (if (or (=fx i (-fx stop 1))
-			       (not (char-numeric? (string-ref fmt (+fx i 2)))))
-			   (let ((n (digit->number (string-ref fmt (+fx i 1)))))
-			      (if (>fx n len)
-				  (loop (+fx i 2) j res)
-				  (let* ((m (list-ref match n))
-					 (portion (js-substring string (car m) (cdr m))))
-				     (loop (+fx i 2) (+fx i 2)
-					(js-jsstring-append res portion)))))
-			   (let ((n (digit10->number
-				       (string-ref fmt (+fx i 1))
-				       (string-ref fmt (+fx i 2)))))
-			      (if (>fx n len)
-				  (let ((n (digit->number (string-ref fmt (+fx i 1)))))
-				     (if (>=fx n len)
-					 (loop (+fx i 3) j res)
-					 (let* ((m (list-ref match n))
-						(portion (js-substring string (car m) (cdr m))))
-					    (loop (+fx i 2) (+fx i 2)
-					       (js-jsstring-append res portion)))))
-				  (let* ((m (list-ref match n))
-					 (portion (js-substring string (car m) (cdr m))))
-				     (loop (+fx i 3) (+fx i 3)
-					(js-jsstring-append res portion))))))))
-		   (else
-		    (loop (+fx i 2) j res)))))))))
+		       (js-jsstring-append res (js-ascii->jsstring "$")))))
+		((#\&)
+		 (let ((res (js-jsstring-append res (js-substring fmt j i)))
+		       (portion (js-substring string (caar match) (cdar match))))
+		    (loop (+fx i 2) (+fx i 2)
+		       (js-jsstring-append res portion))))
+		((#\`)
+		 (let ((res (js-jsstring-append res (js-substring fmt j i)))
+		       (portion (js-substring string 0 (caar match))))
+		    (loop (+fx i 2) (+fx i 2)
+		       (js-jsstring-append res portion))))
+		((#\')
+		 (let ((res (js-jsstring-append res (js-substring fmt j i)))
+		       (portion (js-substring string (cdar match)
+				   (string-length string))))
+		    (loop (+fx i 2) (+fx i 2)
+		       (js-jsstring-append res portion))))
+		((#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)
+		 (let ((res (js-jsstring-append res (js-substring fmt j i)))
+		       (len (length match)))
+		    (if (or (=fx i (-fx stop 1))
+			    (not (char-numeric? (string-ref fmt (+fx i 2)))))
+			(let ((n (digit->number (string-ref fmt (+fx i 1)))))
+			   (if (>fx n len)
+			       (loop (+fx i 2) j res)
+			       (let* ((m (list-ref match n))
+				      (portion (js-substring string (car m) (cdr m))))
+				  (loop (+fx i 2) (+fx i 2)
+				     (js-jsstring-append res portion)))))
+			(let ((n (digit10->number
+				    (string-ref fmt (+fx i 1))
+				    (string-ref fmt (+fx i 2)))))
+			   (if (>fx n len)
+			       (let ((n (digit->number (string-ref fmt (+fx i 1)))))
+				  (if (>=fx n len)
+				      (loop (+fx i 3) j res)
+				      (let* ((m (list-ref match n))
+					     (portion (js-substring string (car m) (cdr m))))
+					 (loop (+fx i 2) (+fx i 2)
+					    (js-jsstring-append res portion)))))
+			       (let* ((m (list-ref match n))
+				      (portion (js-substring string (car m) (cdr m))))
+				  (loop (+fx i 3) (+fx i 3)
+				     (js-jsstring-append res portion))))))))
+		(else
+		 ;; MS, 2019-01-09: used to be:
+		 ;; (loop (+fx i 2) j res)
+		 (loop (+fx i 1) j res))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-replace-regexp ...                                   */
@@ -2318,31 +2324,33 @@
 	 ((not i)
 	  this)
 	 ((not need22)
-	  (js-jsstring-append
-	     (js-substring/enc string 0 i enc)
-	     (js-jsstring-append replacevalue
-		(js-substring/enc string
-		   (+fx i (js-jsstring-lengthfx searchstr))
-		   (string-length string)
-		   enc))))
+	  (let* ((j (+fx i (js-jsstring-lengthfx searchstr)))
+		 (tail (js-jsstring-append replacevalue
+			  (js-substring/enc string
+			     j (string-length string) enc))))
+	     (if (>fx i 0)
+		 (js-jsstring-append (js-substring/enc string 0 i enc) tail)
+		 tail)))
 	 ((isa? replacevalue JsFunction)
-	  (let ((str (js-jsstring->string string)))
+	  (let ((j (+fx i (js-jsstring-lengthfx searchstr))))
 	     (js-stringlist->jsstring
 		(list
-		   (substring str 0 i)
+		   (js-substring/enc string 0 i enc)
 		   (js-tostring
 		      (js-call3 %this replacevalue (js-undefined)
 			 searchstr i string) %this)
-		   (substring str
-		      (+fx i (js-jsstring-lengthfx searchstr)))))))
+		   (js-substring/enc string
+		      j (string-length string) enc)))))
 	 (else
-	  (let ((newstring (js-tostring replacevalue %this))
-		(j (+fx i (js-jsstring-lengthfx searchstr))))
-	     (js-jsstring-append
-		(js-substring/enc string 0 i enc)
-		(js-jsstring-append
-		   (table22 newstring (list (cons i j)) string)
-		   (js-substring/enc string j (string-length string) enc))))))))
+	  (let* ((newstring (js-tostring replacevalue %this))
+		 (j (+fx i (js-jsstring-lengthfx searchstr)))
+		 (tail (js-jsstring-append
+			  (table22 newstring (list (cons i j)) string)
+			  (js-substring/enc string
+			     j (string-length string) enc))))
+	     (if (>fx i 0)
+		 (js-jsstring-append (js-substring/enc string 0 i enc) tail)
+		 tail))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-replace ...                                          */
