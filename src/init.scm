@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Mar  9 10:44:46 2018 (serrano)                */
-;*    Copyright   :  2005-18 Manuel Serrano                            */
+;*    Last change :  Thu Jan 10 15:43:24 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -203,6 +203,8 @@
 	 ((string=? query (hop-scm-compile-suffix))
 	  (clientc-response req abspath abspath (hop-scm-compile-suffix)))
 	 ((string-prefix? "js=" query)
+	  (clientc-response req abspath (query-name query) query))
+	 ((string-prefix? "mjs=" query)
 	  (clientc-response req abspath (query-name query) query))
 	 ((string-prefix? "es=" query)
 	  (let ((resp (clientc-response req abspath (query-name query) query)))

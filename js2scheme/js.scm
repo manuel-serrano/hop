@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Dec 30 10:56:10 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Thu Jan 10 16:05:36 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
 ;*=====================================================================*/
@@ -42,7 +42,15 @@
 		     (eval! `(define %worker ,(config-get conf :worker)))
 		     (eval! `(define %scope %this))
 		     (eval! `(define this %this))
-		     (j2s-js ast #f
+		     (j2s-js ast
+			(lambda (this::J2STilde tildec dollarc mode evalp conf)
+			   (with-access::J2STilde this (loc stmt)
+			      (cons* this "new hop_tilde( function() {"
+				 (append (j2s-js stmt
+					    tildec
+					    dollarc
+					    mode evalp conf)
+				    '("})")))))
 			(lambda (this::J2SDollar tildec dollarc mode evalp conf)
 			   (with-access::J2SDollar this (node)
 			      (let ((expr (j2s-scheme node mode evalp conf)))
@@ -1026,20 +1034,23 @@
 ;*    j2s-js ::J2STilde ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2STilde tildec dollarc mode evalp conf)
-   (cons this
-      (cond
-	 ((procedure? tildec)
-	  (tildec this tildec dollarc mode evalp conf))
-	 ((eq? tildec #t)
-	  (j2s-js-script-tilde this tildec dollarc mode evalp conf))
-	 (else
-	  (with-access::J2STilde this (loc stmt)
-	     (cons* this "<script>"
-		(append (j2s-js stmt
-			   j2s-js-script-tilde
-			   dollarc
-			   mode evalp conf)
-		   '("</script>"))))))))
+   (let ((ndollarc (lambda (this::J2SDollar tildec dollarc mode evalp conf)
+		      (with-access::J2SDollar this (node)
+			 (j2s-js node tildec dollarc mode evalp conf)))))
+      (cons this
+	 (cond
+	    ((procedure? tildec)
+	     (tildec this tildec ndollarc mode evalp conf))
+	    ((eq? tildec #t)
+	     (j2s-js-script-tilde this tildec dollarc mode evalp conf))
+	    (else
+	     (with-access::J2STilde this (loc stmt)
+		(cons* this "<script>"
+		   (append (j2s-js stmt
+			      j2s-js-script-tilde
+			      ndollarc
+			      mode evalp conf)
+		      '("</script>")))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-script-tilde ...                                          */
