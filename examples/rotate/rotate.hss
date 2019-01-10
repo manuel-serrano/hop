@@ -1,0 +1,19 @@
+svg * {
+  fill: blue;
+  stroke: blue;
+}
+  
+[data-following="on"] svg * {
+  fill: red;
+  stroke: red;
+}
+  
+.center {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+body {
+  overflow: hidden;
+}
