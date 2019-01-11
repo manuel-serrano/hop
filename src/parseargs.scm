@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/src/parseargs.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Oct 26 06:25:20 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Fri Jan 11 14:41:14 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -67,7 +67,9 @@
 	 (clientc-debug #f)
 	 (clientc-compress #f)
 	 (clientc-inlining #t)
-	 (clientc-use-strict #t))
+	 (clientc-use-strict #t)
+	 (libs-dir #f)
+	 (cache-dir #f))
       
       (bigloo-debug-set! 0)
 
@@ -100,15 +102,19 @@
 	     (set! rc-file file))
 	    (("--rc-dir" ?dir (help "Set rc directory"))
 	     (hop-rc-directory-set! dir)
-	     (hop-cache-directory-set! (make-file-name dir "cache"))
-	     (hop-sofile-directory-set! (make-file-path dir "libs")))
+	     (unless cache-dir
+		(hop-cache-directory-set! (make-file-name dir "cache")))
+	     (unless libs-dir
+		(hop-sofile-directory-set! (make-file-path dir "libs"))))
 	    (("--var-dir" ?dir (help "Set var directory"))
 	     (hop-var-directory-set! dir)
 	     (hop-upload-directory-set! (make-file-name dir "upload")))
 	    (("--cache-dir" ?dir (help "Set cache directory"))
+	     (set! cache-dir #t)
 	     (hop-cache-directory-set! dir))
 	    (("--libs-dir" ?dir
 		(help (format "Set libs directory (~a)" (hop-sofile-directory))))
+	     (set! libs-dir #t)
 	     (hop-sofile-directory-set! dir))
 	    (("--icons-dir" ?dir (help "Set Hop icons directory"))
 	     (hop-icons-directory-set! dir))

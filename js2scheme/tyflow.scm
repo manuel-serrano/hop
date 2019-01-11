@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Jan  7 10:56:22 2019 (serrano)                */
+;*    Last change :  Fri Jan 11 13:51:58 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -160,16 +160,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark-capture this::J2SNode env::pair-nil)
    (call-default-walker))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    mark-capture ::J2SRef ...                                        *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (mark-capture this::J2SRef env::pair-nil)       */
-;*    (with-access::J2SRef this (decl)                                 */
-;*       (with-access::J2SDecl decl (scope ronly %info vtype)          */
-;* 	 (when (not ronly)                                             */
-;* 	    (unless (memq decl env)                                    */
-;* 	       (set! %info 'capture))))))                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-capture ::J2SAssig ...                                      */

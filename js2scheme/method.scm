@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/method.scm        */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/method.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Aug 31 08:48:03 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Fri Jan 11 13:56:58 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
 ;*    -------------------------------------------------------------    */
@@ -101,7 +101,8 @@
       (with-access::J2SFun val (thisp loc body generator)
 	 (with-access::J2SDecl thisp (usecnt)
 	    (cond
-	       ((only-usage? '(new init) usage)
+	       ((and (only-usage? '(new init) usage)
+		     (not (isa? this J2SDeclSvc)))
 		(with-access::J2SDecl thisp (utype)
 		   (set! utype 'object)))
 	       ((and (usage? '(ref get) usage)

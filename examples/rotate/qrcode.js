@@ -15,7 +15,7 @@ export function qrcode( el, attr ) {
    var qr = Qrcode( attr.type || 4, attr.level || 'L'  );
    qr.addData( attr.data );
    qr.make();
-   document.getElementById( el ).innerHTML = qr.createImgTag( 4 );
+   document.getElementById( el ).innerHTML = qr.createImgTag( attr.pixelSize || 4 );
 }
 
 		
