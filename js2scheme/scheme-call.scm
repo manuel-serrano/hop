@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jan 12 18:56:30 2019 (serrano)                */
+;*    Last change :  Sat Jan 12 19:33:53 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -235,8 +235,8 @@
 			      (vector-set-ur! ,scmarr %t:tmp %o:item)
 			      (js-array-update-length! ,scmobj (+fx 1 %t:tmp))
 			      %o:item)
-			   (js-array-push ,scmobj ,scmarg %this)))))
-	     `(js-array-push ,scmobj ,scmarg %this))))
+			   (js-array-push ,scmobj ,scmarg %this #f)))))
+	     `(js-array-push ,scmobj ,scmarg %this #f))))
    
    (define (j2s-type-sans-cast expr)
       (if (isa? expr J2SCast)
