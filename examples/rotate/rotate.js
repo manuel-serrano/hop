@@ -3,6 +3,8 @@
 import { QRCODE } from "./qrcode.js";
 
 service rotate() {
+   const url = `http://${this.host}:${hop.port}${followme().toString()}`;
+   
    return <html>
      <head>
        <script type="module" lang="hopscript"
@@ -11,21 +13,22 @@ service rotate() {
      </head>
      <script>
        server.addEventListener( "orientation", e => {
-	  const t = `rotate(${360-e.value}deg)`;
 	  document.getElementById( "container" )
-	     .style.setProperty( "transform", t, "" );
+	     .style
+	     .setProperty( "transform", `rotate(${360-e.value}deg)`, "" );
        } )
      </script>
      <div id="container" class="center">
-       <svg:img width="40%" src=${require.resolve( "./phone.svgz" )}/>
+       <svg:img height="100%" width="auto" src=${require.resolve( "./phone.svgz" )}/>
      </div>
-     <div >
-       <qrcode data=${`http://${this.host}:${hop.port}${followMe().toString()}`}/>
+     <div>
+       <qrcode data=${url}/>
+       <div><tt>${url}</tt></div>
      </div>
    </html>;
 }
 
-service followMe() {
+service followme() {
    return <html>
      <head>
        <meta name="viewport"
@@ -52,7 +55,7 @@ service followMe() {
 	     ot = -1;
 	     document.body.setAttribute( "data-following", "off" );
 	     window.removeEventListener( "deviceorientation", follow );
-	     ${orientation}( 0 ).post();
+	     follow( 0 );
 	  }
        }
      </script>

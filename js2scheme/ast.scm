@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Dec 29 05:57:59 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Fri Jan 11 14:01:08 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -93,7 +93,7 @@
 	      (val::J2SExpr (info '("ast"))))
 
 	   (class J2SDeclFun::J2SDeclInit
-	      (parent read-only (default #f) (info '("nojson")))
+	      (parent read-only (default #f) (info '("nojson" "notraverse")))
 	      (expression::bool (default #f))
 	      (hintinfo::obj (default #f) (info '("nojson" "notraverse"))))
 

@@ -17,3 +17,8 @@ svg * {
 body {
   overflow: hidden;
 }
+
+#container {
+  margin-top: 5%;
+  height: 40%;
+}
