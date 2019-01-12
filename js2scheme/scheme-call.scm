@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jan 12 17:10:52 2019 (serrano)                */
+;*    Last change :  Sat Jan 12 18:39:25 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -58,15 +58,15 @@
 	      (else
 	       (error "hopc" "bad builtin method specification" e))))
       `(;; string and array methods
-	("indexOf" js-array-indexof array (any (any 0)) %this)
-	("indexOf" js-jsstring-indexof string (string (any 0)) %this)
+	("indexOf" js-array-indexof array (any (any 0)) %this #t)
+	("indexOf" js-jsstring-indexof string (string (any 0)) %this #f)
 	;; string methods
 	("fromCharCode" ,js-jsstring-fromcharcode String (any) %this)
 	("charAt" js-jsstring-charat string (any) %this)
 	("charAt" js-jsstring-maybe-charat any (any) %this)
 	("charCodeAt" ,j2s-jsstring-charcodeat string (any) %this)
 	("charCodeAt" js-jsstring-maybe-charcodeat any (any) %this)
-	("indexOf" js-jsstring-maybe-indexof any (any (any 0)) %this)
+	("indexOf" js-jsstring-maybe-indexof any (any (any 0)) %this #t)
 	("lastIndexOf" js-jsstring-lastindexof string (string (any +nan.0)) %this)
 	("lastIndexOf" js-jsstring-maybe-lastindexof string (any (any +nan.0)) %this)
 	("substring" js-jsstring-substring string (any any) %this)
@@ -105,13 +105,13 @@
 ;* 	("concat" js-array-maybe-concat any (any) %this)               */
 ;* 	("slice" js-array-slice array () %this)                        */
 ;* 	("slice" js-array-maybe-slice any () %this)                    */
-	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #f ,j2s-array-plain?)
-	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this #f ,j2s-array-plain?)
-	("join" js-array-join array (any) %this #f ,j2s-array-plain?)
-	("join" js-array-maybe-join any (any) %this #f ,j2s-array-plain?)
-	("push" js-array-push array (any) %this #f ,j2s-array-plain?)
+	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
+	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
+	("join" js-array-join array (any) %this #t ,j2s-array-plain?)
+	("join" js-array-maybe-join any (any) %this #t ,j2s-array-plain?)
+	("push" js-array-push array (any) %this #t ,j2s-array-plain?)
 	("push" js-array-maybe-push any (any) %this #t ,j2s-array-plain?)
-	("pop" js-array-pop array () %this #f ,j2s-array-plain?)
+	("pop" js-array-pop array () %this #t ,j2s-array-plain?)
 	("pop" js-array-maybe-pop any () %this #t ,j2s-array-plain?)
 	;; functions
 	("call" ,j2s-call function (any any) #f))))

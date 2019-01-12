@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jan 11 20:17:38 2019 (serrano)                */
+;*    Last change :  Sat Jan 12 18:52:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1385,9 +1385,6 @@
        (js-get-own-property-pair o p %this)
        (js-undefined)))
 
-(define K 0)
-(define L (if (getenv "L") (string->integer (getenv "L")) 10000000))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ::JsObject ...                               */
 ;*---------------------------------------------------------------------*/
@@ -1402,16 +1399,6 @@
 		(with-access::JsConstructMap cmap (props)
 		   (let ((name (prop-name (vector-ref props i)))
 			 (flags (prop-flags (vector-ref props i))))
-		      (set! K (+fx K 1))
-		      (when (>fx K L)
-			 (with-handler
-			    (lambda (e)
-			       (exception-notify e)
-			       (pragma "the_failure( BUNSPEC, BUNSPEC, BUNSPEC )")
-			       (exit 1))
-			    (tprint "name=" name " " (-fx K (+ L 40))
-			       " /fx=" (/fx K (-fx K (+fx L 40)))
-			       " ty=" (typeof K) " " (typeof L))))
 		      (instantiate::JsValueDescriptor
 			 (writable (flags-writable? flags))
 			 (enumerable (flags-enumerable? flags))

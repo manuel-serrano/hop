@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jan  9 10:25:01 2019 (serrano)                */
+;*    Last change :  Sat Jan 12 18:45:23 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -67,7 +67,7 @@
 	   (js-get-string ::obj ::obj ::obj)
 	   (js-put-string! ::bstring ::obj ::obj ::bool ::obj)
 	   (js-jsstring-indexof ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-indexof ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-indexof ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-lastindexof ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-lastindexof ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-charcodeat ::obj ::obj ::JsGlobalObject)
@@ -1302,16 +1302,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-indexof ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-indexof this search position %this)
+(define (js-jsstring-maybe-indexof this search position %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-indexof this (js-tostring search %this) position %this))
 	 ((js-array? this)
-	  (js-array-indexof this search position %this))
+	  (js-array-indexof this search position %this cache))
 	 ((isa? this JsObject)
 	  (js-call2 %this
-	     (js-get-name/cache this 'indexOf #f %this (js-pcache-ref %pcache 1))
+	     (js-get-name/cache this 'indexOf #f %this cache)
 	     this search position))
 	 (else
 	  (loop (js-toobject %this this))))))

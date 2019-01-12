@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jan 12 17:13:26 2019 (serrano)                */
+;*    Last change :  Sat Jan 12 18:39:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -98,15 +98,15 @@
 	   (js-array-construct/length::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
-	   (js-array-fill ::JsArray ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-array-join ::JsArray ::obj ::JsGlobalObject)
-	   (js-array-maybe-join ::obj ::obj ::JsGlobalObject)
-	   (js-array-push ::JsArray ::obj ::JsGlobalObject)
+	   (js-array-fill ::JsArray ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-join ::JsArray ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-join ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-push ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-push ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-array-pop ::JsArray ::JsGlobalObject)
+	   (js-array-pop ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-maybe-pop ::obj ::JsGlobalObject ::obj)
-	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject)
+	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-iterator-to-array ::obj ::long ::JsGlobalObject))
    
    (cond-expand
@@ -3477,21 +3477,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-join ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (js-array-join this::JsArray separator %this)
+(define (js-array-join this::JsArray separator %this cache)
    (if (js-object-mode-plain? this)
        (js-array-prototype-join this separator %this)
        (js-call1 %this
-	  (js-get-name/cache this 'join #f %this (js-pcache-ref %pcache 1))
+	  (js-get-name/cache this 'join #f %this cache)
 	  this separator)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-join ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-array-maybe-join this separator %this)
+(define (js-array-maybe-join this separator %this cache)
    (if (js-array? this)
-       (js-array-join this separator %this)
+       (js-array-join this separator %this cache)
        (js-call1 %this
-	  (js-get-name/cache this 'join #f %this (js-pcache-ref %pcache 2))
+	  (js-get-name/cache this 'join #f %this cache)
 	  this separator)))
 
 ;*---------------------------------------------------------------------*/
@@ -3546,21 +3546,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-fill ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (js-array-fill this::JsArray value start end %this)
+(define (js-array-fill this::JsArray value start end %this cache)
    (if (js-object-mode-plain? this)
        (js-array-prototype-fill this value start end %this)
        (js-call3 %this
-	  (js-get-name/cache this 'fill #f %this (js-pcache-ref %pcache 4))
+	  (js-get-name/cache this 'fill #f %this cache)
 	  this value start end)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-fill ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-array-maybe-fill this value start end %this)
+(define (js-array-maybe-fill this value start end %this cache)
    (if (js-array? this)
-       (js-array-fill this value start end %this)
+       (js-array-fill this value start end %this cache)
        (js-call3 %this
-	  (js-get-name/cache this 'fill #f %this (js-pcache-ref %pcache 5))
+	  (js-get-name/cache this 'fill #f %this cache)
 	  this value start end)))
 
 ;*---------------------------------------------------------------------*/
@@ -3601,11 +3601,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-push ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (js-array-push o::JsArray item %this::JsGlobalObject)
+(define (js-array-push o::JsArray item %this::JsGlobalObject cache)
    (if (js-object-mode-plain? o)
        (js-array-prototype-push o item %this)
        (js-call1 %this
-	  (js-get-name/cache o 'push #f %this (js-pcache-ref %pcache 6))
+	  (js-get-name/cache o 'push #f %this cache)
 	  o item)))
 
 ;*---------------------------------------------------------------------*/
@@ -3613,7 +3613,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-push this item %this cache)
    (if (js-array? this)
-       (js-array-push this item %this)
+       (js-array-push this item %this cache)
        (js-call1 %this
 	  (js-get-name/cache this 'push #f %this cache)
 	  this item)))
@@ -3648,11 +3648,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-pop ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-array-pop o::JsArray %this)
+(define (js-array-pop o::JsArray %this cache)
    (if (js-object-mode-plain? o)
        (js-array-prototype-pop o %this)
        (js-call0 %this
-	  (js-get-name/cache o 'pop #f %this (js-pcache-ref %pcache 8))
+	  (js-get-name/cache o 'pop #f %this cache)
 	  o)))
 
 ;*---------------------------------------------------------------------*/
@@ -3660,7 +3660,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-pop this %this cache)
    (if (js-array? this)
-       (js-array-pop this %this)
+       (js-array-pop this %this cache)
        (js-call0 %this
 	  (js-get-name/cache this 'pop #f %this cache)
 	  this)))
@@ -3737,11 +3737,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-indexof ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-array-indexof o::JsArray el indx %this)
+(define (js-array-indexof o::JsArray el indx %this cache)
    (if (js-object-mode-plain? o)
        (js-array-prototype-indexof o el indx %this)
        (js-call2 %this
-	  (js-get-name/cache o 'indexOf #f %this (js-pcache-ref %pcache 10))
+	  (js-get-name/cache o 'indexOf #f %this cache)
 	  o el indx)))
 
 ;*---------------------------------------------------------------------*/
