@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Wed Jun 13 14:57:34 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Sat Jan 12 16:10:55 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
 ;*    This analysis scans the AST to find property assignments and     */
@@ -15,7 +15,7 @@
 ;*       - Those that are known to be defined as accessor              */
 ;*         properties.                                                 */
 ;*       - Those that are known to be defined as prototype values.     */
-;*       - Those that are likeley to be polymorphic.                   */
+;*       - Those that are likely to be polymorphic.                    */
 ;*    It then set the accessor cache levels accordingly.               */
 ;*=====================================================================*/
 

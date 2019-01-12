@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jan  9 09:20:26 2019 (serrano)                */
+;*    Last change :  Sat Jan 12 16:15:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -39,11 +39,6 @@
 
    (export (js-init-string! ::JsGlobalObject)
 	   (js-template-raw ::JsArray ::JsArray ::JsGlobalObject)))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
@@ -781,8 +776,3 @@
    (js-freeze arr %this)
    (js-freeze raw %this)
    arr)
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)

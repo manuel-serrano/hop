@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jan  9 14:04:13 2019 (serrano)                */
+;*    Last change :  Fri Jan 11 20:17:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -93,7 +93,7 @@
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
 	   
-	   (generic js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
+	   (js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache ::long ::pair-nil)
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 	   
@@ -218,6 +218,12 @@
 	   (js-call/cache ::JsGlobalObject ::JsPropertyCache obj this . args)
 	   
 	   (js-get-vindex::long ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 2)
+(define %pcache (js-make-pcache-table 2 "hopscript/property.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline thresholds ...                                            */
@@ -1379,6 +1385,9 @@
        (js-get-own-property-pair o p %this)
        (js-undefined)))
 
+(define K 0)
+(define L (if (getenv "L") (string->integer (getenv "L")) 10000000))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ::JsObject ...                               */
 ;*---------------------------------------------------------------------*/
@@ -1393,6 +1402,16 @@
 		(with-access::JsConstructMap cmap (props)
 		   (let ((name (prop-name (vector-ref props i)))
 			 (flags (prop-flags (vector-ref props i))))
+		      (set! K (+fx K 1))
+		      (when (>fx K L)
+			 (with-handler
+			    (lambda (e)
+			       (exception-notify e)
+			       (pragma "the_failure( BUNSPEC, BUNSPEC, BUNSPEC )")
+			       (exit 1))
+			    (tprint "name=" name " " (-fx K (+ L 40))
+			       " /fx=" (/fx K (-fx K (+fx L 40)))
+			       " ty=" (typeof K) " " (typeof L))))
 		      (instantiate::JsValueDescriptor
 			 (writable (flags-writable? flags))
 			 (enumerable (flags-enumerable? flags))
@@ -1493,7 +1512,8 @@
 ;*    js-get ::JsObject ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsObject prop %this::JsGlobalObject)
-   (js-get-jsobject o o prop %this))
+   (js-object-get-lookup o (js-toname prop %this) #f %this
+      (js-pcache-ref %pcache 0) -1 '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject ::JsObject ...                                   */
@@ -1543,9 +1563,9 @@
 ;*    Look for the property, if found update the cache and return      */
 ;*    the property value.                                              */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-object-get-lookup o::JsObject name::obj throw::bool
-		   %this::JsGlobalObject
-		   cache::JsPropertyCache point::long cspecs::pair-nil)
+(define (js-object-get-lookup o::JsObject name::obj throw::bool
+	   %this::JsGlobalObject
+	   cache::JsPropertyCache point::long cspecs::pair-nil)
 
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage)
       (set! cntmiss (+u32 #u32:1 cntmiss))
@@ -1559,10 +1579,14 @@
 	    (set! vindex (js-get-vindex %this)))
 	 (js-cmap-vtable-add! omap vindex i cache)))
 
+	    (when (eq? prop 'log)
+	       (tprint "ICI0 o=" (typeof o)))
    (let loop ((obj o))
       (jsobject-find obj name
 	 ;; map search
 	 (lambda (obj i)
+	    (when (eq? prop 'log)
+	       (tprint "ICI1 o=" (typeof o)))
 	    (with-access::JsObject o ((omap cmap))
 	       (with-access::JsObject obj (elements)
 		  (with-access::JsPropertyCache cache (index owner cntmiss)
@@ -1592,6 +1616,8 @@
 			    el-or-desc)))))))
 	 ;; property search
 	 (lambda (obj v)
+	    (when (eq? prop 'log)
+	       (tprint "ICI2 o=" (typeof o)))
 	    (js-property-value o v %this))
 	 ;; not found
 	 (lambda ()
