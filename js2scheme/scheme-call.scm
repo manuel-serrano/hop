@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jan 12 18:39:25 2019 (serrano)                */
+;*    Last change :  Sat Jan 12 18:56:30 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -331,7 +331,9 @@
 			     '(%this)
 			     '())
 		       ,@(if (builtin-method-cache m)
-			     `((js-pcache-ref %pcache ,cache))
+			     (if cache
+				 `((js-pcache-ref %pcache ,cache))
+				 '(#f))
 			     '())))
 		  ((procedure? met)
 		   ;; builtin procedure
@@ -346,7 +348,9 @@
 			     '(%this)
 			     '())
 			 (if (builtin-method-cache m)
-			     `((js-pcache-ref %pcache ,cache))
+			     (if cache
+				 `((js-pcache-ref %pcache ,cache))
+				 '(#f))
 			     '()))
 		      mode return conf))
 		  (else
