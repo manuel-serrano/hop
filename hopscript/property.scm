@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jan 12 18:52:05 2019 (serrano)                */
+;*    Last change :  Sat Jan 12 18:59:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -222,8 +222,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
-(%define-pcache 2)
-(define %pcache (js-make-pcache-table 2 "hopscript/property.scm"))
+(define %cache (instantiate::JsPropertyCache))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline thresholds ...                                            */
@@ -1499,8 +1498,7 @@
 ;*    js-get ::JsObject ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsObject prop %this::JsGlobalObject)
-   (js-object-get-lookup o (js-toname prop %this) #f %this
-      (js-pcache-ref %pcache 0) -1 '()))
+   (js-object-get-lookup o (js-toname prop %this) #f %this %cache -1 '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject ::JsObject ...                                   */
