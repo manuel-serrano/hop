@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Jan  7 11:44:01 2019 (serrano)                */
+;*    Last change :  Sat Jan 12 17:10:52 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -39,20 +39,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    builtin-method ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-struct builtin-method jsname met ttype args %this predicate)
+(define-struct builtin-method jsname met ttype args %this cache predicate)
 (define-struct builtin-function id scmid args %this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-builtin-methods ...                                          */
 ;*---------------------------------------------------------------------*/
 (define j2s-builtin-methods
-   ;; jsname, scmname|procedure, (this.types), [opt-args], %this, [opt-predicate]
+   ;; jsname, scmname|procedure, (this.types), [opt-args], %this, [opt-cache] [opt-predicate]
    (map (lambda (e)
 	   (match-case e
 	      ((?jsname ?met ?ttype ?args ?%this)
-	       (builtin-method jsname met ttype args %this #f))
-	      ((?jsname ?met ?ttype ?args ?%this ?pred)
-	       (builtin-method jsname met ttype args %this pred))
+	       (builtin-method jsname met ttype args %this #f #f))
+	      ((?jsname ?met ?ttype ?args ?%this ?cache)
+	       (builtin-method jsname met ttype args %this cache #f))
+	      ((?jsname ?met ?ttype ?args ?%this ?cache ?pred)
+	       (builtin-method jsname met ttype args %this cache pred))
 	      (else
 	       (error "hopc" "bad builtin method specification" e))))
       `(;; string and array methods
@@ -103,14 +105,14 @@
 ;* 	("concat" js-array-maybe-concat any (any) %this)               */
 ;* 	("slice" js-array-slice array () %this)                        */
 ;* 	("slice" js-array-maybe-slice any () %this)                    */
-	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this ,j2s-array-plain?)
-	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this ,j2s-array-plain?)
-	("join" js-array-join array (any) %this ,j2s-array-plain?)
-	("join" js-array-maybe-join any (any) %this ,j2s-array-plain?)
-	("push" js-array-push array (any) %this ,j2s-array-plain?)
-	("push" js-array-maybe-push any (any) %this ,j2s-array-plain?)
-	("pop" js-array-pop array () %this ,j2s-array-plain?)
-	("pop" js-array-maybe-pop any () %this ,j2s-array-plain?)
+	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #f ,j2s-array-plain?)
+	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this #f ,j2s-array-plain?)
+	("join" js-array-join array (any) %this #f ,j2s-array-plain?)
+	("join" js-array-maybe-join any (any) %this #f ,j2s-array-plain?)
+	("push" js-array-push array (any) %this #f ,j2s-array-plain?)
+	("push" js-array-maybe-push any (any) %this #t ,j2s-array-plain?)
+	("pop" js-array-pop array () %this #f ,j2s-array-plain?)
+	("pop" js-array-maybe-pop any () %this #t ,j2s-array-plain?)
 	;; functions
 	("call" ,j2s-call function (any any) #f))))
 
@@ -306,7 +308,7 @@
 			       (loop (cdr args) (cdr params)))))))))
 	 j2s-builtin-functions))
 
-   (define (call-builtin-method obj::J2SExpr field::J2SExpr args)
+   (define (call-builtin-method obj::J2SExpr field::J2SExpr args cache cspecs)
       (let ((m (find-builtin-method obj field args)))
 	 (when m
 	    (let* ((met (builtin-method-met m))
@@ -327,6 +329,9 @@
 				(map cadr (list-tail opt (-fx lopt nopt)))))
 		       ,@(if (builtin-method-%this m)
 			     '(%this)
+			     '())
+		       ,@(if (builtin-method-cache m)
+			     `((js-pcache-ref %pcache ,cache))
 			     '())))
 		  ((procedure? met)
 		   ;; builtin procedure
@@ -339,6 +344,9 @@
 				(map cadr (list-tail opt (-fx lopt nopt)))))
 			 (if (builtin-method-%this m)
 			     '(%this)
+			     '())
+			 (if (builtin-method-cache m)
+			     `((js-pcache-ref %pcache ,cache))
 			     '()))
 		      mode return conf))
 		  (else
@@ -417,7 +425,7 @@
 	 (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
 	    (let loop ((obj obj))
 	       (cond
-		  ((call-builtin-method obj field args)
+		  ((call-builtin-method obj field args ccache ccspecs)
 		   =>
 		   (lambda (sexp) sexp))
 		  ((isa? obj J2SGlobalRef)

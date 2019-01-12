@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan  9 09:17:42 2019 (serrano)                */
+;*    Last change :  Sat Jan 12 17:13:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -103,9 +103,9 @@
 	   (js-array-join ::JsArray ::obj ::JsGlobalObject)
 	   (js-array-maybe-join ::obj ::obj ::JsGlobalObject)
 	   (js-array-push ::JsArray ::obj ::JsGlobalObject)
-	   (js-array-maybe-push ::obj ::obj ::JsGlobalObject)
+	   (js-array-maybe-push ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-pop ::JsArray ::JsGlobalObject)
-	   (js-array-maybe-pop ::obj ::JsGlobalObject)
+	   (js-array-maybe-pop ::obj ::JsGlobalObject ::obj)
 	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject)
 	   (js-iterator-to-array ::obj ::long ::JsGlobalObject))
    
@@ -3611,11 +3611,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-push ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-array-maybe-push this item %this)
+(define (js-array-maybe-push this item %this cache)
    (if (js-array? this)
        (js-array-push this item %this)
        (js-call1 %this
-	  (js-get-name/cache this 'push #f %this (js-pcache-ref %pcache 7))
+	  (js-get-name/cache this 'push #f %this cache)
 	  this item)))
 
 ;*---------------------------------------------------------------------*/
@@ -3658,11 +3658,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-pop ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-array-maybe-pop this %this)
+(define (js-array-maybe-pop this %this cache)
    (if (js-array? this)
        (js-array-pop this %this)
        (js-call0 %this
-	  (js-get-name/cache this 'pop #f %this (js-pcache-ref %pcache 9))
+	  (js-get-name/cache this 'pop #f %this cache)
 	  this)))
 
 ;*---------------------------------------------------------------------*/
