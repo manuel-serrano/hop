@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Jan 12 18:45:23 2019 (serrano)                */
+;*    Last change :  Sun Jan 13 17:52:25 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -69,48 +69,48 @@
 	   (js-jsstring-indexof ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-indexof ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-lastindexof ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-lastindexof ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-lastindexof ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-charcodeat ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-charcodeat-as-int32::int32 ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-charcodeatu32 ::obj ::uint32 ::JsGlobalObject)
 	   (js-jsstring-charcodeatu32-as-int32::int32 ::obj ::uint32 ::JsGlobalObject)
-	   (js-jsstring-maybe-charcodeat ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-charcodeat ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-charat ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-charat ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-charat ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-substring ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-substring ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-substring ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-substr ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-substr ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-substr ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-tolowercase ::obj)
-	   (js-jsstring-maybe-tolowercase ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-tolowercase ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-tolocalelowercase ::obj)
-	   (js-jsstring-maybe-tolocalelowercase ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-tolocalelowercase ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-touppercase ::obj)
-	   (js-jsstring-maybe-touppercase ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-touppercase ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-tolocaleuppercase ::obj)
-	   (js-jsstring-maybe-tolocaleuppercase ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-tolocaleuppercase ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-split ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-split ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-split ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-replace-regexp ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
 	   (js-jsstring-replace-regexp-fun1 ::obj ::regexp ::long ::bool ::procedure ::JsGlobalObject)
 	   (js-jsstring-replace-regexp-string ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
 	   (js-jsstring-replace-string ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-replace ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-replace ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-replace ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-match ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-match ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-match ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-naturalcompare ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-naturalcompare ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-naturalcompare ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-localecompare ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-trim ::obj)
-	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-fromcharcode ::JsObject ::obj ::JsGlobalObject)
 	   (js-jsstring-escape ::obj)
 	   (js-jsstring-unescape ::obj ::JsGlobalObject)
 	   (js-jsstring-slice ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-slice ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-slice ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring->jsarray ::obj ::JsGlobalObject)
 	   (js-jsstring->list ::obj))
 
@@ -1374,14 +1374,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-lastindexof ...                                */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-lastindexof this search position %this)
+(define (js-jsstring-maybe-lastindexof this search position %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-lastindexof this (js-tostring search %this) position %this))
 	 ((isa? this JsObject)
 	  (js-call2 %this
-	     (js-get-name/cache this 'lastIndexOf #f %this (js-pcache-ref %pcache 2))
+	     (js-get-name/cache this 'lastIndexOf #f %this
+		(or cache (js-pcache-ref %pcache 2)))
 	     this search position))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -1494,14 +1495,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-charcodeat ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-charcodeat this index %this)
+(define (js-jsstring-maybe-charcodeat this index %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-charcodeat this index %this))
 	 ((isa? this JsObject)
 	  (js-call1 %this
-	     (js-get-name/cache this 'charCodeAt #f %this (js-pcache-ref %pcache 3))
+	     (js-get-name/cache this 'charCodeAt #f %this
+		(or cache (js-pcache-ref %pcache 3)))
 	     this index))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -1561,14 +1563,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-charat ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-charat this index %this)
+(define (js-jsstring-maybe-charat this index %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-charat this index %this))
 	 ((isa? this JsObject)
 	  (js-call1 %this
-	     (js-get-name/cache this 'charAt #f %this (js-pcache-ref %pcache 4))
+	     (js-get-name/cache this 'charAt #f %this
+		(or cache (js-pcache-ref %pcache 4)))
 	     this index))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -1605,14 +1608,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-substring ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-substring this start end %this)
+(define (js-jsstring-maybe-substring this start end %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-substring this start end %this))
 	 ((isa? this JsObject)
 	  (js-call2 %this
-	     (js-get-name/cache this 'substring #f %this (js-pcache-ref %pcache 5))
+	     (js-get-name/cache this 'substring #f %this
+		(or cache (js-pcache-ref %pcache 5)))
 	     this start end))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -1653,14 +1657,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-substr ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-substr this start length %this)
+(define (js-jsstring-maybe-substr this start length %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-substr this start length %this))
 	 ((isa? this JsObject)
 	  (js-call2 %this
-	     (js-get-name/cache this 'substr #f %this (js-pcache-ref %pcache 6))
+	     (js-get-name/cache this 'substr #f %this
+		(or cache (js-pcache-ref %pcache 6)))
 	     this start length))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -1685,14 +1690,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-tolowercase ...                                */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-tolowercase this %this)
+(define (js-jsstring-maybe-tolowercase this %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-tolowercase this))
 	 ((isa? this JsObject)
 	  (js-call0 %this
-	     (js-get-name/cache this 'toLowerCase #f %this (js-pcache-ref %pcache 7))
+	     (js-get-name/cache this 'toLowerCase #f %this
+		(or cache (js-pcache-ref %pcache 7)))
 	     this))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -1715,17 +1721,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-tolocalelowercase ...                          */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-tolocalelowercase this %this)
+(define (js-jsstring-maybe-tolocalelowercase this %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-tolocalelowercase this))
 	 ((isa? this JsObject)
 	  (js-call0 %this
-	     (js-get-name/cache this 'toLocaleLowerCase
-		#f
-		%this
-		(js-pcache-ref %pcache 8))
+	     (js-get-name/cache this 'toLocaleLowerCase #f %this
+		(or cache (js-pcache-ref %pcache 8)))
 	     this))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -1750,14 +1754,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-touppercase ...                                */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-touppercase this %this)
+(define (js-jsstring-maybe-touppercase this %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-touppercase this))
 	 ((isa? this JsObject)
 	  (js-call0 %this
-	     (js-get-name/cache this 'toUpperCase #f %this (js-pcache-ref %pcache 9))
+	     (js-get-name/cache this 'toUpperCase #f %this
+		(or cache (js-pcache-ref %pcache 9)))
 	     this))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -1780,15 +1785,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-tolocaleuppercase ...                          */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-tolocaleuppercase this %this)
+(define (js-jsstring-maybe-tolocaleuppercase this %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-tolocaleuppercase this))
 	 ((isa? this JsObject)
 	  (js-call0 %this
-	     (js-get-name/cache this 'toLocaleUpperCase
-		#f %this (js-pcache-ref %pcache 10))
+	     (js-get-name/cache this 'toLocaleUpperCase #f %this
+		(or cache (js-pcache-ref %pcache 10)))
 	     this))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -1926,14 +1931,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-split ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-split this separator limit %this)
+(define (js-jsstring-maybe-split this separator limit %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-split this separator limit %this))
 	 ((isa? this JsObject)
 	  (js-call2 %this
-	     (js-get-name/cache this 'split #f %this (js-pcache-ref %pcache 11))
+	     (js-get-name/cache this 'split #f %this
+		(or cache (js-pcache-ref %pcache 11)))
 	     this separator limit))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -2420,7 +2426,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-replace this searchvalue replacevalue %this)
+(define (js-jsstring-maybe-replace this searchvalue replacevalue %this cache)
    (cond
       ((js-jsstring? this)
        (js-jsstring-replace this searchvalue replacevalue %this))
@@ -2429,7 +2435,8 @@
 	  (js-jsstring-replace val searchvalue replacevalue %this)))
       (else
        (js-call2 %this
-	  (js-get-name/cache this 'replace #f %this (js-pcache-ref %pcache 33))
+	  (js-get-name/cache this 'replace #f %this
+	     (or cache (js-pcache-ref %pcache 33)))
 	  this searchvalue replacevalue))))
 
 ;*---------------------------------------------------------------------*/
@@ -2491,14 +2498,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-match ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-match this regexp %this)
+(define (js-jsstring-maybe-match this regexp %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-match this regexp %this))
 	 ((isa? this JsObject)
 	  (js-call1 %this
-	     (js-get-name/cache this 'match #f %this (js-pcache-ref %pcache 26))
+	     (js-get-name/cache this 'match #f %this
+		(or cache (js-pcache-ref %pcache 26)))
 	     this regexp))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -2514,15 +2522,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-naturalcompare ...                             */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-naturalcompare this that %this)
+(define (js-jsstring-maybe-naturalcompare this that %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-naturalcompare this that %this))
 	 ((isa? this JsObject)
 	  (js-call1 %this
-	     (js-get-name/cache this 'naturalCompare
-		#f %this (js-pcache-ref %pcache 27))
+	     (js-get-name/cache this 'naturalCompare #f %this
+		(or cache (js-pcache-ref %pcache 27)))
 	     this that))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -2540,15 +2548,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-localecompare ...                              */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-localecompare this that %this)
+(define (js-jsstring-maybe-localecompare this that %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-localecompare this that %this))
 	 ((isa? this JsObject)
 	  (js-call1 %this
-	     (js-get-name/cache this 'localeCompare
-		#f %this (js-pcache-ref %pcache 28))
+	     (js-get-name/cache this 'localeCompare #f %this
+		(or cache (js-pcache-ref %pcache 28)))
 	     this that))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -2565,14 +2573,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-trim ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-trim this %this)
+(define (js-jsstring-maybe-trim this %this cache)
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-trim this))
 	 ((isa? this JsObject)
 	  (js-call0 %this
-	     (js-get-name/cache this 'trim #f %this (js-pcache-ref %pcache 29))
+	     (js-get-name/cache this 'trim #f %this
+		(or cache (js-pcache-ref %pcache 29)))
 	     this))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -2810,11 +2819,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-slice ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-slice this start end %this)
+(define (js-jsstring-maybe-slice this start end %this cache)
    (if (js-jsstring? this)
        (js-jsstring-slice this start end %this)
-       (let ((slice (js-get-name/cache this 'slice
-		       #f %this (js-pcache-ref %pcache 30))))
+       (let ((slice (js-get-name/cache this 'slice #f %this
+		       (or cache (js-pcache-ref %pcache 30)))))
 	  (js-call2 %this slice this start end))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jan 12 19:33:53 2019 (serrano)                */
+;*    Last change :  Sun Jan 13 17:49:11 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -46,7 +46,7 @@
 ;*    j2s-builtin-methods ...                                          */
 ;*---------------------------------------------------------------------*/
 (define j2s-builtin-methods
-   ;; jsname, scmname|procedure, (this.types), [opt-args], %this, [opt-cache] [opt-predicate]
+   ;; jsname, scmname|procedure, (this.types), [opt-args], %this, [opt-cache], [opt-predicate]
    (map (lambda (e)
 	   (match-case e
 	      ((?jsname ?met ?ttype ?args ?%this)
@@ -63,41 +63,41 @@
 	;; string methods
 	("fromCharCode" ,js-jsstring-fromcharcode String (any) %this)
 	("charAt" js-jsstring-charat string (any) %this)
-	("charAt" js-jsstring-maybe-charat any (any) %this)
+	("charAt" js-jsstring-maybe-charat any (any) %this #t)
 	("charCodeAt" ,j2s-jsstring-charcodeat string (any) %this)
-	("charCodeAt" js-jsstring-maybe-charcodeat any (any) %this)
+	("charCodeAt" js-jsstring-maybe-charcodeat any (any) %this #t)
 	("indexOf" js-jsstring-maybe-indexof any (any (any 0)) %this #t)
 	("lastIndexOf" js-jsstring-lastindexof string (string (any +nan.0)) %this)
-	("lastIndexOf" js-jsstring-maybe-lastindexof string (any (any +nan.0)) %this)
+	("lastIndexOf" js-jsstring-maybe-lastindexof string (any (any +nan.0)) %this #t)
 	("substring" js-jsstring-substring string (any any) %this)
-	("substring" js-jsstring-maybe-substring any (any any) %this)
+	("substring" js-jsstring-maybe-substring any (any any) %this #t)
 	("substr" js-jsstring-substr string (any any) %this)
 	("substr" ,js-jsstring-substr string (any) %this)
-	("substr" js-jsstring-maybe-substr any (any any) %this)
+	("substr" js-jsstring-maybe-substr any (any any) %this #t)
 	("toUpperCase" js-jsstring-touppercase string () #f)
-	("toUpperCase" js-jsstring-maybe-touppercase any () %this)
+	("toUpperCase" js-jsstring-maybe-touppercase any () %this #t)
 	("toLocaleUpperCase" js-jsstring-tolocaleuppercase string () #f)
 	("toLocaleUpperCase" js-jsstring-maybe-tolocaleuppercase any () %this)
 	("toLowerCase" js-jsstring-tolowercase string () #f)
-	("toLowerCase" js-jsstring-maybe-tolowercase any () %this)
+	("toLowerCase" js-jsstring-maybe-tolowercase any () %this #t)
 	("toLocaleLowerCase" js-jsstring-tolocalelowercase string () #f)
-	("toLocaleLowerCase" js-jsstring-maybe-tolocalelowercase any () %this)
+	("toLocaleLowerCase" js-jsstring-maybe-tolocalelowercase any () %this #t)
 	("split" js-jsstring-split string (string (any (js-undefined))) %this)
-	("split" js-jsstring-maybe-split any (any (any (js-undefined))) %this)
+	("split" js-jsstring-maybe-split any (any (any (js-undefined))) %this #t)
 	("replace" ,j2s-jsstring-replace-regexp string (regexp any) %this)
 	("replace" ,j2s-jsstring-replace-string string (string any) %this)
 	("replace" ,j2s-jsstring-replace string (any any) %this)
-	("replace" js-jsstring-maybe-replace any (any any) %this)
+	("replace" js-jsstring-maybe-replace any (any any) %this #t)
 	("match" js-jsstring-match string (any) %this)
-	("match" js-jsstring-maybe-match any (any) %this)
+	("match" js-jsstring-maybe-match any (any) %this #t)
 	("naturalCompare" js-jsstring-naturalcompare string (string) %this)
-	("naturalCompare" js-jsstring-maybe-naturalcompare any (any) %this)
+	("naturalCompare" js-jsstring-maybe-naturalcompare any (any) %this #t)
 	("localeCompare" js-jsstring-localecompare string (string) %this)
-	("localeCompare" js-jsstring-maybe-localecompare any (any) %this)
+	("localeCompare" js-jsstring-maybe-localecompare any (any) %this #t)
 	("trim" js-jsstring-trim string () #f)
-	("trim" js-jsstring-maybe-trim any () %this)
+	("trim" js-jsstring-maybe-trim any () %this #t)
 	("slice" js-jsstring-slice string (any any) %this)
-	("slice" js-jsstring-maybe-slice any (any any) %this)
+	("slice" js-jsstring-maybe-slice any (any any) %this #t)
 	;; regexp
 	("test" ,j2s-regexp-test regexp (any) %this)
 	;; array methods

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jan 12 18:39:20 2019 (serrano)                */
+;*    Last change :  Sun Jan 13 17:49:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3481,7 +3481,8 @@
    (if (js-object-mode-plain? this)
        (js-array-prototype-join this separator %this)
        (js-call1 %this
-	  (js-get-name/cache this 'join #f %this cache)
+	  (js-get-name/cache this 'join #f %this
+	     (or cache (js-pcache-ref %pcache 2)))
 	  this separator)))
 
 ;*---------------------------------------------------------------------*/
@@ -3491,7 +3492,8 @@
    (if (js-array? this)
        (js-array-join this separator %this cache)
        (js-call1 %this
-	  (js-get-name/cache this 'join #f %this cache)
+	  (js-get-name/cache this 'join #f %this
+	     (or cache (js-pcache-ref %pcache 3)))
 	  this separator)))
 
 ;*---------------------------------------------------------------------*/
@@ -3521,7 +3523,7 @@
 	 (cond
 	    ((not (js-object-mode-plain? this))
 	     (js-call3 %this
-		(js-get-name/cache this 'fill #f %this (js-pcache-ref %pcache 3))
+		(js-get-name/cache this 'fill #f %this (js-pcache-ref %pcache 1))
 		this value start end))
 	    ((js-object-mode-inline? this)
 	     (let loop ((i k))
@@ -3550,7 +3552,8 @@
    (if (js-object-mode-plain? this)
        (js-array-prototype-fill this value start end %this)
        (js-call3 %this
-	  (js-get-name/cache this 'fill #f %this cache)
+	  (js-get-name/cache this 'fill #f %this
+	     (or cache (js-pcache-ref %pcache 4)))
 	  this value start end)))
 
 ;*---------------------------------------------------------------------*/
@@ -3560,7 +3563,8 @@
    (if (js-array? this)
        (js-array-fill this value start end %this cache)
        (js-call3 %this
-	  (js-get-name/cache this 'fill #f %this cache)
+	  (js-get-name/cache this 'fill #f %this
+	     (or cache (js-pcache-ref %pcache 5)))
 	  this value start end)))
 
 ;*---------------------------------------------------------------------*/
@@ -3605,7 +3609,8 @@
    (if (js-object-mode-plain? o)
        (js-array-prototype-push o item %this)
        (js-call1 %this
-	  (js-get-name/cache o 'push #f %this cache)
+	  (js-get-name/cache o 'push #f %this
+	     (or cache (js-pcache-ref %pcache 6)))
 	  o item)))
 
 ;*---------------------------------------------------------------------*/
@@ -3615,7 +3620,8 @@
    (if (js-array? this)
        (js-array-push this item %this cache)
        (js-call1 %this
-	  (js-get-name/cache this 'push #f %this cache)
+	  (js-get-name/cache this 'push #f %this
+	     (or cache (js-pcache-ref %pcache 7)))
 	  this item)))
 
 ;*---------------------------------------------------------------------*/
@@ -3652,7 +3658,8 @@
    (if (js-object-mode-plain? o)
        (js-array-prototype-pop o %this)
        (js-call0 %this
-	  (js-get-name/cache o 'pop #f %this cache)
+	  (js-get-name/cache o 'pop #f %this
+	     (or cache (js-pcache-ref %pcache 8)))
 	  o)))
 
 ;*---------------------------------------------------------------------*/
@@ -3662,7 +3669,8 @@
    (if (js-array? this)
        (js-array-pop this %this cache)
        (js-call0 %this
-	  (js-get-name/cache this 'pop #f %this cache)
+	  (js-get-name/cache this 'pop #f %this
+	     (or cache (js-pcache-ref %pcache 9)))
 	  this)))
 
 ;*---------------------------------------------------------------------*/
@@ -3741,7 +3749,8 @@
    (if (js-object-mode-plain? o)
        (js-array-prototype-indexof o el indx %this)
        (js-call2 %this
-	  (js-get-name/cache o 'indexOf #f %this cache)
+	  (js-get-name/cache o 'indexOf #f %this
+	     (or cache (js-pcache-ref %pcache 10)))
 	  o el indx)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jan 12 18:59:39 2019 (serrano)                */
+;*    Last change :  Sun Jan 13 10:24:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -106,7 +106,7 @@
 	   (js-get-lengthu32::uint32 ::obj ::JsGlobalObject #!optional cache)
 	   
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
-	   
+
 	   (js-get/cache ::obj ::obj ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   (js-get-name/cache ::obj ::symbol ::bool ::JsGlobalObject
@@ -1448,14 +1448,33 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property-value o::JsObject base p::obj %this::JsGlobalObject)
    ;; JsObject x obj x JsGlobalObject -> value | Absent
-   (let loop ((owner o))
-      (let ((desc (js-get-own-property owner p %this)))
-	 (if (eq? desc (js-undefined))
-	     (with-access::JsObject owner (__proto__)
-		(if (isa? __proto__ JsObject)
-		    (loop __proto__)
-		    (js-absent)))
-	     (js-property-value base desc %this)))))
+   (jsobject-find o (js-toname p %this)
+		;; cmap search
+		(lambda (owner i)
+		   (with-access::JsObject owner (elements)
+		      (let ((e (vector-ref elements i)))
+			 (if (isa? e JsPropertyDescriptor)
+			     (js-property-value base e %this)
+			     e))))
+		;; property search
+		(lambda (o d)
+		   (js-property-value base d %this))
+		;; not found
+		(lambda ()
+		   (js-absent))
+		;; prototype search
+		(lambda (__proto__)
+		   (js-get-property-value __proto__ base p %this))))
+
+;*    ;; JsObject x obj x JsGlobalObject -> value | Absent             */
+;*    (let loop ((owner o))                                            */
+;*       (let ((desc (js-get-own-property owner p %this)))             */
+;* 	 (if (eq? desc (js-undefined))                                 */
+;* 	     (with-access::JsObject owner (__proto__)                  */
+;* 		(if (isa? __proto__ JsObject)                          */
+;* 		    (loop __proto__)                                   */
+;* 		    (js-absent)))                                      */
+;* 	     (js-property-value base desc %this)))))                   */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-notfound ...                                              */
@@ -1498,7 +1517,7 @@
 ;*    js-get ::JsObject ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsObject prop %this::JsGlobalObject)
-   (js-object-get-lookup o (js-toname prop %this) #f %this %cache -1 '()))
+   (js-get-jsobject o o prop %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject ::JsObject ...                                   */
@@ -1512,8 +1531,8 @@
 (define (js-get-jsobject o::JsObject base prop %this)
    (let ((pval (js-get-property-value o base prop %this)))
       (if (eq? pval (js-absent))
-	  (js-undefined)
-	  pval)))
+          (js-undefined)
+          pval)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get/debug ...                                                 */
@@ -1564,14 +1583,10 @@
 	    (set! vindex (js-get-vindex %this)))
 	 (js-cmap-vtable-add! omap vindex i cache)))
 
-	    (when (eq? prop 'log)
-	       (tprint "ICI0 o=" (typeof o)))
    (let loop ((obj o))
       (jsobject-find obj name
 	 ;; map search
 	 (lambda (obj i)
-	    (when (eq? prop 'log)
-	       (tprint "ICI1 o=" (typeof o)))
 	    (with-access::JsObject o ((omap cmap))
 	       (with-access::JsObject obj (elements)
 		  (with-access::JsPropertyCache cache (index owner cntmiss)
@@ -1601,8 +1616,6 @@
 			    el-or-desc)))))))
 	 ;; property search
 	 (lambda (obj v)
-	    (when (eq? prop 'log)
-	       (tprint "ICI2 o=" (typeof o)))
 	    (js-property-value o v %this))
 	 ;; not found
 	 (lambda ()
@@ -1613,8 +1626,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::obj ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get-length o::obj %this::JsGlobalObject
-		   #!optional cache)
+(define-generic (js-get-length o::obj %this::JsGlobalObject #!optional cache)
    (if cache
        (js-get-name/cache o 'length #f %this cache)
        (js-get o 'length %this)))
