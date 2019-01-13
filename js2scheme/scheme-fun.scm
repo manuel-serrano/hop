@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Jan  1 06:19:24 2019 (serrano)                */
+;*    Last change :  Sun Jan 13 09:36:02 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -143,10 +143,6 @@
 		  (unless generator
 		     (and (usage? '(new) usage)
 			  (not (usage? '(ref get call) usage)))))))))
-   ;; CARE CONSTRUCTOR-ONLY? #f
-;* 			  (begin                                       */
-;* 			     ;; (tprint "remove #f here")              */
-;* 			     #f))))))))                                */
 
    (define (lambda? id)
       (or (memq id '(lambda lambda::obj))
@@ -684,7 +680,8 @@
 (define-method (j2s-scheme this::J2SFun mode return conf)
    (with-access::J2SFun this (loc name params mode vararg generator method)
       (let* ((id (j2sfun-id this))
-	     (tmp (gensym id))
+	     (tmp (gensym
+		     (string->symbol (format "~a:~a-" (cadr loc) (caddr loc)))))
 	     (arity (if vararg -1 (+fx 1 (length params))))
 	     (fundef (if generator
 			 (let ((tmp2 (gensym id)))

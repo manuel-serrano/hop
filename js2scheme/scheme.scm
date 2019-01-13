@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jan  9 12:39:46 2019 (serrano)                */
+;*    Last change :  Sun Jan 13 09:36:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -824,7 +824,7 @@
 		   (if (isa? decl J2SDecl)
 		       (let ((id (j2sfun-id val))
 			     (tmp (j2s-fast-id id))
-			     (proc (gensym 'p))
+			     (proc (gensym 'proc))
 			     (^tmp (j2s-decl-scheme-id decl))
 			     (fun (jsfun->lambda val mode return conf
 				     `(js-get ,ident 'prototype %this) #f)))
@@ -2685,7 +2685,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-tilde->expression this::J2STilde mode return conf)
    (with-access::J2STilde this (loc stmt)
-      (let* ((temp (gensym))
+      (let* ((temp (gensym 'tilde))
 	     (assign (j2s-stmt-assign stmt temp))
 	     (js-stmt (concat-tilde (j2s-js assign #t #f mode return conf)))
 	     (str (cond
