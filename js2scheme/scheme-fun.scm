@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Jan 13 09:36:02 2019 (serrano)                */
+;*    Last change :  Sun Jan 13 09:58:34 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -681,7 +681,8 @@
    (with-access::J2SFun this (loc name params mode vararg generator method)
       (let* ((id (j2sfun-id this))
 	     (tmp (gensym
-		     (string->symbol (format "~a:~a-" (cadr loc) (caddr loc)))))
+		     (string->symbol (format "~a:~a-"
+					(basename (cadr loc)) (caddr loc)))))
 	     (arity (if vararg -1 (+fx 1 (length params))))
 	     (fundef (if generator
 			 (let ((tmp2 (gensym id)))
