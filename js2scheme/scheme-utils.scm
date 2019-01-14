@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Jan  7 10:21:59 2019 (serrano)                */
+;*    Last change :  Mon Jan 14 10:53:19 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -544,7 +544,16 @@
 	     ((int32)
 	      `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
 	     ((string)
-	      `(js-array-string-ref ,obj ,prop %this))
+	      (cond
+		 ((and (string? prop) (string=? prop "length"))
+		  (if (eq? tyval 'uint32)
+		      `(js-array-length ,obj)
+		      (box `(js-array-length ,obj) 'uint32 conf)))
+		 ((and cache cspecs)
+		  `(js-get-name/cache ,obj (js-toname ,prop %this) #f %this
+		      ,(js-pcache cache) ,(loc->point loc) ',cspecs))
+		 (else
+		  `(js-array-ref ,obj ,prop %this))))
 	     (else
 	      `(js-array-ref ,obj ,prop %this))))
 	 ((eq? tyobj 'string)
