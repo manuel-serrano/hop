@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Jan 13 17:52:25 2019 (serrano)                */
+;*    Last change :  Mon Jan 14 13:00:02 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -937,7 +937,7 @@
 	 (if (>=fx r len)
 	     l
 	     (let* ((c (string-ref str r))
-		    (s (utf8-char-size c)))
+		    (s (utf8-char-size-ur c)))
 		(if (and (=fx s 4)
 			 (or (=fx (char->integer c) #xf0)
 			     (=fx (char->integer c) #xf4)))
@@ -1012,12 +1012,10 @@
 	    (else
 	     (let* ((utf8 (substring str r (+fx r s)))
 		    (ucs2 (utf8-string->ucs2-string utf8)))
-;* 		(tprint "ucs2=" (ucs2-string-length ucs2) " j=" j)     */
 		(ucs2->integer (ucs2-string-ref ucs2 j)))))))
    
    (define (rollback-utf8 this str i)
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
-;* 	 (tprint "*********** ROLLBACK i=" i " idxstr=" %idxstr " idxutf8=" %idxutf8) */
 	 (let loop ((r %idxstr)
 		    (j %idxutf8))
 	    (let liip ((r r)
@@ -1031,7 +1029,6 @@
 		  (else
 		   (let* ((c (string-ref-ur str r))
 			  (u (codepoint-length c)))
-;* 		      (tprint "unroll r=" r " i=" i " j=" j " u=" u)   */
 		      (if (<fx (-fx j u) i)
 			  (return-utf8 this str i j c s r j)
 			  (loop (-fx r 1) (-fx j u))))))))))
@@ -1039,9 +1036,6 @@
    (let ((len (string-length str)))
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
 	 ;; adjust with respect to the last position
-;* 	 (tprint "codeuint i=" i " idxutf8=" %idxutf8 " %idxstr=" %idxstr */
-;* 	    " r=" (if (>=fx i %idxutf8) %idxstr 0)                     */
-;* 	    " j=" (if (>=fx i %idxutf8) (-fx i %idxutf8) i))           */
 	 (if (and (<fx i %idxutf8)
 		  (>fx i 0)
 		  (>=fx i (- %idxutf8 i)))
@@ -1053,7 +1047,7 @@
 		(if (>=fx r len)
 		    +nan.0
 		    (let* ((c (string-ref-ur str r))
-			   (s (utf8-char-size c))
+			   (s (utf8-char-size-ur c))
 			   (u (codepoint-length c)))
 		       (if (>=fx j u)
 			   (loop (+fx r s) (-fx j u))
@@ -1367,7 +1361,7 @@
 		(loop (+fx searchlen i) (+fx u usearchlen) u))
 	       (else
 		(let ((c (string-ref s i)))
-		   (loop (+fx i (utf8-char-size c)) (+fx u 1) r)))))))
+		   (loop (+fx i (utf8-char-size-ur c)) (+fx u 1) r)))))))
 
    (string-dispatch lastindexof this))
    
@@ -1869,14 +1863,14 @@
 		(if (not (=fx q s))
 		    (let ((z (split-match S q R)))
 		       (if (eq? z 'failure)
-			   (loop (+fx q (utf8-char-size (string-ref S q))) p)
+			   (loop (+fx q (utf8-char-size-ur (string-ref S q))) p)
 			   ;; 13.c.i
 			   (let ((e (cdar z))
 				 (q (caar z))
 				 (cap (cdr z)))
 			      (if (=fx e p)
 				  ;; 13.c.ii
-				  (loop (+fx q (utf8-char-size (string-ref S q))) p)
+				  (loop (+fx q (utf8-char-size-ur (string-ref S q))) p)
 				  ;; 13.c.iii.1
 				  (let ((T (substring S p q))
 					(l (->fixnum (js-get-length A %this))))
@@ -2847,7 +2841,7 @@
 	     (vec (make-vector len)))
 	 (let loop ((i 0))
 	    (if (<fx i len)
-		(let* ((z (utf8-char-size (string-ref val i)))
+		(let* ((z (utf8-char-size-ur (string-ref val i)))
 		       (s (substring val i (+fx i z))))
 		   (vector-set! vec i (js-string->jsstring s))
 		   (loop (+fx i z)))
@@ -2875,7 +2869,7 @@
 	 (let loop ((i 0)
 		    (acc '()))
 	    (if (<fx i len)
-		(let* ((z (utf8-char-size (string-ref val i)))
+		(let* ((z (utf8-char-size-ur (string-ref val i)))
 		       (s (substring val i (+fx i z))))
 		   (loop (+fx i z) (cons (js-string->jsstring s) acc)))
 		(reverse! acc)))))
@@ -2908,7 +2902,7 @@
       (let ((len (string-length val)))
 	 (let loop ((i 0))
 	       (when (<fx i len)
-		  (let* ((z (utf8-char-size (string-ref val i)))
+		  (let* ((z (utf8-char-size-ur (string-ref val i)))
 			 (s (substring val i (+fx i z))))
 		     (proc (js-string->jsstring s))
 		     (loop (+fx i z)))))))
