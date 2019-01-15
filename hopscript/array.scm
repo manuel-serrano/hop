@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jan 13 17:49:49 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 09:35:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -428,7 +428,7 @@
 	 
 	 ;; create the array object constructor
 	 (set! js-array
-	    (js-make-function %this (%js-array %this) 1 'Array
+	    (js-make-function %this (%js-array %this) 1 "Array"
 	       :__proto__ js-function-prototype
 	       :prototype js-array-prototype
 	       :alloc js-array-alloc-ctor
@@ -441,7 +441,7 @@
 	    :value (js-make-function %this
 		      (lambda (this arg)
 			 (or (js-array? arg) (js-proxy-array? arg)))
-		      1 'isArray)
+		      1 "isArray")
 	    :writable #t
 	    :enumerable #f
 	    :hidden-class #t)
@@ -494,7 +494,7 @@
    
 	 (js-bind! %this js-array 'from
 	    :value (js-make-function %this array-from
-		      0 'from
+		      0 "from"
 		      :prototype (js-undefined))
 	    :enumerable #f
 	    :hidden-class #t)
@@ -506,7 +506,7 @@
 	 
 	 (js-bind! %this js-array 'of
 	    :value (js-make-function %this array-of
-		      0 'of
+		      0 "of"
 		      :prototype (js-undefined))
 	    :enumerable #f
 	    :hidden-class #t)
@@ -524,7 +524,7 @@
 	 (with-access::JsGlobalObject %this (js-symbol-species)
 	    (js-bind! %this js-array js-symbol-species
 	       :get (js-make-function %this (lambda (this) js-array)
-		       0 '|get [Symbol.species]|)
+		       0 "get [Symbol.species]")
 	       :enumerable #f
 	       :configurable #t))
 
@@ -954,7 +954,7 @@
 	     (js-tojsstring this %this))))
    
    (js-bind! %this js-array-prototype 'toString
-      :value (js-make-function %this array-prototype-tostring 0 'toString
+      :value (js-make-function %this array-prototype-tostring 0 "toString"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -989,7 +989,7 @@
 			  (+u32 i #u32:1))))))))
    
    (js-bind! %this js-array-prototype 'toLocaleString
-      :value (js-make-function %this array-prototype-tolocalestring 0 'toLocaleString
+      :value (js-make-function %this array-prototype-tolocalestring 0 "toLocaleString"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1063,7 +1063,7 @@
 		(loop (cdr l) (+fx 1 i)))))))
    
    (js-bind! %this js-array-prototype 'concat
-      :value (js-make-function %this array-prototype-concat 1 'concat
+      :value (js-make-function %this array-prototype-concat 1 "concat"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1125,7 +1125,7 @@
 	 o))
 
    (js-bind! %this js-array-prototype 'copyWithin
-      :value (js-make-function %this array-prototype-copywithin 2 'copyWithin
+      :value (js-make-function %this array-prototype-copywithin 2 "copyWithin"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1139,7 +1139,7 @@
 	 %this))
    
    (js-bind! %this js-array-prototype 'entries
-      :value (js-make-function %this array-prototype-entries 0 'entries
+      :value (js-make-function %this array-prototype-entries 0 "entries"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1171,7 +1171,7 @@
 			      (+u32 i #u32:1)))))))))
    
    (js-bind! %this js-array-prototype 'join
-      :value (js-make-function %this array-prototype-join 1 'join
+      :value (js-make-function %this array-prototype-join 1 "join"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1195,7 +1195,7 @@
 	  (js-array-prototype-pop this %this)))
    
    (js-bind! %this js-array-prototype 'pop
-      :value (js-make-function %this array-prototype-pop 0 'pop
+      :value (js-make-function %this array-prototype-pop 0 "pop"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1230,7 +1230,7 @@
 ;* 		(js-uint32-tointeger n)))))                            */
    
    (js-bind! %this js-array-prototype 'push
-      :value (js-make-function %this array-prototype-push 1 'push
+      :value (js-make-function %this array-prototype-push 1 "push"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1292,7 +1292,7 @@
 	     (array-reverse! o))))
    
    (js-bind! %this js-array-prototype 'reverse
-      :value (js-make-function %this array-prototype-reverse 0 'reverse
+      :value (js-make-function %this array-prototype-reverse 0 "reverse"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1354,7 +1354,7 @@
 		    (array-shift! o len)))))))
 
    (js-bind! %this js-array-prototype 'shift
-      :value (js-make-function %this array-prototype-shift 0 'shift
+      :value (js-make-function %this array-prototype-shift 0 "shift"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1479,7 +1479,7 @@
 		       (array-slice! o k final)))))))))
       
    (js-bind! %this js-array-prototype 'slice
-      :value (js-make-function %this array-prototype-slice 2 'slice
+      :value (js-make-function %this array-prototype-slice 2 "slice"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1576,7 +1576,7 @@
 		    (array-sort this (get-compare comparefn))))))))
 
    (js-bind! %this js-array-prototype 'sort
-      :value (js-make-function %this array-prototype-sort 1 'sort
+      :value (js-make-function %this array-prototype-sort 1 "sort"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1676,7 +1676,7 @@
 		    (array-splice this len actualstart actualdeletecount)))))))
 
    (js-bind! %this js-array-prototype 'splice
-      :value (js-make-function %this array-prototype-splice 2 'splice
+      :value (js-make-function %this array-prototype-splice 2 "splice"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1745,7 +1745,7 @@
 		    (array-unshift this len))))))
 
    (js-bind! %this js-array-prototype 'unshift
-      :value (js-make-function %this array-prototype-unshift 1 'unshift
+      :value (js-make-function %this array-prototype-unshift 1 "unshift"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1762,7 +1762,7 @@
 	     %this)))
 
    (js-bind! %this js-array-prototype 'indexOf
-      :value (js-make-function %this array-prototype-indexof 1 'indexOf
+      :value (js-make-function %this array-prototype-indexof 1 "indexOf"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1841,7 +1841,7 @@
 			(lastindexof o (-u32 len #u32:1))))))))
 
    (js-bind! %this js-array-prototype 'lastIndexOf
-      :value (js-make-function %this array-prototype-lastindexof 1 'lastIndexOf
+      :value (js-make-function %this array-prototype-lastindexof 1 "lastIndexOf"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1889,7 +1889,7 @@
       (array-prototype-iterator %this this proc t array-every vector-every))
    
    (js-bind! %this js-array-prototype 'every
-      :value (js-make-function %this array-prototype-every 1 'every
+      :value (js-make-function %this array-prototype-every 1 "every"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1933,7 +1933,7 @@
 
    (js-bind! %this js-array-prototype 'some
       :value (js-make-function %this
-		array-prototype-some 1 'some
+		array-prototype-some 1 "some"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1971,7 +1971,7 @@
       (js-undefined))
 
    (js-bind! %this js-array-prototype 'forEach
-      :value (js-make-function %this array-prototype-foreach 1 'forEach
+      :value (js-make-function %this array-prototype-foreach 1 "forEach"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2029,7 +2029,7 @@
 
    (js-bind! %this js-array-prototype 'map
       :value (js-make-function %this
-		(make-array-prototype-map %this) 1 'map
+		(make-array-prototype-map %this) 1 "map"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2102,7 +2102,7 @@
 
    (js-bind! %this js-array-prototype 'filter
       :value (js-make-function %this
-		array-prototype-filter 1 'filter
+		array-prototype-filter 1 "filter"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2131,7 +2131,7 @@
 	     o)))
    
    (js-bind! %this js-array-prototype 'fill
-      :value (js-make-function %this array-prototype-fill 1 'fill
+      :value (js-make-function %this array-prototype-fill 1 "fill"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2169,7 +2169,7 @@
 
    (js-bind! %this js-array-prototype 'find
       :value (js-make-function %this
-		array-prototype-find 1 'find
+		array-prototype-find 1 "find"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2208,7 +2208,7 @@
 
    (js-bind! %this js-array-prototype 'findIndex
       :value (js-make-function %this
-		array-prototype-find-index 1 'findIndex
+		array-prototype-find-index 1 "findIndex"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2269,7 +2269,7 @@
    
    (js-bind! %this js-array-prototype 'includes
       :value (js-make-function %this
-		array-prototype-includes 1 'includes
+		array-prototype-includes 1 "includes"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2309,7 +2309,7 @@
    
    (js-bind! %this js-array-prototype 'reduce
       :value (js-make-function %this
-		array-prototype-reduce 1 'reduce
+		array-prototype-reduce 1 "reduce"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2349,7 +2349,7 @@
 		 (reduce/accumulator o len (-u32 len #u32:1) (car init))))))
    
    (js-bind! %this js-array-prototype 'reduceRight
-      :value (js-make-function %this array-prototype-reduceright 1 'reduceRight
+      :value (js-make-function %this array-prototype-reduceright 1 "reduceRight"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2362,7 +2362,7 @@
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (js-bind! %this js-array-prototype js-symbol-iterator
 	 :value (js-make-function %this array-prototype-array-values
-		   0 '@@iterator
+		   0 "@@iterator"
 		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #t))

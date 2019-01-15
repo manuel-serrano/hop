@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Dec 28 09:31:34 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Tue Jan 15 09:48:15 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
 ;*    -------------------------------------------------------------    */
@@ -38,7 +38,7 @@
 	   __hopscript_spawn)
    
    (export (js-init-proxy! ::JsGlobalObject)
-	   (js-proxy-debug-name::bstring ::JsProxy)
+	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
 	   (js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (js-proxy-property-descriptor ::JsProxy ::obj)
 	   (js-proxy-property-value ::JsProxy ::JsObject ::obj ::JsGlobalObject)
@@ -70,7 +70,7 @@
 			 (set! revoked #t))
 		      (js-raise-type-error %this
 			 "Not a Revocable proxy" this))))
-	    0 'revoke
+	    0 "revoke"
 	    :prototype '()))
 
       ;; create a HopScript object
@@ -85,7 +85,7 @@
 	    %this))
 
       (set! js-proxy
-	 (js-make-function %this %js-proxy 2 'Proxy
+	 (js-make-function %this %js-proxy 2 "Proxy"
 	    :__proto__ js-function-prototype
 	    :prototype '()
 	    :alloc js-proxy-alloc
@@ -93,7 +93,7 @@
 
       (js-bind! %this js-proxy 'revocable
 	 :writable #t :configurable #t :enumerable #f
-	 :value (js-make-function %this %js-revocable 2 'revocable
+	 :value (js-make-function %this %js-revocable 2 "revocable"
 		   :__proto__ js-function-prototype
 		   :prototype '())
 	 :hidden-class #t)
@@ -108,10 +108,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-debug-name ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-debug-name::bstring obj::JsProxy)
+(define (js-proxy-debug-name::bstring obj::JsProxy %this)
    (with-access::JsProxy obj (target)
       (if (isa? target JsFunction)
-	  (js-function-debug-name target)
+	  (js-function-debug-name target %this)
 	  "proxy")))
 
 ;*---------------------------------------------------------------------*/

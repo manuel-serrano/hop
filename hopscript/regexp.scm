@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan  9 06:58:05 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 09:34:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -122,7 +122,7 @@
 	 ;; create a HopScript regexp object constructor
 	 (set! js-regexp
 	    (js-make-function %this
-	       (%js-regexp %this) 2 'RegExp
+	       (%js-regexp %this) 2 "RegExp"
 	       :__proto__ js-function-prototype
 	       :prototype js-regexp-prototype
 	       :construct (js-regexp-construct %this)))
@@ -518,7 +518,7 @@
 			 (if (js-totest (js-get this 'ignoreCase %this)) "i" "")
 			 (if (js-totest (js-get this 'multiline %this)) "m" ""))))
 		
-		0 'toString)
+		0 "toString")
       :writable #t
       :configurable #t
       :enumerable #f
@@ -531,7 +531,7 @@
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-ignorecase? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 'ignoreCase)
+	      0 "ignoreCase")
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -543,7 +543,7 @@
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-multiline? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 'multiline)
+	      0 "multiline")
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -555,7 +555,7 @@
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-global? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 'global)
+	      0 "global")
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -567,7 +567,7 @@
 		     (with-access::JsRegExp this (source)
 			(js-string->jsstring source))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 'source)
+	      0 "source")
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -576,21 +576,21 @@
       :value (js-make-function %this
 		(lambda (this string::obj)
 		   (regexp-prototype-exec %this this string))
-		1 'exec)
+		1 "exec")
       :writable #t
       :configurable #t
       :enumerable #f
       :hidden-class #t)
    ;; test
    (js-bind! %this obj 'test
-      :value (js-make-function %this (make-regexp-prototype-test %this) 1 'test)
+      :value (js-make-function %this (make-regexp-prototype-test %this) 1 "test")
       :writable #t
       :configurable #t
       :enumerable #f
       :hidden-class #t)
    ;; compile
    (js-bind! %this obj 'compile
-      :value (js-make-function %this regexp-prototype-compile 1 'compile)
+      :value (js-make-function %this regexp-prototype-compile 1 "compile")
       :writable #t
       :configurable #t
       :enumerable #f

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jan  8 07:43:24 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 10:10:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -243,7 +243,6 @@
 	      val::bstring)
 	   
 	   (class JsFunction::JsObject
-	      (name::bstring read-only)
 	      (constructor::obj read-only (default #f))
 	      %prototype
 	      alloc::procedure

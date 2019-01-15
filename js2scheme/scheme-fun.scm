@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Jan 13 10:01:16 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 10:05:26 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -648,7 +648,7 @@
 	    (cond
 	       ((or src prototype __proto__ method new-target)
 		`(js-make-function %this ,tmp ,len
-		    ,(symbol->string! (or name (j2s-decl-scheme-id id)))
+		    ,(symbol->string! name)
 		    :src ,src
 		    :rest ,(eq? vararg 'rest)
 		    :arity ,arity
@@ -663,7 +663,7 @@
 				(jsfun->lambda method mode return conf #f #f))))
 	       ((eq? vararg 'arguments)
 		`(js-make-function %this ,tmp ,len
-		    ,(symbol->string! (or name (j2s-decl-scheme-id id)))
+		    ,(symbol->string! name)
 		    :rest ,(eq? vararg 'rest)
 		    :arity ,arity ,
 		    :minlen minlen
@@ -671,7 +671,7 @@
 		    :constrsize ,constrsize))
 	       (else
 		`(js-make-function-simple %this ,tmp ,len
-		    ,(symbol->string! (or name (j2s-decl-scheme-id id)))
+		    ,(symbol->string! name)
 		    ,arity ,minlen ',mode ,(eq? vararg 'rest) ,constrsize)))))))
 
 ;*---------------------------------------------------------------------*/

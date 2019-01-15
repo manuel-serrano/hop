@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Fri Dec 28 09:25:49 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:50:03 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
 ;*=====================================================================*/
@@ -157,7 +157,7 @@
 	       items))
 
 	 (set! js-arraybuffer
-	    (js-make-function %this %js-arraybuffer 1 'ArrayBuffer
+	    (js-make-function %this %js-arraybuffer 1 "ArrayBuffer"
 	       :__proto__ js-function-prototype
 	       :prototype js-arraybuffer-prototype
 	       :alloc js-arraybuffer-alloc
@@ -225,7 +225,7 @@
 		     
 		     (js-bind! %this this 'slice
 			:value (js-make-function %this
-				  arraybuffer-slice 2 'slice)
+				  arraybuffer-slice 2 "slice")
 			:configurable #f
 			:writable #t
 			:enumerable #t

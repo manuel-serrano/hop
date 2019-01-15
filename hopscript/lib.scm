@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sun Jan  6 06:59:29 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 09:38:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -377,7 +377,7 @@
 ;*    js-procedure->jsobject ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-procedure->jsobject obj %this)
-   (js-make-function %this obj (procedure-arity obj) 'native))
+   (js-make-function %this obj (procedure-arity obj) "native"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-iterable->list ...                                            */

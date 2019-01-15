@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Fri Dec 28 09:50:25 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:57:20 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
 ;*=====================================================================*/
@@ -206,7 +206,7 @@
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-stream-fd %worker hdl))
-		       0 'GetFD)
+		       0 "GetFD")
 	       :writable #f :configurable #f)
 	    obj)))
    

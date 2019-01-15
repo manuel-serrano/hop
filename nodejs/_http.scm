@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Thu Oct 26 05:55:26 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:55:17 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
 ;*=====================================================================*/
@@ -122,12 +122,6 @@
 ;*---------------------------------------------------------------------*/
 (define (process-http-parser %this)
    
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "http-parse" "binding not implemented" name))
-	 0 name))
-   
    (define http-parser-proto
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((proto (js-new0 %this js-object)))
@@ -140,7 +134,7 @@
 			 (begin
 			    (reset-parser! this)
 			    (js-undefined))))
-		  1 'reinitialize)
+		  1 "reinitialize")
 	       #f %this)
 	    (js-put! proto 'execute
 	       (js-make-function %this
@@ -148,7 +142,7 @@
 		     (let ((off (->fixnum (js-tointeger offset %this)))
 			   (len (->fixnum (js-tointeger length %this))))
 			(http-parser-execute %this this buf off len)))
-		  1 'execute)
+		  1 "execute")
 	       #f %this)
 	    (js-put! proto 'finish
 	       (js-make-function %this
@@ -158,7 +152,7 @@
 			(when (input-port? ip)
 			   (close-input-port ip)
 			   (set! ip #f))))
-		  0 'finish)
+		  0 "finish")
 	       #f %this)
 	    (js-put! proto 'pause
 	       (js-make-function %this
@@ -166,7 +160,7 @@
 		     (with-access::JsHttpParser this (errno)
 			(set! errno 1)) 
 		     (js-undefined))
-		  0 'pause)
+		  0 "pause")
 	       #f %this)
 	    (js-put! proto 'resume
 	       (js-make-function %this
@@ -174,7 +168,7 @@
 		     (with-access::JsHttpParser this (errno)
 			(set! errno 0) )
 		     (js-undefined))
-		  0 'resume)
+		  0 "resume")
 	       #f %this)
 	    proto)))
    

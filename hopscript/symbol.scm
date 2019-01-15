@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec 31 07:00:20 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:50:11 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
 ;*    -------------------------------------------------------------    */
@@ -195,7 +195,7 @@
 	       (lambda (this . args)
 		  (instantiate::JsSymbolLiteral
 		     (val (if (null? args) "" (js-tostring (car args) %this)))))
-	       1 'Symbol
+	       1 "Symbol"
 	       :__proto__ js-function-prototype
 	       :prototype js-symbol-prototype
 	       :shared-cmap #f))
@@ -233,7 +233,7 @@
 		      new))))
 
 	 (js-bind! %this js-symbol 'for
-	    :value (js-make-function %this js-symbol-for 1 'for)
+	    :value (js-make-function %this js-symbol-for 1 "for")
 	    :writable #t
 	    :enumerable #f
 	    :configurable #t
@@ -248,7 +248,7 @@
 		(js-raise-type-error %this "not a symbol" sym)))
 
 	 (js-bind! %this js-symbol 'keyFor
-	    :value (js-make-function %this js-symbol-keyfor 1 'keyFor)
+	    :value (js-make-function %this js-symbol-keyfor 1 "keyFor")
 	    :writable #t
 	    :enumerable #f
 	    :configurable #t
@@ -316,7 +316,7 @@
 	  (js-raise-type-error %this "not a symbol" this))))
    
    (js-bind! %this obj 'toString
-      :value (js-make-function %this tostring 0 'toString)
+      :value (js-make-function %this tostring 0 "toString")
       :enumerable #f
       :hidden-class #t)
    
@@ -333,7 +333,7 @@
 	  (js-raise-type-error %this "not a symbol" this))))
    
    (js-bind! %this obj 'valueOf
-      :value (js-make-function %this valueof 0 'valueOf)
+      :value (js-make-function %this valueof 0 "valueOf")
       :enumerable #f
       :hidden-class #t))
 

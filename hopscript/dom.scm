@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Thu Dec  6 16:12:31 2018 (serrano)                */
-;*    Copyright   :  2015-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:46:15 2019 (serrano)                */
+;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
 ;*=====================================================================*/
@@ -144,20 +144,20 @@
 	 (lambda (this txt)
 	    (instantiate::xml-verbatim
 	       (data (js-tostring txt %this))))
-	 1 'createTextNode))
+	 1 "createTextNode"))
      ((createComment)
       (js-make-function %this
 	 (lambda (this txt)
 	    (instantiate::xml-comment
 	       (data (js-tostring txt %this))))
-	 1 'createComment))
+	 1 "createComment"))
      ((createElement)
       (js-make-function %this
 	 (lambda (this txt)
 	    (instantiate::xml-element
 	       (tag (string->symbol (js-tostring txt %this)))
 	       (body '())))
-	 1 'createElement))
+	 1 "createElement"))
      (else
       (call-next-method))))
 
@@ -205,9 +205,9 @@
        (js-make-function %this
 	  (lambda (this txt)
 	     (js-string->jsstring (js-tostring o %this)))
-	  0 'toString))
+	  0 "toString"))
       ((inspect)
-       (js-make-function %this js-inspect 1 'inspect))
+       (js-make-function %this js-inspect 1 "inspect"))
       ((nodeType)
        3)
       ((parentNode)
@@ -240,12 +240,12 @@
       ((nodeType)
        8)
       ((inspect)
-       (js-make-function %this js-inspect 1 'inspect))
+       (js-make-function %this js-inspect 1 "inspect"))
       ((toString)
        (js-make-function %this
 	  (lambda (this txt)
 	     (js-string->jsstring (js-tostring o %this)))
-	  0 'toString))
+	  0 "toString"))
       ((parentNode)
        (with-access::xml-comment o (parent) parent))
       ((nextSibling)
@@ -271,19 +271,19 @@
 	  (with-access::xml-markup o (body)
 	     body))
 	 ((inspect)
-	  (js-make-function %this js-inspect 1 'inspect))
+	  (js-make-function %this js-inspect 1 "inspect"))
 	 ((constructor)
 	  (js-undefined))
 	 ((toString)
 	  (js-make-function %this
 	     (lambda (this)
 		(js-string->jsstring (js-tostring o %this)))
-	     0 'toString))
+	     0 "toString"))
 	 ((getElementById)
 	  (js-make-function %this
 	     (lambda (this id)
 		(dom-get-element-by-id this (js-tostring id %this)))
-	     1 'getElementById))
+	     1 "getElementById"))
 	 ((getElementsByTagName)
 	  (js-make-function %this
 	     (lambda (this tag)
@@ -292,7 +292,7 @@
 		      (dom-get-elements-by-tag-name this
 			 (js-tostring tag %this)))
 		   %this))
-	     1 'getElementsByTagName))
+	     1 "getElementsByTagName"))
 	 ((getElementsByClassName)
 	  (js-make-function %this
 	     (lambda (this clazz)
@@ -301,17 +301,17 @@
 		      (dom-get-elements-by-class this
 			 (js-tostring clazz %this)))
 		   %this))
-	     1 'getElementsByClassName))
+	     1 "getElementsByClassName"))
 	 ((appendChild)
 	  (js-make-function %this
 	     (lambda (this child)
 		(dom-append-child! this child))
-	     1 'appendChild))
+	     1 "appendChild"))
 	 ((removeChild)
 	  (js-make-function %this
 	     (lambda (this child)
 		(dom-remove-child! this child))
-	     1 'removeChild))
+	     1 "removeChild"))
 	 ((previousSibling)
 	  (dom-previous-sibling o))
 	 ((childNodes)

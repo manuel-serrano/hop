@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Jan  9 11:24:56 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 10:06:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1048,9 +1048,7 @@
 	    (when (equal? usage '(rest)) 'rest))))
 
    (define (loc->funname pref loc)
-      (if debug-function
-	  (string->symbol (format "~a@~a:~a" pref (cadr loc) (caddr loc)))
-	  '||))
+      (string->symbol (format "~a@~a:~a" pref (cadr loc) (caddr loc))))
    
    (define (function declaration? token #!optional methodof)
       (let ((loc (token-loc token)))

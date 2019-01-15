@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Jan  1 09:39:27 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 09:38:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -480,14 +480,15 @@
 ;*    js-raise-arity-error ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-raise-arity-error %this fun n)
-   (with-access::JsFunction fun (name minlen arity rest len src)
-      (let ((m (format "~a: wrong number of arguments ~a provided, ~a expected"
-		  (if (string? name) name "")
-		  n
-		  (cond
-		     ((or (<fx minlen 0) (and (=fx minlen len) (not rest))) len)
-		     (rest (format ">= ~a" minlen))
-		     (else (format "[~a..~a]" minlen len))))))
+   (with-access::JsFunction fun (minlen arity rest len src)
+      (let* ((name (js-get fun 'name %this))
+	     (m (format "~a: wrong number of arguments ~a provided, ~a expected"
+		   (if (js-jsstring? name) (js-jsstring->string name) "")
+		   n
+		   (cond
+		      ((or (<fx minlen 0) (and (=fx minlen len) (not rest))) len)
+		      (rest (format ">= ~a" minlen))
+		      (else (format "[~a..~a]" minlen len))))))
 	 (if (pair? src)
 	     (js-raise-type-error/loc %this (car src) m fun)
 	     (js-raise-type-error %this m fun)))))
@@ -684,7 +685,7 @@
        ((isa? ,fun JsFunction)
 	(with-access::JsFunction ,fun (procedure)
 	   (let ((env (current-dynamic-env))
-		 (name (js-function-debug-name ,fun)))
+		 (name (js-function-debug-name ,fun %this)))
 	      ($env-push-trace env name loc)
 	      (let ((aux (,(string->symbol (format "js-call~a%" (length args)))
 			  ,%this ,fun procedure ,this ,@args)))
@@ -693,7 +694,7 @@
        ((isa? ,fun JsProxy)
 	(with-access::JsProxy ,fun (target)
 	   (let ((env (current-dynamic-env))
-		 (name (js-proxy-debug-name ,fun)))
+		 (name (js-proxy-debug-name ,fun %this)))
 	      ($env-push-trace env name loc)
 	      (let ((aux (,(string->symbol (format "js-call-proxy~a" (length args)))
 			  ,%this ,fun ,this ,@args)))
@@ -741,7 +742,7 @@
       ((isa? fun JsFunction)
        (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
+		(name (js-function-debug-name fun %this)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-calln% %this fun this args)))
 		($env-pop-trace env)
@@ -749,7 +750,7 @@
       ((isa? fun JsProxy)
        (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
-		(name (js-proxy-debug-name fun)))
+		(name (js-proxy-debug-name fun %this)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-call-proxyn %this fun this args)))
 		($env-pop-trace env)
@@ -1841,7 +1842,7 @@
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
-      2 'HEAD))
+      2 "HEAD"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-html-script ...                                               */
@@ -1858,7 +1859,7 @@
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
-      2 'SCRIPT))
+      2 "SCRIPT"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint ...                                                  */

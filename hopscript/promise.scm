@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Dec 28 09:30:14 2018 (serrano)                */
-;*    Copyright   :  2015-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:46:42 2019 (serrano)                */
+;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
 ;*    -------------------------------------------------------------    */
@@ -213,7 +213,7 @@
    (define js-promise
       (with-access::JsGlobalObject %this (js-function-prototype)
 	 (js-make-function %this
-	    js-promise-construct 1 'Promise
+	    js-promise-construct 1 "Promise"
 	    :__proto__ js-function-prototype
 	    :prototype js-promise-prototype
 	    :construct js-promise-construct
@@ -249,7 +249,7 @@
    
    (js-bind! %this js-promise 'all
       :configurable #f :enumerable #t
-      :value (js-make-function %this js-promise-all 1 'all)
+      :value (js-make-function %this js-promise-all 1 "all")
       :hidden-class #t)
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.race
@@ -276,7 +276,7 @@
 
    (js-bind! %this js-promise 'race
       :configurable #f :enumerable #t
-      :value (js-make-function %this js-promise-race 1 'race)
+      :value (js-make-function %this js-promise-race 1 "race")
       :hidden-class #t)
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.reject
@@ -296,7 +296,7 @@
    
    (js-bind! %this js-promise 'reject
       :configurable #f :enumerable #t
-      :value (js-make-function %this promise-reject 1 'reject)
+      :value (js-make-function %this promise-reject 1 "reject")
       :hidden-class #t)
 
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.resolve
@@ -319,7 +319,7 @@
    
    (js-bind! %this js-promise 'resolve
       :configurable #f :enumerable #t
-      :value (js-make-function %this promise-resolve 1 'resolve)
+      :value (js-make-function %this promise-resolve 1 "resolve")
       :hidden-class #t)
    
    ;; prototype properties
@@ -328,7 +328,7 @@
    (with-access::JsGlobalObject %this (js-symbol-species)
       (js-bind! %this js-promise js-symbol-species
 	 :configurable #f :enumerable #f :writable #f
-	 :get (js-make-function %this (lambda (o) js-promise) 0 '@@species)
+	 :get (js-make-function %this (lambda (o) js-promise) 0 "@@species")
 	 :hidden-class #t))
    
    ;; bind Promise in the global object
@@ -401,7 +401,7 @@
       :value (js-make-function %this
 		(lambda (this fail)
 		   (then-catch this (js-undefined) fail))
-		1 'catch)
+		1 "catch")
       :enumerable #f
       :hidden-class #t)
    
@@ -411,7 +411,7 @@
       :value (js-make-function %this
 		(lambda (this proc fail)
 		   (then-catch this proc fail))
-		2 'then)
+		2 "then")
       :enumerable #f
       :hidden-class #t))
 
@@ -430,7 +430,7 @@
 				  (begin
 				     (set! resolved #t)
 				     (js-promise-resolve o resolution))))
-			   1 'resolve :src 'builtin))
+			   1 "resolve" :src 'builtin))
 	       (reject (js-make-function %this
 			  (lambda (_ reason)
 			     (if resolved
@@ -438,7 +438,7 @@
 				 (begin
 				    (set! resolved #t)
 				    (js-promise-reject o reason))))
-			  1 'reject :src 'builtin)))
+			  1 "reject" :src 'builtin)))
 	    (values resolve reject)))))
 
 ;*---------------------------------------------------------------------*/

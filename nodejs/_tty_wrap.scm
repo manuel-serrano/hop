@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Fri Dec 28 09:50:19 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:57:39 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
 ;*=====================================================================*/
@@ -139,7 +139,7 @@
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-stream-fd %worker hdl))
-		       0 'GetFD)
+		       0 "GetFD")
 	       :writable #f :configurable #f)
 	    obj)))
    
@@ -158,7 +158,7 @@
 	       (js-make-function %this
 		  (lambda (this fd)
 		     (nodejs-istty %worker %this fd))
-		  1 'isTTY)
+		  1 "isTTY")
 	       #f %this)
 	    
 	    (js-put! obj 'guessHandleType
@@ -166,7 +166,7 @@
 		  (lambda (this fd)
 		     (nodejs-guess-handle-type
 			%worker %this fd))
-		  1 'guessHandleType)
+		  1 "guessHandleType")
 	       #f %this)
 	    
 	    (js-put! obj 'TTY js-tty #f %this)

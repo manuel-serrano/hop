@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 17 17:07:03 2014                          */
-;*    Last change :  Fri Dec 28 09:50:05 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:56:11 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs child processes bindings                                  */
 ;*=====================================================================*/
@@ -37,14 +37,14 @@
       (js-make-function %this 
 	 (lambda (this options)
 	    (nodejs-process-spawn %worker %this process this options))
-	 1 'spawn)
+	 1 "spawn")
       #f %this)
    
    (js-put! process-prototype 'kill
       (js-make-function %this 
 	 (lambda (this pid)
 	    (nodejs-process-kill %worker %this process this pid))
-	 1 'kill)
+	 1 "kill")
       #f %this)
    
    (js-put! process-prototype 'close
@@ -74,7 +74,7 @@
       (js-alist->jsobject
 	 `((Process . ,(js-make-function %this
 			  (lambda (this) this)
-			  1 'Process
+			  1 "Process"
 			  :alloc (lambda (%this o)
 				    (instantiateJsHandle
 				       (handle (nodejs-new-process))

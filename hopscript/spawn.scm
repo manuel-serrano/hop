@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Mon Oct  8 14:23:42 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:50:23 2019 (serrano)                */
+;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
 ;*                                                                     */
@@ -98,7 +98,7 @@
 ;*    fun ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-macro (fun args body)
-   `(js-make-function %this (lambda ,args ,body) ,(length args) 'fun))
+   `(js-make-function %this (lambda ,args ,body) ,(length args) "fun"))
 
 ;*---------------------------------------------------------------------*/
 ;*    %pcache ...                                                      */
@@ -142,4 +142,4 @@
 	       
 	       (step (lambda () (invoke gen 'next (js-undefined)))))
 	    
-	    2 'AsyncPromise))))
+	    2 "AsyncPromise"))))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Wed Dec 13 20:10:53 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:43:21 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
 ;*=====================================================================*/
@@ -110,28 +110,28 @@
 	      (format "no such field \"~a\" ~~a" (js-toname prop %this)) o)))
       ((length)
        (js-make-function %this length
-	  0 'length))
+	  0 "length"))
       ((map)
        (js-make-function %this
 	  (lambda (this proc)
 	     (map (lambda (x) (js-call1 %this proc o x)) o))
-	  1 'map))
+	  1 "map"))
       ((forEach)
        (js-make-function %this
 	  (lambda (this proc)
 	     (for-each (lambda (x) (js-call1 %this proc o x)) o))
-	  1 'forEach))
+	  1 "forEach"))
       ((assoc)
        (js-make-function %this
 	  (lambda (this key) (assoc o key))
-	  1 'assoc))
+	  1 "assoc"))
       ((reverse)
        (js-make-function %this reverse
-	  0 'reverse))
+	  0 "reverse"))
       ((concat)
        (js-make-function %this
 	  (lambda (this . l) (apply append this l))
-	  -1 'concat))
+	  -1 "concat"))
       ((keys)
        (js-make-function %this
 	  (lambda (this . l)
@@ -140,12 +140,12 @@
 		    (vector "car" "cdr" "cer")
 		    (vector "car" "cdr"))
 		%this))
-	  0 'keys))
+	  0 "keys"))
       ((toArray)
        (js-make-function %this
 	  (lambda (this)
 	     (js-vector->jsarray (list->vector this) %this))
-	  0 'toArray))
+	  0 "toArray"))
       ((inspect)
        (js-undefined))
       ((nodeType)
@@ -154,7 +154,7 @@
        (js-make-function %this
 	  (lambda (this id)
 	     (dom-get-element-by-id this (js-tostring id %this)))
-	  1 'getElementById))
+	  1 "getElementById"))
       ((getElementsByTagName)
        (js-make-function %this
 	  (lambda (this tag)
@@ -162,7 +162,7 @@
 		(list->vector
 		   (dom-get-elements-by-tag-name this (js-tostring tag %this)))
 		%this))
-	  1 'getElementsByTagName))
+	  1 "getElementsByTagName"))
       ((getElementsByClassName)
        (js-make-function %this
 	  (lambda (this tag)
@@ -170,7 +170,7 @@
 		(list->vector
 		   (dom-get-elements-by-class this (js-tostring tag %this)))
 		%this))
-	  1 'getElementsByClassName))
+	  1 "getElementsByClassName"))
       ((childNodes)
        (js-vector->jsarray (list->vector o) %this))
       (else

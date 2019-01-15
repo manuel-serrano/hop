@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Mon Dec 31 09:59:50 2018 (serrano)                */
-;*    Copyright   :  2015-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:47:22 2019 (serrano)                */
+;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
 ;*    -------------------------------------------------------------    */
@@ -96,7 +96,7 @@
 	       :value (js-make-function %this
 			 (lambda (this)
 			    this)
-			 0 '@@iterator
+			 0 "@@iterator"
 			 :prototype (js-undefined))
 	       :writable #t :enumerable #f :configurable #t)
 	    proto))
@@ -162,7 +162,7 @@
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-next this val #f))
-		   1 'next)
+		   1 "next")
 	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto 'return
@@ -170,7 +170,7 @@
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-return this val #f))
-		   1 'return)
+		   1 "return")
 	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto 'throw
@@ -178,7 +178,7 @@
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-next this val #t))
-		   1 'throw)
+		   1 "throw")
 	 :hidden-class #t)
 
 ;*       (js-bind! %this js-gen-proto js-symbol-iterator               */
@@ -198,7 +198,7 @@
 	 :configurable #t :enumerable #f :writable #f
 	 :value (js-make-function %this
 		   js-generator-construct
-		   1 'constructor
+		   1 "constructor"
 		   :construct js-generator-construct)
 	 :hidden-class #t)
       

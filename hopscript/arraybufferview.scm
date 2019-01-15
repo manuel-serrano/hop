@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Mon Dec 31 06:14:40 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:44:16 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
 ;*=====================================================================*/
@@ -399,7 +399,7 @@
 	  (js-raise-type-error %this "Object must be a TypedArray" this)))
    
    (js-bind! %this proto 'includes
-      :value (js-make-function %this js-typedarray-includes 1 'includes)
+      :value (js-make-function %this js-typedarray-includes 1 "includes")
       :configurable #t
       :writable #t
       :enumerable #f)
@@ -407,7 +407,8 @@
    (let ((not-implemented (js-not-implemented %this)))
       (for-each (lambda (id)
 		   (js-bind! %this proto id
-		      :value (js-make-function %this not-implemented 1 id)
+		      :value (js-make-function %this not-implemented 1
+				(symbol->string id))
 		      :configurable #t
 		      :writable #t
 		      :enumerable #f))
@@ -622,7 +623,7 @@
 	       o))
 	 
 	 (define js-typedarray
-	    (js-make-function %this %js-typedarray 1 name
+	    (js-make-function %this %js-typedarray 1 (symbol->string name)
 	       :__proto__ js-function-prototype
 	       :prototype js-typedarray-prototype
 	       :alloc js-typedarray-alloc
@@ -1149,7 +1150,7 @@
 	       (__proto__ (js-get constructor 'prototype %this))))
 	 
 	 (define js-dataview
-	    (js-make-function %this %js-dataview 1 'DataView
+	    (js-make-function %this %js-dataview 1 "DataView"
 	       :__proto__ js-function-prototype
 	       :prototype js-dataview-prototype
 	       :alloc js-dataview-alloc

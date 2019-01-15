@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Dec 28 09:29:00 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:35:25 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
 ;*    -------------------------------------------------------------    */
@@ -163,12 +163,11 @@
 	       (msg (js-ascii->jsstring ""))))
 	 
 	 (define (js-error-alloc %this constructor::JsFunction)
-	    (with-access::JsFunction constructor (name)
-	       (instantiateJsError
-		  (name (js-string->jsstring name))
-		  (msg (js-ascii->jsstring ""))
-		  (__proto__ (js-get constructor 'prototype %this))
-		  (stack '()))))
+	    (instantiateJsError
+	       (name (js-get constructor 'name %this))
+	       (msg (js-ascii->jsstring ""))
+	       (__proto__ (js-get constructor 'prototype %this))
+	       (stack '())))
 	 
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.11
 	 (define (js-error-construct this::JsError . args)
@@ -270,7 +269,7 @@
 			 (lambda (o)
 			    (with-access::JsFrame o (file)
 			       (js-string->jsstring file)))
-			 0 'getFileName)
+			 0 "getFileName")
 	       :enumerable #t
 	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'getLineNumber
@@ -278,7 +277,7 @@
 			 (lambda (o)
 			    (with-access::JsFrame o (line)
 			       line))
-			 0 'getLineNumber)
+			 0 "getLineNumber")
 	       :enumerable #t
 	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'getColumnNumber
@@ -286,7 +285,7 @@
 			 (lambda (o)
 			    (with-access::JsFrame o (column)
 			       column))
-			 0 'getColumnNumber)
+			 0 "getColumnNumber")
 	       :enumerable #t
 	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'getFunctionName
@@ -294,7 +293,7 @@
 			 (lambda (o)
 			    (with-access::JsFrame o (fun)
 			       (js-string->jsstring fun)))
-			 0 'getFunctionName)
+			 0 "getFunctionName")
 	       :enumerable #t
 	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'isEval
@@ -302,7 +301,7 @@
 			 (lambda (o)
 			    (with-access::JsFrame o (iseval)
 			       iseval))
-			 0 'isEval)
+			 0 "isEval")
 	       :enumerable #t
 	       :hidden-class #t)
 	    
@@ -330,11 +329,11 @@
 					  (js-call2 %this prepare js-error
 					     err frames))
 				       (hop-stack->jsstring err stack))))
-			     0 'get)
+			     0 "get")
 		     :set (js-make-function %this
 			     (lambda (o v)
 				(js-undefined))
-			     2 'set)
+			     2 "set")
 		     :enumerable #f
 		     :configurable #f
 		     :hidden-class #t))))
@@ -344,19 +343,19 @@
 	    :value (js-make-function %this
 		      (lambda (exn)
 			 (exception-notify exn))
-		      1 'notify)
+		      1 "notify")
 	    :enumerable #f)
 	 (js-bind! %this js-error-prototype 'message
 	    :set (js-make-function %this
 		    (lambda (o v)
 		       (js-bind! %this o 'message :value v :enumerable #f))
-		    1 'message)
+		    1 "message")
 	    :get (js-make-function %this
 		    (lambda (o)
 		       (if (isa? o JsError)
 			   (with-access::JsError o (msg) msg)
 			   (js-undefined)))
-		    0 'message)
+		    0 "message")
 	    :enumerable #f
 	    :configurable #t
 	    :hidden-class #t)
@@ -364,20 +363,20 @@
 	    :set (js-make-function %this
 		    (lambda (o v)
 		       (js-bind! %this o 'name :value v))
-		    1 'name)
+		    1 "name")
 	    :get (js-make-function %this
 		    (lambda (o)
 		       (if (isa? o JsError)
 			   (with-access::JsError o (name) name)
 			   (js-undefined)))
-		    0 'name)
+		    0 "name")
 	    :enumerable #f
 	    :hidden-class #t)
 	 
 	 ;; then, create a HopScript object
 	 (set! js-error
 	    (js-make-function %this (%js-error %this) 1
-	       'Error
+	       "Error"
 	       :__proto__ js-function-prototype
 	       :prototype js-error-prototype
 	       :alloc js-error-alloc
@@ -385,7 +384,7 @@
 	 (init-builtin-error-prototype! %this js-error js-error-prototype)
 	 (set! js-syntax-error
 	    (js-make-function %this (%js-syntax-error %this) 1
-	       'SyntaxError
+	       "SyntaxError"
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
@@ -394,7 +393,7 @@
 	       :construct js-error-construct/stack))
 	 (set! js-type-error
 	    (js-make-function %this (%js-type-error %this) 1
-	       'TypeError
+	       "TypeError"
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
@@ -403,7 +402,7 @@
 	       :construct js-error-construct/stack))
 	 (set! js-uri-error
 	    (js-make-function %this (%js-uri-error %this) 1
-	       'URIError
+	       "URIError"
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
@@ -412,7 +411,7 @@
 	       :construct js-error-construct/stack))
 	 (set! js-eval-error
 	    (js-make-function %this (%js-eval-error %this) 1
-	       'EvalError
+	       "EvalError"
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
@@ -421,7 +420,7 @@
 	       :construct js-error-construct/stack))
 	 (set! js-range-error
 	    (js-make-function %this (%js-range-error %this) 1
-	       'RangeError
+	       "RangeError"
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
@@ -430,7 +429,7 @@
 	       :construct js-error-construct))
 	 (set! js-reference-error
 	    (js-make-function %this (%js-reference-error %this) 1
-	       'ReferenceError
+	       "ReferenceError"
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
@@ -468,7 +467,7 @@
 	    :value (js-make-function %this
 		      (lambda (o this start-func)
 			 (capture-stack-trace this start-func))
-		      2 'captureStackTrace)
+		      2 "captureStackTrace")
 	    :enumerable #f
 	    :hidden-class #t)
 	 js-error)))
@@ -575,7 +574,7 @@
                     (list (js-jsstring->string name4) ": " msg6)))))))
       
    (js-bind! %this obj 'toString
-      :value (js-make-function %this error-prototype-tostring 1 'toString)
+      :value (js-make-function %this error-prototype-tostring 1 "toString")
       :enumerable #f
       :hidden-class #t)
    

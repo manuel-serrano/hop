@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jan  4 18:15:13 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 09:49:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -535,18 +535,18 @@
       :get (js-make-function this
 	      (lambda (_)
 		 (js-string->jsstring language)) 0
-		 'lang)
+		 "lang")
       :set (js-make-function this
 	      (lambda (_ val)
 		 (set! language (js-tostring val this))
 		 val)
-	      1 'lang)
+	      1 "lang")
       :configurable #f :writable #t)
    
    ;; require.main
    (with-access::JsGlobalObject this (js-main js-object) 
       (js-bind! this require 'main
-	 :get (js-make-function this (lambda (this) js-main) 0 'main)
+	 :get (js-make-function this (lambda (this) js-main) 0 "main")
 	 :configurable #f :writable #f))
    
    ;; require.resolve
@@ -565,7 +565,7 @@
       (js-bind! this require 'cache
 	 :get (js-make-function this
 		 (lambda (this) module-cache)
-		 0 'cache)
+		 0 "cache")
 	 :set (js-make-function this
 		 (lambda (this v)
 		    ;; when setting require.cache, erase the compilation
@@ -573,7 +573,7 @@
 		    (synchronize compile-mutex
 		       (set! compile-table (make-hashtable)))
 		    (set! module-cache v))
-		 1 'cache)
+		 1 "cache")
 	 :configurable #f))
 
    ;; module.require
@@ -620,7 +620,7 @@
 				 path 0 loc)))
 		     (js-call1 %this resolve (js-undefined)
 			(nodejs-exports-module mod worker %this)))))
-	    2 'import))))
+	    2 "import"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import-meta ...                                           */
@@ -664,7 +664,7 @@
 				      :get (js-make-function %this
 					      (lambda (this)
 						 (vector-ref evars i))
-					      0 'get)
+					      0 "get")
 				      :configurable #f :writable #f)))
 			       ((=fx idx -1)
 				;; named default
@@ -672,7 +672,7 @@
 				   :get (js-make-function %this
 					   (lambda (this)
 					      default)
-					   0 'get)
+					   0 "get")
 				   :configurable #f :writable #f))
 			       ((and (not writable)
 				     (constant? (vector-ref evars idx)))
@@ -684,7 +684,7 @@
 				   :get (js-make-function %this
 					   (lambda (this)
 					      (vector-ref evars idx))
-					   0 'get)
+					   0 "get")
 				   :configurable #f :writable #f)))))
 	       exports)
 	    mod))))
@@ -2060,7 +2060,7 @@
 			  :get (js-make-function %this
 				  (lambda (o)
 				     (js-get e k %this))
-				  0 'get)
+				  0 "get")
 			  :hidden-class #f))
 	     bindings))))
 
@@ -2086,7 +2086,7 @@
 		(%js-eval ip 'eval %this %this scope)))))
 
    (js-bind! %this scope 'eval
-      :value (js-make-function %this js-eval 1 'eval :prototype (js-undefined))
+      :value (js-make-function %this js-eval 1 "eval" :prototype (js-undefined))
       :configurable #f :enumerable #f))
 
 ;*---------------------------------------------------------------------*/
@@ -2151,7 +2151,7 @@
    (define js-worker
       (with-access::JsGlobalObject %this (js-function-prototype
 					    js-worker-prototype)
-	 (js-make-function %this (%js-worker %this) 2 'JsWorker
+	 (js-make-function %this (%js-worker %this) 2 "JsWorker"
 	    :__proto__ js-function-prototype
 	    :prototype js-worker-prototype
 	    :construct (js-worker-construct %this loader))))

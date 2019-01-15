@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Fri Dec 28 09:49:51 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 10:02:30 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
 ;*=====================================================================*/
@@ -87,7 +87,7 @@
       (js-make-function %this 
 	 (lambda (this)
 	    (stream-shutdown %worker %this process this))
-	 0 'shutdown)
+	 0 "shutdown")
       #f %this)
    
    ;; writeBuffer
@@ -105,7 +105,7 @@
 	    (stream-write-string %worker %this process this
 	       (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 	       "ascii" #f handle))
-	 2 'writeAsciiString)
+	 2 "writeAsciiString")
       #f %this)
    
    ;; writeUtf8String
@@ -136,7 +136,7 @@
 	 (lambda (this name)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-pipe-bind %this process handle name)))
-	 0 'bind)
+	 0 "bind")
       #f %this)
    
    ;; listen
@@ -166,7 +166,7 @@
 				 oncomp req status this req #t #t)
 			      (js-undefined))))
 		     req))))
-	 2 'connect)
+	 2 "connect")
       #f %this)
    
    ;; open
@@ -175,7 +175,7 @@
 	 (lambda (this fd)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-pipe-open %worker %this handle fd)))
-	 1 'open)
+	 1 "open")
       #f %this)
 
    ;; pipe
@@ -191,7 +191,7 @@
 		       (lambda (this)
 			  (with-access::JsHandle this (handle)
 			     (nodejs-stream-fd %worker handle)))
-		       0 'getGD)
+		       0 "getGD")
 	       :writable #f :configurable #f)
 	    ;; writeQueueSize
 	    (js-put! obj 'writeQueueSize
@@ -203,7 +203,7 @@
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-pipe
 	       (js-make-function %this
-		  (lambda (this . args) #unspecified) 1 'Pipe
+		  (lambda (this . args) #unspecified) 1 "Pipe"
 		  :construct pipe
 		  :prototype pipe-prototype
 		  :alloc (lambda (%this o) #unspecified)))

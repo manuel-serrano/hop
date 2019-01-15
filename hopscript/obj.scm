@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Wed Oct  3 10:41:14 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:43:34 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
 ;*=====================================================================*/
@@ -113,7 +113,6 @@
 	  (case name
 	     ((inspect)
 	      (js-undefined))
-;* 	      (js-make-function %this js-inspect 1 'inspect))          */
 	     ((constructor)
 	      (js-undefined))
 	     ((toString)
@@ -121,11 +120,11 @@
 		 (lambda (this)
 		    (js-tostring this %this))
 		 0
-		 'toString))
+		 "toString"))
 	     ((isSealed)
-	      (js-make-function %this (lambda (this) #t) 1 'isSealed))
+	      (js-make-function %this (lambda (this) #t) 1 "isSealed"))
 	     ((isFrozen)
-	      (js-make-function %this (lambda (this) #t) 1 'isFrozen))
+	      (js-make-function %this (lambda (this) #t) 1 "isFrozen"))
 	     (else
 	      (js-raise-type-error %this
 		 (format "no such field \"~a\" ~~a" name) o)))

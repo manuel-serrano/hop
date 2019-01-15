@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Dec 28 09:49:57 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:52:56 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
 ;*=====================================================================*/
@@ -389,12 +389,12 @@
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (js-plist->jsobject (j2s-compile-options) %this))
-		    0 'compilerOptions)
+		    0 "compilerOptions")
 	    :set (js-make-function %this
 		    (lambda (this o)
 		       (j2s-compile-options-set!
 			  (js-jsobject->plist o %this)))
-		    1 'compilerOptions)
+		    1 "compilerOptions")
 	    :configurable #f)
 	 
 	 ;; first process name
@@ -404,11 +404,11 @@
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (js-string->jsstring (nodejs-get-process-title)))
-		    0 'title)
+		    0 "title")
 	    :set (js-make-function %this
 		    (lambda (this str)
 		       (nodejs-set-process-title! (js-tostring str %this)))
-		    1 'title)
+		    1 "title")
 	    :configurable #f)
 	 
 	 (js-put! proc 'version
@@ -537,7 +537,7 @@
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-check? check))
-		       0 '_needImmediateCallback)
+		       0 "_needImmediateCallback")
 	       :set (js-make-function %this
 		       (lambda (this val)
 			  (let ((v (js-totest val)))
@@ -556,7 +556,7 @@
 				 (set! idle #f)
 				 (nodejs-check-stop %worker %this check)
 				 (set! check #f)))))
-		       1 '_needImmediateCallback)
+		       1 "_needImmediateCallback")
 	       :configurable #f))
 	    
 	 (js-put! proc 'cwd
@@ -676,22 +676,6 @@
 	       2 "_kill")
 	    #t %this)
 
-;* 	 ;; _getActiveRequests                                         */
-;* 	 (js-put! proc '_getActiveRequests                             */
-;* 	    (js-make-function %this                                    */
-;* 	       (lambda (this)                                          */
-;* 		  (js-vector->jsarray (make-vector 0) %this))          */
-;* 	       0 "_getActiveRequests")                                 */
-;* 	    #t %this)                                                  */
-;*                                                                     */
-;* 	 ;; _getActiveHandles                                          */
-;* 	 (js-put! proc '_getActiveHandles                              */
-;* 	    (js-make-function %this                                    */
-;* 	       (lambda (this)                                          */
-;* 		  (js-vector->jsarray (make-vector 0) %this))          */
-;* 	       0 "_getActiveHandles")                                  */
-;* 	    #t %this)                                                  */
-
 	 ;; memoryUsage
 	 (js-put! proc 'memoryUsage
 	    (js-make-function %this
@@ -725,7 +709,7 @@
 	 ;; mainModule
 	 (with-access::JsGlobalObject %this (js-main) 
 	    (js-bind! %this proc 'mainModule
-	       :get (js-make-function %this (lambda (this) js-main) 0 'main)
+	       :get (js-make-function %this (lambda (this) js-main) 0 "main")
 	       :configurable #f
 	       :writable #f))
 	 
@@ -1016,7 +1000,7 @@
 	 `((isIP . ,(js-make-function %this
 		       (lambda (this domain)
 			  (nodejs-isip (js-tojsstring domain %this)))
-		       1 'isIP))
+		       1 "isIP"))
 	   (getaddrinfo . ,(js-make-function %this getaddrinfo 2 "getaddrinfo"))
 	   (queryA . ,(js-make-function %this query4 2 "queryA"))
 	   (queryAaaa . ,(js-make-function %this query6 2 "queryAaaa"))

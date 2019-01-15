@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Dec 21 17:43:16 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:37:56 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */
@@ -58,14 +58,14 @@
 	    (__proto__ __proto__)))
       ;; parse
       (js-bind! %this js-json 'parse
-	 :value (js-make-function %this (js-json-parse %this) 2 'parse)
+	 :value (js-make-function %this (js-json-parse %this) 2 "parse")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #t)
       ;; stringify
       (js-bind! %this js-json 'stringify
-	 :value (js-make-function %this (js-json-stringify %this) 3 'stringify)
+	 :value (js-make-function %this (js-json-stringify %this) 3 "stringify")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f

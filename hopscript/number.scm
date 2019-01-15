@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Dec 28 06:50:02 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 09:34:30 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
 ;*=====================================================================*/
@@ -143,7 +143,7 @@
 
 	 ;; Create a HopScript number object constructor
 	 (set! js-number
-	    (js-make-function %this %js-number 1 'Number
+	    (js-make-function %this %js-number 1 "Number"
 	       :__proto__ js-function-prototype
 	       :prototype js-number-prototype
 	       :construct js-number-construct
@@ -175,7 +175,7 @@
 	    :value +nan.0
 	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this js-number 'isInteger
-	    :value (js-make-function %this is-integer? 1 'isInteger)
+	    :value (js-make-function %this is-integer? 1 "isInteger")
 	    :writable #f :configurable #f :enumerable #f :hidden-class #f)
 	 ;; bind the builtin prototype properties
 	 (init-builtin-number-prototype! %this js-number js-number-prototype)
@@ -245,7 +245,7 @@
       (js-jsnumber-tostring (js-cast-number this typeof) radix %this))
 
    (js-bind! %this obj 'toString
-      :value (js-make-function %this js-number-tostring 2 'toString)
+      :value (js-make-function %this js-number-tostring 2 "toString")
       :writable #t
       :configurable #t
       :enumerable #f
@@ -257,7 +257,7 @@
       (js-number-tostring this radix))
 
    (js-bind! %this obj 'toLocaleString
-      :value (js-make-function %this js-number-tolocalestring 2 'toLocaleString)
+      :value (js-make-function %this js-number-tolocalestring 2 "toLocaleString")
       :writable #t
       :configurable #t
       :enumerable #f
@@ -269,7 +269,7 @@
       (js-cast-number this #f))
 
    (js-bind! %this obj 'valueOf
-      :value (js-make-function %this js-number-valueof 0 'valueOf)
+      :value (js-make-function %this js-number-valueof 0 "valueOf")
       :writable #t
       :configurable #t
       :enumerable #f
@@ -329,7 +329,7 @@
 					   (substring s (-fx l f)))))))))))))))
 
    (js-bind! %this obj 'toFixed
-      :value (js-make-function %this js-number-tofixed 1 'toFixed)
+      :value (js-make-function %this js-number-tofixed 1 "toFixed")
       :writable #t
       :configurable #t
       :enumerable #f
@@ -341,7 +341,7 @@
       :value (js-make-function %this
 		(lambda (this val)
 		   (error "toExponential" "not implemented" "yet"))
-		1 'toExponential)
+		1 "toExponential")
       :writable #t
       :configurable #t
       :enumerable #f
@@ -353,7 +353,7 @@
       :value (js-make-function %this
 		(lambda (this val)
 		   (error "toPrecision" "not implemented" "yet"))
-		1 'toPrecision)
+		1 "toPrecision")
       :writable #t
       :configurable #t
       :enumerable #f
