@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Mon Jan 14 13:04:50 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 07:15:33 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -292,7 +292,7 @@
 		 (l 0))
 	 (if (=fx r len)
 	     l
-	     (loop (+fx r (utf8-char-size-ur (string-ref str r))) (+fx l 1))))))
+	     (loop (+fx r (utf8-char-size (string-ref str r))) (+fx l 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-force-ascii! ...                                          */
@@ -370,7 +370,7 @@
 	     (let ((n (string-ref-ur string1 (+fx o1 i))))
 		(if (char>? n #a127)
 		    ;; an utf8 string
-		    (let ((sz (utf8-char-size-ur n))
+		    (let ((sz (utf8-char-size n))
 			  (ucs2 (utf8-string-get string1 (+fx o1 i) n)))
 		       (string-in-set-ur! string2 (+fx o2 j)
 			  (bit-and ucs2 255))
@@ -412,7 +412,7 @@
 				      string2 k 3)
 				   (loop (+fx i 4) (+fx j 3) (+fx l 3) (+fx c 1)))
 				(values l n))
-			    (let ((sz (utf8-char-size-ur n)))
+			    (let ((sz (utf8-char-size n)))
 			       (if (<=fx (+fx j sz) len)
 				   (let ((k (+fx o2 j)))
 				      (blit-string! string1 (+fx o1 i)

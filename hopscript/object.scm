@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Jan  5 10:32:45 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 08:13:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -740,6 +740,31 @@
       (js-bind! %this js-object 'getOwnPropertyDescriptor
 	 :value (js-make-function %this
 		   getownpropertydescriptor 2 'getOwnPropertyDescriptor)
+	 :writable #t
+	 :configurable #t
+	 :enumerable #f
+	 :hidden-class #f)
+      
+      ;; getOwnPropertyDescriptors
+      ;; https://www.ecma-international.org/ecma-262/8.0/#sec-object.getownpropertydescriptors
+      (define (getownpropertydescriptors this o p)
+	 (let* ((o (if (isa? o object)
+		       o
+		       (js-cast-object o %this "getOwnPropertyDescriptors")))
+		(keys (js-properties-names o #f %this))
+		(res (js-new0 %this js-object)))
+	    (when (pair? keys)
+	       (for-each (lambda (k)
+			    (let ((desc (js-get-own-property o k %this)))
+			       (js-put! res k
+				  (js-from-property-descriptor %this desc o)
+				  #f %this)))
+		  keys))
+	    res))
+      
+      (js-bind! %this js-object 'getOwnPropertyDescriptors
+	 :value (js-make-function %this
+		   getownpropertydescriptors 1 'getOwnPropertyDescriptors)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f

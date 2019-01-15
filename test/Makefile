@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Dec  6 10:12:16 2018 (serrano)                */
-#*    Copyright   :  2006-18 Manuel Serrano                            */
+#*    Last change :  Tue Jan 15 08:23:59 2019 (serrano)                */
+#*    Copyright   :  2006-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -40,6 +40,8 @@ POPULATION = Makefile \
   hopjs/noserv/cache.js \
   hopjs/noserv/array.js \
   hopjs/noserv/ecma51.js \
+  hopjs/noserv/ecma6.js \
+  hopjs/noserv/ecma8.js \
   hopjs/noserv/number.js \
   hopjs/noserv/regexp.js \
   hopjs/noserv/unicode.js \

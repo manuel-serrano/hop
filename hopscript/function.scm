@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Jan  4 19:27:34 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 07:31:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -467,7 +467,7 @@
 		      (writable #f)
 		      (value prototype)))
 		  ((eq? prototype '())
-		   ;; the Proxy global object as no prototype field
+		   ;; the Proxy global object has no prototype field
 		   (instantiate::JsValueDescriptor
 		      (name '%null)
 		      (enumerable #f)
@@ -694,6 +694,3 @@
 		 ;; slow path
 		 (loop (+fx i 1)
 		    (cons (js-get argarray i %this) acc))))))))
-
-   
-   
