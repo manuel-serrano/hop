@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Jan 15 09:25:40 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 19:40:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -77,6 +77,12 @@
 		   nobj)
 		(js-undefined))))))
    
+;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 11)
+(define %pcache (js-make-pcache-table 11 "hopscript/array.scm"))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ...                                */
 ;*---------------------------------------------------------------------*/
@@ -293,7 +299,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-function-debug-name::bstring obj::JsFunction %this)
    (with-access::JsFunction obj (src)
-      (let ((name (js-get obj 'name %this)))
+      (let ((name (js-object-get-name/cache obj 'name %this
+		     (js-pcache-ref %pcache 0))))
 	 (cond
 	    ((js-jsstring? name) (js-jsstring->string name))
 	    ((pair? src) (format "~a:~a" (cadr (car src)) (caddr (car src))))
