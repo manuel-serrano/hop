@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Jan 15 07:31:20 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 08:46:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -122,22 +122,19 @@
    (make-cmap
       `#(,(prop 'prototype (property-flags #f #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #t #f))
-	 ,(prop 'source (property-flags #f #f #f #f)))))
+	 ,(prop 'name (property-flags #f #f #t #f)))))
 
 (define js-function-cmap-sans-prototype
    (make-cmap
       `#(,(prop '%null (property-flags #f #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #t #f))
-	 ,(prop 'source (property-flags #f #f #f #f)))))
+	 ,(prop 'name (property-flags #f #f #t #f)))))
 
 (define js-function-strict-cmap
    (make-cmap
       `#(,(prop 'prototype (property-flags #f #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
 	 ,(prop 'name (property-flags #f #f #t #f))
-	 ,(prop 'source (property-flags #f #f #f #f))
 	 ,(prop 'arguments (property-flags #f #f #f #f))
 	 ,(prop 'caller (property-flags #f #f #f #f)))))
 
@@ -145,15 +142,13 @@
    (make-cmap
       `#(,(prop 'prototype (property-flags #t #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #t #f))
-	 ,(prop 'source (property-flags #f #f #f #f)))))
+	 ,(prop 'name (property-flags #f #f #t #f)))))
 
 (define js-function-writable-strict-cmap
    (make-cmap
       `#(,(prop 'prototype (property-flags #t #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
 	 ,(prop 'name (property-flags #f #f #t #f))
-	 ,(prop 'source (property-flags #f #f #f #f))
 	 ,(prop 'arguments (property-flags #f #f #f #f))
 	 ,(prop 'caller (property-flags #f #f #f #f)))))
    
@@ -253,6 +248,7 @@
       
       ;; prototype properties
       (init-builtin-function-prototype! %this js-function js-function-prototype)
+      
       ;; bind Function in the global object
       (js-bind! %this %this 'Function
 	 :value js-function
@@ -328,38 +324,10 @@
 	   arity (minlen -1) src rest
 	   (constrsize 3) constrmap (maxconstrsize 100) method (shared-cmap #t))
    
-   (define (js-not-a-constructor %this constr)
-      (with-access::JsFunction constr (name)
-	 (js-raise-type-error %this (format "~s not a constructor ~~a" name)
-	    name)))
-
-   (define (get-source)
-      
-      (define (source this::JsFunction)
-	 (with-access::JsFunction this (src)
-	    (when (pair? src)
-	       (js-string->jsstring
-		  (format "~a:~a" (cadr (car src)) (caddr (car src)))))))
-      
-      (if js-get-source
-	  js-get-source
-	  (set! js-get-source
-	     (instantiateJsFunction
-		(procedure source)
-		(method source)
-		(arity 0)
-		(minlen 0)
-		(len 0)
-		(alloc js-not-a-constructor)
-		(construct list)
-		(name "source")
-		(%prototype (with-access::JsGlobalObject %this (__proto__)
-			       __proto__))))))
-
    (define (prototype-set o::JsFunction v)
       (with-access::JsFunction o (constrmap constrsize %prototype elements cmap)
-	 ;; as the prototype property is not configurable, we are sure
-	 ;; to find it in the object
+	 ;; as the prototype property is not configurable,
+	 ;; it is always owned by the object
 	 (let ((desc (if (eq? cmap (js-not-a-cmap))
 			 (find (lambda (d)
 				  (with-access::JsPropertyDescriptor d (name)
@@ -386,21 +354,13 @@
 		     (set! %prototype (if (isa? v JsObject) v __proto__)))))))
       v)
 
-   (define (get__proto__ __proto__)
-      (or __proto__
-	  (with-access::JsGlobalObject %this (js-function-prototype
-						js-function-strict-prototype)
-	     (if (eq? strict 'normal)
-		 js-function-prototype
-		 js-function-strict-prototype))))
-
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 (let* ((constr (or construct list))
 		(fname (if (symbol? name) (symbol->string! name) name))
 		(els (if (eq? strict 'normal)
-			 ($create-vector 4)
-			 ($create-vector 6)))
+			 ($create-vector 3)
+			 ($create-vector 5)))
 		(proto (cond
 			  ((isa? prototype JsObject)
 			   prototype)
@@ -486,12 +446,10 @@
 	    (vector-set! els 1 length)
 	    ;; name
 	    (vector-set! els 2 (js-string->jsstring fname))
-	    ;; source is an hop extension
-	    (vector-set! els 3 (get-source))
 	    ;; strict properties
 	    (unless (eq? strict 'normal)
-	       (vector-set! els 4 strict-arguments-property)
-	       (vector-set! els 5 strict-caller-property))
+	       (vector-set! els 3 strict-arguments-property)
+	       (vector-set! els 4 strict-caller-property))
 	    ;; constrmap
 	    (when constrmap
 	       (with-access::JsFunction fun (constrsize constrmap)
@@ -502,9 +460,12 @@
 	    fun))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-source ...                                                */
+;*    js-not-a-constructor ...                                         */
 ;*---------------------------------------------------------------------*/
-(define js-get-source #f)
+(define (js-not-a-constructor %this constr)
+   (with-access::JsFunction constr (name)
+      (js-raise-type-error %this (format "~s not a constructor ~~a" name)
+	 name)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-function-simple ...                                      */
@@ -561,6 +522,23 @@
 
    (js-bind! %this obj 'toString
       :value (js-make-function %this tostring 0 "toString"
+		:prototype (js-undefined))
+      :enumerable #f :writable #t :configurable #t
+      :hidden-class #t)
+
+   ;; source
+   ;; Hop extension
+   (define (source this)
+      (if (isa? this JsFunction)
+	  (with-access::JsFunction this (src)
+	     (when (pair? src)
+		(js-string->jsstring
+		   (format "~a:~a" (cadr (car src)) (caddr (car src))))))
+	  (js-raise-type-error %this "source: not a function ~s"
+	     (js-typeof this))))
+   
+   (js-bind! %this obj 'source
+      :value (js-make-function %this source 0 "source"
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
