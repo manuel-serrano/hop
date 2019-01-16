@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Jan 13 17:49:11 2019 (serrano)                */
+;*    Last change :  Wed Jan 16 06:14:42 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -77,7 +77,7 @@
 	("toUpperCase" js-jsstring-touppercase string () #f)
 	("toUpperCase" js-jsstring-maybe-touppercase any () %this #t)
 	("toLocaleUpperCase" js-jsstring-tolocaleuppercase string () #f)
-	("toLocaleUpperCase" js-jsstring-maybe-tolocaleuppercase any () %this)
+	("toLocaleUpperCase" js-jsstring-maybe-tolocaleuppercase any () %this #t)
 	("toLowerCase" js-jsstring-tolowercase string () #f)
 	("toLowerCase" js-jsstring-maybe-tolowercase any () %this #t)
 	("toLocaleLowerCase" js-jsstring-tolocalelowercase string () #f)
