@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Jan 16 06:28:32 2019 (serrano)                */
+;*    Last change :  Tue Jan 15 19:40:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -136,12 +136,28 @@
 	 ,(prop 'length (property-flags #f #f #f #f))
 	 ,(prop 'name (property-flags #f #f #t #f)))))
 
+(define js-function-strict-cmap
+   (make-cmap
+      `#(,(prop 'prototype (property-flags #f #f #f #f))
+	 ,(prop 'length (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #t #f))
+	 ,(prop 'arguments (property-flags #f #f #f #f))
+	 ,(prop 'caller (property-flags #f #f #f #f)))))
+
 (define js-function-writable-cmap
    (make-cmap
       `#(,(prop 'prototype (property-flags #t #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
 	 ,(prop 'name (property-flags #f #f #t #f)))))
 
+(define js-function-writable-strict-cmap
+   (make-cmap
+      `#(,(prop 'prototype (property-flags #t #f #f #f))
+	 ,(prop 'length (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #t #f))
+	 ,(prop 'arguments (property-flags #f #f #f #f))
+	 ,(prop 'caller (property-flags #f #f #f #f)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -207,6 +223,33 @@
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype
 	    :construct (js-function-construct %this)))
+      ;; throwers
+      (let* ((throw1 (lambda (o)
+			(js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
+	     (throw2 (lambda (o v)
+			(js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
+	     (thrower (js-make-function %this throw1
+			 1 "thrower")))
+	 (set! thrower-get thrower)
+	 (set! thrower-set thrower)
+	 (set! strict-arguments-property
+	    (instantiate::JsAccessorDescriptor
+	       (name 'arguments)
+	       (get thrower-get)
+	       (set thrower-set)
+	       (%get throw1)
+	       (%set throw2)
+	       (enumerable #f)
+	       (configurable #f)))
+	 (set! strict-caller-property
+	    (instantiate::JsAccessorDescriptor
+	       (name 'caller)
+	       (get thrower-get)
+	       (set thrower-set)
+	       (%get throw1)
+	       (%set throw2)
+	       (enumerable #f)
+	       (configurable #f))))
       
       ;; prototype properties
       (init-builtin-function-prototype! %this js-function js-function-prototype)
@@ -321,7 +364,7 @@
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 (let* ((constr (or construct list))
-		(els ($create-vector 3))
+		(els ($create-vector (if (eq? strict 'normal) 3 5)))
 		(proto (cond
 			  ((isa? prototype JsObject)
 			   prototype)
@@ -332,13 +375,17 @@
 				 (__proto__ __proto__))))
 			  (else
 			   #f)))
-		(cmap (cond
-			 ((isa? prototype JsObject)
-			  js-function-cmap)
-			 ((eq? prototype '())
-			  js-function-cmap-sans-prototype)
-			 (else
-			  js-function-writable-cmap)))
+		(cmap (if (eq? strict 'normal)
+			  (cond
+			     ((isa? prototype JsObject)
+			      js-function-cmap)
+			     ((eq? prototype '())
+			      js-function-cmap-sans-prototype)
+			     (else
+			      js-function-writable-cmap))
+			  (if (isa? prototype JsObject)
+			      js-function-strict-cmap
+			      js-function-writable-strict-cmap)))
 		(fun (INSTANTIATE-JSFUNCTION
 			(arity (or arity (procedure-arity procedure)))
 			(procedure procedure)
@@ -402,6 +449,10 @@
 	    (vector-set! els 1 length)
 	    ;; name
 	    (vector-set! els 2 name)
+	    ;; strict properties
+	    (unless (eq? strict 'normal)
+	       (vector-set! els 3 strict-arguments-property)
+	       (vector-set! els 4 strict-caller-property))
 	    ;; constrmap
 	    (when constrmap
 	       (with-access::JsFunction fun (constrsize constrmap)
@@ -450,7 +501,7 @@
       :value js-function
       :enumerable #f :configurable #t :writable #t
       :hidden-class #t)
-   
+
    ;; name
    (js-bind! %this obj 'name
       :value (js-ascii->jsstring "builtin")
@@ -480,13 +531,13 @@
 	 (else
 	  (js-raise-type-error %this "toString: not a function ~s"
 	     (js-typeof this)))))
-   
+
    (js-bind! %this obj 'toString
       :value (js-make-function %this tostring 0 "toString"
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
-   
+
    ;; source
    ;; Hop extension
    (define (source this)
@@ -503,7 +554,7 @@
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
-   
+
    ;; @@hasInstance
    (with-access::JsGlobalObject %this (js-symbol-hasinstance)
       (js-bind! %this obj js-symbol-hasinstance
@@ -517,7 +568,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.3
    (define (prototype-apply this::obj thisarg argarray)
       (js-apply-array %this this thisarg argarray))
-   
+
    (js-bind! %this obj 'apply
       :value (js-make-function %this prototype-apply 2 "apply"
 		:prototype (js-undefined))
@@ -563,30 +614,18 @@
 		   :strict 'strict
 		   :alloc alloc
 		   :construct fun)))))
-   
+
    (js-bind! %this obj 'bind
       :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
    
-   ;; throwers
-   (let* ((throw (lambda (o)
-		    (js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
-	  (thrower (js-make-function %this throw 1 "thrower")))
-      (set! thrower-get thrower)
-      (set! thrower-set thrower)
-      ;; hopscript does not support caller nor arguments
-      (js-bind! %this obj 'caller
-	 :get thrower-get
-	 :set thrower-set
-	 :enumerable #f :configurable #f
-	 :hidden-class #t)
-      
-      (js-bind! %this obj 'arguments
-	 :get thrower-get
-	 :set thrower-set
-	 :enumerable #f :configurable #f
-	 :hidden-class #t)))
+   ;; hopscript does not support caller
+   (js-bind! %this obj 'caller
+      :get thrower-get
+      :set thrower-set
+      :enumerable #f :configurable #f
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply-array ...                                               */
