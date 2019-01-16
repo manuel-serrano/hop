@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Jan 15 09:35:54 2019 (serrano)                */
+;*    Last change :  Wed Jan 16 07:27:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3719,28 +3719,29 @@
 	       (else
 		(loop (+ k 1)))))))
    
-   (with-access::JsArray this (vec ilen)
-      (let* ((len::uint32 (js-get-lengthu32 this %this))
-	     (n (js-tointeger indx %this)))
-	 (if (<=uint32 len n)
-	     -1
-	     (let ((k (if (< n 0)
-			  (let ((absn (abs n)))
-			     (if (<=uint32 len absn)
-				 #u32:0
-				 (-u32 len (->uint32 absn))))
-			  (->uint32 n))))
-		(cond
-		   ((not (js-array? this))
-		    (array-indexof this k len))
-		   ((js-object-mode-inline? this)
+   (let* ((len::uint32 (js-get-lengthu32 this %this))
+	  (n (js-tointeger indx %this)))
+      (if (<=uint32 len n)
+	  -1
+	  (let ((k (if (< n 0)
+		       (let ((absn (abs n)))
+			  (if (<=uint32 len absn)
+			      #u32:0
+			      (-u32 len (->uint32 absn))))
+		       (->uint32 n))))
+	     (cond
+		((not (js-array? this))
+		 (array-indexof this k len))
+		((js-object-mode-inline? this)
+		 (with-access::JsArray this (vec ilen)
 		    (vector-indexof this vec (uint32->fixnum k)
-		       (uint32->fixnum ilen)))
-		   ((js-object-mode-holey? this)
+		       (uint32->fixnum ilen))))
+		((js-object-mode-holey? this)
+		 (with-access::JsArray this (vec ilen)
 		    (vector-holey-indexof this vec (uint32->fixnum k)
-		       (vector-length vec)))
-		   (else
-		    (array-indexof this k len))))))))
+		       (vector-length vec))))
+		(else
+		 (array-indexof this k len)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-indexof ...                                             */
