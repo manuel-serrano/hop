@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue Jan 15 09:38:26 2019 (serrano)                */
+;*    Last change :  Wed Jan 16 11:38:13 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -475,7 +475,7 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (set! %worker
 	    (instantiate::WorkerHopThread
-	       (name "%worker")
+	       (name "%worker@main")
 	       (%this %this)
 	       (onexit #f)
 	       (keep-alive keep-alive)

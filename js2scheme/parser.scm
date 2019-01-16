@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jan 15 10:06:49 2019 (serrano)                */
+;*    Last change :  Wed Jan 16 11:11:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2160,7 +2160,7 @@
 			(arg (assig-expr #f #f #t)))
 		    (loop (cons arg rev-args))))
 		(else
-		 (parse-token-error "Illegal argument epxression" (peek-token)))))))
+		 (parse-token-error "Illegal argument expression" (peek-token)))))))
 
    (define (xml-expression tag delim)
       (html-parser input-port

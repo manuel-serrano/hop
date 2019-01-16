@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Jan 15 19:40:45 2019 (serrano)                */
+;*    Last change :  Wed Jan 16 08:43:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -604,16 +604,18 @@
       (if (not (isa? this JsFunction))
 	  (js-raise-type-error %this "bind: this not a function ~s" this)
 	  (with-access::JsFunction this (len construct alloc procedure)
-	     (let ((fun (lambda (_ . actuals)
-			   (js-apply %this this thisarg (append args actuals)))))
-		(js-make-function
-		   %this
-		   fun
-		   (maxfx 0 (-fx len (length args)))
-		   (js-tostring (js-get this 'name %this) %this)
-		   :strict 'strict
-		   :alloc alloc
-		   :construct fun)))))
+	     (let* ((proc (lambda (_ . actuals)
+			     (js-apply %this this
+				thisarg (append args actuals))))
+		    (fun (js-make-function
+			    %this
+			    proc
+			    (maxfx 0 (-fx len (length args)))
+			    (js-tostring (js-get this 'name %this) %this)
+			    :strict 'strict
+			    :alloc alloc
+			    :construct proc)))
+		fun))))
 
    (js-bind! %this obj 'bind
       :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))
