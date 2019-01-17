@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jan 13 10:24:13 2019 (serrano)                */
+;*    Last change :  Thu Jan 17 14:36:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1239,7 +1239,7 @@
 	  v))
       ((isa? desc JsWrapperDescriptor)
        (with-access::JsWrapperDescriptor desc (%set)
-	  (%set obj v)
+	  (%set obj v %this)
 	  v))
       (else
        (js-undefined))))
@@ -2651,7 +2651,7 @@
 		      (set! value dvalue)))
 		  ((isa? current JsWrapperDescriptor)
 		   (with-access::JsWrapperDescriptor current (%set)
-		      (%set o dvalue)))))))
+		      (%set o dvalue %this)))))))
       #t)
    
    (define (propagate-accessor-descriptor! current desc)

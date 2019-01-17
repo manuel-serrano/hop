@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Jan 17 12:11:43 2019 (serrano)                */
+;*    Last change :  Thu Jan 17 14:36:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -328,36 +328,6 @@
 	   arity (minlen -1) src rest
 	   (constrsize 3) constrmap (maxconstrsize 100) method (shared-cmap #t))
    
-   (define (prototype-set o::JsFunction v)
-      (with-access::JsFunction o (constrmap constrsize %prototype elements cmap)
-	 ;; as the prototype property is not configurable,
-	 ;; it is always owned by the object
-	 (let ((desc (if (eq? cmap (js-not-a-cmap))
-			 (find (lambda (d)
-				  (with-access::JsPropertyDescriptor d (name)
-				     (eq? name 'prototype)))
-			    (js-object-properties o))
-			 (vector-ref elements 0))))
-	    (with-access::JsDataDescriptor desc (writable)
-	       (when writable
-		  (cond
-		     ((isa? desc JsValueDescriptor)
-		      (with-access::JsValueDescriptor desc (value)
-			 (set! value v)))
-		     ((isa? desc JsWrapperDescriptor)
-		      (with-access::JsWrapperDescriptor desc (value)
-			 (set! value v))))
-		  ;; the prototype is changed, generate a fresh constrmap
-		  (when constrmap
-		     (set! constrmap
-			(instantiate::JsConstructMap
-			   (ctor o)
-			   (size constrsize))))
-		  ;; (set! constrmap #f)
-		  (with-access::JsGlobalObject %this (__proto__)
-		     (set! %prototype (if (isa? v JsObject) v __proto__)))))))
-      v)
-
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 (let* ((constr (or construct list))
@@ -441,7 +411,7 @@
 		      (configurable #f)
 		      (writable #t)
 		      (value (if construct proto (js-undefined)))
-		      (%set prototype-set)))))
+		      (%set js-fun-prototype-set)))))
 	    ;; length
 	    (vector-set! els 1 length)
 	    ;; name
@@ -458,6 +428,39 @@
 			(ctor fun)
 			(size constrsize)))))
 	    fun))))
+
+;*---------------------------------------------------------------------*/
+;*    js-fun-prototype-set ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-fun-prototype-set o::JsFunction v %this)
+   (with-access::JsFunction o (constrmap constrsize %prototype elements cmap)
+      ;; as the prototype property is not configurable,
+      ;; it is always owned by the object
+      (let ((desc (if (eq? cmap (js-not-a-cmap))
+		      (find (lambda (d)
+			       (with-access::JsPropertyDescriptor d (name)
+				  (eq? name 'prototype)))
+			 (js-object-properties o))
+		      (vector-ref elements 0))))
+	 (with-access::JsDataDescriptor desc (writable)
+	    (when writable
+	       (cond
+		  ((isa? desc JsValueDescriptor)
+		   (with-access::JsValueDescriptor desc (value)
+		      (set! value v)))
+		  ((isa? desc JsWrapperDescriptor)
+		   (with-access::JsWrapperDescriptor desc (value)
+		      (set! value v))))
+	       ;; the prototype is changed, generate a fresh constrmap
+	       (when constrmap
+		  (set! constrmap
+		     (instantiate::JsConstructMap
+			(ctor o)
+			(size constrsize))))
+	       ;; (set! constrmap #f)
+	       (with-access::JsGlobalObject %this (__proto__)
+		  (set! %prototype (if (isa? v JsObject) v __proto__)))))))
+   v)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-not-a-constructor ...                                         */
