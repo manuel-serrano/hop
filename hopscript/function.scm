@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Jan 16 08:43:02 2019 (serrano)                */
+;*    Last change :  Thu Jan 17 12:11:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -224,12 +224,9 @@
 	    :prototype js-function-prototype
 	    :construct (js-function-construct %this)))
       ;; throwers
-      (let* ((throw1 (lambda (o)
+      (let* ((throw (lambda (o)
 			(js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
-	     (throw2 (lambda (o v)
-			(js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
-	     (thrower (js-make-function %this throw1
-			 1 "thrower")))
+	     (thrower (js-make-function %this throw 1 "thrower")))
 	 (set! thrower-get thrower)
 	 (set! thrower-set thrower)
 	 (set! strict-arguments-property
@@ -237,8 +234,8 @@
 	       (name 'arguments)
 	       (get thrower-get)
 	       (set thrower-set)
-	       (%get throw1)
-	       (%set throw2)
+	       (%get throw)
+	       (%set throw)
 	       (enumerable #f)
 	       (configurable #f)))
 	 (set! strict-caller-property
@@ -246,8 +243,8 @@
 	       (name 'caller)
 	       (get thrower-get)
 	       (set thrower-set)
-	       (%get throw1)
-	       (%set throw2)
+	       (%get throw)
+	       (%set throw)
 	       (enumerable #f)
 	       (configurable #f))))
       
