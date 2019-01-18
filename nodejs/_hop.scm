@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Jan 15 09:54:51 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 13:41:15 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -79,6 +79,7 @@
 	    2 "webService"
 	    :__proto__ js-function-prototype
 	    :prototype js-urlframe-prototype
+	    :alloc js-no-alloc
 	    :construct (lambda (this url args)
 			  (js-make-urlframe %this
 			     js-urlframe-prototype
@@ -95,6 +96,7 @@
 	    4 "Server"
 	    :__proto__ js-function-prototype
 	    :prototype server-prototype
+	    :alloc js-no-alloc
 	    :construct (lambda (this host port auth ssl)
 			  (instantiateJsServer
 			     (__proto__ server-prototype)

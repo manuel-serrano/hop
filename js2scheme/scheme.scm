@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Jan 13 09:36:46 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 10:53:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -788,7 +788,7 @@
 		`(begin
 		    (define ,tmp ,fun)
 		    (define ,ident
-		       ,(j2sfun->scheme val tmp tmp mode return conf))
+		       ,(j2sfun->scheme val tmp mode return conf))
 		    ,@(if (usage? '(eval) usage)
 			  `((js-define %this ,scope ',id
 			       (lambda (%) ,ident)
@@ -830,14 +830,14 @@
 				     `(js-get ,ident 'prototype %this) #f)))
 			  `((,^tmp #unspecified)
 			    (,tmp ,fun)
-			    (,var (let ((,proc ,(j2sfun->scheme val tmp tmp mode return conf)))
+			    (,var (let ((,proc ,(j2sfun->scheme val tmp mode return conf)))
 				     (set! ,^tmp ,proc)
 				     ,proc))))
 		       (let ((fun (jsfun->lambda val mode return conf
 				     `(js-get ,ident 'prototype %this) #f))
 			     (tmp (j2s-fast-id id)))
 			  `((,tmp ,fun)
-			    (,var ,(j2sfun->scheme val tmp tmp mode return conf)))))))
+			    (,var ,(j2sfun->scheme val tmp mode return conf)))))))
 	       ((usage? '(call) usage)
 		`((,(j2s-fast-id id)
 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f))))

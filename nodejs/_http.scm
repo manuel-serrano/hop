@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Tue Jan 15 09:55:17 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 13:46:28 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -186,6 +186,7 @@
 	    (state http-line-state))))
    
    (let ((http (js-make-function %this http-parser 1 "HTTPParser"
+		  :alloc js-no-alloc
 		  :construct http-parser
 		  :prototype http-parser-proto)))
       (with-access::JsObject http (__proto__)

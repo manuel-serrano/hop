@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Jan 17 14:36:08 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 08:29:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -36,13 +36,13 @@
 	   thrower-set
 	   
 	   (js-function-debug-name::bstring ::JsFunction ::JsGlobalObject)
-	   (js-make-function::JsFunction ::JsGlobalObject
-	      ::procedure ::int ::bstring
+	   (js-make-function::JsFunction
+	      ::JsGlobalObject ::procedure ::int ::bstring
 	      #!key
-	      __proto__ prototype constructor construct alloc
+	      method construct alloc
+	      __proto__ prototype
 	      (strict 'normal) arity (minlen -1) src rest
-	      (constrsize 3) constrmap (maxconstrsize 100)
-	      method (shared-cmap #t))
+	      (constrsize 3) constrmap (maxconstrsize 100) (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::bstring ::int ::int ::symbol ::bool ::int)
 
@@ -157,7 +157,11 @@
 	 ,(prop 'name (property-flags #f #f #t #f))
 	 ,(prop 'arguments (property-flags #f #f #f #f))
 	 ,(prop 'caller (property-flags #f #f #f #f)))))
-   
+
+(define js-function-prototype-cmap
+   (make-cmap
+      `#(,(prop 'constructor (property-flags #t #f #t #f)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -193,22 +197,19 @@
 				       js-function-prototype
 				       js-function-strict-prototype
 				       js-function)
-      
-      (set! js-function-prototype
-	 (instantiateJsFunction
-	    (src "[Function.__proto__@function.scm]")
-	    (len -1)
-	    (procedure (lambda l (js-undefined)))
-	    (method (lambda l (js-undefined)))
-	    (alloc (lambda (%this _) #unspecified))
-	    (construct (lambda (constructor args)
-			  (js-raise-type-error %this "not a constructor ~s"
-			     js-function-prototype)))
-	    (arity -1)
-	    (%prototype (with-access::JsGlobalObject %this (__proto__)
-			   __proto__))
-	    (cmap (instantiate::JsConstructMap))
-	    (__proto__ js-object-prototype)))
+      (let ((proc (lambda l (js-undefined))))
+	 (set! js-function-prototype
+	    (instantiateJsFunction
+	       (procedure proc)
+	       (method proc)
+	       (construct proc)
+	       (cmap (instantiate::JsConstructMap))
+	       (alloc js-not-a-constructor-alloc)
+	       (src "[Function.__proto__@function.scm]")
+	       (len -1)
+	       (arity -1)
+	       (%prototype js-object-prototype)
+	       (__proto__ js-object-prototype))))
 
       (set! js-function-strict-prototype
 	 (instantiateJsObject
@@ -219,10 +220,10 @@
       (set! js-function
 	 (js-make-function %this
 	    (%js-function %this) 1 "Function"
+	    :alloc js-no-alloc
 	    :src (cons (current-loc) "Function() { /* function.scm */}")
 	    :__proto__ js-function-prototype
-	    :prototype js-function-prototype
-	    :construct (js-function-construct %this)))
+	    :prototype js-function-prototype))
       ;; throwers
       (let* ((throw (lambda (o)
 			(js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
@@ -262,25 +263,16 @@
 ;*    %js-function ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.1.1     */
-;*---------------------------------------------------------------------*/
-(define (%js-function %this::JsGlobalObject)
-   (lambda (this . value)
-      (with-access::JsGlobalObject %this (js-function)
-	 (apply js-new %this js-function value))))
-
-;*---------------------------------------------------------------------*/
-;*    js-function-construct ...                                        */
-;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.2.1     */
 ;*    -------------------------------------------------------------    */
 ;*    This definition is overriden by the definition of                */
 ;*    nodejs_require (nodejs/require.scm).                             */
 ;*---------------------------------------------------------------------*/
-(define (js-function-construct %this::JsGlobalObject)
+(define (%js-function %this::JsGlobalObject)
    (lambda (this . args)
       (if (null? args)
-	  (js-make-function %this (lambda (this) (js-undefined))
-	     0 "" :construct (lambda (_) (js-undefined)))
+	  (js-make-function %this (lambda (this) (js-undefined)) 0 ""
+	     :alloc js-object-alloc)
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
 		 (body (car (last-pair args)))
@@ -323,25 +315,14 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3.1     */
 ;*---------------------------------------------------------------------*/
 (define (js-make-function %this procedure length name
-	   #!key __proto__ prototype
-	   constructor alloc construct (strict 'normal)
-	   arity (minlen -1) src rest
-	   (constrsize 3) constrmap (maxconstrsize 100) method (shared-cmap #t))
-   
+	   #!key
+	   method construct alloc
+	   __proto__ prototype
+	   (strict 'normal) arity (minlen -1) src rest
+	   (constrsize 3) constrmap (maxconstrsize 100) (shared-cmap #t))
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 (let* ((constr (or construct list))
-		(els ($create-vector (if (eq? strict 'normal) 3 5)))
-		(proto (cond
-			  ((isa? prototype JsObject)
-			   prototype)
-			  (construct
-			   (with-access::JsObject %this (__proto__)
-			      (instantiateJsObject
-				 (cmap (instantiate::JsConstructMap))
-				 (__proto__ __proto__))))
-			  (else
-			   #f)))
+	 (let* ((els ($create-vector (if (eq? strict 'normal) 3 5)))
 		(cmap (if (eq? strict 'normal)
 			  (cond
 			     ((isa? prototype JsObject)
@@ -354,80 +335,81 @@
 			      js-function-strict-cmap
 			      js-function-writable-strict-cmap)))
 		(fun (INSTANTIATE-JSFUNCTION
-			(arity (or arity (procedure-arity procedure)))
 			(procedure procedure)
 			(method (or method procedure))
+			(construct (or construct procedure))
+			(alloc (or alloc js-not-a-constructor-alloc))
+			(arity (or arity (procedure-arity procedure)))
 			(rest rest)
 			(len length)
 			(__proto__ (or __proto__ js-function-prototype))
 			(src src)
-			(alloc (cond
-				  (alloc alloc)
-				  (construct (lambda (%this _) #unspecified))
-				  (else js-not-a-constructor)))
 			(constrsize constrsize)
 			(constrmap constrmap)
 			(maxconstrsize maxconstrsize)
-			(construct constr)
 			(elements els)
 			(cmap (if (and shared-cmap (isa? prototype JsObject))
 				  cmap
 				  (duplicate::JsConstructMap cmap
 				     (%id (gencmapid)))))
-			(%prototype (or proto
-					(with-access::JsObject %this (__proto__)
-					   __proto__)))
-			(constructor constructor))))
-	    ;; the builtin %prototype field and the prototype property
-	    ;; are not aliases. when the property is not an object,
-	    ;; %prototype will be the default prototype
-	    ;; while the property will retain the user value.
-	    (when proto
-	       (js-bind! %this proto 'constructor
-		  :value fun
-		  :configurable #t :enumerable #f :writable #t
-		  :hidden-class #t))
-	    (vector-set! els 0
-	       (cond
-		  ((isa? prototype JsObject)
-		   (instantiate::JsValueDescriptor
-		      (name 'prototype)
-		      (enumerable #f)
-		      (configurable #f)
-		      (writable #f)
-		      (value prototype)))
-		  ((eq? prototype '())
-		   ;; the Proxy global object has no prototype field
-		   (instantiate::JsValueDescriptor
-		      (name '%null)
-		      (enumerable #f)
-		      (configurable #f)
-		      (writable #f)
-		      (value '())))
-		   (else
-		   (instantiate::JsWrapperDescriptor
-		      (name 'prototype)
-		      (enumerable #f)
-		      (configurable #f)
-		      (writable #t)
-		      (value (if construct proto (js-undefined)))
-		      (%set js-fun-prototype-set)))))
-	    ;; length
-	    (vector-set! els 1 length)
-	    ;; name
-	    (vector-set! els 2 name)
-	    ;; strict properties
-	    (unless (eq? strict 'normal)
-	       (vector-set! els 3 strict-arguments-property)
-	       (vector-set! els 4 strict-caller-property))
-	    ;; constrmap
-	    (when constrmap
-	       (with-access::JsFunction fun (constrsize constrmap)
-		  (set! constrmap
-		     (instantiate::JsConstructMap
-			(ctor fun)
-			(size constrsize)))))
-	    fun))))
+			(%prototype #f))))
+	    ;; the builtin "%prototype" property
+	    (with-access::JsFunction fun (%prototype)
+	       (set! %prototype
+		  (if (isa? prototype JsObject)
+		      (begin
+			 (js-bind! %this prototype 'constructor
+			    :value fun
+			    :configurable #t :enumerable #f :writable #t
+			    :hidden-class #t)
+			 prototype)
+		      (with-access::JsObject %this (__proto__)
+			 (instantiateJsObject
+			    (cmap js-function-prototype-cmap)
+			    (elements (vector fun))
+			    (__proto__ __proto__)))))
+	       ;; regular function properties
+	       (vector-set! els 0
+		  (cond
+		     ((isa? prototype JsObject)
+		      (instantiate::JsValueDescriptor
+			 (name 'prototype)
+			 (enumerable #f)
+			 (configurable #f)
+			 (writable #f)
+			 (value %prototype)))
+		     ((eq? prototype '())
+		      ;; the Proxy global object has no prototype field
+		      (instantiate::JsValueDescriptor
+			 (name '%null)
+			 (enumerable #f)
+			 (configurable #f)
+			 (writable #f)
+			 (value '())))
+		     (else
+		      (instantiate::JsWrapperDescriptor
+			 (name 'prototype)
+			 (enumerable #f)
+			 (configurable #f)
+			 (writable #t)
+			 (value %prototype)
+			 (%set js-fun-prototype-set)))))
+	       ;; length
+	       (vector-set! els 1 length)
+	       ;; name
+	       (vector-set! els 2 name)
+	       ;; strict properties
+	       (unless (eq? strict 'normal)
+		  (vector-set! els 3 strict-arguments-property)
+		  (vector-set! els 4 strict-caller-property))
+	       ;; constrmap
+	       (when constrmap
+		  (with-access::JsFunction fun (constrsize constrmap)
+		     (set! constrmap
+			(instantiate::JsConstructMap
+			   (ctor fun)
+			   (size constrsize)))))
+	       fun)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-fun-prototype-set ...                                         */
@@ -461,14 +443,6 @@
 	       (with-access::JsGlobalObject %this (__proto__)
 		  (set! %prototype (if (isa? v JsObject) v __proto__)))))))
    v)
-
-;*---------------------------------------------------------------------*/
-;*    js-not-a-constructor ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-not-a-constructor %this constr)
-   (let ((name (js-tostring (js-get constr 'name %this) %this)))
-      (js-raise-type-error %this (format "~s not a constructor ~~a" name)
-	 name)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-function-simple ...                                      */

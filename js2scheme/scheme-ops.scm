@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Jan  7 10:41:53 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 12:11:23 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -339,7 +339,11 @@
 		 (js-binop-arithmetic loc op left lhs right rhs conf)))
 	   (js-arithmetic-mul loc type lhs rhs mode return conf)))
       ((**)
-       (js-arithmetic-expt loc type lhs rhs mode return conf))
+       (if (=fx (config-get conf :optim 0) 0)
+	   (with-tmp lhs rhs mode return conf 'any
+	      (lambda (left right)
+		 (js-binop-arithmetic loc '** left lhs right rhs conf)))
+	   (js-arithmetic-expt loc type lhs rhs mode return conf)))
       ((/)
        (js-arithmetic-div loc type lhs rhs mode return conf))
       ((remainderfx remainder)
@@ -521,6 +525,8 @@
 	  `(-js ,(box left tl conf) ,(box right tr conf) %this))
 	 ((*)
 	  `(*js ,(box left tl conf) ,(box right tr conf) %this))
+	 ((**)
+	  `(**js ,(box left tl conf) ,(box right tr conf) %this))
 	 ((/)
 	  `(/js ,(box left tl conf) ,(box right tr conf) %this))
 	 ((<)
@@ -1458,12 +1464,27 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arithmetic-expt loc type lhs::J2SExpr rhs::J2SExpr
 	   mode return conf)
-   (with-tmp lhs rhs mode return conf '**
+   (with-tmp lhs rhs mode return conf '*
       (lambda (left right)
 	 (let ((tl (j2s-vtype lhs))
 	       (tr (j2s-vtype rhs)))
 	    (epairify loc
-	       `(expt ,(asreal left tl) ,(asreal right tr)))))))
+	       (cond
+		  ((and (eq? tl 'int32) (eq? tr 'int32) (eq? type 'int32))
+		   `(expts32 ,left ,right))
+		  ((and (eq? tl 'uint32) (eq? tr 'uint32) (eq? type 'uint32))
+		   `(exptu32 ,left ,right))
+		  ((and (eq? tl 'int30) (eq? tr 'int30) (eq? type 'int30))
+		   `(exptfx ,left ,right))
+		  ((and (eq? tl 'real) (eq? tr 'real) (eq? type 'real))
+		   `(exptfl ,left ,right))
+		  (else
+		   (let ((expr `(**js ,(box left tl conf) ,(box right tr conf) %this)))
+		      (case type
+			 ((uint32) (asuint32 expr 'real))
+			 ((int32) (asint32 expr 'real))
+			 ((fixnum int30) (asfixnum expr 'real))
+			 (else expr))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arithmetic-div ...                                            */
@@ -1781,6 +1802,7 @@
       ((uint32) (if (uint32? val) (uint32->int32 val) `(uint32->int32 ,val)))
       ((int53) (if (fixnum? val) (fixnum->int32 val) `(fixnum->int32 ,val)))
       ((integer) (if (fixnum? val) (fixnum->int32 val) `(fixnum->int32 ,val)))
+      ((real) (if (real? val) (flonum->int32 val) `(flonum->int32 ,val)))
       (else `(fixnum->int32 ,val))))
 
 ;*---------------------------------------------------------------------*/
@@ -1792,6 +1814,7 @@
       ((uint32) val)
       ((int53) (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
       ((integer) (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
+      ((real) (if (real? val) (flonum->uint32 val) `(flonum->uint32 ,val)))
       (else `(fixnum->uint32 ,val))))
 
 ;*---------------------------------------------------------------------*/
@@ -1801,6 +1824,7 @@
    (case type
       ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
       ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
+      ((real) (if (real? val) (flonum->fixnum val) `(flonum->fixnum ,val)))
       (else val)))
 
 ;*---------------------------------------------------------------------*/

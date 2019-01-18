@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  5 22:00:24 2018                          */
-;*    Last change :  Tue Jan 15 09:47:37 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 10:57:58 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Reflect object.              */
@@ -53,16 +53,22 @@
 	 (js-apply-array %this target thisarg argarray))
 
       (define (js-reflect-construct this target argarray newtarget)
+	 (tprint "CTOR target=" (typeof target))
 	 (cond
 	    ((eq? newtarget (js-undefined))
+	     (tprint "CTOR target.1=" (typeof target))
 	     (apply js-new %this target (js-iterable->list argarray %this)))
 	    ((not (isa? newtarget JsObject))
+	     (tprint "CTOR target.2=" (typeof target))
 	     (js-raise-type-error %this "construct: Not an object ~s" newtarget))
 	    ((isa? target JsFunction)
+	     (tprint "CTOR target.3=" (typeof target))
 	     (with-access::JsFunction target (construct alloc)
 		(let* ((o (alloc %this newtarget))
+		       (_ (tprint "CTOR target.3b=" (typeof target)))
 		       (t (js-apply% %this target construct o
 			     (js-iterable->list argarray %this)))
+		       (__ (tprint "CTOR target.3c=" (typeof target)))
 		       (r (if (isa? t JsObject) t o))
 		       (p (js-get newtarget 'prototype %this)))
 		   (js-setprototypeof r p %this "construct")

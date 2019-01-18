@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Thu Oct 26 05:56:06 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 18 09:51:51 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
 ;*=====================================================================*/
@@ -46,6 +46,7 @@
 	 (lambda (this) this)
 	 0 "Timer"
 	 :prototype js-timer-prototype
+	 :alloc js-no-alloc
 	 :construct (js-timer-construct! %worker %this process js-timer-prototype)))
 
    (js-bind! %this Timer 'now

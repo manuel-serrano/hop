@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Tue Jan 15 09:47:22 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 09:50:01 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -199,6 +199,7 @@
 	 :value (js-make-function %this
 		   js-generator-construct
 		   1 "constructor"
+		   :alloc js-no-alloc
 		   :construct js-generator-construct)
 	 :hidden-class #t)
       

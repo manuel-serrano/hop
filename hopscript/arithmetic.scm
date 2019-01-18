@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Wed Oct 10 08:03:08 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Fri Jan 18 12:37:01 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
 ;*=====================================================================*/
@@ -36,6 +36,7 @@
 	   (+js::obj ::obj ::obj ::JsGlobalObject)
 	   (-js::obj ::obj ::obj ::JsGlobalObject)
 	   (*js::obj ::obj ::obj ::JsGlobalObject)
+	   (**js::obj ::obj ::obj ::JsGlobalObject)
 	   (/js::obj ::obj ::obj ::JsGlobalObject)
 	   (negjs ::obj ::JsGlobalObject)
 	   
@@ -77,12 +78,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-toflonum r)
    (if (flonum? r) r (fixnum->flonum r)))
-;*    (cond                                                            */
-;*       ((flonum? r) r)                                               */
-;*       ((fixnum? r) (fixnum->flonum r))                              */
-;*       ((uint32? r) (uint32->flonum r))                              */
-;*       ((int32? r) (int32->flonum r))                                */
-;*       (else (error "js-toflonum" (format "Illegal number (~a)" (typeof r)) r)))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    +js ...                                                          */
@@ -113,6 +108,17 @@
    (let* ((nx (if (number? x) x (js-tonumber x %this)))
 	  (ny (if (number? y) y (js-tonumber y %this))))
       (*/overflow nx ny)))
+
+;*---------------------------------------------------------------------*/
+;*    **js ...                                                         */
+;*    -------------------------------------------------------------    */
+;*    https://www.ecma-international.org/ecma-262/8.0/                 */
+;*       #sec-applying-the-exp-operator                                */
+;*---------------------------------------------------------------------*/
+(define (**js x::obj y::obj %this)
+   (let* ((nx (if (number? x) x (js-tonumber x %this)))
+	  (ny (if (number? y) y (js-tonumber y %this))))
+      (exptfl (js-toflonum nx) (js-toflonum ny))))
 
 ;*---------------------------------------------------------------------*/
 ;*    /js ...                                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jan 15 09:49:35 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 11:12:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2106,7 +2106,9 @@
    (define (js-function-construct this . args)
       (if (null? args)
 	  (js-make-function %this (lambda (this) (js-undefined))
-	     0 "" :construct (lambda (_) (js-undefined)))
+	     0 ""
+	     :alloc js-object-alloc
+	     :construct (lambda (_) (js-undefined)))
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
 		 (body (car (last-pair args)))
@@ -2124,12 +2126,12 @@
 	    :src (cons (current-loc) "Function() { /* require.scm */ }")
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype
+	    :alloc js-no-alloc
 	    :construct js-function-construct)))
 
    (js-bind! %this scope 'Function
       :value js-function
       :configurable #f :enumerable #f :hidden-class #f))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-worker ...                                                */
@@ -2154,6 +2156,7 @@
 	 (js-make-function %this (%js-worker %this) 2 "JsWorker"
 	    :__proto__ js-function-prototype
 	    :prototype js-worker-prototype
+	    :alloc js-no-alloc
 	    :construct (js-worker-construct %this loader))))
 
    (js-bind! %this scope 'Worker

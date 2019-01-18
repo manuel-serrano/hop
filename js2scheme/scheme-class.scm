@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Dec 29 05:47:18 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Fri Jan 18 08:46:11 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
 ;*=====================================================================*/
@@ -144,7 +144,6 @@
 			       :src ,(when src (class-src loc this conf))
 			       :strict ',mode
 			       :alloc js-object-alloc/new-target
-			       :construct ,ctor
 			       :prototype  ,proto
 			       :arity ,(+fx 1 length)
 			       :__proto__ ,(if (null? super)

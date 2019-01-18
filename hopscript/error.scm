@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jan 15 09:35:25 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 09:37:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -269,7 +269,8 @@
 			 (lambda (o)
 			    (with-access::JsFrame o (file)
 			       (js-string->jsstring file)))
-			 0 "getFileName")
+			 0 "getFileName"
+			 :src "error.scm")
 	       :enumerable #t
 	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'getLineNumber
@@ -277,7 +278,8 @@
 			 (lambda (o)
 			    (with-access::JsFrame o (line)
 			       line))
-			 0 "getLineNumber")
+			 0 "getLineNumber"
+			 :src "error.scm")
 	       :enumerable #t
 	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'getColumnNumber
@@ -285,7 +287,8 @@
 			 (lambda (o)
 			    (with-access::JsFrame o (column)
 			       column))
-			 0 "getColumnNumber")
+			 0 "getColumnNumber"
+			 :src "error.scm")
 	       :enumerable #t
 	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'getFunctionName
@@ -293,7 +296,8 @@
 			 (lambda (o)
 			    (with-access::JsFrame o (fun)
 			       (js-string->jsstring fun)))
-			 0 "getFunctionName")
+			 0 "getFunctionName"
+			 :src "error.scm")
 	       :enumerable #t
 	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'isEval
@@ -301,7 +305,8 @@
 			 (lambda (o)
 			    (with-access::JsFrame o (iseval)
 			       iseval))
-			 0 "isEval")
+			 0 "isEval"
+			 :src "error.scm")
 	       :enumerable #t
 	       :hidden-class #t)
 	    
@@ -329,11 +334,13 @@
 					  (js-call2 %this prepare js-error
 					     err frames))
 				       (hop-stack->jsstring err stack))))
-			     0 "get")
+			     0 "get"
+			     :src "error.scm")
 		     :set (js-make-function %this
 			     (lambda (o v)
 				(js-undefined))
-			     2 "set")
+			     2 "set"
+			     :src "error.scm")
 		     :enumerable #f
 		     :configurable #f
 		     :hidden-class #t))))
@@ -343,19 +350,22 @@
 	    :value (js-make-function %this
 		      (lambda (exn)
 			 (exception-notify exn))
-		      1 "notify")
+		      1 "notify"
+		      :src "error.scm")
 	    :enumerable #f)
 	 (js-bind! %this js-error-prototype 'message
 	    :set (js-make-function %this
 		    (lambda (o v)
 		       (js-bind! %this o 'message :value v :enumerable #f))
-		    1 "message")
+		    1 "message"
+		    :src "error.scm")
 	    :get (js-make-function %this
 		    (lambda (o)
 		       (if (isa? o JsError)
 			   (with-access::JsError o (msg) msg)
 			   (js-undefined)))
-		    0 "message")
+		    0 "message"
+		    :src "error.scm")
 	    :enumerable #f
 	    :configurable #t
 	    :hidden-class #t)
@@ -363,13 +373,15 @@
 	    :set (js-make-function %this
 		    (lambda (o v)
 		       (js-bind! %this o 'name :value v))
-		    1 "name")
+		    1 "name"
+		    :src "error.scm")
 	    :get (js-make-function %this
 		    (lambda (o)
 		       (if (isa? o JsError)
 			   (with-access::JsError o (name) name)
 			   (js-undefined)))
-		    0 "name")
+		    0 "name"
+		    :src "error.scm")
 	    :enumerable #f
 	    :hidden-class #t)
 	 
@@ -380,7 +392,8 @@
 	       :__proto__ js-function-prototype
 	       :prototype js-error-prototype
 	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
+	       :construct js-error-construct/stack
+	       :src "error.scm"))
 	 (init-builtin-error-prototype! %this js-error js-error-prototype)
 	 (set! js-syntax-error
 	    (js-make-function %this (%js-syntax-error %this) 1
@@ -390,7 +403,8 @@
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
+	       :construct js-error-construct/stack
+	       :src "error.scm"))
 	 (set! js-type-error
 	    (js-make-function %this (%js-type-error %this) 1
 	       "TypeError"
@@ -399,7 +413,8 @@
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
+	       :construct js-error-construct/stack
+	       :src "error.scm"))
 	 (set! js-uri-error
 	    (js-make-function %this (%js-uri-error %this) 1
 	       "URIError"
@@ -408,7 +423,8 @@
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
+	       :construct js-error-construct/stack
+	       :src "error.scm"))
 	 (set! js-eval-error
 	    (js-make-function %this (%js-eval-error %this) 1
 	       "EvalError"
@@ -417,7 +433,8 @@
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
+	       :construct js-error-construct/stack
+	       :src "error.scm"))
 	 (set! js-range-error
 	    (js-make-function %this (%js-range-error %this) 1
 	       "RangeError"
@@ -426,7 +443,8 @@
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
-	       :construct js-error-construct))
+	       :construct js-error-construct
+	       :src "error.scm"))
 	 (set! js-reference-error
 	    (js-make-function %this (%js-reference-error %this) 1
 	       "ReferenceError"
@@ -435,7 +453,8 @@
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
+	       :construct js-error-construct/stack
+	       :src "error.scm"))
 	 ;; bind Error in the global object
 	 (js-bind! %this %this 'Error :configurable #f :enumerable #f
 	    :value js-error
@@ -467,7 +486,8 @@
 	    :value (js-make-function %this
 		      (lambda (o this start-func)
 			 (capture-stack-trace this start-func))
-		      2 "captureStackTrace")
+		      2 "captureStackTrace"
+		      :src "error.scm")
 	    :enumerable #f
 	    :hidden-class #t)
 	 js-error)))
@@ -574,7 +594,8 @@
                     (list (js-jsstring->string name4) ": " msg6)))))))
       
    (js-bind! %this obj 'toString
-      :value (js-make-function %this error-prototype-tostring 1 "toString")
+      :value (js-make-function %this error-prototype-tostring 1 "toString"
+		:src "error.scm")
       :enumerable #f
       :hidden-class #t)
    

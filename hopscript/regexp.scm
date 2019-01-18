@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Jan 15 09:34:42 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 09:43:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -125,6 +125,7 @@
 	       (%js-regexp %this) 2 "RegExp"
 	       :__proto__ js-function-prototype
 	       :prototype js-regexp-prototype
+	       :alloc js-no-alloc
 	       :construct (js-regexp-construct %this)))
 	 (init-builtin-regexp-prototype! %this js-regexp js-regexp-prototype)
 	 

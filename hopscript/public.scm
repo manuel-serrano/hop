@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Jan 15 09:38:38 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 08:25:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -66,6 +66,8 @@
 	   (inline js-object-alloc-fast ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc-super-fast ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc/new-target ::JsGlobalObject ::JsFunction)
+	   (inline js-no-alloc ::JsGlobalObject ::JsFunction)
+	   (js-not-a-constructor-alloc ::JsGlobalObject ::JsFunction)
 	   
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
 	   (js-apply-service% ::procedure obj args::pair-nil ::int)
@@ -314,6 +316,23 @@
       (js-object-alloc %this ctor)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-no-alloc ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    This is used by functions that allocate ad-hoc constructors.     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-no-alloc %this ctor::JsFunction)
+   (js-undefined))
+
+;*---------------------------------------------------------------------*/
+;*    js-not-a-constructor-alloc ...                                   */
+;*    -------------------------------------------------------------    */
+;*    Used by functions that are not allowed to be used in NEW expr.   */
+;*---------------------------------------------------------------------*/
+(define (js-not-a-constructor-alloc %this ctor::JsFunction)
+   (let ((name (js-tostring (js-get ctor 'name %this) %this)))
+      (js-raise-type-error %this "~s not a constructor" name)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-new-return ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-new-return f r o)
@@ -360,26 +379,11 @@
 (define-macro (gen-new %this ctor . args)
    `(cond
        ((isa? ,ctor JsFunction)
-	(with-access::JsFunction ,ctor (construct name alloc)
+	(with-access::JsFunction ,ctor (src construct alloc)
 	   (let ((o (alloc %this ,ctor)))
 	      (let ((r (,(string->symbol (format "js-call~a%" (length args)))
 			,%this ,ctor construct o ,@args)))
 		 (js-new-return ,ctor r o)))))
-       ((isa? ,ctor JsProxy)
-	(js-new/proxy ,%this ,ctor (list ,@args)))
-       (else
-	(js-raise-type-error ,%this "new: object is not a function ~s" ,ctor))))
-
-(define-macro (gen-new-TOBEREMOVED-2018-12-28 %this ctor . args)
-   `(cond
-       ((isa? ,ctor JsFunction)
-	(with-access::JsFunction ,ctor (constructor construct name alloc)
-	   (if constructor
-	       (constructor %this ,ctor ,@(if (null? args) '((js-null)) args))
-	       (let ((o (alloc %this ,ctor)))
-		  (let ((r (,(string->symbol (format "js-call~a%" (length args)))
-			    ,%this ,ctor construct o ,@args)))
-		     (js-new-return ,ctor r o))))))
        ((isa? ,ctor JsProxy)
 	(js-new/proxy ,%this ,ctor (list ,@args)))
        (else

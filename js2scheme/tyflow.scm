@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jan 11 13:51:58 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 11:00:43 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -562,16 +562,20 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SPragma env::pair-nil fix::cell)
    (with-access::J2SPragma this (lang expr type)
-      (if (eq? lang 'scheme)
+      (cond
+	 ((eq? lang 'scheme)
 	  (if (eq? type 'unknown)
 	      (expr-type-add! this env fix 'any)
-	      (return type env env))
+	      (return type env env)))
+	 ((isa? expr J2SNode)
 	  (multiple-value-bind (_ _ bk)
 	     (node-type expr env fix)
 	     (if (eq? type 'unknown)
 		 (expr-type-add! this env fix 'any bk)
-		 (return type env env))))))
-
+		 (return type env env))))
+	 (else
+	  (expr-type-add! this env fix 'any)))))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDataPropertyInit ...                              */
 ;*---------------------------------------------------------------------*/

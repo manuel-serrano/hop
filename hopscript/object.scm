@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Jan 15 09:27:48 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 09:32:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -206,7 +206,8 @@
                                      nodes)))
                            (apply ,(symbol-append '< tag '>)
                               nodes)))
-                    2 (js-ascii->jsstring ,(symbol->string tag)))
+                    2 (js-ascii->jsstring ,(symbol->string tag))
+		    :src "object.scm")
           :writable #f :configurable #f :enumerable #f :hidden-class #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -267,7 +268,6 @@
 		     (__proto__ (js-null))))
 	  (%prototype (instantiateJsObject
 			 (cmap (instantiate::JsConstructMap))
-;* 			 (__proto__ (js-null))                         */
 			 (__proto__ (js-hop-builtin %void))
 			 (elements (make-vector 40))))
 	  (%this (instantiateJsGlobalObject
@@ -336,7 +336,8 @@
 	    
 	    (js-bind! %this %this 'eval
 	       :value (js-make-function %this js-eval 1 "eval"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 	    
 	    (js-bind! %this %this 'parseInt
@@ -344,7 +345,8 @@
 			 (lambda (this string radix)
 			    (js-parseint string radix %this))
 			 2 "parseInt"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    (js-bind! %this %this 'parseFloat
@@ -352,7 +354,8 @@
 			 (lambda (this string)
 			    (js-parsefloat string %this))
 			 1 "parseFloat"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; isNaN
@@ -363,7 +366,8 @@
 
 	    (js-bind! %this %this 'isNaN
 	       :value (js-make-function %this isnan 1 "isNaN"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; isFinite
@@ -377,7 +381,8 @@
 
 	    (js-bind! %this %this 'isFinite
 	       :value (js-make-function %this isfinite 1 "isFinite"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; check-utfi-validity
@@ -396,7 +401,8 @@
    
 	    (js-bind! %this %this 'decodeURI
 	       :value (js-make-function %this decodeuri 1 "decodeURI"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; decodeURIComponent
@@ -410,7 +416,8 @@
 	    (js-bind! %this %this 'decodeURIComponent
 	       :value (js-make-function %this decodeuricomponent
 			 1 "decodeURIComponent"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; encodeURI
@@ -423,7 +430,8 @@
 
 	    (js-bind! %this %this 'encodeURI
 	       :value (js-make-function %this encodeuri 1 "encodeURI"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; encodeURIComponent
@@ -437,7 +445,8 @@
 	    (js-bind! %this %this 'encodeURIComponent
 	       :value (js-make-function %this encodeuricomponent
 			 1 "encodeURIComponent"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; escape
@@ -447,7 +456,8 @@
 	    
 	    (js-bind! %this %this 'escape
 	       :value (js-make-function %this escape 1 "escape"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; unescape
@@ -457,7 +467,8 @@
 
 	    (js-bind! %this %this 'unescape
 	       :value (js-make-function %this unescape 1 "unescape"
-			 :prototype (js-undefined))
+			 :prototype (js-undefined)
+			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; html
@@ -470,7 +481,8 @@
 			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))
 			 (apply <HTML> :idiom "javascript" nodes)))
-		  1 "HTML"))
+		  1 "HTML"
+		  :src "object.scm"))
 	    
 	    (js-bind! %this %this 'HTML
 	       :value (js-html-html %this) :enumerable #f :hidden-class #f)
@@ -500,7 +512,8 @@
 			 1 "Tilde"
 			 :__proto__ js-function-prototype
 			 :construct (lambda (this body)
-				       (string->xml-tilde body)))
+				       (string->xml-tilde body))
+			 :src "object.scm")
 	       :enumerable #f :writable #f :configurable #f :hidden-class #f)
 
 	    ;; return the newly created object
@@ -585,7 +598,8 @@
 		(lambda (this data)
 		   (instantiate::xml-comment
 		      (data data)))
-		1 "<!--")
+		1 "<!--"
+		:src "object.scm")
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
 
    builtin)
@@ -647,8 +661,10 @@
 	       :__proto__ js-function-prototype
 	       :constrsize 3 :maxconstrsize 4
 	       :prototype %prototype
+	       :alloc js-no-alloc
 	       :construct js-object-construct
-	       :shared-cmap #f)))
+	       :shared-cmap #f
+	       :src "object.scm")))
       
       ;; getPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2
@@ -656,7 +672,8 @@
 	 (js-getprototypeof o %this "getPrototypeOf"))
       
       (js-bind! %this js-object 'getPrototypeOf
-	 :value (js-make-function %this getprototypeof 1 "getPrototypeOf")
+	 :value (js-make-function %this getprototypeof 1 "getPrototypeOf"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -668,7 +685,8 @@
 	 (js-setprototypeof o v %this "setPrototypeOf"))
       
       (js-bind! %this js-object 'setPrototypeOf
-	 :value (js-make-function %this setprototypeof 1 "setPrototypeOf")
+	 :value (js-make-function %this setprototypeof 1 "setPrototypeOf"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -685,7 +703,8 @@
       
       (js-bind! %this js-object 'getOwnPropertyDescriptor
 	 :value (js-make-function %this
-		   getownpropertydescriptor 2 "getOwnPropertyDescriptor")
+		   getownpropertydescriptor 2 "getOwnPropertyDescriptor"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -710,7 +729,8 @@
       
       (js-bind! %this js-object 'getOwnPropertyDescriptors
 	 :value (js-make-function %this
-		   getownpropertydescriptors 1 "getOwnPropertyDescriptors")
+		   getownpropertydescriptors 1 "getOwnPropertyDescriptors"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -724,7 +744,8 @@
       
       (js-bind! %this js-object 'getOwnPropertyNames
 	 :value (js-make-function %this
-		   getownpropertynames 1 "getOwnPropertyNames")
+		   getownpropertynames 1 "getOwnPropertyNames"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -738,7 +759,8 @@
       
       (js-bind! %this js-object 'getOwnPropertySymbols
 	 :value (js-make-function %this
-		   getownpropertysymbols 1 "getOwnPropertySymbols")
+		   getownpropertysymbols 1 "getOwnPropertySymbols"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -757,7 +779,8 @@
 		obj)))
 
       (js-bind! %this js-object 'create
-	 :value (js-make-function %this create 2 "create")
+	 :value (js-make-function %this create 2 "create"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -773,7 +796,8 @@
 	    obj))
       
       (js-bind! %this js-object 'defineProperty
-	 :value (js-make-function %this defineproperty 3 "defineProperty")
+	 :value (js-make-function %this defineproperty 3 "defineProperty"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -816,7 +840,8 @@
 	    to))
 
       (js-bind! %this js-object 'assign
-	 :value (js-make-function %this assign 2 "assign")
+	 :value (js-make-function %this assign 2 "assign"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -828,7 +853,8 @@
 	 :value (js-make-function %this
 		   (lambda (this obj properties)
 		      (object-defineproperties %this this obj properties))
-		   2 "defineProperties")
+		   2 "defineProperties"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -840,7 +866,8 @@
 	 (js-seal (js-cast-object obj %this "seal") obj))
       
       (js-bind! %this js-object 'seal
-	 :value (js-make-function %this seal 1 "seal")
+	 :value (js-make-function %this seal 1 "seal"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -852,7 +879,8 @@
 	 (js-freeze (js-cast-object obj %this "freeze") obj))
       
       (js-bind! %this js-object 'freeze
-	 :value (js-make-function %this freeze 1 "freeze")
+	 :value (js-make-function %this freeze 1 "freeze"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -862,7 +890,8 @@
 	 :value (js-make-function %this
 		   (lambda (this obj)
 		      (js-preventextensions obj %this))
-		   1 "preventExtensions")
+		   1 "preventExtensions"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -886,7 +915,8 @@
 		      (and (nanfl? x) (nanfl? y))))))
 
       (js-bind! %this js-object 'is
-	 :value (js-make-function %this is 2 "is")
+	 :value (js-make-function %this is 2 "is"
+		   :src "object.scm")
 	 :enumerable #f :configurable #t :writable #t :hidden-class #f)
 	    
       ;; isSealed
@@ -910,7 +940,8 @@
 		(not (js-object-mode-extensible? o))))))
       
       (js-bind! %this js-object 'isSealed
-	 :value (js-make-function %this issealed 1 "isSealed")
+	 :value (js-make-function %this issealed 1 "isSealed"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -941,7 +972,8 @@
 		(not (js-object-mode-extensible? o))))))
       
       (js-bind! %this js-object 'isFrozen
-	 :value (js-make-function %this isfrozen 1 "isFrozen")
+	 :value (js-make-function %this isfrozen 1 "isFrozen"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -957,7 +989,8 @@
 	 :value (js-make-function %this
 		   (lambda (this obj)
 		      (js-extensible? obj %this))
-		   1 "isExtensible")
+		   1 "isExtensible"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -968,7 +1001,8 @@
       (js-bind! %this js-object 'keys
 	 :value (js-make-function %this (lambda (this obj)
 					   (js-ownkeys obj %this))
-		   1 "keys")
+		   1 "keys"
+		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -991,11 +1025,13 @@
 	 :get (js-make-function %this
 		 (lambda (o)
 		    (js-getprototypeof o %this "__proto__"))
-		 1 "get")
+		 1 "get"
+		 :src "object.scm")
 	 :set (js-make-function %this
 		 (lambda (o v)
 		    (js-setprototypeof o v %this "__proto__"))
-		 2 "set")
+		 2 "set"
+		 :src "object.scm")
 	 :hidden-class #f)
       
       ;; constructor
@@ -1043,7 +1079,8 @@
       (js-bind! %this obj 'toString
 	 :value (js-make-function %this
 		   js-object-prototype-tostring 0 "toString"
-		   :prototype (js-undefined))
+		   :prototype (js-undefined)
+		   :src "object.scm")
 	 :enumerable #f
 	 :hidden-class #f)
       
@@ -1055,7 +1092,8 @@
       (js-bind! %this obj 'toLocaleString
 	 :value (js-make-function %this
 		   js-object-prototype-tolocalestring 0 "toLocaleString"
-		   :prototype (js-undefined))
+		   :prototype (js-undefined)
+		   :src "object.scm")
 	 :enumerable #f
 	 :hidden-class #f)
       
@@ -1063,7 +1101,8 @@
       (js-bind! %this obj 'valueOf
 	 :value (js-make-function %this (lambda (o) (js-valueof o %this))
 		   0 "valueOf"
-		   :prototype (js-undefined))
+		   :prototype (js-undefined)
+		   :src "object.scm")
 	 :enumerable #f
 	 :hidden-class #f)
       
@@ -1073,7 +1112,8 @@
 		   (lambda (this v)
 		      (js-object-prototype-hasownproperty this v %this))
 		   1 "hasOwnProperty"
-		   :prototype (js-undefined))
+		   :prototype (js-undefined)
+		   :src "object.scm")
 	 :enumerable #f
 	 :hidden-class #f)
       
@@ -1090,7 +1130,8 @@
       (js-bind! %this obj 'isPrototypeOf
 	 :value (js-make-function %this
 		   js-object-prototype-isprototypeof 1 "isPrototypeOf"
-		   :prototype (js-undefined))
+		   :prototype (js-undefined)
+		   :src "object.scm")
 	 :enumerable #f
 	 :hidden-class #f)
       
@@ -1107,7 +1148,8 @@
       (js-bind! %this obj 'propertyIsEnumerable
 	 :value (js-make-function %this
 		   js-object-prototype-propertyisenumerable 1 "propertyIsEnumerable"
-		   :prototype (js-undefined))
+		   :prototype (js-undefined)
+		   :src "object.scm")
 	 :enumerable #f
 	 :hidden-class #f)))
 

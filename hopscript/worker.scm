@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Jan 16 11:38:13 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 09:53:20 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -108,6 +108,7 @@
 	    (js-make-function %this (%js-worker %this) 2 "Worker"
 	       :__proto__ js-function-prototype
 	       :prototype js-worker-prototype
+	       :alloc js-no-alloc
 	       :construct (js-worker-construct %this (js-worker-load))))
 
 	 ;; prototype properties

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Jan 15 09:34:30 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 08:26:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -106,15 +106,6 @@
 	       (val 0)
 	       (__proto__ __proto__)))
 
-;* 	 (define (js-number-constructor %this f value)                 */
-;* 	    (with-access::JsFunction f (constrmap)                     */
-;* 	       (instantiateJsNumber                                    */
-;* 		  (cmap constrmap)                                     */
-;* 		  (__proto__ (js-object-get-name/cache f 'prototype    */
-;* 				#f %this                               */
-;* 				(js-pcache-ref %pcache 0)))            */
-;* 		  (val (if (eq? value (js-null)) 0 (js-tonumber value %this)))))) */
-
 	 (define (js-number-construct this . args)
 	    (when (pair? args)
 	       (with-access::JsNumber this (val)
@@ -147,7 +138,6 @@
 	       :__proto__ js-function-prototype
 	       :prototype js-number-prototype
 	       :construct js-number-construct
-;* 	       :constructor js-number-constructor                      */
 	       :alloc js-number-alloc
 	       :constrmap (instantiate::JsConstructMap)
 	       :shared-cmap #f))

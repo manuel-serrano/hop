@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Jan 15 09:39:13 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 13:40:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -399,6 +399,7 @@
 				 3 "Service"
 				 :__proto__ js-function-prototype
 				 :prototype js-service-prototype
+				 :alloc js-no-alloc
 				 :construct (lambda (this proc path)
 					       (js-create-service %this proc
 						  (unless (eq? path (js-undefined))
@@ -410,6 +411,7 @@
 				  1 "HopFrame"
 				  :__proto__ js-function-prototype
 				  :prototype js-hopframe-prototype
+				  :alloc js-no-alloc
 				  :construct (lambda (this path args)
 						(js-make-hopframe %this 
 						   this path args)))))
