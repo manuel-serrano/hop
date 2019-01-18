@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Mon Jan  7 07:50:43 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 13:54:05 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -1177,33 +1177,43 @@
 		   r)))))
 
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
+		:alloc js-no-alloc
 		:construct secure-context
 		:prototype secure-context-proto))
 	 (conn (js-make-function %this connection 4 "Connection"
+		  :alloc js-no-alloc
 		  :construct connection
 		  :prototype connection-proto))
 	 (dh (js-make-function %this diffie-hellman 4 "DiffieHellman"
-		  :construct diffie-hellman
-		  :prototype diffie-hellman-proto))
+		:alloc js-no-alloc
+		:construct diffie-hellman
+		:prototype diffie-hellman-proto))
 	 (dhg (js-make-function %this diffie-hellman-group 1 "DiffieHellmanGroup"
-		  :construct diffie-hellman-group
-		  :prototype diffie-hellman-proto))
+		 :alloc js-no-alloc
+		 :construct diffie-hellman-group
+		 :prototype diffie-hellman-proto))
 	 (hm (js-make-function %this hmac 1 "Hmac"
+		:alloc js-no-alloc
 		:construct hmac
 		:prototype hmac-proto))
 	 (hs (js-make-function %this hash 1 "Hash"
+		:alloc js-no-alloc
 		:construct hash
 		:prototype hash-proto))
 	 (sn (js-make-function %this sign 1 "Sign"
+		:alloc js-no-alloc
 		:construct sign
 		:prototype sign-proto))
 	 (vf (js-make-function %this sign 1 "Verify"
+		:alloc js-no-alloc
 		:construct verify
 		:prototype verify-proto))
 	 (ci (js-make-function %this sign 1 "cipher"
+		:alloc js-no-alloc
 		:construct cipher
 		:prototype cipher-proto))
 	 (dc (js-make-function %this sign 1 "decipher"
+		:alloc js-no-alloc
 		:construct decipher
 		:prototype decipher-proto)))
       
