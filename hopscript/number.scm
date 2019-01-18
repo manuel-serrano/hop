@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jan 18 08:26:05 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 14:11:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -113,10 +113,17 @@
 	    this)
 		
 	 (define (js-number-alloc %this constructor::JsFunction)
-	    (instantiateJsNumber
-	       (__proto__ (js-object-get-name/cache constructor 'prototype
-			     #f %this
-			     (js-pcache-ref %pcache 1)))))
+	    (with-access::JsFunction constructor (constrmap)
+	       (unless constrmap
+		  (set! constrmap
+		     (instantiate::JsConstructMap
+			(ctor constructor)
+			(size 1))))
+	       (instantiateJsNumber
+		  (cmap constrmap)
+		  (__proto__ (js-object-get-name/cache constructor 'prototype
+				#f %this
+				(js-pcache-ref %pcache 1))))))
 
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
 	 (define (%js-number this . arg)
@@ -139,7 +146,6 @@
 	       :prototype js-number-prototype
 	       :construct js-number-construct
 	       :alloc js-number-alloc
-	       :constrmap (instantiate::JsConstructMap)
 	       :shared-cmap #f))
 	 
 	 ;; other properties of the Number constructor

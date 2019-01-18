@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Jan 18 08:29:09 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 14:22:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -42,7 +42,8 @@
 	      method construct alloc
 	      __proto__ prototype
 	      (strict 'normal) arity (minlen -1) src rest
-	      (constrsize 3) constrmap (maxconstrsize 100) (shared-cmap #t))
+	      (constrsize 3) (maxconstrsize 100)
+	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::bstring ::int ::int ::symbol ::bool ::int)
 
@@ -319,7 +320,8 @@
 	   method construct alloc
 	   __proto__ prototype
 	   (strict 'normal) arity (minlen -1) src rest
-	   (constrsize 3) constrmap (maxconstrsize 100) (shared-cmap #t))
+	   (constrsize 3) (maxconstrsize 100)
+	   (constrmap (js-not-a-cmap)) (shared-cmap #t))
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 (let* ((els ($create-vector (if (eq? strict 'normal) 3 5)))
@@ -356,18 +358,22 @@
 	    ;; the builtin "%prototype" property
 	    (with-access::JsFunction fun (%prototype)
 	       (set! %prototype
-		  (if (isa? prototype JsObject)
+		  (cond
+		     ((isa? prototype JsObject)
 		      (begin
 			 (js-bind! %this prototype 'constructor
 			    :value fun
 			    :configurable #t :enumerable #f :writable #t
 			    :hidden-class #t)
-			 prototype)
+			 prototype))
+		     (prototype
+		      prototype)
+		     (else
 		      (with-access::JsObject %this (__proto__)
 			 (instantiateJsObject
 			    (cmap js-function-prototype-cmap)
 			    (elements (vector fun))
-			    (__proto__ __proto__)))))
+			    (__proto__ __proto__))))))
 	       ;; regular function properties
 	       (vector-set! els 0
 		  (cond
@@ -402,13 +408,13 @@
 	       (unless (eq? strict 'normal)
 		  (vector-set! els 3 strict-arguments-property)
 		  (vector-set! els 4 strict-caller-property))
-	       ;; constrmap
-	       (when constrmap
-		  (with-access::JsFunction fun (constrsize constrmap)
-		     (set! constrmap
-			(instantiate::JsConstructMap
-			   (ctor fun)
-			   (size constrsize)))))
+;* 	       ;; constrmap                                            */
+;* 	       (when constrmap                                         */
+;* 		  (with-access::JsFunction fun (constrsize constrmap)  */
+;* 		     (set! constrmap                                   */
+;* 			(instantiate::JsConstructMap                   */
+;* 			   (ctor fun)                                  */
+;* 			   (size constrsize)))))                       */
 	       fun)))))
 
 ;*---------------------------------------------------------------------*/
@@ -433,13 +439,15 @@
 		  ((isa? desc JsWrapperDescriptor)
 		   (with-access::JsWrapperDescriptor desc (value)
 		      (set! value v))))
-	       ;; the prototype is changed, generate a fresh constrmap
-	       (when constrmap
-		  (set! constrmap
-		     (instantiate::JsConstructMap
-			(ctor o)
-			(size constrsize))))
-	       ;; (set! constrmap #f)
+	       ;; chaning the prototype invalidates the constrmap
+	       ;; (MS, change 2019-01-18)
+	       (tprint "js-fun-prototype-set " (js-function-debug-name o %this))
+	       (set! constrmap (js-not-a-cmap))
+;* 	       (when constrmap                                         */
+;* 		  (set! constrmap                                      */
+;* 		     (instantiate::JsConstructMap                      */
+;* 			(ctor o)                                       */
+;* 			(size constrsize))))                           */
 	       (with-access::JsGlobalObject %this (__proto__)
 		  (set! %prototype (if (isa? v JsObject) v __proto__)))))))
    v)

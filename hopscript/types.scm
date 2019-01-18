@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Jan 18 08:23:56 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 15:57:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -189,7 +189,7 @@
 	      alloc::procedure
 	      (constrsize::long (default 3))
 	      (maxconstrsize::long (default 100))
-	      (constrmap (default #f)) 
+	      (constrmap::JsConstructMap (default (js-not-a-cmap)))
 	      (src read-only (default #f))
 	      (len::int read-only)
 	      (arity::int read-only (default -1))
@@ -959,6 +959,7 @@
 ;*---------------------------------------------------------------------*/
 (define *js-not-a-cmap*
    (instantiate::JsConstructMap
+      (size -100)
       (%id 0)))
 
 ;*---------------------------------------------------------------------*/

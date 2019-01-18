@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Jan 18 10:52:38 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 16:20:25 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -67,7 +67,8 @@
 			  :__proto__ ,(j2s-fun-__proto__ val)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new ref) usage)))
+;* 			  :constrmap ,(usage? '(new ref) usage)       */
+			  ))
 		     (src
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
@@ -79,7 +80,7 @@
 			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new ref) usage)
+;* 			  :constrmap ,(usage? '(new ref) usage)        */
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -91,7 +92,7 @@
 			  :minlen ,minlen
 			  :strict ',mode 
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new ref) usage)
+;* 			  :constrmap ,(usage? '(new ref) usage)        */
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -105,7 +106,7 @@
 			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new ref) usage)
+;* 			  :constrmap ,(usage? '(new ref) usage)        */
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -119,7 +120,8 @@
 			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap #t))
+;* 			  :constrmap #t                                */
+			  ))
 		     (else
 		      `(js-make-function-simple %this ,fastid
 			  ,len ,(symbol->string! id)
@@ -276,7 +278,8 @@
 			  :__proto__ ,(j2s-fun-__proto__ val)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new ref) usage)))
+;* 			  :constrmap ,(usage? '(new ref) usage)        */
+			  ))
 		     (src
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
@@ -288,7 +291,7 @@
 			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new ref) usage)
+;* 			  :constrmap ,(usage? '(new ref) usage)        */
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -300,7 +303,7 @@
 			  :minlen ,minlen
 			  :strict ',mode 
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new ref) usage)
+;* 			  :constrmap ,(usage? '(new ref) usage)        */
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -314,7 +317,7 @@
 			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap ,(usage? '(new ref) usage)
+;* 			  :constrmap ,(usage? '(new ref) usage)        */
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -328,7 +331,8 @@
 			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-			  :constrmap #t))
+;* 			  :constrmap #t                                */
+			  ))
 		     (else
 		      `(js-make-function-simple %this ,fastid
 			  ,len ,(symbol->string! id)
