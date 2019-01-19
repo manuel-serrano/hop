@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Thu Dec  6 21:40:04 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Sat Jan 19 19:43:55 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
 ;*=====================================================================*/
@@ -73,9 +73,9 @@
 	 (iterable error)
 	 (any nop)))
      (integer
-	((int32 ,js-fixnum->int32)
-	 (uint32 ,js-fixnum->uint32)
-	 (string ,js-fixnum->string)
+	((int32 ,js-integer->int32)
+	 (uint32 ,js-integer->uint32)
+	 (string ,js-integer->string)
 	 (scmstring number->string)
 	 (real fixnum->flonum)
 	 (int53 nop)
@@ -272,7 +272,19 @@
 (define (js-fixnum->string v expr conf)
    (if (fixnum? v)
        (integer->string v)
-       `(js-ascii->jssstring ,v)))
+       `(js-ascii->jssstring (fixnum->string ,v))))
+
+;; integer
+(define (js-integer->int32 v expr conf)
+   `(if (fixnum? ,v) (fixnum->int32 ,v) (flonum->int32 ,v)))
+
+(define (js-integer->uint32 v expr conf)
+   `(if (fixnum? ,v) (fixnum->uint32 ,v) (flonum->uint32 ,v)))
+
+(define (js-integer->string v expr conf)
+   (if (integer? v)
+       (integer->string v)
+       `(js-ascii->jssstring (integer->string ,v))))
 
 ;; number
 (define (js-number->string v expr conf)
