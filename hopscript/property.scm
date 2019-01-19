@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jan 19 06:46:21 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 10:55:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1127,7 +1127,7 @@
 ;* 	     (js-put! obj 'value value #f %this)                       */
 ;* 	     (js-put! obj 'writable writable #f %this)))               */
 	  (with-access::JsWrapperDescriptor desc (%get writable)
-	     (js-put! obj 'value (%get obj %this) #f %this)
+	     (js-put! obj 'value (%get owner %this) #f %this)
 	     (js-put! obj 'writable writable #f %this)))
 	 )
       (with-access::JsPropertyDescriptor desc (enumerable configurable)
