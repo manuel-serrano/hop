@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Jan 18 16:20:25 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 17:56:31 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -36,13 +36,126 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
 
-   (define (declfun-fun this::J2SDeclFun)
-      (with-access::J2SDeclFun this (val)
-	 (if (isa? val J2SFun)
-	     val
-	     (with-access::J2SMethod val (function) function))))
+   (define (no-closure? this::J2SDeclFun)
+      (with-access::J2SDeclFun this (usage ronly val)
+	 (when ronly
+	    (when (isa? val J2SFun)
+	       (with-access::J2SFun val (generator)
+		  (unless generator
+		     (not (usage? '(new ref get set) usage))))))))
+
+   (define (constructor-only? this::J2SDeclFun)
+      (with-access::J2SDeclFun this (usage ronly val)
+	 (when ronly
+	    (when (isa? val J2SFun)
+	       (with-access::J2SFun val (generator)
+		  (unless generator
+		     (and (usage? '(new) usage)
+			  (not (usage? '(ref get call) usage)))))))))
+
+   (define (lambda? id)
+      (or (memq id '(lambda lambda::obj))
+	  (when (symbol? id)
+	     (string-prefix? "lambda::" (symbol->string id)))))
+
+   (define (type-lambda lambd id)
+      (if (memq lambd '(lambda lambda::obj))
+	  id
+	  (symbol-append id
+	     (string->symbol (substring (symbol->string lambd) 6)))))
+      
+   (define (beautiful-define expr)
+      (match-case expr
+	 ((define ?id (labels ((?id ?args . ?body)) ?id))
+	  `(define ,(cons id args) ,@body))
+	 ((define ?id ((and ?lambd (? lambda?)) ?args . ?body))
+	  `(define ,(cons (type-lambda lambd id) args) ,@body))
+	 (else
+	  expr)))
+
+   (define (global-declfun this val scmid fastid)
+      (with-access::J2SDeclFun this (loc id)
+	 `(begin
+	     ,(beautiful-define
+		 `(define ,fastid
+		     ,(jsfun->lambda val mode return conf
+			 (j2s-declfun-prototype this)
+			 (constructor-only? this))))
+	     ,@(if (optimized-ctor this)
+		   `(,(beautiful-define
+			 `(define ,(j2s-fast-constructor-id id)
+			     ,(j2sfun->ctor val mode return conf this))))
+		   '())
+	     ,@(if (no-closure? this)
+		   '()
+		   `((define ,scmid #unspecified))))))
+
+   (define (regular-declfun this val scmid fastid)
+      (with-access::J2SDeclFun this (loc id)
+	 `(begin
+	     ,(beautiful-define
+		 `(define ,fastid
+		     ,(jsfun->lambda val mode return conf
+			 (j2s-declfun-prototype this)
+			 (constructor-only? this))))
+	     ,@(if (optimized-ctor this)
+		   `(,(beautiful-define
+			 `(define ,(j2s-fast-constructor-id id)
+			     ,(j2sfun->ctor val mode return conf this))))
+		   '())
+	     ,@(if (no-closure? this)
+		   '()
+		   `((define ,scmid 
+			,(j2s-make-function this mode return conf)))))))
    
-   (define (make-function this::J2SDeclFun)
+   (with-access::J2SDeclFun this (loc id scope val usage ronly exports)
+      (let ((val (declfun-fun this)))
+	 (with-access::J2SFun val (params mode vararg body name generator)
+	    (let* ((scmid (j2s-decl-scheme-id this))
+		   (fastid (j2s-fast-id id)))
+	       (epairify-deep loc
+		  (case scope
+		     ((none)
+		      (beautiful-define
+			 `(define ,fastid
+			     ,(jsfun->lambda val mode return conf
+				 (j2s-declfun-prototype this)
+				 (constructor-only? this)))))
+		     ((letblock)
+		      (let ((def `(,fastid ,(jsfun->lambda val mode return conf
+					       (j2s-declfun-prototype this)
+					       (constructor-only? this)))))
+			 
+			 (if (no-closure? this)
+			     (list def)
+			     (list def
+				`(,scmid ,(j2s-make-function this
+					     mode return conf))))))
+		     ((global %scope)
+		      (global-declfun this val scmid fastid))
+		     ((export)
+		      (with-access::J2SExport (car exports) (index)
+			 (append
+			    (regular-declfun this val scmid fastid)
+			    `((vector-set! %evars ,index ,scmid)))))
+		     (else
+		      (regular-declfun this val scmid fastid)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    declfun-fun ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (declfun-fun this::J2SDeclFun)
+   (with-access::J2SDeclFun this (val)
+      (if (isa? val J2SFun)
+	  val
+	  (with-access::J2SMethod val (function) function))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-make-function ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-make-function this::J2SDeclFun mode return conf)
+   
+   (define (make-function-sans-alloc this::J2SDeclFun)
       (with-access::J2SDeclFun this (loc id scope val ronly usage)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator
@@ -128,123 +241,22 @@
 			  ,arity ,minlen
 			  ',mode ,(eq? vararg 'rest)
 			  ,constrsize))))))))
-   
-   (define (no-closure? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (usage ronly val)
-	 (when ronly
-	    (when (isa? val J2SFun)
-	       (with-access::J2SFun val (generator)
-		  (unless generator
-		     (not (usage? '(new ref get set) usage))))))))
 
-   (define (constructor-only? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (usage ronly val)
-	 (when ronly
-	    (when (isa? val J2SFun)
-	       (with-access::J2SFun val (generator)
-		  (unless generator
-		     (and (usage? '(new) usage)
-			  (not (usage? '(ref get call) usage)))))))))
-
-   (define (lambda? id)
-      (or (memq id '(lambda lambda::obj))
-	  (when (symbol? id)
-	     (string-prefix? "lambda::" (symbol->string id)))))
-
-   (define (type-lambda lambd id)
-      (if (memq lambd '(lambda lambda::obj))
-	  id
-	  (symbol-append id
-	     (string->symbol (substring (symbol->string lambd) 6)))))
-      
-   (define (beautiful-define expr)
-      (match-case expr
-	 ((define ?id (labels ((?id ?args . ?body)) ?id))
-	  `(define ,(cons id args) ,@body))
-	 ((define ?id ((and ?lambd (? lambda?)) ?args . ?body))
-	  `(define ,(cons (type-lambda lambd id) args) ,@body))
-	 (else
-	  expr)))
-
-   (define (global-declfun this val scmid fastid)
-      (with-access::J2SDeclFun this (loc id)
-	 `(begin
-	     ,(beautiful-define
-		 `(define ,fastid
-		     ,(jsfun->lambda val mode return conf
-			 (j2s-declfun-prototype this)
-			 (constructor-only? this))))
-	     ,@(if (optimized-ctor this)
-		   `(,(beautiful-define
-			 `(define ,(j2s-fast-constructor-id id)
-			     ,(j2sfun->ctor val mode return conf
-				 this))))
-		   '())
-	     ,@(if (no-closure? this)
-		   '()
-		   `((define ,scmid #unspecified))))))
-
-   (define (regular-declfun this val scmid fastid)
-      (with-access::J2SDeclFun this (loc id)
-	 `(begin
-	     ,(beautiful-define
-		 `(define ,fastid
-		     ,(jsfun->lambda val mode return conf
-			 (j2s-declfun-prototype this)
-			 (constructor-only? this))))
-	     ,@(if (optimized-ctor this)
-		   `(,(beautiful-define
-			 `(define ,(j2s-fast-constructor-id id)
-			     ,(j2sfun->ctor val mode return conf
-				 this))))
-		   '())
-	     ,@(if (no-closure? this)
-		   '()
-		   `((define ,scmid 
-			,(make-function this)))))))
-   
-   (with-access::J2SDeclFun this (loc id scope val usage ronly exports)
-      (let ((val (declfun-fun this)))
-	 (with-access::J2SFun val (params mode vararg body name generator)
-	    (let* ((scmid (j2s-decl-scheme-id this))
-		   (fastid (j2s-fast-id id)))
-	       (epairify-deep loc
-		  (case scope
-		     ((none)
-		      (beautiful-define
-			 `(define ,fastid
-			     ,(jsfun->lambda val mode return conf
-				 (j2s-declfun-prototype this)
-				 (constructor-only? this)))))
-		     ((letblock)
-		      (let ((def `(,fastid ,(jsfun->lambda val mode return conf
-					       (j2s-declfun-prototype this)
-					       (constructor-only? this)))))
-			 
-			 (if (no-closure? this)
-			     (list def)
-			     (list def `(,scmid ,(make-function this))))))
-		     ((global %scope)
-		      (global-declfun this val scmid fastid))
-		     ((export)
-		      (with-access::J2SExport (car exports) (index)
-			 (append
-			    (regular-declfun this val scmid fastid)
-			    `((vector-set! %evars ,index ,scmid)))))
-		     (else
-		      (regular-declfun this val scmid fastid)))))))))
+   (with-access::J2SDeclFun this (usage val)
+      (let ((fun (make-function-sans-alloc this)))
+	 (if (usage? '(new ref) usage)
+	     (with-access::J2SFun (declfun-fun this) (body loc)
+		(if (cancall? this)
+		    fun
+		    (epairify loc
+		       `(js-function-set-constrmap! ,fun))))
+	     fun))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-closure ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-closure this::J2SDecl mode return conf)
 
-   (define (declfun-fun this::J2SDeclFun)
-      (with-access::J2SDeclFun this (val)
-	 (if (isa? val J2SFun)
-	     val
-	     (with-access::J2SMethod val (function) function))))
-
    (define (no-closure? this::J2SDeclFun)
       (with-access::J2SDeclFun this (usage ronly val)
 	 (when ronly
@@ -252,93 +264,6 @@
 	       (with-access::J2SFun val (generator)
 		  (unless generator
 		     (not (usage? '(new ref get set) usage))))))))
-   
-   (define (make-function this::J2SDeclFun)
-      (with-access::J2SDeclFun this (loc id scope val ronly usage)
-	 (let ((val (declfun-fun this)))
-	    (with-access::J2SFun val (params mode vararg body name generator
-					constrsize method new-target)
-	       (let* ((fastid (j2s-fast-id id))
-		      (lparams (length params))
-		      (arity (if vararg -1 (+fx 1 lparams)))
-		      (minlen (if (eq? mode 'hopscript) (j2s-minlen val) -1))
-		      (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
-		      (src (j2s-function-src loc val conf)))
-		  (cond
-		     (generator
-		      `(js-make-function %this ,fastid
-			  ,len ,(symbol->string! id)
-			  :src ,src
-			  :rest ,(eq? vararg 'rest)
-			  :arity ,arity
-			  :minlen ,minlen
-			  :strict ',mode
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
-			  :prototype ,(j2s-fun-prototype val)
-			  :__proto__ ,(j2s-fun-__proto__ val)
-			  :construct ,fastid
-			  :constrsize ,constrsize
-;* 			  :constrmap ,(usage? '(new ref) usage)        */
-			  ))
-		     (src
-		      `(js-make-function %this ,fastid
-			  ,len ,(symbol->string! id)
-			  :src ,src
-			  :rest ,(eq? vararg 'rest)
-			  :arity ,arity
-			  :minlen ,minlen
-			  :strict ',mode
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
-			  :construct ,fastid
-			  :constrsize ,constrsize
-;* 			  :constrmap ,(usage? '(new ref) usage)        */
-			  :method ,(when method
-				      (jsfun->lambda method
-					 mode return conf #f #f))))
-		     ((eq? vararg 'arguments)
-		      `(js-make-function %this ,fastid
-			  ,len ,(symbol->string! id)
-			  :rest ,(eq? vararg 'rest)
-			  :arity ,arity
-			  :minlen ,minlen
-			  :strict ',mode 
-			  :constrsize ,constrsize
-;* 			  :constrmap ,(usage? '(new ref) usage)        */
-			  :method ,(when method
-				      (jsfun->lambda method
-					 mode return conf #f #f))))
-		     (method
-		      `(js-make-function %this ,fastid
-			  ,len ,(symbol->string! id)
-			  :rest ,(eq? vararg 'rest)
-			  :arity ,arity
-			  :minlen ,minlen
-			  :strict ',mode
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
-			  :construct ,fastid
-			  :constrsize ,constrsize
-;* 			  :constrmap ,(usage? '(new ref) usage)        */
-			  :method ,(when method
-				      (jsfun->lambda method
-					 mode return conf #f #f))))
-		     ((or (usage? '(new) usage) new-target)
-		      `(js-make-function %this ,fastid
-			  ,len ,(symbol->string! id)
-			  :rest ,(eq? vararg 'rest)
-			  :arity ,arity
-			  :minlen ,minlen
-			  :strict ',mode
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
-			  :construct ,fastid
-			  :constrsize ,constrsize
-;* 			  :constrmap #t                                */
-			  ))
-		     (else
-		      `(js-make-function-simple %this ,fastid
-			  ,len ,(symbol->string! id)
-			  ,arity ,minlen
-			  ',mode ,(eq? vararg 'rest)
-			  ,constrsize))))))))
    
    (when (and (isa? this J2SDeclFun) (not (isa? this J2SDeclSvc)))
       (with-access::J2SDeclFun this (loc id scope val ronly)
@@ -358,8 +283,10 @@
 				,(if (js-need-global? this scope mode)
 				     `(js-bind! %this ,scope ',id
 					 :configurable #f
-					 :value ,(make-function this))
-				     (make-function this)))))
+					 :value ,(j2s-make-function this
+						    mode return conf))
+				     (j2s-make-function this
+					mode return conf)))))
 			(else
 			 #f)))))))))
       

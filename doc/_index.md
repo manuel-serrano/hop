@@ -58,7 +58,7 @@ Hop client-side code and server-side can also be mixed using the
 `\${` mark:
 
 ```hopscript[:prog4@homeprog]
-service hello( { who: "foo" } ) {
+service hello( { name: who } ) {
   return <html><div onclick=~{ alert( "Hi " + ${who} + "!") }>hello</div></html>;
 }
 ```

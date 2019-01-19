@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Jan 18 14:22:31 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 18:17:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -56,6 +56,12 @@
    (lambda (o)
       (js-undefined))
    (lambda (o %this) o))
+
+;*---------------------------------------------------------------------*/
+;*    object-equal? ::JsFunction ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (object-equal? x::JsFunction y::object)
+   (eq? x y))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsFunction ...                             */
@@ -441,7 +447,6 @@
 		      (set! value v))))
 	       ;; chaning the prototype invalidates the constrmap
 	       ;; (MS, change 2019-01-18)
-	       (tprint "js-fun-prototype-set " (js-function-debug-name o %this))
 	       (set! constrmap (js-not-a-cmap))
 ;* 	       (when constrmap                                         */
 ;* 		  (set! constrmap                                      */

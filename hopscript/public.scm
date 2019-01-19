@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jan 18 15:58:20 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 17:49:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -69,6 +69,8 @@
 	   (inline js-object-alloc/new-target ::JsGlobalObject ::JsFunction)
 	   (inline js-no-alloc ::JsGlobalObject ::JsFunction)
 	   (js-not-a-constructor-alloc ::JsGlobalObject ::JsFunction)
+	   
+	   (inline js-function-set-constrmap!::JsFunction ::JsFunction)
 	   
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
 	   (js-apply-service% ::procedure obj args::pair-nil ::int)
@@ -277,10 +279,7 @@
    (with-access::JsFunction ctor (constrsize constrmap %prototype)
       (with-access::JsConstructMap constrmap (size)
 	 (unless (=fx size constrsize)
-	    (set! constrmap
-	       (instantiate::JsConstructMap
-		  (ctor ctor)
-		  (size constrsize)))))
+	    (js-function-set-constrmap! ctor)))
       (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/
@@ -290,10 +289,7 @@
    (with-access::JsFunction ctor (constrsize constrmap %prototype)
       (with-access::JsConstructMap constrmap (size)
 	 (unless (=fx size constrsize)
-	    (set! constrmap
-	       (instantiate::JsConstructMap
-		  (ctor ctor)
-		  (size constrsize)))))
+	    (js-function-set-constrmap! ctor)))
       (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/
@@ -336,6 +332,17 @@
    (let ((name (js-tostring (js-get ctor 'name %this) %this)))
       (js-raise-type-error %this "~s not a constructor" name)))
 
+;*---------------------------------------------------------------------*/
+;*    js-function-set-constrmap! ...                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-function-set-constrmap! ctor::JsFunction)
+   (with-access::JsFunction ctor (constrmap constrsize)
+      (set! constrmap
+	 (instantiate::JsConstructMap
+	    (ctor ctor)
+	    (size constrsize)))
+      ctor))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-new-return ...                                                */
 ;*---------------------------------------------------------------------*/

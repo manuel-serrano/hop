@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jan 18 09:32:28 2019 (serrano)                */
+;*    Last change :  Fri Jan 18 18:42:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -631,9 +631,7 @@
 	    (cond
 	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
 		;; 2
-		(with-access::JsFunction f (constrmap constrsize name)
-		   (unless constrmap
-		      (set! constrmap (instantiate::JsConstructMap (ctor f))))
+		(with-access::JsFunction f (constrmap constrsize)
 		   (js-make-jsobject constrsize constrmap %prototype)))
 	       ((isa? value JsObject)
 		;; 1.a
@@ -656,15 +654,16 @@
 	       (if (pair? arg) (car arg) (js-undefined)))))
       
       (with-access::JsObject js-function ((js-function-prototype __proto__))
-	 (set! js-object 
-	    (js-make-function %this %js-object 1 "Object"
-	       :__proto__ js-function-prototype
-	       :constrsize 3 :maxconstrsize 4
-	       :prototype %prototype
-	       :alloc js-no-alloc
-	       :construct js-object-construct
-	       :shared-cmap #f
-	       :src "object.scm")))
+	 (set! js-object
+	    (js-function-set-constrmap!
+	       (js-make-function %this %js-object 1 "Object"
+		  :__proto__ js-function-prototype
+		  :constrsize 3 :maxconstrsize 4
+		  :prototype %prototype
+		  :alloc js-no-alloc
+		  :construct js-object-construct
+		  :shared-cmap #f
+		  :src "object.scm"))))
       
       ;; getPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2
@@ -792,6 +791,7 @@
 	 (let* ((o (js-cast-object obj %this "defineProperty"))
 		(name (js-toname p %this))
 		(desc (js-to-property-descriptor %this attributes name)))
+	    (tprint "DF o=" (typeof o) " name=" name " desc=" (typeof desc))
 	    (js-define-own-property o name desc #t %this)
 	    obj))
       
