@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Dec  7 21:55:09 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Sat Jan 19 09:25:31 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
 ;*=====================================================================*/
@@ -34,7 +34,8 @@
 	   (j2s-array-ref ::J2SAccess mode return conf)
 	   (j2s-array-set! ::J2SAssig mode return conf)
 	   (j2s-vector-ref ::J2SAccess mode return conf)
-	   (j2s-vector-set! ::J2SAssig mode return conf)))
+	   (j2s-vector-set! ::J2SAssig mode return conf)
+	   (j2s-array-foreach obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SArray ...                                        */
@@ -464,5 +465,13 @@
       field
       (j2s-vtype field) 'integer conf))
 
-      
-	     
+;*---------------------------------------------------------------------*/
+;*    j2s-array-foreach ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-foreach obj args mode return conf)
+   (match-case args
+      ((?fun ?this ?%this ?cache)
+       #f)
+      ((?fun ?%this ?cache)
+       #f)))
+	   

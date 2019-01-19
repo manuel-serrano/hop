@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jan 15 09:34:15 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 09:52:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -188,7 +188,8 @@
 	 
 	 (js-bind! %this js-string 'fromCharCode
 	    :value (js-make-function %this
-		      js-string-fromcharcode 1 "fromCharCode")
+		      js-string-fromcharcode 1 "fromCharCode"
+		      :prototype (js-undefined))
 	    :writable #t
 	    :enumerable #f
 	    :configurable #t
@@ -226,7 +227,8 @@
 		    
 	 (js-bind! %this js-string 'raw
 	    :value (js-make-function %this
-		      js-string-raw 1 "raw")
+		      js-string-raw 1 "raw"
+		      :prototype (js-undefined))
 	    :writable #t
 	    :enumerable #f
 	    :configurable #t
@@ -318,7 +320,8 @@
 	  (js-raise-type-error %this "argument not a string ~a" (typeof this)))))
    
    (js-bind! %this obj 'toString
-      :value (js-make-function %this tostring 0 "toString")
+      :value (js-make-function %this tostring 0 "toString"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -334,7 +337,8 @@
 	  (js-raise-type-error %this "argument not a string ~a" this))))
    
    (js-bind! %this obj 'valueOf
-      :value (js-make-function %this valueof 0 "valueOf")
+      :value (js-make-function %this valueof 0 "valueOf"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -344,7 +348,8 @@
       (js-jsstring-charat (js-cast-string-normalize! %this this) index %this))
    
    (js-bind! %this obj 'charAt
-      :value (js-make-function %this charat 1 "charAt")
+      :value (js-make-function %this charat 1 "charAt"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -354,7 +359,8 @@
       (js-jsstring-charcodeat (js-cast-string-normalize! %this this) index %this))
    
    (js-bind! %this obj 'charCodeAt
-      :value (js-make-function %this charcodeat 1 "charCodeAt")
+      :value (js-make-function %this charcodeat 1 "charCodeAt"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -389,7 +395,8 @@
 		       (cdr rest))))))))
    
    (js-bind! %this obj 'concat
-      :value (js-make-function %this concat 1 "concat")
+      :value (js-make-function %this concat 1 "concat"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -401,7 +408,8 @@
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
 
    (js-bind! %this obj 'indexOf
-      :value (js-make-function %this indexof 1 "indexOf")
+      :value (js-make-function %this indexof 1 "indexOf"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -413,7 +421,8 @@
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
    
    (js-bind! %this obj 'lastIndexOf
-      :value (js-make-function %this last-indexof 1 "lastIndexOf")
+      :value (js-make-function %this last-indexof 1 "lastIndexOf"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -423,7 +432,8 @@
       (js-jsstring-localecompare (js-cast-string-normalize! %this this) that %this))
    
    (js-bind! %this obj 'localeCompare
-      :value (js-make-function %this locale-compare 1 "localeCompare")
+      :value (js-make-function %this locale-compare 1 "localeCompare"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -433,7 +443,8 @@
       (js-jsstring-naturalcompare (js-cast-string-normalize! %this this) that %this))
    
    (js-bind! %this obj 'naturalCompare
-      :value (js-make-function %this natural-compare 1 "naturalCompare")
+      :value (js-make-function %this natural-compare 1 "naturalCompare"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -443,7 +454,8 @@
       (js-jsstring-match (js-cast-string %this this) regexp %this))
    
    (js-bind! %this obj 'match
-      :value (js-make-function %this match 1 "match")
+      :value (js-make-function %this match 1 "match"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -455,7 +467,8 @@
 
       
    (js-bind! %this obj 'replace
-      :value (js-make-function %this replace 2 "replace")
+      :value (js-make-function %this replace 2 "replace"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -473,7 +486,8 @@
 		      (caar pos)
 		      -1))))))
    (js-bind! %this obj 'search
-      :value (js-make-function %this search 1 "search")
+      :value (js-make-function %this search 1 "search"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -484,7 +498,8 @@
 	 (js-jsstring-slice jss start end %this)))
    
    (js-bind! %this obj 'slice
-      :value (js-make-function %this slice 2 "slice")
+      :value (js-make-function %this slice 2 "slice"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -494,7 +509,8 @@
       (js-jsstring-split (js-cast-string %this this) separator limit %this))
    
    (js-bind! %this obj 'split
-      :value (js-make-function %this split 2 "split")
+      :value (js-make-function %this split 2 "split"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -504,7 +520,8 @@
       (js-jsstring-substring (js-cast-string-normalize! %this this) start end %this))
    
    (js-bind! %this obj 'substring
-      :value (js-make-function %this js-substring 2 "substring")
+      :value (js-make-function %this js-substring 2 "substring"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -514,7 +531,8 @@
       (js-jsstring-tolowercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj 'toLowerCase
-      :value (js-make-function %this tolowercase 0 "toLowerCase")
+      :value (js-make-function %this tolowercase 0 "toLowerCase"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -524,7 +542,8 @@
       (js-jsstring-tolocalelowercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj 'toLocaleLowerCase
-      :value (js-make-function %this tolocalelowercase 0 "toLocaleLowerCase")
+      :value (js-make-function %this tolocalelowercase 0 "toLocaleLowerCase"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -534,7 +553,8 @@
       (js-jsstring-touppercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj 'toUpperCase
-      :value (js-make-function %this touppercase 0 "toUpperCase")
+      :value (js-make-function %this touppercase 0 "toUpperCase"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -544,7 +564,8 @@
       (js-jsstring-tolocaleuppercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj 'toLocaleUpperCase
-      :value (js-make-function %this tolocaleuppercase 0 "toLocaleUpperCase")
+      :value (js-make-function %this tolocaleuppercase 0 "toLocaleUpperCase"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -554,7 +575,8 @@
       (js-jsstring-trim (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj 'trim
-      :value (js-make-function %this trim 0 "trim")
+      :value (js-make-function %this trim 0 "trim"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -564,7 +586,8 @@
       (js-jsstring-substr (js-tostring this %this) start length %this))
    
    (js-bind! %this obj 'substr
-      :value (js-make-function %this substr 2 "substr")
+      :value (js-make-function %this substr 2 "substr"
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    

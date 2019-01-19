@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan 16 07:27:10 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 09:37:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -100,6 +100,8 @@
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
 	   (js-array-fill ::JsArray ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-foreach ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-foreach ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-join ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-join ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-push ::JsArray ::obj ::JsGlobalObject ::obj)
@@ -163,8 +165,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
-(%define-pcache 11)
-(define %pcache (js-make-pcache-table 11 "hopscript/array.scm"))
+(%define-pcache 13)
+(define %pcache (js-make-pcache-table 13 "hopscript/array.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-vector ...                                               */
@@ -3566,6 +3568,34 @@
 	  (js-get-name/cache this 'fill #f %this
 	     (or cache (js-pcache-ref %pcache 5)))
 	  this value start end)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-foreach ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-foreach this::JsArray proc thisarg %this)
+   (tprint "TODO"))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-foreach ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-array-foreach this::JsArray proc thisarg %this cache)
+   (if (js-object-mode-plain? this)
+       (js-array-prototype-foreach this proc thisarg %this)
+       (js-call2 %this
+	  (js-get-name/cache this 'forEach #f %this
+	     (or cache (js-pcache-ref %pcache 11)))
+	  this proc thisarg)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-foreach ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-foreach this proc thisarg %this cache)
+   (if (js-array? this)
+       (js-array-foreach this proc thisarg %this cache)
+       (js-call2 %this
+	  (js-get-name/cache this 'forEach #f %this
+	     (or cache (js-pcache-ref %pcache 12)))
+	  this proc thisarg)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-push ...                                      */
