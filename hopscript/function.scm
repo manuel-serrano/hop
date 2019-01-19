@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jan 19 07:33:33 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 08:08:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -371,13 +371,13 @@
 	 (let* ((els ($create-vector (if (eq? strict 'normal) 3 5)))
 		(cmap (if (eq? strict 'normal)
 			  (cond
-			     ((isa? prototype JsObject)
+			     ((js-object? prototype)
 			      js-function-cmap)
 			     ((eq? prototype '())
 			      js-function-cmap-sans-prototype)
 			     (else
 			      js-function-writable-cmap))
-			  (if (isa? prototype JsObject)
+			  (if (js-object? prototype)
 			      js-function-strict-cmap
 			      js-function-writable-strict-cmap)))
 		(fun (INSTANTIATE-JSFUNCTION
@@ -394,7 +394,7 @@
 			(constrmap constrmap)
 			(maxconstrsize maxconstrsize)
 			(elements els)
-			(cmap (if (and shared-cmap (isa? prototype JsObject))
+			(cmap (if (and shared-cmap (js-object? prototype))
 				  cmap
 				  (duplicate::JsConstructMap cmap
 				     (%id (gencmapid)))))
@@ -412,7 +412,7 @@
 				     (__proto__ __proto__)))))
 			 (set! %prototype p)
 			 prototype-property-rw))
-		     ((isa? prototype JsObject)
+		     ((js-object? prototype)
 		      (js-bind! %this prototype 'constructor
 			 :value fun
 			 :configurable #t :enumerable #f :writable #t
@@ -545,7 +545,7 @@
 		  (unless (isa? v JsObject)
 		     (tprint "PAS BON " (js-function-debug-name o %this)
 			" v=" (typeof v)))
-		  (set! %prototype (if (isa? v JsObject) v __proto__)))))))
+		  (set! %prototype (if (js-object? v) v __proto__)))))))
    v)
 
 ;*---------------------------------------------------------------------*/
@@ -727,7 +727,7 @@
 	  "apply: argument not a function ~s" this))
       ((or (eq? argarray (js-null)) (eq? argarray (js-undefined)))
        (js-call0 %this this thisarg))
-      ((not (isa? argarray JsObject))
+      ((not (js-object? argarray))
        (js-raise-type-error %this
 	  "apply: argument not an object ~s" argarray))
       ((isa? argarray JsArray)
