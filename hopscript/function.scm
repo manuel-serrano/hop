@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jan 19 06:43:01 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 07:33:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -121,6 +121,9 @@
 (define strict-arguments-property #f)
 (define strict-caller-property #f)
 
+;*---------------------------------------------------------------------*/
+;*    pre-allocated prototype property descriptors                     */
+;*---------------------------------------------------------------------*/
 (define prototype-property-rw
    (instantiate::JsWrapperDescriptor
       (name 'prototype)
@@ -138,6 +141,22 @@
       (writable #f)
       (%get js-function-prototype-get)
       (%set js-function-prototype-set)))
+
+(define prototype-property-null
+   (instantiate::JsValueDescriptor
+      (name '%null)
+      (enumerable #f)
+      (configurable #f)
+      (writable #f)
+      (value '())))
+
+(define prototype-property-undefined
+   (instantiate::JsValueDescriptor
+      (name '%undefined)
+      (enumerable #f)
+      (configurable #f)
+      (writable #f)
+      (value (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-cmap ...                                                    */
@@ -383,70 +402,99 @@
 	    ;; the prototype property
 	    ;; the builtin "%prototype" property
 	    (with-access::JsFunction fun (%prototype)
-	       (set! %prototype
-		  (cond
-		     ((isa? prototype JsObject)
-		      (begin
-			 (js-bind! %this prototype 'constructor
-			    :value fun
-			    :configurable #t :enumerable #f :writable #t
-			    :hidden-class #t)
-			 prototype))
-		     (prototype
-		      prototype)
-		     (else
-		      (with-access::JsObject %this (__proto__)
-			 (instantiateJsObject
-			    (cmap js-function-prototype-cmap)
-			    (elements (vector fun))
-			    (__proto__ __proto__))))))
-	       ;; regular function properties
 	       (vector-set! els 0
 		  (cond
+		     ((not prototype)
+		      (let ((p (with-access::JsObject %this (__proto__)
+				  (instantiateJsObject
+				     (cmap js-function-prototype-cmap)
+				     (elements (vector fun))
+				     (__proto__ __proto__)))))
+			 (set! %prototype p)
+			 prototype-property-rw))
 		     ((isa? prototype JsObject)
-;* 		      (instantiate::JsWrapperDescriptor                */
-;* 			 (name 'prototype)                             */
-;* 			 (enumerable #f)                               */
-;* 			 (configurable #f)                             */
-;* 			 (writable #f)                                 */
-;* 			 (value %prototype)                            */
-;* 			 (%get js-function-prototype-get)              */
-;* 			 (%set js-function-prototype-set))             */
+		      (js-bind! %this prototype 'constructor
+			 :value fun
+			 :configurable #t :enumerable #f :writable #t
+			 :hidden-class #t)
+		      (set! %prototype prototype)
 		      prototype-property-ro)
-;* 		      (instantiate::JsValueDescriptor                  */
-;* 			 (name 'prototype)                             */
-;* 			 (enumerable #f)                               */
-;* 			 (configurable #f)                             */
-;* 			 (writable #f)                                 */
-;* 			 (value %prototype)))                          */
-		     ((eq? prototype '())
-		      ;; the Proxy global object has no prototype field
-		      (instantiate::JsValueDescriptor
-			 (name '%null)
-			 (enumerable #f)
-			 (configurable #f)
-			 (writable #f)
-			 (value '())))
+		     ((eq? prototype (js-undefined))
+		      (set! %prototype prototype)
+		      prototype-property-undefined)
+		     ((null? prototype)
+		      (set! %prototype prototype)
+		      prototype-property-null)
 		     (else
-;* 		      (instantiate::JsWrapperDescriptor                */
-;* 			 (name 'prototype)                             */
-;* 			 (enumerable #f)                               */
-;* 			 (configurable #f)                             */
-;* 			 (writable #t)                                 */
-;* 			 (value %prototype)                            */
-;* 			 (%get js-function-prototype-get)              */
-;* 			 (%set js-function-prototype-set))             */
-		      prototype-property-rw
-		      )))
-	       
-	       ;; length
-	       (vector-set! els 1 length)
-	       ;; name
-	       (vector-set! els 2 name)
-	       ;; strict properties
-	       (unless (eq? strict 'normal)
-		  (vector-set! els 3 strict-arguments-property)
-		  (vector-set! els 4 strict-caller-property))
+		      (error "js-make-function" "Illegal :prototype"
+			 prototype)))))
+;* 	    (with-access::JsFunction fun (%prototype)                  */
+;* 	       (set! %prototype                                        */
+;* 		  (cond                                                */
+;* 		     ((isa? prototype JsObject)                        */
+;* 		      (begin                                           */
+;* 			 (js-bind! %this prototype 'constructor        */
+;* 			    :value fun                                 */
+;* 			    :configurable #t :enumerable #f :writable #t */
+;* 			    :hidden-class #t)                          */
+;* 			 prototype))                                   */
+;* 		     (prototype                                        */
+;* 		      prototype)                                       */
+;* 		     (else                                             */
+;* 		      (with-access::JsObject %this (__proto__)         */
+;* 			 (instantiateJsObject                          */
+;* 			    (cmap js-function-prototype-cmap)          */
+;* 			    (elements (vector fun))                    */
+;* 			    (__proto__ __proto__))))))                 */
+;* 	       ;; regular function properties                          */
+;* 	       (vector-set! els 0                                      */
+;* 		  (cond                                                */
+;* 		     ((isa? prototype JsObject)                        */
+;* {* 		      (instantiate::JsWrapperDescriptor                *} */
+;* {* 			 (name 'prototype)                             *} */
+;* {* 			 (enumerable #f)                               *} */
+;* {* 			 (configurable #f)                             *} */
+;* {* 			 (writable #f)                                 *} */
+;* {* 			 (value %prototype)                            *} */
+;* {* 			 (%get js-function-prototype-get)              *} */
+;* {* 			 (%set js-function-prototype-set))             *} */
+;* 		      prototype-property-ro)                           */
+;* {* 		      (instantiate::JsValueDescriptor                  *} */
+;* {* 			 (name 'prototype)                             *} */
+;* {* 			 (enumerable #f)                               *} */
+;* {* 			 (configurable #f)                             *} */
+;* {* 			 (writable #f)                                 *} */
+;* {* 			 (value %prototype)))                          *} */
+;* 		     ((eq? prototype '())                              */
+;* 		      ;; the Proxy global object has no prototype field */
+;* {* 		      (instantiate::JsValueDescriptor                  *} */
+;* {* 			 (name '%null)                                 *} */
+;* {* 			 (enumerable #f)                               *} */
+;* {* 			 (configurable #f)                             *} */
+;* {* 			 (writable #f)                                 *} */
+;* {* 			 (value '()))                                  *} */
+;* 		      prototype-property-null                          */
+;* 		      )                                                */
+;* 		     (else                                             */
+;* {* 		      (instantiate::JsWrapperDescriptor                *} */
+;* {* 			 (name 'prototype)                             *} */
+;* {* 			 (enumerable #f)                               *} */
+;* {* 			 (configurable #f)                             *} */
+;* {* 			 (writable #t)                                 *} */
+;* {* 			 (value %prototype)                            *} */
+;* {* 			 (%get js-function-prototype-get)              *} */
+;* {* 			 (%set js-function-prototype-set))             *} */
+;* 		      prototype-property-rw                            */
+;* 		      )))                                              */
+;* 	                                                               */
+	    ;; length
+	    (vector-set! els 1 length)
+	    ;; name
+	    (vector-set! els 2 name)
+	    ;; strict properties
+	    (unless (eq? strict 'normal)
+	       (vector-set! els 3 strict-arguments-property)
+	       (vector-set! els 4 strict-caller-property))
 ;* 	       ;; constrmap                                            */
 ;* 	       (when constrmap                                         */
 ;* 		  (with-access::JsFunction fun (constrsize constrmap)  */
@@ -454,7 +502,7 @@
 ;* 			(instantiate::JsConstructMap                   */
 ;* 			   (ctor fun)                                  */
 ;* 			   (size constrsize)))))                       */
-	       fun)))))
+	    fun))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
