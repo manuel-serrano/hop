@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jan 19 09:37:18 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 10:10:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -102,6 +102,7 @@
 	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-foreach ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-foreach ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-foreach-procedure ::JsArray ::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-join ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-join ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-push ::JsArray ::obj ::JsGlobalObject ::obj)
@@ -3597,6 +3598,50 @@
 	     (or cache (js-pcache-ref %pcache 12)))
 	  this proc thisarg)))
 
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-foreach-procedure ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-foreach-procedure this::JsArray proc::procedure thisarg %this)
+   
+   (define (vector-foreach o len::uint32 proc t i::uint32)
+      [%assert-array! o "vector-foreach"]
+      (if (js-object-mode-inline? o)
+	  (with-access::JsArray o (vec ilen)
+	     (let loop ((i i))
+		(cond
+		   ((>=u32 i ilen)
+		    (js-undefined))
+		   ((not (js-object-mode-inline? o))
+		    (array-foreach o len proc t i))
+		   (else
+		    (let ((v (vector-ref vec (uint32->fixnum i))))
+		       (proc t v (js-uint32-tointeger i) o %this)
+		       (loop (+u32 i 1)))))))
+	  (array-foreach o len proc t i)))
+   
+   (define (array-foreach o len proc t i::uint32)
+      (let loop ((i i))
+	 (when (<u32 i len)
+	    (let ((pv (js-get-property-value o o
+			 (js-toname i %this) %this)))
+	       (unless (js-absent? pv)
+		  (proc t pv (uint32->fixnum i) o %this))
+	       (loop (+u32 i 1))))))
+
+   (with-access::JsArray this (length)
+      (vector-foreach this length proc thisarg #u32:0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-foreach-procedure ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-array-foreach-procedure this::JsArray proc thisarg %this cache)
+   (if (js-object-mode-plain? this)
+       (js-array-prototype-foreach-procedure this proc thisarg %this)
+       (let ((jsproc (js-make-function %this proc 3 "forEachProc"
+			:constrsize 0
+			:alloc js-object-alloc)))
+	  (js-array-foreach this jsproc thisarg %this cache))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-push ...                                      */
 ;*    -------------------------------------------------------------    */

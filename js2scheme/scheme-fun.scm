@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Jan 18 17:56:31 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 10:10:22 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -317,7 +317,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    jsfun->lambda/body ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (jsfun->lambda/body this::J2SFun mode return conf proto body)
+(define (jsfun->lambda/body this::J2SFun mode return conf body)
 
    (define (type-this idthis thisp)
       (if (and idthis (isa? thisp J2SDecl))
@@ -500,7 +500,7 @@
 			 (with-access::J2SNode body (loc)
 			    (epairify loc
 			       (if (pair? bd) bd `(begin ,bd)))))))))
-	 (jsfun->lambda/body this mode return conf proto body))))
+	 (jsfun->lambda/body this mode return conf body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun->ctor ...                                                 */
@@ -526,7 +526,7 @@
 			     mode return conf)
 			,id))
 	       (proto (j2s-declfun-prototype decl)))
-	    (jsfun->lambda/body nfun mode return conf proto body)))))
+	    (jsfun->lambda/body nfun mode return conf body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-body ...                                                  */

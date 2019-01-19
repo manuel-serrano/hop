@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Jan 19 09:25:31 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 10:03:43 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -469,9 +469,43 @@
 ;*    j2s-array-foreach ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-foreach obj args mode return conf)
+   
+   (define (foreach obj proc thisarg %this cache)
+      `(js-array-foreach-procedure
+	  ,(j2s-scheme obj mode return conf)
+	  ,proc
+	  (js-undefined)
+	  ,%this ,cache))
+   
+   (define (foreach/thisarg obj fun thisarg %this cache)
+      (cond
+	 ((isa? fun J2SArrow)
+	  (with-access::J2SFun fun (generator vararg)
+	     (unless (or generator vararg)
+		(let ((proc (jsfun->lambda fun mode return conf #f #f)))
+		   (match-case proc
+		      ((?lambda (?this ?v) ?body)
+		       (foreach obj
+			  `(lambda (,this ,v %n %arr %this::JsGlobalObject) ,body)
+			  '(js-undefined) %this cache))
+		      ((?lambda (?this ?v ?n) ?body)
+		       (foreach obj
+			  `(lambda (,this ,v ,n %arr %this::JsGlobalObject) ,body)
+			  '(js-undefined) %this cache))
+		      ((?lambda (?this ?v ?n ?arr) ?body)
+		       (foreach obj
+			  `(lambda (,this ,v ,n ,arr %this::JsGlobalObject) ,body)
+			  '(js-undefined) %this cache))
+		      (else
+		       #f))))))
+	 (else
+	  #f)))
+   
    (match-case args
       ((?fun ?this ?%this ?cache)
-       #f)
+       (foreach/thisarg obj fun (j2s-scheme this mode return conf) %this cache))
       ((?fun ?%this ?cache)
+       (foreach/thisarg obj fun '(js-undefined) %this cache))
+      (else
        #f)))
 	   
