@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Jan 15 10:05:35 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 09:16:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -222,7 +222,7 @@
 	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
 	      (new-target::obj (default #f) (info '("notraverse")))
 	      (vararg::obj (default #f) (info '("notraverse")))
-	      (name::symbol read-only (info '("notraverse")))
+	      (name::symbol (info '("notraverse")))
 	      (generator::bool (default #f) (info '("notraverse")))
 	      (optimize (default #t) (info '("notraverse")))
 	      (thisp (default #f) (info '("notraverse")))

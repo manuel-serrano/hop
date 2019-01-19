@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Jan 10 15:09:00 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 09:16:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -794,6 +794,10 @@
 		     (fname (cadr loc))
 		     (location (caddr loc))))))
 	 (let ((rhs (resolve! val env mode withs wenv genv ctx conf)))
+	    (when (isa? rhs J2SFun)
+	       (with-access::J2SFun rhs (name)
+		  (when (eq? name '||)
+		     (set! name id))))
 	    (if (j2s-let-opt? this)
 		(begin
 		   (set! val rhs)
