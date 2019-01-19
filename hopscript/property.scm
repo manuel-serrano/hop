@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jan 19 10:55:22 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 13:42:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -226,7 +226,8 @@
 ;*---------------------------------------------------------------------*/
 (define (inline-threshold) #u32:100)
 (define (vtable-threshold) #u32:200)
-
+(define (method-invalidation-threshold) 10)
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -2027,7 +2028,7 @@
 			     (extend-object!)
 			     ;; 8.12.4, step 8.b
 			     (reject "Read-only property"))))))))))
-   
+
    (define (extend-mapped-object!)
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
@@ -2041,17 +2042,35 @@
 		      =>
 		      (lambda (nextmap)
 			 ;; follow the next map
-			 (with-access::JsConstructMap nextmap (ctor methods)
+			 (with-access::JsConstructMap nextmap (ctor methods props)
 			    (if (isa? v JsFunction)
 				;; validate cache method and don't cache
 				(unless (eq? v (vector-ref methods index))
-				   ;; invalidate cache method and cache
-				   (js-invalidate-cache-method! nextmap index)
-				   (js-invalidate-pcaches-pmap! %this name)
-				   (reset-cmap-vtable! nextmap)
-				   (when cache
-				      (js-validate-pcaches-pmap! %this)
-				      (js-pcache-next-direct! cache o nextmap index)))
+				   ;; MS 2019-01-19
+				   ;; on a method conflict, if the number of
+				   ;; property in the cache is small enough,
+				   ;; instead of invalidating all methods,
+				   ;; a new cmap is created. see
+				   ;; see the prototype initialization
+				   ;; in js-make-function@function.scm
+				   (if (>fx (vector-length props) (method-invalidation-threshold))
+				       (begin
+					  ;; invalidate cache method and cache
+					  (js-invalidate-cache-method! nextmap index)
+					  (js-invalidate-pcaches-pmap! %this name)
+					  (reset-cmap-vtable! nextmap)
+					  (when cache
+					     (js-validate-pcaches-pmap! %this)
+					     (js-pcache-next-direct! cache o nextmap index)))
+				       (let ((forkmap (extend-cmap cmap name flags)))
+					  (js-invalidate-pcaches-pmap! %this name)
+					  (with-access::JsConstructMap forkmap (methods ctor)
+					     ;; validate cache method and don't cache
+					     (vector-set! methods index v)
+					     (link-cmap! cmap forkmap v v flags)
+					     (js-object-push/ctor! o index v ctor))
+					  (set! cmap forkmap)
+					  v)))
 				(begin
 				   (when (isa? (vector-ref methods index) JsFunction)
 				      ;; invalidate cache method and cache
@@ -3236,6 +3255,7 @@
 
    (js-profile-log-method name point)
 
+   
    (let loop ((obj o))
       (jsobject-find obj name
 	 ;; map search

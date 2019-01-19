@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Sun Jan  6 17:53:11 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 14:04:14 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -556,17 +556,20 @@
 					  (set! usage (cons 'assig usage))
 					  (set! writable #t)
 					  (set! ronly #f)
-					  (J2SAssig/type vtype
-					     (J2SRef d :type vtype) val)))
+					  (J2SStmtExpr
+					     (J2SAssig/type vtype
+						(J2SRef d :type vtype) val))))
 				  decls))
-		       (assig- (map (lambda (a)
-				       (with-access::J2SAssig a (lhs rhs)
-					  ;; deep copy nrhs if it contains
-					  ;; assignments itself
-					  (let ((nrhs (j2s-alpha rhs '() '())))
-					     (duplicate::J2SAssig a
-						(lhs (nopce lhs))
-						(rhs (nopce nrhs))))))
+		       (assig- (map (lambda (n)
+				       (with-access::J2SStmtExpr n (expr)
+					  (with-access::J2SAssig expr (lhs rhs)
+					     ;; deep copy nrhs if it contains
+					     ;; assignments itself
+					     (let ((nrhs (j2s-alpha rhs '() '())))
+						(J2SStmtExpr
+						   (duplicate::J2SAssig expr
+						      (lhs (nopce lhs))
+						      (rhs (nopce nrhs))))))))
 				  assig+)))
 		   (J2SLetBlock ndecls
 		      (J2SIf pretest

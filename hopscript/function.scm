@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jan 19 08:32:27 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 12:27:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -394,7 +394,7 @@
 			(constrmap constrmap)
 			(maxconstrsize maxconstrsize)
 			(elements els)
-			(cmap (if shared-cmap
+			(cmap (if (and shared-cmap #f)
 				  ;; normal functions, i.e., user functions,
 				  ;; use shared-cmap
 				  cmap
@@ -415,6 +415,11 @@
 	       (vector-set! els 0
 		  (cond
 		     ((not prototype)
+		      ;; MS 2019-01-19
+		      ;; all default prototypes share the same cmap
+		      ;; because on method conflict a new cmap with
+		      ;; a fake transition will be created
+		      ;; see extend-mapped-object!@property.scm
 		      (let ((p (with-access::JsObject %this (__proto__)
 				  (instantiateJsObject
 				     (cmap js-function-prototype-cmap)
@@ -545,7 +550,8 @@
 ;* 		      (set! value v))))                                */
 	       ;; changing the prototype invalidates the fun's constrmap
 	       ;; (MS, change 2019-01-18)
-	       (set! constrmap (js-not-a-cmap))
+	       (unless (eq? constrmap (js-not-a-cmap))
+		  (js-function-set-constrmap! o))
 ;* 	       (when constrmap                                         */
 ;* 		  (set! constrmap                                      */
 ;* 		     (instantiate::JsConstructMap                      */

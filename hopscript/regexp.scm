@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jan 18 09:43:17 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 11:33:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -519,7 +519,8 @@
 			 (if (js-totest (js-get this 'ignoreCase %this)) "i" "")
 			 (if (js-totest (js-get this 'multiline %this)) "m" ""))))
 		
-		0 "toString")
+		0 "toString"
+		:prototype (js-undefined))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -532,7 +533,8 @@
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-ignorecase? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 "ignoreCase")
+	      0 "ignoreCase"
+	      :prototype (js-undefined))
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -544,7 +546,8 @@
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-multiline? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 "multiline")
+	      0 "multiline"
+	      :prototype (js-undefined))
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -556,7 +559,8 @@
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-global? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 "global")
+	      0 "global"
+	      :prototype (js-undefined))
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -568,7 +572,8 @@
 		     (with-access::JsRegExp this (source)
 			(js-string->jsstring source))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 "source")
+	      0 "source"
+	      :prototype (js-undefined))
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -577,21 +582,24 @@
       :value (js-make-function %this
 		(lambda (this string::obj)
 		   (regexp-prototype-exec %this this string))
-		1 "exec")
+		1 "exec"
+		:prototype (js-undefined))
       :writable #t
       :configurable #t
       :enumerable #f
       :hidden-class #t)
    ;; test
    (js-bind! %this obj 'test
-      :value (js-make-function %this (make-regexp-prototype-test %this) 1 "test")
+      :value (js-make-function %this (make-regexp-prototype-test %this) 1 "test"
+		:prototype (js-undefined))
       :writable #t
       :configurable #t
       :enumerable #f
       :hidden-class #t)
    ;; compile
    (js-bind! %this obj 'compile
-      :value (js-make-function %this regexp-prototype-compile 1 "compile")
+      :value (js-make-function %this regexp-prototype-compile 1 "compile"
+		:prototype (js-undefined))
       :writable #t
       :configurable #t
       :enumerable #f
