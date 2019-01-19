@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Jan 18 18:17:25 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 06:43:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -46,6 +46,8 @@
 	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::bstring ::int ::int ::symbol ::bool ::int)
+
+	   (inline js-function-prototype-get ::JsFunction ::JsGlobalObject)
 
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)))
 
@@ -98,8 +100,7 @@
 		  cache::JsPropertyCache
 		  #!optional (point -1) (cspecs '()))
    (if (eq? p 'prototype)
-       (with-access::JsFunction o (%prototype)
-	  %prototype)
+       (with-access::JsFunction o (%prototype) %prototype)
        (call-next-method)))
    
 ;*---------------------------------------------------------------------*/
@@ -119,6 +120,24 @@
 
 (define strict-arguments-property #f)
 (define strict-caller-property #f)
+
+(define prototype-property-rw
+   (instantiate::JsWrapperDescriptor
+      (name 'prototype)
+      (enumerable #f)
+      (configurable #f)
+      (writable #t)
+      (%get js-function-prototype-get)
+      (%set js-function-prototype-set)))
+
+(define prototype-property-ro
+   (instantiate::JsWrapperDescriptor
+      (name 'prototype)
+      (enumerable #f)
+      (configurable #f)
+      (writable #f)
+      (%get js-function-prototype-get)
+      (%set js-function-prototype-set)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-cmap ...                                                    */
@@ -361,6 +380,7 @@
 				  (duplicate::JsConstructMap cmap
 				     (%id (gencmapid)))))
 			(%prototype #f))))
+	    ;; the prototype property
 	    ;; the builtin "%prototype" property
 	    (with-access::JsFunction fun (%prototype)
 	       (set! %prototype
@@ -384,12 +404,21 @@
 	       (vector-set! els 0
 		  (cond
 		     ((isa? prototype JsObject)
-		      (instantiate::JsValueDescriptor
-			 (name 'prototype)
-			 (enumerable #f)
-			 (configurable #f)
-			 (writable #f)
-			 (value %prototype)))
+;* 		      (instantiate::JsWrapperDescriptor                */
+;* 			 (name 'prototype)                             */
+;* 			 (enumerable #f)                               */
+;* 			 (configurable #f)                             */
+;* 			 (writable #f)                                 */
+;* 			 (value %prototype)                            */
+;* 			 (%get js-function-prototype-get)              */
+;* 			 (%set js-function-prototype-set))             */
+		      prototype-property-ro)
+;* 		      (instantiate::JsValueDescriptor                  */
+;* 			 (name 'prototype)                             */
+;* 			 (enumerable #f)                               */
+;* 			 (configurable #f)                             */
+;* 			 (writable #f)                                 */
+;* 			 (value %prototype)))                          */
 		     ((eq? prototype '())
 		      ;; the Proxy global object has no prototype field
 		      (instantiate::JsValueDescriptor
@@ -399,13 +428,17 @@
 			 (writable #f)
 			 (value '())))
 		     (else
-		      (instantiate::JsWrapperDescriptor
-			 (name 'prototype)
-			 (enumerable #f)
-			 (configurable #f)
-			 (writable #t)
-			 (value %prototype)
-			 (%set js-fun-prototype-set)))))
+;* 		      (instantiate::JsWrapperDescriptor                */
+;* 			 (name 'prototype)                             */
+;* 			 (enumerable #f)                               */
+;* 			 (configurable #f)                             */
+;* 			 (writable #t)                                 */
+;* 			 (value %prototype)                            */
+;* 			 (%get js-function-prototype-get)              */
+;* 			 (%set js-function-prototype-set))             */
+		      prototype-property-rw
+		      )))
+	       
 	       ;; length
 	       (vector-set! els 1 length)
 	       ;; name
@@ -424,9 +457,16 @@
 	       fun)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-fun-prototype-set ...                                         */
+;*    js-function-prototype-get ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-fun-prototype-set o::JsFunction v %this)
+(define-inline (js-function-prototype-get o::JsFunction %this)
+   (with-access::JsFunction o (%prototype)
+      %prototype))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-prototype-set ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-function-prototype-set o::JsFunction v %this)
    (with-access::JsFunction o (constrmap constrsize %prototype elements cmap)
       ;; as the prototype property is not configurable,
       ;; it is always owned by the object
@@ -438,14 +478,14 @@
 		      (vector-ref elements 0))))
 	 (with-access::JsDataDescriptor desc (writable)
 	    (when writable
-	       (cond
-		  ((isa? desc JsValueDescriptor)
-		   (with-access::JsValueDescriptor desc (value)
-		      (set! value v)))
-		  ((isa? desc JsWrapperDescriptor)
-		   (with-access::JsWrapperDescriptor desc (value)
-		      (set! value v))))
-	       ;; chaning the prototype invalidates the constrmap
+;* 	       (cond                                                   */
+;* {* 		  ((isa? desc JsValueDescriptor)                       *} */
+;* {* 		   (with-access::JsValueDescriptor desc (value)        *} */
+;* {* 		      (set! value v)))                                 *} */
+;* 		  ((isa? desc JsWrapperDescriptor)                     */
+;* 		   (with-access::JsWrapperDescriptor desc (value)      */
+;* 		      (set! value v))))                                */
+	       ;; changing the prototype invalidates the fun's constrmap
 	       ;; (MS, change 2019-01-18)
 	       (set! constrmap (js-not-a-cmap))
 ;* 	       (when constrmap                                         */
@@ -454,6 +494,9 @@
 ;* 			(ctor o)                                       */
 ;* 			(size constrsize))))                           */
 	       (with-access::JsGlobalObject %this (__proto__)
+		  (unless (isa? v JsObject)
+		     (tprint "PAS BON " (js-function-debug-name o %this)
+			" v=" (typeof v)))
 		  (set! %prototype (if (isa? v JsObject) v __proto__)))))))
    v)
 

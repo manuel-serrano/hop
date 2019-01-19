@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jan 18 11:12:47 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 07:15:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -787,8 +787,8 @@
    ;; v8 compatibility (used by nodejs/lib)
    (with-access::JsGlobalObject %this (js-object)
       (let ((proto (js-get js-object 'prototype %this)))
-	 ;; mark object non-enumerable (i.e., it contains not enumerable
-	 ;; property) to optimize for..in
+	 ;; mark object non-enumerable (i.e., it contains no enumerable
+	 ;; property) in order to optimize for..in
 	 (js-object-mode-enumerable-set! proto #f)
 	 (js-bind! %this proto '__defineGetter__
 	    :value (js-make-function %this

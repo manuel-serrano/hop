@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jan 18 18:42:40 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 06:35:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -791,7 +791,6 @@
 	 (let* ((o (js-cast-object obj %this "defineProperty"))
 		(name (js-toname p %this))
 		(desc (js-to-property-descriptor %this attributes name)))
-	    (tprint "DF o=" (typeof o) " name=" name " desc=" (typeof desc))
 	    (js-define-own-property o name desc #t %this)
 	    obj))
       

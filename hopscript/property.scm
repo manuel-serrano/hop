@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Jan 17 14:36:28 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 06:46:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -115,9 +115,6 @@
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
 	   (generic js-object-get-name/cache-miss ::JsObject ::obj ::bool
-	      ::JsGlobalObject
-	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   (inline js-object-get-prototype/cache-miss ::JsObject ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
@@ -1126,9 +1123,13 @@
 	     (js-put! obj 'set set #f %this)))
 	 ((isa? desc JsWrapperDescriptor)
 	  ;; hop.js extension
-	  (with-access::JsWrapperDescriptor desc (value writable)
-	     (js-put! obj 'value value #f %this)
-	     (js-put! obj 'writable writable #f %this))))
+;* 	  (with-access::JsWrapperDescriptor desc (value writable)      */
+;* 	     (js-put! obj 'value value #f %this)                       */
+;* 	     (js-put! obj 'writable writable #f %this)))               */
+	  (with-access::JsWrapperDescriptor desc (%get writable)
+	     (js-put! obj 'value (%get obj %this) #f %this)
+	     (js-put! obj 'writable writable #f %this)))
+	 )
       (with-access::JsPropertyDescriptor desc (enumerable configurable)
 	 ;; 5
 	 (js-put! obj 'enumerable enumerable #f %this)
@@ -1214,9 +1215,12 @@
       ((isa? desc JsValueDescriptor)
        (with-access::JsValueDescriptor desc (value)
 	  value))
+;*       ((isa? desc JsWrapperDescriptor)                              */
+;*        (with-access::JsWrapperDescriptor desc (value)               */
+;* 	  value))                                                      */
       ((isa? desc JsWrapperDescriptor)
-       (with-access::JsWrapperDescriptor desc (value)
-	  value))
+       (with-access::JsWrapperDescriptor desc (%get)
+	  (%get obj %this)))
       ((isa? desc JsProxyDescriptor)
        (with-access::JsProxyDescriptor desc (proxy name)
 	  (js-proxy-property-value proxy obj name %this)))
@@ -1747,18 +1751,6 @@
 		   #!optional (point -1) (cspecs '()))
    (js-object-get-lookup obj name throw %this cache point cspecs))
 
-;*---------------------------------------------------------------------*/
-;*    js-object-get-prototype/cache-miss ...                           */
-;*---------------------------------------------------------------------*/
-(define-inline (js-object-get-prototype/cache-miss obj::JsObject name::obj
-		   throw::bool %this::JsGlobalObject
-		   cache::JsPropertyCache
-		   #!optional (point -1) (cspecs '()))
-   (if (eq? (object-class obj) JsFunction)
-       (with-access::JsFunction obj (%prototype)
-	  %prototype)
-       (js-object-get-name/cache-miss obj name throw %this cache point cspecs)))
-	  
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-cmap+ ...                               */
 ;*    -------------------------------------------------------------    */

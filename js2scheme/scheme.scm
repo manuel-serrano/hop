@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan 18 10:53:48 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 06:50:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2202,9 +2202,8 @@
 	  (with-access::J2SString field (val)
 	     (cond
 		((string=? val "prototype")
-		 `(with-access::JsFunction ,(j2s-scheme obj mode return conf)
-			(%prototype)
-		     %prototype))
+		 `(js-function-prototype-get
+		     ,(j2s-scheme obj mode return conf) %this))
 		(else
 		 #f)))))
 		 
@@ -2225,6 +2224,12 @@
 	     (or (j2s-arguments-ref this mode return conf)
 		 (get obj (j2s-scheme obj mode return conf)
 		    field cache cspecs #f loc)))
+	    ((and (eq? (j2s-type obj) 'function)
+		  (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (string=? val "prototype")))
+	     `(js-function-prototype-get
+		 ,(j2s-scheme obj mode return conf) %this))
 	    ((mightbe-number? field)
 	     (index-ref obj field cache cspecs loc))
 	    ((and (builtin-object? obj)

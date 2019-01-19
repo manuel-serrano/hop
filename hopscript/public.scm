@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jan 18 17:49:12 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 07:19:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -886,16 +886,20 @@
    (with-access::JsFunction f (cmap elements)
       ;; can't use %prototype here because instanceof require
       ;; to check the user prototype value
-      (let ((o (if (eq? cmap (js-not-a-cmap))
-		   (js-get f 'prototype %this)
-		   (let ((d (vector-ref elements 0)))
-		      (cond
-			 ((isa? d JsValueDescriptor)
-			  (with-access::JsValueDescriptor d (value)
-			     value))
-			 ((isa? d JsWrapperDescriptor)
-			  (with-access::JsWrapperDescriptor d (value)
-			     value)))))))
+;*       (let ((o (if (eq? cmap (js-not-a-cmap))                       */
+;* 		   (js-get f 'prototype %this)                         */
+;* 		   (let ((d (vector-ref elements 0)))                  */
+;* 		      (cond                                            */
+;* 			 ((isa? d JsValueDescriptor)                   */
+;* 			  (with-access::JsValueDescriptor d (value)    */
+;* 			     value))                                   */
+;* 			 ((isa? d JsWrapperDescriptor)                 */
+;* {* 			  (with-access::JsWrapperDescriptor d (value)  *} */
+;* {* 			     value)                                    *} */
+;* 			  (with-access::JsWrapperDescriptor d (%get)   */
+;* 			     (%get                                     */
+;* 			  ))))))                                       */
+      (let ((o (js-function-prototype-get f %this)))
 	 (if (not (isa? o JsObject))
 	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
 	     (let loop ((v v))
