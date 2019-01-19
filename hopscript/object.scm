@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Jan 19 06:35:44 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 09:02:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -662,8 +662,8 @@
 		  :prototype %prototype
 		  :alloc js-no-alloc
 		  :construct js-object-construct
-		  :shared-cmap #f
-		  :src "object.scm"))))
+		  :src "object.scm"
+		  :shared-cmap #f))))
       
       ;; getPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2

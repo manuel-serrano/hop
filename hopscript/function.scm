@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jan 19 08:08:19 2019 (serrano)                */
+;*    Last change :  Sat Jan 19 08:32:27 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -394,10 +394,20 @@
 			(constrmap constrmap)
 			(maxconstrsize maxconstrsize)
 			(elements els)
-			(cmap (if (and shared-cmap (js-object? prototype))
+			(cmap (if shared-cmap
+				  ;; normal functions, i.e., user functions,
+				  ;; use shared-cmap
 				  cmap
+				  ;; non shared-cmap are used by builtin
+				  ;; objects, such as Date or Number to create
+				  ;; a single cmap for all their fields
 				  (duplicate::JsConstructMap cmap
 				     (%id (gencmapid)))))
+;* 			(%prototype #f))                               */
+;* 			(cmap (if (and shared-cmap (js-object? prototype)) */
+;* 				  cmap                                 */
+;* 				  (duplicate::JsConstructMap cmap      */
+;* 				     (%id (gencmapid)))))              */
 			(%prototype #f))))
 	    ;; the prototype property
 	    ;; the builtin "%prototype" property
