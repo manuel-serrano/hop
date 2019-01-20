@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Jan 19 20:30:44 2019 (serrano)                */
+;*    Last change :  Sun Jan 20 09:49:52 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -463,7 +463,7 @@
 (define (env-remove env::pair-nil decls::pair-nil)
    (filter (lambda (l)
 	      (not (memq (car l) decls)))
-      decls))
+      env))
    
 ;*---------------------------------------------------------------------*/
 ;*    env-filter ...                                                   */
