@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Jan 20 09:13:22 2019 (serrano)                */
+;*    Last change :  Sun Jan 20 10:16:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -240,8 +240,9 @@
    (if (or (>= (bigloo-debug) 2)
 	   (let ((env (or (getenv "HOPTRACE") "")))
 	      (let ((i (string-contains env "j2s:range")))
-		 (or (=fx i (-fx (string-length env) 9))
-		     (char=? (string-ref env (+fx i 9)) #\space)))))
+		 (when i
+		    (or (=fx i (-fx (string-length env) 9))
+			(char=? (string-ref env (+fx i 9)) #\space))))))
        (let ((range (cond
 		      ((isa? this J2SExpr)
 		       (with-access::J2SExpr this (range) range))
