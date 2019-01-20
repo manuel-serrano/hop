@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Dec 30 09:07:22 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Sun Jan 20 09:13:22 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
 ;*=====================================================================*/
@@ -238,7 +238,10 @@
 ;*---------------------------------------------------------------------*/
 (define (dump-range this::J2SNode)
    (if (or (>= (bigloo-debug) 2)
-	   (string-contains (or (getenv "HOPTRACE") "") "j2s:range"))
+	   (let ((env (or (getenv "HOPTRACE") "")))
+	      (let ((i (string-contains env "j2s:range")))
+		 (or (=fx i (-fx (string-length env) 9))
+		     (char=? (string-ref env (+fx i 9)) #\space)))))
        (let ((range (cond
 		      ((isa? this J2SExpr)
 		       (with-access::J2SExpr this (range) range))
@@ -919,7 +922,7 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid usage ronly scope cache)
+   (with-access::J2SDecl this (id key binder _scmid usage scope cache)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(dump-dump this)

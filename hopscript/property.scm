@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jan 19 13:42:37 2019 (serrano)                */
+;*    Last change :  Sun Jan 20 05:39:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2062,14 +2062,13 @@
 					  (when cache
 					     (js-validate-pcaches-pmap! %this)
 					     (js-pcache-next-direct! cache o nextmap index)))
-				       (let ((forkmap (extend-cmap cmap name flags)))
+				       (let ((detachedmap (extend-cmap cmap name flags)))
 					  (js-invalidate-pcaches-pmap! %this name)
-					  (with-access::JsConstructMap forkmap (methods ctor)
+					  (with-access::JsConstructMap detachedmap (methods ctor)
 					     ;; validate cache method and don't cache
 					     (vector-set! methods index v)
-					     (link-cmap! cmap forkmap v v flags)
 					     (js-object-push/ctor! o index v ctor))
-					  (set! cmap forkmap)
+					  (set! cmap detachedmap)
 					  v)))
 				(begin
 				   (when (isa? (vector-ref methods index) JsFunction)
