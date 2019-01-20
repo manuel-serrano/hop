@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Jan 18 13:40:13 2019 (serrano)                */
+;*    Last change :  Sun Jan 20 10:32:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -243,20 +243,21 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 ;; service prototype
-	 (set! js-service-prototype
-	    (instantiateJsService
-	       (__proto__ js-function-prototype)
-	       (worker (class-nil WorkerHopThread))
-	       (alloc (lambda (_) #unspecified))
-	       (construct (lambda (constructor args)
-			     (js-raise-type-error %this "not a constructor ~s"
-				js-function-prototype)))
-	       (%prototype (with-access::JsGlobalObject %this (__proto__)
-			      __proto__))
-	       (len -1)
-	       (procedure list)
-	       (method list)
-	       (svc #f)))
+	 (with-access::JsGlobalObject %this (__proto__)
+	    (set! js-service-prototype
+	       (instantiateJsService
+		  (__proto__ js-function-prototype)
+		  (worker (class-nil WorkerHopThread))
+		  (alloc (lambda (_) #unspecified))
+		  (construct (lambda (constructor args)
+				(js-raise-type-error %this "not a constructor ~s"
+				   js-function-prototype)))
+		  (prototype __proto__)
+		  (%prototype __proto__)
+		  (len -1)
+		  (procedure list)
+		  (method list)
+		  (svc #f))))
 
 	 (js-bind! %this js-service-prototype 'name
 	    :value (js-ascii->jsstring "service")
@@ -1003,15 +1004,15 @@
 	 (make-file-name (hop-service-base) (js-tostring v %this)))
       v)
    
-   (with-access::JsGlobalObject %this (js-service-prototype)
+   (with-access::JsGlobalObject %this (js-service-prototype __proto__)
       (instantiateJsService
 	 (procedure proc)
 	 (method proc)
 	 (len arity)
 	 (arity arity)
 	 (worker worker)
-	 (%prototype (with-access::JsGlobalObject %this (__proto__)
-		       __proto__))
+	 (prototype __proto__)
+	 (%prototype __proto__)
 	 (__proto__ js-service-prototype)
 	 (alloc (lambda (_)
 		   (js-raise-type-error %this

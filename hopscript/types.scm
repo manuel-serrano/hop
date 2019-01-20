@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Jan 19 06:51:48 2019 (serrano)                */
+;*    Last change :  Sun Jan 20 10:31:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -196,6 +196,10 @@
 	      (arity::int read-only (default -1))
 	      (minlen::int read-only (default -1))
 	      (rest::bool read-only (default #f))
+	      ;; MS 2019-01-10: two prototype fields are required,
+	      ;; see isPrototypeof in ECMASpecification
+	      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.6
+	      prototype
 	      %prototype)
 	   
 	   (class JsService::JsFunction

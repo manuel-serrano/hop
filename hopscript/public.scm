@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Jan 19 08:03:11 2019 (serrano)                */
+;*    Last change :  Sun Jan 20 10:34:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -874,23 +874,8 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (cmap elements)
-      ;; can't use %prototype here because instanceof require
-      ;; to check the user prototype value
-;*       (let ((o (if (eq? cmap (js-not-a-cmap))                       */
-;* 		   (js-get f 'prototype %this)                         */
-;* 		   (let ((d (vector-ref elements 0)))                  */
-;* 		      (cond                                            */
-;* 			 ((isa? d JsValueDescriptor)                   */
-;* 			  (with-access::JsValueDescriptor d (value)    */
-;* 			     value))                                   */
-;* 			 ((isa? d JsWrapperDescriptor)                 */
-;* {* 			  (with-access::JsWrapperDescriptor d (value)  *} */
-;* {* 			     value)                                    *} */
-;* 			  (with-access::JsWrapperDescriptor d (%get)   */
-;* 			     (%get                                     */
-;* 			  ))))))                                       */
-      (let ((o (js-function-prototype-get f %this)))
+   (with-access::JsFunction f (cmap elements prototype)
+      (let ((o prototype))
 	 (if (not (isa? o JsObject))
 	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
 	     (let loop ((v v))

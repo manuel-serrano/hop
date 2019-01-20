@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Jan 19 09:02:13 2019 (serrano)                */
+;*    Last change :  Sun Jan 20 10:33:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -264,15 +264,15 @@
    ;; 2018-01-05: before all, initialize the builtin object prototype
    ;; and then create the global object
    (let* ((%void (instantiate::JsGlobalObject
-		     (cmap (make-cmap '#()))
-		     (__proto__ (js-null))))
-	  (%prototype (instantiateJsObject
-			 (cmap (instantiate::JsConstructMap))
-			 (__proto__ (js-hop-builtin %void))
-			 (elements (make-vector 40))))
+		    (cmap (make-cmap '#()))
+		    (__proto__ (js-null))))
+	  (%proto (instantiateJsObject
+		     (cmap (instantiate::JsConstructMap))
+		     (__proto__ (js-hop-builtin %void))
+		     (elements (make-vector 40))))
 	  (%this (instantiateJsGlobalObject
 		    (cmap (make-cmap '#()))
-		    (__proto__ %prototype))))
+		    (__proto__ %proto))))
       ;; freeze the void object
       (js-object-properties-set! %void '())
       (js-freeze %void %void)
@@ -497,7 +497,7 @@
 	    (define (string->xml-tilde body)
 	       (let ((expr (js-tostring body %this)))
 		  (instantiateJsWrapper
-		     (__proto__ %prototype)
+		     (__proto__ %proto)
 		     (data body)
 		     (obj (instantiate::xml-tilde
 			     (lang 'javascript)
@@ -610,7 +610,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-object! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this ((%prototype __proto__)
+   (with-access::JsGlobalObject %this ((%proto __proto__)
 				       js-object js-function)
       
       ;; Object.prototype
@@ -632,7 +632,7 @@
 	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
 		;; 2
 		(with-access::JsFunction f (constrmap constrsize)
-		   (js-make-jsobject constrsize constrmap %prototype)))
+		   (js-make-jsobject constrsize constrmap %proto)))
 	       ((isa? value JsObject)
 		;; 1.a
 		value)
@@ -659,7 +659,7 @@
 	       (js-make-function %this %js-object 1 "Object"
 		  :__proto__ js-function-prototype
 		  :constrsize 3 :maxconstrsize 4
-		  :prototype %prototype
+		  :prototype %proto
 		  :alloc js-no-alloc
 		  :construct js-object-construct
 		  :src "object.scm"
