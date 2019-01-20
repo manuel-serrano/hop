@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jan 19 12:27:15 2019 (serrano)                */
+;*    Last change :  Sun Jan 20 10:08:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -557,11 +557,7 @@
 ;* 		     (instantiate::JsConstructMap                      */
 ;* 			(ctor o)                                       */
 ;* 			(size constrsize))))                           */
-	       (with-access::JsGlobalObject %this (__proto__)
-		  (unless (isa? v JsObject)
-		     (tprint "PAS BON " (js-function-debug-name o %this)
-			" v=" (typeof v)))
-		  (set! %prototype (if (js-object? v) v __proto__)))))))
+	       (set! %prototype v)))))
    v)
 
 ;*---------------------------------------------------------------------*/
