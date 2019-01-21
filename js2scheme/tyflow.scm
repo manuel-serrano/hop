@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jan 18 11:00:43 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 18:34:05 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -175,10 +175,19 @@
       (mark-capture rhs env)))
 
 ;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SDeclFun ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SDeclFun env::pair-nil)
+   (with-access::J2SDeclFun this (%info)
+      ;; cleanup the DeclFun %info field for preparing the hint typing
+      (set! %info #f)
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
 ;*    mark-capture ::J2SFun ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark-capture this::J2SFun env::pair-nil)
-   (with-access::J2SFun this (params body)
+   (with-access::J2SFun this (params body %info)
       (for-each (lambda (p::J2SDecl)
 		   (with-access::J2SDecl p (%info)
 		      (set! %info 'nocapture)))

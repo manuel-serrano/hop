@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Jan 21 08:52:07 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 17:39:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -63,7 +63,7 @@
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 
 	   (inline js-object-alloc ::JsGlobalObject ::JsFunction)
-	   (inline js-object-alloc-super-fast ::JsGlobalObject ::JsFunction)
+	   (inline js-object-alloc-fast ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc/new-target ::JsGlobalObject ::JsFunction)
 	   (inline js-no-alloc ::JsGlobalObject ::JsFunction)
 	   (js-not-a-constructor-alloc ::JsGlobalObject ::JsFunction)
@@ -281,9 +281,9 @@
       (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-alloc-super-fast ...                                   */
+;*    js-object-alloc-fast ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-object-alloc-super-fast %this ctor::JsFunction)
+(define-inline (js-object-alloc-fast %this ctor::JsFunction)
    (with-access::JsFunction ctor (constrsize constrmap %prototype)
       (js-make-jsobject constrsize constrmap %prototype)))
 

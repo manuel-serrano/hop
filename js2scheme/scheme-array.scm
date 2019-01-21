@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Jan 19 10:03:43 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 17:49:06 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -479,7 +479,7 @@
    
    (define (foreach/thisarg obj fun thisarg %this cache)
       (cond
-	 ((isa? fun J2SArrow)
+	 ((and (isa? fun J2SFun) (not (isa? fun J2SSvc)))
 	  (with-access::J2SFun fun (generator vararg)
 	     (unless (or generator vararg)
 		(let ((proc (jsfun->lambda fun mode return conf #f #f)))

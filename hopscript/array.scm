@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jan 19 10:10:53 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 17:52:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1941,40 +1941,8 @@
       :enumerable #f
       :hidden-class #t)
 
-   ;; forEach
-   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.18
-   (define (array-prototype-foreach this::obj proc t)
-
-      (define (vector-foreach o len::uint32 proc t i::uint32)
-	 [%assert-array! o "vector-foreach"]
-	 (if (js-object-mode-inline? o)
-	     (with-access::JsArray o (vec ilen)
-		(let loop ((i i))
-		   (cond
-		      ((>=u32 i ilen)
-		       (js-undefined))
-		      ((not (js-object-mode-inline? o))
-		       (array-foreach o len proc t i))
-		      (else
-		       (let ((v (vector-ref vec (uint32->fixnum i))))
-			  (js-call3 %this proc t v (js-uint32-tointeger i) o)
-			  (loop (+u32 i 1)))))))
-	     (array-foreach o len proc t i)))
-
-      (define (array-foreach o len proc t i::uint32)
-	 (let loop ((i i))
-	    (when (<u32 i len)
-	       (let ((pv (js-get-property-value o o
-			    (js-toname i %this) %this)))
-		  (unless (js-absent? pv)
-		     (js-call3 %this proc t pv (uint32->fixnum i) o))
-		  (loop (+u32 i 1))))))
-
-      (array-prototype-iterator %this this proc t array-foreach vector-foreach)
-      (js-undefined))
-
    (js-bind! %this js-array-prototype 'forEach
-      :value (js-make-function %this array-prototype-foreach 1 "forEach"
+      :value (js-make-function %this js-array-prototype-foreach 1 "forEach"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -3572,9 +3540,36 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-foreach ...                                   */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.18    */
 ;*---------------------------------------------------------------------*/
-(define (js-array-prototype-foreach this::JsArray proc thisarg %this)
-   (tprint "TODO"))
+(define (js-array-prototype-foreach this::JsArray proc t %this)
+   
+   (define (vector-foreach o len::uint32 proc t i::uint32)
+      (if (js-object-mode-inline? o)
+	  (with-access::JsArray o (vec ilen)
+	     (let loop ((i i))
+		(cond
+		   ((>=u32 i ilen)
+		    (js-undefined))
+		   ((not (js-object-mode-inline? o))
+		    (array-foreach o len proc t i))
+		   (else
+		    (let ((v (vector-ref vec (uint32->fixnum i))))
+		       (js-call3 %this proc t v (js-uint32-tointeger i) o)
+		       (loop (+u32 i 1)))))))
+	  (array-foreach o len proc t i)))
+   
+   (define (array-foreach o len proc t i::uint32)
+      (let loop ((i i))
+	 (when (<u32 i len)
+	    (let ((pv (js-get-property-value o o
+			 (js-toname i %this) %this)))
+	       (unless (js-absent? pv)
+		  (js-call3 %this proc t pv (uint32->fixnum i) o))
+	       (loop (+u32 i 1))))))
+   
+   (array-prototype-iterator %this this proc t array-foreach vector-foreach))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-foreach ...                                             */

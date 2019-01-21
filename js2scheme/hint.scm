@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Thu Sep  6 07:35:17 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Mon Jan 21 18:21:13 2019 (serrano)                */
+;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
 ;*=====================================================================*/
@@ -483,7 +483,7 @@
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-hint-function* ::J2SDeclFun ...                               */
+;*    j2s-hint-function* ::J2SDeclFun ...                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint-function* this::J2SDeclFun conf)
    

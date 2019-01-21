@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Jan 21 08:52:35 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 17:34:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2519,7 +2519,7 @@
 		     (eq? scope '%scope)))
 	     (if (cancall? decl)
 		 `(js-object-alloc %this ,fun)
-		 `(js-object-alloc-super-fast %this ,fun))
+		 `(js-object-alloc-fast %this ,fun))
 	     `(js-object-alloc %this ,fun))))
       
    (define (j2s-new-fast cache clazz args)
@@ -2792,7 +2792,7 @@
 			      nodes)))
 		    (else
 		     `(let ((,cmap cmap))
-			 (if (or (eq? ,cmap ,cmap0) (eq? ,cmap ,cmap1))
+			 (if (or (eq? ,cmap ,cmap1) (eq? ,cmap ,cmap2))
 			     ;; cache hit
 			     ,(vector-inits %ref elements i offset nodes cmap1)
 			     ;; cache miss

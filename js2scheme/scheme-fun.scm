@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Jan 21 08:52:30 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 17:39:24 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -510,7 +510,7 @@
 	 (let ((f (j2s-decl-scheme-id decl)))
 	    (if (cancall? body)
 		`(js-object-alloc %this ,f)
-		`(js-object-alloc-super-fast %this ,f)))))
+		`(js-object-alloc-fast %this ,f)))))
    
    (with-access::J2SFun this (loc body vararg mode params generator thisp)
       (with-access::J2SDecl thisp (id)
