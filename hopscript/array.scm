@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jan 21 17:52:25 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 18:53:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1941,8 +1941,13 @@
       :enumerable #f
       :hidden-class #t)
 
+   ;; forEach
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.18
+   (define (array-prototype-foreach this::obj proc t)
+      (js-array-prototype-foreach this proc t %this))
+
    (js-bind! %this js-array-prototype 'forEach
-      :value (js-make-function %this js-array-prototype-foreach 1 "forEach"
+      :value (js-make-function %this array-prototype-foreach 1 "forEach"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
