@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Jan 16 11:11:02 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 11:35:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1510,12 +1510,14 @@
 	  (consume-any!)
 	  (let ((param (consume-rest-param!)))
 	     (pop-open-token (consume-token! 'RPAREN))
-	     (values (list param) '())))
+	     (values (list param) '(#f))))
+;* 	     (values (list param) '())))                               */
 	 (else
 	  (multiple-value-bind (param arg)
 	     (consume-param! 0)
 	     (let loop ((rev-params (list param))
-			(rev-args (if arg (list arg) '()))
+;* 			(rev-args (if arg (list arg) '()))             */
+			(rev-args (list arg))
 			(idx 1))
 		(if (eq? (peek-token-type) 'COMMA)
 		    (begin
@@ -1527,11 +1529,13 @@
 				 (pop-open-token (consume-token! 'RPAREN))
 				 (values
 				    (reverse! (cons param rev-params))
-				    (reverse! rev-args))))
+				    (reverse! (cons #f rev-args)))))
+;* 				    (reverse! rev-args))))             */
 			   (multiple-value-bind (param arg)
 			      (consume-param! idx)
 			      (loop (cons param rev-params)
-				 (if arg (cons arg rev-args) rev-args)
+				 (cons arg rev-args)
+;* 				 (if arg (cons arg rev-args) rev-args) */
 				 (+fx idx 1)))))
 		    (begin
 		       (pop-open-token (consume-token! 'RPAREN))
@@ -2994,9 +2998,13 @@
    (if (find (lambda (a) (isa? a J2SObjInit)) args)
        (with-access::J2SBlock body (loc nodes)
 	  (let* ((decls (append-map (lambda (p a)
-				       (if (isa? a J2SUnresolvedRef)
-					   '()
-					   (j2s-destructure a p #t)))
+				       (cond
+					  ((not a)
+					   '())
+					  ((isa? a J2SUnresolvedRef)
+					   '())
+					  (else
+					   (j2s-destructure a p #t))))
 			   params args))
 		 (vdecls (instantiate::J2SVarDecls
 			    (loc loc)
