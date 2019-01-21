@@ -82,3 +82,20 @@ function FIB( { value: value }, ... nodes ) {
 
 console.log( <FIB value=20/> );
 ```
+
+XML tag can also be conveniently used to build data structures. Example:
+
+```hopscript
+"use strict"
+
+function BOX(attr, ... children ) {
+   return { type : "BOX", attr : attr, children: children };
+}
+
+function ELEM( attr, ... children ) {
+   return { type : "Elem",  attr : attr, children: children };
+}
+
+console.log( <box id="1"> <elem> 1 </elem> <elem> 2 </elem> <elem> 3 </elem> </box> );
+console.log( <box id="2"> ${[1, 2, 3].map( ELEM )} </box> );
+```
