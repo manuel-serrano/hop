@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jan 20 10:34:52 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 08:52:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -63,7 +63,6 @@
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 
 	   (inline js-object-alloc ::JsGlobalObject ::JsFunction)
-	   (inline js-object-alloc-fast ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc-super-fast ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc/new-target ::JsGlobalObject ::JsFunction)
 	   (inline js-no-alloc ::JsGlobalObject ::JsFunction)
@@ -275,16 +274,6 @@
 ;*    js-object-alloc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype)
-      (with-access::JsConstructMap constrmap (size)
-	 (unless (=fx size constrsize)
-	    (js-function-set-constrmap! ctor)))
-      (js-make-jsobject constrsize constrmap %prototype)))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-alloc-fast ...                                         */
-;*---------------------------------------------------------------------*/
-(define-inline (js-object-alloc-fast %this ctor::JsFunction)
    (with-access::JsFunction ctor (constrsize constrmap %prototype)
       (with-access::JsConstructMap constrmap (size)
 	 (unless (=fx size constrsize)

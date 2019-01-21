@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Jan  7 05:46:04 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 08:39:08 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -39,7 +39,8 @@
 	  ((js-profile-log-cache ?cache . ?cspecs)
 	   (e `(with-access::JsPropertyCache ,cache (cntimap cntemap
 						       cntcmap cntpmap 
-						       cntamap cntvtable)
+						       cntamap cntvtable
+						       cntmiss)
 		  ,@(filter-map (lambda (c)
 				   (when (keyword? c)
 				      (let ((id (symbol-append 'cnt
@@ -716,6 +717,7 @@
 
    (define (calln-uncachable %this ocspecs obj prop args ccache ocache loc)
       `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc ',ocspecs)))
+	  (js-profile-log-cache ,ccache :miss)
 	  ,(calln %this 'f obj args)))
    
    (define (expand-cache-specs/args ccspecs ocspecs %this obj prop args ccache ocache loc)

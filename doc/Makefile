@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Jan  5 06:52:44 2019 (serrano)                */
+#*    Last change :  Mon Jan 21 09:09:36 2019 (serrano)                */
 #*    Copyright   :  2006-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -47,7 +47,8 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   lang/tilde.bnf lang/syntax.bnf \
   lang/00-syntax.md \
   lang/01-es.md lang/01-service.md lang/02-worker.md \
-  lang/01-module.md lang/03-react.md lang/app.js lang/stateful.js lang/ui.js \
+  lang/01-module.md lang/03-react.md lang/10-xml.md \
+  lang/app.js lang/stateful.js lang/ui.js \
   dev/dev.json dev/00-command.md dev/01-rcfile.md dev/10-edit.md \
   intf/intf.json intf/01-nodejs.md intf/10-scheme.md intf/scheme.bnf \
   intf/20-language.md license.md _index.md \
@@ -60,7 +61,7 @@ API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
   systime.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
-  01-es.html 03-react.html 01-module.html markdown.html cpp.html
+  01-es.html 03-react.html 01-module.html 10-xml.html markdown.html cpp.html
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 

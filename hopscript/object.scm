@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Jan 20 10:33:39 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 10:26:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -191,7 +191,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-bind-tag! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-macro (js-bind-tag! %this obj tag . tagjs)
+(define-macro (js-bind-tag! %this obj __proto__ tag . tagjs)
    `(begin
        (js-bind! ,%this ,obj ',(if (pair? tagjs) (car tagjs) tag)
           :value (js-make-function ,%this
@@ -207,32 +207,33 @@
                            (apply ,(symbol-append '< tag '>)
                               nodes)))
                     2 (js-ascii->jsstring ,(symbol->string tag))
+		    :__proto__ ,__proto__
 		    :src "object.scm")
           :writable #f :configurable #f :enumerable #f :hidden-class #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind-tags! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-macro (js-bind-tags! %this obj . tags)
+(define-macro (js-bind-tags! %this obj __proto__ . tags)
    `(begin
        ,@(map (lambda (tag)
-		 `(js-bind-tag! ,%this ,obj ,tag))
+		 `(js-bind-tag! ,%this ,obj ,__proto__ ,tag))
 	    tags)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-bind-svg-tags! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-macro (js-bind-svg-tags! %this obj . tags)
+(define-macro (js-bind-svg-tags! %this obj __proto__ . tags)
    `(begin
        ,@(map (lambda (tag)
 		 (let* ((s (symbol->string tag))
 			(i (string-index s #\:)))
 		    (if i
 			`(begin
-			    (js-bind-tag! ,%this ,obj ,tag)
-			    (js-bind-tag! ,%this ,obj ,tag
+			    (js-bind-tag! ,%this ,obj ,__proto__ ,tag)
+			    (js-bind-tag! ,%this ,obj ,__proto__ ,tag
 			       ,(string->symbol (substring s (+fx i 1)))))
-			`(js-bind-tag! ,%this ,obj ,tag))))
+			`(js-bind-tag! ,%this  ,obj ,__proto__ ,tag))))
 	    tags)))
    
 ;*---------------------------------------------------------------------*/
@@ -529,14 +530,56 @@
 ;*---------------------------------------------------------------------*/
 (define (js-hop-builtin %this)
    (when  (eq? %builtin #unspecified)
-      (let ((obj (instantiateJsObject
+      (let ((proto (instantiateJsObject
+		      (cmap (instantiate::JsConstructMap))
+		      (__proto__ (js-null))
+		      (elements (make-vector 4))))
+	    (obj (instantiateJsObject
 		    (cmap (instantiate::JsConstructMap))
 		    (__proto__ (js-null))
 		    (elements (make-vector 180)))))
 	 
-	 (js-init-hop-builtin! %this obj)
-	 (js-prevent-extensions obj)
+	 (js-bind! %this proto 'toString
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (tprint "IN TO STRING...")
+			 (js-function-debug-name this %this))
+		      0 "toString"
+		      :__proto__ proto)
+	    :writable #f :configurable #f :enumerable #f)
+	 
+	 (js-bind! %this proto '__proto__
+	    :get (js-make-function %this
+		    (lambda (o)
+		       (with-access::JsObject o (__proto__)
+			  __proto__))
+		    1 "get"
+		    :src "object.scm")
+	    :writable #f :enumerable #f :configurable #f)
 
+	 (js-bind! %this proto 'apply
+	    :value (js-make-function %this
+		      (lambda (this thisarg argarray)
+			 (tprint "ARG=" thisarg " " argarray)
+			 (js-apply-array %this this thisarg argarray))
+		      2 "apply"
+		      :src "object.scm"
+		      :__proto__ proto)
+	    :writable #f :enumerable #f :configurable #f)
+
+	 (js-bind! %this proto 'call
+	    :value (js-make-function %this
+		      (lambda (this thisarg . args)
+			 (js-apply %this this thisarg args))
+		      1 "call"
+		      :src "object.scm"
+		      :__proto__ proto)
+	    :writable #f :enumerable #f :configurable #f)
+	 
+	 (js-init-hop-builtin! %this obj proto)
+	 (js-prevent-extensions obj)
+	 (js-prevent-extensions proto)
+	 
 	 (set! %builtin obj)))
    %builtin)
 
@@ -549,9 +592,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-init-hop-builtin! ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-init-hop-builtin! %this builtin::JsObject)
+(define (js-init-hop-builtin! %this builtin::JsObject __proto__)
    ;; html_base
-   (js-bind-tags! %this builtin
+   (js-bind-tags! %this builtin __proto__
       A ABBR ACRONYM ADDRESS APPLET AREA ARTICLE B BASE
       BASEFONT BDI BDO BIG BLOCKQUOTE BODY BR BUTTON
       CANVAS CAPTION CENTER CITE CODE COL COLGROUP
@@ -564,29 +607,27 @@
       Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
       STRONG SUB SUMMARY SUP TABLE TBODY TD TEXTAREA TFOOT TH
       THEAD TIME TITLE TR TT U UL VAR REACT)
-   
+
    ;; html_head
-   (js-bind-tags! %this builtin
-      LINK STYLE)
+   (js-bind-tags! %this builtin __proto__ LINK STYLE)
    
-   (js-bind-tags! %this builtin IMG)
+   (js-bind-tags! %this builtin __proto__ IMG)
    
    ;; html5
-   (js-bind-tags! %this builtin
-      AUDIO VIDEO TRACK)
+   (js-bind-tags! %this builtin __proto__ AUDIO VIDEO TRACK)
    
    ;; svg
-   (js-bind-svg-tags! %this builtin
+   (js-bind-svg-tags! %this builtin __proto__
       SVG SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
       SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
       SVG:TEXTPATH SVG:TREF SVG:TSPAN
       SVG:RADIALGRADIENT SVG:LINEARGRADIENT)
    
-   (js-bind-tag! %this builtin SVG:IMG)
+   (js-bind-tag! %this builtin __proto__ SVG:IMG)
    
    ;; mathml
-   (js-bind-tags! %this builtin
+   (js-bind-tags! %this builtin __proto__
       MATH MATH:MSTYLE MATH:MI MATH:MN MATH:MO
       MATH:MROW MATH:MUNDER MATH:MOVER MATH:MUNDEROVER
       MATH:MSUP MATH:MSUB MATH:MSUBSUP MATH:MFRAC
@@ -599,6 +640,7 @@
 		   (instantiate::xml-comment
 		      (data data)))
 		1 "<!--"
+		:__proto__ __proto__
 		:src "object.scm")
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
 

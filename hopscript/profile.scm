@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sun Jan  6 17:35:51 2019 (serrano)                */
+;*    Last change :  Mon Jan 21 08:31:52 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -1136,7 +1136,7 @@
 	      (profile-uncached puts *profile-puts*)
 	      (newline *profile-port*)
 	      (fprint *profile-port*
-		 "UNCACHED METHODS:\n==================")
+		 "UNCACHED METHODS:\n=================")
 	      (profile-uncached calls *profile-methods*)
 	      (newline *profile-port*))
 	   (fprint *profile-port* "\n(use HOPTRACE=\"hopscript:uncache\" for uncached accesses)")))))
