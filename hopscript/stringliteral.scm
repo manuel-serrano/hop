@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan 22 13:23:44 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 13:50:47 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -200,7 +200,7 @@
       (let loop ((i 0))
 	 (when (<=fx i 127)
 	    (vector-set! vec i
-	       (js-index->jsstring
+	       (js-ascii->jsstring
 		  (make-string 1 (integer->char i))))
 	    (loop (+fx i 1))))
       (let loop ((i 128))
