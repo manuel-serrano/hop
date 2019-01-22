@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jan 21 18:53:05 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 07:42:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3548,7 +3548,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.18    */
 ;*---------------------------------------------------------------------*/
-(define (js-array-prototype-foreach this::JsArray proc t %this)
+(define (js-array-prototype-foreach this proc t %this)
    
    (define (vector-foreach o len::uint32 proc t i::uint32)
       (if (js-object-mode-inline? o)
@@ -3573,8 +3573,9 @@
 	       (unless (js-absent? pv)
 		  (js-call3 %this proc t pv (uint32->fixnum i) o))
 	       (loop (+u32 i 1))))))
-   
-   (array-prototype-iterator %this this proc t array-foreach vector-foreach))
+
+   (array-prototype-iterator %this this proc t array-foreach vector-foreach)
+   (js-undefined))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-foreach ...                                             */
