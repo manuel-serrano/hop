@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Jan 21 17:39:16 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 13:23:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1126,12 +1126,13 @@
        p)
       ((int32? p)
        (int32->uint32 p))
+      ((js-jsstring? p)
+       (if (isa? p JsStringLiteralIndex)
+	   (with-access::JsStringLiteralIndex p (index)
+	      index)
+	   (string->index (js-jsstring->string p))))
       ((isa? p JsNumber)
        (with-access::JsNumber p (val) (js-toindex val)))
-      ((js-jsstring? p)
-       (string->index (js-jsstring->string p)))
-      ((string? p)
-       (string->index p))
       ((symbol? p)
        (string->index (symbol->string! p)))
       ((isa? p JsString)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jan 22 08:23:13 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 13:21:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -123,7 +123,9 @@
 	      left::obj
 	      (right::obj (default #f)))
 	   
-	   (final-class JsStringLiteralASCII::JsStringLiteral)
+	   (class JsStringLiteralASCII::JsStringLiteral)
+	   (final-class JsStringLiteralIndex::JsStringLiteralASCII
+	      (index::uint32 read-only))
 	   (final-class JsStringLiteralUTF8::JsStringLiteral
 	      (%idxutf8::long (default 0))
 	      (%idxstr::long (default 0))

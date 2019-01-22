@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan 22 10:49:22 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 13:23:44 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -29,6 +29,7 @@
    (export (js-jsstring-debug msg obj)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
 	   (inline js-ascii->jsstring::bstring ::bstring)
+	   (inline js-index->jsstring::JsStringLiteralIndex ::bstring)
 	   (inline js-utf8->jsstring::JsStringLiteralUTF8 ::bstring)
 	   (js-string->jsstring::obj ::bstring)
 	   (js-stringlist->jsstring ::pair-nil)
@@ -199,7 +200,7 @@
       (let loop ((i 0))
 	 (when (<=fx i 127)
 	    (vector-set! vec i
-	       (js-ascii->jsstring
+	       (js-index->jsstring
 		  (make-string 1 (integer->char i))))
 	    (loop (+fx i 1))))
       (let loop ((i 128))
@@ -316,6 +317,15 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-ascii->jsstring::bstring val::bstring)
    val)
+
+;*---------------------------------------------------------------------*/
+;*    js-index->jsstring ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-index->jsstring val::bstring)
+   (instantiate::JsStringLiteralIndex
+      (weight (fixnum->uint32 (string-length val)))
+      (left val)
+      (index (fixnum->uint32 (string->integer val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii->jsstring ...                                           */
@@ -690,7 +700,7 @@
 (define-macro (make-integer-table num)
    `(vector
        ,@(map (lambda (i)
-		 (js-ascii->jsstring (integer->string i)))
+		 `(js-index->jsstring ,(integer->string i)))
 	    (iota num))))
 
 ;*---------------------------------------------------------------------*/
