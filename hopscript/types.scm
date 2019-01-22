@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Jan 20 10:31:22 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 08:23:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -74,7 +74,6 @@
 	      get set
 	      %get::procedure %set::procedure)
 	   (final-class JsWrapperDescriptor::JsDataDescriptor
-;* 	      (value (default (js-undefined)))                         */
 	      (%get::procedure read-only)
 	      (%set::procedure read-only))
 	   (final-class JsProxyDescriptor::JsPropertyDescriptor
@@ -197,7 +196,7 @@
 	      (minlen::int read-only (default -1))
 	      (rest::bool read-only (default #f))
 	      ;; MS 2019-01-10: two prototype fields are required,
-	      ;; see isPrototypeof in ECMASpecification
+	      ;; see isPrototypeOf in ECMAScript specification
 	      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.6
 	      prototype
 	      %prototype)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Jan 21 10:26:46 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 08:41:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -542,7 +542,6 @@
 	 (js-bind! %this proto 'toString
 	    :value (js-make-function %this
 		      (lambda (this)
-			 (tprint "IN TO STRING...")
 			 (js-function-debug-name this %this))
 		      0 "toString"
 		      :__proto__ proto)
@@ -579,6 +578,7 @@
 	 (js-init-hop-builtin! %this obj proto)
 	 (js-prevent-extensions obj)
 	 (js-prevent-extensions proto)
+	 (js-object-mode-enumerable-set! obj #f)
 	 
 	 (set! %builtin obj)))
    %builtin)
@@ -1200,7 +1200,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.5     */
 ;*---------------------------------------------------------------------*/
 (define (js-object-prototype-hasownproperty this v %this)
-   ;; the conversion TopRopertyKey is implemented by js-has-has-own-property
+   ;; the conversion ToPropertyKey is implemented by js-has-own-property
    (js-has-own-property (js-toobject %this this) v %this))
 
 ;*---------------------------------------------------------------------*/

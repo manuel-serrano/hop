@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Jan 14 10:53:19 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 08:01:43 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -298,11 +298,6 @@
 ;*    utype-ident ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (utype-ident ident utype conf #!optional compound)
-
-   (define (atomic-type? typ)
-      (memq typ '(int32 uint32 number integer bint
-		  int53 fixnum undefined bool null)))
-
    (cond
       ((or (eq? utype 'any) (eq? utype 'unknown))
        ident)
@@ -315,11 +310,6 @@
 ;*    vtype-ident ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (vtype-ident ident utype conf #!optional compound)
-
-   (define (atomic-type? typ)
-      (memq typ '(int32 uint32 number integer bint
-		  int53 fixnum undefined bool null)))
-
    (cond
       ((or (eq? utype 'any) (eq? utype 'unknown))
        ident)
@@ -543,19 +533,12 @@
 	      `(js-array-index-ref ,obj ,prop %this))
 	     ((int32)
 	      `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
-	     ((string)
-	      (cond
-		 ((and (string? prop) (string=? prop "length"))
+	     (else
+	      (if (and (string? prop) (string=? prop "length"))
 		  (if (eq? tyval 'uint32)
 		      `(js-array-length ,obj)
-		      (box `(js-array-length ,obj) 'uint32 conf)))
-		 ((and cache cspecs)
-		  `(js-get-name/cache ,obj (js-toname ,prop %this) #f %this
-		      ,(js-pcache cache) ,(loc->point loc) ',cspecs))
-		 (else
-		  `(js-array-ref ,obj ,prop %this))))
-	     (else
-	      `(js-array-ref ,obj ,prop %this))))
+		      (box `(js-array-length ,obj) 'uint32 conf))
+		  `(js-array-ref ,obj ,prop %this)))))
 	 ((eq? tyobj 'string)
 	  (cond
 	     ((type-uint32? typrop)

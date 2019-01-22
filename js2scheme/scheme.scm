@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Jan 21 17:34:14 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 08:10:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1244,7 +1244,7 @@
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
 	 (let ((for `(let ((%acc (js-undefined)))
 			(,(js-for-in op) ,(j2s-scheme obj mode return conf)
-			   (lambda (,name)
+			   (lambda (,name %this)
 			      ,set
 			      ,(if need-bind-exit-continue
 				   `(bind-exit (,(escape-name '%continue id))
@@ -1260,7 +1260,7 @@
    (define (for-in/break-eval tmp name props obj body set op)
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
 	 (let ((for `(,(js-for-in op) ,(j2s-scheme obj mode return conf)
-			(lambda (,name)
+			(lambda (,name %this)
 			   ,set
 			   ,(if need-bind-exit-continue
 				`(bind-exit (,(escape-name '%continue id))
@@ -1279,7 +1279,7 @@
 
    (define (for-in/w-break-comp tmp name props obj body set op)
       `(,(js-for-in op) ,(j2s-scheme obj mode return conf)
-	  (lambda (,name)
+	  (lambda (,name %this)
 	     ,set
 	     ,(j2s-scheme body mode return conf))
 	  ,@(close op (throw? body))
@@ -1288,7 +1288,7 @@
    (define (for-in/w-break-eval tmp name props obj body set op)
       `(let ((%acc (js-undefined)))
 	  (,(js-for-in op) ,(j2s-scheme obj mode return conf)
-	     (lambda (,name)
+	     (lambda (,name %this)
 		,set
 		,(j2s-scheme body mode acc-return conf))
 	     ,@(close op (throw? body))

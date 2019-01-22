@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sat Jan  5 07:10:25 2019 (serrano)                */
+/*    Last change :  Tue Jan 22 08:15:26 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -500,3 +500,54 @@ assert.ok( testSeal(), "seal" );
 assert.ok( testSealReadOnly(), "sealReadOnly" );
 assert.throws( testSealReadOnlyStrict, "sealReadOnlyStrict" );
 assert.ok( testFreeze(), "freeze" );
+
+/*---------------------------------------------------------------------*/
+/*    for-in-of                                                        */
+/*---------------------------------------------------------------------*/
+function forinarr( a ) {
+   let r = 0;
+
+   for( let k in a ) {
+      r += a[ k ];
+   }
+   
+   return r;
+}
+
+function forofarr( a ) {
+   let r = 0;
+
+   for( let v of a ) {
+      r += v;
+   }
+   
+   return r;
+}
+
+function testforinof() { 
+   let a = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2];
+   
+   return forinarr( a ) === forofarr( a );
+}
+	  
+assert.ok( testforinof(), "for in/of" );
+
+/*---------------------------------------------------------------------*/
+/*    forin                                                            */
+/*---------------------------------------------------------------------*/
+function testforin() {
+   var a = [1, 2];
+   var p = { "1": 20, __proto__: Array };
+   var cnt = 0;
+
+   a.__proto__ = p;
+   
+   for( let k in a ) { 
+      cnt++;
+   }
+   
+   return cnt === 2;
+}
+
+assert.ok( testforin(), "for in" );
+

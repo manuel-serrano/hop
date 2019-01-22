@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Jan 15 09:46:42 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 10:08:30 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -248,7 +248,7 @@
 	 promise))
    
    (js-bind! %this js-promise 'all
-      :configurable #f :enumerable #t
+      :configurable #f :enumerable #f
       :value (js-make-function %this js-promise-all 1 "all")
       :hidden-class #t)
    
@@ -275,7 +275,7 @@
 	 promise))
 
    (js-bind! %this js-promise 'race
-      :configurable #f :enumerable #t
+      :configurable #f :enumerable #f
       :value (js-make-function %this js-promise-race 1 "race")
       :hidden-class #t)
    
@@ -295,7 +295,7 @@
 	     promise))))
    
    (js-bind! %this js-promise 'reject
-      :configurable #f :enumerable #t
+      :configurable #f :enumerable #f
       :value (js-make-function %this promise-reject 1 "reject")
       :hidden-class #t)
 
@@ -318,7 +318,7 @@
 	     promise))))
    
    (js-bind! %this js-promise 'resolve
-      :configurable #f :enumerable #t
+      :configurable #f :enumerable #f
       :value (js-make-function %this promise-resolve 1 "resolve")
       :hidden-class #t)
    

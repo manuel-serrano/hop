@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan 15 13:42:07 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 10:49:22 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2889,7 +2889,7 @@
 	 (when (<fx i len)
 	    (let ((val (vector-ref prealloc-strings
 			  (char->integer (string-ref-ur o i)))))
-	       (proc val)
+	       (proc val %this)
 	       (loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2906,7 +2906,7 @@
 	       (when (<fx i len)
 		  (let* ((z (utf8-char-size (string-ref val i)))
 			 (s (substring val i (+fx i z))))
-		     (proc (js-string->jsstring s))
+		     (proc (js-string->jsstring s) %this)
 		     (loop (+fx i z)))))))
    
    (string-dispatch for-of o proc %this))

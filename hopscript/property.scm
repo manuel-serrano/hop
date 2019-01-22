@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jan 20 05:39:52 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 08:11:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -187,6 +187,7 @@
 	   (js-prevent-extensions ::JsObject)
 	   
 	   (generic js-for-in ::obj ::procedure ::JsGlobalObject)
+	   (generic js-for-in-prototype ::JsObject ::JsObject ::procedure ::JsGlobalObject)
 	   (generic js-for-of ::obj ::procedure ::bool ::JsGlobalObject)
 	   (js-for-of-iterator ::obj ::obj ::procedure ::bool ::JsGlobalObject)
 	   
@@ -978,6 +979,7 @@
 ;; MS CARE 27 sep 2014: This function is used by js-freeze and js-seal
 ;; I don't understand why.
 (define (js-object-unmap! o::JsObject)
+   (js-object-mode-enumerable-set! o #t)
    (with-access::JsObject o (cmap elements)
       (unless (eq? cmap (js-not-a-cmap))
 	 (with-access::JsConstructMap cmap (props)
@@ -1375,6 +1377,20 @@
       (lambda (o d) #t)
       ;; not found
       (lambda () #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-upto-property ...                                         */
+;*    -------------------------------------------------------------    */
+;*    This function search a property in a delimited subset of         */
+;*    the prototype chain. It is used by JS-FOR-IN.                    */
+;*---------------------------------------------------------------------*/
+(define (js-has-upto-property o::JsObject proto::JsObject p::obj %this)
+   (let loop ((obj o))
+      (if (js-has-own-property obj p %this)
+	  #t
+	  (with-access::JsObject obj (__proto__)
+	     (unless (eq? __proto__ proto)
+		(loop __proto__))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */
@@ -2030,6 +2046,7 @@
 			     (reject "Read-only property"))))))))))
 
    (define (extend-mapped-object!)
+      (js-object-mode-enumerable-set! o #t)
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (props single)
@@ -2385,6 +2402,8 @@
 		   cmap)))))
    
    (define (extend-mapped-object!)
+      (when enumerable
+	 (js-object-mode-enumerable-set! o #t))
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (props)
@@ -2969,17 +2988,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in obj::JsObject proc %this)
    
-   (define env '())
-
    (define (in-mapped-property prop)
       (when prop
 	 (let ((name (prop-name prop)))
 	    (when (symbol? name)
-	       (unless (memq name env)
-		  (set! env (cons name env))
-		  (when (flags-enumerable? (prop-flags prop))
-		     (proc (js-symbol->jsstring name))))))))
-
+	       (when (flags-enumerable? (prop-flags prop))
+		  (proc (js-symbol->jsstring name) %this))))))
+   
    (define (vfor-in vecname)
       (let ((len (vector-length vecname)))
 	 (let loop ((i 0))
@@ -2991,23 +3006,61 @@
       (when (isa? p JsPropertyDescriptor)
 	 (with-access::JsPropertyDescriptor p (name enumerable)
 	    (when (symbol? name)
-	       (unless (memq name env)
-		  (set! env (cons name env))
-		  (when (eq? enumerable #t)
-		     (proc (js-symbol->jsstring name))))))))
-
-   (let loop ((o obj))
-      (with-access::JsObject o (cmap __proto__ elements)
-	 (when (js-object-mode-enumerable? o)
-	    (if (not (eq? cmap (js-not-a-cmap)))
-		(with-access::JsConstructMap cmap (props)
-		   (vfor-in props))
-		(for-each in-property (js-object-properties o))))
-	 (when (isa? __proto__ JsObject)
-	    (loop __proto__)))))
+	       (when (eq? enumerable #t)
+		  (proc (js-symbol->jsstring name) %this))))))
+   
+   (with-access::JsObject obj (cmap __proto__ elements)
+      (when (js-object-mode-enumerable? obj)
+	 (if (not (eq? cmap (js-not-a-cmap)))
+	     (with-access::JsConstructMap cmap (props)
+		(vfor-in props))
+	     (for-each in-property (js-object-properties obj))))
+      (when (js-object? __proto__)
+	 (js-for-in-prototype __proto__ obj proc %this))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-for-in ::Object ...                                           */
+;*    js-for-in-prototype ...                                          */
+;*    -------------------------------------------------------------    */
+;*    JS-FOR-IN is the "surface" function, i.e., called on the         */
+;*    object itself. JS-FOR-IN-PROTOTYPE is the "deep" function,       */
+;*    i.e., called on the __proto__ of the initial object.             */
+;*---------------------------------------------------------------------*/
+(define-generic (js-for-in-prototype obj::JsObject owner::JsObject proc %this)
+
+   (define (in-mapped-property prop)
+      (when prop
+	 (let ((name (prop-name prop)))
+	    (when (symbol? name)
+	       (when (flags-enumerable? (prop-flags prop))
+		  (unless (js-has-upto-property owner obj name %this)
+		     (proc (js-symbol->jsstring name) %this)))))))
+   
+   (define (vfor-in vecname)
+      (let ((len (vector-length vecname)))
+	 (let loop ((i 0))
+	    (when (<fx i len)
+	       (in-mapped-property (vector-ref vecname i))
+	       (loop (+fx i 1))))))
+   
+   (define (in-property p)
+      (when (isa? p JsPropertyDescriptor)
+	 (with-access::JsPropertyDescriptor p (name enumerable)
+	    (when (symbol? name)
+	       (when (eq? enumerable #t)
+		  (unless (js-has-upto-property owner obj name %this)
+		     (proc (js-symbol->jsstring name) %this)))))))
+   
+   (with-access::JsObject obj (cmap __proto__ elements)
+      (when (js-object-mode-enumerable? obj)
+	 (if (not (eq? cmap (js-not-a-cmap)))
+	     (with-access::JsConstructMap cmap (props)
+		(vfor-in props))
+	     (for-each in-property (js-object-properties obj))))
+      (when (js-object? __proto__)
+	 (js-for-in-prototype __proto__ owner proc %this))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-for-in ::object ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in obj::object proc %this)
    (let ((jsobj (js-toobject %this obj)))
@@ -3018,7 +3071,8 @@
 		   (proc
 		      (js-string->jsstring
 			 (symbol->string
-			    (class-field-name (vector-ref fields i)))))
+			    (class-field-name (vector-ref fields i))))
+		      %this)
 		   (loop (+fx i 1)))))
 	  (js-for-in jsobj proc %this))))
 
@@ -3044,7 +3098,7 @@
       (let loop ()
 	 (let ((n (js-call0 %this next iterator)))
 	    (unless (eq? (js-get n 'done %this) #t)
-	       (proc (js-get n 'value %this))
+	       (proc (js-get n 'value %this) %this)
 	       (loop))))
       #t)
    

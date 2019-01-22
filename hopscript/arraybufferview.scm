@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Tue Jan 15 09:44:16 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 10:48:58 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -1396,7 +1396,7 @@
 		(let ((vref (js-typedarray-ref o)))
 		   (let loop ((i #u32:0))
 		      (when (<u32 i length)
-			 (proc (vref %data (uint32->fixnum i)))
+			 (proc (vref %data (uint32->fixnum i)) %this)
 			 (loop (+u32 i 1))))))))))
 
 ;*---------------------------------------------------------------------*/

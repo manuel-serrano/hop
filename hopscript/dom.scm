@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Tue Jan 15 09:46:15 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 08:12:36 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -569,8 +569,8 @@
       (let loop ((attributes attributes))
 	 (when (pair? attributes)
 	    (if (eq? (car attributes) 'class:)
-		(proc (js-string->jsstring "className"))
-		(proc (js-string->jsstring (keyword->string (car attributes)))))
+		(proc (js-string->jsstring "className") %this)
+		(proc (js-string->jsstring (keyword->string (car attributes))) %this))
 	    (loop (cddr attributes))))))
 	 
 ;*---------------------------------------------------------------------*/
@@ -586,7 +586,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in o::xml-element proc %this)
    (with-access::xml-markup o (id)
-      (proc (js-string->jsstring "id"))
+      (proc (js-string->jsstring "id") %this)
       (call-next-method)))
 	 
 ;*---------------------------------------------------------------------*/
@@ -594,7 +594,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in o::xml-html proc %this)
    (with-access::xml-markup o (id)
-      (proc (js-string->jsstring "id"))
+      (proc (js-string->jsstring "id") %this)
       (call-next-method)))
 	 
 ;*---------------------------------------------------------------------*/

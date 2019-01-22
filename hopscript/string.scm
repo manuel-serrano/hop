@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Jan 19 09:52:56 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 08:13:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -773,7 +773,7 @@
 	     (let loop ((i #u32:0))
 		(if (<u32 i len)
 		    (begin
-		       (proc (js-integer->jsstring (uint32->fixnum i)))
+		       (proc (js-integer->jsstring (uint32->fixnum i)) %this)
 		       (loop (+u32 i #u32:1)))
 		    (call-next-method)))
 	     (call-next-method)))))

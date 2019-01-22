@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Jan 22 07:42:06 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 08:14:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -410,8 +410,10 @@
 			      (instantiate::JsValueDescriptor
 				 (name 'length)
 				 (value 0)
+				 (enumerable #f)
 				 (configurable #f)
 				 (writable #t))))))
+	 (js-object-mode-enumerable-set! js-array-prototype #f)
 
 	 ;; DO NOT REMOVE !
 	 ;; when array are ready for caching this should replace
@@ -2563,7 +2565,16 @@
 ;*    js-has-own-property ::JsArray ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-own-property o::JsArray p %this::JsGlobalObject)
-   (not (eq? (js-get-own-property o p %this) (js-undefined))))
+   (with-access::JsArray o (vec ilen length)
+      (let ((i::uint32 (js-toindex p)))
+	 (cond
+	    ((<u32 i ilen) #t)
+	    ((eq? p 'length) #t)
+	    ((and (js-object-mode-holey? o)
+		  (<u32 i (fixnum->uint32 (vector-length vec)))
+		  (<u32 i length))
+	     (if (js-absent? (u32vref vec i)) (call-next-method) #t))
+	    (else (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */
@@ -3377,13 +3388,13 @@
 	     (let loop ((i #u32:0))
 		(cond
 		   ((<u32 i len)
-		    (proc (js-integer->jsstring (uint32->fixnum i)))
+		    (proc (js-integer->jsstring (uint32->fixnum i)) %this)
 		    (loop (+u32 i #u32:1)))
 		   ((js-object-mode-inline? o)
 		    (call-next-method))
 		   ((<u32 i vlen)
 		    (unless (js-absent? (u32vref vec i))
-		       (proc (js-integer->jsstring (uint32->fixnum i))))
+		       (proc (js-integer->jsstring (uint32->fixnum i)) %this))
 		    (loop (+u32 i #u32:1)))
 		   (else
 		    (call-next-method)))))
@@ -3404,7 +3415,7 @@
 		   ((not (js-object-mode-inline? o))
 		    (array-forof o len proc i))
 		   (else
-		    (proc (vector-ref vec (uint32->fixnum i)))
+		    (proc (vector-ref vec (uint32->fixnum i)) %this)
 		    (loop (+u32 i 1))))))
 	  (array-forof o len proc i)))
    
@@ -3412,7 +3423,7 @@
       (let loop ((i i))
 	 (when (<u32 i len)
 	    (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
-	       (proc (if (js-absent? pv) (js-undefined) pv))
+	       (proc (if (js-absent? pv) (js-undefined) pv) %this)
 	       (loop (+u32 i 1))))))
 
    (with-access::JsGlobalObject %this (js-symbol-iterator)

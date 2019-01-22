@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Dec 31 11:30:05 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 22 08:12:14 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
 ;*=====================================================================*/
@@ -498,7 +498,7 @@
 	     (let loop ((i 0))
 		(if (<fx i len)
 		    (begin
-		       (proc (js-integer->jsstring i))
+		       (proc (js-integer->jsstring i) %this)
 		       (loop (+fx i 1)))
 		    (call-next-method))))
 	  (call-next-method))))
@@ -517,6 +517,6 @@
 				 (js-touint32 (js-get o 'length %this) %this)))))
 		   (let loop ((i 0))
 		      (when (<fx i len)
-			 (proc (js-property-value o (vector-ref vec i) %this))
+			 (proc (js-property-value o (vector-ref vec i) %this) %this)
 			 (loop (+fx i 1))))))))))
 
