@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jan 18 14:11:09 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 20:48:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -131,7 +131,7 @@
 
 	 (define (is-integer?::bbool this arg)
 	    (cond
-	       ((number? arg)
+	       ((js-number? arg)
 		(integer? arg))
 	       ((isa? this JsNumber)
 		(with-access::JsNumber this (val)
@@ -231,7 +231,7 @@
 
    (define (js-cast-number this shape)
       (cond
-	 ((number? this) this)
+	 ((js-number? this) this)
 	 ((isa? this JsNumber) (with-access::JsNumber this (val) val))
 	 (else (js-raise-type-error %this "Not a number ~a"
 		  (if shape (shape this) this)))))
@@ -486,7 +486,7 @@
 (define (js-jsnumber-maybe-tostring this radix %this)
    (let loop ((this this))
       (cond
-	 ((number? this)
+	 ((js-number? this)
 	  (js-jsnumber-tostring this radix %this))
 	 ((isa? this JsObject)
 	  (js-call1 %this (js-get this 'toString %this) this radix))
@@ -499,7 +499,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
 (define (js+ left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
+   (if (and (js-number? left) (js-number? right))
        (+js left right %this)
        (js-slow+ left right %this)))
 
@@ -527,7 +527,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
 ;*---------------------------------------------------------------------*/
 (define (js- left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
+   (if (and (js-number? left) (js-number? right))
        (-/overflow left right)
        (let* ((lnum (js-tonumber left %this))
 	      (rnum (js-tonumber right %this)))
@@ -545,8 +545,8 @@
 	  (not (=fx (signbitfl o) 0))
 	  (<fx o 0)))
    
-   (let* ((lnum (if (number? left) left (js-tonumber left %this)))
-	  (rnum (if (number? right) right (js-tonumber right %this)))
+   (let* ((lnum (if (js-number? left) left (js-tonumber left %this)))
+	  (rnum (if (js-number? right) right (js-tonumber right %this)))
 	  (r (* lnum rnum)))
       (cond
 	 ((fixnum? r)

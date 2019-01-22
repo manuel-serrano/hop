@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Fri Jan 18 12:37:01 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 20:43:06 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -85,8 +85,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
 (define (+js x::obj y::obj %this)
-   (let* ((nx (if (number? x) x (js-tonumber x %this)))
-	  (ny (if (number? y) y (js-tonumber y %this))))
+   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
+	  (ny (if (js-number? y) y (js-tonumber y %this))))
       (+/overflow nx ny)))
    
 ;*---------------------------------------------------------------------*/
@@ -95,8 +95,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
 ;*---------------------------------------------------------------------*/
 (define (-js x::obj y::obj %this)
-   (let* ((nx (if (number? x) x (js-tonumber x %this)))
-	  (ny (if (number? y) y (js-tonumber y %this))))
+   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
+	  (ny (if (js-number? y) y (js-tonumber y %this))))
       (-/overflow nx ny)))
    
 ;*---------------------------------------------------------------------*/
@@ -105,8 +105,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
 (define (*js x::obj y::obj %this)
-   (let* ((nx (if (number? x) x (js-tonumber x %this)))
-	  (ny (if (number? y) y (js-tonumber y %this))))
+   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
+	  (ny (if (js-number? y) y (js-tonumber y %this))))
       (*/overflow nx ny)))
 
 ;*---------------------------------------------------------------------*/
@@ -116,8 +116,8 @@
 ;*       #sec-applying-the-exp-operator                                */
 ;*---------------------------------------------------------------------*/
 (define (**js x::obj y::obj %this)
-   (let* ((nx (if (number? x) x (js-tonumber x %this)))
-	  (ny (if (number? y) y (js-tonumber y %this))))
+   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
+	  (ny (if (js-number? y) y (js-tonumber y %this))))
       (exptfl (js-toflonum nx) (js-toflonum ny))))
 
 ;*---------------------------------------------------------------------*/
@@ -165,11 +165,11 @@
 (define (negjs expr %this)
    (let loop ((expr expr))
       (cond
-	 ((and (number? expr) (= expr 0))
+	 ((and (js-number? expr) (= expr 0))
 	  (if (flonum? expr)
 	      (if (=fx (signbitfl expr) 0) -0.0 +0.0)
 	      -0.0))
-	 ((number? expr)
+	 ((js-number? expr)
 	  (- expr))
 	 (else
 	  (loop (js-tonumber expr %this))))))
@@ -342,7 +342,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.2       */
 ;*---------------------------------------------------------------------*/
 (define (>js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
+   (if (and (js-number? left) (js-number? right))
        (> left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
@@ -358,7 +358,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.3       */
 ;*---------------------------------------------------------------------*/
 (define (<=js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
+   (if (and (js-number? left) (js-number? right))
        (<= left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
@@ -374,7 +374,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.4       */
 ;*---------------------------------------------------------------------*/
 (define (>=js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
+   (if (and (js-number? left) (js-number? right))
        (>= left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))

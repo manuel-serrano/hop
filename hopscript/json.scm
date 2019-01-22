@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jan 15 09:37:56 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 20:47:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -220,7 +220,7 @@
       (define indent
 	 (let loop ((space space))
 	    (cond
-	       ((number? space)
+	       ((js-number? space)
 		(cond
 		   ((> space 10)
 		    "          ")
@@ -341,7 +341,7 @@
 		   (js-tostring value %this)))
 	       ((js-jsstring? value)
 		(string-quote (js-jsstring->string value)))
-	       ((number? value)
+	       ((js-number? value)
 		(cond
 		   ((fixnum? value)
 		    (js-ascii->jsstring (fixnum->string value)))

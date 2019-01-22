@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Oct 16 08:58:06 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 22 20:48:25 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
 ;*=====================================================================*/
@@ -131,7 +131,7 @@
 	 (match-case x
 	    ((?- ?val 'number ?this)
 	     `(let ((,tmp ,(e val e)))
-		 (if ,(e `(number? ,tmp) e)
+		 (if ,(e `(js-number? ,tmp) e)
 		     ,tmp
 		     (js-toprimitive ,tmp 'number ,this))))
 	    ((?- ?val 'string ?this)
@@ -141,7 +141,7 @@
 		     (js-toprimitive ,tmp 'string ,this))))
 	    ((?- ?val 'any ?this)
 	     `(let ((,tmp ,(e val e)))
-		 (if ,(e `(number? ,tmp) e)
+		 (if ,(e `(js-number? ,tmp) e)
 		     ,tmp
 		     (if ,(e `(js-jsstring? ,tmp) e)
 			 ,tmp

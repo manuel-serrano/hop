@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jan 19 09:23:26 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 19:58:15 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -740,11 +740,12 @@
 		      (j2s-scheme (car args) mode return conf)
 		      10) %this))
 	    ((int53 bint)
-	     `(js-string->jsstring
-		 (fixnum->string ,(j2s-scheme obj mode return conf)
-		    ,(if (pair? args)
-			 (j2s-scheme (car args) mode return conf)
-			 10))))
+	     (if (pair? args)
+		 `(js-string->jsstring
+		     (fixnum->string ,(j2s-scheme obj mode return conf)
+			,(j2s-scheme (car args) mode return conf)))
+		 `(js-integer->jsstring
+		     (j2s-scheme (car args) mode return conf))))
 	    ((int32)
 	     `(js-string->jsstring
 		 (number->string ,(j2s-scheme obj mode return conf)

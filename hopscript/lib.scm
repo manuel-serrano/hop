@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Jan 15 09:38:49 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 20:47:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -118,7 +118,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-obj->jsobject obj::obj %this::JsGlobalObject)
    (cond
-      ((number? obj) (js-number->jsnumber obj))
+      ((js-number? obj) (js-number->jsnumber obj))
       ((boolean? obj) obj)
       ((eq? obj #unspecified) obj)
       ((null? obj) obj)

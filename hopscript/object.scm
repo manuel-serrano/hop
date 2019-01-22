@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Jan 22 08:41:55 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 20:48:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -684,7 +684,7 @@
 	       ((boolean? value)
 		;; 1.c
 		(js-new %this js-boolean value))
-	       ((number? value)
+	       ((js-number? value)
 		;; 1.c
 		(js-new %this js-number value))
 	       (else

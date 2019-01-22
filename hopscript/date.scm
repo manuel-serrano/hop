@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jan 15 09:37:44 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 20:47:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -206,7 +206,7 @@
 		       (cond
 			  ((js-jsstring? v)
 			   (parse-date (js-jsstring->string v)))
-			  ((number? v)
+			  ((js-number? v)
 			   (if (flonum? v)
 			       (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
 				   +nan.0
@@ -462,7 +462,7 @@
    (define (date-prototype-toJSON this::JsDate)
       (let* ((o (js-toobject %this this))
 	     (tv (js-toprimitive o 'number %this)))
-	 (if (and (number? tv) (not (integer? tv)))
+	 (if (and (js-number? tv) (not (integer? tv)))
 	     (js-null)
 	     (let ((p (js-get o 'toISOString %this)))
 		(if (isa? p JsFunction)

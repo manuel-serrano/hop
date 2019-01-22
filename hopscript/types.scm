@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jan 22 13:21:04 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 20:44:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -984,7 +984,7 @@
 ;*    js-number? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-number? o)
-   (or (fixnum? o) (flonum? o) (int32? o) (uint32? o)))
+   (or (fixnum? o) (flonum? o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object? ...                                                   */

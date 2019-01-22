@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Jan 22 13:23:03 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 20:46:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -996,11 +996,8 @@
 (define-generic (js-tonumber obj %this::JsGlobalObject)
    (let loop ((obj obj))
       (cond
-	 ((number? obj)
-	  (cond
-	     ((uint32? obj) (bigloo-type-error "toNumber" "fixnum/flonum" obj))
-	     ((int32? obj) (bigloo-type-error "toNumber" "fixnum/flonum" obj))
-	     (else obj)))
+	 ((js-number? obj)
+	  obj)
 	 ((eq? obj (js-undefined))
 	  +nan.0)
 	 ((eq? obj (js-null))
@@ -1170,7 +1167,7 @@
       ((eq? obj #t) "true")
       ((eq? obj #f) "false")
       ((eq? obj (js-null)) "null")
-      ((number? obj) (js-number->string obj))
+      ((js-number? obj) (js-number->string obj))
       ((symbol? obj) (js-symbol->jsstring obj))
       (else (typeof obj))))
 
@@ -1182,7 +1179,7 @@
       ((string? obj) obj)
       ((eq? obj #t) "true")
       ((eq? obj #f) "false")
-      ((number? obj) (js-number->string obj))
+      ((js-number? obj) (js-number->string obj))
       ((symbol? obj) (js-symbol->jsstring obj))
       (else (js-tostring (js-toobject %this obj) %this))))
 
@@ -1206,7 +1203,7 @@
 (define (js-tojsstring obj %this)
    (cond
       ((js-jsstring? obj) obj)
-      ((number? obj) (js-ascii->jsstring (js-number->string obj)))
+      ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((eq? obj (js-undefined)) (js-ascii->jsstring "undefined"))
       ((eq? obj #t) (js-ascii->jsstring "true"))
       ((eq? obj #f) (js-ascii->jsstring "false"))
@@ -1224,7 +1221,7 @@
       ((js-jsstring? o)
        (with-access::JsGlobalObject %this (js-string)
 	  (js-new1 %this js-string o)))
-      ((number? o)
+      ((js-number? o)
        (with-access::JsGlobalObject %this (js-number)
 	  (js-new1 %this js-number o)))
       ((boolean? o)
@@ -1306,9 +1303,9 @@
 	  (eq? y (js-undefined)))
 	 ((eq? x (js-undefined))
 	  (eq? y (js-null)))
-	 ((number? x)
+	 ((js-number? x)
 	  (cond
-	     ((number? y)
+	     ((js-number? y)
 	      (= x y))
 	     ((js-jsstring? y)
 	      (if (= x 0)
@@ -1323,7 +1320,7 @@
 	  (cond
 	     ((js-jsstring? y)
 	      (js-jsstring=? x y))
-	     ((number? y)
+	     ((js-number? y)
 	      (if (= y 0)
 		  (or (js-jsstring-null? x) (equality? (js-tonumber x %this) y))
 		  (equality? (js-tonumber x %this) y)))
@@ -1346,7 +1343,7 @@
 	  (cond
 	     ((js-jsstring? y)
 	      (equality? (js-toprimitive x 'any %this) y))
-	     ((number? y)
+	     ((js-number? y)
 	      (equality? (js-toprimitive x 'any %this) y))
 	     ((isa? y JsSymbolLiteral)
 	      (equality? (js-toprimitive x 'any %this) y))
@@ -1682,7 +1679,7 @@
        (js-jsstring->string obj))
       ((symbol? obj)
        (js-symbol->jsstring obj))
-      ((number? obj)
+      ((js-number? obj)
        (number->string obj))
       (else
        (js-jsstring->string (js-tostring obj %this)))))

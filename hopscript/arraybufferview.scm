@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Tue Jan 22 10:48:58 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 20:47:19 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -382,7 +382,7 @@
 		   (else (-u32 len (int32->uint32 (negs32 i))))))))
       
       (if (isa? this JsTypedArray)
-	  (when (number? val)
+	  (when (js-number? val)
 	     (with-access::JsTypedArray this (vref buffer bpe byteoffset)
 		(let ((len (js-typedarray-lengthu32 this %this))
 		      (vref (js-typedarray-ref this)))
@@ -511,7 +511,7 @@
 		(js-create-from-arraybuffer this
 		   (js-new %this (js-get %this 'ArrayBuffer %this))
 		   #u32:0 #u32:0))
-	       ((number? (car items))
+	       ((js-number? (car items))
 		(cond
 		   ((< (car items) 0)
 		    (js-raise-range-error %this

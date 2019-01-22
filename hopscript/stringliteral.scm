@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan 22 13:50:47 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 19:57:14 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -706,7 +706,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    integers ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define integers (make-integer-table 100))
+(define integers (make-integer-table 256))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->number ...                                            */
@@ -898,7 +898,6 @@
    (if (or (<fx num 0) (>=fx num (vector-length integers)))
        (js-ascii->jsstring (integer->string num))
        (vector-ref integers num)))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->bool ...                                              */

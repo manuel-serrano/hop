@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jan 18 12:11:23 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 19:59:42 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1203,35 +1203,31 @@
 	 ((eq? tr 'int32)
 	  (str-append flip
 	     left
-	     `(js-ascii->jsstring
-		(fixnum->string (int32->fixnum ,right)))))
+	     `(js-integer->jsstring (int32->fixnum ,right))))
 	 ((eq? tr 'uint32)
 	  (str-append flip
 	     left
-	     `(js-ascii->jsstring
-		 (fixnum->string ,(asfixnum right 'uint32)))))
+	     `(js-integer->jsstring ,(asfixnum right 'uint32))))
 	 ((memq tr '(integer int53))
 	  (str-append flip
 	     left
-	     `(js-ascii->jsstring (fixnum->string ,right))))
+	     `(js-integer->jsstring ,right)))
 	 ((eq? tr 'real)
 	  (str-append flip
 	     left
 	     `(js-ascii->jsstring (js-real->string ,right))))
 	 ((eq? tl 'number)
 	  (str-append flip
-	     `(js-ascii->jsstring
-		 (if (fixnum? ,left)
-		     (fixnum->string ,left)
-		     (js-real->string ,left)))
+	     `(if (fixnum? ,left)
+		  (js-integer->jsstring ,left)
+		  (js-ascii->jsstring (js-real->string ,left)))
 	     right))
 	 ((eq? tr 'number)
 	  (str-append flip
 	     left
-	     `(js-ascii->jsstring
-		 (if (fixnum? ,right)
-		     (fixnum->string ,right)
-		     (js-real->string ,right)))))
+	     `(if (fixnum? ,right)
+		  (js-integer->jsstring ,right)
+		  (js-ascii->jsstring (js-real->string ,right)))))
 	 (else
 	  (str-append flip
 	     left

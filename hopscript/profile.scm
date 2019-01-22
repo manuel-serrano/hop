@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Mon Jan 21 08:31:52 2019 (serrano)                */
+;*    Last change :  Tue Jan 22 18:14:00 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -106,7 +106,8 @@
 	    (register-exit-function!
 	       (lambda (n)
 		  (profile-report-start trc)
-		  (profile-report-cache trc)
+		  (when (string-contains trc "hopscript:cache")
+		     (profile-report-cache trc))
 		  (when (string-contains trc "hopscript:hint")
 		     (profile-hints trc))
 		  (when (string-contains trc "hopscript:alloc")
@@ -515,6 +516,7 @@
 (define js-profile-accesses (make-vector 32 #l0))
 (define js-profile-extensions (make-vector 32 #l0))
 (define js-profile-vectors (make-vector 256 #l0))
+(define js-profile-vector-maxlen 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-allocs ...                                               */
@@ -593,6 +595,7 @@
 	  (print  "\nEXTENSIONS:\n" "===========\n")
 	  (show-text-percentages js-profile-extensions)
 	  (print  "\nVECTOR EXTENSIONS:\n" "==================\n")
+	  (print "max-extension: " js-profile-vector-maxlen "\n")
 	  (show-text-percentages js-profile-vectors))
 	 (else
 	  (error "hop" "no alloc profiling configured" #f))))
@@ -642,6 +645,8 @@
       (profile
        (let* ((len (vector-length js-profile-vectors))
 	      (i (if (>= olen len) (- len 1) olen)))
+	  (when (>fx nlen js-profile-vector-maxlen)
+	     (set! js-profile-vector-maxlen nlen))
 	  (vector-set! js-profile-vectors i
 	     (+llong (fixnum->llong 1) (vector-ref js-profile-vectors i)))))
       (else
