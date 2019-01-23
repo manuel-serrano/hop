@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Jan 23 15:19:00 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 19:45:03 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -160,9 +160,6 @@
 		;; allocate precise types according to the ranges
 		(if (config-get conf :optim-integer #f)
 		    (begin
-		       ;; optimize operators (modulo) according to ranges
-		       (when (>=fx (config-get conf :optim 0) 2)
-			  (opt-range-binary! this conf))
 		       ;; allocate precise variable types
 		       (type-range! this tymap)
 		       (map-types this tymap))
@@ -2278,51 +2275,6 @@
 	 (let ((ity (interval->type range tymap 'number)))
 	    (set! type (min-type type ity)))))
    this)
-
-;*---------------------------------------------------------------------*/
-;*    opt-range-binary! ::J2SNode ...                                  */
-;*---------------------------------------------------------------------*/
-(define-walk-method (opt-range-binary! this::J2SNode args)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    opt-range-binary! ::J2SProgram ...                               */
-;*---------------------------------------------------------------------*/
-(define-walk-method (opt-range-binary! this::J2SProgram args)
-   (with-access::J2SProgram this (decls nodes)
-      (for-each (lambda (n) (opt-range-binary! n args)) decls)
-      (for-each (lambda (n) (opt-range-binary! n args)) nodes)
-      this))
-
-;*---------------------------------------------------------------------*/
-;*    opt-range-binary! ::J2SBinary ...                                */
-;*---------------------------------------------------------------------*/
-(define-walk-method (opt-range-binary! this::J2SBinary args)
-   
-   (define (integer? e::J2SExpr)
-      (with-access::J2SExpr e (type)
-	 (type-integer? type)))
-   
-   (define (positive-integer? e::J2SExpr)
-      (when (integer? e)
-	 (with-access::J2SExpr e (range)
-	    (and (interval? range) (> (interval-min range) 0)))))
-   
-   (with-access::J2SBinary this (op lhs rhs type)
-      (when (and (eq? op '%) (positive-integer? rhs))
-	 (with-access::J2SExpr this (range)
-	    (with-access::J2SExpr rhs ((rr range))
-	       (with-access::J2SExpr lhs ((lr range))
-		  (set! op 'remainder)
-		  (set! type 'integer)
-		  (let ((nrange (if (positive-integer? lhs)
-				    rr
-				    (interval
-				       (- (interval-max rr))
-				       (interval-max rr)))))
-		     (set! range nrange)))))))
-   
-   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    typemapXX ...                                                    */
