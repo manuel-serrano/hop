@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jan 23 05:40:13 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 07:42:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -15,11 +15,6 @@
 (module __hopscript_public
 
    (option (set! *compiler-debug-trace* 0))
-
-   (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
-	      "bgl_make_jsobject")
-	   ($js-jsobject-inline-elements-cleanup::obj (::obj)
-	      "bgl_jsobject_inline_elements_cleanup"))
 
    (include "types.sch")
    
@@ -61,8 +56,6 @@
 	   (inline js-new-return-fast::JsObject ::JsFunction ::JsObject)
 	   
 	   (js-new-sans-construct ::JsGlobalObject f)
-
-	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 
 	   (inline js-object-alloc ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc-fast ::JsGlobalObject ::JsFunction)
@@ -185,21 +178,6 @@
 	   (js-parseint-any ::obj ::JsGlobalObject)
 	   (js-parseint-string-uint32 ::obj ::uint32)
 	   (js-parsefloat ::obj ::JsGlobalObject)))
-
-;*---------------------------------------------------------------------*/
-;*    js-make-jsobject ...                                             */
-;*---------------------------------------------------------------------*/
-(define-inline (js-make-jsobject constrsize constrmap __proto__)
-   (let ((mode (js-object-default-mode)))
-      (cond-expand
-	 (bigloo-c
-	  ($js-make-jsobject constrsize constrmap __proto__ mode))
-	 (else
-	  (instantiateJsObject
-	     (cmap constrmap)
-	     (__proto__ __proto__)
-	     (elements (make-vector constrsize (js-undefined)))
-	     (mode mode))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */

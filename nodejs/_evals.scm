@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Fri Dec 28 09:49:34 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Wed Jan 23 11:48:30 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
 ;*=====================================================================*/
@@ -41,7 +41,7 @@
       (let ((this (js-new-global-object)))
 	 (when (isa? obj JsObject)
 	    (js-for-in obj
-	       (lambda (p)
+	       (lambda (p %this)
 		  (let* ((s (js-jsstring->string p))
 			 (y (string->symbol s)))
 		     (js-bind! %this this y
@@ -60,11 +60,11 @@
       (let* ((%ctx (%createContext this ctx))
 	     (prev '()))
 	 ;; get all pre-bound variables
-	 (js-for-in %ctx (lambda (p) (set! prev (cons p prev))) %this)
+	 (js-for-in %ctx (lambda (p %this) (set! prev (cons p prev))) %this)
 	 (let ((res (proc %ctx)))
 	    (when (isa? ctx JsObject)
 	       (js-for-in %ctx
-		  (lambda (p)
+		  (lambda (p %this)
 		     (unless (member p prev)
 			(js-put! ctx p (js-get %ctx p %this) #f %this)))
 		  %this))

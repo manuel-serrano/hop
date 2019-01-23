@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Tue Jan 15 10:02:30 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 10:06:09 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -184,7 +184,9 @@
 	 (let* ((hdl (nodejs-new-pipe %worker (and (pair? val) (car val))))
 		(obj (instantiateJsHandle
 			(handle hdl)
-			(__proto__ pipe-prototype))))
+			(__proto__ pipe-prototype)
+			(cmap (instantiate::JsConstructMap))
+			(elements ($create-vector 1)))))
 	    ;; fd
 	    (js-bind! %this obj 'fd
 	       :get (js-make-function %this

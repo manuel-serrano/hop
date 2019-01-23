@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jan 18 09:37:03 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:40:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -391,6 +391,7 @@
 	       "Error"
 	       :__proto__ js-function-prototype
 	       :prototype js-error-prototype
+	       :size 5
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack
 	       :src "error.scm"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jan 15 09:38:04 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:23:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -60,7 +60,8 @@
       (set! js-math
 	 (instantiateJsMath
 	    (cmap (instantiate::JsConstructMap))
-	    (__proto__ __proto__)))
+	    (__proto__ __proto__)
+	    (elements ($create-vector 26))))
       ;; other properties
       (js-bind! %this js-math 'E
 	 :value 2.7182818284590452354

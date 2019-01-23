@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jan 15 09:50:11 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:26:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -64,7 +64,7 @@
 			(__proto__ (js-get js-object 'prototype %this)))))
 	    (js-object-properties-set! nobj '())
 	    (js-for-in obj
-	       (lambda (k)
+	       (lambda (k %this)
 		  (js-put! nobj k
 		     (js-donate (js-get obj k %_this) worker %_this)
 		     #f %this))
@@ -198,6 +198,7 @@
 	       1 "Symbol"
 	       :__proto__ js-function-prototype
 	       :prototype js-symbol-prototype
+	       :size 17
 	       :shared-cmap #f))
 	 
 	 (js-bind! %this %this 'Symbol

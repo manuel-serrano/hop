@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Jan 20 10:32:30 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:41:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -156,7 +156,7 @@
 	 (js-object-properties-set! nobj '())
 	 (js-object-mode-set! nobj (js-object-mode obj))
 	 (js-for-in obj
-	    (lambda (k)
+	    (lambda (k %this)
 	       (js-put! nobj k
 		  (js-donate (js-get obj k %_this) worker %this)
 		  #f %this))
@@ -400,6 +400,7 @@
 				 3 "Service"
 				 :__proto__ js-function-prototype
 				 :prototype js-service-prototype
+				 :size 5
 				 :alloc js-no-alloc
 				 :construct (lambda (this proc path)
 					       (js-create-service %this proc

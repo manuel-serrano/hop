@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Jan 19 09:16:08 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 15:36:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -875,7 +875,41 @@
 ;*    resolve! ::J2SAssign ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SAssig env mode withs wenv genv ctx conf)
+   
+   (define (lhs-name node)
+      (cond
+	 ((isa? node J2SRef)
+	  (with-access::J2SRef node (decl) (lhs-name decl)))
+	 ((isa? node J2SDecl)
+	  (with-access::J2SDecl node (id) (symbol->string id)))
+	 ((isa? node J2SAccess)
+	  (with-access::J2SAccess node (obj field)
+	     (format "~a.~a" (lhs-name obj) (lhs-name field))))
+	 ((isa? node J2SString)
+	  (with-access::J2SString node (val) val))
+	 ((isa? node J2SNumber)
+	  (with-access::J2SNumber node (val) (number->string val)))
+	 (else
+	  "")))
+   
    (call-default-walker)
+
+   ;; find a good name for function assignment
+   (with-access::J2SAssig this (lhs rhs)
+      (when (isa? rhs J2SFun)
+	 (with-access::J2SFun rhs (name)
+	    (cond
+	       ((eq? name '||)
+		(let ((better-name (lhs-name lhs)))
+		   (unless (string=? better-name "")
+		      (set! name (string->symbol better-name)))))
+	       ((string-index (symbol->string! name) #\@)
+		=>
+		(lambda (i)
+		   (let ((better-name (lhs-name lhs)))
+		      (unless (string=? better-name "")
+			 (set! name (string->symbol better-name))))))))))
+   
    (when (eq? mode 'strict)
       ;; strict mode restrictions
       (with-access::J2SAssig this (lhs loc)
@@ -1226,4 +1260,3 @@
 	     (obj id)
 	     (fname (cadr loc))
 	     (location (caddr loc)))))))
-

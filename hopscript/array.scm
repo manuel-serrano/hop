@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Jan 22 20:47:29 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:24:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -192,7 +192,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    global parameters                                                */
 ;*---------------------------------------------------------------------*/
-(define-inline (DEFAULT-EMPTY-ARRAY-SIZE) 8)
+(define-inline (DEFAULT-EMPTY-ARRAY-SIZE) 4)
 
 (define-inline (MAX-EXPANDABLE-ARRAY-SIZE::uint32)
    (bit-lshu32 #u32:1 20))
@@ -236,7 +236,7 @@
 		     (js-object-mode-holey? obj)))
 	       ;; donate the value of the array
 	       (js-for-in obj
-		  (lambda (k)
+		  (lambda (k %this)
 		     (js-put! nobj k
 			(js-donate (js-get obj k %_this) worker %_this)
 			#f %this))
@@ -436,6 +436,7 @@
 	    (js-make-function %this (%js-array %this) 1 "Array"
 	       :__proto__ js-function-prototype
 	       :prototype js-array-prototype
+	       :size 17
 	       :alloc js-array-alloc-ctor
 	       :construct (lambda (this . is)
 			     (js-array-construct %this this is))))
@@ -805,7 +806,10 @@
 	  (lambda (len)
 	     (let ((nlen (uint32->fixnum len)))
 		(cond-expand (profile (profile-vector-extension nlen len)))
-		(set! vec (copy-vector-fill! vec nlen (js-undefined))))
+		(let ((nvec (copy-vector-fill! vec nlen (js-undefined))))
+		   (when ($jsobject-vector-inline? arr)
+		      (vector-fill! vec #unspecified))
+		   (set! vec nvec)))
 	     (js-get arr (js-uint32-tointeger idx) %this)))
 	 (else
 	  (js-get arr (js-uint32-tointeger idx) %this)))))
@@ -2380,7 +2384,7 @@
 	 (__proto__ js-array-prototype))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-alloc ...                                               */
+;*    js-array-alloc-ctor ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-array-alloc-ctor::JsArray %this constructor::JsFunction)
    (with-access::JsGlobalObject %this (js-array js-array-prototype)
@@ -2449,14 +2453,6 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.2.1     */
 ;*---------------------------------------------------------------------*/
 (define (js-array-construct/length %this::JsGlobalObject this::JsArray len)
-   
-   (define (array-set! v::vector iln::uint32 ulen::uint32)
-      (with-access::JsArray this (vec ilen length)
-	 (set! length ulen)
-	 (set! ilen iln)
-	 (set! vec v))
-      this)
-   
    (let ((l32 (js-touint32 len %this)))
       (if (not (=uint32 l32 len))
 	  (js-raise-range-error %this "index out of range ~a" len)
@@ -2876,7 +2872,7 @@
 			   ;; 6
 			   (js-define-own-property o q newdesc throw %this)))))
 	     v)))
-   
+
    (with-access::JsArray o (vec ilen length)
       (let ((idx::uint32 (js-toindex p)))
 	 (cond
@@ -2918,14 +2914,20 @@
 	     (with-access::JsArray o (length vec ilen)
 		;; use max when vector-length == 0
 		(let* ((len (vector-length vec))
-		       (nlen (max (*fx len 2) (+fx (uint32->fixnum idx) 1))))
+		       (nlen (max (*fx len 2) (+fx (uint32->fixnum idx) 1)))
+		       (nvec (copy-vector-fill! vec nlen (js-absent))))
 		   (cond-expand (profile (profile-vector-extension nlen len)))
-		   (set! vec (copy-vector vec nlen)))
+		   (when ($jsobject-vector-inline? o)
+		      (vector-fill! vec #unspecified))
+		   (set! vec nvec))
 		(vector-set! vec (uint32->fixnum idx) v)
-		(let ((nilen (+u32 ilen #u32:1)))
-		   (set! ilen nilen)
-		   (when (>=u32 idx length)
-		      (set! length (+u32 idx #u32:1))))))
+		(if (=u32 ilen idx)
+		    (set! ilen (+u32 ilen #u32:1))
+		    (begin
+		       (js-object-mode-inline-set! o #f)
+		       (js-object-mode-holey-set! o #t)))
+		(when (>=u32 idx length)
+		   (set! length (+u32 idx #u32:1)))))
 	    (else
 	     (aput! o (js-toname p %this) v))))))
 
@@ -3286,13 +3288,15 @@
 				     ;; expand the vector
 				     =>
 				     (lambda (len)
-					(let ((olen (vector-length vec))
-					      (nlen (uint32->fixnum len)))
+					(let* ((olen (vector-length vec))
+					      (nlen (uint32->fixnum len))
+					      (nvec (copy-vector-fill! vec nlen (js-absent))))
 					   (cond-expand
 					      (profile (profile-vector-extension
 							  nlen olen)))
-					   (set! vec
-					      (copy-vector-fill! vec nlen (js-absent))))
+					   (when ($jsobject-vector-inline? a)
+					      (vector-fill! vec #unspecified))
+					   (set! vec nvec))
 					(js-define-own-property-array
 					   a index desc #f)))
 				    (else

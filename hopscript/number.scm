@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Jan 22 20:48:09 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:19:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -145,6 +145,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype js-number-prototype
 	       :construct js-number-construct
+	       :size 8
 	       :alloc js-number-alloc
 	       :shared-cmap #f))
 	 

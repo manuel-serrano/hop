@@ -3,15 +3,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Oct 26 21:59:00 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Wed Jan 23 11:57:12 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/6.0/#sec-14.4         */
 ;*    -------------------------------------------------------------    */
 ;*    This module implements the JavaScript CPS transformation needed  */
-;*    to implement generators. Only generator function are modified.   */
+;*    for generators. Only generator function are modified.            */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -585,9 +585,13 @@
 	     (let* ((y (cps (car wdecls)
 			  (KontStmt (lambda (ndecl::J2SStmt)
 				       (cond
-					  ((null? (cdr decls))
-					   (set-car! decls ndecl)
-					   (call-next-method))
+;* 					  ((null? (cdr decls))         */
+;* 					   (tprint "NULL CDR DECLS")   */
+;* 					   (set-car! decls ndecl)      */
+;* 					   (tprint ">>>> " (j2s->list this)) */
+;* 					   (let ((r (call-next-method))) */
+;* 					      (tprint "<<< R=" (j2s->list this)) */
+;* 					      r))                      */
 					  ((null? (cdr wdecls))
 					   (let ((block (instantiate::J2SBlock
 							   (loc loc)
@@ -675,23 +679,32 @@
 ;*    cps ::J2SBindExit ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SBindExit k pack kbreaks kcontinues ktry fun)
-   (assert-kont k KontExpr this)
-   (with-access::J2SBindExit this (stmt lbl)
-      (if lbl
-	  (begin
-	     ;; an inlined function
-	     (set! stmt (cps-fun! stmt))
-	     (kcall k this))
-	  (if (yield-expr? stmt kbreaks kcontinues)
-	      (cps stmt
-		 (KontStmt (lambda (kstmt::J2SStmt)
-			      (set! stmt kstmt)
-			      (kcall k this))
-		    this k)
-		 pack kbreaks kcontinues ktry fun)
-	      (begin
-		 (set! stmt (cps-fun! stmt))
-		 (kcall k this))))))
+   
+   (define (make-kont-decl loc k)
+      (let* ((name (gensym '%kbind-exit))
+	     (kfun (J2SArrow name '()
+		      (J2SBlock/w-endloc (kcall k (J2SUndefined))))))
+	 (J2SLetOpt '(call) name kfun)))
+   
+   (define (make-kont-fun-call loc decl)
+      (J2SCall (J2SRef decl)))   (assert-kont k KontExpr this)
+      
+   (with-access::J2SBindExit this (stmt lbl loc)
+      (cond
+	 ((not (yield-expr? stmt kbreaks kcontinues))
+	  (set! stmt (cps-fun! stmt))
+	  (kcall k this))
+	 (lbl
+	  ;; in order to inline code generator, the j2sreturn CPS
+	  ;; transformation must know how to map its lbl to a contination
+	  (error "cps" "generator cannot use inline expression" loc))
+	 (else
+	  (cps stmt
+	     (KontStmt (lambda (kstmt::J2SStmt)
+			  (set! stmt kstmt)
+			  (kcall k this))
+		this k)
+	     pack kbreaks kcontinues ktry fun)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SFor ...                                                 */

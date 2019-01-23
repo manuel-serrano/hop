@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Dec  2 21:05:27 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Wed Jan 23 08:01:58 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
 ;*=====================================================================*/
@@ -75,7 +75,7 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_public)
+		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
 				      ,(length elements)
 				      ,cmap
 				      ,__proto__))
@@ -96,7 +96,7 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_public)
+		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
 				      ,n
 				      ,cmap
 				      ,__proto__))
@@ -105,6 +105,22 @@
 			   ,@(map (lambda (idx)
 				     `(vector-set! ,vec ,idx (js-undefined)))
 				(iota n))
+			   ,obj)
+		       e)))
+		((instantiateJsObject
+		    (cmap ?cmap)
+		    (__proto__ ?__proto__)
+		    (elements ($create-vector ?n)))
+		 ;; The purpose of this special expansion is to force allocate
+		 ;; the object with the JS-MAKE-JSOBJECT that creates
+		 ;;; properties inline, in contrast to the regular
+		 ;; constructor that allocates properties in a separate vector.
+		 (let ((obj (gensym 'o))
+		       (vec (gensym 'v)))
+		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+				      ,n
+				      ,cmap
+				      ,__proto__)))
 			   ,obj)
 		       e)))
 		(else
@@ -161,7 +177,7 @@
 	  (__proto__ ?__proto__))
        (let ((obj (gensym 'o))
 	     (vec (gensym 'v)))
-	  (e `(let* ((,obj ((@ js-make-jsobject __hopscript_public)
+	  (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
 			    ,(length elements)
 			    ,cmap
 			    ,__proto__))

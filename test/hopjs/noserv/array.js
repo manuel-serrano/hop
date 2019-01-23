@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Jan  4 14:56:13 2019 (serrano)                */
+/*    Last change :  Wed Jan 23 11:02:01 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -306,6 +306,31 @@ assert.ok( o[ 4294967296 ] == undefined );
 var p = [];
 
 [1,2,3,4,5,6,7,8,9,10].forEach( n => assert.ok( p.push( true ) === n ) );
+
+function foo() {
+   let a = new Array( 10 );
+   
+   console.log( a.length, a );
+   
+   let n = a.push( "foo" );
+   
+   console.log( n, a.length, a );
+}
+
+foo();
+   
+   
+function testCtorPush() {
+   let a = new Array( 10 );
+   
+   console.log( a.length, a );
+   
+   let n = a.push( "foo" );
+   
+   return !Object.getOwnPropertyDescriptor( a, "0" );
+}
+
+assert.ok( testCtorPush(), "CtorPush" );
 
 /*---------------------------------------------------------------------*/
 /*    holey                                                            */

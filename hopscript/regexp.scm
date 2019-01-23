@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jan 19 11:33:25 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:31:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -114,7 +114,7 @@
 	    (instantiateJsRegExp
 	       (cmap js-regexp-cmap)
 	       (__proto__ __proto__)
-	       (elements (vector 0))
+	       (elements ($create-vector 10))
 	       (rx (pregexp ""))
 	       (source "")
 	       (flags #u32:0)))

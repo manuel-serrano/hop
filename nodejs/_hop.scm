@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Jan 18 13:41:15 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 09:14:45 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -70,7 +70,8 @@
       
       (define js-urlframe-prototype
 	 (instantiateJsObject
-	    (__proto__ __proto__)))
+	    (__proto__ __proto__)
+	    (elements ($create-vector 5))))
       
       (define js-webservice
 	 (js-make-function %this

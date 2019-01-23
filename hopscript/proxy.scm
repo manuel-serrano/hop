@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Tue Jan 15 09:48:15 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:39:39 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -89,6 +89,7 @@
 	    :__proto__ js-function-prototype
 	    :prototype '()
 	    :alloc js-proxy-alloc
+	    :size 1
 	    :construct js-proxy-construct))
 
       (js-bind! %this js-proxy 'revocable
@@ -512,7 +513,7 @@
    
    (define (all-symbol-or-string? r)
       (js-for-of r
-	 (lambda (el)
+	 (lambda (el %this)
 	    (unless (or (js-jsstring? el) (isa? el JsSymbol))
 	       (err)))
 	 #t %this)
@@ -529,7 +530,7 @@
       (when (=uint32 (fixnum->uint32 (vector-length names))
 	       (js-array-length r))
 	 (js-for-of r
-	    (lambda (el)
+	    (lambda (el %this)
 	       (unless (find-in? el names)
 		  (err)))
 	    #t %this)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Tue Jan 15 09:50:03 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 11:45:42 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -56,7 +56,7 @@
 			    (data ndata))))
 	       (set! data '#u8())
 	       (js-for-in obj
-		  (lambda (k)
+		  (lambda (k %this)
 		     (js-put! nobj k
 			(js-donate (js-get obj k %_this) worker %this)
 			#f %this))

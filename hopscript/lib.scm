@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Jan 22 20:47:50 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 09:16:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -118,7 +118,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-obj->jsobject obj::obj %this::JsGlobalObject)
    (cond
-      ((js-number? obj) (js-number->jsnumber obj))
+      ((number? obj) (js-number->jsnumber obj))
       ((boolean? obj) obj)
       ((eq? obj #unspecified) obj)
       ((null? obj) obj)
@@ -204,31 +204,35 @@
 (define (js-alist->jsobject alist %this)
    (with-access::JsGlobalObject %this (js-object __proto__)
       (let* ((len (length alist))
-	     (elements ($create-vector len))
 	     (props ($create-vector len))
-	     (methods (make-vector len #f)))
-	 (let loop ((i 0)
-		    (alist alist))
-	    (if (=fx i len)
-		(let ((cmap (instantiate::JsConstructMap
-			       (props props)
-			       (methods methods))))
-		   (instantiateJsObject
-		      (cmap cmap)
-		      (__proto__ __proto__)
-		      (elements elements)))
-		(let* ((name (cond
-				((keyword? (caar alist))
-				 (keyword->symbol (caar alist)))
-				((string? (caar alist))
-				 (string->symbol (caar alist)))
-				(else
-				 (caar alist))))
-		       (val (js-obj->jsobject (cdar alist) %this)))
-		   (vector-set! props i (prop name (property-flags-default)))
-		   (vector-set! elements i val)
-		   (when (isa? val JsFunction) (vector-set! methods i #t))
-		   (loop (+fx i 1) (cdr alist))))))))
+	     (methods (make-vector len #f))
+	     (cmap (instantiate::JsConstructMap
+		      (props props)
+		      (methods methods)))
+	     (obj (instantiateJsObject
+		     (cmap cmap)
+		     (__proto__ __proto__)
+		     (elements ($create-vector len)))))
+	 (with-access::JsObject obj (elements)
+	    (let ((vec elements))
+	       (let loop ((i 0)
+			  (alist alist))
+		  (if (=fx i len)
+		      obj
+		      (let* ((name (cond
+				      ((keyword? (caar alist))
+				       (keyword->symbol (caar alist)))
+				      ((string? (caar alist))
+				       (string->symbol (caar alist)))
+				      (else
+				       (caar alist))))
+			     (val (js-obj->jsobject (cdar alist) %this)))
+			 (vector-set! props i
+			    (prop name (property-flags-default)))
+			 (vector-set! vec i val)
+			 (when (isa? val JsFunction)
+			    (vector-set! methods i #t))
+			 (loop (+fx i 1) (cdr alist))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-plist->jsobject ...                                           */
@@ -268,7 +272,7 @@
 (define (js-jsobject->plist obj %this)
    (let ((args '()))
       (js-for-in obj
-	 (lambda (p)
+	 (lambda (p %this)
 	    (let ((p (string->symbol (js-jsstring->string p))))
 	       (set! args (cons (symbol->keyword p) args))
 	       (set! args (cons (js-get obj p %this) args))))
@@ -281,7 +285,7 @@
 (define (js-jsobject->keyword-plist obj %this)
    (let ((args '()))
       (js-for-in obj
-	 (lambda (p)
+	 (lambda (p %this)
 	    (let ((p (string->symbol (js-jsstring->string p))))
 	       (set! args (cons (symbol->keyword p) args))
 	       (set! args (cons (js-get obj p %this) args))))
@@ -294,7 +298,7 @@
 (define (js-jsobject->alist obj %this)
    (let ((args '()))
       (js-for-in obj
-	 (lambda (p)
+	 (lambda (p %this)
 	    (let* ((n (js-jsstring->string p))
 		   (k (string->symbol n))
 		   (e (cons (string->keyword n) (js-get obj k %this))))
@@ -333,7 +337,7 @@
 
    (let ((acc '()))
       (js-for-in obj
-	 (lambda (k)
+	 (lambda (k %this)
 	    (let ((val (js-get obj k %this))
 		  (key (string->keyword (js-jsstring->string k))))
 	       (if (isa? val JsArray)
@@ -410,7 +414,7 @@
 	 (if (isa? fun JsFunction)
 	     (begin
 		(js-for-of-iterator (js-call0 %this fun o) o
-		   (lambda (e) (set! acc (cons e acc))) #f %this)
+		   (lambda (e %this) (set! acc (cons e acc))) #f %this)
 		(js-vector->jsarray (list->vector (reverse! acc)) %this))
 	     (js-raise-type-error %this "call: not an interator ~s"
 	       o)))))

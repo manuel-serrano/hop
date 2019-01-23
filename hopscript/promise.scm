@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Jan 22 10:08:30 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:35:03 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -217,6 +217,7 @@
 	    :__proto__ js-function-prototype
 	    :prototype js-promise-prototype
 	    :construct js-promise-construct
+	    :size 7
 	    :alloc js-promise-alloc)))
 
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.all

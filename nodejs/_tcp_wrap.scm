@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Tue Jan 15 09:56:41 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 09:58:16 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
@@ -244,7 +244,9 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (instantiateJsHandle
 		       (handle hdl)
-		       (__proto__ (get-tcp-proto)))))
+		       (cmap (instantiate::JsConstructMap))
+		       (__proto__ (get-tcp-proto))
+		       (elements ($create-vector 2)))))
 	    (js-bind! %this obj 'fd
 	       :get (js-make-function %this
 		       (lambda (this)

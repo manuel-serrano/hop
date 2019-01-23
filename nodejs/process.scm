@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Jan 15 09:52:56 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 09:00:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -238,7 +238,8 @@
    (with-access::JsGlobalObject %this (js-object)
       (let ((proc (instantiateJsProcess
 		     (cmap (instantiate::JsConstructMap))
-		     (__proto__ (js-new %this js-object)))))
+		     (__proto__ (js-new %this js-object))
+		     (elements ($create-vector 45)))))
 
 	 (define (not-implemented name)
 	    (js-put! proc name
@@ -842,7 +843,8 @@
    (define (fs-event this)
       (instantiateJsHandle
 	 (handle (nodejs-make-fs-event %worker))
-	 (__proto__ (get-fs-event-proto process))))
+	 (__proto__ (get-fs-event-proto process))
+	 (cmap (instantiate::JsConstructMap))))
    
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject

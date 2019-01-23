@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jan 22 08:13:33 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:25:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -172,6 +172,7 @@
 	       (%js-string %this) 1 "String"
 	       :__proto__ js-function-prototype
 	       :prototype js-string-prototype
+	       :size 17
 	       :construct js-string-construct
 	       :alloc js-string-alloc))
 	 

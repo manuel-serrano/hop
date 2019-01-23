@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Fri Jan 18 13:11:05 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:42:20 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -395,6 +395,7 @@
 		  (js-new %this js-websocket url options))
 	       2 "WebSocket"
 	       :__proto__ js-function-prototype
+	       :size 4
 	       :alloc js-no-alloc
 	       :construct js-websocket-construct
 	       :shared-cmap #f))

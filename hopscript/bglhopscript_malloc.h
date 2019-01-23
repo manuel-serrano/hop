@@ -48,3 +48,26 @@ bgl_gc_bump_malloc( long sz ) {
 #else
 #define HOP_MALLOC( sz ) GC_MALLOC( sz )
 #endif
+
+/*---------------------------------------------------------------------*/
+/*    HOP_JSOBJECT_ELEMENTS_INLINEP                                    */
+/*    -------------------------------------------------------------    */
+/*    Used to detect when to reset object inline elements before an    */
+/*    expansion. This helps the collector not to retain dead objects   */
+/*    still pointed to by these inlined elements.                      */
+/*---------------------------------------------------------------------*/
+#define HOP_JSOBJECT_ELEMENTS_INLINEP( _o ) \
+  CVECTOR( ((BgL_jsobjectz00_bglt)COBJECT(_o))->BgL_elementsz00 ) == \
+  (obj_t)(&(((BgL_jsobjectz00_bglt)COBJECT(_o))->BgL_elementsz00) + 1)
+
+/*---------------------------------------------------------------------*/
+/*    HOP_JSARRAY_VECTOR_INLINEP                                       */
+/*    -------------------------------------------------------------    */
+/*    Used to detect when to reset array inline elements before an     */
+/*    expansion. This helps the collector not to retain dead arrays    */
+/*    still pointed to by these inlined elements.                      */
+/*---------------------------------------------------------------------*/
+#define HOP_JSARRAY_VECTOR_INLINEP( _o ) \
+  CVECTOR( ((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00 ) == \
+  (obj_t)(&(((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00) + 1)
+

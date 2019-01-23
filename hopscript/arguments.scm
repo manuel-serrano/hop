@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Tue Jan 22 08:12:14 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 09:23:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -387,7 +387,7 @@
       (let ((obj (instantiateJsArguments
 		    (vec vec)
 		    (cmap (instantiate::JsConstructMap))
-		    (elements (make-vector 1))
+		    (elements ($create-vector 2))
 		    (__proto__ __proto__))))
 	 (js-bind! %this obj 'length
 	    :value (vector-length vec)
@@ -424,7 +424,7 @@
       (with-access::JsObject %this (__proto__)
 	 (let ((obj (instantiateJsArguments
 		       (vec vec)
-		       (elements (make-vector 1))
+		       (elements ($create-vector 3))
 		       (__proto__ __proto__))))
 	    (js-bind! %this obj 'length
 	       :value len

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jan 22 20:47:35 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:26:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -116,6 +116,7 @@
 	    (instantiateJsDate
 	       (val (current-date))
 	       (cmap (instantiate::JsConstructMap))
+	       (elements ($create-vector 47))
 	       (__proto__ __proto__)))
 	 
 	 (define (js-date-alloc %this constructor::JsFunction)
@@ -254,6 +255,7 @@
 	       :prototype js-date-prototype
 	       :alloc js-date-alloc
 	       :construct js-date-construct
+	       :size 3
 	       :shared-cmap #f))
 
 	 ;; parse

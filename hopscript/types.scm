@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jan 22 20:44:00 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 07:39:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -31,6 +31,15 @@
 	__hopscript_property
 	__hopscript_public
 	__hopscript_lib)
+
+   (extern (include "bglhopscript_malloc.h"))
+
+   (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
+	      "bgl_make_jsobject")
+	   (macro $jsobject-elements-inline?::bool (::JsObject)
+		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
+	   (macro $jsobject-vector-inline?::bool (::JsArray)
+		  "HOP_JSARRAY_VECTOR_INLINEP"))
    
    (export (class WorkerHopThread::hopthread
 	      (%loop (default #f))
@@ -341,6 +350,8 @@
 	      (js-input-port (default #f))
 	      (js-new-target (default (js-undefined))))
 
+	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
+
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
 	   
@@ -453,6 +464,20 @@
       ((not bigloo4.3a)
        (pragma (gencmapid default-inline)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-make-jsobject ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-make-jsobject constrsize constrmap __proto__)
+   (let ((mode (js-object-default-mode)))
+      (cond-expand
+	 (bigloo-c
+	  ($js-make-jsobject constrsize constrmap __proto__ mode))
+	 (else
+	  (instantiateJsObject
+	     (cmap constrmap)
+	     (__proto__ __proto__)
+	     (elements (make-vector constrsize (js-undefined)))
+	     (mode mode))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-default-mode ...                                       */

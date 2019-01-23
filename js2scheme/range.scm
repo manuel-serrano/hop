@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Jan 20 09:49:52 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 15:19:00 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -161,7 +161,7 @@
 		(if (config-get conf :optim-integer #f)
 		    (begin
 		       ;; optimize operators (modulo) according to ranges
-		       '(when (>=fx (config-get conf :optim 0) 2)
+		       (when (>=fx (config-get conf :optim 0) 2)
 			  (opt-range-binary! this conf))
 		       ;; allocate precise variable types
 		       (type-range! this tymap)
@@ -1948,13 +1948,15 @@
 ;*    node-range ::J2SReturnYield ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SReturnYield env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SReturnYield this (expr from loc)
+   (with-access::J2SReturnYield this (expr from loc kont)
       (multiple-value-bind (intv env)
 	 (node-range expr env conf mode fix)
-	 (return #f env))))
+	 (multiple-value-bind (kintv kenv)
+	    (node-range kont env conf mode fix)
+	    (return #f kenv)))))
    
 ;*---------------------------------------------------------------------*/
-;*    node-range ::J2SKont ...                                          */
+;*    node-range ::J2SKont ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SKont env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SKont this (body exn param)

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Fri Dec 28 09:49:44 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Wed Jan 23 09:54:18 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
 ;*=====================================================================*/
@@ -259,43 +259,45 @@
 
    (define (create-fs-watcher-proto)
       (with-access::JsGlobalObject %this (js-object)
-	 (let ((obj (js-new %this js-object)))
-	    
-	    (js-put! obj 'start
-	       (js-make-function %this
-		  (lambda (this::JsHandle path options interval)
-		     (with-access::JsHandle this (handle)
-			(nodejs-fs-poll-start %this (get-process-fs-stats %this)
-			   handle
-			   (js-tostring path %this)
-			   (lambda (_ status prev curr)
-			      (let ((onchange (js-get this 'onchange %this)))
-				 (unless (=fx status 0)
-				    (js-put! process '_errno
-				       (nodejs-err-name status)
-				       #f %this))
-				 (!js-callback3 'fs-watcher %worker %this
-				    onchange this curr prev status)))
-			   interval))
-		     (unless (js-totest options)
+	 (with-access::JsFunction js-object (%prototype constrmap)
+;* 	    (let ((obj (js-new %this js-object)))                      */
+	    (let ((obj (js-make-jsobject 2 constrmap %prototype)))
+	       
+	       (js-put! obj 'start
+		  (js-make-function %this
+		     (lambda (this::JsHandle path options interval)
 			(with-access::JsHandle this (handle)
-			   (nodejs-unref handle %worker))))
-		  3 "start")
-	       #f %this)
-	    
-	    (js-put! obj 'stop
-	       (js-make-function %this
-		  (lambda (this)
-		     (let ((onstop (js-get this 'onstop %this)))
-			(when (isa? onstop JsFunction)
-			   (!js-callback0 'fs-watcher %worker %this
-			      onstop this)))
-		     (with-access::JsHandle this (handle)
-			(nodejs-fs-poll-stop handle)))
-		  1 "stop")
-	       #f %this)
-	    
-	    obj)))
+			   (nodejs-fs-poll-start %this (get-process-fs-stats %this)
+			      handle
+			      (js-tostring path %this)
+			      (lambda (_ status prev curr)
+				 (let ((onchange (js-get this 'onchange %this)))
+				    (unless (=fx status 0)
+				       (js-put! process '_errno
+					  (nodejs-err-name status)
+					  #f %this))
+				    (!js-callback3 'fs-watcher %worker %this
+				       onchange this curr prev status)))
+			      interval))
+			(unless (js-totest options)
+			   (with-access::JsHandle this (handle)
+			      (nodejs-unref handle %worker))))
+		     3 "start")
+		  #f %this)
+	       
+	       (js-put! obj 'stop
+		  (js-make-function %this
+		     (lambda (this)
+			(let ((onstop (js-get this 'onstop %this)))
+			   (when (isa? onstop JsFunction)
+			      (!js-callback0 'fs-watcher %worker %this
+				 onstop this)))
+			(with-access::JsHandle this (handle)
+			   (nodejs-fs-poll-stop handle)))
+		     1 "stop")
+		  #f %this)
+	       
+	       obj))))
    
    (define (get-fs-watcher-proto process)
       (with-access::JsProcess process (fs-watcher-proto)
@@ -306,6 +308,7 @@
    (define (fs-watcher this)
       (instantiateJsHandle
 	 (handle (nodejs-make-fs-poll %worker))
+	 (cmap (instantiate::JsConstructMap))
 	 (__proto__ (get-fs-watcher-proto process))))
    
    (js-alist->jsobject

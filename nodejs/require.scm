@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jan 19 07:15:52 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 09:06:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -528,7 +528,7 @@
 			 (loop langmod)))
 		     (else
 		      #f)))))
-	 2 "require"))
+	 2 "require" :size 4 :src "require.scm"))
 
    ;; require.lang
    (js-bind! this require 'lang
@@ -891,15 +891,16 @@
 ;*    nodejs-new-scope-object ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-scope-object global::JsGlobalObject)
-   (let ((scope (duplicate::JsGlobalObject global
-		   (cmap (instantiate::JsConstructMap))
-		   (__proto__ global)
-		   (elements '#()))))
-      (js-object-properties-set! scope '())
-      (js-object-mode-set! scope (js-object-default-mode))
-      (nodejs-bind-export! global scope global)
-      (hopscript-global-object-init! scope)
-      scope))
+   (with-access::JsGlobalObject global (elements)
+      (let ((scope (duplicate::JsGlobalObject global
+		      (cmap (instantiate::JsConstructMap))
+		      (__proto__ global)
+		      (elements ($create-vector (vector-length elements))))))
+	 (js-object-properties-set! scope '())
+	 (js-object-mode-set! scope (js-object-default-mode))
+	 (nodejs-bind-export! global scope global)
+	 (hopscript-global-object-init! scope)
+	 scope)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-global-object-init! ...                                */

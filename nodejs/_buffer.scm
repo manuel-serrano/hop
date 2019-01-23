@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Jan 15 07:15:33 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:56:38 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -499,7 +499,10 @@
    (define slowbuffer-proto
       (with-access::JsGlobalObject %this (js-slowbuffer-proto js-object)
 	 (unless js-slowbuffer-proto
-	    (set! js-slowbuffer-proto (js-new %this js-object)))
+	    (set! js-slowbuffer-proto
+	       (with-access::JsFunction js-object (constrmap %prototype)
+		  (js-make-jsobject 25 constrmap %prototype))))
+;* 	       (js-new %this js-object)))                              */
 	 js-slowbuffer-proto))
    
    (define (slowbuffer-constr this a0)
@@ -562,6 +565,7 @@
    (define js-slowbuffer
       (js-make-function %this slowbuffer-constr 1 "SlowBuffer"
 	 :alloc (lambda (%this o) #unspecified)
+	 :size 10
 	 :construct slowbuffer-constr
 	 :prototype slowbuffer-proto))
 

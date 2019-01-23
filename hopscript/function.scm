@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Jan 20 10:24:17 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:19:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -42,7 +42,7 @@
 	      method construct alloc
 	      __proto__ prototype
 	      (strict 'normal) arity (minlen -1) src rest
-	      (constrsize 3) (maxconstrsize 100)
+	      (size 0) (constrsize 3) (maxconstrsize 100)
 	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::bstring ::int ::int ::symbol ::bool ::int)
@@ -255,12 +255,14 @@
 	       (arity -1)
 	       (prototype js-object-prototype)
 	       (%prototype js-object-prototype)
-	       (__proto__ js-object-prototype))))
+	       (__proto__ js-object-prototype)
+	       (elements ($create-vector 10)))))
 
       (set! js-function-strict-prototype
 	 (instantiateJsObject
 	    (cmap (instantiate::JsConstructMap))
-	    (__proto__ js-function-prototype)))
+	    (__proto__ js-function-prototype)
+	    (elements (make-vector 10 (js-undefined)))))
       
       ;; then, create the properties of the function contructor
       (set! js-function
@@ -365,11 +367,11 @@
 	   method construct alloc
 	   __proto__ prototype
 	   (strict 'normal) arity (minlen -1) src rest
-	   (constrsize 3) (maxconstrsize 100)
+	   (size 0) (constrsize 3) (maxconstrsize 100)
 	   (constrmap (js-not-a-cmap)) (shared-cmap #t))
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((%__proto__ __proto__))
-	 (let* ((els ($create-vector (if (eq? strict 'normal) 3 5)))
+	 (let* ((els ($create-vector (+fx size (if (eq? strict 'normal) 3 5))))
 		(cmap (if (eq? strict 'normal)
 			  (cond
 			     ((js-object? prototype)

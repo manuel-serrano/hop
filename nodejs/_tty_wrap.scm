@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Tue Jan 15 09:57:39 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 10:02:44 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -134,7 +134,9 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (instantiateJsHandle
 		       (handle hdl)
-		       (__proto__ (get-tty-proto)))))
+		       (__proto__ (get-tty-proto))
+		       (cmap (instantiate::JsConstructMap))
+		       (elements ($create-vector 1)))))
 	    (js-bind! %this obj 'fd
 	       :get (js-make-function %this
 		       (lambda (this)

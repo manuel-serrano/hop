@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jan 23 05:26:01 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 07:41:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -336,11 +336,10 @@
 (define (js-object-add! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements cmap)
       (let ((nels (copy-vector elements (+fx 1 idx))))
-	 (tprint "js-object-add old=" (vector-length elements)
-	    " new=" (+fx 1 idx))
 	 (cond-expand (profile (profile-cache-extension (+fx 1 idx))))
 	 (vector-set! nels idx value)
-	 ($js-jsobject-inline-elements-cleanup obj)
+	 (when ($jsobject-elements-inline? obj)
+	    (vector-fill! elements #unspecified))
 	 (set! elements nels)
 	 obj)))
 
@@ -352,8 +351,6 @@
       (with-access::JsConstructMap cmap (ctor)
 	 (when (isa? ctor JsFunction)
 	    (with-access::JsFunction ctor (constrsize maxconstrsize)
-	       (tprint "js-object-ctor-add constrsize=" constrsize
-		  " max=" maxconstrsize " new=" (+fx 1 constrsize))
 	       (when (<fx constrsize maxconstrsize)
 		  (set! constrsize (+fx 1 constrsize)))))))
    (js-object-add! obj idx value)
@@ -384,12 +381,9 @@
    (with-access::JsObject obj (elements)
       (if (>=fx idx (vector-length elements))
 	  (begin
-	     (tprint "js-object-push/ctor old=" (vector-length elements) " new="
-		(+fx idx 1))
 	     (js-object-add! obj idx value)
 	     (when (isa? ctor JsFunction)
 		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize src)
-		   (tprint "FUN=" src)
 		   (when (<fx constrsize maxconstrsize)
 		      (set! constrsize (+fx 1 constrsize))
 		      (set! constrmap
@@ -2070,31 +2064,35 @@
 			 (with-access::JsConstructMap nextmap (ctor methods props)
 			    (if (isa? v JsFunction)
 				;; validate cache method and don't cache
-				(unless (eq? v (vector-ref methods index))
-				   ;; MS 2019-01-19
-				   ;; on a method conflict, if the number of
-				   ;; property in the cache is small enough,
-				   ;; instead of invalidating all methods,
-				   ;; a new cmap is created. see
-				   ;; see the prototype initialization
-				   ;; in js-make-function@function.scm
-				   (if (>fx (vector-length props) (method-invalidation-threshold))
-				       (begin
-					  ;; invalidate cache method and cache
-					  (js-invalidate-cache-method! nextmap index)
-					  (js-invalidate-pcaches-pmap! %this name)
-					  (reset-cmap-vtable! nextmap)
-					  (when cache
-					     (js-validate-pcaches-pmap! %this)
-					     (js-pcache-next-direct! cache o nextmap index)))
-				       (let ((detachedmap (extend-cmap cmap name flags)))
-					  (js-invalidate-pcaches-pmap! %this name)
-					  (with-access::JsConstructMap detachedmap (methods ctor)
-					     ;; validate cache method and don't cache
-					     (vector-set! methods index v)
-					     (js-object-push/ctor! o index v ctor))
-					  (set! cmap detachedmap)
-					  v)))
+				(if (eq? v (vector-ref methods index))
+				    (when cache
+				       (js-pcache-next-direct! cache o nextmap index))
+				    (begin
+				       ;; MS 2019-01-19
+				       ;; on a method conflict, if the number of
+				       ;; property in the cache is small enough,
+				       ;; instead of invalidating all methods,
+				       ;; a new cmap is created. see
+				       ;; see the prototype initialization
+				       ;; in js-make-function@function.scm
+				       (if (>fx (vector-length props) (method-invalidation-threshold))
+					   (begin
+					      ;; invalidate cache method and cache
+					      (js-invalidate-cache-method! nextmap index)
+					      (js-invalidate-pcaches-pmap! %this name)
+					      (reset-cmap-vtable! nextmap)
+					      (when cache
+						 (js-validate-pcaches-pmap! %this)
+						 (js-pcache-next-direct! cache o nextmap index)))
+					   (let ((detachedmap (extend-cmap cmap name flags)))
+					      (js-invalidate-pcaches-pmap! %this name)
+					      (with-access::JsConstructMap detachedmap (methods ctor)
+						 ;; validate cache method and don't cache
+						 (vector-set! methods index v)
+;* 					     (js-object-push/ctor! o index v ctor) */
+						 )
+					      (set! cmap detachedmap)
+					      v))))
 				(begin
 				   (when (isa? (vector-ref methods index) JsFunction)
 				      ;; invalidate cache method and cache

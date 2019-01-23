@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Dec  7 15:08:07 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Wed Jan 23 14:08:49 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
 ;*    -------------------------------------------------------------    */
@@ -498,8 +498,8 @@
 (define-walk-method (inline! this::J2SFun
 		       targets leaf limit::long stack::pair-nil
 		       pmethods prgm conf)
-   (with-access::J2SFun this (optimize body)
-      (when optimize
+   (with-access::J2SFun this (optimize body generator)
+      (when (and optimize (not generator))
 	 (set! body
 	    (inline! body
 	       targets leaf limit (cons this stack) pmethods prgm conf)))

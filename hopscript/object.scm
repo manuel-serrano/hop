@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Jan 22 20:48:19 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 08:11:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -88,7 +88,7 @@
 	    (js-object-properties-set! nobj '())
 	    (js-object-mode-set! nobj (js-object-mode obj))
 	    (js-for-in obj
-	       (lambda (k)
+	       (lambda (k %this)
 		  (js-put! nobj k
 		     (js-donate (js-get obj k %_this) worker %_this)
 		     #f %this))
@@ -176,7 +176,7 @@
       (display "{" op)
       (let ((sep ""))
 	 (js-for-in o
-	    (lambda (p)
+	    (lambda (p %this)
 	       (display sep op)
 	       (display "\"" op)
 	       (display p op)
@@ -264,7 +264,7 @@
 (define (js-new-global-object)
    ;; 2018-01-05: before all, initialize the builtin object prototype
    ;; and then create the global object
-   (let* ((%void (instantiate::JsGlobalObject
+   (let* ((%void (instantiateJsGlobalObject
 		    (cmap (make-cmap '#()))
 		    (__proto__ (js-null))))
 	  (%proto (instantiateJsObject
@@ -273,7 +273,8 @@
 		     (elements (make-vector 40))))
 	  (%this (instantiateJsGlobalObject
 		    (cmap (make-cmap '#()))
-		    (__proto__ %proto))))
+		    (__proto__ %proto)
+		    (elements (make-vector 97)))))
       ;; freeze the void object
       (js-object-properties-set! %void '())
       (js-freeze %void %void)
@@ -703,10 +704,11 @@
 		  :constrsize 3 :maxconstrsize 4
 		  :prototype %proto
 		  :alloc js-no-alloc
+		  :size 21
 		  :construct js-object-construct
 		  :src "object.scm"
 		  :shared-cmap #f))))
-      
+
       ;; getPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2
       (define (getprototypeof this o)
