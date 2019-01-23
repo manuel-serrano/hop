@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Jan 22 18:50:47 2019 (serrano)                */
+/*    Last change :  Wed Jan 23 05:38:54 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -200,6 +200,24 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
 #endif
    
    return BNANOBJECT( o );
+}
+
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_jsobject_inline_elements_cleanup ...                         */
+/*    -------------------------------------------------------------    */
+/*    Reset the object inline elements before an expansion. This will  */
+/*    help the collector not to retain dead objects still pointed to   */
+/*    by these inlined elements.                                       */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_jsobject_inline_elements_cleanup( obj_t obj ) {
+   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)COBJECT( obj );
+   if( CVECTOR( o->BgL_elementsz00 ) == (obj_t)(&(o->BgL_elementsz00) + 1) ) {
+      fprintf( stderr, "*************** NEED CLEANUP...\n" );
+   }
+   return obj;
 }
 
 /*---------------------------------------------------------------------*/

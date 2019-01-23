@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jan 22 18:49:00 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 05:26:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -336,8 +336,11 @@
 (define (js-object-add! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements cmap)
       (let ((nels (copy-vector elements (+fx 1 idx))))
+	 (tprint "js-object-add old=" (vector-length elements)
+	    " new=" (+fx 1 idx))
 	 (cond-expand (profile (profile-cache-extension (+fx 1 idx))))
 	 (vector-set! nels idx value)
+	 ($js-jsobject-inline-elements-cleanup obj)
 	 (set! elements nels)
 	 obj)))
 
@@ -349,6 +352,8 @@
       (with-access::JsConstructMap cmap (ctor)
 	 (when (isa? ctor JsFunction)
 	    (with-access::JsFunction ctor (constrsize maxconstrsize)
+	       (tprint "js-object-ctor-add constrsize=" constrsize
+		  " max=" maxconstrsize " new=" (+fx 1 constrsize))
 	       (when (<fx constrsize maxconstrsize)
 		  (set! constrsize (+fx 1 constrsize)))))))
    (js-object-add! obj idx value)
@@ -379,9 +384,12 @@
    (with-access::JsObject obj (elements)
       (if (>=fx idx (vector-length elements))
 	  (begin
+	     (tprint "js-object-push/ctor old=" (vector-length elements) " new="
+		(+fx idx 1))
 	     (js-object-add! obj idx value)
 	     (when (isa? ctor JsFunction)
-		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize)
+		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize src)
+		   (tprint "FUN=" src)
 		   (when (<fx constrsize maxconstrsize)
 		      (set! constrsize (+fx 1 constrsize))
 		      (set! constrmap

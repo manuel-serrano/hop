@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Jan 22 20:46:59 2019 (serrano)                */
+;*    Last change :  Wed Jan 23 05:40:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -17,7 +17,9 @@
    (option (set! *compiler-debug-trace* 0))
 
    (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
-	      "bgl_make_jsobject"))
+	      "bgl_make_jsobject")
+	   ($js-jsobject-inline-elements-cleanup::obj (::obj)
+	      "bgl_jsobject_inline_elements_cleanup"))
 
    (include "types.sch")
    
