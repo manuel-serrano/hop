@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Jan 19 09:16:49 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 12:50:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -68,7 +68,7 @@
 	      (useinloop::bool (default #f) (info '("notraverse")))
 	      (useinfun::bool (default #f) (info '("notraverse")))
 	      ;; usage: init, new, ref, assig, get (field), set (field), call,
-	      ;; delete
+	      ;; delete, uninit (premature variable access)
 	      (usage::pair-nil (default '()) (info '("notraverse")))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))
@@ -981,7 +981,7 @@
 (gen-walks J2SNode)
 (gen-walks J2SMeta stmt)
 (gen-walks J2SSeq (nodes))
-(gen-walks J2SProgram (decls) (headers) (nodes))
+(gen-walks J2SProgram (headers) (decls) (nodes))
 (gen-walks J2SBindExit stmt)
 (gen-walks J2SReturn expr)
 (gen-walks J2SReturnYield expr kont)

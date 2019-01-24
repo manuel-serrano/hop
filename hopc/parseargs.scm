@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jan  6 07:53:15 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 16:28:48 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -324,6 +324,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-unletrec #t (hopc-j2s-flags))))
 	    (("-fno-unletrec" (help "Disable unletrec optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-unletrec #f (hopc-j2s-flags))))
+	    (("-fglobprop" (help "Enable globprop optimization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-globprop #t (hopc-j2s-flags))))
+	    (("-fno-globprop" (help "Disable globprop optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-globprop #f (hopc-j2s-flags))))
 	    (("-fclevel" (help "Enable property cache level optimization (-O2)"))
 	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
 	    (("-fno-clevel" (help "Disable property cache level optimization"))

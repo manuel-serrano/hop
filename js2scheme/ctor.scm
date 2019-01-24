@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sat Sep 22 08:15:10 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Thu Jan 24 10:48:52 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
 ;*    -------------------------------------------------------------    */
@@ -188,6 +188,18 @@
 	     (and (simple-expr? test obj)
 		  (simple-expr? then obj)
 		  (simple-expr? else obj))))
+	 ((isa? expr J2SNew)
+	  (with-access::J2SNew expr (clazz args)
+	     (and (simple-expr? clazz obj)
+		  (every (lambda (e) (simple-expr? e obj)) args))))
+	 ((isa? expr J2SCall)
+	  (with-access::J2SCall expr (fun args)
+	     (and (simple-expr? fun obj)
+		  (every (lambda (e) (simple-expr? e obj)) args))))
+	 ((isa? expr J2SAccess)
+	  (with-access::J2SAccess expr ((o obj) field)
+	     (and (simple-expr? o obj)
+		  (simple-expr? field obj))))
 	 (else
 	  #f)))
 	     

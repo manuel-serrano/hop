@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jan 22 08:10:55 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 08:56:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1160,7 +1160,8 @@
 			       (,loop %acc))))
 		   %acc)))
       
-      (let* ((whileid (gensym 'while))
+      (let* ((whileid (string->symbol
+			 (format "while:~a" (cadr loc) (caddr loc))))
 	     (loop (if (in-eval? return) (eval-loop whileid) (comp-loop whileid))))
 	 (epairify-deep loc
 	    (if need-bind-exit-break
@@ -1212,7 +1213,8 @@
 		      (,loop %acc))
 		   %acc)))
 
-      (let* ((forid (gensym 'for))
+      (let* ((forid (string->symbol
+		       (format "for@~a:~a" (cadr loc) (caddr loc))))
 	     (loop (if (in-eval? return) (eval-loop forid) (comp-loop forid))))
 	 (epairify-deep loc
 	    `(begin

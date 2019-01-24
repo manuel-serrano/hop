@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sat Jan 19 19:43:55 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 17:45:06 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -231,7 +231,9 @@
       ((and (uint32? v) (or (<u32 v (bit-lshu32 #u32:1 29)) (m64? conf)))
        (uint32->fixnum v))
       ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
-       `(uint32->fixnum ,v))
+       (match-case v
+	  ((fixnum->uint32 ?e) e)
+	  (else `(uint32->fixnum ,v))))
       (else
        `(js-uint32-tointeger ,v))))
 
@@ -243,7 +245,10 @@
        `(uint32->flonum ,v))))
 
 (define (js-uint32->fixnum v expr conf)
-   (if (uint32? v) (uint32->fixnum v) `(uint32->fixnum ,v)))
+   (match-case v
+      ((? uint32?) (uint32->fixnum v))
+      ((fixnum->uint32 ?e) e)
+      (else `(uint32->fixnum ,v))))
 
 (define (js-uint32->int32 v expr conf)
    (if (uint32? v) (uint32->int32 v) `(uint32->int32 ,v)))

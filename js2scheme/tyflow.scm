@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Jan 21 18:34:05 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 11:31:02 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1053,10 +1053,10 @@
    
    (define (escape-type rtype)
       (case rtype
-	 ((undefined any obj object null) rtype)
+	 ((unknown undefined any obj object null) rtype)
 	 (else 'any)))
 
-   (with-access::J2SFun val (params rtype thisp)
+   (with-access::J2SFun val (params rtype thisp name)
       (when (and (not met) thisp)
 	 (decl-vtype-add! thisp 'any fix))
       (set! rtype (tyflow-type (escape-type rtype)))

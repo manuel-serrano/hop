@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sat Oct 27 07:27:29 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Thu Jan 24 16:22:34 2019 (serrano)                */
+;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
 ;*=====================================================================*/
@@ -400,6 +400,14 @@
        (usage ,usage)
        (id ,id)))
 
+(define-macro (J2SDeclGlobal binder usage id)
+   `(instantiate::J2SDecl
+       (loc loc)
+       (binder ,binder)
+       (scope 'global)
+       (usage ,usage)
+       (id ,id)))
+
 (define-macro (J2SParam usage id . opts)
    `(instantiate::J2SDecl
        (loc loc)
@@ -437,6 +445,18 @@
    `(instantiate::J2SDeclInit
        (loc loc)
        (writable #f)
+       (ronly #t)
+       (usecnt 1)
+       (binder 'let-opt)
+       (usage ,usage)
+       (val ,val)
+       (id ,id)))
+
+(define-macro (J2SLetOptRoGlobal usage id val)
+   `(instantiate::J2SDeclInit
+       (loc loc)
+       (writable #f)
+       (scope 'global)
        (ronly #t)
        (usecnt 1)
        (binder 'let-opt)

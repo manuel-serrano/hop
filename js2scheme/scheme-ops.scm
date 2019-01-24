@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Jan 24 06:57:26 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 18:16:25 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -803,7 +803,6 @@
       (case (j2s-type expr)
 	 ((int30 int32 uint32 fixnum integer real number) number)
 	 ((string) string)
-	 ((object) object)
 	 ((boolean) boolean)
 	 ((regexp) regexp)
 	 ((function) function)
@@ -814,25 +813,25 @@
    
    (define (j2s-typeof-predicate this::J2SExpr expr)
       (when (isa? this J2SUnary)
-	 (with-access::J2SUnary this (op)
+	 (with-access::J2SUnary this (op (unary expr))
 	    (when (eq? op 'typeof)
 	       (when (or (isa? expr J2SString) (isa? expr J2SNativeString))
 		  (with-access::J2SLiteralValue expr (val)
 		     (cond
 			((string=? val "number")
-			 (j2s-case-type expr 'js-number? :number 'true))
+			 (j2s-case-type unary 'js-number? :number 'true))
 			((string=? val "function")
-			 (j2s-case-type expr 'js-function? :function 'true))
+			 (j2s-case-type unary 'js-function? :function 'true))
 			((string=? val "string")
-			 (j2s-case-type expr 'js-jsstring? :string 'true))
+			 (j2s-case-type unary 'js-jsstring? :string 'true))
 			((string=? val "undefined")
-			 (j2s-case-type expr 'js-undefined? :undefined 'true))
+			 (j2s-case-type unary 'js-undefined? :undefined 'true))
 			((string=? val "boolean")
-			 (j2s-case-type expr 'boolean? :boolean 'true))
+			 (j2s-case-type unary 'boolean? :boolean 'true))
 			((string=? val "pair")
-			 (j2s-case-type expr 'pair? :pair 'true))
+			 (j2s-case-type unary 'pair? :pair 'true))
 			((string=? val "symbol")
-			 (j2s-case-type expr 'js-symbol? :symbol 'true))
+			 (j2s-case-type unary 'js-symbol? :symbol 'true))
 			(else
 			 #f))))))))
 
@@ -959,7 +958,7 @@
 	 ((eq? pred 'false)
 	  `(begin
 	      ,(typeof-expr expr mode return conf)
-	      ,(if (memq op '(!= !==)) #f #t)))
+	      ,(if (memq op '(!= !==)) #t #f)))
 	 (else
 	  (let ((t `(,pred ,(box (typeof-expr expr mode return conf)
 			       (j2s-vtype expr)

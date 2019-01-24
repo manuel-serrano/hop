@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Dec  6 22:26:45 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Thu Jan 24 17:36:10 2019 (serrano)                */
+;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
 ;*    -------------------------------------------------------------    */
@@ -274,14 +274,13 @@
 				       vtype)))
 			 (let ((pt (type-cast! (car vals) ptype)))
 			    (loop (cdr params) (cdr vals)
-			       (cons pt
-				  nvals)))))))))))
+			       (cons pt nvals)))))))))))
    
    (define (unknown-fun this)
       (set! fun (type-cast! fun '*))
       (set! args (map! (lambda (a) (type-cast! a 'any)) args))
-      (cast-expr this 'any totype))
-   
+      (cast-expr this (j2s-type this) totype))
+
    (cond
       ((isa? fun J2SFun)
        (set! fun (type-cast! fun '*))

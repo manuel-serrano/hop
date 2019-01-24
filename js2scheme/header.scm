@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Fri Jan  4 16:07:06 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 14:56:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -102,6 +102,8 @@
 	    '(js-put! GLOBAL 'global GLOBAL #f %this))
 	 (js-def-extern 'process #t #t '(nodejs-process %worker %this)
 	    :type 'object)
+	 (js-def-extern 'Object #t #t
+	    `(with-access::JsGlobalObject %this (js-object) js-object))
 	 (js-def-extern 'Array #t #t
 	    `(with-access::JsGlobalObject %this (js-array) js-array))
 	 (js-def-extern 'String #t #t

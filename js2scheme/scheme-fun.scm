@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Jan 21 17:39:24 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 07:27:17 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -179,9 +179,7 @@
 			  :prototype ,(j2s-fun-prototype val)
 			  :__proto__ ,(j2s-fun-__proto__ val)
 			  :construct ,fastid
-			  :constrsize ,constrsize
-;* 			  :constrmap ,(usage? '(new ref) usage)       */
-			  ))
+			  :constrsize ,constrsize))
 		     (src
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
@@ -193,7 +191,6 @@
 			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-;* 			  :constrmap ,(usage? '(new ref) usage)        */
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -205,7 +202,6 @@
 			  :minlen ,minlen
 			  :strict ',mode 
 			  :constrsize ,constrsize
-;* 			  :constrmap ,(usage? '(new ref) usage)        */
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -219,7 +215,6 @@
 			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
 			  :constrsize ,constrsize
-;* 			  :constrmap ,(usage? '(new ref) usage)        */
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -232,9 +227,7 @@
 			  :strict ',mode
 			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
 			  :construct ,fastid
-			  :constrsize ,constrsize
-;* 			  :constrmap #t                                */
-			  ))
+			  :constrsize ,constrsize))
 		     (else
 		      `(js-make-function-simple %this ,fastid
 			  ,len ,(symbol->string! id)
@@ -373,8 +366,10 @@
 	    (lambda-or-labels rtype idgen (type-this idthis thisp) id rest
 	       (jsfun-strict-vararg-body fun body id rest)))))
 
-   (with-access::J2SFun this (loc vararg mode params generator)
-      (let* ((id (j2sfun-id this))
+   (with-access::J2SFun this (loc vararg mode params generator name ismethodof)
+      (let* ((id (or (j2sfun-id this)
+		     (and (config-get conf :function-nice-name #f)
+			  name)))
 	     (fun (cond
 		     ((not vararg)
 		      (fixarg-lambda this id body))
@@ -390,62 +385,6 @@
 ;*    jsfun->lambda ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (jsfun->lambda this::J2SFun mode return conf proto ctor-only::bool)
-
-   (define (type-this idthis thisp)
-      (if (and idthis (isa? thisp J2SDecl))
-	  (with-access::J2SDecl thisp (vtype)
-	     (type-ident idthis vtype conf))
-	  idthis))
-   
-   (define (lambda-or-labels rtype %gen this id args body)
-      ;; in addition to the user explicit arguments, this and %gen
-      ;; are treated as:
-      ;;   - some typed functions are optimized and they don't expect a this
-      ;;     argument
-      ;;   - some typed functions implement a generator body and they take
-      ;;     as extra argument the generator
-      (let* ((targs (if this (cons this args) args))
-	     (gtargs (if %gen (cons '%gen targs) targs)))
-	 (if id
-	     (let ((%id (j2s-fast-id id)))
-		`(labels ((,%id ,gtargs ,body)) ,%id))
-	     `(,(type-ident 'lambda rtype conf) ,gtargs ,body))))
-
-   (define (j2s-type-scheme p)
-      (let ((a (j2s-scheme p mode return conf)))
-	 (with-access::J2SDecl p (vtype)
-	    (type-ident a vtype conf))))
-		    
-   (define (fixarg-lambda fun id body)
-      (with-access::J2SFun fun (idgen idthis thisp params rtype)
-	 (let ((args (map j2s-type-scheme params)))
-	    (lambda-or-labels rtype idgen
-	       (type-this idthis thisp)
-	       id args body))))
-   
-   (define (rest-lambda fun id body)
-      (with-access::J2SFun fun (idgen idthis thisp params rtype)
-	 (let ((args (j2s-scheme params mode return conf)))
-	    (lambda-or-labels rtype idgen
-	       (type-this idthis thisp)
-	       id args body))))
-   
-   (define (normal-vararg-lambda fun id body)
-      ;; normal mode: arguments is an alias
-      (let ((id (or id (gensym 'fun)))
-	    (rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idgen idthis thisp rtype)
-	    (lambda-or-labels rtype idgen
-	       (type-this idthis thisp)
-	       id rest
-	       (jsfun-normal-vararg-body fun body id rest)))))
-   
-   (define (strict-vararg-lambda fun id body)
-      ;; strict mode: arguments is initialized on entrance
-      (let ((rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idgen idthis thisp rtype)
-	    (lambda-or-labels rtype idgen (type-this idthis thisp) id rest
-	       (jsfun-strict-vararg-body fun body id rest)))))
 
    (define (generator-body body)
       `(letrec ((%gen (js-make-generator (lambda (%v %e) ,body) ,proto %this)))
@@ -615,7 +554,10 @@
 (define-method (j2s-scheme this::J2SFun mode return conf)
    (with-access::J2SFun this (loc name params mode vararg generator method)
       (let* ((id (j2sfun-id this))
-	     (tmp (gensym (format "~a:~a-" (basename (cadr loc)) (caddr loc))))
+	     (tmp (if (eq? name '||)
+		      (gensym (format "~a:~a-"
+				 (basename (cadr loc)) (caddr loc)))
+		      name))
 	     (arity (if vararg -1 (+fx 1 (length params))))
 	     (fundef (if generator
 			 (let ((tmp2 (gensym id)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Jan  6 07:56:24 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 08:06:25 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -81,6 +81,21 @@
 	  (j2s-slave-module module scmcnsts esexports esimports body)
 	  (j2s-master-module module scmcnsts esexports esimports body)))
 
+   (define (j2s-worker-thunk path esimports esexports globals scmcnsts body conf)
+      `(lambda ()
+	  (define %scope (nodejs-new-scope-object %this))
+	  (define this
+	     (with-access::JsGlobalObject %this (js-object)
+		(js-new0 %this js-object)))
+	  (define %module
+	     (nodejs-new-module ,(basename path) ,(absolute path)
+		%worker %this))
+	  (define %cnsts ,scmcnsts)
+	  ,@esimports
+	  ,esexports
+	  ,@globals
+	  ,@(exit-body body conf)))
+   
    (define (j2s-main-module/workers name scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size %this path
 				       globals)
@@ -112,19 +127,14 @@
 		   (hopscript-install-expanders!)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (js-worker-push-thunk! %worker "nodejs-toplevel"
-		      (lambda ()
-			 (define %scope (nodejs-new-scope-object %this))
-			 (define this
-			    (with-access::JsGlobalObject %this (js-object)
-			       (js-new0 %this js-object)))
-			 (define %module
-			    (nodejs-new-module ,(basename path) ,(absolute path)
-			       %worker %this))
-			 (define %cnsts ,scmcnsts)
-			 ,@esimports
-			 ,esexports
-			 ,@globals
-			 ,@(exit-body body conf)))
+		      ,(if (config-get conf :function-nice-name #f)
+			   (let ((id (string->symbol "#")))
+			      `(let ((,id ,(j2s-worker-thunk path
+					      esimports esexports
+					      globals scmcnsts body conf)))
+				  ,id))
+			   (j2s-worker-thunk path esimports esexports
+			      globals scmcnsts body conf)))
 		   ,(profilers conf)
 		   (thread-join! (thread-start-joinable! %worker)))))))
 

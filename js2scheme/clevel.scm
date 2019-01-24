@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sat Jan 12 16:10:55 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 15:00:15 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -489,14 +489,12 @@
 		    (isa? (cadr args) J2SString))
 	    (when (isa? fun J2SAccess)
 	       (with-access::J2SAccess fun (obj field)
-		  (when (and (isa? obj J2SGlobalRef) (isa? field J2SString))
+		  (when (isa? field J2SString)
 		     (with-access::J2SString field (val)
 			(when (string=? val "defineProperty")
-			   (with-access::J2SGlobalRef obj (decl)
-			      (with-access::J2SDecl decl (id)
-				 (when (eq? id 'Object)
-				    (with-access::J2SString (cadr args) (val)
-				       val))))))))))))
+			   (when (is-builtin-ref? obj 'Object)
+			      (with-access::J2SString (cadr args) (val)
+				 val))))))))))
       
    (call-default-walker)
    (let ((prop (defineProperty this)))

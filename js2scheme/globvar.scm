@@ -1,13 +1,12 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/globvar.scm       */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/globvar.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Sep  4 07:49:13 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Thu Jan 24 13:46:36 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Global variables optimization (initialization and constant       */
-;*    propagation).                                                    */
+;*    Global variables optimization (constant propagation).            */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -33,7 +32,7 @@
    (instantiate::J2SStageProc
       (name "globvar")
       (comment "Global variable initialization optimization")
-      (proc (lambda (n args) (j2s-globvar! n args)))
+      (proc j2s-globvar!)
       (optional 2)))
 
 ;*---------------------------------------------------------------------*/
@@ -45,14 +44,8 @@
 	 (unless direct-eval
 	    (let ((gcnsts (collect-gloconst* this)))
 	       (when (pair? gcnsts)
-		  ;; mark all the global before traversing for references
-		  (invalidate-early-decl this #f '())
-		  (when (find (lambda (g)
-				 (with-access::J2SDecl g (%info)
-				    (pair? %info)))
-			   gcnsts)
-		     ;; propagate the constants
-		     (propagate-constant! this)))
+		  ;; propagate the constants
+		  (propagate-constant! this))
 	       (when (>=fx (config-get args :verbose 0) 3)
 		  (display " " (current-error-port))
 		  (fprintf (current-error-port) "(~(, ))"
@@ -80,7 +73,7 @@
       ((isa? expr J2SRef)
        (with-access::J2SRef expr (decl)
 	  (with-access::J2SDecl decl (ronly writable usage)
-	     (or ronly (not writable) (not (usage? '(assig) usage))))))
+	     (or ronly (not writable) (not (usage? '(assig uninit) usage))))))
       ((isa? expr J2SUnary)
        (with-access::J2SUnary expr (expr)
 	  (constant? expr)))
@@ -103,9 +96,6 @@
 ;*    collect-gloconst* ::J2SDecl ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-gloconst* this::J2SDecl)
-   (with-access::J2SDecl this (%info %%dump)
-      (set! %%dump #unspecified)
-      (set! %info #unspecified))
    '())
 
 ;*---------------------------------------------------------------------*/
@@ -116,23 +106,12 @@
       ;; no need to scan rhs as we are only looking for variable decls/inits
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (usage ronly val %info %%dump id)
-		(if (and (not (usage? '(assig) usage)) (constant? rhs))
-		    (cond
-		       ((and (pair? %info) (eq? (car %info) 'uninit))
-			;; multiple init, invalidate
-			(set! %%dump "globvar:multiple")
-			(set! %info 'multi)
-			'())
-		       ((not %info)
-			(set! %info (cons 'uninit this))
-			(list decl))
-		       (else
-			'()))
+	     (with-access::J2SDecl decl (usage ronly val %info id)
+		(if (and (not (usage? '(assig uninit) usage)) (constant? rhs))
 		    (begin
-		       (set! %%dump "globvar:not constant")
-		       (set! %info 'noconstant)
-		       '()))))
+		       (set! %info (cons 'init rhs))
+		       (list decl))
+		    '())))
 	  '())))
 
 ;*---------------------------------------------------------------------*/
@@ -145,94 +124,13 @@
 	     (set! %%dump this)
 	     (set! %info (cons 'init this))
 	     (list this))
-	  (begin
-	     (set! %%dump "globvar:read-write")
-	     (set! %info #unspecified)
-	     '()))))
+	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-gloconst* ::J2SFun ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-gloconst* this::J2SFun)
    '())
-
-;*---------------------------------------------------------------------*/
-;*    invalidate-early-decl ::J2SNode ...                              */
-;*    -------------------------------------------------------------    */
-;*    Scan the whole program and invalidate all global variables       */
-;*    that can possibily be accessed before initialized.               */
-;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SNode inexpr::bool stack)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    invalidate-early-decl ::J2SRef ...                               */
-;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SRef inexpr stack)
-   (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (%info %%dump)
-	 (unless (and (pair? %info) (eq? (car %info) 'init))
-	    (set! %%dump "globvar:early")
-	    (set! %info #f))
-	 (when (isa? decl J2SDeclFun)
-	    (with-access::J2SDeclFun decl (val)
-	       (unless (memq decl stack)
-		  (invalidate-early-decl val #t (cons decl stack))))))))
-
-;*---------------------------------------------------------------------*/
-;*    invalidate-early-decl ::J2SInit ...                              */
-;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SInit inexpr stack)
-   (with-access::J2SInit this (lhs rhs %%dump)
-      (invalidate-early-decl rhs #t stack)
-      (when (isa? lhs J2SRef)
-	 (with-access::J2SRef lhs (decl)
-	    (with-access::J2SDecl decl (%info)
-	       (when (and (pair? %info) (eq? (car %info) 'uninit))
-		  ;; for sure this can be optimized
-		  (set-car! %info 'init)))))))
-
-;*---------------------------------------------------------------------*/
-;*    invalidate-early-decl ::J2SDeclInit ...                          */
-;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SDeclInit inexpr stack)
-   (with-access::J2SDeclInit this (val %info %%dump)
-      (invalidate-early-decl val #t stack)
-      (when (and (pair? %info) (eq? (car %info) 'uninit))
-	 ;; for sure this can be optimized
-	 (set-car! %info 'init))))
-
-;*---------------------------------------------------------------------*/
-;*    invalidate-early-decl ::J2SDeclFun ...                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SDeclFun inexpr stack)
-   (with-access::J2SDeclInit this (val %info %%dump)
-      (when (and (pair? %info) (eq? (car %info) 'uninit))
-	 ;; for sure this can be optimized
-	 (set-car! %info 'init))))
-
-;*---------------------------------------------------------------------*/
-;*    invalidate-early-decl ::J2SAssig ...                             */
-;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SAssig inexpr stack)
-   (if inexpr
-       (call-default-walker)
-       (with-access::J2SAssig this (lhs rhs)
-	  (let loop ((lhs lhs))
-	     (cond
-		((isa? lhs J2SAccess)
-		 (with-access::J2SAccess lhs (obj field)
-		    (loop obj)))
-		((not (isa? lhs J2SRef))
-		 (invalidate-early-decl lhs #t stack)
-		 (invalidate-early-decl rhs #t stack))
-		(else
-		 (with-access::J2SRef lhs (decl)
-		    (invalidate-early-decl lhs inexpr stack)
-		    (with-access::J2SDecl decl (%info %%dump)
-		       (invalidate-early-decl rhs
-			  (not (and (pair? %info) (eq? (car %info) 'init)))
-			  stack)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    propagate-constant! ::J2SNode ...                                */
@@ -247,11 +145,11 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (%info id)
 	 (cond
-	    ((and (pair? %info) (isa? (cdr %info) J2SInit))
-	     (with-access::J2SInit (cdr %info) (rhs)
-		;; copy the value
-		(j2s-alpha (propagate-constant! rhs) '() '())))
-	    ((and (pair? %info) (eq? (car %info) 'init) (isa? decl J2SDeclInit))
+	    ((or (not (pair? %info)) (not (eq? (car %info) 'init)))
+	     (call-default-walker))
+	    ((isa? (cdr %info) J2SExpr)
+	     (j2s-alpha (propagate-constant! (cdr %info)) '() '()))
+	    ((isa? decl J2SDeclInit)
 	     (with-access::J2SDeclInit decl (val usecnt)
 		(set! usecnt (-fx usecnt 1))
 		;; copy the value
@@ -268,6 +166,6 @@
       (if (and (isa? lhs J2SRef)
 	       (with-access::J2SRef lhs (decl)
 		  (with-access::J2SDecl decl (%info)
-		     (and (pair? %info) (isa? (cdr %info) J2SInit)))))
+		     (and (pair? %info) (isa? (cdr %info) J2SExpr)))))
 	  (J2SUndefined)
 	  (call-default-walker))))

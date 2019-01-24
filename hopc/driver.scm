@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sun Jan  6 07:54:46 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 07:35:20 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -395,6 +395,7 @@
 			:plugins-loader (hopc-plugins-loader)
 			:libs-dir (hopc-libs-dir)
 			:debug (bigloo-debug)
+			:function-nice-name (string? temp)
 			(hopc-j2s-flags))))
 	       file
 	       temp)))

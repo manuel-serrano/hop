@@ -1,0 +1,312 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/globprop.scm            */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
+;*    Last change :  Thu Jan 24 17:20:02 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    Global properties optimization (constant propagation).           */
+;*                                                                     */
+;*    This optimization propages global object constant properties.    */
+;*    That is, it replaces a pattern:                                  */
+;*                                                                     */
+;*      G = INIT                                                       */
+;*      ...                                                            */
+;*      G.PROP1 = EXPR                                                 */
+;*      ...                                                            */
+;*      ... G.PROP1 ...                                                */
+;*                                                                     */
+;*    with:                                                            */
+;*                                                                     */
+;*      G = INIT                                                       */
+;*      ...                                                            */
+;*      const TMP = EXPR                                               */
+;*      G.PROP1 = TMP                                                  */
+;*      ...                                                            */
+;*      ... TMP ...                                                    */
+;*                                                                     */
+;*    For that transformation to apply, all the following properties   */
+;*    must hold:                                                       */
+;*                                                                     */
+;*      1. the assignment is toplevel or EXPR is a constant            */
+;*      2. G is a read-only variable, initialized, not used as value   */
+;*      3. no setter and getter are used                               */
+;*      4. INIT must be a literal, a function, or a builtin object     */
+;*      5. there should be only one single PROP1 in G, in particular   */
+;*         there is no computed prop assigned to G                     */
+;*      6. there is no direct EVAL                                     */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __js2scheme_globprop
+
+   (include "ast.sch")
+   
+   (import __js2scheme_ast
+	   __js2scheme_dump
+	   __js2scheme_compile
+	   __js2scheme_stage
+	   __js2scheme_utils
+	   __js2scheme_alpha)
+
+   (export j2s-globprop-stage))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-globprop-stage ...                                           */
+;*---------------------------------------------------------------------*/
+(define j2s-globprop-stage
+   (instantiate::J2SStageProc
+      (name "globprop")
+      (comment "Global property constant propagation")
+      (proc j2s-globprop!)
+      (optional :optim-globprop)))
+
+;*---------------------------------------------------------------------*/
+;*    propinfo ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-struct propinfo init props)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-globprop! ::J2SProgram ...                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-globprop! this args)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (nodes decls direct-eval)
+	 (unless direct-eval
+	    (let ((gcnsts (collect-gloconst* this)))
+	       (when (pair? gcnsts)
+		  ;; propagate the constants
+		  (collect-gloprops this)
+		  (collect-gloprops-toplevel this)
+		  (rewrite-accesses! this)
+		  (let ((ndecls (append-map (lambda (d)
+					       (with-access::J2SDecl d (id %info)
+						  (if (pair? (propinfo-props %info))
+						      (filter-map (lambda (i)
+								     (when (isa? (cdr i) J2SDecl)
+									(cdr i)))
+							 (propinfo-props %info))
+						      '())))
+				   gcnsts)))
+		     (set! decls (append decls ndecls))
+		     (when (>=fx (config-get args :verbose 0) 3)
+			(display " " (current-error-port))
+			(fprintf (current-error-port) "(~(, ))"
+			   (append-map (lambda (g)
+					  (with-access::J2SDecl g (%info id)
+					     (if (pair? (propinfo-props %info))
+						 (filter-map (lambda (i)
+								(if (isa? (cdr i) J2SDecl)
+								    (format "~a.~a" id (car i))))
+						    (propinfo-props %info))
+						 '())))
+			      gcnsts)))))))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    constant-object? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (constant-object? expr::J2SExpr)
+   (cond
+      ((isa? expr J2SLiteralCnst)
+       #t)
+      ((isa? expr J2SFun)
+       #t)
+      ((isa? expr J2SNew)
+       (with-access::J2SNew expr (clazz)
+	  (is-builtin-ref? clazz 'Object)))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    collect-gloconst* ::J2SNode ...                                  */
+;*    -------------------------------------------------------------    */
+;*    Collect all the global variables that are initialized but        */
+;*    never assigned.                                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-gloconst* this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    collect-gloconst* ::J2SDecl ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-gloconst* this::J2SDecl)
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    collect-gloconst* ::J2SInit ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-gloconst* this::J2SInit)
+   (with-access::J2SInit this (lhs rhs)
+      ;; no need to scan rhs as we are only looking for variable decls/inits
+      (if (isa? lhs J2SRef)
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (usage %info)
+		(if (and (not (usage? '(assig uninit) usage))
+			 (constant-object? rhs))
+		    (begin
+		       (set! %info (propinfo rhs '()))
+		       (list decl))
+		    '())))
+	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    collect-gloconst* ::J2SDeclInit ...                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-gloconst* this::J2SDeclInit)
+   (with-access::J2SDeclInit this (usage ronly val %info)
+      (if (and (not (usage? '(assig) usage)) (constant-object? val))
+	  (begin
+	     (set! %info (propinfo val '()))
+	     (list this))
+	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    collect-gloconst* ::J2SFun ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-gloconst* this::J2SFun)
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    collect-gloprops ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-gloprops this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    collect-gloprops ::J2SAssig ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-gloprops this::J2SAssig)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SAccess)
+	  (with-access::J2SAccess lhs (obj field)
+	     (if (isa? obj J2SRef)
+		 (with-access::J2SRef obj (decl)
+		    (collect-gloprops rhs)
+		    (with-access::J2SDecl decl (%info)
+		       (when (propinfo? %info)
+			  (if (isa? field J2SString)
+			      (with-access::J2SString field (val)
+				 (unless (eq? (propinfo-props %info) '*)
+				    (let ((c (assoc val (propinfo-props %info))))
+				       (if (pair? c)
+					   (set-cdr! c #f)
+					   (propinfo-props-set! %info
+					      (cons (cons val #t)
+						 (propinfo-props %info)))))))
+			      (propinfo-props-set! %info '*)))))
+		 (call-default-walker)))
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-gloprops-toplevel ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-gloprops-toplevel this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    collect-gloprops-toplevel ::J2SAssig ...                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-gloprops-toplevel this::J2SAssig)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SAccess)
+	  (with-access::J2SAccess lhs (obj field loc)
+	     (if (isa? obj J2SRef)
+		 (with-access::J2SRef obj (decl)
+		    (collect-gloprops-toplevel rhs)
+		    (with-access::J2SDecl decl (%info)
+		       (when (propinfo? %info)
+			  (if (isa? field J2SString)
+			      (with-access::J2SString field (val)
+				 (unless (eq? (propinfo-props %info) '*)
+				    (let ((c (assoc val (propinfo-props %info))))
+				       (when (and (pair? c) (cdr c))
+					  (if (isa? rhs J2SLiteralCnst)
+					      (let ((ndecl (J2SLetOptRoGlobal '(ref init)
+							      (gensym val)
+							      rhs)))
+						 (set! rhs (J2SRef ndecl))
+						 (set-cdr! c ndecl))
+					      (let ((ndecl (J2SDeclGlobal 'let
+							      '(ref init)
+							      (gensym val))))
+						 (set! rhs
+						    (J2SSequence
+						       (J2SInit (J2SRef ndecl) rhs)
+						       (J2SRef ndecl)))
+						 (set-cdr! c ndecl)))))))
+			      (collect-gloprops-toplevel field)))))
+		 (call-default-walker)))
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-glopprops-toplevel ::J2SFun ...                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-gloprops-toplevel this::J2SFun)
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    rewrite-accesses! ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (rewrite-accesses! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    rewrite-accesses! ::J2SAccess ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (rewrite-accesses! this::J2SAccess)
+   (with-access::J2SAccess this (obj field)
+      (if (isa? obj J2SRef)
+	  (with-access::J2SRef obj (decl loc)
+	     (with-access::J2SDecl decl (%info)
+		(if (propinfo? %info)
+		    (if (isa? field J2SString)
+			(with-access::J2SString field (val)
+			   (if (eq? (propinfo-props %info) '*)
+			       this
+			       (let ((c (assoc val (propinfo-props %info))))
+				  (if (pair? c)
+				      (J2SRef (cdr c))
+				      this))))
+			(begin
+			   (set! field (rewrite-accesses! field))
+			   this))
+		    (call-default-walker))))
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    rewrite-accesses! ::J2SAssig ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (rewrite-accesses! this::J2SAssig)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SAccess)
+	  (with-access::J2SAccess lhs (obj field)
+	     (if (isa? obj J2SRef)
+		 (begin
+		    ;; don't traverse the access per se to avoid
+		    ;; rewriting the property initialization
+		    (set! field (rewrite-accesses! field))
+		    (set! rhs (rewrite-accesses! rhs))
+		    this)
+		 (call-default-walker)))
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    rewrite-accesses! ::J2SCall ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (rewrite-accesses! this::J2SCall)
+   (with-access::J2SCall this (args fun thisarg)
+      (if (isa? fun J2SAccess)
+	  (with-access::J2SAccess fun (obj field)
+	     (if (isa? obj J2SRef)
+		 (let ((nfun (rewrite-accesses! fun)))
+		    (let ((node (call-default-walker)))
+		       (unless (eq? nfun fun)
+			  (with-access::J2SCall node (thisarg)
+			     (set! thisarg (list obj))))
+		       node))
+		 (call-default-walker)))
+	  (call-default-walker))))

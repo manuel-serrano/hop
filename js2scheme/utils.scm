@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/utils.scm     */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/utils.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Mon Sep  3 09:33:29 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Thu Jan 24 12:51:13 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -68,7 +68,9 @@
 	   (array-method-type name #!optional (default '(any any)))
 	   
 	   (find-builtin-method-type ::J2SExpr ::bstring)
-	   (guess-builtin-method-type ::J2SExpr ::bstring)))
+	   (guess-builtin-method-type ::J2SExpr ::bstring)
+
+	   (is-builtin-ref?::bool ::J2SExpr ::symbol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -569,7 +571,7 @@
 ;*---------------------------------------------------------------------*/
 (define (usage? keys usage)
    (any (lambda (k)
-	   [assert (k) (memq k '(init new ref assig get set call eval delete))]
+	   [assert (k) (memq k '(uninit init new ref assig get set call eval delete))]
 	   (memq k usage))
       keys))
 
@@ -578,7 +580,7 @@
 ;*---------------------------------------------------------------------*/
 (define (only-usage? keys usage)
    (every (lambda (u)
-	     [assert (u) (memq u '(init new ref assig get set call eval delete))]
+	     [assert (u) (memq u '(uninit init new ref assig get set call eval delete))]
 	     (memq u keys))
       usage))
 
@@ -828,5 +830,19 @@
       (if (memq ty '(unknown any))
 	  (guess-method obj fn)
 	  (find-builtin-method-type obj fn))))
-
    
+;*---------------------------------------------------------------------*/
+;*    is-builtin-ref? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (is-builtin-ref? expr clazz)
+   (cond
+      ((isa? expr J2SGlobalRef)
+       (with-access::J2SGlobalRef expr (decl)
+	  (with-access::J2SDecl decl (id usage)
+	     (and (eq? id clazz) (not (usage? '(assig) usage))))))
+      ((isa? expr J2SRef)
+       (with-access::J2SRef expr (decl)
+	  (with-access::J2SDecl decl (id usage)
+	     (and (eq? id clazz) (not (usage? '(assig) usage))))))
+      (else
+       #f)))

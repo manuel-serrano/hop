@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Dec 27 18:51:34 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Thu Jan 24 11:17:26 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
 ;*=====================================================================*/
@@ -54,6 +54,8 @@
 	   __js2scheme_ecmascript5
 	   __js2scheme_cps
 	   __js2scheme_sweep
+	   __js2scheme_uninit
+	   __js2scheme_globprop
 	   __js2scheme_globvar
 	   __js2scheme_varpreinit
 	   __js2scheme_method
@@ -187,6 +189,9 @@
 	  j2s-callapply-stage
 	  j2s-sweep-stage
 	  j2s-ronly-stage
+	  j2s-uninit-stage
+	  j2s-globprop-stage
+	  j2s-uninit-globprop-stage
 	  j2s-globvar-stage
 	  j2s-clevel-stage
 	  j2s-method-stage
@@ -455,7 +460,9 @@
 	 (unless (memq :optim-integer o)
 	    (set! o (cons* :optim-integer #t o)))
 	 (unless (memq :optim-inline o)
-	    (set! o (cons* :optim-inline #t o))))
+	    (set! o (cons* :optim-inline #t o)))
+	 (unless (memq :optim-globprop o)
+	    (set! o (cons* :optim-globprop #t o))))
       (when (>=fx l 3)
 	 (unless (memq :optim-literals o)
 	    (set! o (cons* :optim-literals #t o)))
@@ -473,8 +480,9 @@
 	    (set! o (cons* :optim-vector #t o)))
 	 (unless (memq :optim-vector o)
 	    (set! o (cons* :optim-vector #t o)))
-	 (unless (memq :optim-pce o)
-	    (set! o (cons* :optim-pce #t o))))
+;* 	 (unless (memq :optim-pce o)                                   */
+;* 	    (set! o (cons* :optim-pce #t o)))                          */
+	 )
       (when (>=fx l 2)
 	 (unless (memq :optim-method o)
 	    (set! o (cons* :optim-method #t o)))
