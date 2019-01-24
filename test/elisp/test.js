@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sun Jan 13 09:18:47 2019 (serrano)                */
+/*    Last change :  Thu Jan 24 06:46:13 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -30,8 +30,11 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+//CHECK#1
+	 console.log( "tof=[" + (typeof 0) + "]" );
+
 // pok comment and conditionals
-		  function foo() {
+	 function foo() {
 		     for( let i = 0; i < len; i++ ) {
 	 		const fanout = fanin_list[ i ];
 	 		let value = fanout.polarity ? this.value : !this.value;

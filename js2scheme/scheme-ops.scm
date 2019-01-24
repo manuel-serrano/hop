@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Jan 22 19:59:42 2019 (serrano)                */
+;*    Last change :  Thu Jan 24 06:57:26 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -183,16 +183,21 @@
 	  `(begin ,(j2s-scheme expr mode return conf) #t))))
 
    (define (typeof->scheme expr)
-      (cond
-	 ((isa? expr J2SUnresolvedRef)
-	  ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3
-	  (with-access::J2SUnresolvedRef expr (id loc cache)
-	     `(js-typeof ,(j2s-unresolved id #f cache loc))))
-	 ((isa? expr J2SParen)
-	  (with-access::J2SParen expr (expr)
-	     (typeof->scheme expr)))
-	 (else
-	  `(js-typeof ,(j2s-scheme expr mode return conf)))))
+      (let ((ty (j2s-type expr)))
+	 (cond
+	    ((memq ty '(int30 int32 uint32 fixnum integer real number))
+	     `(js-ascii->jsstring "number"))
+	    ((eq? ty 'string)
+	     `(js-ascii->jsstring "string"))
+	    ((isa? expr J2SUnresolvedRef)
+	     ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3
+	     (with-access::J2SUnresolvedRef expr (id loc cache)
+		`(js-typeof ,(j2s-unresolved id #f cache loc))))
+	    ((isa? expr J2SParen)
+	     (with-access::J2SParen expr (expr)
+		(typeof->scheme expr)))
+	    (else
+	     `(js-typeof ,(j2s-scheme expr mode return conf))))))
 
    (define (bitnot loc expr)
       ;; optimize the pattern ~~expr that is sometime used to cast
@@ -785,6 +790,28 @@
       (with-access::J2SAccess expr (obj field)
 	 obj))
 
+   (define (j2s-case-type expr test #!key
+	      (number 'false)
+	      (string 'false)
+	      (object 'false)
+	      (boolean 'false)
+	      (regexp 'false)
+	      (function 'false)
+	      (undefined 'false)
+	      (pair 'false)
+	      (symbol 'false))
+      (case (j2s-type expr)
+	 ((int30 int32 uint32 fixnum integer real number) number)
+	 ((string) string)
+	 ((object) object)
+	 ((boolean) boolean)
+	 ((regexp) regexp)
+	 ((function) function)
+	 ((undefined) undefined)
+	 ((pair) pair)
+	 ((symbol) pair)
+	 (else test)))
+   
    (define (j2s-typeof-predicate this::J2SExpr expr)
       (when (isa? this J2SUnary)
 	 (with-access::J2SUnary this (op)
@@ -792,15 +819,22 @@
 	       (when (or (isa? expr J2SString) (isa? expr J2SNativeString))
 		  (with-access::J2SLiteralValue expr (val)
 		     (cond
-			((string=? val "number") 'js-number?)
-			((string=? val "function") 'js-function?)
-			((string=? val "string") 'js-jsstring?)
-			((string=? val "undefined") 'js-undefined?)
-			((string=? val "boolean") 'boolean?)
-			((string=? val "pair") 'pair?)
-			((string=? val "object") #f)
-			((string=? val "symbol") 'js-symbol?)
-			(else (tprint "TYPEOF PAS OPT " val) #f))))))))
+			((string=? val "number")
+			 (j2s-case-type expr 'js-number? :number 'true))
+			((string=? val "function")
+			 (j2s-case-type expr 'js-function? :function 'true))
+			((string=? val "string")
+			 (j2s-case-type expr 'js-jsstring? :string 'true))
+			((string=? val "undefined")
+			 (j2s-case-type expr 'js-undefined? :undefined 'true))
+			((string=? val "boolean")
+			 (j2s-case-type expr 'boolean? :boolean 'true))
+			((string=? val "pair")
+			 (j2s-case-type expr 'pair? :pair 'true))
+			((string=? val "symbol")
+			 (j2s-case-type expr 'js-symbol? :symbol 'true))
+			(else
+			 #f))))))))
 
    (define (equality-int32 op lhs tl rhs tr mode return conf flip::bool)
       ;; tl == int32, tr = ???
@@ -916,6 +950,22 @@
 	 (else
 	  (j2s-scheme expr mode return conf))))
 
+   (define (typeof/pred expr pred)
+      (cond
+	 ((eq? pred 'true)
+	  `(begin
+	      ,(typeof-expr expr mode return conf)
+	      ,(if (memq op '(!= !==)) #f #t)))
+	 ((eq? pred 'false)
+	  `(begin
+	      ,(typeof-expr expr mode return conf)
+	      ,(if (memq op '(!= !==)) #f #t)))
+	 (else
+	  (let ((t `(,pred ,(box (typeof-expr expr mode return conf)
+			       (j2s-vtype expr)
+			       conf))))
+	     (if (memq op '(!= !==)) `(not ,t) t)))))
+   
    (let ((tl (j2s-vtype lhs))
 	 (tr (j2s-vtype rhs)))
       (cond
@@ -923,18 +973,12 @@
 	  =>
 	  (lambda (pred)
 	     (with-access::J2SUnary lhs (expr)
-		(let ((t `(,pred ,(typeof-expr expr mode return conf))))
-		   (if (memq op '(!= !==))
-		       `(not ,t)
-		       t)))))
+		(typeof/pred expr pred))))
 	 ((j2s-typeof-predicate rhs lhs)
 	  =>
 	  (lambda (pred)
 	     (with-access::J2SUnary rhs (expr)
-		(let ((t `(,pred ,(typeof-expr expr mode return conf))))
-		   (if (memq op '(!= !==))
-		       `(not ,t)
-		       t)))))
+		(typeof/pred expr pred))))
 	 ((and (is-uint32? lhs) (is-uint32? rhs))
 	  (cond
 	     ((j2s-aref-length? rhs)
