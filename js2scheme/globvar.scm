@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Jan 24 13:46:36 2019 (serrano)                */
+;*    Last change :  Fri Jan 25 09:23:08 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (constant propagation).            */
@@ -119,9 +119,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-gloconst* this::J2SDeclInit)
    (with-access::J2SDeclInit this (usage ronly val %info %%dump id)
-      (if (and ronly (not (usage? '(assig) usage)) (constant? val))
+      (if (and (not (usage? '(assig) usage)) (constant? val))
 	  (begin
-	     (set! %%dump this)
 	     (set! %info (cons 'init this))
 	     (list this))
 	  '())))

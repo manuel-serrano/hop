@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Jan 24 11:31:02 2019 (serrano)                */
+;*    Last change :  Fri Jan 25 10:12:09 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -824,51 +824,55 @@
 		  decl)))))
    
    (with-access::J2SAssig this (lhs rhs loc)
-      (multiple-value-bind (tyv envl lbk)
-	 (node-type lhs env fix)
-	 (cond
-	    ;; variable assignment
-	    ((isa? lhs J2SRef)
-	     (with-access::J2SRef lhs (decl)
-		(with-access::J2SDecl decl (writable utype id)
-		   (multiple-value-bind (tyr env rbk)
-		      (node-type rhs envl fix)
-		      (cond
-			 ((and (not writable) (not (isa? this J2SInit)))
-			  (let ((nenv (extend-env env decl tyv)))
-			     (expr-type-add! this nenv fix tyv
-				(append lbk rbk))))
-			 ((not (eq? utype 'unknown))
-			  ;; force utype to be in vtype (for instance, for
-			  ;; argumentsp)
-			  (decl-vtype-add! decl utype fix)
-			  (expr-type-add! this env fix utype
-			     (append lbk rbk)))
-			 (tyr
-			  (with-access::J2SRef lhs (decl loc)
-			     (decl-vtype-add! decl tyr fix)
-			     (let ((nenv (extend-env env decl tyr)))
-				(expr-type-add! this nenv fix tyr
-				   (append lbk rbk)))))
-			 (else
-			  (return 'unknown env (append lbk rbk))))))))
-	    ((this-assig? lhs)
-	     =>
-	     (lambda (decl)
-		;; "this" property assignment
-		(let ((envt (extend-env envl decl 'object)))
-		   (multiple-value-bind (tyr nenv rbk)
-		      (node-type rhs envt fix)
-		      (if tyr
-			  (expr-type-add! this nenv fix tyr (append lbk rbk))
-			  (return 'unknown envt (append lbk rbk)))))))
-	    (else
-	     ;; a non variable assignment
-	     (multiple-value-bind (tyr nenv rbk)
-		(node-type rhs envl fix)
-		(if tyr
-		    (expr-type-add! this nenv fix tyr (append lbk rbk))
-		    (return 'unknown env (append lbk rbk)))))))))
+      (let loop ((lhs lhs))
+	 (multiple-value-bind (tyv envl lbk)
+	    (node-type lhs env fix)
+	    (cond
+	       ;; variable assignment
+	       ((isa? lhs J2SRef)
+		(with-access::J2SRef lhs (decl)
+		   (with-access::J2SDecl decl (writable utype id)
+		      (multiple-value-bind (tyr env rbk)
+			 (node-type rhs envl fix)
+			 (cond
+			    ((and (not writable) (not (isa? this J2SInit)))
+			     (let ((nenv (extend-env env decl tyv)))
+				(expr-type-add! this nenv fix tyv
+				   (append lbk rbk))))
+			    ((not (eq? utype 'unknown))
+			     ;; force utype to be in vtype (for instance, for
+			     ;; argumentsp)
+			     (decl-vtype-add! decl utype fix)
+			     (expr-type-add! this env fix utype
+				(append lbk rbk)))
+			    (tyr
+			     (with-access::J2SRef lhs (decl loc)
+				(decl-vtype-add! decl tyr fix)
+				(let ((nenv (extend-env env decl tyr)))
+				   (expr-type-add! this nenv fix tyr
+				      (append lbk rbk)))))
+			    (else
+			     (return 'unknown env (append lbk rbk))))))))
+	       ((isa? lhs J2SWithRef)
+		(with-access::J2SWithRef lhs (expr)
+		   (loop expr)))
+	       ((this-assig? lhs)
+		=>
+		(lambda (decl)
+		   ;; "this" property assignment
+		   (let ((envt (extend-env envl decl 'object)))
+		      (multiple-value-bind (tyr nenv rbk)
+			 (node-type rhs envt fix)
+			 (if tyr
+			     (expr-type-add! this nenv fix tyr (append lbk rbk))
+			     (return 'unknown envt (append lbk rbk)))))))
+	       (else
+		;; a non variable assignment
+		(multiple-value-bind (tyr nenv rbk)
+		   (node-type rhs envl fix)
+		   (if tyr
+		       (expr-type-add! this nenv fix tyr (append lbk rbk))
+		       (return 'unknown env (append lbk rbk))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SAssigOp ...                                       */

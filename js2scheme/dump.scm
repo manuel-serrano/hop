@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Jan 20 10:16:10 2019 (serrano)                */
+;*    Last change :  Fri Jan 25 09:07:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -834,8 +834,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLabel)
    (with-access::J2SLabel this (lhs id body)
-      `(,@(call-next-method) ,(j2s->list id)
-	  ,(j2s->list body))))
+      `(,@(call-next-method) ,id ,(j2s->list body))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SBreak ...                                         */

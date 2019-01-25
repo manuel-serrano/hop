@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Sun Mar 25 17:14:52 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Fri Jan 25 10:21:11 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
 ;*=====================================================================*/
@@ -106,7 +106,9 @@
 		  (obj id)
 		  (fname (cadr loc))
 		  (location (caddr loc))))))
-      (with-access::J2SDecl decl (ronly)
+      (with-access::J2SDecl decl (ronly id usage)
+	 (unless (usage? '(assig) usage)
+	    (set! usage (cons 'assig usage)))
 	 (set! ronly #f)))
    
    (with-access::J2SAssig this (lhs rhs loc)
@@ -127,7 +129,9 @@
    (with-access::J2SAssig this (lhs rhs)
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
-	    (with-access::J2SDecl decl (ronly id)
+	    (with-access::J2SDecl decl (ronly id usage)
+	       (unless (usage? '(assig) usage)
+		  (set! usage (cons 'assig usage)))
 	       (set! ronly #f))))
       (ronly! rhs mode deval))
    this)
@@ -139,7 +143,9 @@
    (with-access::J2SUnary this (op expr)
       (if (and (eq? op 'delete) (isa? expr J2SRef))
 	  (with-access::J2SRef expr (decl)
-	     (with-access::J2SDecl decl (ronly)
+	     (with-access::J2SDecl decl (ronly id usage)
+		(unless (usage? '(assig) usage)
+		   (set! usage (cons 'assig usage)))
 		(set! ronly #f))
 	     this)
 	  (call-default-walker))))
@@ -152,7 +158,6 @@
       (unless deval
 	 (when (and (or (eq? mode 'hopscript) (eq? mode 'strict))
 		    (or (not (memq scope '(global %scope)))
-			(not writable)
 			(not (usage? '(assig) usage))))
 	    (set! ronly #t))))
    this)
@@ -211,8 +216,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark-write! this::J2SRef)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (usage ronly)
-	 (set! usage (cons 'assig usage))
+      (with-access::J2SDecl decl (usage ronly id)
+	 (unless (usage? '(assig) usage)
+	    (set! usage (cons 'assig usage)))
 	 (set! ronly #f)
 	 this)))
    

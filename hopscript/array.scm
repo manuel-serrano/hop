@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan 23 08:24:42 2019 (serrano)                */
+;*    Last change :  Fri Jan 25 08:38:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -686,7 +686,7 @@
 	     (begin
 		(vector-set! new i (vector-ref vec i))
 		(loop (+fx i 1)))))))
-	 
+
 ;*---------------------------------------------------------------------*/
 ;*    js-array-ref ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -694,8 +694,10 @@
    (if (cond-expand
 	  ((or bint30 bint32)
 	   (and (fixnum? idx) (>=fx idx 0)))
+	  (not-used
+	   (and (fixnum? idx) (>=fx idx 0) (<=fx idx (-fx (bit-lsh 1 32) 2))))
 	  (else
-	   (and (fixnum? idx) (>=fx idx 0) (<=fx idx (-fx (bit-lsh 1 32) 2)))))
+	   (and (fixnum? idx) (pragma::bool "(ulong)($1) <= (ulong)($2)" idx (-fx (bit-lsh 1 32) 2)))))
        (js-array-index-ref arr (fixnum->uint32 idx) %this)
        (js-get arr idx %this)))
 

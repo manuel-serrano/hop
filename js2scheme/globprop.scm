@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Jan 24 17:20:02 2019 (serrano)                */
+;*    Last change :  Fri Jan 25 08:36:41 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -74,6 +74,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-globprop! this args)
    (when (isa? this J2SProgram)
+      (tprint "GLOBPROP incorrect, to be completed and fixed")
       (with-access::J2SProgram this (nodes decls direct-eval)
 	 (unless direct-eval
 	    (let ((gcnsts (collect-gloconst* this)))

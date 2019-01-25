@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Thu Jan 24 17:06:29 2019 (serrano)                */
+;*    Last change :  Fri Jan 25 09:05:55 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -62,12 +62,26 @@
 		;; initialize all global variables
 		(for-each (lambda (decl)
 			     (with-access::J2SDecl decl (%info)
-				(set! %info 'unknown)))
+				(if (isa? decl J2SDeclInit)
+				    (set! %info 'init0)
+				    (set! %info 'unknown))))
 		   decls)
-		;; mark double initialization
+		;; mark single decl init initialization
 		(for-each invalidate-double-decl nodes)
+		;; mark global declinit single init
+		(for-each (lambda (decl)
+			     (with-access::J2SDecl decl (%info)
+				(when (and (isa? decl J2SDeclInit) (eq? %info 'init0))
+				   (set! %info 'init))))
+		   decls)
 		;; mark variables used before initialized
-		(for-each invalidate-early-decl nodes)))))
+		(for-each (lambda (n) (invalidate-early-decl n #t)) nodes)
+		;; mark all variables not initialized for sure
+		(for-each (lambda (decl)
+			     (with-access::J2SDecl decl (%info usage id)
+				(when (memq %info '(init0 unknown double))
+				   (set! usage (cons 'uninit usage)))))
+		   decls)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -94,6 +108,18 @@
 		   ((init0)
 		    (set! %info 'double)))))
 	  (invalidate-double-decl lhs))))
+
+;*---------------------------------------------------------------------*/
+;*    invalidate-double-decl ::J2SDeclInit ...                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (invalidate-double-decl this::J2SDeclInit)
+   (with-access::J2SDeclInit this (%info val)
+      (invalidate-double-decl val)
+      (case %info
+	 ((unknown)
+	  (set! %info 'init0))
+	 ((init0)
+	  (set! %info 'double)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SNode ...                              */
@@ -101,13 +127,13 @@
 ;*    Scan the whole program and invalidate all global variables       */
 ;*    that can possibily be accessed before initialized.               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SNode)
+(define-walk-method (invalidate-early-decl this::J2SNode initp::bool)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SRef ...                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SRef)
+(define-walk-method (invalidate-early-decl this::J2SRef initp)
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (%info usage id key)
 	 (when (memq %info '(unknown init0 double))
@@ -115,31 +141,38 @@
 		(begin
 		   (set! %info 'init)
 		   (with-access::J2SDeclFun decl (val)
-		      (invalidate-early-decl val)))
+		      (invalidate-early-decl val #f)))
 		(begin
 		   (set! %info 'uninit)
 		   (set! usage (cons 'uninit usage))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    invalidate-early-decl ::J2SFun ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (invalidate-early-decl this::J2SFun initp)
+   (with-access::J2SFun this (body)
+      (invalidate-early-decl body #f)))
+
+;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SInit ...                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SInit)
+(define-walk-method (invalidate-early-decl this::J2SInit initp)
    (with-access::J2SInit this (lhs rhs %%dump)
-      (invalidate-early-decl rhs)
+      (invalidate-early-decl rhs initp)
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (%info id)
-		(when (eq? %info 'init0)
+		(when (and initp (eq? %info 'init0))
 		   ;; for sure this is initialized
 		   (set! %info 'init))))
-	  (invalidate-early-decl lhs))))
+	  (invalidate-early-decl lhs initp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SDeclInit ...                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SDeclInit)
+(define-walk-method (invalidate-early-decl this::J2SDeclInit initp)
    (with-access::J2SDeclInit this (%info val)
-      (invalidate-early-decl val)
+      (invalidate-early-decl val initp)
       (when (eq? %info 'init0)
 	 ;; for sure this is initialized
 	 (set! %info 'init))))
@@ -147,9 +180,52 @@
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SDeclFun ...                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-early-decl this::J2SDeclFun)
+(define-walk-method (invalidate-early-decl this::J2SDeclFun initp)
    (with-access::J2SDeclInit this (%info val)
       (when (eq? %info 'initi0)
 	 ;; for sure this is initialized
 	 (set! %info 'init))))
 
+;*---------------------------------------------------------------------*/
+;*    invalidate-early-decl ::J2SLabel ...                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (invalidate-early-decl this::J2SLabel initp)
+   (with-access::J2SLabel this (body)
+      (invalidate-early-decl body #f)))
+
+;*---------------------------------------------------------------------*/
+;*    invalidate-early-decl ::J2STry ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (invalidate-early-decl this::J2STry initp)
+   (with-access::J2STry this (body catch finally)
+      (invalidate-early-decl body #f)
+      (invalidate-early-decl catch #f)
+      (invalidate-early-decl finally #f)))
+
+;*---------------------------------------------------------------------*/
+;*    invalidate-early-decl ::J2SLoop ...                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (invalidate-early-decl this::J2SLoop initp)
+   (with-access::J2SLoop this (body)
+      (invalidate-early-decl body #f)))
+
+;*---------------------------------------------------------------------*/
+;*    invalidate-early-decl ::J2SFor ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (invalidate-early-decl this::J2SFor initp)
+   (with-access::J2SFor this (init test incr)
+      (invalidate-early-decl init initp)
+      (invalidate-early-decl test initp)
+      (invalidate-early-decl incr initp)
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    invalidate-early-decl ::J2SForIn ...                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (invalidate-early-decl this::J2SForIn initp)
+   (with-access::J2SForIn this (lhs obj)
+      (invalidate-early-decl lhs initp)
+      (invalidate-early-decl obj initp)
+      (call-next-method)))
+
+      
