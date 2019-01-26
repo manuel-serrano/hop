@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jan 23 07:41:34 2019 (serrano)                */
+;*    Last change :  Sat Jan 26 09:10:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -79,7 +79,6 @@
 	   (js-property-value-set! obj::JsObject ::JsPropertyDescriptor v ::JsGlobalObject)
 	   
 	   (js-object-add! obj::JsObject index::long value)
-	   (js-object-push! obj::JsObject index::long value)
 	   (js-object-ctor-add! obj::JsObject index::long value)
 	   (js-object-ctor-push! obj::JsObject index::long value)
 	   
@@ -335,13 +334,16 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-add! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements cmap)
-      (let ((nels (copy-vector elements (+fx 1 idx))))
-	 (cond-expand (profile (profile-cache-extension (+fx 1 idx))))
-	 (vector-set! nels idx value)
-	 (when ($jsobject-elements-inline? obj)
-	    (vector-fill! elements #unspecified))
-	 (set! elements nels)
-	 obj)))
+      (let ((nlen (if (>fx (vector-length elements) 16)
+		      (*fx 2 (vector-length elements))
+		      (+fx 1 (vector-length elements)))))
+	 (let ((nels (copy-vector elements nlen)))
+	    (cond-expand (profile (profile-cache-extension nlen)))
+	    (vector-set! nels idx value)
+	    (when ($jsobject-elements-inline? obj)
+	       (vector-fill! elements #unspecified))
+	    (set! elements nels)
+	    obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-ctor-add! ...                                          */
@@ -1723,8 +1725,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-global-object-get-name ...                                    */
 ;*    -------------------------------------------------------------    */
-;*    !!! Overriden by a macro in property.sch                         */
-;*    -------------------------------------------------------------    */
 ;*    This is an inlined version of js-get-own-property.               */
 ;*---------------------------------------------------------------------*/
 (define (js-global-object-get-name o::JsObject name::symbol
@@ -2408,6 +2408,7 @@
 		   cmap)))))
    
    (define (extend-mapped-object!)
+      
       (when enumerable
 	 (js-object-mode-enumerable-set! o #t))
       ;; 8.12.5, step 6
@@ -2434,6 +2435,9 @@
 			 ;; follow the next map 
 			 (with-access::JsConstructMap nextmap (props)
 			    (set! cmap nextmap)
+;* 			    (with-access::JsObject o (elements)        */
+;* 			       (when (>=fx index (vector-length elements)) */
+;* 				  (tprint "PUSH " name " " index)))    */
 			    (js-object-push! o index val-or-desc)
 			    value))))
 		  (axs
@@ -2449,6 +2453,9 @@
 			  (nextmap (next-cmap o name #f flags)))
 		      (check-accessor-property! get set)
 		      ;; extending the elements vector is mandatory
+;* 		      (with-access::JsObject o (elements)              */
+;* 			 (when (>=fx index (vector-length elements))   */
+;* 			    (tprint "PUSH " name " " index)))          */
 		      (js-object-push! o index newdesc)
 		      (js-undefined)))
 		  (else
@@ -2462,6 +2469,10 @@
 			  (nextmap (next-cmap o name value flags)))
 		      (with-access::JsConstructMap nextmap (methods)
 			 (validate-cache-method! value methods index))
+;* 		      (with-access::JsObject o (elements)              */
+;* 			 (when (>=fx index (vector-length elements))   */
+;* 			    (tprint "PUSH " name " " index "/"         */
+;* 			       (vector-length elements))))             */
 		      (js-object-push! o index newdesc)
 		      value)))))))
    

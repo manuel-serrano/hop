@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jan 23 07:39:07 2019 (serrano)                */
+;*    Last change :  Sat Jan 26 08:02:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -290,6 +290,7 @@
 	      (revoked::bool (default #f)))
 	   
 	   (class JsGlobalObject::JsObject
+	      (js-hop-builtin::JsObject (default (class-nil JsObject)))
 	      (js-object::JsFunction (default (class-nil JsFunction)))
 	      (js-array::JsFunction (default (class-nil JsFunction)))
 	      (js-array-prototype::JsArray (default (class-nil JsArray)))

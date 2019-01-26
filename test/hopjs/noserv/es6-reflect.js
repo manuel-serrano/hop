@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Jan  5 09:37:25 2019 (serrano)                */
+/*    Last change :  Sat Jan 26 09:06:55 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Reflect object                           */
@@ -112,8 +112,7 @@ function mdnl() {
    
    const proto1 = Reflect.getPrototypeOf(object1);
    
-   return Reflect.getPrototypeOf(proto1) === null
-      || (hop.isBuiltinObject( Reflect.getPrototypeOf( proto1) ) );
+   return Reflect.getPrototypeOf(proto1) === null;
 }
 
 function mdnm() {

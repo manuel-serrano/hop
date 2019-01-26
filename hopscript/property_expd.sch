@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Jan 23 05:25:24 2019 (serrano)                */
+;*    Last change :  Sat Jan 26 12:05:37 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -464,20 +464,6 @@
 	     e)))
       (else
        (error "js-get-name/cache" "bad form" x))))
-
-;*---------------------------------------------------------------------*/
-;*    js-global-object-get-name-expander ...                           */
-;*---------------------------------------------------------------------*/
-(define (js-global-object-get-name-expander x e)
-   (match-case x
-      ((?- (and (? symbol?) ?o) ?name ?throw ?%this)
-       (e `(let ((pval (js-get-property-value ,o ,o ,name ,%this)))
-	      (if (eq? pval (js-absent))
-		  (js-get-notfound ,name ,throw ,%this)
-		  pval))
-	  e))
-      (else
-       (error "js-global-object-get-name" "bad form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-global-object-get-name/cache-expander ...                     */

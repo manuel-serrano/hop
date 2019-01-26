@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jan 25 08:38:52 2019 (serrano)                */
+;*    Last change :  Sat Jan 26 12:34:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3514,10 +3514,6 @@
 			    (minu32 (js-touint32 relend %this) len))))))
       (with-access::JsArray this (vec ilen length)
 	 (cond
-	    ((not (js-object-mode-plain? this))
-	     (js-call3 %this
-		(js-get-name/cache this 'fill #f %this (js-pcache-ref %pcache 1))
-		this value start end))
 	    ((js-object-mode-inline? this)
 	     (let loop ((i k))
 		(if (<u32 i final)

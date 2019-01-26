@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Tue Jan 22 20:47:19 2019 (serrano)                */
+;*    Last change :  Sat Jan 26 09:53:01 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -335,6 +335,7 @@
       (let ((proto (instantiateJsObject
 		      (__proto__ __proto__))))
 	 (js-init-typedarray-prototype! proto %this)
+	 
 	 (with-access::JsGlobalObject %this (js-int8array)
 	    (set! js-int8array
 	       (js-init-typedarray! %this 'Int8Array 1 proto)))
@@ -625,6 +626,7 @@
 	 (define js-typedarray
 	    (js-make-function %this %js-typedarray 1 (symbol->string name)
 	       :__proto__ js-function-prototype
+	       :size 2
 	       :prototype js-typedarray-prototype
 	       :alloc js-typedarray-alloc
 	       :construct (lambda (this . items)
@@ -708,6 +710,14 @@
 		     (%js-typedarray (js-undefined) buffer
 			(uint32->fixnum beg) (uint32->fixnum len))))))
 
+	 (js-bind! %this js-typedarray 'from
+	    :configurable #f :enumerable #f :value (js-not-implemented %this)
+	    :hidden-class #t)
+	    
+	 (js-bind! %this js-typedarray 'of
+	    :configurable #f :enumerable #f :value (js-not-implemented %this)
+	    :hidden-class #t)
+	 
 	 ;; bind the Typedarray in the global object
 	 (js-bind! %this %this name
 	    :configurable #f :enumerable #f :value js-typedarray
@@ -1374,14 +1384,6 @@
 	    :configurable #f :enumerable #f :value js-dataview
 	    :hidden-class #t)
 
-	 (js-bind! %this %this 'from
-	    :configurable #f :enumerable #f :value (js-not-implemented %this)
-	    :hidden-class #t)
-	    
-	 (js-bind! %this %this 'of
-	    :configurable #f :enumerable #f :value (js-not-implemented %this)
-	    :hidden-class #t)
-	 
 	 js-dataview)))
 	 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Jan 23 08:11:06 2019 (serrano)                */
+;*    Last change :  Sat Jan 26 08:15:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -52,8 +52,7 @@
    (with   __hopscript_dom)
    
    (export (js-initial-global-object)
-	   (js-hop-builtin? ::obj ::obj)
-	   (js-new-global-object::JsGlobalObject)))
+	   (js-new-global-object::JsGlobalObject #!optional (size 64))))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -112,7 +111,8 @@
 ;*    js-donate ::JsGlobalObject ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsGlobalObject worker %_this)
-   (js-new-global-object))
+   (with-access::JsGlobalObject obj (elements)
+      (js-new-global-object (vector-length elements))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsObject ...                                  */
@@ -261,24 +261,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-new-global-object ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-new-global-object)
-   ;; 2018-01-05: before all, initialize the builtin object prototype
-   ;; and then create the global object
-   (let* ((%void (instantiateJsGlobalObject
-		    (cmap (make-cmap '#()))
-		    (__proto__ (js-null))))
-	  (%proto (instantiateJsObject
+(define (js-new-global-object #!optional (size 64))
+   (let* ((%proto (instantiateJsObject
 		     (cmap (instantiate::JsConstructMap))
-		     (__proto__ (js-hop-builtin %void))
-		     (elements (make-vector 40))))
+		     (__proto__ (js-null))
+		     (elements (make-vector 128))))
 	  (%this (instantiateJsGlobalObject
 		    (cmap (make-cmap '#()))
 		    (__proto__ %proto)
-		    (elements (make-vector 97)))))
-      ;; freeze the void object
-      (js-object-properties-set! %void '())
-      (js-freeze %void %void)
-      (js-seal %void %void)
+		    (elements (make-vector size)))))
       ;; for bootstrap, first allocat hasInstance symbol
       (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 	 (set! js-symbol-hasinstance
@@ -520,132 +511,6 @@
 
 	    ;; return the newly created object
 	    %this))))
-
-;*---------------------------------------------------------------------*/
-;*    %builtin ...                                                     */
-;*---------------------------------------------------------------------*/
-(define %builtin #unspecified)
-
-;*---------------------------------------------------------------------*/
-;*    js-hop-builtin ...                                               */
-;*---------------------------------------------------------------------*/
-(define (js-hop-builtin %this)
-   (when  (eq? %builtin #unspecified)
-      (let ((proto (instantiateJsObject
-		      (cmap (instantiate::JsConstructMap))
-		      (__proto__ (js-null))
-		      (elements (make-vector 4))))
-	    (obj (instantiateJsObject
-		    (cmap (instantiate::JsConstructMap))
-		    (__proto__ (js-null))
-		    (elements (make-vector 180)))))
-	 
-	 (js-bind! %this proto 'toString
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-function-debug-name this %this))
-		      0 "toString"
-		      :__proto__ proto)
-	    :writable #f :configurable #f :enumerable #f)
-	 
-	 (js-bind! %this proto '__proto__
-	    :get (js-make-function %this
-		    (lambda (o)
-		       (with-access::JsObject o (__proto__)
-			  __proto__))
-		    1 "get"
-		    :src "object.scm")
-	    :writable #f :enumerable #f :configurable #f)
-
-	 (js-bind! %this proto 'apply
-	    :value (js-make-function %this
-		      (lambda (this thisarg argarray)
-			 (tprint "ARG=" thisarg " " argarray)
-			 (js-apply-array %this this thisarg argarray))
-		      2 "apply"
-		      :src "object.scm"
-		      :__proto__ proto)
-	    :writable #f :enumerable #f :configurable #f)
-
-	 (js-bind! %this proto 'call
-	    :value (js-make-function %this
-		      (lambda (this thisarg . args)
-			 (js-apply %this this thisarg args))
-		      1 "call"
-		      :src "object.scm"
-		      :__proto__ proto)
-	    :writable #f :enumerable #f :configurable #f)
-	 
-	 (js-init-hop-builtin! %this obj proto)
-	 (js-prevent-extensions obj)
-	 (js-prevent-extensions proto)
-	 (js-object-mode-enumerable-set! obj #f)
-	 
-	 (set! %builtin obj)))
-   %builtin)
-
-;*---------------------------------------------------------------------*/
-;*    js-hop-builtin? ...                                              */
-;*---------------------------------------------------------------------*/
-(define (js-hop-builtin? this obj)
-   (eq? obj %builtin))
-
-;*---------------------------------------------------------------------*/
-;*    js-init-hop-builtin! ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-init-hop-builtin! %this builtin::JsObject __proto__)
-   ;; html_base
-   (js-bind-tags! %this builtin __proto__
-      A ABBR ACRONYM ADDRESS APPLET AREA ARTICLE B BASE
-      BASEFONT BDI BDO BIG BLOCKQUOTE BODY BR BUTTON
-      CANVAS CAPTION CENTER CITE CODE COL COLGROUP
-      DATALIST DD DEL DETAILS DFN DIR DIV DL DT EM EMBED FIELDSET
-      FIGURE FIGCAPTION FONT FOOTER FORM FRAME FRAMESET
-      H1 H2 H3 H4 H5 H6
-      HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
-      LI MAIN MAP MARQUEE MENU MENUITEM META METER NAV NOFRAMES NOSCRIPT
-      OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
-      Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
-      STRONG SUB SUMMARY SUP TABLE TBODY TD TEXTAREA TFOOT TH
-      THEAD TIME TITLE TR TT U UL VAR REACT)
-
-   ;; html_head
-   (js-bind-tags! %this builtin __proto__ LINK STYLE)
-   
-   (js-bind-tags! %this builtin __proto__ IMG)
-   
-   ;; html5
-   (js-bind-tags! %this builtin __proto__ AUDIO VIDEO TRACK)
-   
-   ;; svg
-   (js-bind-svg-tags! %this builtin __proto__
-      SVG SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
-      SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
-      SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
-      SVG:TEXTPATH SVG:TREF SVG:TSPAN
-      SVG:RADIALGRADIENT SVG:LINEARGRADIENT)
-   
-   (js-bind-tag! %this builtin __proto__ SVG:IMG)
-   
-   ;; mathml
-   (js-bind-tags! %this builtin __proto__
-      MATH MATH:MSTYLE MATH:MI MATH:MN MATH:MO
-      MATH:MROW MATH:MUNDER MATH:MOVER MATH:MUNDEROVER
-      MATH:MSUP MATH:MSUB MATH:MSUBSUP MATH:MFRAC
-      MATH:MROOT MATH:MSQRT MATH:MTEXT MATH:MTABLE
-      MATH:MTR MATH:MTD MATH:MPADDED MATH:TEX)
-   
-   (js-bind! %this builtin '!--
-      :value (js-make-function %this
-		(lambda (this data)
-		   (instantiate::xml-comment
-		      (data data)))
-		1 "<!--"
-		:__proto__ __proto__
-		:src "object.scm")
-      :enumerable #f :writable #f :configurable #f :hidden-class #f)
-
-   builtin)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-object! ...                                              */

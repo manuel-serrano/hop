@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Jan 23 09:06:54 2019 (serrano)                */
+;*    Last change :  Sat Jan 26 08:12:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -58,6 +58,11 @@
 (define (builtin-language? str)
    (member str '("hopscript" "html" "json" "hop" "ecmascript5"
 		 "ecmascript6" "ecmascript2017")))
+
+;*---------------------------------------------------------------------*/
+;*    default scope length                                             */
+;*---------------------------------------------------------------------*/
+(define (SCOPE-ELEMENTS-LENGTH) 128)
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-mutex ...                                                */
@@ -776,115 +781,127 @@
 			#f this)
 		     ;; the resolution
 		     (nodejs-resolve name this m 'body)))))))
-   (let ((obj (js-new-global-object)))
-      (nodejs-v8-global-object-init! obj)
-      obj))
+   (let ((%this (js-new-global-object 256)))
+      (with-access::JsGlobalObject %this (js-object __proto__)
+	 (let ((proto (instantiateJsObject
+			 (cmap (instantiate::JsConstructMap))
+			 (__proto__ (js-get js-object 'prototype %this))
+			 (elements (make-vector 190)))))
+	    ;; mark object non-enumerable (i.e., it contains no enumerable
+	    ;; property) in order to optimize for..in
+	    (js-object-mode-enumerable-set! proto #f)
+	    ;; bind the builtin hop functions
+	    (js-init-hop-builtin! %this %this)
+	    ;; bind the v8 builtin
+	    (nodejs-init-v8-global-object! %this __proto__)
+	    (nodejs-init-v8-global-object-prototype! %this %this)))
+      %this))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-v8-global-object-init! ...                                */
+;*    nodejs-init-v8-global-object! ...                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-v8-global-object-init! %this::JsGlobalObject)
+(define (nodejs-init-v8-global-object! %this::JsGlobalObject proto::JsObject)
    ;; v8 compatibility (used by nodejs/lib)
-   (with-access::JsGlobalObject %this (js-object)
-      (let ((proto (js-get js-object 'prototype %this)))
-	 ;; mark object non-enumerable (i.e., it contains no enumerable
-	 ;; property) in order to optimize for..in
-	 (js-object-mode-enumerable-set! proto #f)
-	 (js-bind! %this proto '__defineGetter__
-	    :value (js-make-function %this
-		      (lambda (this name fun)
-			 (js-bind! %this this
-			    (string->symbol (js-jsstring->string name))
-			    :get fun))
-		      2 "__defineGetter__")
-	    :enumerable #f
-	    :writable #t
-	    :configurable #f)
-	 ;; Dtrace profiling
-	 (js-bind! %this proto 'DTRACE_HTTP_SERVER_REQUEST
-	    :value (js-make-function %this
-		      (lambda (this req socket)
-			 (js-undefined))
-		      2 "DTRACE_HTTP_SERVER_REQUEST")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'DTRACE_HTTP_SERVER_RESPONSE
-	    :value (js-make-function %this
-		      (lambda (this req socket)
-			 (js-undefined))
-		      2 "DTRACE_HTTP_SERVER_RESPONSE")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'COUNTER_HTTP_SERVER_REQUEST
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-undefined))
-		      0 "COUNTER_HTTP_SERVER_REQUEST")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'COUNTER_HTTP_SERVER_RESPONSE
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-undefined))
-		      0 "COUNTER_HTTP_SERVER_RESPONSE")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'DTRACE_HTTP_CLIENT_RESPONSE
-	    :value (js-make-function %this
-		      (lambda (this req socket)
-			 (js-undefined))
-		      2 "DTRACE_HTTP_CLIENT_RESPONSE")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'COUNTER_HTTP_CLIENT_REQUEST
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-undefined))
-		      0 "COUNTER_HTTP_CLIENT_REQUEST")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'DTRACE_HTTP_CLIENT_REQUEST
-	    :value (js-make-function %this
-		      (lambda (this req socket)
-			 (js-undefined))
-		      2 "DTRACE_HTTP_CLIENT_REQUEST")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'COUNTER_HTTP_CLIENT_RESPONSE
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-undefined))
-		      0 "COUNTER_HTTP_CLIENT_RESPONSE")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'DTRACE_NET_STREAM_END
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-undefined))
-		      0 "DTRACE_NET_STREAM_END")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'DTRACE_NET_SOCKET_READ
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-undefined))
-		      0 "DTRACE_NET_SOCKET_READ")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'DTRACE_NET_SOCKET_WRITE
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-undefined))
-		      0 "DTRACE_NET_SOCKET_WRITE")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'DTRACE_NET_SERVER_CONNECTION
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-undefined))
-		      0 "DTRACE_NET_SERVER_CONNECTION")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'COUNTER_NET_SERVER_CONNECTION
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-undefined))
-		      0 "COUNTER_NET_SERVER_CONNECTION")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this proto 'COUNTER_NET_SERVER_CONNECTION_CLOSE
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (js-undefined))
-		      0 "COUNTER_NET_SERVER_CONNECTION_CLOSE")
-	    :enumerable #f :writable #f :configurable #f :hidden-class #f)))
+   (js-bind! %this proto '__defineGetter__
+      :value (js-make-function %this
+		(lambda (this name fun)
+		   (js-bind! %this this
+		      (string->symbol (js-jsstring->string name))
+		      :get fun))
+		2 "__defineGetter__")
+      :enumerable #f
+      :writable #t
+      :configurable #f))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-init-v8-global-object-prototype! ...                      */
+;*---------------------------------------------------------------------*/
+(define (nodejs-init-v8-global-object-prototype! %this::JsGlobalObject proto)
+   ;; Dtrace profiling
+   (js-bind! %this proto 'DTRACE_HTTP_SERVER_REQUEST
+      :value (js-make-function %this
+		(lambda (this req socket)
+		   (js-undefined))
+		2 "DTRACE_HTTP_SERVER_REQUEST")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'DTRACE_HTTP_SERVER_RESPONSE
+      :value (js-make-function %this
+		(lambda (this req socket)
+		   (js-undefined))
+		2 "DTRACE_HTTP_SERVER_RESPONSE")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'COUNTER_HTTP_SERVER_REQUEST
+      :value (js-make-function %this
+		(lambda (this)
+		   (js-undefined))
+		0 "COUNTER_HTTP_SERVER_REQUEST")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'COUNTER_HTTP_SERVER_RESPONSE
+      :value (js-make-function %this
+		(lambda (this)
+		   (js-undefined))
+		0 "COUNTER_HTTP_SERVER_RESPONSE")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'DTRACE_HTTP_CLIENT_RESPONSE
+      :value (js-make-function %this
+		(lambda (this req socket)
+		   (js-undefined))
+		2 "DTRACE_HTTP_CLIENT_RESPONSE")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'COUNTER_HTTP_CLIENT_REQUEST
+      :value (js-make-function %this
+		(lambda (this)
+		   (js-undefined))
+		0 "COUNTER_HTTP_CLIENT_REQUEST")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'DTRACE_HTTP_CLIENT_REQUEST
+      :value (js-make-function %this
+		(lambda (this req socket)
+		   (js-undefined))
+		2 "DTRACE_HTTP_CLIENT_REQUEST")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'COUNTER_HTTP_CLIENT_RESPONSE
+      :value (js-make-function %this
+		(lambda (this)
+		   (js-undefined))
+		0 "COUNTER_HTTP_CLIENT_RESPONSE")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'DTRACE_NET_STREAM_END
+      :value (js-make-function %this
+		(lambda (this)
+		   (js-undefined))
+		0 "DTRACE_NET_STREAM_END")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'DTRACE_NET_SOCKET_READ
+      :value (js-make-function %this
+		(lambda (this)
+		   (js-undefined))
+		0 "DTRACE_NET_SOCKET_READ")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'DTRACE_NET_SOCKET_WRITE
+      :value (js-make-function %this
+		(lambda (this)
+		   (js-undefined))
+		0 "DTRACE_NET_SOCKET_WRITE")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'DTRACE_NET_SERVER_CONNECTION
+      :value (js-make-function %this
+		(lambda (this)
+		   (js-undefined))
+		0 "DTRACE_NET_SERVER_CONNECTION")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'COUNTER_NET_SERVER_CONNECTION
+      :value (js-make-function %this
+		(lambda (this)
+		   (js-undefined))
+		0 "COUNTER_NET_SERVER_CONNECTION")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
+   (js-bind! %this proto 'COUNTER_NET_SERVER_CONNECTION_CLOSE
+      :value (js-make-function %this
+		(lambda (this)
+		   (js-undefined))
+		0 "COUNTER_NET_SERVER_CONNECTION_CLOSE")
+      :enumerable #f :writable #f :configurable #f :hidden-class #f)
    %this)
 
 ;*---------------------------------------------------------------------*/
@@ -895,19 +912,23 @@
       (let ((scope (duplicate::JsGlobalObject global
 		      (cmap (instantiate::JsConstructMap))
 		      (__proto__ global)
-		      (elements ($create-vector (vector-length elements))))))
+		      (elements ($create-vector (SCOPE-ELEMENTS-LENGTH))))))
 	 (js-object-properties-set! scope '())
 	 (js-object-mode-set! scope (js-object-default-mode))
-	 (nodejs-bind-export! global scope global)
-	 (hopscript-global-object-init! scope)
+	 ;;(nodejs-bind-export! global scope global)
+	 (nodejs-scope-init! scope)
 	 scope)))
 
 ;*---------------------------------------------------------------------*/
-;*    hopscript-global-object-init! ...                                */
+;*    nodejs-scope-init! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (hopscript-global-object-init! scope)
-   (js-put! scope 'HEAD (js-html-head scope) #f scope))
-
+(define (nodejs-scope-init! scope)
+   (js-bind! scope scope 'head
+      :value (js-html-head scope)
+      :enumerable #f :writable #f :configurable #f :hidden-class #f))
+;*                                                                     */
+;*    (js-put! scope 'HEAD (js-html-head scope) #f scope))             */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    debug-compile-trace ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -2026,44 +2047,44 @@
    (define (for-in obj::JsObject proc)
       
       (define (vfor-each proc vec)
-	 (let ((len (vector-length vec)))
-	    (let loop ((i 0))
-	       (when (<fx i len)
-		  (proc (vector-ref-ur vec i))
-		  (loop (+fx i 1))))))
+         (let ((len (vector-length vec)))
+            (let loop ((i 0))
+               (when (<fx i len)
+                  (proc (vector-ref-ur vec i))
+                  (loop (+fx i 1))))))
       
       (define (in-mapped-property n)
-	 (when (symbol? (property-name n)) (proc (property-name n))))
+         (when (symbol? (property-name n)) (proc (property-name n))))
       
       (define (in-property p)
-	 (when (isa? p JsPropertyDescriptor)
-	    (with-access::JsPropertyDescriptor p (name)
-	       (proc name))))
+         (when (isa? p JsPropertyDescriptor)
+            (with-access::JsPropertyDescriptor p (name)
+               (proc name))))
       
       (with-access::JsObject obj (cmap __proto__)
-	 (if (not (eq? cmap (js-not-a-cmap)))
-	     (with-access::JsConstructMap cmap (props)
-		(vfor-each in-mapped-property props))
-	     (for-each in-property (js-object-properties obj)))))
+         (if (not (eq? cmap (js-not-a-cmap)))
+             (with-access::JsConstructMap cmap (props)
+                (vfor-each in-mapped-property props))
+             (for-each in-property (js-object-properties obj)))))
    
    ;; e start being undefined during the first steps of the rts boot
    (when (isa? e JsObject)
       ;; bind all the exported functions in the global object
       (if (null? bindings)
-	  (for-in e
-	     (lambda (k)
-		(js-bind! %this %scope k
-		   :value (js-get e k %this)
-		   :writable #t :enumerable #f :configurable #f
-		   :hidden-class #f)))
-	  (for-each (lambda (k)
-		       (js-bind! %this %scope k
-			  :get (js-make-function %this
-				  (lambda (o)
-				     (js-get e k %this))
-				  0 "get")
-			  :hidden-class #f))
-	     bindings))))
+          (for-in e
+             (lambda (k)
+                (js-bind! %this %scope k
+                   :value (js-get e k %this)
+                   :writable #t :enumerable #f :configurable #f
+                   :hidden-class #f)))
+          (for-each (lambda (k)
+                       (js-bind! %this %scope k
+                          :get (js-make-function %this
+                                  (lambda (o)
+                                     (js-get e k %this))
+                                  0 "get")
+                          :hidden-class #f))
+             bindings))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-eval ...                                                  */
@@ -2160,8 +2181,7 @@
 	    :alloc js-no-alloc
 	    :construct (js-worker-construct %this loader))))
 
-   (js-bind! %this scope 'Worker
-      :value js-worker
+   (js-bind! %this scope 'Worker :value js-worker
       :configurable #f :enumerable #f))
 
 ;*---------------------------------------------------------------------*/
