@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jan 26 09:10:54 2019 (serrano)                */
+;*    Last change :  Sun Jan 27 19:57:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -99,6 +99,7 @@
 	   (js-get-notfound ::obj ::obj ::JsGlobalObject)
 	   
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
+
 	   (js-get-jsobject ::JsObject ::obj ::obj ::JsGlobalObject)
 	   
 	   (generic js-get-length::obj ::obj ::JsGlobalObject #!optional cache)
@@ -1474,32 +1475,22 @@
 (define-method (js-get-property-value o::JsObject base p::obj %this::JsGlobalObject)
    ;; JsObject x obj x JsGlobalObject -> value | Absent
    (jsobject-find o (js-toname p %this)
-		;; cmap search
-		(lambda (owner i)
-		   (with-access::JsObject owner (elements)
-		      (let ((e (vector-ref elements i)))
-			 (if (isa? e JsPropertyDescriptor)
-			     (js-property-value base e %this)
-			     e))))
-		;; property search
-		(lambda (o d)
-		   (js-property-value base d %this))
-		;; not found
-		(lambda ()
-		   (js-absent))
-		;; prototype search
-		(lambda (__proto__)
-		   (js-get-property-value __proto__ base p %this))))
-
-;*    ;; JsObject x obj x JsGlobalObject -> value | Absent             */
-;*    (let loop ((owner o))                                            */
-;*       (let ((desc (js-get-own-property owner p %this)))             */
-;* 	 (if (eq? desc (js-undefined))                                 */
-;* 	     (with-access::JsObject owner (__proto__)                  */
-;* 		(if (isa? __proto__ JsObject)                          */
-;* 		    (loop __proto__)                                   */
-;* 		    (js-absent)))                                      */
-;* 	     (js-property-value base desc %this)))))                   */
+      ;; cmap search
+      (lambda (owner i)
+	 (with-access::JsObject owner (elements)
+	    (let ((e (vector-ref elements i)))
+	       (if (isa? e JsPropertyDescriptor)
+		   (js-property-value base e %this)
+		   e))))
+      ;; property search
+      (lambda (o d)
+	 (js-property-value base d %this))
+      ;; not found
+      (lambda ()
+	 (js-absent))
+      ;; prototype search
+      (lambda (__proto__)
+	 (js-get-property-value __proto__ base p %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-notfound ...                                              */
@@ -2049,6 +2040,8 @@
 
    (define (extend-mapped-object!)
       (js-object-mode-enumerable-set! o #t)
+      (when (and (symbol? name) (string->number (symbol->string! name)))
+	 (js-object-mode-hasnumeralprop-set! o #t))
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (props single)
@@ -2408,9 +2401,10 @@
 		   cmap)))))
    
    (define (extend-mapped-object!)
-      
       (when enumerable
 	 (js-object-mode-enumerable-set! o #t))
+      (when (and (symbol? name) (string->number (symbol->string! name)))
+	 (js-object-mode-hasnumeralprop-set! o #t))
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (props)
@@ -2761,6 +2755,8 @@
    
    ;; MS CARE, to be improved
    (js-object-unmap! o)
+   (when (and (symbol? name) (string->number (symbol->string! name)))
+      (js-object-mode-hasnumeralprop-set! o #t))
    (let ((current (js-get-own-property o name %this)))
       ;; 1 & 2
       (cond

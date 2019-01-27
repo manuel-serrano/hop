@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Jan 26 08:15:09 2019 (serrano)                */
+;*    Last change :  Sun Jan 27 20:11:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -270,6 +270,8 @@
 		    (cmap (make-cmap '#()))
 		    (__proto__ %proto)
 		    (elements (make-vector size)))))
+      ;; mark the top proto has holding no numeral properties
+      (js-object-mode-hasnumeralprop-set! %proto #f)
       ;; for bootstrap, first allocat hasInstance symbol
       (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 	 (set! js-symbol-hasinstance
