@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Jan 23 08:41:44 2019 (serrano)                */
+;*    Last change :  Mon Jan 28 16:32:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -140,7 +140,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-primitive-value o::JsHopFrame)
    (with-access::JsHopFrame o (path)
-      path))
+      (hopframe->string o '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsService ...                                        */
