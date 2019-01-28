@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Tue Dec  4 16:05:48 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Mon Jan 28 11:36:38 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
 ;*=====================================================================*/
@@ -128,13 +128,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (stage-exec stage::J2SStageFile ast::J2SProgram tmp::bstring count args::obj)
    (with-access::J2SStageFile stage (path)
-      (driver-debug-post stage tmp count ast args
-	 (lambda (ast args)
-	    (cond
-	       ((string-suffix? ".hop" path)
-		(let ((stage (hop-load path)))
-		   (if (isa? stage J2SStage)
-		       (stage-exec stage ast tmp count args)
-		       (error "j2scheme" "Illegal plugin file" path))))
-	       (else
-		(error "j2sscheme" "Illegal plugin file" path)))))))
+      (cond
+	 ((string-suffix? ".hop" path)
+	  (let ((stage (hop-load path)))
+	     (if (isa? stage J2SStage)
+		 (stage-exec stage ast tmp count args)
+		 (error "j2scheme" "Illegal plugin file" path))))
+	 (else
+	  (error "j2sscheme" "Illegal plugin file" path)))))
