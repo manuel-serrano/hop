@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jan 28 14:48:37 2019 (serrano)                */
+;*    Last change :  Mon Jan 28 15:35:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -744,10 +744,18 @@
 (define-inline (js-array-fixnum-ref arr::JsArray idx::long %this)
    (with-access::JsArray arr (vec ilen)
       (cond
-	 ((<u32 (fixnum->uint32 idx) ilen)
+	 ((cond-expand
+	     ((or bint30 bint32)
+	      (<u32 (fixnum->uint32 idx) ilen))
+	     (else
+	      (pragma::bool "(ulong)($1) < (ulong)($2)" idx ilen)))
 	  (vector-ref vec idx))
 	 ((and (js-object-mode-holey? arr)
-	       (<u32 (fixnum->uint32 idx) (fixnum->uint32 (vector-length vec))))
+	       (cond-expand
+		  ((or bint30 bint32)
+		   (<u32 (fixnum->uint32 idx) (fixnum->uint32 (vector-length vec))))
+		  (else
+		   (pragma::bool "(ulong)($1) < (ulong)($2)" idx (vector-length vec)))))
 	  (let ((v (vector-ref vec idx)))
 	     (if (js-absent? v)
 		 (js-get-fixnum arr idx %this)
