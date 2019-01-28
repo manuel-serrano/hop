@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jan 23 07:42:20 2019 (serrano)                */
+;*    Last change :  Mon Jan 28 08:55:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1659,7 +1659,7 @@
        (js-jsstring->string obj))
       ((symbol? obj)
        (js-symbol->jsstring obj))
-      ((js-number? obj)
+      ((or (js-number? obj) (int32? obj) (uint32? obj))
        (number->string obj))
       (else
        (js-jsstring->string (js-tostring obj %this)))))

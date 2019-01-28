@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Wed Jan 23 11:02:01 2019 (serrano)                */
+/*    Last change :  Mon Jan 28 08:05:48 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -307,27 +307,11 @@ var p = [];
 
 [1,2,3,4,5,6,7,8,9,10].forEach( n => assert.ok( p.push( true ) === n ) );
 
-function foo() {
-   let a = new Array( 10 );
-   
-   console.log( a.length, a );
-   
-   let n = a.push( "foo" );
-   
-   console.log( n, a.length, a );
-}
-
-foo();
-   
-   
 function testCtorPush() {
    let a = new Array( 10 );
    
-   console.log( a.length, a );
-   
    let n = a.push( "foo" );
-   
-   return !Object.getOwnPropertyDescriptor( a, "0" );
+   return !Object.getOwnPropertyDescriptor( a, "0" ) && n === 11;
 }
 
 assert.ok( testCtorPush(), "CtorPush" );
@@ -405,3 +389,73 @@ function optimInNewProto() {
 assert.ok( optimInObject(), "optimInObject" );
 assert.ok( optimInProto(), "optimInProto" );
 assert.ok( optimInProto(), "optimInNewProto" );
+
+/*---------------------------------------------------------------------*/
+/*    extensible                                                       */
+/*---------------------------------------------------------------------*/
+function extensible() {
+   var a = new Array();
+   
+   Object.defineProperty( a, "length", { value: 5, writable: false } );
+   
+   a[ 3 ] = 3;
+   
+   try { 
+      a[ 6 ] = 6;
+      return false;
+   } catch( e ) {
+      return a[ 3 ] === 3;
+   }
+}
+
+assert.ok( extensible(), "extensible" );
+
+/*---------------------------------------------------------------------*/
+/*    prototype chain                                                  */
+/*---------------------------------------------------------------------*/
+function protoChain() {
+   var a = new Array();
+   var b = new Array();
+	 
+   Object.defineProperty( Object.prototype, "0", { 
+      set: function( v ) { return; } 
+   } );
+   
+   Object.defineProperty( Object.prototype, "1", { 
+      value: 10, writable: false
+   } );
+   
+   a[ 0 ] = 3;
+   
+   try {
+      a[ 1 ] = 20;
+      return false;
+   } catch( e ) {
+      return a[ 0 ] === undefined;
+   }
+}
+
+function protoChainPush() {
+   var a = new Array( 10 );
+	 
+   Object.defineProperty( Object.prototype, "10", { 
+      set: function( v ) { return; }, get: function() { return -1 }
+   } );
+   
+   Object.defineProperty( Object.prototype, "11", { 
+      value: 10, writable: false
+   } );
+   
+   a.push( 3 );
+
+   try {
+      a.push( 4 );
+      return false;
+   } catch( e ) {
+      return a[ 10 ] === -1 && a.length === 11;
+   }
+}
+
+assert.ok( protoChain(), "protoChain" );
+assert.ok( protoChainPush(), "protoChainPush" );
+

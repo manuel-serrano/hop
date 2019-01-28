@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Jan 26 09:06:55 2019 (serrano)                */
+/*    Last change :  Mon Jan 28 10:19:47 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Reflect object                           */
@@ -311,6 +311,7 @@ function kangaxq() {
    function F(){}
    var obj = Reflect.construct(Array, [], F);
    obj[2] = 'foo';
+   console.log( "o.l=", obj.length );
    return obj.length === 3 && obj instanceof F;
 }
 
