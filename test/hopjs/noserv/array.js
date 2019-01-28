@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Jan 28 08:05:48 2019 (serrano)                */
+/*    Last change :  Mon Jan 28 14:51:25 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -32,6 +32,21 @@ var s3 = new Array( 5 );
 
 assert.ok( !(0 in s3), "0 should not be in s3" );
 assert.ok( !("0" in s3), "0 should not be in s3" );
+
+var pp = {
+   get x() { return -1 },
+   set x( v ) { return undefined;}
+}
+
+var oo = {__proto__: pp};
+
+oo.x = 3;
+
+assert.ok( oo.x, -1 );
+
+Object.defineProperty( o, "x", { value: 100 } );
+
+assert.ok( oo.x, 100 );
 
 /*---------------------------------------------------------------------*/
 /*    preventExtensions                                                */

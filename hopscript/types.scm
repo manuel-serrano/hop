@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Jan 27 19:52:51 2019 (serrano)                */
+;*    Last change :  Mon Jan 28 15:11:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -377,8 +377,8 @@
 	   (inline js-object-mode-holey?::bool ::JsObject)
 	   (inline js-object-mode-holey-set! ::JsObject ::bool)
 	   
-	   (inline js-object-mode-plain?::bool ::JsObject)
-	   (inline js-object-mode-plain-set! ::JsObject ::bool)
+	   (inline js-object-mode-array-plain?::bool ::JsObject)
+	   (inline js-object-mode-array-plain-set! ::JsObject ::bool)
 	   
 	   (inline js-object-mode-enumerable?::bool ::JsObject)
 	   (inline js-object-mode-enumerable-set! ::JsObject ::bool)
@@ -395,7 +395,7 @@
 	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
 	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
 	   (inline JS-OBJECT-MODE-HASNUMERALPROP::uint32)
-	   (inline JS-OBJECT-MODE-PLAIN::uint32)
+	   (inline JS-OBJECT-MODE-ARRAY-PLAIN::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
 
@@ -489,7 +489,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
-      (bit-oru32 (JS-OBJECT-MODE-PLAIN)
+      (bit-oru32 (JS-OBJECT-MODE-ARRAY-PLAIN)
 	 (bit-oru32 (JS-OBJECT-MODE-INLINE)
 	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
 	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
@@ -497,7 +497,7 @@
 
 (define-inline (js-array-default-mode)
    (bit-oru32 (js-object-default-mode)
-      (bit-oru32 (JS-OBJECT-MODE-PLAIN)
+      (bit-oru32 (JS-OBJECT-MODE-ARRAY-PLAIN)
 	 (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
 	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
 	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
@@ -511,7 +511,7 @@
 (define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
 (define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:64)
 (define-inline (JS-OBJECT-MODE-ENUMERABLE) #u32:128)
-(define-inline (JS-OBJECT-MODE-PLAIN) #u32:256)
+(define-inline (JS-OBJECT-MODE-ARRAY-PLAIN) #u32:256)
 (define-inline (JS-OBJECT-MODE-HASNUMERALPROP) #u32:512)
 ;; WARNING: music be the two last constants (see js-array?)
 (define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:1024)
@@ -525,7 +525,7 @@
 (define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
 (define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:64)
 (define-macro (JS-OBJECT-MODE-ENUMERABLE) #u32:128)
-(define-macro (JS-OBJECT-MODE-PLAIN) #u32:256)
+(define-macro (JS-OBJECT-MODE-ARRAY-PLAIN) #u32:256)
 (define-macro (JS-OBJECT-MODE-HASNUMERALPROP) #u32:512)
 ;; WARNING: music be the two last constants (see js-array?)
 (define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:1024)
@@ -601,15 +601,15 @@
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYHOLEY))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-JSARRAYHOLEY))))))
 
-(define-inline (js-object-mode-plain? o)
-   (=u32 (bit-andu32 (JS-OBJECT-MODE-PLAIN) (js-object-mode o))
-      (JS-OBJECT-MODE-PLAIN)))
+(define-inline (js-object-mode-array-plain? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-ARRAY-PLAIN) (js-object-mode o))
+      (JS-OBJECT-MODE-ARRAY-PLAIN)))
 
-(define-inline (js-object-mode-plain-set! o flag)
+(define-inline (js-object-mode-array-plain-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-PLAIN))
-	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-PLAIN))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-ARRAY-PLAIN))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-ARRAY-PLAIN))))))
 
 (define-inline (js-object-mode-enumerable? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-ENUMERABLE) (js-object-mode o))
