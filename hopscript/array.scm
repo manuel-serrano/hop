@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jan 28 16:40:47 2019 (serrano)                */
+;*    Last change :  Tue Jan 29 07:49:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1974,10 +1974,20 @@
 				(if (>u32 i 0)
 				    (set! ilen (-u32 i #u32:1))
 				    (set! ilen #u32:0))))
-			  (with-access::JsArray a (vec)
-			     (vector-set! vec (uint32->fixnum i)
-				(js-call3 %this proc t pv
-				   (js-uint32-tointeger i) o))))
+			  (let ((v (js-call3 %this proc t pv
+				      (js-uint32-tointeger i) o)))
+			     (with-access::JsArray a (vec)
+				(if (<u32 i (fixnum->uint32 (vector-length vec)))
+				    (vector-set! vec (uint32->fixnum i) v)
+				    (js-define-own-property a
+				       (js-uint32-tointeger i)
+				       (instantiate::JsValueDescriptor
+					  (name (number->string i))
+					  (value v)
+					  (enumerable #t)
+					  (configurable #t)
+					  (writable #t))
+				       #f %this)))))
 		      (loop (+u32 i 1)))
 		   a)))
 
