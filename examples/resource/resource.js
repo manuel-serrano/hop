@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Mon Jan 28 16:50:30 2019 (serrano)                */
+/*    Last change :  Tue Jan 29 08:42:37 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    basic example that shows how to access local resources           */
@@ -18,13 +18,13 @@ service resource() {
           <img src=${require.resolve( "./hop.png" )}/>
        </li>
        <li> An image accessed via a service:
-          <img src=${getImage( "./hop.png" )}/>
+          <img src=${getResource( "./hop.png" )}/>
        </li>
      </ul>  
    </html>
 }
 
-service getImage( path ) {
+service getResource( path ) {
    return hop.HTTPResponseFile( require.resolve( path ) );
 }
    
