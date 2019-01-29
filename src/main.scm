@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Sep  5 07:53:21 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan 29 11:35:39 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -225,7 +225,7 @@
       (let ((path (file-name-canonicalize!
 		     (make-file-name (pwd) (car args)))))
 	 (nodejs-new-module "<repl>" path %worker %global))
-      ;; push the user expressions
+      ;; push user expressions
       (when (pair? exprs)
 	 (js-worker-push-thunk! %worker "cmdline"
 	    (lambda ()

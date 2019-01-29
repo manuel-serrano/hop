@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Jan 26 12:05:37 2019 (serrano)                */
+;*    Last change :  Tue Jan 29 14:27:35 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -715,7 +715,9 @@
 			 `(if (eq? (js-pcache-cmap ,ccache) #t)
 			      ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc)
 			      ,(calln-miss %this obj prop args ccache ocache loc ccspecs ocspecs))
-			 (calln-uncachable %this ocspecs obj prop args ccache ocache loc))
+			 `(begin
+			     (tprint "uncachable " ',prop)
+			     (calln-uncachable %this ocspecs obj prop args ccache ocache loc)))
 		     (case (car cs)
 			((cmap amap imap emap)
 			 (loop (cdr cs)))
@@ -770,7 +772,13 @@
 			    "bad cache spec" cs))))))))
    
    (define (expand-cache-specs ccspecs ocspecs %this obj prop args ccache ocache loc)
-      (let* ((tmps (map (lambda (a) (when (pair? a) (gensym '%a))) args))
+      (let* ((tmps (map (lambda (a)
+			   (match-case a
+			      ((uint32->fixnum (? symbol?)) #f)
+			      ((int32->fixnum (? symbol?)) #f)
+			      ((?- . ?-) (gensym '%a))
+			      (else #f)))
+		      args))
 	     (bindings (filter-map (lambda (t o) (when t (list t o))) tmps args))
 	     (nargs (map (lambda (t a) (or t a)) tmps args)))
 	 (if (pair? bindings)
@@ -824,7 +832,13 @@
 	   (js-non-object-method-call-name %this ,obj ,name ,@args)))
    
    (define (expand-call/tmp %this obj name ccache ocache loc cs os args)
-      (let* ((tmps (map (lambda (a) (when (pair? a) (gensym '%a))) args))
+      (let* ((tmps (map (lambda (a)
+			   (match-case a
+			      ((uint32->fixnum (? symbol?)) #f)
+			      ((int32->fixnum (? symbol?)) #f)
+			      ((?- . ?-) (gensym '%a))
+			      (else #f)))
+		      args))
 	     (bindings (filter-map (lambda (t o) (when t (list t o))) tmps args))
 	     (nargs (map (lambda (t a) (or t a)) tmps args))
 	     (iso (gensym 'isobj)))
@@ -855,7 +869,13 @@
 (define (js-call/cache-expander x e)
    
    (define (call %this ccache fun this args)
-      (let* ((tmps (map (lambda (a) (when (pair? a) (gensym '%a))) args))
+      (let* ((tmps (map (lambda (a)
+			      (match-case a
+				 ((uint32->fixnum (? symbol?)) #f)
+				 ((int32->fixnum (? symbol?)) #f)
+				 ((?- . ?-) (gensym '%a))
+				 (else #f)))
+		      args))
 	     (bdgs (filter-map (lambda (t o) (when t (list t o))) tmps args)))
 	 (if (pair? bdgs)
 	     `(let ,bdgs

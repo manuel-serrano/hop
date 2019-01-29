@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Thu Jan 24 14:56:56 2019 (serrano)                */
+;*    Last change :  Tue Jan 29 17:22:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -114,6 +114,63 @@
 		(loc loc))
 	     (js-def-extern 'console #t #f
 		'(nodejs-require-core "console" %worker %this) :type 'object))
+	 (if (string=? id "buffer.js")
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc))
+	     (js-def-extern 'Buffer #t #f
+		'(js-get (nodejs-require-core "buffer" %worker %this)
+		  'Buffer %this)
+		:type 'object))
+	 (if (string=? id "timers.js")
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc))
+	     (js-def-extern '%__timers #t #f
+		'(nodejs-require-core "timers" %worker %this)
+		  :type 'object))
+	 (if (string=? id "timers.js")
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc))
+	     (js-def-extern 'clearImmediate #t #f
+		'(js-get %__timers 'clearImmediate %this)
+		:type 'object))
+	 (if (string=? id "timers.js")
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc))
+	     (js-def-extern 'clearInterval #t #f
+		'(js-get %__timers 'clearInterval %this)
+		:type 'object))
+	 (if (string=? id "timers.js")
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc))
+	     (js-def-extern 'clearTimeout #t #f
+		'(js-get %__timers 'clearTimeout %this)
+		:type 'object))
+	 (if (string=? id "timers.js")
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc))
+	     (js-def-extern 'setImmediate #t #f
+		'(js-get %__timers 'setImmediate %this)
+		:type 'object))
+	 (if (string=? id "timers.js")
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc))
+	     (js-def-extern 'setInterval #t #f
+		'(js-get %__timers 'setInterval %this)
+		:type 'object))
+	 (if (string=? id "timers.js")
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc))
+	     (js-def-extern 'setTimeout #t #f
+		'(js-get %__timers 'setTimeout %this)
+		:type 'object))
 	 (if (string=? path "hop")
 	     (instantiate::J2SUndefined
 		(type 'undefined)
@@ -125,12 +182,13 @@
 	    `(begin
 		(nodejs-eval %this %scope)
 		(nodejs-function %this %scope)
-		,(unless (string=? path "buffer")
-		    `(nodejs-bind-export! %this %scope
-			(nodejs-require-core "buffer" %worker %this) 'Buffer))
-		,(unless (string=? path "timers")
-		    `(nodejs-bind-export! %this %scope
-			(nodejs-require-core "timers" %worker %this)))))
+;* 		,(unless (string=? path "buffer")                      */
+;* 		    `(nodejs-bind-export! %this %scope                 */
+;* 			(nodejs-require-core "buffer" %worker %this) 'Buffer)) */
+;* 		,(unless (string=? path "timers")                      */
+;* 		    `(nodejs-bind-export! %this %scope                 */
+;* 			(nodejs-require-core "timers" %worker %this))) */
+		))
 	 (instantiate::J2SUndefined
 	    (type 'undefined)
 	    (loc loc)))))

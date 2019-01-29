@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Jan 28 08:55:46 2019 (serrano)                */
+;*    Last change :  Tue Jan 29 18:09:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -473,7 +473,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-calln . args)
    (let ((n (+fx 1 (length args))))
-      `(with-access::JsFunction fun (arity len rest minlen src name)
+      `(with-access::JsFunction fun (arity len rest minlen src)
 	  (case arity
 	     ((-1)
 	      (if (not rest)
@@ -542,7 +542,9 @@
 (define (js-call1% %this fun::JsFunction proc::procedure this a0)
    (gen-calln a0))
 (define (js-call2% %this fun::JsFunction proc::procedure this a0 a1)
-   (gen-calln a0 a1))
+   (with-access::JsFunction fun (arity src)
+;*       (tprint "js-call2 src=" src " arity=" arity)                  */
+      (gen-calln a0 a1)))
 (define (js-call3% %this fun::JsFunction proc::procedure this a0 a1 a2)
    (gen-calln a0 a1 a2))
 (define (js-call4% %this fun::JsFunction proc::procedure this a0 a1 a2 a3)

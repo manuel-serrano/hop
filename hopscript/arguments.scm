@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Jan 23 09:23:44 2019 (serrano)                */
+;*    Last change :  Tue Jan 29 17:43:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -18,7 +18,7 @@
 
    (library hop)
 
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -378,26 +378,26 @@
    (js-get o p %this))
 
 ;*---------------------------------------------------------------------*/
+;*    arguments-cmap ...                                               */
+;*---------------------------------------------------------------------*/
+(define arguments-cmap
+   (instantiate::JsConstructMap
+      (methods (make-vector 2))
+      (props `#(,(prop 'length (property-flags #t #f #t #f))
+		,(prop 'callee (property-flags #t #f #t #f))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-arguments ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
 ;*---------------------------------------------------------------------*/
 (define (js-arguments %this::JsGlobalObject vec::vector)
    (with-access::JsObject %this (__proto__)
-      (let ((obj (instantiateJsArguments
-		    (vec vec)
-		    (cmap (instantiate::JsConstructMap))
-		    (elements ($create-vector 2))
-		    (__proto__ __proto__))))
-	 (js-bind! %this obj 'length
-	    :value (vector-length vec)
-	    :enumerable #f :configurable #t :writable #t
-	    :hidden-class #t)
-	 (js-bind! %this obj 'callee
-	    :value (js-undefined)
-	    :enumerable #f :configurable #t :writable #t
-	    :hidden-class #t)
-	 obj)))
+      (instantiateJsArguments
+	 (vec vec)
+	 (cmap arguments-cmap)
+	 (elements (vector (vector-length vec) (js-undefined)))
+	 (__proto__ __proto__))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments ...                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jan 22 19:58:15 2019 (serrano)                */
+;*    Last change :  Tue Jan 29 15:25:05 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -386,7 +386,8 @@
 			       ,(loc->point loc)
 			       ',ccspecs
 			       ',(if (>=fx (config-get conf :optim 0) 3)
-				     ocspecs
+				     ;;ocspecs
+				     '(imap+ vtable)
 				     '(imap+))
 			       ,@(map (lambda (arg)
 					 (j2s-scheme arg mode return conf))
