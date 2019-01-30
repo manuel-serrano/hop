@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Thu Jan 24 06:46:13 2019 (serrano)                */
+/*    Last change :  Wed Jan 30 11:00:23 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -31,7 +31,7 @@ or
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
 //CHECK#1
-	 console.log( "tof=[" + (typeof 0) + "]" );
+console.log( "tof=[" + (typeof 0) + "]" );
 
 // pok comment and conditionals
 	 function foo() {
@@ -49,6 +49,18 @@ const N = K / 10;
 function foo() {
    return undefined;
 }
+
+// pok closing (because of ./struct
+const js = <impress.slide title="Intro JavaScript"
+			  id="intro-js"
+			  data-y=0
+			  class="intro"
+			  data-step-count=3>
+  <div id="scm-access" class="scm code">
+    <tt class="filename">./struct.scm</tt>
+${code.include( require.resolve( "./src/class.scm" ), fontifier.scheme )}
+    </div>
+</impress.slide>  
 
 // ok arrow									 
 json.forEach( entry => { 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Wed Jan 23 08:56:38 2019 (serrano)                */
+;*    Last change :  Wed Jan 30 16:36:51 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -279,7 +279,7 @@
 	       ;; land JsTypedArray initialization
 	       (js-buffer-constr proto %this))))
 
-      %module))
+      exp))
 
 ;*---------------------------------------------------------------------*/
 ;*    utf8-substring-length ...                                        */

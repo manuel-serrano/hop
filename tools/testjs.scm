@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/tools/testjs.scm                  */
+;*    serrano/prgm/project/hop/3.2.x/tools/testjs.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 27 17:13:14 2013                          */
-;*    Last change :  Sun Nov 27 07:18:48 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Wed Jan 30 15:39:57 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing JavaScript programs                                      */
 ;*=====================================================================*/
@@ -175,7 +175,7 @@
 			       (cond
 				  ((directory? path)
 				   (when recursive (test-directory path include-path)))
-				  ((or #t (not (blacklist? (basename path) blacklist)))
+				  ((not (blacklist? (basename path) blacklist))
 				   (test-path path include-path))
 				  (else
 				   (set! local-skip (+fx 1 local-skip)))))
@@ -233,7 +233,7 @@
 		       (raise e))))
 	     (with-trace 2 (format "~a (~a)" (basename path) global-count)
 		(let ((tmp (make-file-path /tmp (basename path))))
-		   ;; generate the actual source file)
+		   ;; generate the actual source file
 		   (let ((isnegative (generate-test-file! path tmp include-path)))
 		      ;; compile it
 		      (for-each (lambda (f)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jan 30 06:48:22 2019 (serrano)                */
+;*    Last change :  Wed Jan 30 15:54:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2449,7 +2449,7 @@
 		      (with-access::JsConstructMap nextmap (methods)
 			 (validate-cache-method! value methods index))
 		      (js-object-push! o index value)
-		      value)))))))
+		      value))
 ;* 		  (else                                                */
 ;* 		   ;; create a new map with a JsValueDescriptor        */
 ;* 		   (let* ((newdesc (instantiate::JsValueDescriptor     */
@@ -2462,7 +2462,8 @@
 ;* 		      (with-access::JsConstructMap nextmap (methods)   */
 ;* 			 (validate-cache-method! value methods index)) */
 ;* 		      (js-object-push! o index newdesc)                */
-;* 		      value)))))))                                     */
+;* 		      value))                                          */
+		  )))))
    
    (define (update-properties-object! obj owndesc)
       (if (or (isa? owndesc JsAccessorDescriptor) get)

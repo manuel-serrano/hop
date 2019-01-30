@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Jan 29 07:49:29 2019 (serrano)                */
+;*    Last change :  Wed Jan 30 15:52:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -693,7 +693,7 @@
 	  (not-used
 	   (and (fixnum? idx) (>=fx idx 0) (<=fx idx (-fx (bit-lsh 1 32) 2))))
 	  (else
-	   (and (fixnum? idx) (pragma::bool "(ulong)($1) <= (ulong)($2)" idx (-fx (bit-lsh 1 32) 2)))))
+	   (and (fixnum? idx) (pragma::bool "(unsigned long)($1) <= (unsigned long)($2)" idx (-fx (bit-lsh 1 32) 2)))))
        (js-array-index-ref arr (fixnum->uint32 idx) %this)
        (js-get arr idx %this)))
 
@@ -748,14 +748,14 @@
 	     ((or bint30 bint32)
 	      (<u32 (fixnum->uint32 idx) ilen))
 	     (else
-	      (pragma::bool "(ulong)($1) < (ulong)($2)" idx ilen)))
+	      (pragma::bool "(unsigned long)($1) < (unsigned long)($2)" idx ilen)))
 	  (vector-ref vec idx))
 	 ((and (js-object-mode-holey? arr)
 	       (cond-expand
 		  ((or bint30 bint32)
 		   (<u32 (fixnum->uint32 idx) (fixnum->uint32 (vector-length vec))))
 		  (else
-		   (pragma::bool "(ulong)($1) < (ulong)($2)" idx (vector-length vec)))))
+		   (pragma::bool "(unsigned long)($1) < (unsigned long)($2)" idx (vector-length vec)))))
 	  (let ((v (vector-ref vec idx)))
 	     (if (js-absent? v)
 		 (js-get-fixnum arr idx %this)
@@ -886,14 +886,14 @@
       (cond
 	 ((cond-expand
 	     ((or bint30 bint32) (<u32 (fixnum->uint32 idx) ilen))
-	     (else (pragma::bool "(ulong)($1) < (ulong)($2)" idx ilen)))
+	     (else (pragma::bool "(unsigned long)($1) < (unsigned long)($2)" idx ilen)))
 	  (vector-set! vec idx val)
 	  val)
 	 ((cond-expand
 	     ((or bint30 bint32)
 	      (<u32 (fixnum->uint32 idx) (bit-lshu32 #u32:1 29)))
 	     (else
-	      (pragma::bool "(ulong)($1) < (ulong)(1<<29)" idx)))
+	      (pragma::bool "(unsigned long)($1) < (unsigned long)(1<<29)" idx)))
 	  (js-array-set-ur! arr (fixnum->uint32 idx) val throw %this))
 	 (else
 	  (js-array-put! arr idx val throw %this)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Jan 22 08:01:43 2019 (serrano)                */
+;*    Last change :  Wed Jan 30 16:13:43 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -145,7 +145,9 @@
 ;*    j2s-fast-id ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-fast-id id)
-   (symbol-append '@ id))
+   (if (eq? id '||)
+       '@_
+       (symbol-append '@ id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-fast-constructor-id ...                                      */
