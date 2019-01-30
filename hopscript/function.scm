@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Jan 29 18:21:52 2019 (serrano)                */
+;*    Last change :  Wed Jan 30 07:20:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -595,7 +595,6 @@
    ;; call
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.4
    (define (call this::obj thisarg . args)
-      (tprint "IN CALL...")
       (cond
 	 ((null? args)
 	  (js-call0 %this this thisarg))
