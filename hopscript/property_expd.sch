@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Jan 29 14:27:35 2019 (serrano)                */
+;*    Last change :  Wed Jan 30 06:57:32 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -715,9 +715,7 @@
 			 `(if (eq? (js-pcache-cmap ,ccache) #t)
 			      ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc)
 			      ,(calln-miss %this obj prop args ccache ocache loc ccspecs ocspecs))
-			 `(begin
-			     (tprint "uncachable " ',prop)
-			     (calln-uncachable %this ocspecs obj prop args ccache ocache loc)))
+			 `(calln-uncachable %this ocspecs obj prop args ccache ocache loc))
 		     (case (car cs)
 			((cmap amap imap emap)
 			 (loop (cdr cs)))

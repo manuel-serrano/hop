@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jan 29 14:56:55 2019 (serrano)                */
+;*    Last change :  Wed Jan 30 06:48:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2444,25 +2444,25 @@
 		      ;; extending the elements vector is mandatory
 		      (js-object-push! o index newdesc)
 		      (js-undefined)))
-		  (#f
+		  (else
 		   (let ((nextmap (next-cmap o name value flags)))
 		      (with-access::JsConstructMap nextmap (methods)
 			 (validate-cache-method! value methods index))
 		      (js-object-push! o index value)
-		      value))
-		  (else
-		   ;; create a new map with a JsValueDescriptor
-		   (let* ((newdesc (instantiate::JsValueDescriptor
-				      (name name)
-				      (value value)
-				      (writable writable)
-				      (enumerable enumerable)
-				      (configurable configurable)))
-			  (nextmap (next-cmap o name value flags)))
-		      (with-access::JsConstructMap nextmap (methods)
-			 (validate-cache-method! value methods index))
-		      (js-object-push! o index newdesc)
 		      value)))))))
+;* 		  (else                                                */
+;* 		   ;; create a new map with a JsValueDescriptor        */
+;* 		   (let* ((newdesc (instantiate::JsValueDescriptor     */
+;* 				      (name name)                      */
+;* 				      (value value)                    */
+;* 				      (writable writable)              */
+;* 				      (enumerable enumerable)          */
+;* 				      (configurable configurable)))    */
+;* 			  (nextmap (next-cmap o name value flags)))    */
+;* 		      (with-access::JsConstructMap nextmap (methods)   */
+;* 			 (validate-cache-method! value methods index)) */
+;* 		      (js-object-push! o index newdesc)                */
+;* 		      value)))))))                                     */
    
    (define (update-properties-object! obj owndesc)
       (if (or (isa? owndesc JsAccessorDescriptor) get)
@@ -3202,7 +3202,6 @@
       (set! cpoint point)
       (set! usage 'call))
 
-   (tprint "js-object-method-ca../cache-miss name=" name)
    (with-access::JsPropertyCache ccache (pmap vindex method)
       (when (and (procedure? method)
 		 (isa? pmap JsConstructMap)
@@ -3233,6 +3232,20 @@
 	  (apply js-calln %this method o args)))
 
    (define (funval el-or-desc)
+      (with-access::JsGlobalObject %this (js-call)
+	 (let loop ((el-or-desc el-or-desc))
+	    (cond
+	       ((eq? el-or-desc js-call)
+		(with-access::JsFunction o (procedure)
+		   (if (=fx (procedure-arity procedure) (length args))
+		       procedure
+		       el-or-desc)))
+	       ((isa? el-or-desc JsPropertyDescriptor)
+		(loop (js-property-value o el-or-desc %this)))
+	       (else
+		el-or-desc)))))
+   
+   (define (funval-TOBEREMOVED el-or-desc)
       (if (isa? el-or-desc JsPropertyDescriptor)
 	  (with-access::JsGlobalObject %this (js-call)
 	     (let ((f (js-property-value o el-or-desc %this)))
@@ -3243,7 +3256,7 @@
 			   f))
 		    f)))
 	  el-or-desc))
-
+   
    (define (method->procedure f)
       (case (procedure-arity f)
 	 ((1)
@@ -3324,9 +3337,6 @@
 	       (with-access::JsObject obj ((wmap cmap) elements)
 		  (with-access::JsConstructMap wmap (methods %id)
 		     (let ((el-or-desc (vector-ref elements i)))
-			(when (eq? name 'call)
-			   (tprint "MISS name=" name " el-or-desc=" (typeof el-or-desc)
-			      " " (typeof (vector-ref methods i))))
 			(cond
 			   ((isa? el-or-desc JsAccessorDescriptor)
 			    (with-access::JsPropertyCache ccache (pmap emap cmap)
@@ -3336,8 +3346,6 @@
 			    (jsapply (js-property-value o el-or-desc %this)))
 			   ((isa? (vector-ref methods i) JsFunction)
 			    (let ((f (funval el-or-desc)))
-			       (when (eq? name 'call)
-				  (tprint "f=" (typeof f)))
 			       (cond
 				  ((procedure? f)
 				   (with-access::JsPropertyCache ccache (pmap emap cmap index method function)
