@@ -409,6 +409,41 @@ This function is similar to `broadcast` but only one receiver will be
 notified of the message.
 
 
+EventMonitor
+------------
+
+Event listener monitors are used to react to client connection requests.
+
+### hop.eventListenerMonitor( eventName ) ###
+[:@glyphicon glyphicon-tag constructor]
+
+Creates a new event monitor on event `eventName`.
+
+### eventListenerMonitor.monitor( eventName ) ###
+[:@glyphicon glyphicon-tag function]
+
+Add a new event to be monitored by this monitor.
+
+
+### eventListenerMonitor.addEventListener( event, callback ) ###
+[:@glyphicon glyphicon-tag function]
+
+The argument `event` can be `newListener` or `removeListener`:
+
+  * `newListener`: the associated callback will be invoked each time a 
+client will register a listener on event `eventName`, the event name 
+used to build the monitor.
+  * `removeListener`: the associated callback will be invoked on 
+client deconnection.
+
+Example:
+
+
+```hopscript
+${ doc.include( doc.BUILDDIR + "/examples/evtmonitor/evtserver.js", 14 ) }
+```
+
+
 Web Service
 -----------
 
