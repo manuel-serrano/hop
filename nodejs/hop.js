@@ -130,7 +130,7 @@ function eventListenerMonitor( ... events ) {
    // Although the two following methods have no free variables, they
    // must be created for each monitor. If they would be shared by
    // all monitors the removeEventListener would not work properly.
-   Object.defineProperty( eventListenerMonitor.prototype, "connectListener", {
+   Object.defineProperty( this, "connectListener", {
       configurable: false, enumerable: false, writable: false,
       value: e => {
 	 if( this.events.indexOf( e.data ) >= 0 ) {
@@ -138,7 +138,7 @@ function eventListenerMonitor( ... events ) {
 	 }
       }
    } );
-   Object.defineProperty( eventListenerMonitor.prototype, "disconnectListener", {
+   Object.defineProperty( this, "disconnectListener", {
       configurable: false, enumerable: false, writable: false,
       value: e => {
 	 if( this.events.indexOf( e.data ) >= 0 ) {
@@ -148,14 +148,14 @@ function eventListenerMonitor( ... events ) {
    } );
 
    events.forEach( this.monitor, this );
-   
+
    return this;
 }
 
 eventListenerMonitor.prototype.monitor = function( evname ) {
    if( this.events.indexOf( evname ) < 0 ) {
       this.events.push( evname );
-      if( this.events.length == 1 ) {
+      if( this.events.length === 1 ) {
 	 hop.addEventListener( "connect", this.connectListener );
 	 hop.addEventListener( "disconnect", this.disconnectListener );
       }
@@ -167,7 +167,7 @@ eventListenerMonitor.prototype.ignore = function( evname ) {
    if( i >= 0 ) {
       this.events.splice( i, 1 );
    }
-   if( this.events.length == 0 ) {
+   if( this.events.length === 0 ) {
       hop.removeEventListener( "connect", this.connectListener );
       hop.removeEventListener( "disconnect", this.disconnectListener );
    }
@@ -178,7 +178,7 @@ eventListenerMonitor.prototype.addEventListener = function( evname, ltn ) {
       case "newListener":
 	 this.conlisteners.push( ltn );
 	 break;
-	 
+
       case "removeListener":
 	 this.dislisteners.push( ltn );
 	 break;
@@ -190,7 +190,7 @@ eventListenerMonitor.prototype.removeEventListener = function( evname, ltn ) {
       case "newListener":
 	 this.conlisteners.filter( l => l != ltn );
 	 break;
-	 
+
       case "removeListener":
 	 this.dislisteners.filter( l => l != ltn );
 	 break;
@@ -224,4 +224,3 @@ exports.feed = hop.modulesDir + "/feed";
 
 Object.seal( exports );
 Object.freeze( exports );
-
