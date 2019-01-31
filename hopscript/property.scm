@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jan 30 15:54:56 2019 (serrano)                */
+;*    Last change :  Thu Jan 31 16:47:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2939,7 +2939,8 @@
 				(%id (gencmapid))))
 			  (set! cmap
 			     (cmap-next-proto-cmap %this cmap __proto__ v)))))
-		(set! __proto__ v))))))
+		(set! __proto__ v))
+	     o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-replace-own-property! ...                                     */
@@ -2985,9 +2986,13 @@
 ;*    http://www.ecma-international.org/ecma-262/6.0/#sec-13.7.5       */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-for-in obj proc %this)
-   (if (or (eq? obj (js-undefined)) (eq? obj (js-null)))
-       (js-undefined)
-       (js-for-in (js-cast-object obj %this "for") proc %this)))
+   (cond
+      ((or (eq? obj (js-undefined)) (eq? obj (js-null)))
+       (js-undefined))
+      ((js-jsstring? obj)
+       (js-jsstring-for-in obj proc %this))
+      (else
+       (js-for-in (js-cast-object obj %this "for") proc %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsObject ...                                         */

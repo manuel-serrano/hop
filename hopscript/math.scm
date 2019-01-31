@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jan 23 08:23:59 2019 (serrano)                */
+;*    Last change :  Thu Jan 31 18:45:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -363,11 +363,12 @@
       
       ;; sqrt
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.17
-      (define (js-math-sqrt this x)
+      (define (js-math-prototype-sqrt this x)
 	 (js-math-sqrt x %this))
       
       (js-bind! %this js-math 'sqrt
-	 :value (js-make-function %this js-math-sqrt 1 "sqrt")
+	 :value (js-make-function %this
+		   (lambda (this x) (js-math-sqrt x %this)) 1 "sqrt")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -411,6 +412,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-math-sqrt x %this)
    (let loop ((x x))
+      (tprint "JS-MATH-SQRT x=" x " " (typeof x))
       (cond
 	 ((flonum? x) (js-math-sqrtfl x))
 	 ((fixnum? x) (js-math-sqrtfl (fixnum->flonum x)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan 22 19:57:14 2019 (serrano)                */
+;*    Last change :  Thu Jan 31 19:24:31 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -27,6 +27,7 @@
 	   __hopscript_array)
 
    (export (js-jsstring-debug msg obj)
+	   (js-jsstring-for-in str ::procedure ::JsGlobalObject)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
 	   (inline js-ascii->jsstring::bstring ::bstring)
 	   (inline js-index->jsstring::JsStringLiteralIndex ::bstring)
@@ -2886,6 +2887,19 @@
 		(reverse! acc)))))
    
    (string-dispatch >list o))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-for-in ...                                           */
+;*    -------------------------------------------------------------    */
+;*    This function is invoked on simple literal ascii strings.        */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-for-in o proc %this)
+   (let ((len (js-jsstring-length o)))
+      (let loop ((i #u32:0))
+	 (when (<u32 i len)
+	    (let ((val (js-integer->jsstring (uint32->fixnum i))))
+	       (proc val %this)
+	       (loop (+u32 i 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-for-of ...                                           */

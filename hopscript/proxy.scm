@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Jan 23 08:39:39 2019 (serrano)                */
+;*    Last change :  Thu Jan 31 16:48:18 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -299,7 +299,8 @@
       (let ((set (js-get handler 'setPrototypeOf %this)))
 	 (if (isa? set JsFunction)
 	     (let ((r (js-call2 %this set o target v)))
-		(proxy-check-property-setproto target o v %this msg r))
+		(proxy-check-property-setproto target o v %this msg r)
+		o)
 	     (js-setprototypeof target v %this msg)))))
 
 ;*---------------------------------------------------------------------*/

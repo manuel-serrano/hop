@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Jan 31 10:57:50 2019 (serrano)                */
+;*    Last change :  Thu Jan 31 17:02:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -276,7 +276,7 @@
 			  (let ((ps (source-element-plugins el conf)))
 			     (when ps (set! plugins ps))))
 		       (loop (cons el rev-ses) #f)))))))
-   
+
    (define (source-element)
       (case (peek-token-type)
 	 ((function)
@@ -296,10 +296,12 @@
 			(begin
 			   (token-push-back! token)
 			   (statement)))))
+		((eq? (token-value token) 'service)
+		 (service-declaration))
 		(else
 		 (statement)))))
-	 ((service)
-	  (service-declaration))
+;* 	 ((service)                                                    */
+;* 	  (service-declaration))                                       */
 	 ((class)
 	  (class-declaration))
 	 ((RESERVED)
@@ -330,7 +332,10 @@
    (define (repl-element)
       (case (peek-token-type)
 	 ((function) (function-declaration))
-	 ((service) (service-declaration))
+	 ((ID) (if (eq? (token-value (peek-token-type)) 'service)
+		   (service-declaration)
+		   (statement)))
+;* 	 ((service) (service-declaration))                             */
 	 ((class) (class-declaration))
 	 ((EOF) (cdr (consume-any!)))
 	 ((ERROR) (parse-token-error "Error" (consume-any!)))
@@ -921,7 +926,12 @@
       (function #f (consume-token! 'function)))
    
    (define (service-declaration)
-      (service #t))
+    (let ((token (consume-any!))
+	  (ntype (peek-token-type)))
+       (token-push-back! token)
+       (if (eq? ntype 'ID)
+	   (service #t)
+	   (statement))))
    
    (define (service-expression)
       (service #f))
@@ -1055,7 +1065,8 @@
 	 (let* ((gen (when (eq? (peek-token-type) '*)
 			(consume-any!) '*))
 		(id (when (or declaration?
-			      (memq (peek-token-type) '(ID service)))
+			      (memq (peek-token-type) '(ID)))
+;* 			      (memq (peek-token-type) '(ID service)))  */
 		       (consume-any!))))
 	    (multiple-value-bind (params args)
 	       (function-params)
@@ -1426,7 +1437,8 @@
 	  (parse-token-error "Illegal export declaration" token))))
 
    (define (service declaration?)
-      (let* ((token (consume-token! 'service))
+;*       (let* ((token (consume-token! 'service))                      */
+      (let* ((token (consume-token! 'ID))
 	     (id (when (or declaration? (eq? (peek-token-type) 'ID))
 		    (consume-token! 'ID))))
 	 (multiple-value-bind (params args)
@@ -2147,7 +2159,7 @@
 		    (field-str (format "~a" (cdr field))))
 		(if (or (eq? key 'ID)
 			(eq? key 'RESERVED)
-			(eq? key 'service)
+;* 			(eq? key 'service)                             */
 			(j2s-reserved-id? key))
 		    (loop (instantiate::J2SAccess
 			     (loc (token-loc ignore))
@@ -2293,8 +2305,8 @@
 	  (jspragma))
 	 ((function)
 	  (function-expression))
-	 ((service)
-	  (service-expression))
+;* 	 ((service)                                                    */
+;* 	  (service-expression))                                        */
 	 ((class)
 	  (class-expression))
 	 ((this)
@@ -2319,6 +2331,12 @@
 		((and (eq? (token-value token) 'async)
 		      (eq? (peek-token-value) 'function))
 		 (async-expression token))
+		((and (eq? (peek-token-type) 'ID)
+		      (eq? (peek-token-value) 'service))
+		 (tprint ">>> ICI...")
+		 (let ((r (service-expression)))
+		    (tprint "<<< ICI")
+		    r))
 		((eq? (peek-token-type) '=>)
 		 (arrow-function (list token) (token-loc token)))
 		((eq? (token-value token) 'import)
@@ -2587,7 +2605,8 @@
    (define (property-name destructuring?)
       (case (peek-token-type)
 	 ;; IDs are automatically transformed to strings.
-	 ((ID RESERVED service)
+;* 	 ((ID RESERVED service)                                        */
+	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
 	     (case (token-value token)
 		((get set)
@@ -2737,7 +2756,8 @@
 	    (cond
 	       ((memq name '(get set))
 		(case (peek-token-type)
-		   ((ID RESERVED service)
+;* 		   ((ID RESERVED service)                              */
+		   ((ID RESERVED)
 		    (property-accessor (consume-any!) tokname name props))
 		   ((STRING ESTRING OSTRING)
 		    (let* ((tok (consume-any!))

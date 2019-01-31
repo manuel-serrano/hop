@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  5 22:00:24 2018                          */
-;*    Last change :  Mon Jan 28 10:21:05 2019 (serrano)                */
+;*    Last change :  Thu Jan 31 16:50:08 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Reflect object.              */
@@ -65,8 +65,7 @@
 			     (js-iterable->list argarray %this)))
 		       (r (if (isa? t JsObject) t o))
 		       (p (js-get newtarget 'prototype %this)))
-		   (js-setprototypeof r p %this "construct")
-		   r)))
+		   (js-setprototypeof r p %this "construct"))))
 	    (else
 	     (js-raise-type-error %this "construct: Not a function ~s" target))))
       
