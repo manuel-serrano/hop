@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Oct 20 08:16:15 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Thu Jan 31 13:47:32 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
@@ -145,7 +145,7 @@ function eventListenerMonitor( ... events ) {
 eventListenerMonitor.prototype.monitor = function( evname ) {
    if( this.events.indexOf( evname ) < 0 ) {
       this.events.push( evname );
-      if( this.events.length == 1 ) {
+      if( this.events.length === 1 ) {
 	 hop.addEventListener( "connect", this.connectListener );
 	 hop.addEventListener( "disconnect", this.disconnectListener );
       }
@@ -157,7 +157,7 @@ eventListenerMonitor.prototype.ignore = function( evname ) {
    if( i >= 0 ) {
       this.events.splice( i, 1 );
    }
-   if( this.events.length == 0 ) {
+   if( this.events.length === 0 ) {
       hop.removeEventListener( "connect", this.connectListener );
       hop.removeEventListener( "disconnect", this.disconnectListener );
    }
