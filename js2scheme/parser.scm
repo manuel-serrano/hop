@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jan 21 11:35:24 2019 (serrano)                */
+;*    Last change :  Thu Jan 31 10:57:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1683,7 +1683,8 @@
 	     (gen (when (eq? (peek-token-type) '*)
 		     (consume-any!) '*))
 	     (name-or-get (property-name #f)))
-	 (if (isa? name-or-get J2SNode)
+	 (cond
+	    ((isa? name-or-get J2SNode)
 	     (multiple-value-bind (params args)
 		(function-params)
 		(let* ((body (fun-body params args 'strict))
@@ -1704,7 +1705,33 @@
 		   (instantiate::J2SClassElement
 		      (loc loc)
 		      (static static?)
-		      (prop prop))))
+		      (prop prop)))))
+	    ((eq? (peek-token-type) 'LPAREN)
+	     (multiple-value-bind (params args)
+		(function-params)
+		(let* ((body (fun-body params args 'strict))
+		       (fun (instantiate::J2SFun
+			       (loc loc)
+			       (thisp (new-decl-this loc))
+			       (params params)
+			       (mode 'strict)
+			       (name (loc->funname "met" loc))
+			       (generator gen)
+			       (body body)
+			       (ismethodof super?)
+			       (vararg (rest-params params))))
+		       (prop (instantiate::J2SDataPropertyInit
+				(loc loc)
+				(name (instantiate::J2SString
+					 (loc (token-loc name-or-get))
+					 (val (symbol->string
+						 (token-value name-or-get)))))
+				(val fun))))
+		   (instantiate::J2SClassElement
+		      (loc loc)
+		      (static static?)
+		      (prop prop)))))
+	    (else
 	     (let ((name (property-name #f)))
 		(multiple-value-bind (params args)
 		   (function-params)
@@ -1732,7 +1759,7 @@
 		      (instantiate::J2SClassElement
 			 (loc loc)
 			 (static static?)
-			 (prop prop))))))))
+			 (prop prop)))))))))
    
    (define (expression in-for-init? destructuring?)
       (let ((assig (assig-expr in-for-init? destructuring? #f)))

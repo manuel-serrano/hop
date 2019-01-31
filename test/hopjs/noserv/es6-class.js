@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Sat Dec 29 06:10:23 2018 (serrano)                */
-/*    Copyright   :  2017-18 Manuel Serrano                            */
+/*    Last change :  Thu Jan 31 10:38:50 2019 (serrano)                */
+/*    Copyright   :  2017-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
 /*=====================================================================*/
@@ -143,6 +143,31 @@ function basici() {
       return kla();
    } catch( e ) {
       return new kla() instanceof kla;
+   }
+}
+
+function basicj() {
+   class Animal {
+      constructor(name) {
+    	 this.name = name;
+      }
+
+      get() {
+    	 return this.name;
+      }
+
+      set() {
+    	 this.name = "john";
+      }
+   }
+   
+   let animal = new Animal("Jean");
+   
+   if( animal.name === "Jean" && animal.get() === "Jean" ) {
+      animal.set();
+      return animal.name === "john";
+   } else {
+      return false;
    }
 }
 
