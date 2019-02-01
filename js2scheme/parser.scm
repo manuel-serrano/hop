@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Jan 31 17:02:15 2019 (serrano)                */
+;*    Last change :  Fri Feb  1 08:11:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -396,7 +396,7 @@
 	    ((in)
 	     (cond
 		((not in-for-init?)
-		 (parse-token-error "Illegal variable declaration"
+		 (parse-token-error "Illegal \"in\" variable declaration"
 		    (peek-token)))
 		(else
 		 (instantiate::J2SVarDecls
@@ -418,7 +418,7 @@
 		    (loc (token-loc token))
 		    (decls vars)))
 		(else
-		 (parse-token-error "Illegal variable declaration"
+		 (parse-token-error "Illegal variable declaration list"
 		    (consume-any!))))))))
    
    (define (var-decl-list in-for-init?)
@@ -1069,7 +1069,7 @@
 ;* 			      (memq (peek-token-type) '(ID service)))  */
 		       (consume-any!))))
 	    (multiple-value-bind (params args)
-	       (function-params)
+	       (function-params #f)
 	       (let* ((body (fun-body params args current-mode))
 		      (mode (or (javascript-mode body) current-mode)))
 		  (cond
@@ -1442,14 +1442,31 @@
 	     (id (when (or declaration? (eq? (peek-token-type) 'ID))
 		    (consume-token! 'ID))))
 	 (multiple-value-bind (params args)
-	    (function-params)
-	    (if (and (null? params) (not (eq? (peek-token-type) 'LBRACE)))
-		(if (not id)
-		    (parse-token-error "Bad service import" token)
-		    (service-import token id params args declaration?))
-		(service-implement token id params args declaration?)))))
+	    (function-params #t)
+	    (cond
+	       ((eq? (peek-token-type) 'LBRACE)
+		(if (any (lambda (p) (not p)) params)
+		    (parse-token-error "Illegal service declaration" token)
+		    (service-implement token id params args declaration?)))
+	       (id
+		;; service import
+		(if (any (lambda (p) (not p)) params)
+		    (parse-token-error "Illegal service import" token)
+		    (service-import token id params args declaration?)))
+	       (else
+		;; function call
+		(let* ((loc (token-loc token))
+		       (fun (instantiate::J2SUnresolvedRef
+			      (loc loc)
+			      (id 'service))))
+		   (instantiate::J2SCall
+		      (loc loc)
+		      (fun fun)
+		      (protocol (args-protocol args))
+		      (thisarg (list (J2SUndefined)))
+		      (args args))))))))
 
-   (define (consume-param! idx)
+   (define (consume-param! idx maybe-expr?)
       (case (peek-token-type)
 	 ((ID)
 	  (let* ((token (consume-any!))
@@ -1501,7 +1518,10 @@
 		   (_scmid id))
 		(array-literal #f #f))))
 	 (else
-	  (parse-error "Unexpected token" (consume-any!)))))
+	  (if maybe-expr?
+	      (values #f (assig-expr #f #f #f))
+	      (parse-error "Unexpected token in formal parameter list"
+		 (consume-any!))))))
 
    (define (consume-rest-param!)
       (let* ((token (consume-token! 'ID))
@@ -1512,7 +1532,7 @@
 	    (usage '(rest))
 	    (id (token-value token)))))
       
-   (define (function-params)
+   (define (function-params maybe-expr?)
       (push-open-token (consume-token! 'LPAREN))
       (case (peek-token-type)
 	 ((RPAREN)
@@ -1523,12 +1543,10 @@
 	  (let ((param (consume-rest-param!)))
 	     (pop-open-token (consume-token! 'RPAREN))
 	     (values (list param) '(#f))))
-;* 	     (values (list param) '())))                               */
 	 (else
 	  (multiple-value-bind (param arg)
-	     (consume-param! 0)
+	     (consume-param! 0 maybe-expr?)
 	     (let loop ((rev-params (list param))
-;* 			(rev-args (if arg (list arg) '()))             */
 			(rev-args (list arg))
 			(idx 1))
 		(if (eq? (peek-token-type) 'COMMA)
@@ -1542,12 +1560,10 @@
 				 (values
 				    (reverse! (cons param rev-params))
 				    (reverse! (cons #f rev-args)))))
-;* 				    (reverse! rev-args))))             */
 			   (multiple-value-bind (param arg)
-			      (consume-param! idx)
+			      (consume-param! idx maybe-expr?)
 			      (loop (cons param rev-params)
 				 (cons arg rev-args)
-;* 				 (if arg (cons arg rev-args) rev-args) */
 				 (+fx idx 1)))))
 		    (begin
 		       (pop-open-token (consume-token! 'RPAREN))
@@ -1698,7 +1714,7 @@
 	 (cond
 	    ((isa? name-or-get J2SNode)
 	     (multiple-value-bind (params args)
-		(function-params)
+		(function-params #f)
 		(let* ((body (fun-body params args 'strict))
 		       (fun (instantiate::J2SFun
 			       (loc loc)
@@ -1720,7 +1736,7 @@
 		      (prop prop)))))
 	    ((eq? (peek-token-type) 'LPAREN)
 	     (multiple-value-bind (params args)
-		(function-params)
+		(function-params #f)
 		(let* ((body (fun-body params args 'strict))
 		       (fun (instantiate::J2SFun
 			       (loc loc)
@@ -1746,7 +1762,7 @@
 	    (else
 	     (let ((name (property-name #f)))
 		(multiple-value-bind (params args)
-		   (function-params)
+		   (function-params #f)
 		   (let* ((body (fun-body params args 'strict))
 			  (fun (instantiate::J2SFun
 				  (loc loc)
@@ -2328,15 +2344,12 @@
 		 =>
 		 (lambda (p)
 		    ((cdr p) token #f parser-controller)))
+		((and (eq? (token-value token) 'service))
+		 (token-push-back! token)
+		 (service-expression))
 		((and (eq? (token-value token) 'async)
 		      (eq? (peek-token-value) 'function))
 		 (async-expression token))
-		((and (eq? (peek-token-type) 'ID)
-		      (eq? (peek-token-value) 'service))
-		 (tprint ">>> ICI...")
-		 (let ((r (service-expression)))
-		    (tprint "<<< ICI")
-		    r))
 		((eq? (peek-token-type) '=>)
 		 (arrow-function (list token) (token-loc token)))
 		((eq? (token-value token) 'import)
@@ -2682,7 +2695,7 @@
       
       (define (property-accessor id tokname name props)
 	 (multiple-value-bind (params args)
-	    (function-params)
+	    (function-params #f)
 	    (let* ((body (fun-body params args current-mode))
 		   (mode (or (javascript-mode body) current-mode))
 		   (loc (token-loc tokname))
@@ -2720,7 +2733,7 @@
 
       (define (dynamic-property-accessor loc propname name props)
 	 (multiple-value-bind (params args)
-	    (function-params)
+	    (function-params #f)
 	    (let* ((body (fun-body params args current-mode))
 		   (mode (or (javascript-mode body) current-mode))
 		   (fun (instantiate::J2SFun
