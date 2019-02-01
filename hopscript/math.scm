@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Jan 31 18:45:17 2019 (serrano)                */
+;*    Last change :  Fri Feb  1 11:34:23 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -412,7 +412,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-math-sqrt x %this)
    (let loop ((x x))
-      (tprint "JS-MATH-SQRT x=" x " " (typeof x))
       (cond
 	 ((flonum? x) (js-math-sqrtfl x))
 	 ((fixnum? x) (js-math-sqrtfl (fixnum->flonum x)))

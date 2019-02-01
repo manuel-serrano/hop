@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Feb  1 08:11:50 2019 (serrano)                */
+;*    Last change :  Fri Feb  1 11:33:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2344,7 +2344,8 @@
 		 =>
 		 (lambda (p)
 		    ((cdr p) token #f parser-controller)))
-		((and (eq? (token-value token) 'service))
+		((and (eq? (token-value token) 'service)
+		      (memq (peek-token-type) '(LPAREN ID)))
 		 (token-push-back! token)
 		 (service-expression))
 		((and (eq? (token-value token) 'async)
