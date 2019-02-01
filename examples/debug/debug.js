@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Fri Mar  9 10:18:35 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Fri Feb  1 11:47:55 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Illustrates multitier error reporting                            */
 /*    -------------------------------------------------------------    */
@@ -14,7 +14,7 @@
 service debug() {
    return <html>
      <head>
-       <script src="./bug.js" lang="hopscript"/>
+       <script src="./bugs.js" lang="hopscript"/>
        <script defer>
           var BUGS = require( "./bugs.js" )
        
@@ -85,6 +85,6 @@ if( process.features.debug < 1 ) {
    process.exit( 1 );
 } else {
    console.log( "Go to \"http:/%s:%d/%s\"",
-		hop.hostname, hop.port, debug().toString() );
+      hop.hostname, hop.port, debug().toString() );
 }
 
