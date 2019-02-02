@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Jan 30 11:00:23 2019 (serrano)                */
+/*    Last change :  Sat Feb  2 07:08:47 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -25,24 +25,23 @@ or
 ESC-x: hopjs-indent-test
 or
 (hopjs-indent-test)
+
+[\C-x\C-z] for reloading the emacs file 
 */
 
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-//CHECK#1
-console.log( "tof=[" + (typeof 0) + "]" );
-
-// pok comment and conditionals
-	 function foo() {
-		     for( let i = 0; i < len; i++ ) {
-	 		const fanout = fanin_list[ i ];
-	 		let value = fanout.polarity ? this.value : !this.value;
-						      return value;
-		     }
-		  }
+// ok comment and conditionals
+function foo() {
+   for( let i = 0; i < len; i++ ) {
+      const fanout = fanin_list[ i ];
+      let value = fanout.polarity ? thus.value : !this.value;
+      return value;
+   }
+}
 		  
-// pok const
+// ok const
 const K = 10;
 const N = K / 10;
 
@@ -58,7 +57,7 @@ const js = <impress.slide title="Intro JavaScript"
 			  data-step-count=3>
   <div id="scm-access" class="scm code">
     <tt class="filename">./struct.scm</tt>
-${code.include( require.resolve( "./src/class.scm" ), fontifier.scheme )}
+    ${code.include( require.resolve( "./src/class.scm" ), fontifier.scheme )}
     </div>
 </impress.slide>  
 
@@ -69,9 +68,14 @@ json.forEach( entry => {
 
 // ok !new
 function bangnew() {
-   return new TypedArray([1, 2, 3]).includes(1)
-      && !new TypedArray([1, 2, 3]).includes(4)
-      && !new TypedArray([1, 2, 3]).includes(1, 1);
+   if( true ) {
+      return !new X()
+      	      && 3;
+   } else {
+      return new TypedArray([1, 2, 3]).includes(1)
+      	 && !new TypedArray([1, 2, 3]).includes(4)
+      	     && !new TypedArray([1, 2, 3]).includes(1, 1);
+   }
 }
 
 // ok, ! in expr
