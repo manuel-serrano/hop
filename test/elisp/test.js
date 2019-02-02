@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sat Feb  2 07:08:47 2019 (serrano)                */
+/*    Last change :  Sat Feb  2 16:08:01 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -40,7 +40,7 @@ function foo() {
       return value;
    }
 }
-		  
+
 // ok const
 const K = 10;
 const N = K / 10;
@@ -58,7 +58,7 @@ const js = <impress.slide title="Intro JavaScript"
   <div id="scm-access" class="scm code">
     <tt class="filename">./struct.scm</tt>
     ${code.include( require.resolve( "./src/class.scm" ), fontifier.scheme )}
-    </div>
+  </div>
 </impress.slide>  
 
 // ok arrow									 
@@ -70,11 +70,11 @@ json.forEach( entry => {
 function bangnew() {
    if( true ) {
       return !new X()
-      	      && 3;
+	 && 3;
    } else {
       return new TypedArray([1, 2, 3]).includes(1)
       	 && !new TypedArray([1, 2, 3]).includes(4)
-      	     && !new TypedArray([1, 2, 3]).includes(1, 1);
+	 && !new TypedArray([1, 2, 3]).includes(1, 1);
    }
 }
 
@@ -97,8 +97,8 @@ function s() {
    while( true ) {
       switch( this.peekToken().type ) {
 	 case this.RPAREN:
-	    this.consumeAny();
-   	    const attrs = astutils.J2SObjInit( loc, inits );
+	    thas.consumeAny();
+	    const attrs = astutils.J2SObjInit( loc, inits );
 	    return astutils.J2SCall( loc, hhref( loc, "RUN" ), null,
 	       [ attrs ].concat( accessors ) );
 	    
@@ -138,7 +138,7 @@ function s() {
 
 // ok, argument alignment
 function align() {
-   const assigframe = 
+   const assigframe =
       astutils.J2SStmtExpr( 
       	 loc, 
       	 astutils.J2SAssig( 
@@ -155,7 +155,7 @@ function topl() {
 
 // ok, comment after opening brace
 function F( a, 
-	    b ) { // this is a comment
+   b ) { // this is a comment
    return 3;
 }
 
@@ -201,10 +201,10 @@ const Cart = ( { products, total, onCheckoutClicked }, ... ) => {
    const hasProducts = products.length > 0;
    const nodes = hasProducts 
       ? products.map( product => 
-	      <Product title=${product.title}
-		       price=${product.price}
-		       quantity=${product.quantity}
-		       key=${product.id}/> )
+	 <Product title=${product.title}
+		  price=${product.price}
+		  quantity=${product.quantity}
+		  key=${product.id}/> )
       : <em>cart</em>;
    
    return <div>3</div>;
@@ -330,7 +330,7 @@ function func( domain, range ) {
       const di = domain( !info );
       return {
       	 go: function( value ) {
-      	    if( typeof value === "function" ) {
+	    if( typeof value === "function" ) {
 	       return new Proxy( value, { 
 	       	  apply: function( target, self, args ) {
 		     return ri.go( target( di.go( args[ 0 ] ) ) );
@@ -698,9 +698,9 @@ function openSMTPConnection( config ) {
 	    config.servers[ i ].host + ":" + config.servers[ i ].port );
 	 return open( server )
 	    .then( conn => { 
-	       	  debug( "connection succeeded: ", server );
-	       	  conn.config = server; resolve( conn ) 
-	       }, 
+	       debug( "connection succeeded: ", server );
+	       conn.config = server; resolve( conn ) 
+	    }, 
 	       err => {
 		  debug( "connection failed: ", server );
 		  loop( resolve, reject, i + 1 );
@@ -904,16 +904,16 @@ function glop( x ) {
 function glop( x ) {
    let x = glop( 10 )
       .post( snow => {
-	    return 32;
-      	 } )
+	 return 32;
+      } )
 }
 
 // ok
 function glop( x ) {
    let x = glop( 10 )
       .post( (a, b) => {
-	    return 32;
-      	 } )
+	 return 32;
+      } )
 }
 
 // ok
@@ -1422,7 +1422,7 @@ abro.css = <style>
 {
    "servers": [
       {
-   	 "port": 587,
+	 "port": 587,
   	 "host": "smtp.gmail.com",
    	 "requireTLS": true,
  	 "authMethod": "LOGIN",
