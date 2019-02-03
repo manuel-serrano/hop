@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sat Feb  2 16:07:38 2019 (serrano)                */
+;*    Last change :  Sun Feb  3 11:34:34 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -440,7 +440,9 @@
   (with-debug
    "hopjs-parse-expr utok=%s [%s]"
    utok (hopjs-parse-token-string utok)
-   (let ((tok (hopjs-parse-expr-simple (hopjs-parse-expr-atomic utok) multilinep)))
+   (let ((tok (hopjs-parse-expr-simple
+	       (hopjs-parse-expr-atomic utok)
+	       multilinep)))
      (hopjs-debug 0 "hopjs-parse-expr tok=%s [%s]"
 		  tok (when tok (hopjs-parse-token-string tok)))
      (when tok
@@ -469,7 +471,7 @@
    (let* ((tok (hopjs-parse-consume-token-any))
 	  (ptok (hopjs-parse-peek-token)))
      (when (or multilinep (hopjs-parse-same-linep ptok tok))
-       (let ((ntok (hopjs-parse-expr-simple ptok multilinep)))
+       (let ((ntok (hopjs-parse-expr ptok multilinep)))
 	 (hopjs-debug 0 "hopjs-parse-expr-colon ntok=%s [%s]"
 		      ntok (hopjs-parse-token-string ntok))
 	 (if ntok
@@ -501,15 +503,20 @@
    (cond
     ((not tok)
      '())
-;*     ((memq (hopjs-parse-token-type tok) '(lbracket lparen))         */
-;*      (hopjs-parse-expr (hopjs-parse-peek-token) multilinep))        */
     (t
      (let ((ptok (hopjs-parse-peek-token)))
        (hopjs-debug 0 "hopjs-parse-expr-simple ptok=%s [%s]"
 		    ptok (hopjs-parse-token-string ptok))
        (case (hopjs-parse-token-type ptok)
 	 ((ident rparen rbracket)
-	  (if (or multilinep (hopjs-parse-same-linep ptok tok))
+	  (if (memq (hopjs-parse-token-type tok) '(ident number string))
+	      (message "PAS GLOP %s %s [%s]" tok ptok
+		       (hopjs-parse-token-string ptok)))
+	  (if (and (or multilinep (hopjs-parse-same-linep ptok tok))
+		   (or (not (memq (hopjs-parse-token-type tok)
+				  '(ident number string)))
+		       (member (hopjs-parse-token-string ptok)
+			       hopjs-plugins)))
 	      (or (hopjs-parse-expr ptok multilinep) tok)
 	    tok))
 	 ((catch)
@@ -855,11 +862,12 @@
    "hopjs-find-opening-tok pos=%s depth=%s" pos depth
    (let ((depth depth)
 	 (last '())
-	 (res '()))
-     (while (not res)
+	 (res 'loop))
+     (while (eq res 'loop)
        (let ((tok (hopjs-parse-consume-token-any)))
-	 (hopjs-debug 0 "hopjs-parse-find-opening-tok tok=%s [%s]" tok
-		      (hopjs-parse-token-string tok))
+	 (hopjs-debug 0 "hopjs-parse-find-opening-tok tok=%s [%s] depth=%s" tok
+		      (hopjs-parse-token-string tok)
+		      depth)
 	 (case (hopjs-parse-token-type tok)
 	   ((rbracket rparen rbrace)
 	    (setq depth (+ depth 1)))
@@ -869,7 +877,7 @@
 	   ((lparen lbracket lbrace tilde dollar)
 	    (if (> depth 1)
 		(setq depth (- depth 1))
-	      (setq res last)))
+	      (setq res tok)))
 	   ((otag)
 	    (if (> depth 1)
 		(progn

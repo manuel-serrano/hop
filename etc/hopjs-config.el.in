@@ -45,6 +45,11 @@
   :safe 'stringp
   :group 'hopjs)
 
+(defcustom hopjs-plugins '("hiphop" "module")
+  "The list of plugin keywords (used for indentatation)"
+  :type '(repeat (string))
+  :group 'hopjs)
+  
 (defcustom hopjs-special-tags
   '("link" "LINK" "input" "INPUT" "meta" "META" "img" "IMG")
   "The special HTML tag that have no close tag"
