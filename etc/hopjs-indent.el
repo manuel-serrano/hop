@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Sat Feb  2 16:24:29 2019 (serrano)                */
+;*    Last change :  Sun Feb  3 16:16:24 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -88,7 +88,8 @@
      ((=) (hopjs-indent-new-= tok))
      ((binop) (hopjs-indent-new-binop tok))
      ((return) (hopjs-indent-new-return tok))
-     ((eol-comment comment) (hopjs-indent-new-comment tok))
+     ((eol-comment) (hopjs-indent-new-eol-comment tok))
+     ((comment) (hopjs-indent-new-comment tok))
      ((qmark) (hopjs-indent-new-qmark tok))
      ((=>) (hopjs-indent-new-=> tok))
      (t (hopjs-indent-new-as-previous tok)))))
@@ -488,6 +489,14 @@
 ;*    hopjs-indent-new-comment ...                                     */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-indent-new-comment (tok)
+  (with-debug
+   "hopjs-indent-new-comment %s [%s]" tok (hopjs-parse-token-string tok)
+   (hopjs-indent-new-token (hopjs-parse-consume-token-any))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-indent-new-eol-comment ...                                 */
+;*---------------------------------------------------------------------*/
+(defun hopjs-indent-new-eol-comment (tok)
   (with-debug
    "hopjs-indent-new-comment %s [%s]" tok (hopjs-parse-token-string tok)
    (if (hopjs-indent-first-on-linep tok)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sun Feb  3 11:30:04 2019 (serrano)                */
+/*    Last change :  Sun Feb  3 16:15:34 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -32,6 +32,12 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+// comment
+function foo() {
+/* a comment */
+   return 3;
+}
+
 // ok conditional
 function startSession() {
    if( intvreg ) clearInterval( intvreg );

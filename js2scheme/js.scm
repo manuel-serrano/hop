@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Jan 10 16:05:36 2019 (serrano)                */
+;*    Last change :  Sun Feb  3 17:11:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1368,6 +1368,13 @@
       (cons* this "import("
 	 (append (j2s-js path tildec dollarc mode evalp conf)
 	    '(")")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SDConsumer ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SDConsumer tildec dollarc mode evalp conf)
+   (with-access::J2SDConsumer this (expr)
+      (j2s-js expr tildec dollarc mode evalp conf)))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    return-stmt ...                                                  *} */

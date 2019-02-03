@@ -45,7 +45,7 @@
   :safe 'stringp
   :group 'hopjs)
 
-(defcustom hopjs-plugins '("hiphop" "module")
+(defcustom hopjs-plugins '("hiphop" "module" "in" "out" "inout")
   "The list of plugin keywords (used for indentatation)"
   :type '(repeat (string))
   :group 'hopjs)
