@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sun Feb  3 16:15:34 2019 (serrano)                */
+/*    Last change :  Mon Feb  4 17:22:09 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -32,6 +32,13 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+function react( o ) {
+   if( "name" in o ) nameKeypress( o.name );
+   else throw `Illegal signal ${o}`;
+	
+	return 3;
+}
+
 // comment
 function foo() {
 /* a comment */
