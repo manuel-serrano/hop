@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon Feb  4 17:22:52 2019 (serrano)                */
+;*    Last change :  Tue Feb  5 17:37:13 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -509,14 +509,17 @@
 		    ptok (hopjs-parse-token-string ptok))
        (case (hopjs-parse-token-type ptok)
 	 ((ident rparen rbracket)
-	  (if (memq (hopjs-parse-token-type tok) '(ident number string))
-	      (message "PAS GLOP %s %s [%s]" tok ptok
-		       (hopjs-parse-token-string ptok)))
 	  (if (and (or multilinep (hopjs-parse-same-linep ptok tok))
 		   (or (not (memq (hopjs-parse-token-type tok)
 				  '(ident number string)))
 		       (member (hopjs-parse-token-string ptok)
-			       hopjs-plugins)))
+			       hopjs-plugins)
+		       (progn (message "PAS BON tok=%s [%s] ptok=%s [%s]"
+				       tok
+				       (hopjs-parse-token-string tok)
+				       ptok
+				       (hopjs-parse-token-string ptok))
+			      nil)))
 	      (or (hopjs-parse-expr ptok multilinep) tok)
 	    tok))
 	 ((catch)
@@ -557,7 +560,7 @@
 	    (if (or multilinep (hopjs-parse-same-linep otok ntok))
 		(hopjs-parse-expr-simple ntok multilinep)
 	      otok)))
-	 ((function)
+	 ((function service)
 	  (hopjs-parse-consume-token-any))
 	 ((scheme)
 	  (hopjs-parse-consume-token-any))

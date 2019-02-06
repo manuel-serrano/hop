@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Mon Feb  4 17:22:09 2019 (serrano)                */
+/*    Last change :  Tue Feb  5 15:39:42 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -949,6 +949,8 @@ function glop( x ) {
 /*---------------------------------------------------------------------*/
 /*    Plugins                                                          */
 /*---------------------------------------------------------------------*/
+service foo();
+	
 // ok
 module.exports = hiphop machine( in A, in B, in R, out O ) {
    do {
@@ -1164,6 +1166,26 @@ hiphop module A( x, y ) {
    abort( exn.now ) {
       run m1();
       run m2();
+   }
+}
+
+module.exports = hiphop machine( in name = "", in passwd = "",
+in login, in logout,
+				 out enable, 
+				 out status = "disconnected" combine( x, y ) => x + "-" + y,
+                                 timeout = 0, freeze = 0 ) {
+   signal connected, disabled;
+
+   fork {
+      run enableLogin( ... );
+   } par {
+      every( login.now ) {
+	 run login( ... );
+      }
+   } par {
+      every( connected.now ) {
+	 startSession( ... )
+      }
    }
 }
 
