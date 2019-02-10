@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/share/hop-react.js                */
+/*    serrano/prgm/project/hop/3.2.x/share/hop-react.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Wed Dec 13 13:23:24 2017 (serrano)                */
-/*    Copyright   :  2016-17 Manuel Serrano                            */
+/*    Last change :  Sun Feb 10 00:21:54 2019 (serrano)                */
+/*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
 /*=====================================================================*/
@@ -83,7 +83,7 @@ hop.reactProxy = function( val ) {
    var reactors = {};
 
    function getHandler( target, prop ) {
-      // name mangling for avoid confusion with existing properties
+      // name mangling to avoid confusion with existing properties
       var nprop = "%" + prop;
       
       if( hop.reactInCollect ) {
