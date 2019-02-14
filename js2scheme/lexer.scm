@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Jan 31 17:00:42 2019 (serrano)                */
+;*    Last change :  Thu Feb 14 17:44:27 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -346,6 +346,8 @@
       ((: id_start_u (* id_part_u))
        (let ((str (the-string)))
 	  (cond
+	     ((unicode-whitespace? str)
+	      (token 'BADTOKEN str (string-length str)))
 	     ((no-line-terminator "continue\\u" str)
 	      (unread-string! (substring str 0 8) (the-port))
 	      (token 'continue 'continue 9))
@@ -520,6 +522,28 @@
 	       (substring-at? str "000d" offset)
 	       (substring-at? str "2028" offset)
 	       (substring-at? str "2029" offset)))))
+
+;*---------------------------------------------------------------------*/
+;*    unicode-whitespace? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-7.2          */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-7.6          */
+;*---------------------------------------------------------------------*/
+(define (unicode-whitespace? str)
+   (let ((len2 (-fx (string-length str) 2)))
+      (let loop ((r 0))
+	 (let ((i (string-index str "\\u00" r)))
+	    (when (and i (<fx i len2))
+	       (if (or (substring-at? str "\\u0009" i)
+		       (substring-at? str "\\u000b" i)
+		       (substring-at? str "\\u000B" i)
+		       (substring-at? str "\\u000c" i)
+		       (substring-at? str "\\u000C" i)
+		       (substring-at? str "\\u0020" i)
+		       (substring-at? str "\\u00a0" i)
+		       (substring-at? str "\\u00A0" i))
+		   #t
+		   (loop (+fx i 6))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-escape-js-string ...                                         */
