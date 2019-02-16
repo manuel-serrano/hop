@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Feb  3 17:11:37 2019 (serrano)                */
+;*    Last change :  Sat Feb 16 11:34:23 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -887,8 +887,17 @@
 ;*    j2s-js ::J2SLiteralValue ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SLiteralValue tildec dollarc mode evalp conf)
+
+   (define (num2js val)
+      (cond
+	 ((not (flonum? val)) val)
+	 ((nanfl? val) "NaN")
+	 ((=fl val +inf.0) "Infinity")
+	 ((=fl val -inf.0) "-Infinity")
+	 (else val)))
+   
    (with-access::J2SLiteralValue this (val)
-      (list this (format "~a" (if (and (flonum? val) (nanfl? val)) "NaN" val)))))
+      (list this (format "~a" (num2js val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SBool ...                                             */
