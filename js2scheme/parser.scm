@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Feb  1 11:33:47 2019 (serrano)                */
+;*    Last change :  Tue Feb 19 10:25:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -300,8 +300,6 @@
 		 (service-declaration))
 		(else
 		 (statement)))))
-;* 	 ((service)                                                    */
-;* 	  (service-declaration))                                       */
 	 ((class)
 	  (class-declaration))
 	 ((RESERVED)
@@ -335,7 +333,6 @@
 	 ((ID) (if (eq? (token-value (peek-token-type)) 'service)
 		   (service-declaration)
 		   (statement)))
-;* 	 ((service) (service-declaration))                             */
 	 ((class) (class-declaration))
 	 ((EOF) (cdr (consume-any!)))
 	 ((ERROR) (parse-token-error "Error" (consume-any!)))
@@ -2255,6 +2252,18 @@
 				  ((export) (export (consume-any!)))
 				  (else (statement)))))
 		      (loop (cons stmt rev-stats))))
+		  ((ID)
+		   (let ((token (peek-token)))
+		      (cond
+			 ((and plugins (assq (token-value token) plugins))
+			  =>
+			  (lambda (p)
+			     (let ((stmt ((cdr p)
+					  (consume-any!) #t parser-controller)))
+				(loop (cons stmt rev-stats)))))
+			 
+			 (else
+			  (loop (cons (statement) rev-stats))))))
 		  (else
 		   (loop (cons (statement) rev-stats))))))))
 
@@ -2321,8 +2330,6 @@
 	  (jspragma))
 	 ((function)
 	  (function-expression))
-;* 	 ((service)                                                    */
-;* 	  (service-expression))                                        */
 	 ((class)
 	  (class-expression))
 	 ((this)
