@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jan 11 14:08:12 2019 (serrano)                */
+;*    Last change :  Fri Feb 22 08:47:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -363,7 +363,7 @@
 ;*    usage ::J2SAssig ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SAssig ctx deval infun)
-   (with-access::J2SAssig this (lhs rhs)
+   (with-access::J2SAssig this (lhs rhs loc)
       (usage lhs 'assig deval infun)
       (usage rhs 'ref deval infun))
    this)
