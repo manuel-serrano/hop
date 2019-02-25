@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Jan 25 09:23:08 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 13:03:25 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (constant propagation).            */
@@ -167,4 +167,13 @@
 		  (with-access::J2SDecl decl (%info)
 		     (and (pair? %info) (isa? (cdr %info) J2SExpr)))))
 	  (J2SUndefined)
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-constant! ::J2Unary ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-constant! this::J2SUnary)
+   (with-access::J2SUnary this (op expr)
+      (if (and (eq? op 'delete) (isa? expr J2SRef))
+	  this
 	  (call-default-walker))))

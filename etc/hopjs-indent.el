@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Mon Feb  4 17:25:01 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 11:48:18 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -138,9 +138,10 @@
 (defun hopjs-indent-new-as-previous (tok)
   (with-debug
    "hopjs-indent-new-as-previous tok=%s" tok
-   (goto-char (hopjs-parse-token-beginning tok))
-   (skip-chars-forward " \t")
-   (current-column)))
+   (progn
+     (goto-char (hopjs-parse-token-beginning tok))
+     (skip-chars-forward " \t")
+     (current-column))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-lbrace ...                                      */

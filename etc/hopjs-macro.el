@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  4 15:33:55 2018                          */
-;*    Last change :  Mon Nov 12 17:57:13 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Mon Feb 25 11:40:26 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hopjs internal macros                                            */
 ;*=====================================================================*/

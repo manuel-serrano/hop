@@ -3,10 +3,10 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Jan 28 10:19:47 2019 (serrano)                */
+/*    Last change :  Mon Feb 25 11:33:34 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
-/*    Testing ECMAScript 2016 Reflect object                           */
+/*    Testing ECMAScript 2016 REFLECT object.                          */
 /*=====================================================================*/
 "use strict";
 "use hopscript";
