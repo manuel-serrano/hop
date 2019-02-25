@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Mon Feb 25 16:11:39 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 18:25:06 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -182,14 +182,6 @@
 		   1 "throw")
 	 :hidden-class #t)
 
-;*       (js-bind! %this js-gen-proto js-symbol-iterator               */
-;* 	 :configurable #t :enumerable #f :writable #t                  */
-;* 	 :value (js-make-function %this                                */
-;* 		   (lambda (this val)                                  */
-;* 		      this)                                            */
-;* 		   0 '@@iterator                                       */
-;* 		   :prototype (js-undefined)))                         */
-
       (js-bind! %this js-gen-proto js-symbol-tostringtag
 	 :configurable #t :enumerable #f :writable #f
 	 :value (js-string->jsstring "Generator"))
@@ -319,7 +311,7 @@
 ;*    js-make-iterator ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-make-iterator obj %this)
-   (if (pair? obj)
+   (if (or (pair? obj) (null? obj))
        (js-make-list-iterator obj %this)
        (js-make-map-iterator obj (lambda (key val) val) %this)))
 

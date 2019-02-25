@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Feb 25 16:31:09 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 18:24:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -116,7 +116,7 @@
    (if (eq? preferredtype 'any)
        (with-access::JsSymbolLiteral o (val)
 	  (js-raise-type-error %this
-	     (format "Cannot convert the Symbol value \"~a\" to a string" val) o))
+	     (format "Cannot convert symbol value \"~a\" to a string" val) o))
        (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
