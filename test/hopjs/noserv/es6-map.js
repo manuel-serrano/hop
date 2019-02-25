@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Feb 25 11:33:29 2019                          */
-/*    Last change :  Mon Feb 25 16:42:50 2019 (serrano)                */
+/*    Last change :  Mon Feb 25 18:39:49 2019 (serrano)                */
 /*    Copyright   :  2019 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 MAP object.                              */
@@ -22,7 +22,7 @@ function misca() {
    
    const k0 = k.next().value;
    const k1 = k.next().value;
-   return (k0 === 1 && k1 === 4) || (k0 === 4 && k1 === 1);;
+   return (k0 === 1 && k1 === 4);
 }
 
 console.log( "misc" );
