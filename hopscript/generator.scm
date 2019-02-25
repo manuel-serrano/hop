@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Wed Jan 23 08:44:09 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 16:11:39 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -39,7 +39,7 @@
    (export (js-init-generator! ::JsGlobalObject)
 	   js-yield-cmap
 	   (js-make-generator::JsGenerator ::procedure ::JsObject ::JsGlobalObject)
-	   (js-make-iterator ::object ::JsGlobalObject)
+	   (js-make-iterator ::obj ::JsGlobalObject)
 	   (js-make-map-iterator ::object ::procedure ::JsGlobalObject)
 	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)))
@@ -294,10 +294,34 @@
       %gen))
 
 ;*---------------------------------------------------------------------*/
+;*    js-make-list-iterator ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-make-list-iterator obj %this)
+   (letrec ((%gen (js-make-generator
+		     (lambda (%v %e)
+			(let ((l obj))
+			   (let loop ((%v %v) (%e %e))
+			      (if (null? l)
+				  (js-generator-yield %gen
+				     (js-undefined) #t
+				     loop %this)
+				  (let ((val (car l)))
+				     (set! l (cdr l))
+				     (js-generator-yield %gen
+					val #f
+					loop %this))))))
+		     (with-access::JsGlobalObject %this (js-generator-prototype)
+			js-generator-prototype)
+		     %this)))
+      %gen))
+
+;*---------------------------------------------------------------------*/
 ;*    js-make-iterator ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-make-iterator obj %this)
-   (js-make-map-iterator obj (lambda (key val) val) %this))
+   (if (pair? obj)
+       (js-make-list-iterator obj %this)
+       (js-make-map-iterator obj (lambda (key val) val) %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-generator-yield ...                                           */

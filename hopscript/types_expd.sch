@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Jan 23 08:01:58 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 14:13:01 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -233,6 +233,7 @@
 (define-instantiate-expander JsWorker)
 (define-instantiate-expander JsPromise)
 (define-instantiate-expander JsGenerator)
+(define-instantiate-expander JsMap)
 (define-instantiate-expander JsWebSocket)
 (define-instantiate-expander JsWebSocketClient)
 (define-instantiate-expander JsWebSocketServer)

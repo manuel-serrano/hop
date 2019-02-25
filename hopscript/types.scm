@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Jan 28 15:11:59 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 13:31:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -288,6 +288,9 @@
 	      (target::JsObject (default (class-nil JsObject)))
 	      (handler::JsObject (default (class-nil JsObject)))
 	      (revoked::bool (default #f)))
+
+	   (class JsMap::JsObject
+	      (mapdata read-only))
 	   
 	   (class JsGlobalObject::JsObject
 	      (js-hop-builtin::JsObject (default (class-nil JsObject)))
@@ -334,6 +337,10 @@
 	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))
 	      (js-proxy::JsObject (default (class-nil JsObject)))
 	      (js-reflect::JsObject (default (class-nil JsObject)))
+	      (js-map::JsObject (default (class-nil JsObject)))
+	      (js-set::JsObject (default (class-nil JsObject)))
+	      (js-weakmap::JsObject (default (class-nil JsObject)))
+	      (js-weakset::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
 	      (js-symbol-ctor::procedure (default list))

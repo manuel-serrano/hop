@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jan 23 08:26:16 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 16:31:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -114,7 +114,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-toprimitive o::JsSymbolLiteral preferredtype %this::JsGlobalObject)
    (if (eq? preferredtype 'any)
-       (js-raise-type-error %this "Cannot convert a Symbol value to a string" o)
+       (with-access::JsSymbolLiteral o (val)
+	  (js-raise-type-error %this
+	     (format "Cannot convert the Symbol value \"~a\" to a string" val) o))
        (call-next-method)))
 
 ;*---------------------------------------------------------------------*/

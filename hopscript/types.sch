@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Dec  2 23:10:30 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Mon Feb 25 14:14:00 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
 ;*=====================================================================*/
@@ -67,6 +67,7 @@
 (define-instantiate-sans JsWorker)
 (define-instantiate-sans JsPromise)
 (define-instantiate-sans JsGenerator)
+(define-instantiate-sans JsMap)
 (define-instantiate-sans JsWebSocket)
 (define-instantiate-sans JsWebSocketClient)
 (define-instantiate-sans JsWebSocketServer)

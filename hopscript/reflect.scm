@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  5 22:00:24 2018                          */
-;*    Last change :  Thu Jan 31 16:50:08 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 13:34:37 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Native Bigloo support of JavaScript Reflect object.              */
+;*    Native Bigloo support of JavaScript REFLECT object.              */
 ;*    -------------------------------------------------------------    */
 ;*    https://developer.mozilla.org/en-US/docs/Web/JavaScript/         */
 ;*       Reference/Global_Objects/Reflect                              */ 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Tue Feb  5 15:39:42 2019 (serrano)                */
+/*    Last change :  Mon Feb 25 15:31:53 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -32,11 +32,25 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+// pok, new sans set
+function kangaxc() {
+   new Map();
+
+   try {
+     Map();
+     return false;
+   } catch(e) {
+      return true;
+   }
+}
+
+
+// else sans bracket
 function react( o ) {
    if( "name" in o ) nameKeypress( o.name );
    else throw `Illegal signal ${o}`;
 	
-	return 3;
+   return 3;
 }
 
 // comment

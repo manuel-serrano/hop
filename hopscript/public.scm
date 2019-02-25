@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Jan 29 18:09:29 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 14:20:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -139,6 +139,7 @@
 	   (inline js-equal-fixnum?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-equal-sans-flonum?::bool ::obj ::obj ::JsGlobalObject)
 	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
+	   (js-same-value-zero?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
 	   (inline js-strict-equal-no-string?::bool ::obj ::obj)
 	   (js-eq?::bool ::obj ::obj)
@@ -147,6 +148,7 @@
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
 	   (inline js-null-or-undefined?::bool ::obj)
+	   
 
 	   (js-super ::obj ::obj ::JsGlobalObject)
 	   
@@ -178,6 +180,8 @@
 	   (js-parseint-any ::obj ::JsGlobalObject)
 	   (js-parseint-string-uint32 ::obj ::uint32)
 	   (js-parsefloat ::obj ::JsGlobalObject)))
+	   
+	   
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */
@@ -1338,6 +1342,16 @@
 	  #f))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-same-value-zero? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    https://www.ecma-international.org/ecma-262/6.0/                 */
+;*       #sec-samevaluezero                                            */
+;*---------------------------------------------------------------------*/
+(define (js-same-value-zero? x y %this::JsGlobalObject)
+   (js-equality? x y %this))
+   
+
+;*---------------------------------------------------------------------*/
 ;*    js-strict-equal?                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.4       */
@@ -1869,5 +1883,4 @@
 (define (js-parsefloat string %this)
    (js-string-parsefloat (trim-whitespaces+ (js-tostring string %this) :plus #t)
       #f))
-
 
