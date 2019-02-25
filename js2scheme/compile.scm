@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Jan 25 08:36:22 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 11:07:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -461,8 +461,8 @@
 	    (set! o (cons* :optim-integer #t o)))
 	 (unless (memq :optim-inline o)
 	    (set! o (cons* :optim-inline #t o)))
-;* 	 (unless (memq :optim-globprop o)                              */
-;* 	    (set! o (cons* :optim-globprop #t o)))                     */
+	 (unless (memq :optim-globprop o)
+	    (set! o (cons* :optim-globprop #t o)))
 	 )
       (when (>=fx l 3)
 	 (unless (memq :optim-literals o)

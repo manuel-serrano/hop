@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Jan 24 17:36:10 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 10:09:27 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -377,6 +377,13 @@
 		     (and (not (memq utype '(unknown any object)))
 			  (not (eq? vtype (j2s-type rhs)))))))
 	  (error "type-cast!" "not implemented yet" (j2s->list this)))
+	 ((and (isa? lhs J2SRef)
+	       (not (isa? this J2SInit))
+	       (with-access::J2SRef lhs (decl)
+		  (with-access::J2SDecl decl (writable)
+		     (not writable))))
+	  (set! rhs (type-cast! rhs '*))
+	  (cast this totype))
 	 ((eq? (j2s-vtype lhs) type)
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs type))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Fri Feb 22 08:52:11 2019 (serrano)                */
+;*    Last change :  Mon Feb 25 10:41:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -130,8 +130,8 @@
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
 	    (with-access::J2SDecl decl (ronly id usage)
-	       (unless (usage? '(init) usage)
-		  (set! usage (cons 'init usage)))
+	       (unless (usage? '(assig) usage)
+		  (set! usage (cons 'assig usage)))
 	       (set! ronly #f))))
       (ronly! rhs mode deval))
    this)
