@@ -219,6 +219,21 @@
 	  (j2s-js* this "{" "}" "" nodes tildec dollarc mode evalp conf)))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SWith ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SWith tildec dollarc mode evalp conf)
+   (with-access::J2SWith this (obj block)
+      (cons* this "with (" (append (j2s-js obj tildec dollarc mode evalp conf)
+         (cons ") " (j2s-js block tildec dollarc mode evalp conf) )))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SWithRef ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SWithRef tildec dollarc mode evalp conf)
+   (with-access::J2SWithRef this (id)
+      (list this (symbol->string! id))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SLabel ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SLabel tildec dollarc mode evalp conf)
@@ -886,6 +901,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SLiteralValue ...                                     */
 ;*---------------------------------------------------------------------*/
+(define (num2js val)
+   (cond
+      ((and (flonum? val) (nanfl? val)) "NaN")
+      ((= val +inf.0) "(+Infinity)")
+      ((= val -inf.0) "(-Infinity)")
+      (else val)))
+
 (define-method (j2s-js this::J2SLiteralValue tildec dollarc mode evalp conf)
 
    (define (num2js val)
