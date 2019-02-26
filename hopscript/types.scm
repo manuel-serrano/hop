@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Feb 26 07:47:38 2019 (serrano)                */
+;*    Last change :  Tue Feb 26 14:02:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -337,12 +337,12 @@
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))
-	      (js-proxy::JsObject (default (class-nil JsObject)))
-	      (js-reflect::JsObject (default (class-nil JsObject)))
-	      (js-map::JsObject (default (class-nil JsObject)))
-	      (js-set::JsObject (default (class-nil JsObject)))
-	      (js-weakmap::JsObject (default (class-nil JsObject)))
-	      (js-weakset::JsObject (default (class-nil JsObject)))
+;* 	      (js-proxy::JsObject (default (class-nil JsObject)))      */
+;* 	      (js-reflect::JsObject (default (class-nil JsObject)))    */
+;* 	      (js-map::JsObject (default (class-nil JsObject)))        */
+;* 	      (js-set::JsObject (default (class-nil JsObject)))        */
+;* 	      (js-weakmap::JsObject (default (class-nil JsObject)))    */
+;* 	      (js-weakset::JsObject (default (class-nil JsObject)))    */
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
 	      (js-symbol-ctor::procedure (default list))

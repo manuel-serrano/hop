@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Feb 25 13:31:19 2019 (serrano)                */
+;*    Last change :  Tue Feb 26 13:58:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -304,6 +304,7 @@
 	    (js-init-proxy! %this)
 	    (js-init-reflect! %this)
 	    (js-init-map! %this)
+	    (js-init-weakmap! %this)
 	    (js-init-object! %this)
 	    (js-init-object-prototype! %this)
 

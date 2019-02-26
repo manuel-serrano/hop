@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Tue Feb 26 07:57:51 2019 (serrano)                */
+;*    Last change :  Tue Feb 26 13:58:40 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -39,7 +39,8 @@
 	   __hopscript_worker
 	   __hopscript_spawn)
    
-   (export (js-init-map! ::JsGlobalObject)))
+   (export (js-init-map! ::JsGlobalObject)
+	   (js-init-weakmap! ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    global parameters                                                */
@@ -50,15 +51,30 @@
 ;*    js-init-map! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-init-map! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-map)
+   (init-map! %this 'Map init-builtin-map-prototype! 'none))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-weakmap! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-init-weakmap! %this::JsGlobalObject)
+   (init-map! %this 'WeakMap init-builtin-weakmap-prototype! 'keys))
+
+;*---------------------------------------------------------------------*/
+;*    init-map! ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (init-map! %this::JsGlobalObject name init-prototype! weak::symbol)
+   
+   (with-access::JsGlobalObject %this (__proto__ js-function-prototype)
       
       (define (%js-map this . args)
-	 (js-raise-type-error %this "Constructor Map requires 'new'" this))
+	 (js-raise-type-error %this
+	    (format "Constructor ~a requires 'new'" name) this))
       
       (define (js-map-alloc %this constructor::JsFunction)
 	 (instantiateJsMap
 	    (__proto__ (js-get constructor 'prototype %this))
 	    (mapdata (create-hashtable
+			:weak weak
 			:eqtest (lambda (x y) (js-same-value-zero? x y %this))))
 	    (vec (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent)))
 	    (cursor -1)))
@@ -67,8 +83,8 @@
 	 (instantiateJsObject
 	    (__proto__ __proto__)))
       
-      (set! js-map
-	 (js-make-function %this %js-map 0 "Map"
+      (define js-map
+	 (js-make-function %this %js-map 0 (symbol->string! name)
 	    :__proto__ js-function-prototype
 	    :prototype js-map-prototype
 	    :size 0
@@ -79,10 +95,10 @@
 			      this))))
       
       ;; init the prototype properties
-      (init-builtin-map-prototype! %this js-map js-map-prototype)
+      (init-prototype! %this js-map js-map-prototype)
       
       ;; bind Map in the global object
-      (js-bind! %this %this 'Map
+      (js-bind! %this %this name
 	 :configurable #f :enumerable #f :value js-map
 	 :hidden-class #t)
       
@@ -197,18 +213,8 @@
 
    ;; delete
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.delete
-   (define (js-map-delete this key)
-      (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata vec)
-	     (let ((idx (hashtable-get mapdata key)))
-		(when idx
-		   (hashtable-remove! mapdata key)
-		   (vector-set! vec idx (js-absent))
-		   #t)))
-	  (js-raise-type-error %this "Not a map" this)))
-      
    (js-bind! %this js-map-prototype 'delete
-      :value (js-make-function %this js-map-delete 1 "delete"
+      :value (js-make-function %this (js-map-delete %this) 1 "delete"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -259,8 +265,8 @@
 		(if (fixnum? idx)
 		    (cdr (vector-ref vec idx))
 		    (js-undefined))))
-	  (js-raise-type-error %this "Not a map" this)))
-      
+	  (js-raise-type-error %this "Not a Map" this)))
+
    (js-bind! %this js-map-prototype 'get
       :value (js-make-function %this js-map-get 1 "get"
 		:prototype (js-undefined))
@@ -269,14 +275,8 @@
 
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.has
-   (define (js-map-has this key)
-      (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata)
-	     (fixnum? (hashtable-get mapdata key)))
-	  (js-raise-type-error %this "Not a map" this)))
-      
    (js-bind! %this js-map-prototype 'has
-      :value (js-make-function %this js-map-get 1 "has"
+      :value (js-make-function %this (js-map-has %this) 1 "has"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -287,7 +287,7 @@
       (if (isa? this JsMap)
 	  (with-access::JsMap this (vec)
 	     (js-make-vector-iterator vec (lambda (%this val) (car val)) %this))
-	  (js-raise-type-error %this "Not a map" this)))
+	  (js-raise-type-error %this "Not a Map" this)))
       
    (js-bind! %this js-map-prototype 'keys
       :value (js-make-function %this js-map-keys 0 "keys"
@@ -378,6 +378,122 @@
       :hidden-class #t)
    
    )
+
+;*---------------------------------------------------------------------*/
+;*    init-builtin-weakmap-prototype! ...                              */
+;*---------------------------------------------------------------------*/
+(define (init-builtin-weakmap-prototype! %this js-map js-map-prototype)
+
+   ;; constructor
+   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.constructor
+   (js-bind! %this js-map-prototype 'constructor
+      :value js-map :enumerable #f
+      :hidden-class #t)
+
+   ;; delete
+   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.delete
+   (js-bind! %this js-map-prototype 'delete
+      :value (js-make-function %this (js-map-delete %this) 1 "delete"
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+
+   ;; get
+   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.get
+   (define (js-map-get this key)
+      (if (isa? this JsMap)
+	  (with-access::JsMap this (mapdata vec)
+	     (let ((idx (hashtable-get mapdata key)))
+		(if (fixnum? idx)
+		    (weakptr-data (cdr (vector-ref vec idx)))
+		    (js-undefined))))
+	  (js-raise-type-error %this "Not a Map" this)))
+
+   (js-bind! %this js-map-prototype 'get
+      :value (js-make-function %this js-map-get 1 "get"
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+
+   ;; has
+   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.has
+   (js-bind! %this js-map-prototype 'has
+      :value (js-make-function %this (js-map-has %this) 1 "has"
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+
+   ;; set
+   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.set
+   (define (js-map-set this key value)
+      
+      (define (get-index! this::JsMap)
+	 (with-access::JsMap this (mapdata vec cursor)
+	    (let ((idx (+fx cursor 1)))
+	       (set! cursor idx)
+	       (if (<fx idx (vector-length vec))
+		   idx
+		   (let ((nvec (copy-vector vec (*fx (vector-length vec) 2))))
+		      (vector-fill! nvec (vector-length vec) (js-absent))
+		      (set! vec nvec)
+		      idx)))))
+      
+      (if (isa? this JsMap)
+	  (with-access::JsMap this (mapdata vec)
+	     (let ((k (if (and (flonum? key)
+			       (=fl key 0.0)
+			       (=fx (signbitfl key) 1))
+			  0.0
+			  key)))
+		(let ((idx (hashtable-get mapdata k)))
+		   (if (fixnum? idx)
+		       (weakptr-data-set! (cdr (vector-ref vec idx)) value)
+		       (let ((idx (get-index! this)))
+			  (hashtable-put! mapdata k idx)
+			  (vector-set! vec idx
+			     (cons (make-weakptr key)
+				(make-weakptr value))))))
+		this))
+	  (js-raise-type-error %this "Not a map" this)))
+   
+   (js-bind! %this js-map-prototype 'set
+      :value (js-make-function %this js-map-set 2 "set"
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   )
+
+;*---------------------------------------------------------------------*/
+;*    js-map-delete ...                                                */
+;*    -------------------------------------------------------------    */
+;*    https://www.ecma-international.org/ecma-262/6.0/                 */
+;*       #sec-map.prototype.delete                                     */
+;*---------------------------------------------------------------------*/
+(define (js-map-delete %this)
+   (lambda (this key)
+      (if (isa? this JsMap)
+	  (with-access::JsMap this (mapdata vec)
+	     (let ((idx (hashtable-get mapdata key)))
+		(when idx
+		   (hashtable-remove! mapdata key)
+		   (vector-set! vec idx (js-absent))
+		   #t)))
+	  (js-raise-type-error %this "Not a Map" this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-map-has ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    https://www.ecma-international.org/ecma-262/6.0/                 */
+;*       #sec-map.prototype.has                                        */
+;*---------------------------------------------------------------------*/
+(define (js-map-has %this)
+   (lambda (this key)
+      (if (isa? this JsMap)
+          (with-access::JsMap this (mapdata)
+             (fixnum? (hashtable-get mapdata key)))
+          (js-raise-type-error %this "Not a map" this))))
+
 
    
    
