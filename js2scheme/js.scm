@@ -775,7 +775,7 @@
 		  (if (isa? then J2SNop)
 		      '("{}") (j2s-js then tildec dollarc mode evalp conf))
 		  (if (isa? else J2SNop)
-		      '()
+		      '("else {}")
 		      (cons " else "
 			 (j2s-js else tildec dollarc mode evalp conf)))))))))
 	 
