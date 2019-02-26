@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Mon Feb 25 16:48:05 2019 (serrano)                */
+;*    Last change :  Tue Feb 26 07:57:51 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -42,6 +42,11 @@
    (export (js-init-map! ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    global parameters                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (DEFAULT-EMPTY-VECTOR-SIZE) 4)
+
+;*---------------------------------------------------------------------*/
 ;*    js-init-map! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-init-map! %this::JsGlobalObject)
@@ -54,76 +59,9 @@
 	 (instantiateJsMap
 	    (__proto__ (js-get constructor 'prototype %this))
 	    (mapdata (create-hashtable
-			:eqtest (lambda (x y)
-				   (js-same-value-zero? x y %this))))))
-
-
-      (define (js-map-construct-iterator this::JsMap iter next)
-	 
-	 (define (close-iterator iter ni)
-	    (let ((return (js-get iter 'return %this)))
-	       (when (isa? return JsFunction)
-		  (js-call0 %this return iter)))
-	    (js-raise-type-error %this "Illegal IteratorValue" ni))
-	 
-	 (let ((set (js-get this 'set %this)))
-	    (let loop ()
-	       (let ((ni (js-call0 %this next iter)))
-		  (cond
-		     ((not ni)
-		      this)
-		     ((not (js-object? ni))
-		      (close-iterator iter ni))
-		     (else
-		      (if (js-totest (js-get ni "done" %this))
-			  this
-			  (let ((value (js-get ni "value" %this)))
-			     (if (js-object? value)
-				 (let ((k (js-get value "0" %this))
-				       (v (js-get value "1" %this)))
-				    (js-call2 %this set this k v)
-				    (loop))
-				 (close-iterator iter value))))))))))
-
-      (define (js-map-construct-iterable this::JsMap iterable)
-	 (with-access::JsGlobalObject %this (js-symbol-iterator)
-	    (let ((i (js-get iterable js-symbol-iterator %this)))
-	       (if (isa? i JsFunction)
-		   (let ((iter (js-call0 %this i iterable)))
-		      (if (js-object? iter)
-			  (let ((next (js-get iter 'next %this)))
-			     (if (not (isa? next JsFunction))
-				 (js-raise-type-error %this
-				    "Illegal IteratorValue" next)
-				 (js-map-construct-iterator
-				    this iter next)))
-			  (js-raise-type-error
-			     %this "Wrong iterator" iter)))
-		   (js-raise-type-error %this "Not an iterator" i)))))
-
-      (define (js-map-construct-array this::JsMap iterable::JsArray)
-	 (let ((len (js-array-length iterable))
-	       (set (js-get this 'set %this)))
-	    (let loop ((i #u32:0))
-	       (if (=u32 i len)
-		   this
-		   (let ((value (js-array-index-ref iterable i %this)))
-		      (if (not (js-object? value))
-			  (js-raise-type-error %this "Illegal IteratorValue"
-			     i)
-			  (let ((k (js-get value "0" %this))
-				(v (js-get value "1" %this)))
-			     (js-call2 %this set this k v)
-			     (loop (+u32 i #u32:1)))))))))
-      
-      (define (js-map-construct %this this::JsMap iterable)
-	 (cond
-	    ((or (eq? iterable (js-undefined)) (eq? iterable '()))
-	     this)
-	    ((isa? iterable JsArray)
-	     (js-map-construct-array this iterable))
-	    (else
-	     (js-map-construct-iterable this iterable))))
+			:eqtest (lambda (x y) (js-same-value-zero? x y %this))))
+	    (vec (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent)))
+	    (cursor -1)))
       
       (define js-map-prototype
 	 (instantiateJsObject
@@ -160,6 +98,77 @@
       js-map))
 
 ;*---------------------------------------------------------------------*/
+;*    js-map-construct ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-map-construct %this this::JsMap iterable)
+   
+   (define (js-map-construct-iterator this::JsMap iter next)
+      
+      (define (close-iterator iter ni)
+	 (let ((return (js-get iter 'return %this)))
+	    (when (isa? return JsFunction)
+	       (js-call0 %this return iter)))
+	 (js-raise-type-error %this "Illegal IteratorValue" ni))
+      
+      (let ((set (js-get this 'set %this)))
+	 (let loop ()
+	    (let ((ni (js-call0 %this next iter)))
+	       (cond
+		  ((not ni)
+		   this)
+		  ((not (js-object? ni))
+		   (close-iterator iter ni))
+		  (else
+		   (if (js-totest (js-get ni "done" %this))
+		       this
+		       (let ((value (js-get ni "value" %this)))
+			  (if (js-object? value)
+			      (let ((k (js-get value "0" %this))
+				    (v (js-get value "1" %this)))
+				 (js-call2 %this set this k v)
+				 (loop))
+			      (close-iterator iter value))))))))))
+   
+   (define (js-map-construct-iterable this::JsMap iterable)
+      (with-access::JsGlobalObject %this (js-symbol-iterator)
+	 (let ((i (js-get iterable js-symbol-iterator %this)))
+	    (if (isa? i JsFunction)
+		(let ((iter (js-call0 %this i iterable)))
+		   (if (js-object? iter)
+		       (let ((next (js-get iter 'next %this)))
+			  (if (not (isa? next JsFunction))
+			      (js-raise-type-error %this
+				 "Illegal IteratorValue" next)
+			      (js-map-construct-iterator
+				 this iter next)))
+		       (js-raise-type-error
+			  %this "Wrong iterator" iter)))
+		(js-raise-type-error %this "Not an iterator" i)))))
+   
+   (define (js-map-construct-array this::JsMap iterable::JsArray)
+      (let ((len (js-array-length iterable))
+	    (set (js-get this 'set %this)))
+	 (let loop ((i #u32:0))
+	    (if (=u32 i len)
+		this
+		(let ((value (js-array-index-ref iterable i %this)))
+		   (if (not (js-object? value))
+		       (js-raise-type-error %this "Illegal IteratorValue"
+			  i)
+		       (let ((k (js-get value "0" %this))
+			     (v (js-get value "1" %this)))
+			  (js-call2 %this set this k v)
+			  (loop (+u32 i #u32:1)))))))))
+   
+   (cond
+      ((or (eq? iterable (js-undefined)) (eq? iterable '()))
+       this)
+      ((isa? iterable JsArray)
+       (js-map-construct-array this iterable))
+      (else
+       (js-map-construct-iterable this iterable))))
+
+;*---------------------------------------------------------------------*/
 ;*    init-builtin-map-prototype! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-map-prototype! %this js-map js-map-prototype)
@@ -168,8 +177,10 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.clear
    (define (map-prototype-clear this key)
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata)
-	     (hashtable-clear! mapdata))
+	  (with-access::JsMap this (mapdata vec cursor)
+	     (hashtable-clear! mapdata)
+	     (set! vec (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent)))
+	     (set! cursor 0))
 	  (js-raise-type-error %this "Not a map" this)))
    
    (js-bind! %this js-map-prototype 'clear
@@ -188,8 +199,12 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.delete
    (define (js-map-delete this key)
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata)
-	     (hashtable-remove! mapdata key))
+	  (with-access::JsMap this (mapdata vec)
+	     (let ((idx (hashtable-get mapdata key)))
+		(when idx
+		   (hashtable-remove! mapdata key)
+		   (vector-set! vec idx (js-absent))
+		   #t)))
 	  (js-raise-type-error %this "Not a map" this)))
       
    (js-bind! %this js-map-prototype 'delete
@@ -202,8 +217,11 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.entries
    (define (js-map-entries this)
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata)
-	     (js-make-iterator (hashtable-key-list mapdata) %this))
+	  (with-access::JsMap this (vec)
+	     (js-make-vector-iterator vec
+		(lambda (%this val)
+		   (js-vector->jsarray (vector (car val) (cdr val)) %this))
+		%this))
 	  (js-raise-type-error %this "Not a map" this)))
       
    (js-bind! %this js-map-prototype 'entries
@@ -218,10 +236,11 @@
       (if (isa? this JsMap)
 	  (if (isa? fn JsFunction)
 	      (let ((t (if (pair? thisarg) (car thisarg) (js-undefined))))
-		 (with-access::JsMap this (mapdata)
+		 (with-access::JsMap this (mapdata vec)
 		    (hashtable-for-each mapdata
 		       (lambda (key val)
-			  (js-call3 %this fn t val key this)))))
+			  (js-call3 %this fn t (cdr (vector-ref vec val))
+			     key this)))))
 	      (js-raise-type-error %this "Not a function" fn))
 	  (js-raise-type-error %this "Not a map" this)))
 
@@ -235,8 +254,11 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.get
    (define (js-map-get this key)
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata)
-	     (or (hashtable-get mapdata key) (js-undefined)))
+	  (with-access::JsMap this (mapdata vec)
+	     (let ((idx (hashtable-get mapdata key)))
+		(if (fixnum? idx)
+		    (cdr (vector-ref vec idx))
+		    (js-undefined))))
 	  (js-raise-type-error %this "Not a map" this)))
       
    (js-bind! %this js-map-prototype 'get
@@ -250,7 +272,7 @@
    (define (js-map-has this key)
       (if (isa? this JsMap)
 	  (with-access::JsMap this (mapdata)
-	     (if (hashtable-get mapdata key) #t #f))
+	     (fixnum? (hashtable-get mapdata key)))
 	  (js-raise-type-error %this "Not a map" this)))
       
    (js-bind! %this js-map-prototype 'has
@@ -263,8 +285,8 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.keys
    (define (js-map-keys this)
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata)
-	     (js-make-iterator (hashtable-key-list mapdata) %this))
+	  (with-access::JsMap this (vec)
+	     (js-make-vector-iterator vec (lambda (%this val) (car val)) %this))
 	  (js-raise-type-error %this "Not a map" this)))
       
    (js-bind! %this js-map-prototype 'keys
@@ -276,14 +298,31 @@
    ;; set
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.set
    (define (js-map-set this key value)
+
+      (define (get-index! this::JsMap)
+	 (with-access::JsMap this (mapdata vec cursor)
+	    (let ((idx (+fx cursor 1)))
+	       (set! cursor idx)
+	       (if (<fx idx (vector-length vec))
+		   idx
+		   (let ((nvec (copy-vector vec (*fx (vector-length vec) 2))))
+		      (vector-fill! nvec (vector-length vec) (js-absent))
+		      (set! vec nvec)
+		      idx)))))
+	 
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata)
+	  (with-access::JsMap this (mapdata vec)
 	     (let ((k (if (and (flonum? key)
 			       (=fl key 0.0)
 			       (=fx (signbitfl key) 1))
 			  0.0
 			  key)))
-		(hashtable-put! mapdata k value)
+		(let ((idx (hashtable-get mapdata k)))
+		   (if (fixnum? idx)
+		       (set-cdr! (vector-ref vec idx) value)
+		       (let ((idx (get-index! this)))
+			  (hashtable-put! mapdata k idx)
+			  (vector-set! vec idx (cons key value)))))
 		this))
 	  (js-raise-type-error %this "Not a map" this)))
    
@@ -311,8 +350,8 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.values
    (define (js-map-values this)
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata)
-	     (js-make-iterator (hashtable->list mapdata) %this))
+	  (with-access::JsMap this (vec)
+	     (js-make-vector-iterator vec (lambda (%this val) (cdr val)) %this))
 	  (js-raise-type-error %this "Not a map" this)))
       
    ;; @@iterator

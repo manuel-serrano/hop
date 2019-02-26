@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Feb 25 13:31:34 2019 (serrano)                */
+;*    Last change :  Tue Feb 26 07:47:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -290,7 +290,9 @@
 	      (revoked::bool (default #f)))
 
 	   (class JsMap::JsObject
-	      (mapdata read-only))
+	      (mapdata read-only)
+	      vec::vector
+	      cursor::long)
 	   
 	   (class JsGlobalObject::JsObject
 	      (js-hop-builtin::JsObject (default (class-nil JsObject)))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Feb 25 11:33:29 2019                          */
-/*    Last change :  Mon Feb 25 18:39:49 2019 (serrano)                */
+/*    Last change :  Tue Feb 26 08:16:36 2019 (serrano)                */
 /*    Copyright   :  2019 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 MAP object.                              */
@@ -25,8 +25,147 @@ function misca() {
    return (k0 === 1 && k1 === 4);
 }
 
+function miscb() {
+   const m = new Map( [[1,2], [11, 12], [4,5]] );
+   
+   m.delete( 11 );
+   const k = m.keys();
+   
+   const k0 = k.next().value;
+   const k1 = k.next().value;
+
+   return (k0 === 1 && k1 === 4);
+}
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
+console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
+
+/*---------------------------------------------------------------------*/
+/*    mdn                                                              */
+/*---------------------------------------------------------------------*/
+function mdna() {
+   var map1 = new Map();
+
+   map1.set('bar', 'baz');
+   map1.set(1, 'foo');
+
+   const osize = map1.size;
+   map1.clear();
+   return map1.size === 0 && osize === 2;
+}
+
+function mdnb() {
+   var map1 = new Map();
+   map1.set('bar', 'foo');
+   let r = map1.delete('bar');
+
+   return r && !map1.has('bar');
+}
+
+function mdnc() {
+   var map1 = new Map();
+   
+   map1.set('0', 'foo');
+   map1.set(1, 'bar');
+
+   var iterator1 = map1.entries();
+   const [k0, v0] = iterator1.next().value;
+   const [k1, v1] = iterator1.next().value;
+   
+   return k0 === "0" && v0 === "foo" && k1 === 1 && v1 === "bar";
+}
+
+function mdnd() {
+   let out = "";
+   
+   function logMapElements(value, key, map) {
+      out += `m[${key}] = ${value}`;
+   }
+
+   new Map([['foo', 3], ['bar', {}], ['baz', undefined]])
+      .forEach(logMapElements);
+   
+   return out === "m[foo] = 3m[bar] = [object Object]m[baz] = undefined";
+}
+   
+function mdne() {
+   var map1 = new Map();
+   map1.set('bar', 'foo');
+
+   return map1.get('bar') === "foo" && map1.get('baz') === undefined;
+}
+
+function mdnf() {
+   var map1 = new Map();
+   map1.set('bar', 'foo');
+
+   return map1.has('bar') && !map1.get('baz');
+}
+
+function mdng() {
+   var map1 = new Map();
+
+   map1.set('0', 'foo');
+   map1.set(1, 'bar');
+
+   var iterator1 = map1.keys();
+   var k0 = iterator1.next().value;
+   var k1 = iterator1.next().value;
+   
+   return k0 === "0" && k1 === 1;
+}
+
+function mdnh() {
+   var map1 = new Map();
+
+   map1.set('bar', 'foo');
+
+   return map1.get('bar') === "foo" && map1.get('baz') === undefined;
+}
+
+function mdni() {
+   var map1 = new Map();
+
+   map1.set('0', 'foo');
+   map1.set(1, 'bar');
+
+   var iterator1 = map1.values();
+
+   var k0 = iterator1.next().value;
+   var k1 = iterator1.next().value;
+   
+   return k0 === "foo" && k1 === "bar";
+}
+
+function mdnj() {
+   let out = "";
+   var map1 = new Map();
+
+   map1.set('0', 'foo');
+   map1.set(1, 'bar');
+
+   var iterator1 = map1[Symbol.iterator]();
+
+   for (let item of iterator1) {
+      const [k,v] = item;
+      out += `${k}:${v}`;
+   }
+   
+   return out === "0:foo1:bar";
+}
+
+console.log( "mdn" );
+console.log( "   mdna()"); assert.ok( mdna(), "mdna" );
+console.log( "   mdnb()"); assert.ok( mdnb(), "mdnb" );
+console.log( "   mdnc()"); assert.ok( mdnc(), "mdnc" );
+console.log( "   mdnd()"); assert.ok( mdnd(), "mdnd" );
+console.log( "   mdne()"); assert.ok( mdne(), "mdne" );
+console.log( "   mdnf()"); assert.ok( mdnf(), "mdnf" );
+console.log( "   mdng()"); assert.ok( mdng(), "mdng" );
+console.log( "   mdnh()"); assert.ok( mdnh(), "mdnh" );
+console.log( "   mdni()"); assert.ok( mdni(), "mdni" );
+console.log( "   mdnj()"); assert.ok( mdnj(), "mdnj" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax ...                                                       */
