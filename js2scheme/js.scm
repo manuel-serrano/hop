@@ -219,7 +219,7 @@
 	  (j2s-js* this "{" "}" "" nodes tildec dollarc mode evalp conf)))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SWith ...                                            */
+;*    j2s-js ::J2SWith ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SWith tildec dollarc mode evalp conf)
    (with-access::J2SWith this (obj block)
@@ -227,11 +227,17 @@
          (cons ") " (j2s-js block tildec dollarc mode evalp conf) )))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SWithRef ...                                            */
+;*    j2s-js ::J2SWithRef ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SWithRef tildec dollarc mode evalp conf)
    (with-access::J2SWithRef this (id)
       (list this (symbol->string! id))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SArrayAbsent ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SArrayAbsent tildec dollarc mode evalp conf)
+   (list this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SLabel ...                                            */
