@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Feb 26 13:58:49 2019 (serrano)                */
+;*    Last change :  Tue Feb 26 18:37:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -31,6 +31,7 @@
 	   __hopscript_proxy
 	   __hopscript_reflect
 	   __hopscript_map
+	   __hopscript_set
 	   __hopscript_function
 	   __hopscript_number
 	   __hopscript_math
@@ -305,6 +306,8 @@
 	    (js-init-reflect! %this)
 	    (js-init-map! %this)
 	    (js-init-weakmap! %this)
+	    (js-init-set! %this)
+	    (js-init-weakset! %this)
 	    (js-init-object! %this)
 	    (js-init-object-prototype! %this)
 

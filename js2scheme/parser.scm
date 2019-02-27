@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Feb 19 10:25:29 2019 (serrano)                */
+;*    Last change :  Wed Feb 27 07:19:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1434,7 +1434,6 @@
 	  (parse-token-error "Illegal export declaration" token))))
 
    (define (service declaration?)
-;*       (let* ((token (consume-token! 'service))                      */
       (let* ((token (consume-token! 'ID))
 	     (id (when (or declaration? (eq? (peek-token-type) 'ID))
 		    (consume-token! 'ID))))
@@ -2172,7 +2171,6 @@
 		    (field-str (format "~a" (cdr field))))
 		(if (or (eq? key 'ID)
 			(eq? key 'RESERVED)
-;* 			(eq? key 'service)                             */
 			(j2s-reserved-id? key))
 		    (loop (instantiate::J2SAccess
 			     (loc (token-loc ignore))
@@ -2183,7 +2181,8 @@
 		    (parse-token-error "Wrong property name" field))))
 	    ((LPAREN)
 	     (if call-allowed?
-		 (let ((args (arguments)))
+		 (let* ((loc (token-loc (peek-token)))
+			(args (arguments)))
 		    (loop (instantiate::J2SCall
 			     (loc loc)
 			     (fun expr)

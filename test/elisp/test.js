@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Mon Feb 25 15:31:53 2019 (serrano)                */
+/*    Last change :  Wed Feb 27 07:36:45 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -35,10 +35,10 @@ or
 // pok, new sans set
 function kangaxc() {
    new Map();
-
+   
    try {
-     Map();
-     return false;
+      Map();
+      return false;
    } catch(e) {
       return true;
    }
@@ -49,13 +49,13 @@ function kangaxc() {
 function react( o ) {
    if( "name" in o ) nameKeypress( o.name );
    else throw `Illegal signal ${o}`;
-	
+   
    return 3;
 }
 
 // comment
 function foo() {
-/* a comment */
+   /* a comment */
    return 3;
 }
 
@@ -964,7 +964,7 @@ function glop( x ) {
 /*    Plugins                                                          */
 /*---------------------------------------------------------------------*/
 service foo();
-	
+
 // ok
 module.exports = hiphop machine( in A, in B, in R, out O ) {
    do {
@@ -1185,11 +1185,11 @@ hiphop module A( x, y ) {
 
 module.exports = hiphop machine( in name = "", in passwd = "",
 in login, in logout,
-				 out enable, 
-				 out status = "disconnected" combine( x, y ) => x + "-" + y,
-                                 timeout = 0, freeze = 0 ) {
+   out enable, 
+   out status = "disconnected" combine( x, y ) => x + "-" + y,
+			       timeout = 0, freeze = 0 ) {
    signal connected, disabled;
-
+   
    fork {
       run enableLogin( ... );
    } par {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon Feb 25 11:46:47 2019 (serrano)                */
+;*    Last change :  Wed Feb 27 07:35:14 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -440,9 +440,8 @@
   (with-debug
    "hopjs-parse-expr utok=%s [%s]"
    utok (hopjs-parse-token-string utok)
-   (let ((tok (hopjs-parse-expr-simple
-	       (hopjs-parse-expr-atomic utok)
-	       multilinep)))
+   (let* ((atok (hopjs-parse-expr-atomic utok))
+	  (tok (or (hopjs-parse-expr-simple atok multilinep) atok)))
      (hopjs-debug 0 "hopjs-parse-expr tok=%s [%s]"
 		  tok (when tok (hopjs-parse-token-string tok)))
      (when tok
@@ -555,10 +554,10 @@
 	  (let ((otok (hopjs-parse-consume-token-any))
 		(ntok (hopjs-parse-peek-token)))
 	    (hopjs-debug
-	     0 "hopjs-parse-expr-simple.unary otok=%s [%s]"
-	     otok (when otok (hopjs-parse-token-string otok)))
+	     0 "hopjs-parse-expr-simple.unary otok=%s [%s] ntok=%s"
+	     otok (when otok (hopjs-parse-token-string otok)) ntok)
 	    (if (or multilinep (hopjs-parse-same-linep otok ntok))
-		(hopjs-parse-expr-simple ntok multilinep)
+		(or (hopjs-parse-expr-simple ntok multilinep) otok)
 	      otok)))
 	 ((function service)
 	  (hopjs-parse-consume-token-any))
@@ -589,7 +588,9 @@
 ;* 	     otok (when otok (hopjs-parse-token-string otok)))         */
 ;* 	    (if (or multilinep (hopjs-parse-same-linep otok ntok))     */
 ;* 		(hopjs-parse-expr ntok multilinep)                     */
-;* 	      otok)))                                                  */
+					;* 	      otok)))                                                  */
+	 (t
+	  '())
 	 (t
 	  tok)))))))
 

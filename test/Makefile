@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Feb 26 14:22:01 2019 (serrano)                */
+#*    Last change :  Tue Feb 26 18:38:04 2019 (serrano)                */
 #*    Copyright   :  2006-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -74,6 +74,8 @@ POPULATION = Makefile \
   hopjs/noserv/es6-reflect.js \
   hopjs/noserv/es6-map.js \
   hopjs/noserv/es6-weakmap.js \
+  hopjs/noserv/es6-set.js \
+  hopjs/noserv/es6-weakset.js \
   hopjs/noserv/es6-spread.js \
   hopjs/noserv/worker1.js \
   hopjs/noserv/worker2.js \

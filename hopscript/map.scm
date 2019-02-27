@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Tue Feb 26 13:58:40 2019 (serrano)                */
+;*    Last change :  Tue Feb 26 18:39:20 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -97,7 +97,7 @@
       ;; init the prototype properties
       (init-prototype! %this js-map js-map-prototype)
       
-      ;; bind Map in the global object
+      ;; bind MAP/WEAKMAP in the global object
       (js-bind! %this %this name
 	 :configurable #f :enumerable #f :value js-map
 	 :hidden-class #t)
@@ -117,15 +117,13 @@
 ;*    js-map-construct ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-map-construct %this this::JsMap iterable)
+
+   (define (close-iterator iter)
+      (let ((return (js-get iter 'return %this)))
+	 (when (isa? return JsFunction)
+	    (js-call0 %this return iter))))
    
    (define (js-map-construct-iterator this::JsMap iter next)
-      
-      (define (close-iterator iter ni)
-	 (let ((return (js-get iter 'return %this)))
-	    (when (isa? return JsFunction)
-	       (js-call0 %this return iter)))
-	 (js-raise-type-error %this "Illegal IteratorValue" ni))
-      
       (let ((set (js-get this 'set %this)))
 	 (let loop ()
 	    (let ((ni (js-call0 %this next iter)))
@@ -133,7 +131,8 @@
 		  ((not ni)
 		   this)
 		  ((not (js-object? ni))
-		   (close-iterator iter ni))
+		   (close-iterator iter)
+		   (js-raise-type-error %this "Illegal IteratorValue" ni))
 		  (else
 		   (if (js-totest (js-get ni "done" %this))
 		       this
@@ -143,7 +142,9 @@
 				    (v (js-get value "1" %this)))
 				 (js-call2 %this set this k v)
 				 (loop))
-			      (close-iterator iter value))))))))))
+			      (begin
+				 (close-iterator iter)
+				 (js-raise-type-error %this "Illegal IteratorValue" value)))))))))))
    
    (define (js-map-construct-iterable this::JsMap iterable)
       (with-access::JsGlobalObject %this (js-symbol-iterator)
@@ -155,8 +156,12 @@
 			  (if (not (isa? next JsFunction))
 			      (js-raise-type-error %this
 				 "Illegal IteratorValue" next)
-			      (js-map-construct-iterator
-				 this iter next)))
+			      (with-handler
+				 (lambda (e)
+				    (close-iterator iter)
+				    (raise e))
+				 (js-map-construct-iterator
+				    this iter next))))
 		       (js-raise-type-error
 			  %this "Wrong iterator" iter)))
 		(js-raise-type-error %this "Not an iterator" i)))))
@@ -197,7 +202,7 @@
 	     (hashtable-clear! mapdata)
 	     (set! vec (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent)))
 	     (set! cursor 0))
-	  (js-raise-type-error %this "Not a map" this)))
+	  (js-raise-type-error %this "Not a Map" this)))
    
    (js-bind! %this js-map-prototype 'clear
       :value (js-make-function %this map-prototype-clear 0 "clear"
@@ -228,7 +233,7 @@
 		(lambda (%this val)
 		   (js-vector->jsarray (vector (car val) (cdr val)) %this))
 		%this))
-	  (js-raise-type-error %this "Not a map" this)))
+	  (js-raise-type-error %this "Not a Map" this)))
       
    (js-bind! %this js-map-prototype 'entries
       :value (js-make-function %this js-map-entries 0 "entries"
@@ -243,12 +248,14 @@
 	  (if (isa? fn JsFunction)
 	      (let ((t (if (pair? thisarg) (car thisarg) (js-undefined))))
 		 (with-access::JsMap this (mapdata vec)
-		    (hashtable-for-each mapdata
-		       (lambda (key val)
-			  (js-call3 %this fn t (cdr (vector-ref vec val))
-			     key this)))))
+		    (let loop ((i 0))
+		       (when (<fx i (vector-length vec))
+			  (let ((v (vector-ref vec i)))
+			     (unless (js-absent? v)
+				(js-call3 %this fn t (cdr v) (car v) this)))
+			  (loop (+fx i 1))))))
 	      (js-raise-type-error %this "Not a function" fn))
-	  (js-raise-type-error %this "Not a map" this)))
+	  (js-raise-type-error %this "Not a Map" this)))
 
    (js-bind! %this js-map-prototype 'forEach
       :value (js-make-function %this js-map-for-each 1 "forEach"
@@ -322,9 +329,9 @@
 		       (set-cdr! (vector-ref vec idx) value)
 		       (let ((idx (get-index! this)))
 			  (hashtable-put! mapdata k idx)
-			  (vector-set! vec idx (cons key value)))))
+			  (vector-set! vec idx (cons k value)))))
 		this))
-	  (js-raise-type-error %this "Not a map" this)))
+	  (js-raise-type-error %this "Not a Map" this)))
    
    (js-bind! %this js-map-prototype 'set
       :value (js-make-function %this js-map-set 2 "set"
@@ -338,7 +345,7 @@
       (if (isa? this JsMap)
 	  (with-access::JsMap this (mapdata)
 	     (hashtable-size mapdata))
-	  (js-raise-type-error %this "Not a map" this)))
+	  (js-raise-type-error %this "Not a Map" this)))
    
    (js-bind! %this js-map-prototype 'size
       :get (js-make-function %this js-map-size 0 "size"
@@ -352,7 +359,7 @@
       (if (isa? this JsMap)
 	  (with-access::JsMap this (vec)
 	     (js-make-vector-iterator vec (lambda (%this val) (cdr val)) %this))
-	  (js-raise-type-error %this "Not a map" this)))
+	  (js-raise-type-error %this "Not a Map" this)))
       
    ;; @@iterator
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype-@@tostringtag
@@ -434,7 +441,7 @@
 	       (if (<fx idx (vector-length vec))
 		   idx
 		   (let ((nvec (copy-vector vec (*fx (vector-length vec) 2))))
-		      (vector-fill! nvec (vector-length vec) (js-absent))
+		      (vector-fill! nvec (js-absent) (vector-length vec))
 		      (set! vec nvec)
 		      idx)))))
       
@@ -454,7 +461,7 @@
 			     (cons (make-weakptr key)
 				(make-weakptr value))))))
 		this))
-	  (js-raise-type-error %this "Not a map" this)))
+	  (js-raise-type-error %this "Not a Map" this)))
    
    (js-bind! %this js-map-prototype 'set
       :value (js-make-function %this js-map-set 2 "set"
@@ -492,7 +499,7 @@
       (if (isa? this JsMap)
           (with-access::JsMap this (mapdata)
              (fixnum? (hashtable-get mapdata key)))
-          (js-raise-type-error %this "Not a map" this))))
+          (js-raise-type-error %this "Not a Map" this))))
 
 
    
