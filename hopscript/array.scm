@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan 30 15:52:22 2019 (serrano)                */
+;*    Last change :  Wed Feb 27 11:58:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -167,8 +167,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
-(%define-pcache 13)
-(define %pcache (js-make-pcache-table 13 "hopscript/array.scm"))
+(%define-pcache 14)
+(define %pcache (js-make-pcache-table 14 "hopscript/array.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-vector ...                                               */
@@ -486,7 +486,7 @@
 		  ;; 14. a. Else, Let A be ArrayCreate(len).
 		  (let ((A (if (isa? C JsFunction)
 			       (js-toobject %this (js-new1 %this C len))
-			       (js-vector->jsarray (js-create-vector len) %this))))
+			       (js-species->jsarray this (js-create-vector len) %this))))
 		     ;; 16. Let k be 0.
 		     ;; 17. Repeat, while k < len... (also steps a - h)
 		     (let loop ((k 0))
@@ -510,7 +510,17 @@
 	 ;; of
 	 ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.of
 	 (define (array-of this::obj . items)
-	    (js-vector->jsarray (list->vector items) %this))
+	    (with-access::JsGlobalObject %this (js-array)
+	       (if (and (not (eq? this js-array)) (isa? this JsFunction))
+		   (let ((arr (js-new1 %this this 0)))
+		      (let loop ((i 0)
+				 (is items))
+			 (if (null? is)
+			     arr
+			     (begin
+				(js-put! arr (js-toname i %this) (car is) #f %this)
+				(loop (+fx i 1) (cdr items))))))
+		   (js-vector->jsarray (list->vector items) %this))))
 	 
 	 (js-bind! %this js-array 'of
 	    :value (js-make-function %this array-of
@@ -531,7 +541,7 @@
 	 ;; www.ecma-international.org/ecma-262/6.0/#sec-get-array-@@species
 	 (with-access::JsGlobalObject %this (js-symbol-species)
 	    (js-bind! %this js-array js-symbol-species
-	       :get (js-make-function %this (lambda (this) js-array)
+	       :get (js-make-function %this (lambda (this) this)
 		       0 "get [Symbol.species]")
 	       :enumerable #f
 	       :configurable #t))
@@ -1012,6 +1022,7 @@
    
    ;; concat
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.4
+   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.concat
    (define (array-prototype-concat this::obj . l)
       
       (define (copy-array-slow target tstart src sstart send)
@@ -1052,7 +1063,8 @@
 		       (copy-array-slow dst i src 0 (js-get-length src %this)))))
 	     (copy-array-slow dst i src 0 (js-get-length src %this))))
       
-      (let* ((l (cons (js-toobject %this this) l))
+      (let* ((o (js-toobject %this this))
+	     (l (cons o l))
 	     (new-len (let loop ((l l)
 				 (len 0))
 			 (cond
@@ -1064,23 +1076,27 @@
 				   (js-get-length (car l) %this))))
 			    (else
 			     (loop (cdr l) (+ 1 len))))))
-	     (arr (with-access::JsGlobalObject %this (js-array)
-		     (js-array-construct/lengthu32 %this
-			(js-array-alloc %this) (fixnum->uint32 new-len)))))
+	     (arr (js-array-species-create %this o new-len)))
 	 (with-access::JsArray arr (vec ilen)
 	    ;; fill the vector
 	    (let loop ((l l)
-		       (i 0))
+		       (i #u32:0))
 	       (cond
 		  ((null? l)
 		   arr)
 		  ((js-array? (car l))
-		   (loop (cdr l) (copy-array (car l) arr i)))
+		   (loop (cdr l)
+		      (fixnum->uint32
+			 (copy-array (car l) arr (uint32->fixnum i)))))
+		  ((<u32 i ilen)
+		   (vector-set! vec (uint32->fixnum i) (car l))
+		   (loop (cdr l) (+u32 i #u32:1)))
+		  ((js-object-mode-inline? arr)
+		   (js-array-index-set! arr i (car l) #f %this)
+		   (loop (cdr l) (+u32 i #u32:1)))
 		  (else
-		   (vector-set! vec i (car l))
-		   (when (=u32 (fixnum->uint32 i) ilen)
-		      (set! ilen (+u32 ilen 1)))
-		   (loop (cdr l) (+fx 1 i))))))))
+		   (js-array-fixnum-set! arr (uint32->fixnum i) (car l) #f %this)
+		   (loop (cdr l) (+u32 i #u32:1))))))))
    
    (js-bind! %this js-array-prototype 'concat
       :value (js-make-function %this array-prototype-concat 1 "concat"
@@ -1373,7 +1389,7 @@
    (define (array-prototype-slice this::obj start end)
 
       (define (vector-slice/vec! o val k::long final::long vec::vector)
-	 (let ((arr (js-vector->jsarray vec %this))
+	 (let ((arr (js-species->jsarray this vec %this))
 	       (len (vector-length vec)))
 	    (let ((i (-fx len 1)))
 	       (cond
@@ -1602,7 +1618,7 @@
 		   (nlen (+fx len (-fx litems actualdeletecount)))
 		   (cstart (+fx actualstart actualdeletecount))
 		   (vres (js-create-vector actualdeletecount))
-		   (res (js-vector->jsarray vres %this)))
+		   (res (js-species->jsarray this vres %this)))
 	       ;; populate the result vector
 	       (when (<fx actualstart alen)
 		  ;; from the inlined vector
@@ -1998,7 +2014,7 @@
 		  (let loop ((i i))
 		     (cond
 			((or (>=u32 i ilen) (>=u32 i l))
-			 (let ((a (js-vector->jsarray v %this)))
+			 (let ((a (js-species->jsarray this v %this)))
 			    (if (=u32 i len)
 				(with-access::JsArray a (length ilen)
 				   (set! length len)
@@ -2069,7 +2085,7 @@
 			      (j 0))
 		      (cond
 			 ((>=u32 i ilen)
-			  (let ((a (js-vector->jsarray v %this)))
+			  (let ((a (js-species->jsarray this v %this)))
 			     (with-access::JsArray a (length ilen)
 				(set! length j)
 				(set! ilen j)
@@ -2376,14 +2392,45 @@
 	    :hidden-class #t))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-species-create ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-species-create %this origin new-len)
+   (with-access::JsGlobalObject %this (js-symbol-species js-array js-array-prototype)
+      (with-access::JsObject origin (__proto__)
+	 (if (eq? __proto__ js-array-prototype)
+	     (js-array-construct/lengthu32 %this
+		(js-array-alloc %this)
+		(fixnum->uint32 new-len))
+	     (let ((ctor (js-get-name/cache origin 'constructor #f %this
+			    (js-pcache-ref %pcache 13))))
+		(tprint "SPECIES...")
+		(if (and (isa? ctor JsFunction) (not (eq? js-array ctor)))
+		    (let ((species (js-get ctor js-symbol-species %this)))
+		       (cond
+			  ((isa? species JsFunction)
+			   (js-new1 %this species 0))
+			  ((isa? ctor JsFunction)
+			   (js-new1 %this ctor 0))
+			  (else
+			   (js-raise-type-error %this
+			      "Not a constructor" ctor))))
+		    (js-array-construct/lengthu32 %this
+		       (js-array-alloc %this)
+		       (fixnum->uint32 new-len))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    %js-array ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.1       */
 ;*---------------------------------------------------------------------*/
 (define (%js-array %this::JsGlobalObject)
    (lambda (this . items)
-      (with-access::JsGlobalObject %this (js-array)
-	 (js-array-construct %this (js-array-alloc %this) items))))
+      (with-access::JsGlobalObject %this (js-new-target)
+	 (if (eq? js-new-target (js-undefined))
+	     (let ((arr (js-array-alloc %this)))
+		(js-array-construct %this arr items)
+		arr)
+	     (js-array-construct %this this items)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-alloc ...                                               */
@@ -2499,7 +2546,6 @@
 ;*    js-vector->jsarray ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-vector->jsarray::JsArray vec::vector %this::JsGlobalObject)
-   ;; MS 23 feb 2017
    (let* ((len (vector-length vec)))
       (with-access::JsGlobalObject %this (js-array-prototype)
 	 (instantiateJsArray
@@ -2538,6 +2584,19 @@
 		   (length #u32:0)
 		   (ilen #u32:0)
 		   (vec vec))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-species->jsarray ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-species->jsarray this::JsObject vec::vector %this::JsGlobalObject)
+   (let ((arr (js-vector->jsarray vec %this)))
+      (with-access::JsGlobalObject %this (js-symbol-species js-array-prototype)
+	 (with-access::JsObject this ((__species_proto__ __proto__))
+	    (if (eq? __species_proto__ js-array-prototype)
+		arr
+		(with-access::JsObject arr (__proto__)
+		   (set! __proto__ __species_proto__)
+		   arr))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-names ::JsArray ...                                */

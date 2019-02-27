@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Feb 27 07:36:45 2019 (serrano)                */
+/*    Last change :  Wed Feb 27 18:25:47 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -32,7 +32,16 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
-// pok, new sans set
+// pok instanceof
+function kangaxa() {
+   class C extends Boolean {}
+   var c = new C(true);
+   return c instanceof Boolean
+      && c instanceof C
+      && c == true;
+}
+
+// new sans set
 function kangaxc() {
    new Map();
    

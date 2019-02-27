@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Thu Jan 31 10:38:50 2019 (serrano)                */
+/*    Last change :  Wed Feb 27 17:08:04 2019 (serrano)                */
 /*    Copyright   :  2017-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -181,6 +181,26 @@ console.log( "   basicf()" ); assert.ok( basicf(), "basicf" );
 console.log( "   basicg()" ); assert.ok( basicg(), "basicg" );
 console.log( "   basich()" ); assert.ok( basich(), "basich" );
 console.log( "   basici()" ); assert.ok( basici(), "basici" );
+
+/*---------------------------------------------------------------------*/
+/*    misc                                                             */
+/*---------------------------------------------------------------------*/
+function misca() {
+   let passed = false;
+   
+   function FArray( a ) {
+      passed = (a === 20);
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+console.log( "misc" );
+console.log( "   misca()" ); assert.ok( misca(), "misca" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */

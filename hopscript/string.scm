@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jan 23 08:25:25 2019 (serrano)                */
+;*    Last change :  Wed Feb 27 18:43:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -131,18 +131,8 @@
 		     (set! val (js-ascii->jsstring str))
 		     (js-object-properties-set! o (list len)))))
 	    
-	    (define (set-string! str)
-	       (let ((len (instantiate::JsValueDescriptor
-			     (name 'length)
-			     (writable #f)
-			     (configurable #f)
-			     (enumerable #f)
-			     (value (uint32->fixnum
-				       (js-jsstring-codeunit-length str))))))
-		  (with-access::JsString o (val)
-		     (set! val str)
-		     (js-object-properties-set! o (list len)))))
 	    
+
 	    (if (null? arg)
 		;; 2
 		(set-ascii-string! "")
@@ -151,15 +141,17 @@
 		      ((string? value)
 		       (set-ascii-string! value))
 		      ((isa? value JsStringLiteral)
-		       (set-string! value))
+		       (js-set-string! %this o value))
 		      ((isa? value JsObject)
-		       (set-string! (js-cast-string %this value)))
+		       (js-set-string! %this o (js-cast-string %this value)))
 		      (else
 		       (let ((str (js-tostring value %this)))
-			  (set-string! (js-string->jsstring str))))))))
+			  (js-set-string! %this o (js-string->jsstring str))))))))
 
 	 ;; string allocation
 	 (define (js-string-alloc::JsString %this constructor::JsFunction)
+	    (with-access::JsGlobalObject %this (js-new-target)
+	       (set! js-new-target constructor))
 	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
 	       (__proto__ (js-object-get-name/cache constructor 'prototype #f
@@ -278,9 +270,30 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-string %this)
    (lambda (this . args)
-      (if (null? args)
-	  (js-ascii->jsstring "")
-	  (js-string->jsstring (js-tostring (car args) %this)))))
+      (let ((str (if (null? args)
+		     (js-ascii->jsstring "")
+		     (js-string->jsstring (js-tostring (car args) %this)))))
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (if (or (eq? js-new-target (js-undefined)) (not (isa? this JsString)))
+		str
+		(begin
+		   (js-set-string! %this this str)
+		   this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-set-string! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-set-string! %this o::JsString str)
+   (let ((len (instantiate::JsValueDescriptor
+		 (name 'length)
+		 (writable #f)
+		 (configurable #f)
+		 (enumerable #f)
+		 (value (uint32->fixnum
+			   (js-jsstring-codeunit-length str))))))
+      (with-access::JsString o (val)
+	 (set! val str)
+	 (js-object-properties-set! o (list len)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::JsString ...                                        */

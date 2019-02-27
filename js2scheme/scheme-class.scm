@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Fri Jan 18 08:46:11 2019 (serrano)                */
+;*    Last change :  Wed Feb 27 08:54:04 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -119,7 +119,7 @@
 		     (%superctor ,superid))
 		 ,(proc superid))))))
    
-   (define (make-class name super els constructor length ctorsz src loc)
+   (define (make-class name super els constructor arity length ctorsz src loc)
       (let* ((cname (or name (gensym 'class)))
 	     (clazz (symbol-append cname '%CLASS))
 	     (ctor (symbol-append cname '%CTOR))
@@ -143,9 +143,11 @@
 			       ,(symbol->string! cname)
 			       :src ,(when src (class-src loc this conf))
 			       :strict ',mode
-			       :alloc js-object-alloc/new-target
+			       :alloc ,(if (or (eq? super #f) (null? super))
+					   'js-object-alloc/new-target
+					   `(with-access::JsFunction ,super (alloc) alloc))
 			       :prototype  ,proto
-			       :arity ,(+fx 1 length)
+			       :arity ,arity
 			       :__proto__ ,(if (null? super)
 					       '(with-access::JsGlobalObject %this (js-function-prototype)
 						 js-function-prototype)
@@ -171,15 +173,17 @@
 			 (with-access::J2SFun val (constrsize params thisp)
 			    (make-class name super elements
 			       (ctor->lambda val name mode return conf #f #t super)
+			       (+fx 1 (length params))
 			       (length params) constrsize
 			       src loc)))))
 		  (super
 		   (make-class name super elements
-		      '(lambda (this)
+		      `(lambda (this . args)
 			(let ((%nothis this))
-			   (js-call0 %this %superctor this)
+			   (js-apply %this %superctor this args)
 			   (set! this %nothis)
 			   (js-undefined)))
+		      `(with-access::JsFunction %superctor (arity) arity)
 		      0 0 src loc))
 		  (else
 		   (make-class name super elements
@@ -194,7 +198,7 @@
 				 (begin
 				    (set! js-new-target (js-undefined))
 				    this))))
-		      0 0 src loc))))))))
+		      1 0 0 src loc))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ctor-check-instance ...                                          */

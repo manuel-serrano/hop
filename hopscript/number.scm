@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan 23 08:19:47 2019 (serrano)                */
+;*    Last change :  Wed Feb 27 18:30:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -113,6 +113,8 @@
 	    this)
 		
 	 (define (js-number-alloc %this constructor::JsFunction)
+	    (with-access::JsGlobalObject %this (js-new-target)
+	       (set! js-new-target constructor))
 	    (with-access::JsFunction constructor (constrmap)
 	       (unless constrmap
 		  (set! constrmap
@@ -127,7 +129,14 @@
 
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
 	 (define (%js-number this . arg)
-	    (js-tonumber (if (pair? arg) (car arg) 0) %this))
+	    (let ((num (js-tonumber (if (pair? arg) (car arg) 0) %this)))
+	       (with-access::JsGlobalObject %this (js-new-target)
+		  (if (or (eq? js-new-target (js-undefined))
+			  (not (isa? this JsNumber)))
+		      num
+		      (with-access::JsNumber this (val)
+			 (set! val num)
+			 this)))))
 
 	 (define (is-integer?::bbool this arg)
 	    (cond

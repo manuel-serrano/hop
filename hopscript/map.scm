@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Tue Feb 26 18:39:20 2019 (serrano)                */
+;*    Last change :  Wed Feb 27 18:53:32 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -67,8 +67,10 @@
    (with-access::JsGlobalObject %this (__proto__ js-function-prototype)
       
       (define (%js-map this . args)
-	 (js-raise-type-error %this
-	    (format "Constructor ~a requires 'new'" name) this))
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (when (eq? js-new-target (js-undefined))
+	       (js-raise-type-error %this
+		  (format "Constructor ~a requires 'new'" name) this))))
       
       (define (js-map-alloc %this constructor::JsFunction)
 	 (instantiateJsMap
