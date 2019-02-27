@@ -200,16 +200,17 @@
 		  (lhs (j2sref old loc withs wenv))
 		  (rhs val))))))
 
-(define (decl->assig decl)
-   (with-access::J2SDeclInit decl (loc val)
-      (instantiate::J2SAssig
-         (loc loc)
-	 (lhs (instantiate::J2SRef (loc loc) (decl decl)))
-	 (rhs val))))
+(define (initstmt->assig decl)
+   (with-access::J2SStmtExpr decl (expr)
+      (with-access::J2SInit expr (loc lhs rhs)
+         (instantiate::J2SAssig
+            (loc loc)
+            (lhs lhs)
+            (rhs rhs)))))
 
-(define (decls->sequence loc decls)
+(define (inits->sequence loc decls)
    (if (pair? decls)
-      (let ((exprs (map decl->assig decls)))
+      (let ((exprs (map initstmt->assig decls)))
 	 (instantiate::J2SSequence (loc loc) (exprs exprs)))
       (instantiate::J2SNop (loc loc))))
 
@@ -548,7 +549,7 @@
 				(let ((nd (resolve! d env mode withs wenv genv ctx conf)))
 				   (unless (isa? nd J2SNop) nd)))
 		    decls)))
-	          (set! init (decls->sequence loc ndecls)))
+	          (set! init (inits->sequence loc ndecls)))
 	       (instantiate::J2SBlock
 		  (endloc loc)
 		  (loc loc)
