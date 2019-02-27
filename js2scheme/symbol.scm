@@ -200,6 +200,19 @@
 		  (lhs (j2sref old loc withs wenv))
 		  (rhs val))))))
 
+(define (decl->assig decl)
+   (with-access::J2SDeclInit decl (loc val)
+      (instantiate::J2SAssig
+         (loc loc)
+	 (lhs (instantiate::J2SRef (loc loc) (decl decl)))
+	 (rhs val))))
+
+(define (decls->sequence loc decls)
+   (if (pair? decls)
+      (let ((exprs (map decl->assig decls)))
+	 (instantiate::J2SSequence (loc loc) (exprs exprs)))
+      (instantiate::J2SNop (loc loc))))
+
 ;*---------------------------------------------------------------------*/
 ;*    bind-decls! ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -527,22 +540,15 @@
 		  (loc loc)
 		  (nodes (list lift for)))))))
    
-   (define (decl->assig decl)
-      (with-access::J2SDeclInit decl (loc val)
-	 (instantiate::J2SAssig
-            (loc loc)
-	    (lhs (instantiate::J2SRef (loc loc) (decl decl)))
-	    (rhs val))))
-
-   (define (create-assigns-exprs loc decls)
-      (let ((exprs (map decl->assig decls)))
-	 (instantiate::J2SSequence (loc loc) (exprs exprs))))
-
    (define (for-var for)
       (with-access::J2SFor for (init)
 	 (with-access::J2SVarDecls init (loc decls)
 	    (let ((lift init))
-	       (set! init (create-assigns-exprs loc decls))
+	       (let ((ndecls (filter-map (lambda (d)
+				(let ((nd (resolve! d env mode withs wenv genv ctx conf)))
+				   (unless (isa? nd J2SNop) nd)))
+		    decls)))
+	          (set! init (decls->sequence loc ndecls)))
 	       (instantiate::J2SBlock
 		  (endloc loc)
 		  (loc loc)
