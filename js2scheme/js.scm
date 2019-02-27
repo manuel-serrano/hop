@@ -238,9 +238,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SLabel tildec dollarc mode evalp conf)
    (with-access::J2SLabel this (id body)
-      (cons* this (format "{ ~a: " id)
-	 (append (j2s-js body tildec dollarc mode evalp conf)
-	    '("}")))))
+      (with-access::J2SBlock body (nodes)
+         (cons* this (format "{ ~a: " id)
+	    (append (j2s-js* body "" "" "" nodes tildec dollarc mode evalp conf)
+	       '("}"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SVarDecls ...                                         */
