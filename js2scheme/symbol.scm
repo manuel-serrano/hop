@@ -527,15 +527,26 @@
 		  (loc loc)
 		  (nodes (list lift for)))))))
    
+   (define (decl->assig decl)
+      (with-access::J2SDeclInit decl (loc val)
+	 (instantiate::J2SAssig
+            (loc loc)
+	    (lhs (instantiate::J2SRef (loc loc) (decl decl)))
+	    (rhs val))))
+
+   (define (create-assigns-exprs loc decls)
+      (let ((exprs (map decl->assig decls)))
+	 (instantiate::J2SSequence (loc loc) (exprs exprs))))
+
    (define (for-var for)
       (with-access::J2SFor for (init)
 	 (with-access::J2SVarDecls init (loc decls)
 	    (let ((lift init))
-	       (set! init (instantiate::J2SNop (loc loc)))
+	       (set! init (create-assigns-exprs loc decls))
 	       (instantiate::J2SBlock
 		  (endloc loc)
 		  (loc loc)
-		  (nodes (list lift for)))))))
+		  (nodes (list for)))))))
    
    (define (let-init? init::J2SVarDecls)
       (with-access::J2SVarDecls init (decls)
