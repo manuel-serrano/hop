@@ -219,13 +219,36 @@
 	  (j2s-js* this "{" "}" "" nodes tildec dollarc mode evalp conf)))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SWith ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SWith tildec dollarc mode evalp conf)
+   (with-access::J2SWith this (obj block)
+      (cons* this "with (" (append (j2s-js obj tildec dollarc mode evalp conf)
+         (cons ") " (j2s-js block tildec dollarc mode evalp conf) )))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SWithRef ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SWithRef tildec dollarc mode evalp conf)
+   (with-access::J2SWithRef this (id)
+      (list this (symbol->string! id))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SArrayAbsent ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SArrayAbsent tildec dollarc mode evalp conf)
+   (list this))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SLabel ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SLabel tildec dollarc mode evalp conf)
    (with-access::J2SLabel this (id body)
       (cons* this (format "{ ~a: " id)
-	 (append (j2s-js body tildec dollarc mode evalp conf)
-	    '("}")))))
+         (if (isa? body J2SBlock)
+             (with-access::J2SBlock body (nodes)
+	        (append (j2s-js* body "" "" "" nodes tildec dollarc mode evalp conf) '("}")))
+             (append (j2s-js body tildec dollarc mode evalp conf) '("}"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SVarDecls ...                                         */
@@ -760,7 +783,7 @@
 		  (if (isa? then J2SNop)
 		      '("{}") (j2s-js then tildec dollarc mode evalp conf))
 		  (if (isa? else J2SNop)
-		      '()
+		      '("else {}")
 		      (cons " else "
 			 (j2s-js else tildec dollarc mode evalp conf)))))))))
 	 
