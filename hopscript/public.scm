@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Feb 25 14:20:44 2019 (serrano)                */
+;*    Last change :  Thu Feb 28 08:55:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -342,6 +342,8 @@
       ((isa? ctor JsFunction)
        (with-access::JsFunction ctor (name alloc)
 	  (let ((o (alloc %this ctor)))
+	     (with-access::JsGlobalObject %this (js-new-target)
+		(set! js-new-target (js-undefined)))
 	     (js-new-return ctor o o))))
       ((isa? ctor JsProxy)
        (js-new/proxy %this ctor '()))

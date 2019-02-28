@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Feb 27 18:43:28 2019 (serrano)                */
+;*    Last change :  Thu Feb 28 08:09:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -131,8 +131,8 @@
 		     (set! val (js-ascii->jsstring str))
 		     (js-object-properties-set! o (list len)))))
 	    
-	    
-
+	    (with-access::JsGlobalObject %this (js-new-target)
+	       (set! js-new-target (js-undefined)))
 	    (if (null? arg)
 		;; 2
 		(set-ascii-string! "")
@@ -273,10 +273,11 @@
       (let ((str (if (null? args)
 		     (js-ascii->jsstring "")
 		     (js-string->jsstring (js-tostring (car args) %this)))))
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (if (or (eq? js-new-target (js-undefined)) (not (isa? this JsString)))
+	 (with-access::JsGlobalObject %this (js-new-target js-string)
+	    (if (eq? js-new-target (js-undefined))
 		str
 		(begin
+		   (set! js-new-target (js-undefined))
 		   (js-set-string! %this this str)
 		   this))))))
 

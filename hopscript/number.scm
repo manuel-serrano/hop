@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Feb 27 18:30:41 2019 (serrano)                */
+;*    Last change :  Thu Feb 28 07:59:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -107,6 +107,8 @@
 	       (__proto__ __proto__)))
 
 	 (define (js-number-construct this . args)
+	    (with-access::JsGlobalObject %this (js-new-target)
+	       (set! js-new-target (js-undefined)))
 	    (when (pair? args)
 	       (with-access::JsNumber this (val)
 		  (set! val (js-tonumber (car args) %this))))
@@ -131,10 +133,10 @@
 	 (define (%js-number this . arg)
 	    (let ((num (js-tonumber (if (pair? arg) (car arg) 0) %this)))
 	       (with-access::JsGlobalObject %this (js-new-target)
-		  (if (or (eq? js-new-target (js-undefined))
-			  (not (isa? this JsNumber)))
+		  (if (eq? js-new-target (js-undefined))
 		      num
 		      (with-access::JsNumber this (val)
+			 (set! js-new-target (js-undefined))
 			 (set! val num)
 			 this)))))
 
