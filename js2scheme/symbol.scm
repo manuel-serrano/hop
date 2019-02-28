@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Jan 23 15:36:29 2019 (serrano)                */
+;*    Last change :  Thu Feb 28 13:25:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -200,15 +200,19 @@
 		  (lhs (j2sref old loc withs wenv))
 		  (rhs val))))))
 
-(define (initstmt->assig decl)
-   (with-access::J2SStmtExpr decl (expr)
-      (with-access::J2SInit expr (loc lhs rhs)
-         (instantiate::J2SAssig
-            (loc loc)
-            (lhs lhs)
-            (rhs rhs)))))
-
+;*---------------------------------------------------------------------*/
+;*    inits->sequence ...                                              */
+;*---------------------------------------------------------------------*/
 (define (inits->sequence loc decls)
+   
+   (define (initstmt->assig decl)
+      (with-access::J2SStmtExpr decl (expr)
+	 (with-access::J2SInit expr (loc lhs rhs)
+	    (instantiate::J2SAssig
+	       (loc loc)
+	       (lhs lhs)
+	       (rhs rhs)))))
+   
    (if (pair? decls)
       (let ((exprs (map initstmt->assig decls)))
 	 (instantiate::J2SSequence (loc loc) (exprs exprs)))
