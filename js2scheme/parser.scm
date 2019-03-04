@@ -829,48 +829,61 @@
 			       (instantiate::J2SNop (loc loc)))))))))
    
    (define (catch)
-      (let ((loc (token-loc (consume-token! 'catch))))
-	 (push-open-token (consume-token! 'LPAREN))
-	 (case (peek-token-type)
+     (let ((loc (token-loc (consume-token! 'catch))))
+       (case (peek-token-type)
+         ((LPAREN)
+	  (push-open-token (consume-token! 'LPAREN))
+	  (case (peek-token-type)
 	    ((ID)
 	     (let ((id (consume! 'ID)))
-		(pop-open-token (consume-token! 'RPAREN))
-		(let ((body (block)))
-		   ;; not sure, if 'Param' is a really good choice.
-		   ;; we'll see...
-		   (instantiate::J2SCatch
-		      (loc loc)
-		      (param (instantiate::J2SDecl
-				(loc loc)
-				(id id)
-				(binder 'param)))
-		      (body body)))))
+	       (pop-open-token (consume-token! 'RPAREN))
+	       (let ((body (block)))
+		 ;; not sure, if 'Param' is a really good choice.
+		 ;; we'll see...
+		 (instantiate::J2SCatch
+		  (loc loc)
+		  (param (instantiate::J2SDecl
+			  (loc loc)
+			  (id id)
+			  (binder 'param)))
+		  (body body)))))
 	    ((LBRACE LBRACKET)
 	     (let ((vars (var #t
-			    (lambda (loc id val)
-			       (instantiate::J2SDeclInit
-				  (loc loc)
-				  (id id)
-				  (val val)))
-			    (lambda (loc id)
-			       (instantiate::J2SDecl
-				  (loc loc)
-				  (id id))))))
-		(pop-open-token (consume-token! 'RPAREN))
-		(with-access::J2SDecl (car vars) (binder)
-		   (set! binder 'param))
-		(instantiate::J2SCatch
-		   (loc loc)
-		   (param (car vars))
-		   (body (instantiate::J2SBlock
-			    (loc loc)
-			    (endloc loc)
-			    (nodes (list (instantiate::J2SVarDecls
-					    (loc loc)
-					    (decls (cdr vars)))
-				      (block))))))))
+			      (lambda (loc id val)
+				(instantiate::J2SDeclInit
+				 (loc loc)
+				 (id id)
+				 (val val)))
+			      (lambda (loc id)
+				(instantiate::J2SDecl
+				 (loc loc)
+				 (id id))))))
+	       (pop-open-token (consume-token! 'RPAREN))
+	       (with-access::J2SDecl (car vars) (binder)
+				     (set! binder 'param))
+	       (instantiate::J2SCatch
+		(loc loc)
+		(param (car vars))
+		(body (instantiate::J2SBlock
+		       (loc loc)
+		       (endloc loc)
+		       (nodes (list (instantiate::J2SVarDecls
+				     (loc loc)
+				     (decls (cdr vars)))
+				    (block))))))))
 	    (else
-	     (parse-token-error "Unexpected token" (consume-any!))))))
+	     (parse-token-error "Unexpected token" (consume-any!)))))
+         ((LBRACE)
+	  (let ((body (block)))
+	    ;; not sure, if 'Param' is a really good choice.
+	    ;; we'll see...
+	    (instantiate::J2SCatch
+	     (loc loc)
+	     (param (instantiate::J2SDecl
+		     (loc loc)
+		     (id '%nil)
+		     (binder 'param)))
+	     (body body)))))))
    
    (define (finally)
       (consume! 'finally)
