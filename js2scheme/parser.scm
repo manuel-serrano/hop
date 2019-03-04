@@ -2591,7 +2591,7 @@
 	    (case (peek-token-type)
 	       ((COMMA)
 		(consume-any!)
-		(parse-array (cons array-el rev-els) (+fx length 1)))
+		(parse-array (cons array-el rev-els) (+fx length 1) #f))
 	       ((RBRACKET)
 		(consume! 'RBRACKET)
 		(instantiate::J2SArray
@@ -2602,20 +2602,21 @@
 		(parse-token-error "Unexpected token"
 		   (consume-any!)))))
 	 
-	 (define (parse-array rev-els length)
+	 (define (parse-array rev-els length last-empty?)
 	    (case (peek-token-type)
 	       ((RBRACKET)
 		(pop-open-token (consume-any!))
-		(instantiate::J2SArray
+		(let ((nlength (if last-empty? length (+fx length 1))))
+		  (instantiate::J2SArray
 		   (loc (token-loc token))
-		   (exprs (reverse! rev-els))
-		   (len length)))
+		   (exprs (reverse! (if last-empty? rev-els (cons (instantiate::J2SArrayAbsent (loc (token-loc token))) rev-els))))
+		   (len nlength))))
 	       ((COMMA)
 		(let ((token (consume-any!)))
 		   (parse-array (cons (instantiate::J2SArrayAbsent
 					 (loc (token-loc token)))
 				   rev-els)
-		      (+fx length 1))))
+		      (+fx length 1) #f)))
 	       ((DOTS)
 		(let ((token (consume-any!)))
 		   (cond
@@ -2633,7 +2634,7 @@
 		(let ((array-el (assig-expr #f #f #f)))
 		   (parse-array-element array-el rev-els length)))))
 
-	 (parse-array '() 0)))
+	 (parse-array '() 0 #t)))
 
    (define (property-name destructuring?)
       (case (peek-token-type)
