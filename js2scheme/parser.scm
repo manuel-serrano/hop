@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Feb 27 07:19:31 2019 (serrano)                */
+;*    Last change :  Fri Mar  8 11:21:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2602,15 +2602,20 @@
 		(parse-token-error "Unexpected token"
 		   (consume-any!)))))
 	 
-	 (define (parse-array rev-els length last-empty?)
+ 	 (define (parse-array rev-els length last-empty?)
 	    (case (peek-token-type)
 	       ((RBRACKET)
 		(pop-open-token (consume-any!))
 		(let ((nlength (if last-empty? length (+fx length 1))))
-		  (instantiate::J2SArray
-		   (loc (token-loc token))
-		   (exprs (reverse! (if last-empty? rev-els (cons (instantiate::J2SArrayAbsent (loc (token-loc token))) rev-els))))
-		   (len nlength))))
+		   (instantiate::J2SArray
+		      (loc (token-loc token))
+		      (exprs (reverse!
+				(if last-empty?
+				    rev-els
+				    (cons (instantiate::J2SArrayAbsent
+					     (loc (token-loc token)))
+				       rev-els))))
+		      (len nlength))))
 	       ((COMMA)
 		(let ((token (consume-any!)))
 		   (parse-array (cons (instantiate::J2SArrayAbsent

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/module.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/module.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Oct 26 05:57:58 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Fri Mar  8 11:32:01 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
 ;*=====================================================================*/
@@ -22,7 +22,8 @@
 	   __js2scheme_dump
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_utils)
+	   __js2scheme_utils
+	   __js2scheme_hop-module)
 
    (export j2s-module-stage))
 
@@ -89,7 +90,7 @@
    
    (define (import-decl::pair-nil iprgm::J2SProgram name::J2SImportName)
       (with-access::J2SImportName name (id alias loc)
-	 (with-access::J2SProgram iprgm (exports path defexport)
+	 (with-access::J2SProgram iprgm (exports path)
 	    (let ((expo (find (lambda (export)
 				 (with-access::J2SExport export ((imp id))
 				    (eq? id imp)))
@@ -175,11 +176,16 @@
 			    (if (>= (config-get args :verbose 0) 3)
 				(string-append " [" respath "]")
 				"")))
-		      (let ((iprgm (j2s-compile in
-				      :driver (j2s-export-driver)
-				      :verbose (config-get args :verbose 0)
-				      :verbmargin margin
-				      :module-stack (cons respath stack))))
+		      (let ((iprgm (if (string-suffix? ".hop" respath)
+				       (hop-compile in
+					  :verbose (config-get args :verbose 0)
+					  :verbmargin margin
+					  :module-stack (cons respath stack))
+				       (j2s-compile in
+					  :driver (j2s-export-driver)
+					  :verbose (config-get args :verbose 0)
+					  :verbmargin margin
+					  :module-stack (cons respath stack)))))
 			 (module-cache-put! respath iprgm))))))))
 
    (define (import-module-decls this iprgm)

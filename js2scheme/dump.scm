@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Jan 25 09:07:17 2019 (serrano)                */
+;*    Last change :  Fri Mar  8 12:11:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -509,8 +509,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SGlobalRef)
    (with-access::J2SGlobalRef this (id decl loc)
-      (with-access::J2SDecl decl (id usage)
+      (with-access::J2SDecl decl (id usage scope)
 	 `(,@(call-next-method)
+	     ,@(dump-scope scope)
 	     ,@(dump-vtype decl)
 	     ,@(dump-access decl)))))
  

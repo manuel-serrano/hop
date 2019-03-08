@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Jan 24 08:56:18 2019 (serrano)                */
+;*    Last change :  Fri Mar  8 14:56:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -406,7 +406,10 @@
 		      `(vector-ref ,ivar ,index)))))
 	    ((and (pair? exports) (or (not ronly) (not (isa? decl J2SDeclFun))))
 	     (with-access::J2SExport (car exports) (index decl)
-		`(vector-ref %evars ,index)))
+		(tprint "scope=" scope " id=" id)
+		(if (eq? scope '%hop)
+		    id
+		    `(vector-ref %evars ,index))))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scheme-id decl))
 	    ((j2s-let? decl)

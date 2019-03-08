@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Feb 28 13:25:00 2019 (serrano)                */
+;*    Last change :  Fri Mar  8 12:13:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -677,6 +677,7 @@
 	    ((find-decl id genv)
 	     =>
 	     (lambda (decl)
+		(tprint "GLOBAL.1 decl=" (typeof decl) " " (j2s->list decl))
 		(if (eq? id 'this)
 		    (instantiate::J2SThis
 		       (loc loc)
@@ -691,6 +692,7 @@
 			    (utype 'any)
 			    (loc loc)
 			    (id id))))
+		(tprint "GLOBAL.2 decl=" (typeof decl) " " (j2s->list decl))
 		(set-cdr! (last-pair genv) (list decl))
 		(instantiate::J2SGlobalRef
 		   (id id)

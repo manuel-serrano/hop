@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Jan 24 08:06:25 2019 (serrano)                */
+;*    Last change :  Fri Mar  8 12:36:26 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -265,14 +265,17 @@
       (with-access::J2SProgram prgm (imports)
 	 (map (lambda (im idx)
 		 (with-access::J2SImport im (mvar ivar path iprgm)
-		    (let ((impid (evar-ident idx)))
-		       (reindex! this iprgm idx)
-		       (set! mvar `(vector-ref %imports ,idx))
-		       (set! ivar impid)
-		       `(define ,impid
-			   (with-access::JsModule (vector-ref %imports ,idx) (evars)
-			      ,(format "import: ~a" path)
-			      evars)))))
+		    (with-access::J2SProgram iprgm (mode)
+		       (if (eq? mode 'hop)
+			   #unspecified
+			   (let ((impid (evar-ident idx)))
+			      (reindex! this iprgm idx)
+			      (set! mvar `(vector-ref %imports ,idx))
+			      (set! ivar impid)
+			      `(define ,impid
+				  (with-access::JsModule (vector-ref %imports ,idx) (evars)
+				     ,(format "import: ~a" path)
+				     evars)))))))
 	    imports (iota (length imports)))))
 
    (define (redirect-only?::bool iprgm::J2SProgram)

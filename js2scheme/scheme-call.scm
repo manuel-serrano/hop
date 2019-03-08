@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jan 29 15:25:05 2019 (serrano)                */
+;*    Last change :  Fri Mar  8 12:08:04 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -694,7 +694,7 @@
 		   args))
 	       ((isa? fun J2SGlobalRef)
 		(with-access::J2SGlobalRef fun (decl)
-		   (with-access::J2SDecl decl (id ronly)
+		   (with-access::J2SDecl decl (id ronly scope)
 		      (cond
 			 ((not ronly)
 			  (call-unresolved-function fun thisarg args))
@@ -708,6 +708,8 @@
 				 ,@(if (builtin-function-%this f)
 				       '(%this)
 				       '()))))
+			 ((eq? scope '%hop)
+			  'TODO)
 			 (else
 			  (call-unresolved-function fun thisarg args))))))
 	       ((isa? fun J2SUnresolvedRef)
