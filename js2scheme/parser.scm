@@ -829,48 +829,61 @@
 			       (instantiate::J2SNop (loc loc)))))))))
    
    (define (catch)
-      (let ((loc (token-loc (consume-token! 'catch))))
-	 (push-open-token (consume-token! 'LPAREN))
-	 (case (peek-token-type)
+     (let ((loc (token-loc (consume-token! 'catch))))
+       (case (peek-token-type)
+         ((LPAREN)
+	  (push-open-token (consume-token! 'LPAREN))
+	  (case (peek-token-type)
 	    ((ID)
 	     (let ((id (consume! 'ID)))
-		(pop-open-token (consume-token! 'RPAREN))
-		(let ((body (block)))
-		   ;; not sure, if 'Param' is a really good choice.
-		   ;; we'll see...
-		   (instantiate::J2SCatch
-		      (loc loc)
-		      (param (instantiate::J2SDecl
-				(loc loc)
-				(id id)
-				(binder 'param)))
-		      (body body)))))
+	       (pop-open-token (consume-token! 'RPAREN))
+	       (let ((body (block)))
+		 ;; not sure, if 'Param' is a really good choice.
+		 ;; we'll see...
+		 (instantiate::J2SCatch
+		  (loc loc)
+		  (param (instantiate::J2SDecl
+			  (loc loc)
+			  (id id)
+			  (binder 'param)))
+		  (body body)))))
 	    ((LBRACE LBRACKET)
 	     (let ((vars (var #t
-			    (lambda (loc id val)
-			       (instantiate::J2SDeclInit
-				  (loc loc)
-				  (id id)
-				  (val val)))
-			    (lambda (loc id)
-			       (instantiate::J2SDecl
-				  (loc loc)
-				  (id id))))))
-		(pop-open-token (consume-token! 'RPAREN))
-		(with-access::J2SDecl (car vars) (binder)
-		   (set! binder 'param))
-		(instantiate::J2SCatch
-		   (loc loc)
-		   (param (car vars))
-		   (body (instantiate::J2SBlock
-			    (loc loc)
-			    (endloc loc)
-			    (nodes (list (instantiate::J2SVarDecls
-					    (loc loc)
-					    (decls (cdr vars)))
-				      (block))))))))
+			      (lambda (loc id val)
+				(instantiate::J2SDeclInit
+				 (loc loc)
+				 (id id)
+				 (val val)))
+			      (lambda (loc id)
+				(instantiate::J2SDecl
+				 (loc loc)
+				 (id id))))))
+	       (pop-open-token (consume-token! 'RPAREN))
+	       (with-access::J2SDecl (car vars) (binder)
+				     (set! binder 'param))
+	       (instantiate::J2SCatch
+		(loc loc)
+		(param (car vars))
+		(body (instantiate::J2SBlock
+		       (loc loc)
+		       (endloc loc)
+		       (nodes (list (instantiate::J2SVarDecls
+				     (loc loc)
+				     (decls (cdr vars)))
+				    (block))))))))
 	    (else
-	     (parse-token-error "Unexpected token" (consume-any!))))))
+	     (parse-token-error "Unexpected token" (consume-any!)))))
+         ((LBRACE)
+	  (let ((body (block)))
+	    ;; not sure, if 'Param' is a really good choice.
+	    ;; we'll see...
+	    (instantiate::J2SCatch
+	     (loc loc)
+	     (param (instantiate::J2SDecl
+		     (loc loc)
+		     (id '%nil)
+		     (binder 'param)))
+	     (body body)))))))
    
    (define (finally)
       (consume! 'finally)
@@ -2578,7 +2591,7 @@
 	    (case (peek-token-type)
 	       ((COMMA)
 		(consume-any!)
-		(parse-array (cons array-el rev-els) (+fx length 1)))
+		(parse-array (cons array-el rev-els) (+fx length 1) #f))
 	       ((RBRACKET)
 		(consume! 'RBRACKET)
 		(instantiate::J2SArray
@@ -2589,20 +2602,21 @@
 		(parse-token-error "Unexpected token"
 		   (consume-any!)))))
 	 
-	 (define (parse-array rev-els length)
+	 (define (parse-array rev-els length last-empty?)
 	    (case (peek-token-type)
 	       ((RBRACKET)
 		(pop-open-token (consume-any!))
-		(instantiate::J2SArray
+		(let ((nlength (if last-empty? length (+fx length 1))))
+		  (instantiate::J2SArray
 		   (loc (token-loc token))
-		   (exprs (reverse! rev-els))
-		   (len length)))
+		   (exprs (reverse! (if last-empty? rev-els (cons (instantiate::J2SArrayAbsent (loc (token-loc token))) rev-els))))
+		   (len nlength))))
 	       ((COMMA)
 		(let ((token (consume-any!)))
 		   (parse-array (cons (instantiate::J2SArrayAbsent
 					 (loc (token-loc token)))
 				   rev-els)
-		      (+fx length 1))))
+		      (+fx length 1) #f)))
 	       ((DOTS)
 		(let ((token (consume-any!)))
 		   (cond
@@ -2620,7 +2634,7 @@
 		(let ((array-el (assig-expr #f #f #f)))
 		   (parse-array-element array-el rev-els length)))))
 
-	 (parse-array '() 0)))
+	 (parse-array '() 0 #t)))
 
    (define (property-name destructuring?)
       (case (peek-token-type)
