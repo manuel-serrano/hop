@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Mar  8 11:32:01 2019 (serrano)                */
+;*    Last change :  Fri Mar  8 18:05:17 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -97,18 +97,21 @@
 			   exports)))
 	       (cond
 		  (expo
-		   (with-access::J2SExport expo (decl)
+		   (with-access::J2SExport expo (decl from)
 		      (with-access::J2SDecl decl (exports)
 			 (map (lambda (export)
-				 (with-access::J2SExport export (index)
-				    (instantiate::J2SDeclImport
-				       (loc loc)
-				       (id alias)
-				       (alias id)
-				       (binder 'let)
-				       (writable #f)
-				       (export export)
-				       (import this))))
+				 (with-access::J2SExport export (index decl)
+				    (with-access::J2SDecl decl (vtype)
+				       (instantiate::J2SDeclImport
+					  (loc loc)
+					  (id alias)
+					  (alias id)
+					  (binder 'let)
+					  (writable #f)
+					  (vtype vtype)
+					  (scope (if (eq? from 'hop) '%hop 'local))
+					  (export export)
+					  (import this)))))
 			    exports))))
 		  (else
 		   (raise

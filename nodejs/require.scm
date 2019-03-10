@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jan 26 08:12:03 2019 (serrano)                */
+;*    Last change :  Sun Mar 10 15:19:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -26,6 +26,7 @@
 	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj)
 	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::bstring ::obj)
 	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
+	   (nodejs-import-hop-symbol ::JsGlobalObject ::bstring ::symbol ::symbol ::obj)
 	   (nodejs-exports-module::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
@@ -603,6 +604,25 @@
 	     (js-raise-type-error/loc %this loc
 		"corrupted module ~s"
 		(js-get mod 'filename %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-import-hop-symbol ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import-hop-symbol %this::JsGlobalObject
+	   path::bstring id::symbol module::symbol loc)
+   (cond
+      ((hashtable-get hop-load-cache path)
+       =>
+       (lambda (mod)
+	  (call-with-eval-module mod
+	     (lambda () (eval `(@ ,id ,module))))))
+      ((dynamic-load-symbol path (symbol->string id) (symbol->string module))
+       =>
+       (lambda (sym)
+	  (dynamic-load-symbol-get sym)))
+      (else
+       (js-raise-type-error/loc %this loc
+	  "cannot find symbol ~s" `(@ ,id ,module)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import-module-dynamic ...                                 */
@@ -1418,10 +1438,6 @@
 					(list src))
 				       ((isa? src J2SProgram)
 					`(,filename "--ast-file" ,astfile))
-;* 				       ((isa? src J2SProgram)          */
-;* 					`(,filename "--ast"            */
-;* 					    ,(string-for-read          */
-;* 						(obj->string src))))   */
 				       (else
 					(error "nodejs-socompile"
 					   (format "bad source format `~a'" (typeof src)) filename)))
@@ -1595,15 +1611,40 @@
 		  ;; return the newly created module
 		  (trace-item "mod=" (typeof mod))
 		  mod)))))
-   
-   (define (hop-load/cache filename)
+
+   (define (hop-compile filename)
       (let ((old (hashtable-get hop-load-cache filename)))
 	 (unless old
 	    (set! old (hop-load filename :mode 'module))
 	    (hashtable-put! hop-load-cache filename old))
 	 old))
+
+   (define (hop-load/cache filename)
+      (let loop ((sopath (find-new-sofile filename)))
+	 (cond
+	    ((string? sopath)
+	     (let ((p (hop-dynamic-load sopath)))
+		(if (and (procedure? p) (=fx (procedure-arity p) 4))
+		    p
+		    (js-raise-error %ctxthis
+		       (format "Wrong compiled file format ~s" sopath)
+		       sopath))))
+	    ((and (not (eq? sopath 'error)) (hop-sofile-enable))
+	     (case (hop-sofile-compile-policy)
+		((aot)
+		 (loop (nodejs-socompile src filename lang)))
+		((nte nte1 nte+)
+		 (nodejs-socompile-queue-push filename lang)
+		 (hop-compile filename))
+		(else
+		 (hop-compile filename))))
+	    (else
+	     (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
+		(nodejs-socompile-queue-push filename lang))
+	     (hop-compile filename)))))
    
    (define (load-module-hop)
+      (tprint "load-module-hop filename=" filename)
       (with-access::WorkerHopThread worker (%this)
 	 (with-access::JsGlobalObject %this (js-object)
 	    (let ((evmod-or-init (hop-load/cache filename))

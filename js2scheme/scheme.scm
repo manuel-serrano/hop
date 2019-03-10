@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Mar  8 14:56:36 2019 (serrano)                */
+;*    Last change :  Fri Mar  8 18:16:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -257,7 +257,20 @@
 ;*    j2s-scheme ::J2SDeclImport ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclImport mode return conf)
-   #unspecified)
+
+   (define (j2s-scheme-import-hop this::J2SDeclImport module return conf)
+      (with-access::J2SDeclImport this (alias import loc)
+	 (with-access::J2SImport import (iprgm)
+	    (with-access::J2SProgram iprgm (path module)
+	       (with-access::J2SImport import (mvar)
+		  `(define ,alias
+		      (nodejs-import-hop-symbol %this
+			 ,path ',alias ',module ',loc)))))))
+      
+   (with-access::J2SDeclImport this (scope)
+      (if (eq? scope '%hop)
+	  (j2s-scheme-import-hop this mode return conf)
+	  #unspecified)))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclInit ...                                     */
@@ -400,16 +413,15 @@
       (with-access::J2SDecl decl (scope id vtype exports ronly)
 	 (cond
 	    ((isa? decl J2SDeclImport)
-	     (with-access::J2SDeclImport decl (export import)
+	     (with-access::J2SDeclImport decl (export import scope)
 		(with-access::J2SExport export (index)
 		   (with-access::J2SImport import (ivar mvar)
-		      `(vector-ref ,ivar ,index)))))
+		      (if (eq? scope '%hop)
+			  id
+			  `(vector-ref ,ivar ,index))))))
 	    ((and (pair? exports) (or (not ronly) (not (isa? decl J2SDeclFun))))
 	     (with-access::J2SExport (car exports) (index decl)
-		(tprint "scope=" scope " id=" id)
-		(if (eq? scope '%hop)
-		    id
-		    `(vector-ref %evars ,index))))
+		`(vector-ref %evars ,index)))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scheme-id decl))
 	    ((j2s-let? decl)

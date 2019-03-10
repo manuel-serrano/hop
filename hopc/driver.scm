@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Jan 24 07:35:20 2019 (serrano)                */
+;*    Last change :  Sun Mar 10 16:50:31 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -260,10 +260,9 @@
 	 (cond-expand
 	    (enable-libuv '("-srfi" "enable-libuv" "-srfi" "hopc"))
 	    (else '("-srfi" "hopc"))))
-      
-      (define (compile-temp opts comp file temp)
-	 (call-with-output-file temp comp)
-         (let* ((opts (cons temp (append (srfi-opts) opts)))
+
+      (define (compile-file opts file)
+         (let* ((opts (append (cons file (srfi-opts)) opts))
                 (proc (apply run-process (hopc-bigloo) opts))
                 (cmd (format "~a ~l" (hopc-bigloo) opts)))
             (signal sigterm
@@ -273,6 +272,10 @@
 	    (hop-verb 4 cmd "\n")
 	    (process-wait proc)
             (process-exit-status proc)))
+      
+      (define (compile-temp opts comp file temp)
+	 (call-with-output-file temp comp)
+	 (compile-file opts temp))
 
       (define (compile-temp-ast opts comp file temp)
 	 (call-with-output-file temp comp)
@@ -322,6 +325,8 @@
 
       (define (compiler opts comp file temp)
 	 (cond
+	    ((not comp)
+	     (compile-file opts file))
 	    ((string? temp)
 	     (compile-temp opts comp file temp))
 	    ((> (file-size file) (hopc-pipe-filesize-threshold))
@@ -334,9 +339,10 @@
       (define (compile-hop in opts file temp)
 	 (compiler
 	    (append `("--force-cc-o"
-			"-library" "hop"
-			"-library" "hopscheme"
-			"-library" "hopwidget"
+;* 			"-library" "hop"                               */
+;* 			"-library" "hopscheme"                         */
+;* 			"-library" "js2scheme"                         */
+;* 			"-library" "hopwidget"                         */
 			"-rpath" ,(make-file-path (hop-lib-directory)
 				     "hop" (hop-version)))
 	       opts)
@@ -352,7 +358,7 @@
 			(loop)))))
 	    file
 	    temp))
-      
+
       (define (compile-hopscript in opts file exec temp)
 	 (let ((mmap (when (and (string? fname) (file-exists? fname))
 			(open-mmap fname :read #t :write #f))))
@@ -484,6 +490,7 @@
       (if (eq? (hopc-source-language) 'auto)
 	  (case (string->symbol (suffix src))
 	     ((hop) 'hop)
+	     ((scm) 'scheme)
 	     ((js) 'hopscript)
 	     (else (error "hopc" "Unknown language source" src)))
 	  (hopc-source-language)))

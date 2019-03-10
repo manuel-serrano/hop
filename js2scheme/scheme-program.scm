@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Mar  8 12:36:26 2019 (serrano)                */
+;*    Last change :  Sun Mar 10 10:05:25 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -261,21 +261,37 @@
       (with-access::J2SProgram this (%info)
 	 (set! %info (cons (cons iprgm  reindex) %info))))
 
+   (define (module-import-hop im idx)
+      (with-access::J2SImport im (mvar ivar path iprgm names)
+	 (with-access::J2SProgram iprgm (mode)
+	    (let ((impid (evar-ident idx)))
+	       (reindex! this iprgm idx)
+	       (set! mvar `(vector-ref %imports ,idx))
+	       (set! ivar impid)
+	       `(define ,impid
+		   (with-access::JsModule (vector-ref %imports ,idx) (evars)
+		      ,(format "import: ~a" path)
+		      evars))))))
+      
+   (define (module-import-es6 im idx)
+      (with-access::J2SImport im (mvar ivar path iprgm)
+	 (with-access::J2SProgram iprgm (mode)
+	    (let ((impid (evar-ident idx)))
+	       (reindex! this iprgm idx)
+	       (set! mvar `(vector-ref %imports ,idx))
+	       (set! ivar impid)
+	       `(define ,impid
+		   (with-access::JsModule (vector-ref %imports ,idx) (evars)
+		      evars))))))
+   
    (define (module-imports prgm::J2SProgram)
       (with-access::J2SProgram prgm (imports)
 	 (map (lambda (im idx)
 		 (with-access::J2SImport im (mvar ivar path iprgm)
 		    (with-access::J2SProgram iprgm (mode)
 		       (if (eq? mode 'hop)
-			   #unspecified
-			   (let ((impid (evar-ident idx)))
-			      (reindex! this iprgm idx)
-			      (set! mvar `(vector-ref %imports ,idx))
-			      (set! ivar impid)
-			      `(define ,impid
-				  (with-access::JsModule (vector-ref %imports ,idx) (evars)
-				     ,(format "import: ~a" path)
-				     evars)))))))
+			   (module-import-hop im idx)
+			   (module-import-es6 im idx)))))
 	    imports (iota (length imports)))))
 
    (define (redirect-only?::bool iprgm::J2SProgram)
