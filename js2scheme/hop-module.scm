@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar  8 11:35:48 2019                          */
-;*    Last change :  Fri Mar  8 18:04:59 2019 (serrano)                */
+;*    Last change :  Mon Mar 11 20:26:33 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop (Scheme) module parser used when a JS module imports         */
@@ -80,6 +80,7 @@
 			  (id id)
 			  (alias id)
 			  (decl decl)
+			  (index 1234567) ;; MS CARE: WRONG, OF COURSE
 			  (from 'hop)))
 		 (decl (instantiate::J2SDeclExtern
 			  (loc (cer export))

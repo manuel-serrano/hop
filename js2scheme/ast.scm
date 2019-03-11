@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Jan 24 12:50:41 2019 (serrano)                */
+;*    Last change :  Mon Mar 11 19:11:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1436,7 +1436,7 @@
 	     (+fx i 1)
 	     (with-access::J2SExport (car exports) (index from id)
 		(cond
-		   (from
+		   ((isa? from J2SProgram)
 		    (loop (cdr exports) i))
 		   ((> index i)
 		    (loop (cdr exports) index))

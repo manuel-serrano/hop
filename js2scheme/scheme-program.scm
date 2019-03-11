@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Mar 10 10:05:25 2019 (serrano)                */
+;*    Last change :  Mon Mar 11 18:45:48 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -347,11 +347,9 @@
 
    (with-access::J2SProgram this (imports path %info)
       (set! %info '())
-      ;; WARNING !!! the evaluation order matters
-      ;; module-imports _must_ be called
-      ;; before module-redirect (as module-imports
-      ;; assigned the mvar properties used by
-      ;; module-redirect).
+      ;; WARNING !!! the evaluation order matters module-imports _must_ be
+      ;; called before module-redirect (as module-imports assigned the mvar
+      ;; properties used by module-redirect).
       (let* ((mimports (module-imports this))
 	     (mredirects (module-redirect this)))
 	 (if (and (null? imports) (null? mredirects))
@@ -396,23 +394,32 @@
 		(raise
 		   (instantiate::&error
 		      (proc path)
-		      (msg "Cannot find redirection")
-		      (obj id)
+		      (msg (format "Cannot find redirection for `~a'" id))
+		      (obj path)
 		      (fname (cadr loc))
 		      (location (caddr loc))))
 		(with-access::J2SExport x (from)
-		   (if from
-		       (redirect-index this id from loc)
+		   (cond
+		      ((isa? from J2SProgram)
+		       (redirect-index this id from loc))
+		      ((eq? from 'hop)
 		       (with-access::J2SProgram this (%info)
 			  (let ((c (assq iprgm %info)))
-			     (cdr c)))))))))
+			     (cdr c))))
+		      (else
+		       (with-access::J2SProgram this (%info)
+			  (let ((c (assq iprgm %info)))
+			     (cdr c))))))))))
    
    (define (export e::J2SExport)
       (with-access::J2SExport e (index decl from id alias)
+	 (tprint "export index=" index " id=" id " alias=" alias " from=" (typeof from))
 	 (with-access::J2SDecl decl ((w writable) loc)
-	    (if from
-		(vector alias (cons index (redirect-index this id from loc)) w)
-		(vector alias index w)))))
+	    (cond
+	       ((isa? from J2SProgram)
+		(vector alias (cons index (redirect-index this id from loc)) w))
+	       (else
+		(vector alias index w))))))
    
    (with-access::J2SProgram this (exports imports path checksum)
       (let ((idx (j2sprogram-get-export-index this))

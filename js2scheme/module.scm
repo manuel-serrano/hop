@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Mar  8 18:05:17 2019 (serrano)                */
+;*    Last change :  Mon Mar 11 19:09:15 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -100,7 +100,7 @@
 		   (with-access::J2SExport expo (decl from)
 		      (with-access::J2SDecl decl (exports)
 			 (map (lambda (export)
-				 (with-access::J2SExport export (index decl)
+				 (with-access::J2SExport export (decl)
 				    (with-access::J2SDecl decl (vtype)
 				       (instantiate::J2SDeclImport
 					  (loc loc)

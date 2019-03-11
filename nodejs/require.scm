@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Mar 11 14:28:04 2019 (serrano)                */
+;*    Last change :  Mon Mar 11 18:14:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -598,6 +598,11 @@
 	   %this::JsGlobalObject %module::JsObject
 	   path::bstring checksum::long loc)
    (let ((mod (nodejs-load-module path worker %this %module :commonjs-export #t)))
+      (with-access::JsModule mod (exports)
+	 (tprint "nodejs-import-module path=" path " mod=" (typeof mod)
+	    " " 
+	    exports))
+      
       (with-access::JsModule mod ((mc checksum))
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
 	     mod
@@ -610,6 +615,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-import-hop-symbol %this::JsGlobalObject
 	   path::bstring id::symbol module::symbol loc)
+   (tprint "nodejs-import-hop-symbol path=" path " id=" id " module=" module)
    (cond
       ((hashtable-get hop-load-cache path)
        =>
@@ -1623,21 +1629,20 @@
 
    (define (hop-eval filename)
       (let ((old (hashtable-get hop-load-cache filename)))
-	 (unless old
-	    (let ((v (hop-load filename :mode 'module)))
-	       (set! old
-		  (cond
-		     ((procedure? v)
-		      (tprint "PAS BON HOP-EVAL@require.scm")
-		      v)
-		     ((evmodule? v)
-		      (call-with-eval-module v
-			 (lambda ()
-			    (eval! 'hopscript))))
-		     (else
-		      #f)))
-	       (hashtable-put! hop-load-cache filename old))
-	    old)))
+	 (if old
+	     (call-with-eval-module old (lambda () (eval! 'hopscript)))
+	     (let ((v (hop-load filename :mode 'module)))
+		(cond
+		   ((procedure? v)
+		    (tprint "PAS BON HOP-EVAL@require.scm")
+		    v)
+		   ((evmodule? v)
+		    (hashtable-put! hop-load-cache filename v)
+		    (call-with-eval-module v
+		       (lambda ()
+			  (eval! 'hopscript))))
+		   (else
+		    #f))))))
 
    (define (hop-load/cache filename)
       (let loop ((sopath (find-new-sofile filename)))
@@ -1669,7 +1674,6 @@
 			  (or srcalias filename) worker %this)))
 	       (when (and (procedure? init) (=fx (procedure-arity init) 4))
 		  (init %this this scope mod))
-	       ;; return the newly created module
 	       mod))))
    
    (define (load-module-so)

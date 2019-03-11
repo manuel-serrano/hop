@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Mar  8 18:44:34 2019 (serrano)                */
+;*    Last change :  Mon Mar 11 18:39:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -575,6 +575,8 @@
        ((isa? ,fun JsProxy)
 	(,(string->symbol (format "js-call-proxy~a" (length args)))
 	 ,%this ,fun ,this ,@args))
+       ((procedure? fun)
+	(,fun ,@args))
        (else
 	(js-raise-type-error ,%this
 	   ,(format "call~a: not a function ~~s" (length args)) ,fun))))
