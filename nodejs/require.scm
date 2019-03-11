@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Mar 10 15:19:47 2019 (serrano)                */
+;*    Last change :  Mon Mar 11 14:28:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1120,9 +1120,18 @@
       (let ((old (hashtable-get sofile-cache sopath)))
 	 (if old
 	     old
-	     (let ((v (dynamic-load sopath)))
-		(hashtable-put! sofile-cache sopath v)
-		v)))))
+	     (multiple-value-bind (proc mod)
+		(dynamic-load sopath)
+		(tprint "hop-dynamic-load sopath=" sopath " -> mod=" mod)
+		(let ((v (cond
+			    ((procedure? proc)
+			     proc)
+			    ((dynamic-load-symbol sopath "hopscript" mod)
+			     =>
+			     (lambda (sym)
+				(dynamic-load-symbol-get sym))))))
+		   (hashtable-put! sofile-cache sopath v)
+		   v))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-process-wait ...                                          */
@@ -1612,54 +1621,54 @@
 		  (trace-item "mod=" (typeof mod))
 		  mod)))))
 
-   (define (hop-compile filename)
+   (define (hop-eval filename)
       (let ((old (hashtable-get hop-load-cache filename)))
 	 (unless old
-	    (set! old (hop-load filename :mode 'module))
-	    (hashtable-put! hop-load-cache filename old))
-	 old))
+	    (let ((v (hop-load filename :mode 'module)))
+	       (set! old
+		  (cond
+		     ((procedure? v)
+		      (tprint "PAS BON HOP-EVAL@require.scm")
+		      v)
+		     ((evmodule? v)
+		      (call-with-eval-module v
+			 (lambda ()
+			    (eval! 'hopscript))))
+		     (else
+		      #f)))
+	       (hashtable-put! hop-load-cache filename old))
+	    old)))
 
    (define (hop-load/cache filename)
       (let loop ((sopath (find-new-sofile filename)))
 	 (cond
 	    ((string? sopath)
-	     (let ((p (hop-dynamic-load sopath)))
-		(if (and (procedure? p) (=fx (procedure-arity p) 4))
-		    p
-		    (js-raise-error %ctxthis
-		       (format "Wrong compiled file format ~s" sopath)
-		       sopath))))
+	     (hop-dynamic-load sopath))
 	    ((and (not (eq? sopath 'error)) (hop-sofile-enable))
 	     (case (hop-sofile-compile-policy)
 		((aot)
 		 (loop (nodejs-socompile src filename lang)))
 		((nte nte1 nte+)
 		 (nodejs-socompile-queue-push filename lang)
-		 (hop-compile filename))
+		 (hop-eval filename))
 		(else
-		 (hop-compile filename))))
+		 (hop-eval filename))))
 	    (else
 	     (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
 		(nodejs-socompile-queue-push filename lang))
-	     (hop-compile filename)))))
+	     (hop-eval filename)))))
    
    (define (load-module-hop)
       (tprint "load-module-hop filename=" filename)
       (with-access::WorkerHopThread worker (%this)
 	 (with-access::JsGlobalObject %this (js-object)
-	    (let ((evmod-or-init (hop-load/cache filename))
+	    (let ((init (hop-load/cache filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
 		  (mod (nodejs-new-module filename
 			  (or srcalias filename) worker %this)))
-	       (cond
-		  ((and (procedure? evmod-or-init)
-			(=fx (procedure-arity evmod-or-init) 4))
-		   (evmod-or-init %this this scope mod))
-		  ((evmodule? evmod-or-init)
-		   (call-with-eval-module evmod-or-init
-		      (lambda ()
-			 ((eval! 'hopscript) %this this scope mod)))))
+	       (when (and (procedure? init) (=fx (procedure-arity init) 4))
+		  (init %this this scope mod))
 	       ;; return the newly created module
 	       mod))))
    
