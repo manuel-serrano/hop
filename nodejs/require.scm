@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Mar 11 18:14:10 2019 (serrano)                */
+;*    Last change :  Tue Mar 12 09:35:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -24,6 +24,7 @@
    (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj)
+	   (nodejs-import-module-hop::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj ::vector)
 	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::bstring ::obj)
 	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-import-hop-symbol ::JsGlobalObject ::bstring ::symbol ::symbol ::obj)
@@ -597,18 +598,35 @@
 (define (nodejs-import-module::JsModule worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject
 	   path::bstring checksum::long loc)
-   (let ((mod (nodejs-load-module path worker %this %module :commonjs-export #t)))
-      (with-access::JsModule mod (exports)
-	 (tprint "nodejs-import-module path=" path " mod=" (typeof mod)
-	    " " 
-	    exports))
-      
+   (let ((mod (nodejs-load-module path worker %this %module
+		 :commonjs-export #t)))
       (with-access::JsModule mod ((mc checksum))
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
 	     mod
 	     (js-raise-type-error/loc %this loc
 		"corrupted module ~s"
 		(js-get mod 'filename %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-import-module-hop ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import-module-hop::JsModule worker::WorkerHopThread
+	   %this::JsGlobalObject %module::JsObject
+	   path::bstring checksum::long loc symbols::vector)
+   
+   (define (import-var mod id)
+      (with-access::JsModule mod (%module)
+	 (if (evmodule? %module)
+	     (call-with-eval-module %module
+		(lambda () (eval `(@ ,id ,(evmodule-name %module)))))
+	     (dynamic-load-symbol-get
+		(dynamic-load-symbol path (symbol->string id)
+		   (symbol->string %module))))))
+   
+   (let ((mod (nodejs-import-module worker %this %module path checksum loc)))
+      (with-access::JsModule mod (evars)
+	 (set! evars (vector-map! (lambda (s) (import-var mod s)) symbols)))
+      mod))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import-hop-symbol ...                                     */
@@ -1128,7 +1146,6 @@
 	     old
 	     (multiple-value-bind (proc mod)
 		(dynamic-load sopath)
-		(tprint "hop-dynamic-load sopath=" sopath " -> mod=" mod)
 		(let ((v (cond
 			    ((procedure? proc)
 			     proc)
@@ -1630,25 +1647,26 @@
    (define (hop-eval filename)
       (let ((old (hashtable-get hop-load-cache filename)))
 	 (if old
-	     (call-with-eval-module old (lambda () (eval! 'hopscript)))
+	     (values old
+		(call-with-eval-module old (lambda () (eval! 'hopscript))))
 	     (let ((v (hop-load filename :mode 'module)))
 		(cond
 		   ((procedure? v)
-		    (tprint "PAS BON HOP-EVAL@require.scm")
-		    v)
+		    (values #f v))
 		   ((evmodule? v)
 		    (hashtable-put! hop-load-cache filename v)
-		    (call-with-eval-module v
-		       (lambda ()
-			  (eval! 'hopscript))))
+		    (values v
+		       (call-with-eval-module v
+			  (lambda ()
+			     (eval! 'hopscript)))))
 		   (else
-		    #f))))))
+		    (values #f #f)))))))
 
    (define (hop-load/cache filename)
       (let loop ((sopath (find-new-sofile filename)))
 	 (cond
 	    ((string? sopath)
-	     (hop-dynamic-load sopath))
+	     (values filename (hop-dynamic-load sopath)))
 	    ((and (not (eq? sopath 'error)) (hop-sofile-enable))
 	     (case (hop-sofile-compile-policy)
 		((aot)
@@ -1664,17 +1682,19 @@
 	     (hop-eval filename)))))
    
    (define (load-module-hop)
-      (tprint "load-module-hop filename=" filename)
       (with-access::WorkerHopThread worker (%this)
 	 (with-access::JsGlobalObject %this (js-object)
-	    (let ((init (hop-load/cache filename))
-		  (this (js-new0 %this js-object))
-		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-new-module filename
-			  (or srcalias filename) worker %this)))
-	       (when (and (procedure? init) (=fx (procedure-arity init) 4))
-		  (init %this this scope mod))
-	       mod))))
+	    (multiple-value-bind (m init)
+	       (hop-load/cache filename)
+	       (let ((this (js-new0 %this js-object))
+		     (scope (nodejs-new-scope-object %this))
+		     (mod (nodejs-new-module filename
+			     (or srcalias filename) worker %this)))
+		  (when m
+		     (with-access::JsModule mod (%module) (set! %module m)))
+		  (when (and (procedure? init) (=fx (procedure-arity init) 4))
+		     (init %this this scope mod))
+		  mod)))))
    
    (define (load-module-so)
       (with-access::WorkerHopThread worker (%this)
@@ -1686,7 +1706,6 @@
 			  (or srcalias filename) worker %this)))
 	       (when (procedure? init)
 		  (init %this this scope mod))
-	       ;; return the newly created module
 	       mod))))
    
    (define (not-found filename)

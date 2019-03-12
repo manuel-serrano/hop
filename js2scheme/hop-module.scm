@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar  8 11:35:48 2019                          */
-;*    Last change :  Mon Mar 11 20:26:33 2019 (serrano)                */
+;*    Last change :  Tue Mar 12 09:26:24 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop (Scheme) module parser used when a JS module imports         */
@@ -51,6 +51,12 @@
 					(else
 					 '())))
 			 clauses)))
+	  (let ((n 0))
+	     (for-each (lambda (e)
+			  (with-access::J2SExport e (index)
+			     (set! index n)
+			     (set! n (+fx n 1))))
+		exports))
 	  (instantiate::J2SProgram
 	     (loc `(at ,path 0))
 	     (endloc `(at ,path 0))
@@ -80,7 +86,6 @@
 			  (id id)
 			  (alias id)
 			  (decl decl)
-			  (index 1234567) ;; MS CARE: WRONG, OF COURSE
 			  (from 'hop)))
 		 (decl (instantiate::J2SDeclExtern
 			  (loc (cer export))

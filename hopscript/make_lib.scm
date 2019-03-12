@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Sat Jan 26 08:56:20 2019 (serrano)                */
+;*    Last change :  Tue Mar 12 10:59:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -96,4 +96,6 @@
 
 	   (class MessageEvent)
 	   (class WorkerHopThread)
-	   (class JsWebSocketEvent)))
+	   (class JsWebSocketEvent)
+
+	   (class JsWrapper)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Sep  6 18:29:10 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Tue Mar 12 17:23:37 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -520,7 +520,7 @@
 	     (display "</" p)
 	     (display tag p)
 	     (display ">" p))
-	    ((or (pair? body) (eq? tag 'script))
+	    ((or (pair? body) (eq? tag 'script) (eq? tag 'title))
 	     (display ">" p)
 	     (for-each (lambda (b) (xml-write b p backend)) body)
 	     (display "</" p)
