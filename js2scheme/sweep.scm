@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/sweep.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/sweep.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Oct 26 13:11:18 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Thu Mar 14 14:36:44 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
 ;*=====================================================================*/
@@ -106,7 +106,6 @@
       (when (eq? scope 'export)
 	 (use-decl! this stamp))))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SDeclInit ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -120,9 +119,10 @@
 ;*    mark ::J2SDeclFun ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SDeclFun deval stamp)
-   (with-access::J2SDeclFun this (scope)
+   (with-access::J2SDeclFun this (scope val)
       (when (eq? scope 'export)
-	 (use-decl! this stamp)))
+	 (use-decl! this stamp))
+      (mark val deval stamp))
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
@@ -162,6 +162,15 @@
 	    (when (eq? id 'eval)
 	       (cell-set! deval #t)))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    mark ::J2SFun ...                                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark this::J2SFun deval stamp)
+   (with-access::J2SFun this (params)
+      (call-default-walker)
+      (for-each (lambda (d) (use-decl! d stamp)) params)
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    dead-expr? ...                                                   */
