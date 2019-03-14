@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Mar 12 09:35:45 2019 (serrano)                */
+;*    Last change :  Thu Mar 14 14:43:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -27,7 +27,6 @@
 	   (nodejs-import-module-hop::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj ::vector)
 	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::bstring ::obj)
 	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
-	   (nodejs-import-hop-symbol ::JsGlobalObject ::bstring ::symbol ::symbol ::obj)
 	   (nodejs-exports-module::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
@@ -614,39 +613,26 @@
 	   %this::JsGlobalObject %module::JsObject
 	   path::bstring checksum::long loc symbols::vector)
    
-   (define (import-var mod id)
+   (define (import-var mod sym sopath)
       (with-access::JsModule mod (%module)
-	 (if (evmodule? %module)
+	 (cond
+	    ((evmodule? %module)
 	     (call-with-eval-module %module
-		(lambda () (eval `(@ ,id ,(evmodule-name %module)))))
+		(lambda () (eval `(@ ,(car sym) ,(evmodule-name %module))))))
+	    ((string? %module)
 	     (dynamic-load-symbol-get
-		(dynamic-load-symbol path (symbol->string id)
-		   (symbol->string %module))))))
-   
-   (let ((mod (nodejs-import-module worker %this %module path checksum loc)))
-      (with-access::JsModule mod (evars)
-	 (set! evars (vector-map! (lambda (s) (import-var mod s)) symbols)))
-      mod))
+		(dynamic-load-symbol sopath
+		   (if (eq? (cdr sym) 'procedure)
+		       (string-append (symbol->string (car sym)) "-env")
+		       (symbol->string (car sym)))
+		   %module))))))
 
-;*---------------------------------------------------------------------*/
-;*    nodejs-import-hop-symbol ...                                     */
-;*---------------------------------------------------------------------*/
-(define (nodejs-import-hop-symbol %this::JsGlobalObject
-	   path::bstring id::symbol module::symbol loc)
-   (tprint "nodejs-import-hop-symbol path=" path " id=" id " module=" module)
-   (cond
-      ((hashtable-get hop-load-cache path)
-       =>
-       (lambda (mod)
-	  (call-with-eval-module mod
-	     (lambda () (eval `(@ ,id ,module))))))
-      ((dynamic-load-symbol path (symbol->string id) (symbol->string module))
-       =>
-       (lambda (sym)
-	  (dynamic-load-symbol-get sym)))
-      (else
-       (js-raise-type-error/loc %this loc
-	  "cannot find symbol ~s" `(@ ,id ,module)))))
+   (let ((mod (nodejs-import-module worker %this %module path checksum loc))
+	 (sopath (hop-sofile-path path)))
+      (with-access::JsModule mod (evars)
+	 (set! evars (vector-map! (lambda (s) (import-var mod s sopath))
+			symbols)))
+      mod))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import-module-dynamic ...                                 */
@@ -1143,18 +1129,18 @@
    (synchronize soload-mutex
       (let ((old (hashtable-get sofile-cache sopath)))
 	 (if old
-	     old
+	     (values (car old) (cdr old))
 	     (multiple-value-bind (proc mod)
 		(dynamic-load sopath)
 		(let ((v (cond
 			    ((procedure? proc)
 			     proc)
-			    ((dynamic-load-symbol sopath "hopscript" mod)
+			    ((dynamic-load-symbol sopath "hopscript-env" mod)
 			     =>
 			     (lambda (sym)
 				(dynamic-load-symbol-get sym))))))
-		   (hashtable-put! sofile-cache sopath v)
-		   v))))))
+		   (hashtable-put! sofile-cache sopath (cons v mod))
+		   (values v mod)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-process-wait ...                                          */
@@ -1564,7 +1550,8 @@
 	  (let loop ((sopath (find-new-sofile filename)))
 	     (cond
 		((string? sopath)
-		 (let ((p (hop-dynamic-load sopath)))
+		 (multiple-value-bind (p _)
+		    (hop-dynamic-load sopath)
 		    (if (and (procedure? p) (=fx (procedure-arity p) 4))
 			p
 			(js-raise-error %ctxthis
@@ -1647,18 +1634,19 @@
    (define (hop-eval filename)
       (let ((old (hashtable-get hop-load-cache filename)))
 	 (if old
-	     (values old
-		(call-with-eval-module old (lambda () (eval! 'hopscript))))
+	     (values (call-with-eval-module old (lambda () (eval! 'hopscript)))
+		old)
 	     (let ((v (hop-load filename :mode 'module)))
 		(cond
 		   ((procedure? v)
-		    (values #f v))
+		    (values v #f))
 		   ((evmodule? v)
 		    (hashtable-put! hop-load-cache filename v)
-		    (values v
+		    (values
 		       (call-with-eval-module v
 			  (lambda ()
-			     (eval! 'hopscript)))))
+			     (eval! 'hopscript)))
+		       v))
 		   (else
 		    (values #f #f)))))))
 
@@ -1666,7 +1654,7 @@
       (let loop ((sopath (find-new-sofile filename)))
 	 (cond
 	    ((string? sopath)
-	     (values filename (hop-dynamic-load sopath)))
+	     (hop-dynamic-load sopath))
 	    ((and (not (eq? sopath 'error)) (hop-sofile-enable))
 	     (case (hop-sofile-compile-policy)
 		((aot)
@@ -1684,14 +1672,15 @@
    (define (load-module-hop)
       (with-access::WorkerHopThread worker (%this)
 	 (with-access::JsGlobalObject %this (js-object)
-	    (multiple-value-bind (m init)
+	    (multiple-value-bind (init module)
 	       (hop-load/cache filename)
 	       (let ((this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-new-module filename
 			     (or srcalias filename) worker %this)))
-		  (when m
-		     (with-access::JsModule mod (%module) (set! %module m)))
+		  (when module
+		     (with-access::JsModule mod (%module)
+			(set! %module module)))
 		  (when (and (procedure? init) (=fx (procedure-arity init) 4))
 		     (init %this this scope mod))
 		  mod)))))
@@ -1699,14 +1688,15 @@
    (define (load-module-so)
       (with-access::WorkerHopThread worker (%this)
 	 (with-access::JsGlobalObject %this (js-object)
-	    (let ((init (hop-dynamic-load filename))
-		  (this (js-new0 %this js-object))
-		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-new-module filename
-			  (or srcalias filename) worker %this)))
-	       (when (procedure? init)
-		  (init %this this scope mod))
-	       mod))))
+	    (multiple-value-bind (init _)
+	       (hop-dynamic-load filename)
+	       (let ((this (js-new0 %this js-object))
+		     (scope (nodejs-new-scope-object %this))
+		     (mod (nodejs-new-module filename
+			     (or srcalias filename) worker %this)))
+		  (when (procedure? init)
+		     (init %this this scope mod))
+		  mod)))))
    
    (define (not-found filename)
       (js-raise-error %ctxthis

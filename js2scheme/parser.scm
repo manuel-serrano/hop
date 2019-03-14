@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Mar  8 11:21:07 2019 (serrano)                */
+;*    Last change :  Thu Mar 14 17:48:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2591,7 +2591,7 @@
 	    (case (peek-token-type)
 	       ((COMMA)
 		(consume-any!)
-		(parse-array (cons array-el rev-els) (+fx length 1) #f))
+		(parse-array (cons array-el rev-els) (+fx length 1)))
 	       ((RBRACKET)
 		(consume! 'RBRACKET)
 		(instantiate::J2SArray
@@ -2602,26 +2602,20 @@
 		(parse-token-error "Unexpected token"
 		   (consume-any!)))))
 	 
- 	 (define (parse-array rev-els length last-empty?)
+	 (define (parse-array rev-els length)
 	    (case (peek-token-type)
 	       ((RBRACKET)
 		(pop-open-token (consume-any!))
-		(let ((nlength (if last-empty? length (+fx length 1))))
-		   (instantiate::J2SArray
-		      (loc (token-loc token))
-		      (exprs (reverse!
-				(if last-empty?
-				    rev-els
-				    (cons (instantiate::J2SArrayAbsent
-					     (loc (token-loc token)))
-				       rev-els))))
-		      (len nlength))))
+		(instantiate::J2SArray
+		   (loc (token-loc token))
+		   (exprs (reverse! rev-els))
+		   (len length)))
 	       ((COMMA)
 		(let ((token (consume-any!)))
 		   (parse-array (cons (instantiate::J2SArrayAbsent
 					 (loc (token-loc token)))
 				   rev-els)
-		      (+fx length 1) #f)))
+		      (+fx length 1))))
 	       ((DOTS)
 		(let ((token (consume-any!)))
 		   (cond
@@ -2639,7 +2633,7 @@
 		(let ((array-el (assig-expr #f #f #f)))
 		   (parse-array-element array-el rev-els length)))))
 
-	 (parse-array '() 0 #t)))
+	 (parse-array '() 0)))
 
    (define (property-name destructuring?)
       (case (peek-token-type)

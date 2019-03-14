@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Mar 12 09:41:11 2019 (serrano)                */
+;*    Last change :  Thu Mar 14 15:16:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -257,21 +257,7 @@
 ;*    j2s-scheme ::J2SDeclImport ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclImport mode return conf)
-
-;*    (define (j2s-scheme-import-hop this::J2SDeclImport module return conf) */
-;*       (with-access::J2SDeclImport this (alias import loc)           */
-;* 	 (with-access::J2SImport import (iprgm)                        */
-;* 	    (with-access::J2SProgram iprgm (path module)               */
-;* 	       (with-access::J2SImport import (mvar)                   */
-;* 		  `(define ,alias                                      */
-;* 		      (nodejs-import-hop-symbol %this                  */
-;* 			 ,path ',alias ',module ',loc)))))))           */
-;*                                                                     */
-;*    (with-access::J2SDeclImport this (scope)                         */
-;*       (if (eq? scope '%hop)                                         */
-;* 	  (j2s-scheme-import-hop this mode return conf)                */
    #unspecified)
-;* )                                                                   */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclInit ...                                     */

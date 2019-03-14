@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Mar 12 09:10:46 2019 (serrano)                */
+;*    Last change :  Thu Mar 14 16:32:32 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -363,7 +363,9 @@
 		    ',loc
 		    ',(list->vector
 			 (map (lambda (e)
-				 (with-access::J2SExport e (alias) alias))
+				 (with-access::J2SExport e (alias decl)
+				    (with-access::J2SDecl decl (vtype)
+				       (cons alias vtype))))
 			    exports)))
 		`(nodejs-import-module %worker %this %module
 		    ,respath
