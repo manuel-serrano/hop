@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Feb 26 18:37:04 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 18:16:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -656,7 +656,8 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.4
       (define (getownpropertynames this o p)
 	 (let ((o (js-cast-object o %this "getOwnPropertyNames")))
-	    (js-vector->jsarray (js-properties-name o #f %this) %this)))
+	    (let ((p (js-properties-name o #f %this)))
+	       (js-vector->jsarray p %this))))
       
       (js-bind! %this js-object 'getOwnPropertyNames
 	 :value (js-make-function %this
