@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Tue Jan 29 17:43:37 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 14:35:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -155,6 +155,7 @@
 ;*    js-put-length! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put-length! o::JsArguments v::obj throw::bool cache %this)
+   (tprint "js-put-length o=" (typeof o) " v=" v)
    (js-put! o 'length v throw %this))
 
 ;*---------------------------------------------------------------------*/
@@ -167,7 +168,7 @@
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((not (js-isindex? i))
-	     (when (eq? p 'length)
+	     (when (eq? (js-toname p %this) 'length)
 		(js-object-mode-inline-set! o #f))
 	     (call-next-method))
 	    ((<uint32 i (vector-length vec))

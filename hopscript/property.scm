@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 15 10:27:24 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 13:19:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -547,11 +547,11 @@
       amap))
 
 ;*---------------------------------------------------------------------*/
-;*    js-pache-invalidate! ...                                         */
+;*    js-pcache-invalidate! ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-pache-invalidate! pcache::JsPropertyCache)
+(define (js-pcache-invalidate! pcache::JsPropertyCache)
    (with-access::JsPropertyCache pcache (imap cmap pmap emap amap index owner)
-      (set! imap #t)
+      (set! imap #f)
       (set! cmap #t)
       (set! pmap #t)
       (set! emap #t)
@@ -1685,11 +1685,23 @@
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (if (or (not (js-jsstring? prop)) (not (js-object? o)))
        (js-get o prop %this)
-       (let ((propname (string->symbol (js-jsstring->string prop))))
+       (let ((pname (js-toname prop %this)))
 	  (with-access::JsPropertyCache cache (name)
-	     (if (eq? name propname)
-		 (js-get-name/cache o name #f %this cache point cspecs)
-		 (js-get o propname %this))))))
+	     (cond
+		((eq? name pname)
+		 (js-object-get-name/cache o pname #f
+		    %this cache point cspecs))
+		((eq? name '||)
+		 (set! name pname)
+		 (js-object-get-name/cache o pname #f
+		    %this cache point cspecs))
+		(else
+		 (let ((cache (getprop pname 'pcache)))
+		    (unless cache
+		       (set! cache (instantiate::JsPropertyCache))
+		       (putprop! pname 'pcache cache))
+		    (js-object-get-name/cache o pname #f
+		       %this cache point cspecs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache ...                                            */
@@ -1918,17 +1930,17 @@
 ;*    At the first level, special put! form for Array, String, etc.    */
 ;*    are overriden by method of the js-put! function.                 */
 ;*---------------------------------------------------------------------*/
-(define (js-put-jsobject! o p v
+(define (js-put-jsobject! o prop v
 	   throw::bool extend::bool
 	   %this::JsGlobalObject
 	   cache #!optional (loc #f) (cspecs '()))
    
-   (define name (js-toname p %this))
+   (define name (js-toname prop %this))
    
    (define (reject msg)
       (if throw
 	  (js-raise-type-error/loc %this loc
-	     (format "[[PUT]], ~a ~~s" msg) (js-toname p %this))
+	     (format "[[PUT]], ~a ~~s" msg) name)
 	  v))
    
    (define (update-from-descriptor! o obj index::long v desc)
@@ -1943,11 +1955,11 @@
 		v)
 	     ;; 8.12.4, setp 2.a
 	     (reject "No setter defined"))))
-
+   
    (define (update-from-proxy-descriptor! o obj index::long v desc)
       (with-access::JsProxyDescriptor desc (proxy name)
 	 (js-proxy-property-value-set! proxy obj name %this v)))
-
+   
    (define (update-mapped-object-value! obj cmap i v)
       (with-access::JsObject obj (cmap elements)
 	 (with-access::JsConstructMap cmap (nextmap methods props)
@@ -2041,7 +2053,7 @@
 			     (extend-object!)
 			     ;; 8.12.4, step 8.b
 			     (reject "Read-only property"))))))))))
-
+   
    (define (extend-mapped-object!)
       (js-object-mode-enumerable-set! o #t)
       (when (and (symbol? name) (string->number (symbol->string! name)))
@@ -2049,8 +2061,7 @@
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (props single)
-	    (let* ((name (js-toname p %this))
-		   (index (vector-length props))
+	    (let* ((index (vector-length props))
 		   (flags (property-flags #t #t #t #f)))
 	       (let loop ()
 		  (cond
@@ -2188,14 +2199,14 @@
 	       ((not extend)
 		;; 11.13.1
 		(js-raise-reference-error/loc %this loc
-		   "[[PUT]], \"~a\" is not defined" p))
+		   "[[PUT]], \"~a\" is not defined" name))
 	       ((not (eq? cmap (js-not-a-cmap)))
 		;; 8.12.5, step 6
 		(extend-mapped-object!))
 	       (else
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
-
+   
    (let loop ((obj o))
       (jsobject-find obj name
 	 update-mapped-object!
@@ -2230,7 +2241,22 @@
    (if (or (not (string? prop)) (not (isa? o JsObject)))
        (js-put! o prop v throw %this)
        (let ((pname (js-toname prop %this)))
-	  (js-put! o pname v throw %this))))
+	  (with-access::JsPropertyCache cache (name)
+	     (cond
+		((eq? name pname)
+		 (js-object-put-name/cache! o pname v throw
+		    %this cache point cspecs))
+		((eq? name '||)
+		 (set! name pname)
+		 (js-object-put-name/cache! o pname v throw
+		    %this cache point cspecs))
+		(else
+		 (let ((cache (getprop pname 'pcache)))
+		    (unless cache
+		       (set! cache (instantiate::JsPropertyCache))
+		       (putprop! pname 'pcache cache))
+		    (js-object-put-name/cache! o pname v throw
+		       %this cache point cspecs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache ...                                            */

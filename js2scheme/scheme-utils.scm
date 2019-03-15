@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Jan 30 16:13:43 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 14:23:08 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -626,6 +626,11 @@
 	     (if (js-array? ,o)
 		 (js-array-set! ,o ,p ,v ,mode %this)
 		 ,(js-put! o p v mode '%this)))))
+
+   (define (maybe-string? prop typrop)
+      (and (not (number? prop))
+	   (not (type-number? typrop))
+	   (not (eq? typrop 'array))))
    
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
@@ -677,9 +682,11 @@
 		  ,(box val tyval conf) ,mode %this))
 	     ((or (number? prop) (null? cspecs))
 	      (maybe-array-set! prop (box val tyval conf)))
+	     ((and (maybe-string? prop typrop) (symbol? obj))
+	     `(js-put/cache! ,obj ,prop
+		  ,(box val tyval conf) ,mode %this ,(js-pcache cache)))
 	     (else
-	      `(js-put/cache! ,obj ,prop
-		  ,(box val tyval conf) ,mode %this ,(js-pcache cache)))))
+	      `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))))
 	 ((and field optim-arrayp (mightbe-number? field))
 	  (maybe-array-set! (box prop typrop conf) (box val tyval conf)))
 	 (else

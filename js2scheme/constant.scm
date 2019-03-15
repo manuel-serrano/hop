@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Mar 15 10:38:22 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 14:58:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -212,6 +212,19 @@
 		     (index n)
 		     (val (env-list-ref env n))))))
 	 this)))
+
+;*---------------------------------------------------------------------*/
+;*    constant! ::J2SAccess ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2SAccess env nesting)
+   (with-access::J2SAccess this (obj field)
+      (set! obj (constant! obj env nesting))
+      (unless (isa? field J2SString)
+	 ;; MS 15mar19: otherwise, no hidden class test would ever be emitted
+	 ;; (see "constant! ::J2SString" and Scheme code generation
+	 ;; (put and get)
+	 (set! field (constant! field env nesting)))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SUnary ...                                         */
