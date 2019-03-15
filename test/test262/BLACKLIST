@@ -14,6 +14,8 @@
  "S12.2_A9.js"
  "S12.2_A11.js"
  "S12.10_A[13].[0-9]+_T[1-5].js"
+ ;; black listed to support catch without exception declaration
+ "S12.14_A16_T4.js" 
  "S13.2.2_A1[78]_T[0-9]+.js"
  "S13.2.2_A19_T7.js"
  "S15.2.2.1_A2_T4.js"

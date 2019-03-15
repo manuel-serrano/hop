@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Jan 31 19:24:31 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 10:28:12 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -29,10 +29,15 @@
    (export (js-jsstring-debug msg obj)
 	   (js-jsstring-for-in str ::procedure ::JsGlobalObject)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
+	   (inline js-jsstring-name::obj ::JsStringLiteral)
+	   (inline js-jsstring-name-set!::obj ::JsStringLiteral ::obj)
 	   (inline js-ascii->jsstring::bstring ::bstring)
 	   (inline js-index->jsstring::JsStringLiteralIndex ::bstring)
 	   (inline js-utf8->jsstring::JsStringLiteralUTF8 ::bstring)
 	   (js-string->jsstring::obj ::bstring)
+	   (js-ascii-name->jsstring::JsStringLiteralASCII ::bstring)
+	   (js-utf8-name->jsstring::JsStringLiteralUTF8 ::bstring)
+	   (js-name->jsstring::JsStringLiteral ::bstring)
 	   (js-stringlist->jsstring ::pair-nil)
 	   (inline js-symbol->jsstring::obj ::symbol)
 	   (inline js-jsstring->string::bstring ::obj)
@@ -308,6 +313,18 @@
 	(,(symbol-append 'utf8- fun) (js-jsstring-normalize-UTF8! ,this) ,@args))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-name ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-name o::JsStringLiteral)
+   (object-widening o))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-name-set! ...                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-name-set! o::JsStringLiteral name)
+   (object-widening-set! o name))
+
+;*---------------------------------------------------------------------*/
 ;*    isascii? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-inline (isascii? val)
@@ -344,6 +361,31 @@
       (weight (string-length val))
       (left val)
       (right #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-ascii-name->jsstring ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-ascii-name->jsstring::JsStringLiteralASCII val::bstring)
+   (instantiate::JsStringLiteralASCII
+      (weight (fixnum->uint32 (string-length val)))
+      (left val)
+      (right #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-utf8-name->jsstring ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-utf8-name->jsstring val::bstring)
+   (js-utf8->jsstring val))
+
+;*---------------------------------------------------------------------*/
+;*    js-name->jsstring ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-name->jsstring::JsStringLiteral val::bstring)
+   (let ((enc (string-minimal-charset val)))
+      (case enc
+	 ((ascii) (js-ascii-name->jsstring val))
+	 ((latin1 utf8) (js-utf8-name->jsstring val))
+	 (else (error "js-name->jsstring" "unsupported encoding" enc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->jsstring ...                                          */

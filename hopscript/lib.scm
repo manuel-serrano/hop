@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Jan 23 09:16:02 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 11:14:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -69,7 +69,15 @@
 			 ((0)
 			  ;; a plain string
 			  (let ((str (vector-ref el 1)))
-			     (js-string->jsstring str)))
+			     (js-name->jsstring str)))
+			 ((6)
+			  ;; an ascii name
+			  (let ((str (vector-ref el 1)))
+			     (js-ascii-name->jsstring str)))
+			 ((7)
+			  ;; an utf8 name
+			  (let ((str (vector-ref el 1)))
+			     (js-utf8-name->jsstring str)))
 			 ((1 4)
 			  ;; a plain regexp
 			  (with-access::JsGlobalObject %this (js-regexp)

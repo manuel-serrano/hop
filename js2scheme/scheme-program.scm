@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Mar 14 16:32:32 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 11:35:09 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -519,7 +519,8 @@
 	 (cond
 	    ((isa? this J2SString)
 	     (with-access::J2SString this (val)
-		(vector 0 val)))
+		(let ((n (if (eq? (string-minimal-charset val) 'ascii) 6 7)))
+		   (vector n val))))
 	    ((isa? this J2SRegExp)
 	     (with-access::J2SRegExp this (loc val flags inline)
 		(vector (if inline 5 4) val flags loc)))

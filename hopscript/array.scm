@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Feb 27 11:58:04 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 11:45:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2396,6 +2396,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-species-create %this origin new-len)
    (with-access::JsGlobalObject %this (js-symbol-species js-array js-array-prototype)
+      (define (check-array val)
+	 (if (isa? val JsArray)
+	     val
+	     (js-vector->jsarray (vector val) %this))) 
+
       (with-access::JsObject origin (__proto__)
 	 (if (eq? __proto__ js-array-prototype)
 	     (js-array-construct/lengthu32 %this
@@ -2403,17 +2408,17 @@
 		(fixnum->uint32 new-len))
 	     (let ((ctor (js-get-name/cache origin 'constructor #f %this
 			    (js-pcache-ref %pcache 13))))
-		(tprint "SPECIES...")
 		(if (and (isa? ctor JsFunction) (not (eq? js-array ctor)))
 		    (let ((species (js-get ctor js-symbol-species %this)))
-		       (cond
-			  ((isa? species JsFunction)
-			   (js-new1 %this species 0))
-			  ((isa? ctor JsFunction)
-			   (js-new1 %this ctor 0))
-			  (else
-			   (js-raise-type-error %this
-			      "Not a constructor" ctor))))
+		       (check-array
+			  (cond
+			     ((isa? species JsFunction)
+			      (js-new1 %this species 0))
+			     ((isa? ctor JsFunction)
+			      (js-new1 %this ctor 0))
+			     (else
+			      (js-raise-type-error %this
+				 "Not a constructor" ctor)))))
 		    (js-array-construct/lengthu32 %this
 		       (js-array-alloc %this)
 		       (fixnum->uint32 new-len))))))))

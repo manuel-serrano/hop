@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Mar  8 12:11:44 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 11:29:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -561,9 +561,10 @@
 ;*    j2s->list ::J2SLiteralCnst ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLiteralCnst)
-   (with-access::J2SLiteralCnst this (val)
+   (with-access::J2SLiteralCnst this (index val)
       `(,@(call-next-method)
 	  ,@(dump-type this)
+	  :index ,index
 	  ,(j2s->list val))))
 
 ;*---------------------------------------------------------------------*/

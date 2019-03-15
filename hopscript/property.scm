@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Jan 31 16:47:25 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 10:27:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1024,8 +1024,12 @@
 	  p)
 	 ((string? p)
 	  (string->symbol p))
-	 ((js-jsstring? p)
-	  (string->symbol (js-jsstring->string p)))
+	 ((isa? p JsStringLiteral)
+	  (if (symbol? (js-jsstring-name p))
+	      (js-jsstring-name p)
+	      (let ((newn (string->symbol (js-jsstring->string p))))
+		 (js-jsstring-name-set! p newn)
+		 newn)))
 	 ((fixnum? p)
 	  (fixnum->pname p))
 	 ((uint32? p)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Jan 21 18:21:13 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 10:50:29 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -288,16 +288,16 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-hint-access this maybe-string)
    (with-access::J2SAccess this (obj field)
-      (let loop ((val field))
+      (let loop ((field field))
 	 (cond
-	    ((isa? val J2SString)
-	     (with-access::J2SString field (val)
+	    ((isa? field J2SString)
+	     (with-access::J2SString field (val loc)
 		(if (string=? val "length")
 		    (if maybe-string
 			(j2s-hint obj '((array . 5) (string . 5) (object . 2)))
 			(j2s-hint obj '((array . 5) (no-string . 0) (object . 2))))
 		    (j2s-hint obj '((object . 5))))))
-	    ((isa? val J2SNumber)
+	    ((isa? field J2SNumber)
 	     (j2s-hint obj '((array . 5) (string . 5))))
 	    ((isa? field J2SLiteralCnst)
 	     (with-access::J2SLiteralCnst field (val)

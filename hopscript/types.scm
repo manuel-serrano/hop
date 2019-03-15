@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Mar 12 09:39:01 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 09:58:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -127,7 +127,6 @@
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
 	   (abstract-class JsStringLiteral
-	      ;; the actual characters (string, tree, list)
 	      weight::uint32
 	      left::obj
 	      (right::obj (default #f)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Oct  4 17:45:48 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Fri Mar 15 10:38:22 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
 ;*    closed functions, ...)                                           */
@@ -161,9 +161,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constant! this::J2SString env nesting)
    (with-access::J2SString this (val)
-      (if (eq? (string-minimal-charset val) 'ascii)
+      ;; MS 15mar19: first step toward dynamic prop caching
+      (if (and #f (eq? (string-minimal-charset val) 'ascii))
 	  this
-	  (add-literal! this env 'string #f))))
+	  (add-literal! this env 'string #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2STilde ...                                         */
@@ -201,16 +202,16 @@
 				   (else
 				    #f)))))
 		     inits)))
-	 (if (and (pair? keys) (every (lambda (x) x) keys))
-	     ;; constant cmap
-	     (let ((n (add-cmap! loc (list->vector keys) env)))
-		(set! cmap
-		   (instantiate::J2SLiteralCnst
-		      (loc loc)
-		      (index n)
-		      (val (env-list-ref env n))))
-		this)
-	     (call-next-method)))))
+	 (call-default-walker)
+	 (when (and (pair? keys) (every (lambda (x) x) keys))
+	    ;; constant cmap
+	    (let ((n (add-cmap! loc (list->vector keys) env)))
+	       (set! cmap
+		  (instantiate::J2SLiteralCnst
+		     (loc loc)
+		     (index n)
+		     (val (env-list-ref env n))))))
+	 this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SUnary ...                                         */
