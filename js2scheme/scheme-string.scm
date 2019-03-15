@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Jan  8 07:42:24 2019 (serrano)                */
+;*    Last change :  Fri Mar 15 15:36:05 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -147,12 +147,12 @@
    (define (need22::bool arg)
       (cond
 	 ((isa? arg J2SLiteralValue)
-	  (with-access::J2SLiteralValue (car args) (val)
+	  (with-access::J2SLiteralValue arg (val)
 	     (cond
 		((not (string? val)) #f)
 		((string-index val #\$) #t)
 		(else #f))))
-	 ((isa? (car args) J2SLiteralCnst)
+	 ((isa? arg J2SLiteralCnst)
 	  (with-access::J2SLiteralCnst (car args) (val)
 	     (need22 val)))
 	 (else
