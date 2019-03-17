@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 15 18:34:58 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 06:44:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -92,7 +92,7 @@
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
 	   
-	   (js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
+	   (generic js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache ::long ::pair-nil)
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 	   
@@ -1227,9 +1227,6 @@
       ((isa? desc JsValueDescriptor)
        (with-access::JsValueDescriptor desc (value)
 	  value))
-;*       ((isa? desc JsWrapperDescriptor)                              */
-;*        (with-access::JsWrapperDescriptor desc (value)               */
-;* 	  value))                                                      */
       ((isa? desc JsWrapperDescriptor)
        (with-access::JsWrapperDescriptor desc (%get)
 	  (%get obj %this)))
@@ -1587,7 +1584,7 @@
 ;*    Look for the property, if found update the cache and return      */
 ;*    the property value.                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get-lookup o::JsObject name::obj throw::bool
+(define-generic (js-object-get-lookup o::JsObject name::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache point::long cspecs::pair-nil)
 

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Jan  6 07:15:17 2019 (serrano)                */
+#*    Last change :  Sat Mar 16 06:25:59 2019 (serrano)                */
 #*    Copyright   :  2004-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -155,6 +155,8 @@ done
 arch=noarch
 mach=
 felix=
+
+echo "configuring with [$*]..." > config.status
 
 # Argument parsing
 while : ; do
@@ -1682,7 +1684,7 @@ chmod a+rx $and
 #*---------------------------------------------------------------------*/
 
 # Generate the config.status file to please debian packages
-echo "configuration completed" > config.status
+echo "configuration completed" >> config.status
 
 echo "** Configuration summary **"
 echo 

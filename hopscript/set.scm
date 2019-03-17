@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Thu Feb 28 08:38:23 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 07:00:33 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -80,6 +80,7 @@
 	    (__proto__ (js-get constructor 'prototype %this))
 	    (mapdata (create-hashtable
 			:weak weak
+			:hash js-get-hashnumber
 			:eqtest (lambda (x y) (js-same-value-zero? x y %this))))
 	    (vec (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent)))
 	    (cursor -1)))

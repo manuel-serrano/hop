@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Tue Feb 26 14:03:31 2019 (serrano)                */
+;*    Last change :  Sat Mar 16 06:24:57 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -45,6 +45,26 @@
 	   (js-proxy-property-value-set! ::JsProxy ::JsObject ::obj ::JsGlobalObject ::obj)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-proxy-wrapper-descriptor ...                                  */
+;*---------------------------------------------------------------------*/
+(define js-proxy-wrapper-descriptor
+   (instantiate::JsWrapperDescriptor
+      (name 'anonyymous)
+      (writable #t)
+      (configurable #t)
+      (enumerable #t)
+      (%get (lambda (obj %this)
+	       'todo))
+      (%set (lambda (obj v %this)
+	       'todo))))
+
+;*---------------------------------------------------------------------*/
+;*    local caches                                                     */
+;*---------------------------------------------------------------------*/
+(define %cache-get (instantiate::JsPropertyCache))
+(define %cache-set (instantiate::JsPropertyCache))
+      
+;*---------------------------------------------------------------------*/
 ;*    js-init-proxy! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-proxy! %this::JsGlobalObject)
@@ -53,12 +73,20 @@
       (define (js-proxy-alloc %this constructor::JsFunction)
 	 (instantiateJsProxy
 	    (__proto__ (js-get constructor 'prototype %this))
-	    (elements (vector #unspecified))))
+	    (elements (vector #unspecified js-proxy-wrapper-descriptor))))
 
       (define (js-proxy-construct this::JsProxy t h)
-	 (with-access::JsProxy this (target handler)
-	    (set! target t)
-	    (set! handler h))
+	 (cond
+	    ((not (isa? h JsObject))
+	     (js-raise-type-error %this
+		"Cannot create proxy with a non-object as handler" this))
+	    ((not (isa? t JsObject))
+	     (js-raise-type-error %this
+		"Cannot create proxy with a non-object as target" this))
+	    (else
+	     (with-access::JsProxy this (target handler)
+		(set! target t)
+		(set! handler h))))
 	 this)
 
       (define js-proxy-revoke
@@ -161,7 +189,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value o::JsProxy owner::JsObject prop %this::JsGlobalObject)
    (with-access::JsProxy o (target handler)
-      (let ((get (js-get handler 'get %this)))
+      (let ((get (js-object-get-name/cache handler 'get #f %this %cache-get)))
 	 (if (isa? get JsFunction)
 	     (let ((v (js-call3 %this get handler target
 			 (symbol->pname prop)
@@ -176,7 +204,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value-set! o::JsProxy owner::JsObject prop %this::JsGlobalObject v)
    (with-access::JsProxy o (target handler)
-      (let ((set (js-get handler 'set %this)))
+      (let ((set (js-object-get-name/cache handler 'set #f %this %cache-set)))
 	 (when (isa? set JsFunction)
 	    (let ((v (js-call4 %this set handler target
 			(symbol->pname prop)
@@ -186,6 +214,14 @@
 		   v
 		   (js-raise-type-error %this "Proxy \"set\" returns false on property \"~a\""
 		      prop)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-get-lookup ::JsProxy ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-object-get-lookup obj::JsProxy name::obj throw::bool
+		  %this::JsGlobalObject
+		  cache::JsPropertyCache point::long cspecs::pair-nil)
+   (js-get obj name %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsProxy ...                                             */
