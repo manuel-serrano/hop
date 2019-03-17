@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Mar 16 06:24:57 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 07:13:42 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -39,10 +39,7 @@
    
    (export (js-init-proxy! ::JsGlobalObject)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
-	   (js-proxy-property-descriptor-index ::JsProxy ::obj)
-	   (js-proxy-property-descriptor ::JsProxy ::obj)
-	   (js-proxy-property-value ::JsProxy ::JsObject ::obj ::JsGlobalObject)
-	   (js-proxy-property-value-set! ::JsProxy ::JsObject ::obj ::JsGlobalObject ::obj)))
+	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-wrapper-descriptor ...                                  */
@@ -61,9 +58,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    local caches                                                     */
 ;*---------------------------------------------------------------------*/
-(define %cache-get (instantiate::JsPropertyCache))
-(define %cache-set (instantiate::JsPropertyCache))
-      
+(define %cache-get
+   (instantiate::JsPropertyCache))
+(define %cache-set
+   (instantiate::JsPropertyCache))
+
+(define proxy-property-descriptor
+   (instantiate::JsWrapperDescriptor
+      (name '|name never used|)
+      (%get js-proxy-property-value)
+      (%set js-proxy-property-value-set!)))
+
+(define proxy-cmap
+   (instantiate::JsConstructMap
+      (methods '#())
+      (props '#())))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-init-proxy! ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -72,8 +82,9 @@
 
       (define (js-proxy-alloc %this constructor::JsFunction)
 	 (instantiateJsProxy
+	    (cmap proxy-cmap)
 	    (__proto__ (js-get constructor 'prototype %this))
-	    (elements (vector #unspecified js-proxy-wrapper-descriptor))))
+	    (elements (vector proxy-property-descriptor))))
 
       (define (js-proxy-construct this::JsProxy t h)
 	 (cond
@@ -144,36 +155,12 @@
 	  "proxy")))
 
 ;*---------------------------------------------------------------------*/
-;*    js-proxy-property-descriptor ...                                 */
-;*    -------------------------------------------------------------    */
-;*    Returns a fake generic property descriptor unique to the         */
-;*    proxy object.                                                    */
-;*---------------------------------------------------------------------*/
-(define (js-proxy-property-descriptor obj::JsProxy prop)
-   (with-access::JsProxy obj (elements)
-      (if (eq? (vector-ref elements 0) #unspecified)
-	  (let ((descr (instantiate::JsProxyDescriptor
-			  (name prop)
-			  (proxy obj))))
-	     (vector-set! elements 0 descr)
-	     descr)
-	  (let ((descr (vector-ref elements 0)))
-	     (with-access::JsProxyDescriptor descr (name)
-		(set! name prop))
-	     descr))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-descriptor-index ...                           */
 ;*    -------------------------------------------------------------    */
 ;*    Returns a fake generic property descriptor unique to the         */
 ;*    proxy object.                                                    */
-;*    -------------------------------------------------------------    */
-;*    This function returns a fake property descriptor that is shared  */
-;*    for all proxy accesses. This works only because of               */
-;*    single-threaded JavaScript execution.                            */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-property-descriptor-index obj::JsProxy prop)
-   (js-proxy-property-descriptor obj prop)
+(define-inline (js-proxy-property-descriptor-index obj::JsProxy prop)
    0)
 
 ;*---------------------------------------------------------------------*/
@@ -187,48 +174,40 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-property-value o::JsProxy owner::JsObject prop %this::JsGlobalObject)
-   (with-access::JsProxy o (target handler)
+(define (js-proxy-property-value proxy::JsProxy obj::JsObject prop %this::JsGlobalObject)
+   (with-access::JsProxy proxy (target handler)
       (let ((get (js-object-get-name/cache handler 'get #f %this %cache-get)))
 	 (if (isa? get JsFunction)
 	     (let ((v (js-call3 %this get handler target
 			 (symbol->pname prop)
-			 owner)))
+			 obj)))
 		(if (null? (js-object-properties target))
 		    v
-		    (proxy-check-property-value target owner prop %this v 'get)))
-	     (js-get-jsobject target owner prop %this)))))
+		    (proxy-check-property-value target obj prop %this v 'get)))
+	     (js-get-jsobject target obj prop %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value-set! ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-property-value-set! o::JsProxy owner::JsObject prop %this::JsGlobalObject v)
-   (with-access::JsProxy o (target handler)
+(define (js-proxy-property-value-set! proxy::JsProxy obj::JsObject prop v %this::JsGlobalObject)
+   (with-access::JsProxy proxy (target handler)
       (let ((set (js-object-get-name/cache handler 'set #f %this %cache-set)))
 	 (when (isa? set JsFunction)
 	    (let ((v (js-call4 %this set handler target
 			(symbol->pname prop)
 			v
-			owner)))
+			obj)))
 	       (if (js-totest v)
 		   v
 		   (js-raise-type-error %this "Proxy \"set\" returns false on property \"~a\""
 		      prop)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get-lookup ::JsProxy ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (js-object-get-lookup obj::JsProxy name::obj throw::bool
-		  %this::JsGlobalObject
-		  cache::JsPropertyCache point::long cspecs::pair-nil)
-   (js-get obj name %this))
-
-;*---------------------------------------------------------------------*/
 ;*    js-get ::JsProxy ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsProxy prop %this::JsGlobalObject)
    (proxy-check-revoked! o "get" %this)
-   (js-proxy-property-value o o prop %this))
+   (js-proxy-property-value o o (js-toname prop %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsProxy ...                                            */

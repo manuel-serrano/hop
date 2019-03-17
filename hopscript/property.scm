@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Mar 17 06:44:51 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 07:13:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -73,10 +73,10 @@
 	   (inline js-is-accessor-descriptor?::bool obj)
 	   (inline js-is-data-descriptor?::bool obj)
 	   (inline js-is-generic-descriptor?::bool obj)
-	   (js-from-property-descriptor ::JsGlobalObject desc ::obj)
+	   (js-from-property-descriptor ::JsGlobalObject propname desc ::obj)
 	   (js-to-property-descriptor ::JsGlobalObject desc ::obj)
-	   (js-property-value ::obj ::JsPropertyDescriptor ::JsGlobalObject)
-	   (js-property-value-set! obj::JsObject ::JsPropertyDescriptor v ::JsGlobalObject)
+	   (js-property-value ::obj ::obj ::obj ::JsPropertyDescriptor ::JsGlobalObject)
+	   (js-property-value-set! obj::JsObject ::obj ::obj ::JsPropertyDescriptor v ::JsGlobalObject)
 	   
 	   (js-object-add! obj::JsObject index::long value)
 	   (js-object-ctor-add! obj::JsObject index::long value)
@@ -92,7 +92,7 @@
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
 	   
-	   (generic js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
+	   (js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache ::long ::pair-nil)
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 	   
@@ -935,7 +935,8 @@
 		(,desc
 		 (,succeed ,o ,desc))
 		((isa? ,o JsProxy)
-		 (,succeed ,o (js-proxy-property-descriptor ,o ,p)))
+		 (with-access::JsObject ,o (elements)
+		    (,succeed ,o (vector-ref elements (js-proxy-property-descriptor-index ,o ,p)))))
 		(else
 		 (,fail)))))))
 
@@ -1099,7 +1100,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.4       */
 ;*---------------------------------------------------------------------*/
-(define (js-from-property-descriptor %this::JsGlobalObject desc owner)
+(define (js-from-property-descriptor %this::JsGlobalObject propname desc owner)
 
    (define (js-or x y)
       (if (eq? x (js-undefined)) y x))
@@ -1134,14 +1135,9 @@
 	     (js-put! obj 'get get #f %this)
 	     (js-put! obj 'set set #f %this)))
 	 ((isa? desc JsWrapperDescriptor)
-	  ;; hop.js extension
-;* 	  (with-access::JsWrapperDescriptor desc (value writable)      */
-;* 	     (js-put! obj 'value value #f %this)                       */
-;* 	     (js-put! obj 'writable writable #f %this)))               */
 	  (with-access::JsWrapperDescriptor desc (%get writable)
-	     (js-put! obj 'value (%get owner %this) #f %this)
-	     (js-put! obj 'writable writable #f %this)))
-	 )
+	     (js-put! obj 'value (%get owner owner propname %this) #f %this)
+	     (js-put! obj 'writable writable #f %this))))
       (with-access::JsPropertyDescriptor desc (enumerable configurable)
 	 ;; 5
 	 (js-put! obj 'enumerable enumerable #f %this)
@@ -1219,7 +1215,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Get the value of a property.                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-property-value obj desc %this)
+(define (js-property-value obj propowner propname desc %this)
    (cond
       ((isa? desc JsAccessorDescriptor)
        (with-access::JsAccessorDescriptor desc (%get)
@@ -1229,19 +1225,21 @@
 	  value))
       ((isa? desc JsWrapperDescriptor)
        (with-access::JsWrapperDescriptor desc (%get)
-	  (%get obj %this)))
-      ((isa? desc JsProxyDescriptor)
-       (with-access::JsProxyDescriptor desc (proxy name)
-	  (js-proxy-property-value proxy obj name %this)))
+	  ;; JsWrapperDescriptor are used, amongst other, by JsProxy. 
+	  ;; Each proxy object, uses exactly one JsWrapperDescriptor for
+	  ;; all its attributes. Hence, the NAME property of the descriptor
+	  ;; is meaningless and this is why the %GET and %SET functions of
+	  ;; JsWrapperDescriptor take an explicit name as argument
+	  (%get propowner obj propname %this)))
       (else
        (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-property-value-value-set! ...                                 */
+;*    js-property-value-set! ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    Set the value of a property.                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-property-value-set! obj desc v %this)
+(define (js-property-value-set! obj propowner propname desc v %this)
    (cond
       ((isa? desc JsAccessorDescriptor)
        (with-access::JsAccessorDescriptor desc (%set)
@@ -1252,8 +1250,8 @@
 	  v))
       ((isa? desc JsWrapperDescriptor)
        (with-access::JsWrapperDescriptor desc (%set)
-	  (%set obj v %this)
-	  v))
+	  ;; see JS-PROPERTY-VALUE for name
+	  (%set propowner obj propname v %this)))
       (else
        (js-undefined))))
 
@@ -1441,7 +1439,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.2       */
 ;*    -------------------------------------------------------------    */
-;*    Returns the property owned by the object (i.e., traverses the    */
+;*    Returns the property of the object (i.e., traverses the          */
 ;*    prototype chain if the object does not own it directly).         */
 ;*---------------------------------------------------------------------*/
 (define (js-get-property o::JsObject p::obj %this::JsGlobalObject)
@@ -1481,11 +1479,11 @@
 	 (with-access::JsObject owner (elements)
 	    (let ((e (vector-ref elements i)))
 	       (if (isa? e JsPropertyDescriptor)
-		   (js-property-value base e %this)
+		   (js-property-value base owner p e %this)
 		   e))))
       ;; property search
       (lambda (o d)
-	 (js-property-value base d %this))
+	 (js-property-value base o p d %this))
       ;; not found
       (lambda ()
 	 (js-absent))
@@ -1584,21 +1582,21 @@
 ;*    Look for the property, if found update the cache and return      */
 ;*    the property value.                                              */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-object-get-lookup o::JsObject name::obj throw::bool
+(define (js-object-get-lookup o::JsObject name::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache point::long cspecs::pair-nil)
+
+   (define (js-pcache-vtable! omap cache i)
+      (with-access::JsPropertyCache cache (cntmiss vindex)
+	 (when (=fx vindex (js-not-a-index))
+	    (set! vindex (js-get-vindex %this)))
+	 (js-cmap-vtable-add! omap vindex i cache)))
 
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage)
       (set! cntmiss (+u32 #u32:1 cntmiss))
       (set! cname name)
       (set! cpoint point)
       (set! usage 'get))
-   
-   (define (js-pcache-vtable! omap cache i)
-      (with-access::JsPropertyCache cache (cntmiss vindex)
-	 (when (=fx vindex (js-not-a-index))
-	    (set! vindex (js-get-vindex %this)))
-	 (js-cmap-vtable-add! omap vindex i cache)))
 
    (let loop ((obj o))
       (jsobject-find obj name
@@ -1614,7 +1612,7 @@
 			       (js-validate-pcaches-pmap! %this))
 			    ;; accessor property
 			    (js-pcache-update-descriptor! cache i o obj)
-			    (js-property-value o el-or-desc %this))
+			    (js-property-value o obj name el-or-desc %this))
 			   ((eq? o obj)
 			    ;; direct access to the direct object
 			    [assert (i) (<=fx i (vector-length elements))]
@@ -1632,8 +1630,8 @@
 			    (js-pcache-update-owner! cache i o obj)
 			    el-or-desc)))))))
 	 ;; property search
-	 (lambda (obj v)
-	    (js-property-value o v %this))
+	 (lambda (obj desc)
+	    (js-property-value o obj name desc %this))
 	 ;; not found
 	 (lambda ()
 	    (js-get-notfound name throw %this))
@@ -1759,7 +1757,7 @@
 	    ((eq? amap omap)
 	     (with-access::JsObject owner (elements)
 		(let ((desc (vector-ref elements index)))
-		   (js-property-value o desc %this))))
+		   (js-property-value o owner name desc %this))))
 	    (else
 	     (js-object-get-name/cache-miss o name throw %this cache point cspecs))))))
 
@@ -1942,22 +1940,22 @@
 	     (format "[[PUT]], ~a ~~s" msg) name)
 	  v))
    
-   (define (update-from-descriptor! o obj index::long v desc)
+   (define (update-from-descriptor! o propobj index::long v desc)
       ;; 8.12.5
-      (with-access::JsAccessorDescriptor desc (set)
+      (with-access::JsAccessorDescriptor desc (set %set)
 	 (if (isa? set JsFunction)
 	     ;; 8.12.5, step 5
 	     (begin
 		(when (and (>=fx index 0) cache)
-		   (js-pcache-update-descriptor! cache index o obj))
-		(js-call1 %this set o v)
+		   (js-pcache-update-descriptor! cache index o propobj))
+		(%set o v)
+		;;(js-call1 %this set o v)
 		v)
 	     ;; 8.12.4, setp 2.a
 	     (reject "No setter defined"))))
    
-   (define (update-from-proxy-descriptor! o obj index::long v desc)
-      (with-access::JsProxyDescriptor desc (proxy name)
-	 (js-proxy-property-value-set! proxy obj name %this v)))
+   (define (update-from-wrapper-descriptor! o propobj v desc)
+      (js-property-value-set! o propobj prop desc v %this))
    
    (define (update-mapped-object-value! obj cmap i v)
       (with-access::JsObject obj (cmap elements)
@@ -2028,7 +2026,7 @@
 				 ;; hopjs extension
 				 (when cache
 				    (js-pcache-update-descriptor! cache i o o))
-				 (js-property-value-set! o el-or-desc v %this))
+				 (js-property-value-set! o obj name el-or-desc v %this))
 				(else
 				 (update-mapped-object-value! obj cmap i v)))))
 			 ((flags-writable? (prop-flags (vector-ref props i)))
@@ -2148,7 +2146,7 @@
 	 (cond
 	    ((isa? desc JsAccessorDescriptor)
 	     ;; 8.12.5, step 5
-	     (update-from-descriptor! o o -1 v desc))
+	     (update-from-descriptor! o obj -1 v desc))
 	    ((eq? o obj)
 	     ;; 8.12.5, step 3
 	     (let ((owndesc desc))
@@ -2160,8 +2158,8 @@
 		       (begin
 			  (set! value v)
 			  v)))))
-	    ((isa? desc JsProxyDescriptor)
-	     (or (update-from-proxy-descriptor! o o -1 v desc)
+	    ((isa? desc JsWrapperDescriptor)
+	     (or (update-from-wrapper-descriptor! o obj v desc)
 		 (if (js-object-mode-extensible? obj)
 		     (extend-object!)
 		     (reject "sealed object"))))
@@ -2205,7 +2203,7 @@
 	       (else
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
-   
+
    (let loop ((obj o))
       (jsobject-find obj name
 	 update-mapped-object!
@@ -2297,7 +2295,7 @@
 	    (set! name prop)
 	    (set! cpoint point)
 	    (set! usage 'put))
-	 
+
 	 (unless (eq? %omap (js-not-a-cmap))
 	    (with-access::JsPropertyCache cache (index vindex cntmiss)
 	       (when (>=u32 cntmiss (vtable-threshold))
@@ -2401,8 +2399,10 @@
 		(when (isa? old JsAccessorDescriptor)
 		   (with-access::JsAccessorDescriptor old ((oget get)
 							   (oset set))
-		      (when (eq? get (js-undefined)) (set! get oget))
-		      (when (eq? set (js-undefined)) (set! set oset))))
+		      (when (eq? get (js-undefined))
+			 (set! get oget))
+		      (when (eq? set (js-undefined))
+			 (set! set oset))))
 		(vector-set! elements i
 		   (instantiate::JsAccessorDescriptor
 		      (name name)
@@ -2722,12 +2722,13 @@
    
    (define (propagate-accessor-descriptor! current desc)
       (propagate-property-descriptor! current desc)
-      (with-access::JsAccessorDescriptor current (get %get set)
+      (with-access::JsAccessorDescriptor current (get %get set %set)
 	 (with-access::JsAccessorDescriptor desc ((dget get)
 						  (%dget %get)
-						  (dset set))
+						  (dset set)
+						  (%dset %set))
 	    (when dget (set! get dget) (set! %get %dget))
-	    (when dset (set! set dset))))
+	    (when dset (set! set dset) (set! %set %dset))))
       #t)
    
    (define (same-value v1 v2)
@@ -3268,7 +3269,7 @@
 	  (apply method args)
 	  (apply js-calln %this method o args)))
 
-   (define (funval el-or-desc)
+   (define (funval obj el-or-desc)
       (with-access::JsGlobalObject %this (js-call)
 	 (let loop ((el-or-desc el-or-desc))
 	    (cond
@@ -3278,21 +3279,9 @@
 		       procedure
 		       el-or-desc)))
 	       ((isa? el-or-desc JsPropertyDescriptor)
-		(loop (js-property-value o el-or-desc %this)))
+		(loop (js-property-value o obj name el-or-desc %this)))
 	       (else
 		el-or-desc)))))
-   
-   (define (funval-TOBEREMOVED el-or-desc)
-      (if (isa? el-or-desc JsPropertyDescriptor)
-	  (with-access::JsGlobalObject %this (js-call)
-	     (let ((f (js-property-value o el-or-desc %this)))
-		(if (eq? f js-call)
-		    (with-access::JsFunction o (procedure)
-		       (if (=fx (procedure-arity procedure) (length args))
-			   procedure
-			   f))
-		    f)))
-	  el-or-desc))
    
    (define (method->procedure f)
       (case (procedure-arity f)
@@ -3380,9 +3369,9 @@
 			       (set! pmap #t)
 			       (set! emap #t)
 			       (set! cmap #t))
-			    (jsapply (js-property-value o el-or-desc %this)))
+			    (jsapply (js-property-value o obj name el-or-desc %this)))
 			   ((isa? (vector-ref methods i) JsFunction)
-			    (let ((f (funval el-or-desc)))
+			    (let ((f (funval obj el-or-desc)))
 			       (cond
 				  ((procedure? f)
 				   (with-access::JsPropertyCache ccache (pmap emap cmap index method function)
@@ -3442,14 +3431,14 @@
 			       (set! cmap #t)
 			       (set! pmap #t)
 			       (set! emap #t)
-			       (jsapply (funval el-or-desc))))))))))
+			       (jsapply (funval obj el-or-desc))))))))))
 	 ;; property search
 	 (lambda (obj v)
 	    (with-access::JsPropertyCache ccache (cmap emap pmap)
 	       (set! pmap #t)
 	       (set! emap #t)
 	       (set! cmap #t)
-	       (jsapply (js-property-value o v %this))))
+	       (jsapply (js-property-value o obj name v %this))))
 	 ;; not found
 	 (lambda ()
 	    (js-raise-type-error %this "call: not a function ~s"

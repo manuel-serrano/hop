@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Mar 15 11:45:22 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 09:43:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2989,10 +2989,11 @@
 		    ;; 4
 		    (if (js-is-accessor-descriptor? desc)
 			;; 5
-			(with-access::JsAccessorDescriptor desc ((setter set))
-			   (if (isa? setter JsFunction)
-			       (js-call1 %this setter o v)
-			       (js-undefined)))
+			(js-property-value-set! o o q desc v %this)
+;* 			(with-access::JsAccessorDescriptor desc ((setter set)) */
+;* 			   (if (isa? setter JsFunction)                */
+;* 			       (js-call1 %this setter o v)             */
+;* 			       (js-undefined)))                        */
 			(let ((newdesc (instantiate::JsValueDescriptor
 					  (name q)
 					  (value v)
@@ -3034,7 +3035,7 @@
 			       "Cannot add property ~a, object is not extensible" p)
 			    v)))
 		(uninline-array! o %this)
-		(js-property-value-set! o desc v %this)))
+		(js-property-value-set! o o idx desc v %this)))
 	    ((<u32 idx (fixnum->uint32 (vector-length vec)))
 	     (js-object-mode-hasnumeralprop-set! o #t)
 	     (with-access::JsArray o (length)

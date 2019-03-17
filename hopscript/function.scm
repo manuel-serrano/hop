@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Jan 30 07:20:05 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 07:38:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -28,7 +28,8 @@
 	   __hopscript_private
 	   __hopscript_public
 	   __hopscript_lib
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_array)
    
    (export (js-init-function! ::JsGlobalObject)
 
@@ -47,7 +48,7 @@
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::bstring ::int ::int ::symbol ::bool ::int)
 
-	   (inline js-function-prototype-get ::JsFunction ::JsGlobalObject)
+	   (inline js-function-prototype-get ::JsFunction ::obj ::obj ::JsGlobalObject)
 
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)))
 
@@ -459,14 +460,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-function-prototype-get o::JsFunction %this)
+(define-inline (js-function-prototype-get o::JsFunction obj propname %this)
    (with-access::JsFunction o (prototype)
       prototype))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-set ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-function-prototype-set o::JsFunction v %this)
+(define (js-function-prototype-set o::JsFunction obj propname v %this)
    (with-access::JsFunction o (constrmap %prototype prototype elements cmap)
       ;; as the prototype property is not configurable,
       ;; it is always owned by the object
@@ -659,7 +660,7 @@
 	     (if (=fx i -1)
 		 acc
 		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
-
+   
    (cond
       ((not (isa? this JsFunction))
        (js-raise-type-error %this
@@ -672,21 +673,24 @@
       ((isa? argarray JsArray)
        (let ((len (js-get argarray 'length %this)))
 	  (with-access::JsArray argarray (vec)
-	     (if (>fx (vector-length vec) 0)
+	     (cond
+		((js-object-mode-inline? argarray)
+		 ;; fast path
+		 (js-apply %this this thisarg
+		    (vector->sublist vec len)))
+		((js-object-mode-holey? argarray)
 		 ;; fast path
 		 (js-apply %this this thisarg
 		    (map (lambda (p)
 			    (if (eq? p (js-absent)) (js-undefined) p))
-		       (vector->sublist vec len)))
+		       (vector->sublist vec len))))
+		(else
 		 ;; slow path
 		 (let ((properties (js-object-properties argarray)))
 		    (js-apply %this this thisarg
-		       (map! (lambda (d)
-				(js-property-value argarray argarray %this))
-			  (filter (lambda (d)
-				     (with-access::JsPropertyDescriptor d (name)
-					(js-isindex? (js-toindex name))))
-			     properties))))))))
+		       (map! (lambda (idx)
+				(js-array-fixnum-ref argarray idx %this))
+			  (iota len)))))))))
       (else
        ;; slow path
        (let ((len (uint32->fixnum
@@ -695,11 +699,7 @@
 			%this))))
 	  ;; assumes here a fixnum length as an iteration over the range
 	  ;; 1..2^32-1 is not computable with 2014 computer's performance
-	  (let loop ((i 0)
-		     (acc '()))
-	     (if (=fx i len)
-		 ;; fast path
-		 (js-apply %this this thisarg (reverse! acc))
-		 ;; slow path
-		 (loop (+fx i 1)
-		    (cons (js-get argarray i %this) acc))))))))
+	  (js-apply %this this thisarg
+	     (map! (lambda (idx)
+		      (js-get argarray idx %this))
+		(iota len)))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Jan 18 09:53:20 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 11:42:53 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -188,7 +188,8 @@
 				(js-get %this 'module %this) #f this)
 			     (loader source thread this)))
 		   (thread (instantiate::WorkerHopThread
-			      (name (gensym (string-append "WebWorker@" src)))
+			      (name (gensym (string-append "WebWorker@"
+					       (js-jsstring->string src))))
 			      (parent parent)
 			      (tqueue (list (cons "init" thunk)))
 			      (%this this)

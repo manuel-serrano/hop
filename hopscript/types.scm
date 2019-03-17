@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Mar 15 09:58:55 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 07:32:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -80,13 +80,11 @@
 	   (final-class JsValueDescriptor::JsDataDescriptor
 	      (value (default (js-undefined))))
 	   (final-class JsAccessorDescriptor::JsPropertyDescriptor
-	      get set
-	      %get::procedure %set::procedure)
+	      get %get::procedure
+	      set %set::procedure)
 	   (final-class JsWrapperDescriptor::JsDataDescriptor
 	      (%get::procedure read-only)
 	      (%set::procedure read-only))
-	   (final-class JsProxyDescriptor::JsPropertyDescriptor
-	      (proxy::JsObject read-only))
 	   
 	   (final-class JsPropertyCache
 	      (imap::obj (default #f))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Jan 30 06:57:32 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 07:19:51 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -356,12 +356,14 @@
 		       (js-profile-log-index idx)
 		       (vector-ref elements idx))))
 	       ((eq? cs 'amap)
-		`(let ((idx (js-pcache-index ,cache)))
-		    (with-access::JsObject (js-pcache-owner ,cache) (elements)
+		`(let* ((idx (js-pcache-index ,cache))
+			(propowner (js-pcache-owner ,cache)))
+		    (with-access::JsObject propowner (elements)
 		       (let ((desc (vector-ref elements idx)))
 			  (js-profile-log-cache ,cache :amap #t)
 			  (js-profile-log-index idx)
-			  (js-property-value ,obj desc ,%this)))))
+			  (js-property-value ,obj
+			     propowner ,prop desc ,%this)))))
 	       ((not (pair? cs))
 		(error "js-object-get-name/cache" "bad form" x))
 	       (else
@@ -553,12 +555,14 @@
 			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'amap)
-		     `(with-access::JsObject (js-pcache-owner ,cache) (elements)
-			 (let* ((idx (js-pcache-index ,cache))
-				(desc (vector-ref elements idx)))
-			    (js-profile-log-cache ,cache :amap #t)
-			    (js-profile-log-index idx)
-			    (js-property-value-set! ,obj desc ,tmp %this)
+		     `(let* ((idx (js-pcache-index ,cache))
+			     (propowner (js-pcache-owner ,cache)))
+			 (with-access::JsObject propowner (elements)
+			    (let ((desc (vector-ref elements idx)))
+			       (js-profile-log-cache ,cache :amap #t)
+			       (js-profile-log-index idx)
+			       (js-property-value-set! ,obj
+				  propowner ,prop desc ,tmp %this))
 			    ,tmp)))
 		    ((not (pair? cs))
 		     (error "js-object-put-name/cache" "bad form" x))

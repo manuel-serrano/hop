@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Mar 15 18:16:21 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 08:59:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -615,7 +615,7 @@
 		       o
 		       (js-cast-object o %this "getOwnPropertyDescriptor")))
 		(desc (js-get-own-property o p %this)))
-	    (js-from-property-descriptor %this desc o)))
+	    (js-from-property-descriptor %this o desc o)))
       
       (js-bind! %this js-object 'getOwnPropertyDescriptor
 	 :value (js-make-function %this
@@ -638,7 +638,7 @@
 	       (for-each (lambda (k)
 			    (let ((desc (js-get-own-property o k %this)))
 			       (js-put! res k
-				  (js-from-property-descriptor %this desc o)
+				  (js-from-property-descriptor %this k desc o)
 				  #f %this)))
 		  keys))
 	    res))
@@ -1127,7 +1127,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.7     */
 ;*---------------------------------------------------------------------*/
-(define (object-defineproperties %this::JsGlobalObject this obj properties)
+(define (object-defineproperties %this::JsGlobalObject this _obj _properties)
    
    (define (vfor-each proc vec)
       (let ((len (vector-length vec)))
@@ -1135,45 +1135,46 @@
 	    (when (<fx i len)
 	       (proc (vector-ref vec i) i)
 	       (loop (+fx i 1))))))
-	       
+
    (define (enumerable-mapped-property? obj i)
       (with-access::JsObject obj (elements)
 	 (let ((el (vector-ref elements i)))
 	    (if (isa? el JsPropertyDescriptor)
 		(with-access::JsPropertyDescriptor el (enumerable) enumerable)
 		#t))))
-
-   (define (define-own-property o name prop)
+   
+   (define (define-own-property obj name prop properties)
       (let* ((descobj (if (isa? prop JsPropertyDescriptor)
-			  (js-property-value properties prop %this)
+			  (js-property-value properties properties name prop %this)
 			  prop))
 	     (desc (js-to-property-descriptor %this descobj name)))
-	 (js-define-own-property o name desc #t %this)))
+	 (js-define-own-property obj name desc #t %this)))
    
-   (define (defineproperties/cmap cmap o props)
-      (with-access::JsObject props (elements)
+   (define (defineproperties/cmap cmap obj properties)
+      (with-access::JsObject properties (elements)
 	 (with-access::JsConstructMap cmap (props)
-	    (vfor-each (lambda (d::struct i)
-			  (when (flags-enumerable? (prop-flags d))
-			     (let ((prop (vector-ref elements i)))
-				(define-own-property o (prop-name d) prop))))
+	    (vfor-each
+	       (lambda (d::struct i)
+		  (when (flags-enumerable? (prop-flags d))
+		     (let ((prop (vector-ref elements i)))
+			(define-own-property obj (prop-name d) prop properties))))
 	       props))))
    
-   (define (defineproperties/properties oprops o props)
+   (define (defineproperties/properties oprops obj properties)
       (for-each (lambda (prop)
 		   (with-access::JsPropertyDescriptor prop (name enumerable)
 		      (when (eq? enumerable #t)
-			 (define-own-property o name prop))))
+			 (define-own-property obj name prop properties))))
 	 oprops))
    
-   (let* ((o (js-cast-object obj %this "defineProperties"))
-	  (props (js-cast-object (js-toobject %this properties) %this
+   (let* ((obj (js-cast-object _obj %this "defineProperties"))
+	  (properties (js-cast-object (js-toobject %this _properties) %this
 		    "defineProperties")))
-      (with-access::JsObject props (cmap)
-	 (let ((oprops (js-object-properties props)))
-	    (if (not (eq? cmap (js-not-a-cmap)))
-		(defineproperties/cmap cmap o props)
-		(defineproperties/properties oprops o props))))
+      (with-access::JsObject properties (cmap)
+	 (if (eq? cmap (js-not-a-cmap))
+	     (let ((oprops (js-object-properties properties)))
+		(defineproperties/properties oprops obj properties))
+	     (defineproperties/cmap cmap obj properties)))
       obj))
 
 ;*---------------------------------------------------------------------*/

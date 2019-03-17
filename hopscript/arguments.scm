@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Mar 15 14:35:45 2019 (serrano)                */
+;*    Last change :  Sun Mar 17 10:04:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -64,7 +64,8 @@
    (with-access::JsArguments obj (vec)
       (map! (lambda (desc)
 	       (unless (eq? desc (js-absent))
-		  (js-property-value obj desc (js-initial-global-object))))
+		  (with-access::JsPropertyDescriptor desc (name)
+		     (js-property-value obj obj name desc (js-initial-global-object)))))
 	 (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/
@@ -240,6 +241,19 @@
 		  o))))))
 
 ;*---------------------------------------------------------------------*/
+;*    function1->proc ...                                              */
+;*---------------------------------------------------------------------*/
+(define (function1->proc fun %this::JsGlobalObject)
+   (if (isa? fun JsFunction)
+       (with-access::JsFunction fun (procedure)
+	  (if (correct-arity? procedure 2)
+	      procedure
+	      (lambda (this a0)
+		 (js-call1 %this fun this a0))))
+       (lambda (obj v)
+	  (js-undefined))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-define-own-property ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
@@ -262,11 +276,12 @@
 	      ;; the set attribute of the new desc
 	      (with-access::JsAccessorDescriptor desc ((dset set))
 		 (when (isa? ismapped JsAccessorDescriptor)
-		    (with-access::JsAccessorDescriptor ismapped (set)
-		       (set! set
-			  (if (isa? dset JsFunction)
-			      dset
-			      (js-undefined))))))
+		    (with-access::JsAccessorDescriptor ismapped (set %set)
+		       (if (isa? dset JsFunction)
+			   (begin
+			      (set! set dset)
+			      (set! %set (function1->proc dset %this)))
+			   (set! set (js-undefined))))))
 	      (begin
 		 ;; 5.b
 		 (when (isa? desc JsValueDescriptor)
@@ -348,7 +363,7 @@
 		    (let ((d (u32vref vec index)))
 		       (if (eq? d (js-absent))
 			   (call-next-method)
-			   (js-property-value o d %this))))))
+			   (js-property-value o o p d %this))))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -366,7 +381,7 @@
 	     (let ((desc (u32vref vec i)))
 		(if (eq? desc (js-absent))
 		    (call-next-method)
-		    (js-property-value o desc %this))))
+		    (js-property-value o o p desc %this))))
 	    (else
 	     (call-next-method))))))
 
@@ -448,7 +463,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments->vector obj::JsArguments %this)
    (with-access::JsArguments obj (vec)
-      (vector-map (lambda (d) (js-property-value obj d %this))
+      (vector-map (lambda (d)
+		     (with-access::JsPropertyDescriptor d (name)
+			(js-property-value obj obj name d %this)))
 	 vec)))
 
 ;*---------------------------------------------------------------------*/
@@ -456,7 +473,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments->list obj::JsArguments %this)
    (with-access::JsArguments obj (vec)
-      (map! (lambda (d) (js-property-value obj d %this))
+      (map! (lambda (d)
+	       (with-access::JsPropertyDescriptor d (name)
+		  (js-property-value obj obj name d %this)))
 	 (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/
@@ -465,7 +484,9 @@
 (define (js-arguments->jsarray obj::JsArguments %this)
    (with-access::JsArguments obj (vec)
       (js-vector->jsarray
-	 (vector-map (lambda (d) (js-property-value obj d %this))
+	 (vector-map (lambda (d)
+			(with-access::JsPropertyDescriptor d (name)
+			   (js-property-value obj obj name d %this)))
 	    vec)
 	 %this)))
 
@@ -518,6 +539,7 @@
 				 (js-touint32 (js-get o 'length %this) %this)))))
 		   (let loop ((i 0))
 		      (when (<fx i len)
-			 (proc (js-property-value o (vector-ref vec i) %this) %this)
+			 (proc (js-property-value o o i (vector-ref vec i) %this)
+			    %this)
 			 (loop (+fx i 1))))))))))
 
