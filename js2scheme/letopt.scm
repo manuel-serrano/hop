@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Mon Mar 18 15:47:42 2019 (serrano)                */
+;*    Last change :  Sat Oct 27 07:23:12 2018 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -488,11 +488,11 @@
 		   (trace-item "dup=" (j2s-dump-decls (init-decl (car inodes))))
 		   (mark-decl-noopt! (init-decl (car inodes)))
 		   (loop (cdr inodes)))
-		  ((init-unopt? (car inodes) decls)
-		   ;; the init expression cannot be optimized
-		   (let ((decl (init-decl (car inodes))))
-		      (mark-decl-noopt! decl)
-		      (loop (cdr inodes))))
+;* 		  ((init-unopt? (car inodes) decls)                    */
+;* 		   ;; the init expression cannot be optimized          */
+;* 		   (let ((decl (init-decl (car inodes))))              */
+;* 		      (mark-decl-noopt! decl)                          */
+;* 		      (loop (cdr inodes))))                            */
 		  (else
 		   (let ((decl (init-decl (car inodes))))
 		      (trace-item "regular=" (j2s-dump-decls decl))
@@ -886,14 +886,14 @@
       (trace-item "node=" (j2s->list node))
       (trace-item "no-used*=" (map j2s->list (node-used* node decls #t)))
       (for-each (lambda (d)
-		   (when (isa? d J2SDeclInit)
-		      (with-access::J2SDeclInit d (id val)
-			 (with-trace 'j2s-letopt "mark-used-noopt"
-			    (trace-item "d=" id " maybe-opt="
-			       (typeof (decl-maybe-opt? d)))
-			    (when (eq? (decl-maybe-opt? d) #unspecified)
-			       (mark-decl-noopt! d)
-			       (when (isa? d J2SDeclInit)
+		   (with-trace 'j2s-letopt "mark-used-noopt"
+		      (with-access::J2SDecl d (id)
+			 (trace-item "d=" id " maybe-opt="
+			    (typeof (decl-maybe-opt? d)))
+			 (when (eq? (decl-maybe-opt? d) #unspecified)
+			    (mark-decl-noopt! d)
+			    (when (isa? d J2SDeclInit)
+			       (with-access::J2SDeclInit d (val)
 				  (mark-used-noopt*! val decls)))))))
 	 (node-used* node decls #t))))
    
