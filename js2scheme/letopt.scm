@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sat Oct 27 07:23:12 2018 (serrano)                */
+;*    Last change :  Mon Mar 18 18:12:54 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -488,11 +488,11 @@
 		   (trace-item "dup=" (j2s-dump-decls (init-decl (car inodes))))
 		   (mark-decl-noopt! (init-decl (car inodes)))
 		   (loop (cdr inodes)))
-;* 		  ((init-unopt? (car inodes) decls)                    */
-;* 		   ;; the init expression cannot be optimized          */
-;* 		   (let ((decl (init-decl (car inodes))))              */
-;* 		      (mark-decl-noopt! decl)                          */
-;* 		      (loop (cdr inodes))))                            */
+		  ((init-unopt? (car inodes) decls)
+		   ;; the init expression cannot be optimized
+		   (let ((decl (init-decl (car inodes))))
+		      (mark-decl-noopt! decl)
+		      (loop (cdr inodes))))
 		  (else
 		   (let ((decl (init-decl (car inodes))))
 		      (trace-item "regular=" (j2s-dump-decls decl))
