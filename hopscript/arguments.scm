@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sun Mar 17 10:04:59 2019 (serrano)                */
+;*    Last change :  Mon Mar 18 10:52:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -156,7 +156,6 @@
 ;*    js-put-length! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put-length! o::JsArguments v::obj throw::bool cache %this)
-   (tprint "js-put-length o=" (typeof o) " v=" v)
    (js-put! o 'length v throw %this))
 
 ;*---------------------------------------------------------------------*/

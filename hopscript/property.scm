@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Mar 18 08:50:52 2019 (serrano)                */
+;*    Last change :  Mon Mar 18 10:56:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2245,6 +2245,8 @@
 		    %this cache point cspecs))
 		((js-isindex? (js-toindex prop))
 		 (js-put! o prop v throw %this))
+		((eq? pname 'length)
+		 (js-put-length! o v throw cache %this))
 		((eq? name '||)
 		 (set! name pname)
 		 (js-object-put-name/cache! o pname v throw

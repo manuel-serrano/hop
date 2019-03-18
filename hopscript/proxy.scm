@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Mar 17 07:13:42 2019 (serrano)                */
+;*    Last change :  Mon Mar 18 10:48:09 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -42,20 +42,6 @@
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-proxy-wrapper-descriptor ...                                  */
-;*---------------------------------------------------------------------*/
-(define js-proxy-wrapper-descriptor
-   (instantiate::JsWrapperDescriptor
-      (name 'anonyymous)
-      (writable #t)
-      (configurable #t)
-      (enumerable #t)
-      (%get (lambda (obj %this)
-	       'todo))
-      (%set (lambda (obj v %this)
-	       'todo))))
-
-;*---------------------------------------------------------------------*/
 ;*    local caches                                                     */
 ;*---------------------------------------------------------------------*/
 (define %cache-get
@@ -65,6 +51,9 @@
 
 (define proxy-property-descriptor
    (instantiate::JsWrapperDescriptor
+      (writable #t)
+      (configurable #t)
+      (enumerable #t)
       (name '|name never used|)
       (%get js-proxy-property-value)
       (%set js-proxy-property-value-set!)))

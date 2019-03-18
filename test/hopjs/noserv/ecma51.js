@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Mar 15 14:33:45 2019 (serrano)                */
+/*    Last change :  Mon Mar 18 10:50:50 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -168,15 +168,13 @@ function bar4( buf ) {
    return arguments[ 0 ];
 }
 
- var LENGTH;
- 
- function bar5() {
-    LENGTH = "length";
-    var argObj = (function () { return arguments })();
-    argObj[LENGTH] = 1001;
-       
-    return argObj.length === 1001;
- }
+function bar5() {
+   var LENGTH = "length";
+   var argObj = (function () { return arguments })();
+   argObj[LENGTH] = 1001;
+   
+   return argObj.length === 1001;
+}
 
 assert.equal( foo1( 10 ), 55, "foo1" );
 assert.equal( foo2( 10 ), 10, "foo2" );
