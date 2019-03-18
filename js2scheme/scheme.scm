@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Mar 17 08:51:08 2019 (serrano)                */
+;*    Last change :  Mon Mar 18 14:44:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -815,7 +815,7 @@
 	      typed)
       (with-access::J2SDeclInit d (usage id vtype ronly)
 	 (let* ((ident (j2s-decl-scheme-id d))
-		(var (type-ident ident vtype conf))
+		(var (if typed (type-ident ident vtype conf) ident))
 		(val (j2sdeclinit-val-fun d)))
 	    (cond
 	       ((or (not (isa? val J2SFun))

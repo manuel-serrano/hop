@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Mar 18 10:56:52 2019 (serrano)                */
+;*    Last change :  Mon Mar 18 14:02:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2033,6 +2033,11 @@
 			  (update-mapped-object-value! obj cmap i v)) 
 			 (else
 			  (reject "Read-only property"))))
+		     ((and (isa? el-or-desc JsWrapperDescriptor)
+			   (update-from-wrapper-descriptor! o obj v el-or-desc))
+		      (when cache
+			 (js-pcache-update-descriptor! cache i o o)))
+		      ;; hopjs extension
 		     ((js-object-mode-frozen? obj)
 		      ;; 8.12.9, step 3
 		      (reject "frozen object"))
@@ -3366,7 +3371,8 @@
 		  (with-access::JsConstructMap wmap (methods %id)
 		     (let ((el-or-desc (vector-ref elements i)))
 			(cond
-			   ((isa? el-or-desc JsAccessorDescriptor)
+			   ((or (isa? el-or-desc JsAccessorDescriptor)
+				(isa? el-or-desc JsWrapperDescriptor))
 			    (with-access::JsPropertyCache ccache (pmap emap cmap)
 			       (set! pmap #t)
 			       (set! emap #t)

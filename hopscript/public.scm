@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Mar 11 18:39:52 2019 (serrano)                */
+;*    Last change :  Mon Mar 18 15:11:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -825,7 +825,7 @@
 (define (js-call-proxy10 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
-(define (js-call-proxyn %this fun this . args)
+(define (js-call-proxyn %this fun this args)
    (with-access::JsProxy fun (target handler)
       (if (not (isa? target JsFunction))
 	  (js-raise-type-error %this "calln: not a function ~s" fun)

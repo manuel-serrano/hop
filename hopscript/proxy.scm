@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon Mar 18 10:48:09 2019 (serrano)                */
+;*    Last change :  Mon Mar 18 14:12:29 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -60,7 +60,7 @@
 
 (define proxy-cmap
    (instantiate::JsConstructMap
-      (methods '#())
+      (methods '#(#f))
       (props '#())))
 
 ;*---------------------------------------------------------------------*/
@@ -165,6 +165,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value proxy::JsProxy obj::JsObject prop %this::JsGlobalObject)
    (with-access::JsProxy proxy (target handler)
+      (proxy-check-revoked! proxy "get" %this)
       (let ((get (js-object-get-name/cache handler 'get #f %this %cache-get)))
 	 (if (isa? get JsFunction)
 	     (let ((v (js-call3 %this get handler target
@@ -180,22 +181,26 @@
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value-set! proxy::JsProxy obj::JsObject prop v %this::JsGlobalObject)
    (with-access::JsProxy proxy (target handler)
+      (proxy-check-revoked! proxy "put" %this)
       (let ((set (js-object-get-name/cache handler 'set #f %this %cache-set)))
 	 (when (isa? set JsFunction)
-	    (let ((v (js-call4 %this set handler target
+	    (let ((r (js-call4 %this set handler target
 			(symbol->pname prop)
 			v
 			obj)))
-	       (if (js-totest v)
-		   v
+	       (cond
+		  ((not (js-totest r))
 		   (js-raise-type-error %this "Proxy \"set\" returns false on property \"~a\""
-		      prop)))))))
+		      prop))
+		  ((null? (js-object-properties target))
+		   r)
+		  (else
+		   (proxy-check-property-value target obj prop %this v 'set))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsProxy ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsProxy prop %this::JsGlobalObject)
-   (proxy-check-revoked! o "get" %this)
    (js-proxy-property-value o o (js-toname prop %this) %this))
 
 ;*---------------------------------------------------------------------*/
@@ -204,7 +209,7 @@
 (define-method (js-put! o::JsProxy prop v throw %this::JsGlobalObject)
    (proxy-check-revoked! o "put" %this)
    (with-access::JsProxy o (target handler)
-      (let ((set (js-get handler 'set %this)))
+      (let ((set (js-object-get-name/cache handler 'set #f %this %cache-set)))
 	 (if (isa? set JsFunction)
 	     (begin
 		(proxy-check-property-value target target prop %this v 'set)
@@ -368,7 +373,8 @@
 		 (with-access::JsValueDescriptor prop (writable value)
 		    (if (or writable (js-strict-equal? value v))
 			v
-			(js-raise-type-error %this "Proxy \"get\" inconsistency"
+			(js-raise-type-error %this
+			   (format "Proxy \"~a\" inconsistency" get-or-set)
 			   owner))))
 		((isa? prop JsAccessorDescriptor)
 		 (with-access::JsAccessorDescriptor prop (get set)

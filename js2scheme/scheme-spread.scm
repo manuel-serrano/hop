@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  6 16:35:12 2018                          */
-;*    Last change :  Fri Dec  7 21:33:16 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Mon Mar 18 11:10:07 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions to deal with spread syntax.                    */
 ;*=====================================================================*/
@@ -128,9 +128,17 @@
    (let loop ((nospread '())
 	      (exprs exprs))
       (cond
-	 ((null? exprs) (values (reverse! nospread) exprs))
-	 ((isa? (car exprs) J2SSpread) (values (reverse! nospread) exprs))
-	 (else (loop (cons (car exprs) nospread) (cdr exprs))))))
+	 ((null? exprs)
+	  (values (reverse! nospread) exprs))
+	 ((isa? (car exprs) J2SSpread)
+	  (values (reverse! nospread) exprs))
+	 ((isa? (car exprs) J2SCast)
+	  (with-access::J2SCast (car exprs) (expr type)
+	     (if (and (eq? type 'any) (isa? expr J2SSpread))
+		 (values (reverse! nospread) (cons expr (cdr exprs)))
+		 (loop (cons (car exprs) nospread) (cdr exprs)))))
+	  (else
+	   (loop (cons (car exprs) nospread) (cdr exprs))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-iterable->list ...                                           */

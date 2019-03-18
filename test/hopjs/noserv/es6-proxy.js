@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sun Mar 17 09:32:00 2019 (serrano)                */
+/*    Last change :  Mon Mar 18 15:17:08 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -195,8 +195,8 @@ function mdnb() {
 }
 
 console.log( "mdn" );
-console.log( "   mdna()"); mdna();
-console.log( "   mdnb()"); mdnb();
+console.log( "   mdna()"); assert.ok( mdna(), "mdna" );
+console.log( "   mdnb()"); assert.ok( mdnb(), "mdnb" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
