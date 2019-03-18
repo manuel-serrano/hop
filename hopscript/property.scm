@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Mar 17 07:13:07 2019 (serrano)                */
+;*    Last change :  Mon Mar 18 08:50:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2235,7 +2235,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-put/cache! o prop v::obj throw::bool %this
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (if (or (not (string? prop)) (not (isa? o JsObject)))
+   (if (or (not (js-jsstring? prop)) (not (isa? o JsObject)))
        (js-put! o prop v throw %this)
        (let ((pname (js-toname prop %this)))
 	  (with-access::JsPropertyCache cache (name)
@@ -2244,7 +2244,7 @@
 		 (js-object-put-name/cache! o pname v throw
 		    %this cache point cspecs))
 		((js-isindex? (js-toindex prop))
-		 (js-get o prop %this))
+		 (js-put! o prop v throw %this))
 		((eq? name '||)
 		 (set! name pname)
 		 (js-object-put-name/cache! o pname v throw
@@ -3356,7 +3356,7 @@
    (js-profile-log-method name point)
    
    (let loop ((obj o))
-      (jsobject-find obj name
+      (jsobject-find obj (js-toname name %this)
 	 ;; map search
 	 (lambda (obj i)
 	    (with-access::JsObject o ((omap cmap) __proto__)

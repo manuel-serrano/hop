@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Oct  8 14:57:03 2018 (serrano)                */
-;*    Copyright   :  2005-18 Manuel Serrano                            */
+;*    Last change :  Mon Mar 18 08:09:58 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -1007,7 +1007,7 @@
 			((more-recent? path)
 			 path)
 			((more-recent? (errfile path))
-			 'error)
+			 (cons 'error (errfile path)))
 			(else
 			 (loop (cdr paths))))))))))
 
@@ -1027,7 +1027,7 @@
 	    ((more-recent? sopath)
 	     sopath)
 	    ((more-recent? (errfile sopath))
-	     'error)
+	     (cons 'error (errfile sopath)))
 	    (else
 	     ;; if not found check the user global libs repository
 	     (let ((sopath (hop-sofile-path path)))
@@ -1035,7 +1035,7 @@
 		   ((more-recent? sopath)
 		    sopath)
 		   ((more-recent? (errfile sopath))
-		    'error)
+		    (cons 'error (errfile sopath)))
 		   (else
 		    (or (find-in-unix-path (hop-soname path))
 			(find-in-unix-path path)
@@ -1166,7 +1166,8 @@
 	 (trace-item "afile=" afile)
 	 (if (or (eq? mode 'load) (eq? mode 'module))
 	     (let ((sopath (hop-find-sofile path)))
-		(if sopath
+		(cond
+		   ((string? sopath)
 		    ;; a compiled file has been found, try to load that one
 		    (with-trace 'read "hop-load-path-compiled"
 		       (trace-item "sopath=" sopath)
@@ -1177,8 +1178,9 @@
 			      (or loadval
 				  ;; the dynamic load didn't produced the expected
 				  ;; value, load with eval
-				  (hop-eval-path path)))))
-		    (hop-eval-path path)))
+				  (hop-eval-path path))))))
+		   (else
+		    (hop-eval-path path))))
 	     (hop-eval-path path))))
    
    (let ((path (find-file/path fname (hop-path))))

@@ -403,6 +403,9 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
     if (array && key.match(/^\d+$/)) {
       return str;
     }
+    if (typeof(key) === 'symbol') {
+      return str;
+    }
      name = JSON.stringify('' + key);
      if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
       name = name.substr(1, name.length - 2);

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Mar 14 14:43:39 2019 (serrano)                */
+;*    Last change :  Mon Mar 18 08:31:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1516,7 +1516,7 @@
 				      (kfail)
 				      (hop-verb 3
 					 (hop-color -1 -1 " COMPILE-ERROR")
-					 " " cmd "\n")
+					 " " cmd "\n" msg)
 				      (dump-error cmd sopath msg)
 				      'error))
 				  (synchronize socompile-mutex
@@ -1634,19 +1634,18 @@
    (define (hop-eval filename)
       (let ((old (hashtable-get hop-load-cache filename)))
 	 (if old
-	     (values (call-with-eval-module old (lambda () (eval! 'hopscript)))
-		old)
+	     (values (car old) (cdr old))
 	     (let ((v (hop-load filename :mode 'module)))
 		(cond
 		   ((procedure? v)
+		    (hashtable-put! hop-load-cache filename (cons v #f))
 		    (values v #f))
 		   ((evmodule? v)
-		    (hashtable-put! hop-load-cache filename v)
-		    (values
-		       (call-with-eval-module v
-			  (lambda ()
-			     (eval! 'hopscript)))
-		       v))
+		    (let ((init (call-with-eval-module v
+				   (lambda ()
+				      (eval! 'hopscript)))))
+		       (hashtable-put! hop-load-cache filename (cons init v))
+		       (values init v)))
 		   (else
 		    (values #f #f)))))))
 
