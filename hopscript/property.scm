@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Mar 18 14:02:09 2019 (serrano)                */
+;*    Last change :  Tue Mar 19 09:45:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2712,7 +2712,7 @@
    
    (define (propagate-data-descriptor! current desc)
       (propagate-property-descriptor! current desc)
-      (with-access::JsDataDescriptor current (writable)
+      (with-access::JsDataDescriptor current (writable name)
 	 (with-access::JsDataDescriptor desc ((dwritable writable))
 	    (when (boolean? dwritable)
 	       (set! writable dwritable)))
@@ -2724,7 +2724,7 @@
 		      (set! value dvalue)))
 		  ((isa? current JsWrapperDescriptor)
 		   (with-access::JsWrapperDescriptor current (%set)
-		      (%set o dvalue %this)))))))
+		      (%set o o dvalue name %this)))))))
       #t)
    
    (define (propagate-accessor-descriptor! current desc)

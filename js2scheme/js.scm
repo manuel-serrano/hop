@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sat Feb 16 11:34:23 2019 (serrano)                */
+;*    Last change :  Tue Mar 19 06:55:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -923,6 +923,13 @@
       (list this (format "~a" (num2js val)))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SLiteralCnst ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SLiteralCnst tildec dollarc mode evalp conf)
+   (with-access::J2SLiteralCnst this (val)
+      (j2s-js val tildec dollarc mode evalp conf)))
+   
+;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SBool ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SBool tildec dollarc mode evalp conf)
@@ -1320,10 +1327,15 @@
 (define-method (j2s-js this::J2SClassElement tildec dollarc mode evalp conf)
    
    (define (j2s-js-name name tildec dollarc mode evalp conf)
-      (if (isa? name J2SLiteralValue)
+      (cond
+	 ((isa? name J2SLiteralCnst)
+	  (with-access::J2SLiteralCnst name (val)
+	     (j2s-js-name val tildec dollarc mode evalp conf)))
+	 ((isa? name J2SLiteralValue)
 	  (with-access::J2SLiteralValue name (val)
-	     (list val))
-	  (j2s-js name tildec dollarc mode evalp conf)))
+	     (list val)))
+	 (else
+	  (j2s-js name tildec dollarc mode evalp conf))))
    
    (with-access::J2SClassElement this (static prop)
       (let ((m (if (isa? prop J2SDataPropertyInit)
