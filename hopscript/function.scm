@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Mar 17 07:38:26 2019 (serrano)                */
+;*    Last change :  Tue Mar 19 06:45:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -285,7 +285,7 @@
 	       (get thrower-get)
 	       (set thrower-set)
 	       (%get throw)
-	       (%set throw)
+	       (%set (lambda (this v) (throw this)))
 	       (enumerable #f)
 	       (configurable #f)))
 	 (set! strict-caller-property
@@ -294,7 +294,7 @@
 	       (get thrower-get)
 	       (set thrower-set)
 	       (%get throw)
-	       (%set throw)
+	       (%set (lambda (this v) (throw this)))
 	       (enumerable #f)
 	       (configurable #f))))
       
