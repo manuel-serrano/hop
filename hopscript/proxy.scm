@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon Mar 18 14:12:29 2019 (serrano)                */
+;*    Last change :  Tue Mar 19 14:06:29 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -185,17 +185,17 @@
       (let ((set (js-object-get-name/cache handler 'set #f %this %cache-set)))
 	 (when (isa? set JsFunction)
 	    (let ((r (js-call4 %this set handler target
-			(symbol->pname prop)
-			v
-			obj)))
-	       (cond
-		  ((not (js-totest r))
-		   (js-raise-type-error %this "Proxy \"set\" returns false on property \"~a\""
-		      prop))
-		  ((null? (js-object-properties target))
-		   r)
-		  (else
-		   (proxy-check-property-value target obj prop %this v 'set))))))))
+			   (symbol->pname prop)
+			   v
+			   obj)))
+		  (cond
+		     ((not (js-totest r))
+		      (js-raise-type-error %this "Proxy \"set\" returns false on property \"~a\""
+			 prop))
+		     ((null? (js-object-properties target))
+		      r)
+		     (else
+		      (proxy-check-property-value target obj prop %this v 'set))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsProxy ...                                             */
@@ -351,7 +351,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    proxy-check-revoked! ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (proxy-check-revoked! o::JsProxy action %this::JsGlobalObject)
+(define-inline (proxy-check-revoked! o::JsProxy action %this::JsGlobalObject)
    (with-access::JsProxy o (revoked)
       (when revoked
 	 (js-raise-type-error %this

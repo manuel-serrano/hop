@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Mar 18 15:11:18 2019 (serrano)                */
+;*    Last change :  Tue Mar 19 14:32:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -68,7 +68,14 @@
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
 	   (js-apply-service% ::procedure obj args::pair-nil ::int)
 	   (js-apply-rest% ::JsGlobalObject ::procedure this ::pair-nil ::int ::int)
-	   (js-apply% ::JsGlobalObject ::JsFunction ::procedure obj ::pair-nil)	   
+	   (js-apply% ::JsGlobalObject ::JsFunction ::procedure obj ::pair-nil)
+
+	   (js-call0% ::JsGlobalObject fun::JsFunction ::procedure this)
+	   (js-call1% ::JsGlobalObject fun::JsFunction ::procedure this a0)
+	   (js-call2% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1)
+	   (js-call3% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2)
+	   (js-call4% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3)
+	   
 	   (js-call0 ::JsGlobalObject fun::obj this)
 	   (js-call1 ::JsGlobalObject fun::obj this a0)
 	   (js-call2 ::JsGlobalObject fun::obj this a0 a1)

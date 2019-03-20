@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Mar 19 09:45:06 2019 (serrano)                */
+;*    Last change :  Tue Mar 19 13:24:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1026,11 +1026,7 @@
 	 ((string? p)
 	  (string->symbol p))
 	 ((isa? p JsStringLiteral)
-	  (if (symbol? (js-jsstring-name p))
-	      (js-jsstring-name p)
-	      (let ((newn (string->symbol (js-jsstring->string p))))
-		 (js-jsstring-name-set! p newn)
-		 newn)))
+	  (js-jsstring-toname p))
 	 ((fixnum? p)
 	  (fixnum->pname p))
 	 ((uint32? p)
@@ -1062,6 +1058,16 @@
 	     val))
 	 (else
 	  (loop (js-tostring p %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-toname ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-toname p)
+   (if (symbol? (js-jsstring-name p))
+       (js-jsstring-name p)
+       (let ((newn (string->symbol (js-jsstring->string p))))
+	  (js-jsstring-name-set! p newn)
+	  newn)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-integer->name ...                                             */
@@ -1217,12 +1223,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-property-value obj propowner propname desc %this)
    (cond
-      ((isa? desc JsAccessorDescriptor)
-       (with-access::JsAccessorDescriptor desc (%get)
-	  (%get obj)))
-      ((isa? desc JsValueDescriptor)
-       (with-access::JsValueDescriptor desc (value)
-	  value))
       ((isa? desc JsWrapperDescriptor)
        (with-access::JsWrapperDescriptor desc (%get)
 	  ;; JsWrapperDescriptor are used, amongst other, by JsProxy. 
@@ -1231,6 +1231,12 @@
 	  ;; is meaningless and this is why the %GET and %SET functions of
 	  ;; JsWrapperDescriptor take an explicit name as argument
 	  (%get propowner obj propname %this)))
+      ((isa? desc JsAccessorDescriptor)
+       (with-access::JsAccessorDescriptor desc (%get)
+	  (%get obj)))
+      ((isa? desc JsValueDescriptor)
+       (with-access::JsValueDescriptor desc (value)
+	  value))
       (else
        (js-undefined))))
 
@@ -1678,12 +1684,31 @@
 ;*---------------------------------------------------------------------*/
 (define (js-get/cache o prop::obj %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+   (if (or (not (isa? prop JsStringLiteral)) (not (js-object? o)))
+       (js-get o prop %this)
+       (let* ((pname (js-jsstring-toname prop))
+	      (cache (getprop pname 'pcache)))
+	  (cond
+	     (cache
+	      (js-object-get-name/cache o pname #f
+		 %this cache point cspecs))
+	     ((js-isindex? (js-toindex prop))
+	      (js-get o prop %this))
+	     (else
+	      (let ((cache (instantiate::JsPropertyCache)))
+		 (putprop! pname 'pcache cache)
+		 (js-object-get-name/cache o pname #f
+		    %this cache point cspecs)))))))
+
+(define (js-get/cache.TOBEREMOVED o prop::obj %this::JsGlobalObject
+	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (if (or (not (js-jsstring? prop)) (not (js-object? o)))
        (js-get o prop %this)
        (let ((pname (js-toname prop %this)))
 	  (with-access::JsPropertyCache cache (name)
 	     (cond
 		((eq? name pname)
+		 (tprint "in cache.1")
 		 (js-object-get-name/cache o pname #f
 		    %this cache point cspecs))
 		((js-isindex? (js-toindex prop))
