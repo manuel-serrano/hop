@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Feb 27 08:54:04 2019 (serrano)                */
+;*    Last change :  Tue Mar 26 18:24:50 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -42,9 +42,14 @@
    
    (define (constructor? prop::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit prop (name)
-	 (when (isa? name J2SLiteralValue)
-	    (with-access::J2SLiteralValue name (val)
-	       (equal? val "constructor")))))
+	 (let loop ((name name))
+	    (cond
+	       ((isa? name J2SLiteralCnst)
+		(with-access::J2SLiteralCnst name (val)
+		   (loop val)))
+	       ((isa? name J2SLiteralValue)
+		(with-access::J2SLiteralValue name (val)
+		   (equal? val "constructor")))))))
    
    (define (find-constructor elements)
       (find (lambda (m)

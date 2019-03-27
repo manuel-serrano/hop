@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Tue Jan  8 15:36:33 2019 (serrano)                */
+;*    Last change :  Tue Mar 26 18:22:54 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
@@ -126,9 +126,14 @@
 
    (define (constructor? prop::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit prop (name)
-	 (when (isa? name J2SLiteralValue)
-	    (with-access::J2SLiteralValue name (val)
-	       (equal? val "constructor")))))
+	 (let loop ((name name))
+	    (cond
+	       ((isa? name J2SLiteralCnst)
+		(with-access::J2SLiteralCnst name (val)
+		   (loop val)))
+	       ((isa? name J2SLiteralValue)
+		(with-access::J2SLiteralValue name (val)
+		   (equal? val "constructor")))))))
    
    (define (find-constructor elements)
       (find (lambda (m)

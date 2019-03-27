@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Feb 22 08:47:01 2019 (serrano)                */
+;*    Last change :  Tue Mar 26 18:39:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -310,7 +310,7 @@
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    ronly! ::J2SUnary ...                                            */
+;*    usage ::J2SUnary ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SUnary ctx deval infun)
    (with-access::J2SUnary this (op expr)
@@ -448,8 +448,9 @@
 ;*    usage ::J2SForIn ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SForIn ctx deval infun)
-   (with-access::J2SForIn this (lhs obj)
+   (with-access::J2SForIn this (lhs obj body)
       (usage obj ctx deval infun)
+      (usage body 'ref deval infun)
       (usage lhs 'assig deval infun)))
 
 ;*---------------------------------------------------------------------*/
