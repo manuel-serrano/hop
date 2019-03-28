@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Mar 14 17:51:20 2019 (serrano)                */
+;*    Last change :  Thu Mar 28 11:32:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -199,24 +199,6 @@
 		  (loc loc)
 		  (lhs (j2sref old loc withs wenv))
 		  (rhs val))))))
-
-;*---------------------------------------------------------------------*/
-;*    inits->sequence ...                                              */
-;*---------------------------------------------------------------------*/
-(define (inits->sequence loc decls)
-   
-   (define (initstmt->assig decl)
-      (with-access::J2SStmtExpr decl (expr)
-	 (with-access::J2SInit expr (loc lhs rhs)
-	    (instantiate::J2SAssig
-	       (loc loc)
-	       (lhs lhs)
-	       (rhs rhs)))))
-   
-   (if (pair? decls)
-      (let ((exprs (map initstmt->assig decls)))
-	 (instantiate::J2SSequence (loc loc) (exprs exprs)))
-      (instantiate::J2SNop (loc loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-decls! ...                                                  */
@@ -493,10 +475,40 @@
 	     ref))))
 
 ;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SLabel ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SLabel env mode withs wenv genv ctx conf)
+   (with-access::J2SLabel this (body loc)
+      (if (or (isa? body J2SFor) (isa? body J2SForIn))
+	  (let ((n (resolve! body env mode withs wenv genv ctx conf)))
+	     (cond
+		((isa? n J2SLetBlock)
+		 (with-access::J2SLetBlock n (nodes endloc)
+		    (let ((nbody (instantiate::J2SBlock
+				    (loc loc)
+				    (endloc endloc)
+				    (nodes nodes))))
+		       (set! nodes
+			  (list (duplicate::J2SLabel this
+				   (body nbody))))
+		       n)))
+		((isa? n J2SBlock)
+		 (with-access::J2SBlock n (nodes endloc)
+		    (set! body (cadr nodes))
+		    (instantiate::J2SBlock
+		       (loc loc)
+		       (endloc endloc)
+		       (nodes (list (car nodes) this)))))
+		(else
+		 (set! body n)
+		 this)))
+	  (call-default-walker))))
+	 
+;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SFor ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SFor env mode withs wenv genv ctx conf)
-   
+
    (define (mark-decls-loop! decls)
       (for-each (lambda (decl::J2SDecl)
 		   (with-access::J2SDecl decl (scope _scmid id binder)
@@ -549,15 +561,11 @@
       (with-access::J2SFor for (init)
 	 (with-access::J2SVarDecls init (loc decls)
 	    (let ((lift init))
-	       (let ((ndecls (filter-map (lambda (d)
-				(let ((nd (resolve! d env mode withs wenv genv ctx conf)))
-				   (unless (isa? nd J2SNop) nd)))
-		    decls)))
-	          (set! init (inits->sequence loc ndecls)))
+	       (set! init (instantiate::J2SNop (loc loc)))
 	       (instantiate::J2SBlock
 		  (endloc loc)
 		  (loc loc)
-		  (nodes (list for)))))))
+		  (nodes (list lift for)))))))
    
    (define (let-init? init::J2SVarDecls)
       (with-access::J2SVarDecls init (decls)

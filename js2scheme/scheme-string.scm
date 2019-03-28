@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Mar 15 15:36:05 2019 (serrano)                */
+;*    Last change :  Thu Mar 28 15:57:31 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -132,7 +132,7 @@
 			      (integer? (string-index flags #\g)))))
 		(tmp obj
 		   (lambda (tmp)
-		      (replace tmp `(vector-ref-ur %cnsts ,index) global))))))
+		      (replace tmp `(js-cnst-table-ref ,index) global))))))
        (let ((regexp (j2s-scheme (uncast (car args)) mode return conf)))
 	  (tmp obj
 	     (lambda (tmp)

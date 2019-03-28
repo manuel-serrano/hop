@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Mar 18 14:44:57 2019 (serrano)                */
+;*    Last change :  Thu Mar 28 15:42:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -587,13 +587,13 @@
       (if (isa? val J2SRegExp)
 	  ;; regexp are hybrid, the rx part is precompiled but the
 	  ;; JS object is dynamically allocated
- 	  `(let ((rx::JsRegExp (vector-ref-ur %cnsts ,index)))
+ 	  `(let ((rx::JsRegExp (js-cnst-table-ref ,index)))
 	      (let ((nrx::JsRegExp (duplicate::JsRegExp rx)))
 		 (js-object-mode-set! nrx (js-object-default-mode))
 		 (js-object-properties-set! nrx
 		    (list-copy (js-object-properties rx)))
 		 nrx))
-	  `(vector-ref-ur %cnsts ,index))))
+	  `(js-cnst-table-ref ,index))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2STemplate ...                                     */

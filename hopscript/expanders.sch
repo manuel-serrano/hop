@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Sat Jan 26 12:07:18 2019 (serrano)                */
+;*    Last change :  Thu Mar 28 15:26:25 2019 (serrano)                */
 ;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -48,6 +48,13 @@
 	     ,js-pcache-function-expander))
    (eval `(define-expander js-get-name/cache
 	     ,js-get-name/cache-expander))
+
+   (eval `(define-expander %define-cnst-table
+	     ,%define-cnst-table-expander))
+   (eval `(define-expander js-cnst-table
+	     ,js-cnst-table-expander))
+   (eval `(define-expander js-cnst-table-ref
+	     ,js-cnst-table-ref-expander))
 
    (eval `(define-expander js-pcache-prefetch-index
 	     ,js-pcache-prefetch-index-expander))

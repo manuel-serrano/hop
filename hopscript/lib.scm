@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Fri Mar 15 11:14:43 2019 (serrano)                */
+;*    Last change :  Thu Mar 28 15:42:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -34,7 +34,7 @@
 	   __hopscript_arraybuffer
 	   __hopscript_arraybufferview)
 
-   (export (js-constant-init ::bstring ::JsGlobalObject)
+   (export (js-constant-init ::obj ::bstring ::JsGlobalObject)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
 	   (js-alist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
@@ -51,7 +51,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-constant-init ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-constant-init str %this)
+(define (js-constant-init vec-or-false str %this)
    (let ((cnsts (string->obj str)))
       (let loop ((i (-fx (vector-length cnsts) 1)))
 	 (when (>=fx i 0)
@@ -119,6 +119,9 @@
 				(with-access::JsRegExp regexp (rx)
 				   rx))))))))
 	       (loop (-fx i 1)))))
+      ;; start fill at index 1 because of the C declaration
+      ;; of the constant vector (see constant_expd.sch)
+      (when vec-or-false (vector-copy! vec-or-false 1 cnsts 0))
       cnsts))
 
 ;*---------------------------------------------------------------------*/

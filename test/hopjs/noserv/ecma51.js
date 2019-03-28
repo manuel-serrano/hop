@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Mon Mar 18 10:50:50 2019 (serrano)                */
+/*    Last change :  Thu Mar 28 13:36:36 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -45,6 +45,23 @@ assert.deepEqual( no, { foo_a: o.foo_a,
 			foo_b: o.foo_b,
 			gee_a: o.gee_a,
 			gee_b: o.gee_b } );
+
+function forlbl() {
+   // test262/test/suite/ch07/7.9/S7.9_A1.js
+   label1: for (var i = 0; i <= 0; i++) {
+      for (var j = 0; j <= 1; j++) {
+	 if (j === 0) {
+	    continue label1;
+	 } else {
+	    throw('#1: Check continue statement for automatic semicolon insertion');
+	 }
+      }
+    }
+	   
+    return i === 1 && j === 0;
+}
+
+assert.ok( "forlbl", "forlbl" );
 
 /*---------------------------------------------------------------------*/
 /*    value of an assignment                                           */

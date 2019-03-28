@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Mar 15 11:35:09 2019 (serrano)                */
+;*    Last change :  Thu Mar 28 15:31:34 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -34,8 +34,9 @@
 (define-method (j2s-scheme this::J2SProgram mode return conf)
    
    (define (j2s-master-module module scmcnsts esexports esimports body)
-      (with-access::J2SProgram this (mode pcache-size call-size globals)
+      (with-access::J2SProgram this (mode pcache-size call-size globals cnsts)
 	 (list module
+	    `(%define-cnst-table ,(length cnsts))
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
 		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
@@ -47,7 +48,7 @@
 	       `(define %call-locations ',(call-locations this)))
 	    `(define (hopscript %this this %scope %module)
 		(define %worker (js-current-worker))
-		(define %cnsts ,scmcnsts)
+		(define %cnst-table ,scmcnsts)
 		,@esimports
 		,esexports
 		,@globals
@@ -56,10 +57,11 @@
 	    'hopscript)))
 
    (define (j2s-slave-module module scmcnsts esexports esimports body)
-      (with-access::J2SProgram this (mode pcache-size call-size globals)
+      (with-access::J2SProgram this (mode pcache-size call-size globals cnsts)
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
+	    `(%define-cnst-table ,(length cnsts))
 	    `(define (hopscript %this this %scope %module)
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
@@ -68,7 +70,7 @@
 			(define %call-locations ',(call-locations this)))
 		      '())
 		(define %worker (js-current-worker))
-		(define %cnsts ,scmcnsts)
+		(define %cnst-table ,scmcnsts)
 		,@esimports
 		,esexports
 		,@globals
@@ -90,7 +92,7 @@
 	  (define %module
 	     (nodejs-new-module ,(basename path) ,(absolute path)
 		%worker %this))
-	  (define %cnsts ,scmcnsts)
+	  (define %cnst-table ,scmcnsts)
 	  ,@esimports
 	  ,esexports
 	  ,@globals
@@ -98,7 +100,7 @@
    
    (define (j2s-main-module/workers name scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size %this path
-				       globals)
+				       globals cnsts)
 	 (let ((module `(module ,(string->symbol name)
 			   (eval (library hop)
 			      (library hopscript)
@@ -107,6 +109,7 @@
 			   (cond-expand (enable-libuv (library libuv)))
 			   (main main))))
 	    (list module
+	       `(%define-cnst-table ,(length cnsts))
 	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
 	       `(define %pcache
@@ -154,7 +157,7 @@
 				     (j2s-scheme-closure d mode return conf))
 			 decls))
 	     (scmnodes (j2s-scheme nodes mode return conf))
-	     (scmcnsts (%cnsts cnsts mode return conf)))
+	     (scmcnsts (%cnst-table cnsts mode return conf)))
 	 (if (and main (not (config-get conf :worker #t)))
 	     (j2s-main-sans-worker-module this name
 		scmcnsts
@@ -171,6 +174,7 @@
 		   ((not name)
 		    ;; a mere expression
 		    `(lambda (%this this %scope %module)
+			(%define-cnst-table ,(length cnsts))
 			(%define-pcache ,pcache-size)	       
 			(define %pcache
 			   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
@@ -181,7 +185,7 @@
 			(define %worker (js-current-worker))
 			(define %source (or (the-loading-file) "/"))
 			(define %resource (dirname %source))
-			(define %cnsts ,scmcnsts)
+			(define %cnst-table ,scmcnsts)
 			,@esimports
 			,esexports
 			,@globals
@@ -202,7 +206,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-main-sans-worker-module this name scmcnsts toplevel
 	   esexports esimports body conf)
-   (with-access::J2SProgram this (mode pcache-size call-size %this path globals)
+   (with-access::J2SProgram this (mode pcache-size call-size %this path globals cnsts)
       (let ((module `(module ,(string->symbol name)
 			(eval (library hop)
 			   (library hopscript)
@@ -210,7 +214,8 @@
 			(library hop hopscript nodejs)
 			(cond-expand (enable-libuv (library libuv)))
 			(main main))))
-	 `(,module (%define-pcache ,pcache-size)
+	 `(,module (%define-cnst-table ,(length cnsts))
+	     (%define-pcache ,pcache-size)
 	     (define %pcache
 		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
 	     ,@(if (config-get conf :profile-call #f)
@@ -231,7 +236,7 @@
 	     (define %module
 		(nodejs-new-module ,(basename path) ,(absolute path)
 		   %worker %this))
-	     (define %cnsts ,scmcnsts)
+	     (define %cnst-table ,scmcnsts)
 	     ,@esimports
 	     ,esexports
 	     ,@globals
@@ -494,11 +499,11 @@
        body))
 
 ;*---------------------------------------------------------------------*/
-;*    %cnsts ...                                                       */
+;*    %cnst-table ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (%cnsts cnsts mode return conf)
+(define (%cnst-table cnsts mode return conf)
    
-   (define (%cnsts-debug cnsts)
+   (define (%cnst-table-debug cnsts)
       `(vector
 	  ,@(map (lambda (n)
 		    (let ((s (j2s-scheme n mode return conf)))
@@ -510,7 +515,7 @@
 			   s)))
 	       cnsts)))
    
-   (define (%cnsts-intext cnsts)
+   (define (%cnst-table-intext cnsts)
       
       (define %this
 	 '(js-new-global-object))
@@ -533,14 +538,14 @@
 	    (else
 	     (error "j2s-constant" "wrong literal" this))))
       
-      `(js-constant-init
+      `(js-constant-init (js-cnst-table)
 	  ,(obj->string (list->vector (map j2s-constant cnsts))) %this))
    
    ;; this must be executed after the code is compiled as this
    ;; compilation might change or add new constants.
    (if (>fx (bigloo-debug) 0)
-       (%cnsts-debug cnsts)
-       (%cnsts-intext cnsts)))
+       (%cnst-table-debug cnsts)
+       (%cnst-table-intext cnsts)))
 
 ;*---------------------------------------------------------------------*/
 ;*    call-locations ...                                               */
