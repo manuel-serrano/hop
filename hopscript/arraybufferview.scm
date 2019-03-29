@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arraybufferview.scm     */
+;*    serrano/prgm/project/hop/hop/hopscript/arraybufferview.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sat Jan 26 09:53:01 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 13:40:45 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -731,7 +731,7 @@
 (define-method (js-properties-names::vector obj::JsTypedArray enump %this)
    (with-access::JsTypedArray obj (length)
       (let ((len (uint32->fixnum length)))
-	 (append! (map js-integer->name (iota len))
+	 (append! (map js-integer->jsstring (iota len))
 	    (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/

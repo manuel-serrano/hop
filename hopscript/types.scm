@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/types.scm               */
+;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Mar 17 07:32:20 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 13:39:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -127,7 +127,8 @@
 	   (abstract-class JsStringLiteral
 	      weight::uint32
 	      left::obj
-	      (right::obj (default #f)))
+	      (right::obj (default #f))
+	      (pcache (default #f)))
 	   
 	   (class JsStringLiteralASCII::JsStringLiteral)
 	   (final-class JsStringLiteralIndex::JsStringLiteralASCII

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/require.scm                */
+;*    serrano/prgm/project/hop/hop/nodejs/require.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Mar 18 08:31:33 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 08:37:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2116,7 +2116,7 @@
                   (loop (+fx i 1))))))
       
       (define (in-mapped-property n)
-         (when (symbol? (property-name n)) (proc (property-name n))))
+	 (proc (property-name n)))
       
       (define (in-property p)
          (when (isa? p JsPropertyDescriptor)

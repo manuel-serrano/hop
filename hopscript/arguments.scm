@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arguments.scm           */
+;*    serrano/prgm/project/hop/hop/hopscript/arguments.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Mar 18 10:52:01 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 13:40:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -316,7 +316,7 @@
 (define-method (js-properties-names obj::JsArguments enump %this)
    (with-access::JsArguments obj (vec)
       (append!
-	 (map! js-integer->name (iota (vector-length vec)))
+	 (map! js-integer->jsstring (iota (vector-length vec)))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/

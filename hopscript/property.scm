@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/property.scm            */
+;*    serrano/prgm/project/hop/hop/hopscript/property.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Mar 19 13:24:41 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 08:37:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -60,7 +60,7 @@
 	   (inline js-pcache-cmap ::JsPropertyCache)
 	   (inline js-pcache-amap ::JsPropertyCache)
 	   
-	   (inline property-name::symbol ::struct)
+	   (inline property-name::JsStringLiteral ::struct)
 	   
 	   (js-names->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
@@ -68,7 +68,6 @@
 
 	   (js-object-unmap! ::JsObject)
 	   (js-toname::obj ::obj ::JsGlobalObject)
-	   (js-integer->name::obj ::long)
 	   
 	   (inline js-is-accessor-descriptor?::bool obj)
 	   (inline js-is-data-descriptor?::bool obj)
@@ -109,7 +108,7 @@
 
 	   (js-get/cache ::obj ::obj ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   (js-get-name/cache ::obj ::symbol ::bool ::JsGlobalObject
+	   (js-get-name/cache ::obj ::JsStringLiteral ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   (js-object-get-name/cache ::JsObject ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
@@ -125,9 +124,9 @@
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
-	   (js-global-object-get-name ::JsObject ::symbol ::bool
+	   (js-global-object-get-name ::JsObject ::JsStringLiteral ::bool
 	      ::JsGlobalObject)
-	   (js-global-object-get-name/cache ::JsObject ::symbol ::bool
+	   (js-global-object-get-name/cache ::JsObject ::JsStringLiteral ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
@@ -145,7 +144,7 @@
 	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (js-put/cache! ::obj ::obj ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   (js-put-name/cache! ::obj ::symbol ::obj ::bool
+	   (js-put-name/cache! ::obj ::JsStringLiteral ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   (js-object-put-name/cache! ::JsObject ::obj ::obj ::bool
@@ -201,7 +200,7 @@
 	      (hidden-class #t))
 
 	   (js-define ::JsGlobalObject ::JsObject
-	      ::symbol ::procedure ::obj ::obj ::obj
+	      ::JsStringLiteral ::procedure ::obj ::obj ::obj
 	      #!key (hidden-class #t))
 	   
 	   (js-method-call-name/cache ::JsGlobalObject ::obj ::obj
@@ -1060,22 +1059,6 @@
 	  (loop (js-tostring p %this))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-toname ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (js-jsstring-toname p)
-   (if (symbol? (js-jsstring-name p))
-       (js-jsstring-name p)
-       (let ((newn (string->symbol (js-jsstring->string p))))
-	  (js-jsstring-name-set! p newn)
-	  newn)))
-
-;*---------------------------------------------------------------------*/
-;*    js-integer->name ...                                             */
-;*---------------------------------------------------------------------*/
-(define (js-integer->name n)
-   (string->symbol (integer->string n)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-is-accessor-descriptor? ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.1       */
@@ -1700,31 +1683,6 @@
 		 (js-object-get-name/cache o pname #f
 		    %this cache point cspecs)))))))
 
-(define (js-get/cache.TOBEREMOVED o prop::obj %this::JsGlobalObject
-	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (if (or (not (js-jsstring? prop)) (not (js-object? o)))
-       (js-get o prop %this)
-       (let ((pname (js-toname prop %this)))
-	  (with-access::JsPropertyCache cache (name)
-	     (cond
-		((eq? name pname)
-		 (tprint "in cache.1")
-		 (js-object-get-name/cache o pname #f
-		    %this cache point cspecs))
-		((js-isindex? (js-toindex prop))
-		 (js-get o prop %this))
-		((eq? name '||)
-		 (set! name pname)
-		 (js-object-get-name/cache o pname #f
-		    %this cache point cspecs))
-		(else
-		 (let ((cache (getprop pname 'pcache)))
-		    (unless cache
-		       (set! cache (instantiate::JsPropertyCache))
-		       (putprop! pname 'pcache cache))
-		    (js-object-get-name/cache o pname #f
-		       %this cache point cspecs))))))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache ...                                            */
 ;*    -------------------------------------------------------------    */
@@ -1756,7 +1714,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    This is an inlined version of js-get-own-property.               */
 ;*---------------------------------------------------------------------*/
-(define (js-global-object-get-name o::JsObject name::symbol
+(define (js-global-object-get-name o::JsObject name::JsStringLiteral
 	   throw::bool %this::JsGlobalObject)
    (let ((pval (js-get-property-value o o name %this)))
       (if (eq? pval (js-absent))
@@ -1768,7 +1726,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden by a macro in property.sch                         */
 ;*---------------------------------------------------------------------*/
-(define (js-global-object-get-name/cache o::JsObject name::symbol
+(define (js-global-object-get-name/cache o::JsObject name::JsStringLiteral
 	   throw::bool %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (with-access::JsObject o ((omap cmap) elements)
@@ -2294,7 +2252,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden by a macro in property.sch                         */
 ;*---------------------------------------------------------------------*/
-(define (js-put-name/cache! o prop::symbol v::obj throw::bool
+(define (js-put-name/cache! o prop::JsStringLiteral v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (if (isa? o JsObject)
@@ -2306,7 +2264,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden by a macro in property.sch                         */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache! o::JsObject prop::symbol v::obj throw::bool
+(define (js-object-put-name/cache! o::JsObject prop::JsStringLiteral v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    ;; rewritten by macro expansion
@@ -2315,7 +2273,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-miss! ...                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-miss! o::JsObject prop::symbol v::obj
+(define (js-object-put-name/cache-miss! o::JsObject prop::JsStringLiteral v::obj
 	   throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
@@ -2342,7 +2300,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-imap+! o::JsObject prop::symbol v::obj
+(define (js-object-put-name/cache-imap+! o::JsObject prop::JsStringLiteral v::obj
 	   throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
@@ -2354,7 +2312,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-cmap+! o::JsObject prop::symbol v::obj
+(define (js-object-put-name/cache-cmap+! o::JsObject prop::JsStringLiteral v::obj
 	   throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
@@ -2366,7 +2324,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-pmap+! o::JsObject prop::symbol v::obj
+(define (js-object-put-name/cache-pmap+! o::JsObject prop::JsStringLiteral v::obj
 	   throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))

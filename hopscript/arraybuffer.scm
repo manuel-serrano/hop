@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arraybuffer.scm         */
+;*    serrano/prgm/project/hop/hop/hopscript/arraybuffer.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Wed Jan 23 11:45:42 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 13:40:38 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -245,7 +245,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-names obj::JsArrayBuffer enump %this)
    (let ((len (js-arraybuffer-length obj)))
-      (append! (map js-integer->name (iota len))
+      (append! (map js-integer->jsstring (iota len))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/

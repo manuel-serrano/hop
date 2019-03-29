@@ -1,9 +1,9 @@
-;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/array.scm               */
+!;*=====================================================================*/
+;*    serrano/prgm/project/hop/hop/hopscript/array.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Mar 17 09:43:43 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 13:45:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2613,7 +2613,7 @@
 		 (acc '()))
 	 (if (=fx i -1)
 	     (append! acc (call-next-method))
-	     (loop (-fx i 1) (cons (js-integer->name i) acc))))))
+	     (loop (-fx i 1) (cons (js-integer->jsstring i) acc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArray ...                                    */

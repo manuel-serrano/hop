@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/string.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/string.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Feb 28 08:09:26 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 13:40:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -663,10 +663,8 @@
 (define-method (js-properties-names obj::JsString enump %this)
    (with-access::JsString obj (val)
       (append!
-	 (map! js-integer->name
-	    (iota
-	       (uint32->fixnum
-		  (js-jsstring-character-length val))))
+	 (map! js-integer->jsstring
+	    (iota (uint32->fixnum (js-jsstring-character-length val))))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
