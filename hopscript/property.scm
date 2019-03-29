@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 29 08:37:31 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 18:46:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1647,7 +1647,7 @@
       ((isa? o JsArray)
        (js-array-length o))
       ((isa? o JsStringLiteralASCII)
-       (js-string-literal-length o))
+       (js-string-length o))
       ((isa? o JsStringLiteral)
        (js-jsstring-codeunit-length o))
       ((isa? o JsTypedArray)

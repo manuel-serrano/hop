@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/public.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/public.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Mar 19 14:32:03 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 18:58:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1076,18 +1076,10 @@
 ;*    Performance demands this function not to returned a boxed        */
 ;*    result. So, false is here denoted 1^32-1, as an uint32.          */
 ;*---------------------------------------------------------------------*/
-(define (js-toindex p)
+(define-generic (js-toindex p)
    
    (define false (-u32 #u32:0 #u32:1))
    
-   (define (string->index p::bstring)
-      (let ((num (string->number p)))
-	 (if (bignum? num)
-	     (if (and (>=bx num #z0) (<bx num (exptbx #z2 #z32)))
-		 (llong->uint32 (bignum->llong num))
-		 false)
-	     (js-toindex num))))
-
    (cond
       ((fixnum? p)
        (cond-expand
@@ -1118,17 +1110,6 @@
        p)
       ((int32? p)
        (int32->uint32 p))
-      ((js-jsstring? p)
-       (if (isa? p JsStringLiteralIndex)
-	   (with-access::JsStringLiteralIndex p (index)
-	      index)
-	   (string->index (js-jsstring->string p))))
-      ((isa? p JsNumber)
-       (with-access::JsNumber p (val) (js-toindex val)))
-      ((symbol? p)
-       (string->index (symbol->string! p)))
-      ((isa? p JsString)
-       (with-access::JsString p (val) (string->index (js-jsstring->string val))))
       (else
        false)))
 

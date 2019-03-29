@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/number.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/number.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Feb 28 07:59:48 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 19:01:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -225,6 +225,12 @@
 	  (inexact->exact (floor val)))
 	 (else
 	  val))))
+
+;*---------------------------------------------------------------------*/
+;*    js-toindex ::JsNumber ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-toindex this::JsNumber)
+   (with-access::JsNumber p (val) (js-toindex val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-number-prototype! ...                               */

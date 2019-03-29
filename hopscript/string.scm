@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Mar 29 13:40:53 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 19:02:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -66,6 +66,13 @@
 (define-method (js-tostring obj::JsString %this::JsGlobalObject)
    (with-access::JsString obj (val)
       (js-jsstring->string val)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toindex ::JsString ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-toindex obj::JsString)
+   (with-access::JsString p (val)
+      (js-toindex (js-jsstring->string val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsString ...                                         */
