@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Thu Mar 28 15:57:31 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 07:33:21 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -38,22 +38,33 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-string-ref this::J2SAccess mode return conf)
 
-   (define (jsstring-ref type obj index)
-      (if (eq? type 'string)
-	  `(js-jsstring-ref-as-string ,obj ,index)
-	  `(js-jsstring-ref ,obj ,index)))
+   (define (literal-ascii? obj)
+      (when (isa? obj J2SLiteralCnst)
+	 (with-access::J2SLiteralCnst obj (val)
+	    (when (isa? val J2SString)
+	       (with-access::J2SString val (val)
+		  (eq? (string-minimal-charset val) 'ascii))))))
+		     
+   (define (jsstring-ref type obj index mode return conf)
+      (let ((str (j2s-scheme obj mode return conf)))
+	 (if (literal-ascii? obj)
+	     `(js-ascii-ref ,str ,index)
+	     `(js-jsstring-ref ,str ,index))))
    
    (with-access::J2SAccess this (obj field type)
       (cond
 	 ((eq? (j2s-vtype field) 'uint32)
-	  (jsstring-ref type (j2s-scheme obj mode return conf)
-	     (j2s-scheme field mode return conf)))
+	  (jsstring-ref type obj
+	     (j2s-scheme field mode return conf)
+	     mode return conf))
 	 ((eq? (j2s-vtype field) 'int32)
-	  (jsstring-ref type (j2s-scheme obj mode return conf)
-	     `(int32->uint32 ,(j2s-scheme field mode return conf))))
+	  (jsstring-ref type obj
+	     `(int32->uint32 ,(j2s-scheme field mode return conf))
+	     mode return conf))
 	 ((memq (j2s-vtype field) '(integer bint))
-	  (jsstring-ref type (j2s-scheme obj mode return conf)
-	     `(fixnum->uint32 ,(j2s-scheme field mode return conf))))
+	  (jsstring-ref type obj
+	     `(fixnum->uint32 ,(j2s-scheme field mode return conf))
+	     mode return conf))
 	 ((j2s-field-length? field)
 	  (let ((x `(js-jsstring-codeunit-length
 		       ,(j2s-scheme obj mode return conf))))

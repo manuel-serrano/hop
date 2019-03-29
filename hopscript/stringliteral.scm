@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Mar 15 10:28:12 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 07:39:15 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -44,7 +44,7 @@
 	   (inline js-jsstring?::bool ::obj)
 	   (js-jsstring-character-ref ::obj ::uint32)
 	   (js-jsstring-ref ::obj ::uint32)
-	   (js-jsstring-ref-as-string ::obj ::uint32)
+	   (js-ascii-ref ::JsStringLiteralASCII ::uint32)
 	   (js-jsstring-length::uint32 ::obj)
 	   (js-string-literal-length::uint32 ::JsStringLiteral)
 	   (js-string-ref ::obj ::obj ::JsGlobalObject)
@@ -1140,22 +1140,14 @@
    (string-dispatch string-ref o index))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-ref-as-string ...                                    */
+;*    js-ascii-ref ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-ref-as-string o index::uint32)
-   
-   (define (ascii-string-ref val index)
-      (if (>=u32 index (fixnum->uint32 (string-length val)))
-	  "undefined"
+(define (js-ascii-ref o::JsStringLiteralASCII index::uint32)
+   (let ((str (js-jsstring-normalize-ASCII! o)))
+      (if (>=u32 index (fixnum->uint32 (string-length str)))
+	  (js-undefined)
 	  (vector-ref prealloc-strings
-	     (char->integer (string-ref-ur val (uint32->fixnum index))))))
-   
-   (define (utf8-string-ref val index)
-      (if (>=u32 index (js-jsstring-codeunit-length o))
-	  "undefined"
-	  (js-utf8-ref o val (uint32->fixnum index))))
-
-   (string-dispatch string-ref o index))
+	     (char->integer (string-ref-ur str (uint32->fixnum index)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string-ref ...                                                */
@@ -1173,7 +1165,7 @@
 (define (js-string-ref-as-string o prop %this)
    (cond
       ((fixnum? prop)
-       (js-jsstring-ref-as-string o (fixnum->uint32 prop)))
+       (js-jsstring-ref o (fixnum->uint32 prop)))
       (else
        (js-tojsstring (js-get o prop %this) %this))))
 

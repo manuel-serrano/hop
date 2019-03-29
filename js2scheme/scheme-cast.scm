@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Thu Jan 24 17:45:06 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 07:47:53 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -330,7 +330,8 @@
 (define (js->string v expr conf)
    (match-case v
       ((js-jsstring-ref ?str ?idx)
-       (set-car! v 'js-jsstring-ref-as-string)
+       v)
+      ((js-ascii-ref ?str ?idx)
        v)
       ((js-string-ref ?str ?idx ?this)
        (set-car! v 'js-string-ref-as-string)
@@ -573,7 +574,8 @@
    (define (tostring sexp)
       (match-case sexp
 	 ((js-jsstring-ref ?str ?idx)
-	  (set-car! sexp 'js-jsstring-ref-as-string)
+	  sexp)
+	 ((js-ascii-ref ?str ?idx)
 	  sexp)
 	 ((js-string-ref ?str ?idx ?this)
 	  (set-car! sexp 'js-string-ref-as-string)
