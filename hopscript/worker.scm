@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/worker.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/worker.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sun Mar 17 11:42:53 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 10:41:21 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -115,7 +115,7 @@
 	 (init-builtin-worker-prototype! %this js-worker js-worker-prototype)
 	 
 	 ;; bind Worker in the global object
-	 (js-bind! %this %this 'Worker
+	 (js-bind! %this %this (& "Worker")
 	    :configurable #f :enumerable #f :value js-worker
 	    :hidden-class #t)
 	 js-worker)))
@@ -138,7 +138,7 @@
    
    (define (bind-worker-methods! %this scope worker)
       ;; postMessage
-      (js-bind! %this scope 'postMessage
+      (js-bind! %this scope (& "postMessage")
 	 :value (js-make-function %this
 		   (lambda (this data)
 		      (js-worker-post-slave-message worker data))
@@ -149,7 +149,7 @@
 	 :hidden-class #t)
       
       ;; close
-      (js-bind! %this scope 'close
+      (js-bind! %this scope (& "close")
 	 :value (js-make-function %this
 		   (lambda (this)
 		      (js-worker-self-terminate! worker #f))
@@ -161,7 +161,7 @@
       
       (with-access::JsWorker worker (thread)
 	 ;; onmessage
-	 (js-bind! %this %this 'onmessage
+	 (js-bind! %this %this (& "onmessage")
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (with-access::WorkerHopThread thread (onmessage)
@@ -184,8 +184,8 @@
 		   (this (%global-constructor))
 		   (source (js-tostring src %this))
 		   (thunk (lambda ()
-			     (js-put! this 'module
-				(js-get %this 'module %this) #f this)
+			     (js-put! this (& "module")
+				(js-get %this (& "module") %this) #f this)
 			     (loader source thread this)))
 		   (thread (instantiate::WorkerHopThread
 			      (name (gensym (string-append "WebWorker@"
@@ -224,7 +224,7 @@
 	       (let ((onmessage (js-undefined))
 		     (onerror (js-undefined))
 		     (onexit (js-undefined)))
-		  (js-bind! %this worker 'onmessage
+		  (js-bind! %this worker (& "onmessage")
 		     :get (js-make-function %this
 			     (lambda (this) onmessage)
 			     0 "onmessage")
@@ -238,7 +238,7 @@
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t)
-		  (js-bind! %this worker 'onerror
+		  (js-bind! %this worker (& "onerror")
 		     :get (js-make-function %this
 			     (lambda (this) onerror)
 			     0 "onerror")
@@ -252,7 +252,7 @@
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t)
-		  (js-bind! %this worker 'onexit
+		  (js-bind! %this worker (& "onexit")
 		     :get (js-make-function %this
 			     (lambda (this) onexit)
 			     0 "onexit")
@@ -275,12 +275,12 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-worker-prototype! %this js-worker obj)
    ;; prototype fields
-   (js-bind! %this obj 'constructor
+   (js-bind! %this obj (& "constructor")
       :value js-worker
       :enumerable #f
       :hidden-class #t)
    ;; toString
-   (js-bind! %this obj 'toString
+   (js-bind! %this obj (& "toString")
       :value (js-make-function %this
 		(lambda (this) (js-string->jsstring "[object Worker]"))
 		0 "toString")
@@ -289,7 +289,7 @@
       :enumerable #f
       :hidden-class #t)
    ;; postMessage
-   (js-bind! %this obj 'postMessage
+   (js-bind! %this obj (& "postMessage")
       :value (js-make-function %this
 		(lambda (this::JsWorker data)
 		   (with-access::JsWorker this (thread)
@@ -300,7 +300,7 @@
       :enumerable #f
       :hidden-class #t)
    ;; terminate
-   (js-bind! %this obj 'terminate
+   (js-bind! %this obj (& "terminate")
       :value (js-make-function %this
 		(lambda (this::JsWorker)
 		   (with-access::JsWorker this (thread)

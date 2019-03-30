@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Mar 29 19:02:14 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 10:36:11 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -58,7 +58,7 @@
 	 (with-access::JsGlobalObject this (js-string)
 	    (instantiateJsString
 	       (val (js-string->jsstring o))
-	       (__proto__ (js-get js-string 'prototype this)))))))
+	       (__proto__ (js-get js-string (& "prototype") this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsString ...                                       */
@@ -82,7 +82,7 @@
       (with-access::JsGlobalObject %this (js-string)
 	 (let ((nobj (call-next-method)))
 	    (with-access::JsString nobj (__proto__ val)
-	       (set! __proto__ (js-get js-string 'prototype %this))
+	       (set! __proto__ (js-get js-string (& "prototype") %this))
 	       (set! val (js-donate val worker %_this)))
 	    nobj))))
 
@@ -129,7 +129,7 @@
 	    
 	    (define (set-ascii-string! str)
 	       (let ((len (instantiate::JsValueDescriptor
-			     (name 'length)
+			     (name (& "length"))
 			     (writable #f)
 			     (configurable #f)
 			     (enumerable #f)
@@ -161,7 +161,7 @@
 	       (set! js-new-target constructor))
 	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
-	       (__proto__ (js-object-get-name/cache constructor 'prototype #f
+	       (__proto__ (js-object-get-name/cache constructor (& "prototype") #f
 			     %this
 			     (js-pcache-ref %pcache 0)))))
 
@@ -186,7 +186,7 @@
 				(uint16->fixnum (js-touint16 c %this))))
 			l)))))
 	 
-	 (js-bind! %this js-string 'fromCharCode
+	 (js-bind! %this js-string (& "fromCharCode")
 	    :value (js-make-function %this
 		      js-string-fromcharcode 1 "fromCharCode"
 		      :prototype (js-undefined))
@@ -201,10 +201,10 @@
 	    (let ((template (car a))
 		  (substitutions (cdr a)))
 	       (if (isa? template JsObject)
-		   (let ((raw (js-get template 'raw %this)))
+		   (let ((raw (js-get template (& "raw") %this)))
 		      (if (isa? raw JsObject)
 			  ;; step 9
-			  (let ((literalsegments (js-get raw 'length %this)))
+			  (let ((literalsegments (js-get raw (& "length") %this)))
 			     (let loop ((strs '())
 					(nextindex 0)
 					(subs substitutions))
@@ -225,7 +225,7 @@
 			  (js-undefined)))
 		   (js-undefined))))
 		    
-	 (js-bind! %this js-string 'raw
+	 (js-bind! %this js-string (& "raw")
 	    :value (js-make-function %this
 		      js-string-raw 1 "raw"
 		      :prototype (js-undefined))
@@ -238,7 +238,7 @@
 	 (init-builtin-string-prototype! %this js-string js-string-prototype)
 	 
 	 ;; bind String in the global object
-	 (js-bind! %this %this 'String
+	 (js-bind! %this %this (& "String")
 	    :configurable #f :enumerable #f :value js-string
 	    :hidden-class #t)
 
@@ -293,7 +293,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-set-string! %this o::JsString str)
    (let ((len (instantiate::JsValueDescriptor
-		 (name 'length)
+		 (name (& "length"))
 		 (writable #f)
 		 (configurable #f)
 		 (enumerable #f)
@@ -319,13 +319,13 @@
 (define (init-builtin-string-prototype! %this::JsGlobalObject js-string obj)
    
    ;; length
-   (js-bind! %this obj 'length
+   (js-bind! %this obj (& "length")
       :value 0
       :enumerable #f
       :hidden-class #t)
    
    ;; constructor
-   (js-bind! %this obj 'constructor
+   (js-bind! %this obj (& "constructor")
       :value js-string
       :enumerable #f
       :hidden-class #t)
@@ -341,7 +341,7 @@
 	 (else
 	  (js-raise-type-error %this "argument not a string ~a" (typeof this)))))
    
-   (js-bind! %this obj 'toString
+   (js-bind! %this obj (& "toString")
       :value (js-make-function %this tostring 0 "toString"
 		:prototype (js-undefined))
       :enumerable #f
@@ -358,7 +358,7 @@
 	 (else
 	  (js-raise-type-error %this "argument not a string ~a" this))))
    
-   (js-bind! %this obj 'valueOf
+   (js-bind! %this obj (& "valueOf")
       :value (js-make-function %this valueof 0 "valueOf"
 		:prototype (js-undefined))
       :enumerable #f
@@ -369,7 +369,7 @@
    (define (charat this index)
       (js-jsstring-charat (js-cast-string-normalize! %this this) index %this))
    
-   (js-bind! %this obj 'charAt
+   (js-bind! %this obj (& "charAt")
       :value (js-make-function %this charat 1 "charAt"
 		:prototype (js-undefined))
       :enumerable #f
@@ -380,7 +380,7 @@
    (define (charcodeat this index)
       (js-jsstring-charcodeat (js-cast-string-normalize! %this this) index %this))
    
-   (js-bind! %this obj 'charCodeAt
+   (js-bind! %this obj (& "charCodeAt")
       :value (js-make-function %this charcodeat 1 "charCodeAt"
 		:prototype (js-undefined))
       :enumerable #f
@@ -416,7 +416,7 @@
 			     (js-tojsstring (car rest) %this))
 		       (cdr rest))))))))
    
-   (js-bind! %this obj 'concat
+   (js-bind! %this obj (& "concat")
       :value (js-make-function %this concat 1 "concat"
 		:prototype (js-undefined))
       :enumerable #f
@@ -429,7 +429,7 @@
 	 (js-jsstring-indexof
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
 
-   (js-bind! %this obj 'indexOf
+   (js-bind! %this obj (& "indexOf")
       :value (js-make-function %this indexof 1 "indexOf"
 		:prototype (js-undefined))
       :enumerable #f
@@ -442,7 +442,7 @@
 	 (js-jsstring-lastindexof
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
    
-   (js-bind! %this obj 'lastIndexOf
+   (js-bind! %this obj (& "lastIndexOf")
       :value (js-make-function %this last-indexof 1 "lastIndexOf"
 		:prototype (js-undefined))
       :enumerable #f
@@ -453,7 +453,7 @@
    (define (locale-compare this::obj that)
       (js-jsstring-localecompare (js-cast-string-normalize! %this this) that %this))
    
-   (js-bind! %this obj 'localeCompare
+   (js-bind! %this obj (& "localeCompare")
       :value (js-make-function %this locale-compare 1 "localeCompare"
 		:prototype (js-undefined))
       :enumerable #f
@@ -464,7 +464,7 @@
    (define (natural-compare this::obj that)
       (js-jsstring-naturalcompare (js-cast-string-normalize! %this this) that %this))
    
-   (js-bind! %this obj 'naturalCompare
+   (js-bind! %this obj (& "naturalCompare")
       :value (js-make-function %this natural-compare 1 "naturalCompare"
 		:prototype (js-undefined))
       :enumerable #f
@@ -475,7 +475,7 @@
    (define (match this::obj regexp)
       (js-jsstring-match (js-cast-string %this this) regexp %this))
    
-   (js-bind! %this obj 'match
+   (js-bind! %this obj (& "match")
       :value (js-make-function %this match 1 "match"
 		:prototype (js-undefined))
       :enumerable #f
@@ -488,7 +488,7 @@
 	 searchvalue replacevalue %this))
 
       
-   (js-bind! %this obj 'replace
+   (js-bind! %this obj (& "replace")
       :value (js-make-function %this replace 2 "replace"
 		:prototype (js-undefined))
       :enumerable #f
@@ -507,7 +507,7 @@
 		  (if pos
 		      (caar pos)
 		      -1))))))
-   (js-bind! %this obj 'search
+   (js-bind! %this obj (& "search")
       :value (js-make-function %this search 1 "search"
 		:prototype (js-undefined))
       :enumerable #f
@@ -519,7 +519,7 @@
       (let ((jss (js-cast-string %this this)))
 	 (js-jsstring-slice jss start end %this)))
    
-   (js-bind! %this obj 'slice
+   (js-bind! %this obj (& "slice")
       :value (js-make-function %this slice 2 "slice"
 		:prototype (js-undefined))
       :enumerable #f
@@ -530,7 +530,7 @@
    (define (split this::obj separator limit)
       (js-jsstring-split (js-cast-string %this this) separator limit %this))
    
-   (js-bind! %this obj 'split
+   (js-bind! %this obj (& "split")
       :value (js-make-function %this split 2 "split"
 		:prototype (js-undefined))
       :enumerable #f
@@ -541,7 +541,7 @@
    (define (js-substring this::obj start end)
       (js-jsstring-substring (js-cast-string-normalize! %this this) start end %this))
    
-   (js-bind! %this obj 'substring
+   (js-bind! %this obj (& "substring")
       :value (js-make-function %this js-substring 2 "substring"
 		:prototype (js-undefined))
       :enumerable #f
@@ -552,7 +552,7 @@
    (define (tolowercase this::obj)
       (js-jsstring-tolowercase (js-cast-string-normalize! %this this)))
    
-   (js-bind! %this obj 'toLowerCase
+   (js-bind! %this obj (& "toLowerCase")
       :value (js-make-function %this tolowercase 0 "toLowerCase"
 		:prototype (js-undefined))
       :enumerable #f
@@ -563,7 +563,7 @@
    (define (tolocalelowercase this::obj)
       (js-jsstring-tolocalelowercase (js-cast-string-normalize! %this this)))
    
-   (js-bind! %this obj 'toLocaleLowerCase
+   (js-bind! %this obj (& "toLocaleLowerCase")
       :value (js-make-function %this tolocalelowercase 0 "toLocaleLowerCase"
 		:prototype (js-undefined))
       :enumerable #f
@@ -574,7 +574,7 @@
    (define (touppercase this::obj)
       (js-jsstring-touppercase (js-cast-string-normalize! %this this)))
    
-   (js-bind! %this obj 'toUpperCase
+   (js-bind! %this obj (& "toUpperCase")
       :value (js-make-function %this touppercase 0 "toUpperCase"
 		:prototype (js-undefined))
       :enumerable #f
@@ -585,7 +585,7 @@
    (define (tolocaleuppercase this::obj)
       (js-jsstring-tolocaleuppercase (js-cast-string-normalize! %this this)))
    
-   (js-bind! %this obj 'toLocaleUpperCase
+   (js-bind! %this obj (& "toLocaleUpperCase")
       :value (js-make-function %this tolocaleuppercase 0 "toLocaleUpperCase"
 		:prototype (js-undefined))
       :enumerable #f
@@ -596,7 +596,7 @@
    (define (trim this::obj)
       (js-jsstring-trim (js-cast-string-normalize! %this this)))
    
-   (js-bind! %this obj 'trim
+   (js-bind! %this obj (& "trim")
       :value (js-make-function %this trim 0 "trim"
 		:prototype (js-undefined))
       :enumerable #f
@@ -607,7 +607,7 @@
    (define (substr this::obj start length)
       (js-jsstring-substr (js-tostring this %this) start length %this))
    
-   (js-bind! %this obj 'substr
+   (js-bind! %this obj (& "substr")
       :value (js-make-function %this substr 2 "substr"
 		:prototype (js-undefined))
       :enumerable #f
@@ -813,7 +813,7 @@
 ;*    js-template-raw ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-template-raw arr::JsArray raw::JsArray %this)
-   (js-bind! %this arr 'raw :value raw
+   (js-bind! %this arr (& "raw") :value raw
       :writable #f :enumerable #f :configurable #f
       :hidden-class #t)
    (js-freeze arr %this)

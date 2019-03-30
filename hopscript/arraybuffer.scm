@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Fri Mar 29 13:40:38 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 10:42:18 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -51,7 +51,7 @@
 	 (with-access::JsArrayBuffer obj (data frozen)
 	    (let* ((ndata data)
 		   (nobj (instantiateJsArrayBuffer
-			    (__proto__ (js-get js-arraybuffer 'prototype %this))
+			    (__proto__ (js-get js-arraybuffer (& "prototype") %this))
 			    (frozen frozen)
 			    (data ndata))))
 	       (set! data '#u8())
@@ -93,10 +93,10 @@
    (with-access::JsGlobalObject %this (js-arraybuffer)
       (let* ((u8v (hexstring->u8vector (cadr args)))
 	     (buf (instantiateJsArrayBuffer
-		     (__proto__ (js-get js-arraybuffer 'prototype %this))
+		     (__proto__ (js-get js-arraybuffer (& "prototype") %this))
 		     (frozen (car args))
 		     (data u8v))))
-	 (js-put! buf 'byteLength (u8vector-length u8v) #f %this)
+	 (js-put! buf (& "byteLength") (u8vector-length u8v) #f %this)
 	 buf)))
       
 ;*---------------------------------------------------------------------*/
@@ -167,7 +167,7 @@
 	 (define (js-arraybuffer-alloc %this constructor::JsFunction)
 	    (instantiateJsArrayBuffer
 	       (cmap (js-not-a-cmap))
-	       (__proto__ (js-get constructor 'prototype %this))))
+	       (__proto__ (js-get constructor (& "prototype") %this))))
 
 	 (define (js-arraybuffer-construct this::JsArrayBuffer . items)
 	    (with-access::JsArrayBuffer this (data)
@@ -190,7 +190,7 @@
 			    (set! data (make-u8vector f)))))
 			
 		     ;; byteLength
-		     (js-bind! %this this 'byteLength
+		     (js-bind! %this this (& "byteLength")
 			:value f
 			:configurable #f
 			:writable #f
@@ -223,7 +223,7 @@
 					  (loop (+fx i 1))))
 				    new)))))
 		     
-		     (js-bind! %this this 'slice
+		     (js-bind! %this this (& "slice")
 			:value (js-make-function %this
 				  arraybuffer-slice 2 "slice")
 			:configurable #f
@@ -234,7 +234,7 @@
 	       this))
 
 	 ;; bind the ArrayBuffer in the global object
-	 (js-bind! %this %this 'ArrayBuffer
+	 (js-bind! %this %this (& "ArrayBuffer")
 	    :configurable #f :enumerable #f :value js-arraybuffer
 	    :hidden-class #t)
 

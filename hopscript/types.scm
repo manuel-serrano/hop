@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Mar 30 07:26:11 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 10:37:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -931,13 +931,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    Constant strings ...                                             */
 ;*---------------------------------------------------------------------*/
-(define js-string-undefined (js-ascii->jsstring "undefined"))
-(define js-string-object (js-ascii->jsstring "object"))
-(define js-string-symbol (js-ascii->jsstring "symbol"))
-(define js-string-number (js-ascii->jsstring "number"))
-(define js-string-boolean (js-ascii->jsstring "boolean"))
-(define js-string-string (js-ascii->jsstring "string"))
-(define js-string-function (js-ascii->jsstring "function"))
+(define js-string-undefined (& "undefined"))
+(define js-string-object (& "object"))
+(define js-string-symbol (& "symbol"))
+(define js-string-number (& "number"))
+(define js-string-boolean (& "boolean"))
+(define js-string-string (& "string"))
+(define js-string-function (& "function"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typeof ...                                                    */

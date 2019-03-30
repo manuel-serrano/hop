@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/set.scm                 */
+;*    serrano/prgm/project/hop/hop/hopscript/set.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Sun Mar 17 07:00:33 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 10:34:29 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -51,13 +51,13 @@
 ;*    js-init-set! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-init-set! %this::JsGlobalObject)
-   (init-set! %this 'Set init-builtin-set-prototype! 'none))
+   (init-set! %this "Set" init-builtin-set-prototype! 'none))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-weakset! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-weakset! %this::JsGlobalObject)
-   (init-set! %this 'WeakSet init-builtin-weakset-prototype! 'keys))
+   (init-set! %this "WeakSet" init-builtin-weakset-prototype! 'keys))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-set! ...                                                    */
@@ -77,7 +77,7 @@
 	 (with-access::JsGlobalObject %this (js-new-target)
 	    (set! js-new-target constructor))
 	 (instantiateJsMap
-	    (__proto__ (js-get constructor 'prototype %this))
+	    (__proto__ (js-get constructor (& "prototype") %this))
 	    (mapdata (create-hashtable
 			:weak weak
 			:hash js-get-hashnumber
@@ -90,7 +90,7 @@
 	    (__proto__ __proto__)))
       
       (define js-set
-	 (js-make-function %this %js-set 0 (symbol->string! name)
+	 (js-make-function %this %js-set 0 (& name)
 	    :__proto__ js-function-prototype
 	    :prototype js-set-prototype
 	    :size 0
@@ -106,7 +106,7 @@
       (init-prototype! %this js-set js-set-prototype)
       
       ;; bind SET/WEAKSET in the global object
-      (js-bind! %this %this name
+      (js-bind! %this %this (& name)
 	 :configurable #f :enumerable #f :value js-set
 	 :hidden-class #t)
       
@@ -127,7 +127,7 @@
 (define (js-set-construct %this this::JsMap iterable)
 
    (define (js-set-construct-iterator this::JsMap iter next)
-      (let ((add (js-get this 'add %this)))
+      (let ((add (js-get this (& "add") %this)))
 	 (let loop ()
 	    (let ((ni (js-call0 %this next iter)))
 	       (cond
@@ -143,7 +143,7 @@
    (define (js-set-construct-iterable this::JsMap iterable)
 
       (define (close-iterator iter)
-	 (let ((return (js-get iter 'return %this)))
+	 (let ((return (js-get iter (& "return") %this)))
 	    (when (isa? return JsFunction)
 	       (js-call0 %this return iter))))
       
@@ -152,7 +152,7 @@
 	    (if (isa? i JsFunction)
 		(let ((iter (js-call0 %this i iterable)))
 		   (if (js-object? iter)
-		       (let ((next (js-get iter 'next %this)))
+		       (let ((next (js-get iter (& "next") %this)))
 			  (if (not (isa? next JsFunction))
 			      (js-raise-type-error %this
 				 "Illegal IteratorValue ~a" next)
@@ -168,7 +168,7 @@
    
    (define (js-set-construct-array this::JsMap iterable::JsArray)
       (let ((len (js-array-length iterable))
-	    (add (js-get this 'add %this)))
+	    (add (js-get this (& "add") %this)))
 	 (let loop ((i #u32:0))
 	    (if (=u32 i len)
 		this
@@ -219,7 +219,7 @@
 		this))
 	  (js-raise-type-error %this "not a Set" this)))
    
-   (js-bind! %this js-set-prototype 'add
+   (js-bind! %this js-set-prototype (& "add")
       :value (js-make-function %this js-set-add 1 "add"
 		:prototype (js-undefined))
       :enumerable #f
@@ -235,7 +235,7 @@
 	     (set! cursor 0))
 	  (js-raise-type-error %this "Not a Set" this)))
    
-   (js-bind! %this js-set-prototype 'clear
+   (js-bind! %this js-set-prototype (& "clear")
       :value (js-make-function %this map-prototype-clear 0 "clear"
 		:prototype (js-undefined))
       :enumerable #f
@@ -243,13 +243,13 @@
    
    ;; constructor
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.constructor
-   (js-bind! %this js-set-prototype 'constructor
+   (js-bind! %this js-set-prototype (& "constructor")
       :value js-set :enumerable #f
       :hidden-class #t)
 
    ;; delete
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.delete
-   (js-bind! %this js-set-prototype 'delete
+   (js-bind! %this js-set-prototype (& "delete")
       :value (js-make-function %this (js-set-delete %this) 1 "delete"
 		:prototype (js-undefined))
       :enumerable #f
@@ -266,7 +266,7 @@
 		%this))
 	  (js-raise-type-error %this "Not a Sap" this)))
       
-   (js-bind! %this js-set-prototype 'entries
+   (js-bind! %this js-set-prototype (& "entries")
       :value (js-make-function %this js-set-entries 0 "entries"
 		:prototype (js-undefined))
       :enumerable #f
@@ -288,7 +288,7 @@
 	      (js-raise-type-error %this "Not a function" fn))
 	  (js-raise-type-error %this "not a Set" this)))
 
-   (js-bind! %this js-set-prototype 'forEach
+   (js-bind! %this js-set-prototype (& "forEach")
       :value (js-make-function %this js-set-for-each 1 "forEach"
 		:prototype (js-undefined))
       :enumerable #f
@@ -296,7 +296,7 @@
    
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.has
-   (js-bind! %this js-set-prototype 'has
+   (js-bind! %this js-set-prototype (& "has")
       :value (js-make-function %this (js-set-has %this) 1 "has"
 		:prototype (js-undefined))
       :enumerable #f
@@ -304,7 +304,7 @@
 
    ;; keys
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.keys
-   (js-bind! %this js-set-prototype 'keys
+   (js-bind! %this js-set-prototype (& "keys")
       :value (js-make-function %this js-set-values 0 "keys"
 		:prototype (js-undefined))
       :enumerable #f
@@ -318,7 +318,7 @@
 	     (hashtable-size mapdata))
 	  (js-raise-type-error %this "Not a Set" this)))
    
-   (js-bind! %this js-set-prototype 'size
+   (js-bind! %this js-set-prototype (& "size")
       :get (js-make-function %this js-set-size 0 "size"
 	      :prototype (js-undefined))
       :enumerable #f
@@ -331,7 +331,7 @@
 	  (with-access::JsMap this (vec)
 	     (js-make-vector-iterator vec (lambda (%this val) val) %this))
 	  (js-raise-type-error %this "Not a Set" this)))
-   (js-bind! %this js-set-prototype 'values
+   (js-bind! %this js-set-prototype (& "values")
       :value (js-make-function %this js-set-values 0 "values"
 		:prototype (js-undefined))
       :enumerable #f
@@ -396,7 +396,7 @@
 	 (else
 	  (js-raise-type-error %this "not a Set" this))))
    
-   (js-bind! %this js-set-prototype 'add
+   (js-bind! %this js-set-prototype (& "add")
       :value (js-make-function %this js-set-add 2 "add"
 		:prototype (js-undefined))
       :enumerable #f
@@ -404,13 +404,13 @@
    
    ;; constructor
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.constructor
-   (js-bind! %this js-set-prototype 'constructor
+   (js-bind! %this js-set-prototype (& "constructor")
       :value js-set :enumerable #f
       :hidden-class #t)
 
    ;; delete
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.delete
-   (js-bind! %this js-set-prototype 'delete
+   (js-bind! %this js-set-prototype (& "delete")
       :value (js-make-function %this (js-set-delete %this) 1 "delete"
 		:prototype (js-undefined))
       :enumerable #f
@@ -418,7 +418,7 @@
 
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.has
-   (js-bind! %this js-set-prototype 'has
+   (js-bind! %this js-set-prototype (& "has")
       :value (js-make-function %this (js-set-has %this) 1 "has"
 		:prototype (js-undefined))
       :enumerable #f

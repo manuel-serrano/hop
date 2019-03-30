@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Mar 29 18:58:59 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 10:28:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -216,7 +216,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new/proxy %this::JsGlobalObject p::JsProxy args::pair-nil)
    (with-access::JsProxy p (target handler)
-      (let ((ctor (js-get handler 'construct %this)))
+      (let ((ctor (js-get handler (& "construct") %this)))
 	 (if (isa? ctor JsFunction)
 	     (let ((obj (js-call2 %this ctor p target
 			   (js-vector->jsarray (list->vector args) %this))))
@@ -300,7 +300,7 @@
 ;*    Used by functions that are not allowed to be used in NEW expr.   */
 ;*---------------------------------------------------------------------*/
 (define (js-not-a-constructor-alloc %this ctor::JsFunction)
-   (let ((name (js-tostring (js-get ctor 'name %this) %this)))
+   (let ((name (js-tostring (js-get ctor (& "name") %this) %this)))
       (js-raise-type-error %this "~s not a constructor" name)))
 
 ;*---------------------------------------------------------------------*/
@@ -469,7 +469,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-raise-arity-error %this fun n)
    (with-access::JsFunction fun (minlen arity rest len src)
-      (let* ((name (js-get fun 'name %this))
+      (let* ((name (js-get fun (& "name") %this))
 	     (m (format "~a: wrong number of arguments ~a provided, ~a expected"
 		   (if (js-jsstring? name) (js-jsstring->string name) "")
 		   n
@@ -790,7 +790,7 @@
 	   (js-raise-type-error ,%this
 	      ,(format "call~a: not a function ~~s" (length args))
 	      ,fun)
-	   (let ((xfun (js-get handler 'apply ,%this)))
+	   (let ((xfun (js-get handler (& "apply") ,%this)))
 	      (if (isa? xfun JsFunction)
 		  (with-access::JsFunction xfun (procedure)
 		     (js-call3% %this xfun procedure ,fun target
@@ -836,7 +836,7 @@
    (with-access::JsProxy fun (target handler)
       (if (not (isa? target JsFunction))
 	  (js-raise-type-error %this "calln: not a function ~s" fun)
-	  (let ((xfun (js-get handler 'apply %this)))
+	  (let ((xfun (js-get handler (& "apply") %this)))
 	     (if (isa? xfun JsFunction)
 		 (with-access::JsFunction xfun (procedure)
 		    (js-call3% %this xfun procedure fun target
@@ -870,7 +870,7 @@
 		      (else (loop v)))))))))
 
 (define (js-ordinary-instanceof/debug %this loc v f)
-   (let ((o (js-get f 'prototype %this)))
+   (let ((o (js-get f (& "prototype") %this)))
       (if (not (isa? o JsObject))
           (js-raise-type-error/loc %this loc "instanceof: no prototype ~s" v)
           (let loop ((v v))
@@ -1179,11 +1179,12 @@
 (define (js-tojsstring obj %this)
    (cond
       ((js-jsstring? obj) obj)
+      ((fixnum? obj) (js-integer->jsstring obj))
+      ((eq? obj (js-undefined)) (& "undefined"))
+      ((eq? obj #t) (& "true"))
+      ((eq? obj #f) (& "false"))
+      ((eq? obj (js-null)) (& "null"))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
-      ((eq? obj (js-undefined)) (js-ascii->jsstring "undefined"))
-      ((eq? obj #t) (js-ascii->jsstring "true"))
-      ((eq? obj #f) (js-ascii->jsstring "false"))
-      ((eq? obj (js-null)) (js-ascii->jsstring "null"))
       (else (js-string->jsstring (js-tostring obj %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1433,7 +1434,7 @@
 (define (%js-eval-hss ip::input-port %this %worker scope)
    (js-worker-exec %worker "eval-hss"
       (lambda ()
-	 (let ((v (%js-eval ip 'repl %this (js-get scope 'this %this) scope)))
+	 (let ((v (%js-eval ip 'repl %this (js-get scope (& "this") %this) scope)))
 	    (if (isa? v JsStringLiteral)
 		(js-jsstring->string v)
 		v)))))
@@ -1596,7 +1597,7 @@
    (with-access::JsGlobalObject %this (js-object __proto__)
       (let ((obj (instantiateJsModule
 		    (__proto__ __proto__))))
-	 (js-put! obj 'filename (js-string->jsstring "") #f %this)
+	 (js-put! obj (& "filename") (js-string->jsstring "") #f %this)
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -1654,7 +1655,7 @@
 	  (lambda (e)
 	     (js-jsstring->string (js-typeof obj)))
 	  (js-jsstring->string
-	     (js-call0 %this (js-get obj 'toString %this) obj))))
+	     (js-call0 %this (js-get obj (& "toString") %this) obj))))
       ((eq? obj #unspecified)
        "undefined")
       ((eq? obj #f)

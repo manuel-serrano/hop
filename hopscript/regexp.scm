@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/regexp.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/regexp.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan 23 08:31:34 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 10:33:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -73,7 +73,7 @@
 	 (let ((nobj (call-next-method)))
 	    (with-access::JsRegExp nobj (__proto__ rx)
 	       (with-access::JsRegExp obj ((_rx rx))
-		  (set! __proto__ (js-get js-regexp 'prototype %this))
+		  (set! __proto__ (js-get js-regexp (& "prototype") %this))
 		  (set! rx (js-donate _rx worker %_this))))
 	    nobj))))
 
@@ -87,11 +87,11 @@
    (with-access::JsRegExp o (global)
       (let ((%this (js-initial-global-object)))
 	 (display "/" op)
-	 (display (js-get o 'source %this) op)
+	 (display (js-get o (& "source") %this) op)
 	 (display "/" op)
-	 (when (js-totest (js-get o 'global %this)) (display "g" op))
-	 (when (js-totest (js-get o 'ignoreCase %this)) (display "i" op))
-	 (when (js-totest (js-get o 'multiline %this)) (display "m" op)))))
+	 (when (js-totest (js-get o (& "global") %this)) (display "g" op))
+	 (when (js-totest (js-get o (& "ignoreCase") %this)) (display "i" op))
+	 (when (js-totest (js-get o (& "multiline") %this)) (display "m" op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-regexp! ...                                              */
@@ -108,7 +108,7 @@
 	 (set! js-regexp-cmap
 	    (instantiate::JsConstructMap
 	       (methods (make-vector 1))
-	       (props `#(,(prop 'lastIndex (property-flags #t #f #f #f))))))
+	       (props `#(,(prop (& "lastIndex") (property-flags #t #f #f #f))))))
 	 
 	 (set! js-regexp-prototype
 	    (instantiateJsRegExp
@@ -130,7 +130,7 @@
 	 (init-builtin-regexp-prototype! %this js-regexp js-regexp-prototype)
 	 
 	 ;; bind Regexp in the global object
-	 (js-bind! %this %this 'RegExp
+	 (js-bind! %this %this (& "RegExp")
 	    :configurable #f :enumerable #f :value js-regexp
 	    :hidden-class #t)
 	 js-regexp)))
@@ -504,20 +504,20 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-regexp-prototype! %this::JsGlobalObject js-regexp obj)
    ;; constructor
-   (js-bind! %this obj 'constructor
+   (js-bind! %this obj (& "constructor")
       :value js-regexp
       :enumerable #f
       :hidden-class #t)
    ;; toString
-   (js-bind! %this obj 'toString
+   (js-bind! %this obj (& "toString")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-string->jsstring
 		      (string-append "/"
-			 (js-tostring (js-get this 'source %this) %this) "/"
-			 (if (js-totest (js-get this 'global %this)) "g" "")
-			 (if (js-totest (js-get this 'ignoreCase %this)) "i" "")
-			 (if (js-totest (js-get this 'multiline %this)) "m" ""))))
+			 (js-tostring (js-get this (& "source") %this) %this) "/"
+			 (if (js-totest (js-get this (& "global") %this)) "g" "")
+			 (if (js-totest (js-get this (& "ignoreCase") %this)) "i" "")
+			 (if (js-totest (js-get this (& "multiline") %this)) "m" ""))))
 		
 		0 "toString"
 		:prototype (js-undefined))
@@ -526,7 +526,7 @@
       :enumerable #f
       :hidden-class #t)
    ;; ignoreCase
-   (js-bind! %this obj 'ignoreCase
+   (js-bind! %this obj (& "ignoreCase")
       :get (js-make-function %this
 	      (lambda (this)
 		 (if (isa? this JsRegExp)
@@ -539,7 +539,7 @@
       :enumerable #f
       :configurable #t)
    ;; multiline
-   (js-bind! %this obj 'multiline
+   (js-bind! %this obj (& "multiline")
       :get (js-make-function %this
 	      (lambda (this)
 		 (if (isa? this JsRegExp)
@@ -552,7 +552,7 @@
       :enumerable #f
       :configurable #t)
    ;; global
-   (js-bind! %this obj 'global
+   (js-bind! %this obj (& "global")
       :get (js-make-function %this
 	      (lambda (this)
 		 (if (isa? this JsRegExp)
@@ -565,7 +565,7 @@
       :enumerable #f
       :configurable #t)
    ;; source
-   (js-bind! %this obj 'source
+   (js-bind! %this obj (& "source")
       :get (js-make-function %this
 	      (lambda (this)
 		 (if (isa? this JsRegExp)
@@ -578,7 +578,7 @@
       :enumerable #f
       :configurable #t)
    ;; exec
-   (js-bind! %this obj 'exec
+   (js-bind! %this obj (& "exec")
       :value (js-make-function %this
 		(lambda (this string::obj)
 		   (regexp-prototype-exec %this this string))
@@ -589,7 +589,7 @@
       :enumerable #f
       :hidden-class #t)
    ;; test
-   (js-bind! %this obj 'test
+   (js-bind! %this obj (& "test")
       :value (js-make-function %this (make-regexp-prototype-test %this) 1 "test"
 		:prototype (js-undefined))
       :writable #t
@@ -597,7 +597,7 @@
       :enumerable #f
       :hidden-class #t)
    ;; compile
-   (js-bind! %this obj 'compile
+   (js-bind! %this obj (& "compile")
       :value (js-make-function %this regexp-prototype-compile 1 "compile"
 		:prototype (js-undefined))
       :writable #t
@@ -611,8 +611,8 @@
 (define js-regexp-exec-cmap
    (instantiate::JsConstructMap
       (methods '#())
-      (props `#(,(prop 'index (property-flags #t #t #t #f))
-		,(prop 'input (property-flags #t #t #t #f))))))
+      (props `#(,(prop (& "index") (property-flags #t #t #t #f))
+		,(prop (& "input") (property-flags #t #t #t #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    regexp-prototype-exec ...                                        */
@@ -634,7 +634,7 @@
    (if (not (isa? this JsRegExp))
        (js-raise-type-error %this "Not a RegExp ~s" this)
        (with-access::JsRegExp this (rx flags)
-	  (let ((lastindex (js-object-get-name/cache this 'lastIndex
+	  (let ((lastindex (js-object-get-name/cache this (& "lastIndex")
 			      #f %this (js-pcache-ref %pcache 0)))
 		(global (js-regexp-flags-global? flags)))
 	     (let* ((jss (js-tojsstring string %this))
@@ -646,7 +646,7 @@
 		(cond
 		   ((or (<fx i 0) (>fx i len))
 		    (set! lastindex 0)
-		    (js-object-put-name/cache! this 'lastIndex lastindex
+		    (js-object-put-name/cache! this (& "lastIndex") lastindex
 		       #f %this (js-pcache-ref %pcache 0))
 		    (js-null))
 		   ((pregexp-match-positions rx s i)
@@ -657,7 +657,7 @@
 			  ;; 11
 			  (when global
 			     (set! lastindex e)
-			     (js-object-put-name/cache! this 'lastIndex lastindex
+			     (js-object-put-name/cache! this (& "lastIndex") lastindex
 				#f %this (js-pcache-ref %pcache 0)))
 			  (let* ((n (length r))
 				 (vec ($create-vector n))
@@ -692,7 +692,7 @@
 			     a))))
 		   (else
 		    (set! lastindex 0)
-		    (js-object-put-name/cache! this 'lastIndex lastindex
+		    (js-object-put-name/cache! this (& "lastIndex") lastindex
 		       #f %this (js-pcache-ref %pcache 0))
 		    (js-null))))))))
 
@@ -721,7 +721,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-literal-test-string::bool this::JsRegExp str::obj %this)
    (with-access::JsRegExp this (rx flags)
-      (let* ((lastindex (js-object-get-name/cache this 'lastIndex
+      (let* ((lastindex (js-object-get-name/cache this (& "lastIndex")
 			   #f %this (js-pcache-ref %pcache 0)))
 	     (global (js-regexp-flags-global? flags))
 	     (s (js-jsstring->string str))

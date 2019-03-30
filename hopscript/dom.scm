@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/dom.scm                 */
+;*    serrano/prgm/project/hop/hop/hopscript/dom.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Tue Jan 22 08:12:36 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 10:43:34 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -260,31 +260,31 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::xml-markup prop %this::JsGlobalObject)
    (let loop ((pname (js-toname prop %this)))
-      (case pname
-	 ((tagName)
+      (cond
+	 ((eq? pname (& "tagName"))
 	  (with-access::xml-markup o (tag)
 	     (js-string->jsstring (symbol->string tag))))
-	 ((attributes)
+	 ((eq? pname (& "attributes"))
 	  (with-access::xml-markup o (attributes)
 	     (js-plist->jsobject attributes %this)))
-	 ((children)
+	 ((eq? pname (& "children"))
 	  (with-access::xml-markup o (body)
 	     body))
-	 ((inspect)
+	 ((eq? pname (& "inspect"))
 	  (js-make-function %this js-inspect 1 "inspect"))
 	 ((constructor)
 	  (js-undefined))
-	 ((toString)
+	 ((eq? pname (& "toString"))
 	  (js-make-function %this
 	     (lambda (this)
 		(js-string->jsstring (js-tostring o %this)))
 	     0 "toString"))
-	 ((getElementById)
+	 ((eq? pname (& "getElementById"))
 	  (js-make-function %this
 	     (lambda (this id)
 		(dom-get-element-by-id this (js-tostring id %this)))
 	     1 "getElementById"))
-	 ((getElementsByTagName)
+	 ((eq? pname (& "getElementsByTagName"))
 	  (js-make-function %this
 	     (lambda (this tag)
 		(js-vector->jsarray
@@ -293,7 +293,7 @@
 			 (js-tostring tag %this)))
 		   %this))
 	     1 "getElementsByTagName"))
-	 ((getElementsByClassName)
+	 ((eq? pname (& "getElementsByClassName"))
 	  (js-make-function %this
 	     (lambda (this clazz)
 		(js-vector->jsarray
@@ -302,19 +302,19 @@
 			 (js-tostring clazz %this)))
 		   %this))
 	     1 "getElementsByClassName"))
-	 ((appendChild)
+	 ((eq? pname (& "appendChild"))
 	  (js-make-function %this
 	     (lambda (this child)
 		(dom-append-child! this child))
 	     1 "appendChild"))
-	 ((removeChild)
+	 ((eq? pname (& "removeChild"))
 	  (js-make-function %this
 	     (lambda (this child)
 		(dom-remove-child! this child))
 	     1 "removeChild"))
-	 ((previousSibling)
+	 ((eq? pname (& "previousSibling"))
 	  (dom-previous-sibling o))
-	 ((childNodes)
+	 ((eq? pname (& "childNodes"))
 	  (with-access::xml-markup o (body)
 	     (js-vector->jsarray
 		(list->vector
@@ -332,7 +332,7 @@
 			       o)))
 		      body))
 		%this)))
-	 ((firstChild)
+	 ((eq? pname (& "firstChild"))
 	  (with-access::xml-markup o (body)
 	     (if (null? body)
 		 (js-undefined)
@@ -348,7 +348,7 @@
 			   (data (js-jsstring->string o))))
 		       (else
 			o))))))
-	 ((lastChild)
+	 ((eq? pname (& "lastChild"))
 	  (with-access::xml-markup o (body)
 	     (if (null? body)
 		 (js-undefined)
@@ -366,7 +366,7 @@
 			o))))))
 	 (else
 	  (with-access::xml-markup o (attributes)
-	     (let ((name (if (eq? pname 'className)
+	     (let ((name (if (eq? pname (& "className"))
 			     "class"
 			     (symbol->string pname))))
 		(if (dom-has-attribute? o name)
@@ -387,14 +387,14 @@
 	 (else v)))
    
    (let loop ((pname (js-toname prop %this)))
-      (case pname
-	 ((className)
+      (cond
+	 ((eq? pname (& "className"))
 	  (loop 'class))
-	 ((attributes)
+	 ((eq? pname (& "attributes"))
 	  (when (isa? v JsObject)
 	     (with-access::xml-markup o (attributes)
 		(set! attributes (js-jsobject->keyword-plist v %this)))))
-	 ((children)
+	 ((eq? pname (& "children"))
 	  (with-access::xml-markup o (body)
 	     (if (isa? v JsArray)
 		 (set! body (jsarray->list v %this))
@@ -402,8 +402,10 @@
 		    (format "Bad children (~a)" (typeof v))
 		    v))))
 	 (else
-	  (dom-set-attribute! o (symbol->string pname) (->obj v))))))
+	  (with-access::JsStringLiteral pname (val)
+	     (dom-set-attribute! o (symbol->string val) (->obj v)))))))
 
+(tprint "ICI TODO...")
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::xml-element ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -486,12 +488,20 @@
    (memq name '(nodeType data)))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-markups ...                                                  */
+;*---------------------------------------------------------------------*/
+(define xml-markups
+   (list
+      (& "classname" (& "id") (& "nodeType") (& "attributes")
+	 (& "children") (& "getElementsById") (& "getElementsByTagName")
+	 (& "getElementsByClassName"))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-has-property ::xml-markup ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property o::xml-markup name %this)
-   (or (memq name '(className id nodeType attributes children
-		    getElementById getElementsByTagName getElementsByClassName))
-       (let ((k (symbol->keyword name)))
+   (or (member name xml-markups)
+       (let ((k (string->keyword (js-jsstring->string name))))
 	  (with-access::xml-markup o (attributes)
 	     (let loop ((attributes attributes))
 		(cond

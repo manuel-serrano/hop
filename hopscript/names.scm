@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sat Mar 30 09:17:41 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 10:38:44 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -181,17 +181,31 @@
 ;*    js-ascii-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ascii-name->jsstring::JsStringLiteralASCII val::bstring)
-   (js-jstring->name!
-      (instantiate::JsStringLiteralASCII
-	 (weight (fixnum->uint32 (string-length val)))
-	 (left val)
-	 (right #f))))
+   (with-lock js-names-mutex
+      (let ((n (hashtable-get names val)))
+	 (or n
+	     (let ((n (instantiate::JsStringLiteralASCII
+			 (weight (fixnum->uint32 (string-length val)))
+			 (left val)
+			 (right #f))))
+		(hashtable-put! names str n)
+		(js-jstring-name-set! n n)
+		n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-name->jsstring ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-utf8-name->jsstring val::bstring)
-   (js-jstring->name! (js-utf8->jsstring val)))
+   (with-lock js-names-mutex
+      (let ((n (hashtable-get names val)))
+	 (or n
+	     (let ((n (instantiate::JsStringLiteralUTF8
+			 (weight (fixnum->uint32 (string-length val)))
+			 (left val)
+			 (right #f))))
+		(hashtable-put! names str n)
+		(js-jstring-name-set! n n)
+		n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name->jsstring ...                                            */
