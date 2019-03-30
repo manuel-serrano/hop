@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/builtin.scm             */
+;*    serrano/prgm/project/hop/hop/hopscript/builtin.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jan 26 08:54:32 2019                          */
-;*    Last change :  Sat Jan 26 10:51:23 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 09:20:38 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop builtin JavaScript objects                                   */
@@ -28,7 +28,8 @@
 	   __hopscript_public
 	   __hopscript_lib
 	   __hopscript_worker
-	   __hopscript_function)
+	   __hopscript_function
+	   __hopscript_names)
    
    (export (js-init-hop-builtin! ::JsGlobalObject ::JsObject)))
 
@@ -37,7 +38,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-bind-tag! %this obj __proto__ tag . tagjs)
    `(begin
-       (js-bind! ,%this ,obj ',(if (pair? tagjs) (car tagjs) tag)
+       (js-bind! ,%this ,obj (& ,(symbol->string! (if (pair? tagjs) (car tagjs) tag)))
           :value (js-make-function ,%this
                     (lambda (this attrs . nodes)
                        (if (isa? attrs JsObject)
@@ -126,7 +127,7 @@
 	 MATH:MROOT MATH:MSQRT MATH:MTEXT MATH:MTABLE
 	 MATH:MTR MATH:MTD MATH:MPADDED MATH:TEX)
       
-      (js-bind! %this builtin '!--
+      (js-bind! %this builtin (& "!--")
 	 :value (js-make-function %this
 		   (lambda (this data)
 		      (instantiate::xml-comment

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/stringliteral.sch       */
+;*    serrano/prgm/project/hop/hop/hopscript/stringliteral.sch         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Sat Apr 21 11:13:50 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Sat Mar 30 09:02:00 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JsStringLiteral Helper macros.                                   */
 ;*=====================================================================*/
@@ -17,8 +17,6 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->jsstring                                              */
-;*    -------------------------------------------------------------    */
-;*    Static allocation of constant strings.                           */
 ;*---------------------------------------------------------------------*/
 (define-expander js-string->jsstring
    (lambda (x e)
@@ -33,28 +31,42 @@
 	  (error "js-string->jsstring" "wrong syntax" x)))))
 
 ;*---------------------------------------------------------------------*/
-;*    %js-jsstringliteral-begin! ...                                   */
+;*    js-name->jsstring                                                */
 ;*---------------------------------------------------------------------*/
-(define-expander %js-jsstringliteral-begin!
-   (lambda (x e)
-      (eval '(define js-strings '()))
-      #unspecified))
-
-;*---------------------------------------------------------------------*/
-;*    %js-jsstringliteral-end! ...                                     */
-;*---------------------------------------------------------------------*/
-(define-expander %js-jsstringliteral-end!
-   (lambda (x e)
-      (when (pair? (eval 'js-strings))
-	 (e `(define ,(eval 'js-strings-vector)
-		(vector
-		   ,@(map (lambda (c)
-			     (let ((s (car c)))
-				`(instantiate::JsStringLiteral
-				    (weight ,(string-length s))
-				    (left ,s))))
-			(reverse! (eval 'js-strings)))))
-	    e))))
-
+(define-expander &
+   (let ((multiples '()))
+      (lambda (x e)
+	 
+	 (define (check-multiple val)
+	    (if (member val multiples)
+		(warning "&" "multiple define" val)
+		(set! multiples (cons val multiples))))
+	 
+	 (match-case x
+	    ((& (and ?val (? string?)))
+	     (cond
+		((member val '("__proto__" "charAt" "charCodeAt" "compiler"
+			       "configurable" "constructor" "done" "enumerable"
+			       "exec" "for" "forEach" "indexOf" "iterator"
+			       "keyFor" "lastIndex" "lastIndexOf" "length"
+			       "localeCompare" "match" "map" "naturalCompare"
+			       "next" "prototype" "replace" "return" "slice"
+			       "split" "substr" "substring" "toLowerCase"
+			       "toLocaleLowerCase" "toUpperCase"
+			       "toLocaleUpperCase" "toString" "trim" "value"
+			       "valueOf" "writable"))
+		 `((@ ,(symbol-append '& (string->symbol)) __hopscript_names)))
+		((eq? (string-minimal-charset val) 'ascii)
+		 (check-multiple val)
+		 (evepairify `(js-ascii-name->jsstring ,val) x))
+		(else
+		 (check-multiple val)
+		 (evepairify `(js-name-utf8->jsstring ,val) x))))
+	    ((& (and ?val ((kwote quot) (? symbol?))))
+	     (error "&" "wrong syntax" x))
+	    ((& ?val)
+	     `(js-name->jsstring ,(e (evepairify val x) e)))
+	    (else
+	     (error "&" "wrong syntax" x))))))
 
    

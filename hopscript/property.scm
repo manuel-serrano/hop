@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 29 18:46:20 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 19:23:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -38,6 +38,7 @@
 
    (use    __hopscript_array
 	   __hopscript_stringliteral
+	   __hopscript_names
 	   __hopscript_arraybufferview)
    
    (extern ($js-make-pcache-table::obj (::obj ::int ::obj ::JsPropertyCache)
@@ -67,7 +68,6 @@
 	   (js-object-literal-spread-assign! ::JsObject ::obj ::JsGlobalObject)
 
 	   (js-object-unmap! ::JsObject)
-	   (js-toname::obj ::obj ::JsGlobalObject)
 	   
 	   (inline js-is-accessor-descriptor?::bool obj)
 	   (inline js-is-data-descriptor?::bool obj)
@@ -110,7 +110,8 @@
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   (js-get-name/cache ::obj ::JsStringLiteral ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   (js-object-get-name/cache ::JsObject ::obj ::bool ::JsGlobalObject
+	   (js-object-get-name/cache ::JsObject ::JsStringLiteral
+	      ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
 	   (generic js-object-get-name/cache-miss ::JsObject ::obj ::bool
@@ -190,7 +191,8 @@
 	   (generic js-for-of ::obj ::procedure ::bool ::JsGlobalObject)
 	   (js-for-of-iterator ::obj ::obj ::procedure ::bool ::JsGlobalObject)
 	   
-	   (js-bind! ::JsGlobalObject ::JsObject name::obj #!key
+	   (js-bind! ::JsGlobalObject ::JsObject name::obj
+	      #!key
 	      (value #f)
 	      (get #f)
 	      (set #f)
@@ -385,7 +387,7 @@
 	  (begin
 	     (js-object-add! obj idx value)
 	     (when (isa? ctor JsFunction)
-		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize src)
+		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize)
 		   (when (<fx constrsize maxconstrsize)
 		      (set! constrsize (+fx 1 constrsize))
 		      (set! constrmap
@@ -660,7 +662,7 @@
 ;*    cmap-transition ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (cmap-transition name value flags nextmap)
-   (if (eq? name '__proto__)
+   (if (eq? name &__proto__)
        (transition value flags nextmap)
        (transition name flags nextmap)))
 
@@ -671,13 +673,13 @@
    (with-access::JsConstructMap cmap (parent (%cid %id))
       (let ((flags (property-flags #t #t #t #f)))
 	 ;; 1- try to find a transition from the current cmap
-	 (let ((nextmap (cmap-find-transition cmap '__proto__ new flags)))
+	 (let ((nextmap (cmap-find-transition cmap &__proto__ new flags)))
 	    (or nextmap
 		;; 2- create a new plain cmap connected to its parent
 		;; via a regular link
 		(let ((newmap (duplicate::JsConstructMap cmap
 				 (%id (gencmapid)))))
-		   (link-cmap! cmap newmap '__proto__ new flags)
+		   (link-cmap! cmap newmap &__proto__ new flags)
 		   newmap))))))
 
 ;*---------------------------------------------------------------------*/
@@ -687,7 +689,7 @@
    
    (define (is-transition? t)
       (and (=fx (transition-flags t) flags)
-	   (if (eq? name '__proto__)
+	   (if (eq? name &__proto__)
 	       (eq? (transition-name-or-value t) val)
 	       (eq? (transition-name-or-value t) name))))
    
@@ -853,9 +855,7 @@
 (define (js-object-literal-spread-assign! target::JsObject src %this::JsGlobalObject)
 	 
    (define (idx-cmp a b)
-      (<=fx (string-natural-compare3
-	       (symbol->string! a)
-	       (symbol->string! b))
+      (<=fx (string-natural-compare3 (js-name->string a) (js-name->string b))
 	 0))
 
    (unless (or (null? src) (eq? src (js-undefined)))
@@ -871,32 +871,15 @@
 			  (set! keys (cons name keys))))
 	    names)
 	 (for-each (lambda (k)
-		      (let ((val (js-get fro k %this)))
-			 (js-put! target k val #t %this)))
+		      (let ((val (js-get-jsobject fro k %this)))
+			 (js-put-jsobject! target k val #t %this)))
 	    (sort idx-cmp idx))
 	 (for-each (lambda (k)
-		      (let ((val (js-get fro k %this)))
-			 (js-put! target k val #t %this)))
+		      (let ((val (js-get-jsobject fro k %this)))
+			 (js-put-jsobject! target k val #t %this)))
 	    (reverse! keys))))
 
    target)
-
-;*---------------------------------------------------------------------*/
-;*    property-index-vector ...                                        */
-;*---------------------------------------------------------------------*/
-(define property-index-vector
-   (list->vector
-      (map (lambda (i)
-	      (string->symbol (fixnum->string i)))
-	 (iota 111 -10))))
-
-;*---------------------------------------------------------------------*/
-;*    fixnum->pname ...                                                */
-;*---------------------------------------------------------------------*/
-(define (fixnum->pname indx::long)
-   (if (and (>fx indx -10) (<fx indx 100))
-       (vector-ref property-index-vector (+fx indx 10))
-       (string->symbol (fixnum->string indx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-map-find ...                                            */
@@ -1013,52 +996,6 @@
    o)
 
 ;*---------------------------------------------------------------------*/
-;*    js-toname ...                                                    */
-;*    -------------------------------------------------------------    */
-;*    www.ecma-international.org/ecma-262/7.0/#sec-topropertykey       */
-;*---------------------------------------------------------------------*/
-(define (js-toname p %this)
-   (let loop ((p p))
-      (cond
-	 ((symbol? p)
-	  p)
-	 ((string? p)
-	  (string->symbol p))
-	 ((isa? p JsStringLiteral)
-	  (js-jsstring-toname p))
-	 ((fixnum? p)
-	  (fixnum->pname p))
-	 ((uint32? p)
-	  (cond-expand
-	     (bint30
-	      (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
-		  (fixnum->pname (uint32->fixnum p))
-		  (string->symbol (llong->string (uint32->llong p)))))
-	     (bint32
-	      (if (<u32 p (bit-lshu32 (fixnum->uint32 1) 31))
-		  (fixnum->pname (uint32->fixnum p))
-		  (string->symbol (llong->string (uint32->llong p)))))
-	     (else
-	      (fixnum->pname (uint32->fixnum p)))))
-	 ((int32? p)
-	  (cond-expand
-	     (bint30
-	      (if (and (>s32 p 0) (<s32 p (fixnum->int32 (bit-lsh 1 29))))
-		  (fixnum->pname (int32->fixnum p))
-		  (string->symbol (llong->string (int32->llong p)))))
-	     (bint32
-	      (string->symbol (fixnum->string (int32->fixnum p))))
-	     (else
-	      (fixnum->pname (int32->fixnum p)))))
-	 ((isa? p JsSymbolLiteral)
-	  p)
-	 ((isa? p JsSymbol)
-	  (with-access::JsSymbol p (val)
-	     val))
-	 (else
-	  (loop (js-tostring p %this))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-is-accessor-descriptor? ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.1       */
@@ -1097,18 +1034,18 @@
    (define (from-object obj desc)
       ;; proxy getOwnPropertyDescriptor returns regular objects
       ;; as property descriptors
-      (js-put! obj 'value
-	 (js-get desc 'value %this) #f %this)
-      (js-put! obj 'get
-	 (js-get desc 'get %this) #f %this)
-      (js-put! obj 'set
-	 (js-get desc 'set %this) #f %this)
-      (js-put! obj 'writable
-	 (js-or (js-get desc 'writable %this) #f) #f %this)
-      (js-put! obj 'enumerable
-	 (js-or (js-get desc 'enumerable %this) #f) #f %this)
-      (js-put! obj 'configurable
-	 (js-or (js-get desc 'configurable %this) #f) #f %this)
+      (js-put! obj &value
+	 (js-get desc &value %this) #f %this)
+      (js-put! obj &get
+	 (js-get desc &get %this) #f %this)
+      (js-put! obj &set
+	 (js-get desc &set %this) #f %this)
+      (js-put! obj &writable
+	 (js-or (js-get desc &writable %this) #f) #f %this)
+      (js-put! obj &enumerable
+	 (js-or (js-get desc &enumerable %this) #f) #f %this)
+      (js-put! obj &configurable
+	 (js-or (js-get desc &configurable %this) #f) #f %this)
       obj)
 
    (define (from-desc obj desc)
@@ -1116,22 +1053,22 @@
 	 ((isa? desc JsValueDescriptor)
 	  ;; 3
 	  (with-access::JsValueDescriptor desc (writable value)
-	     (js-put! obj 'value value #f %this)
-	     (js-put! obj 'writable writable #f %this)))
+	     (js-put! obj &value value #f %this)
+	     (js-put! obj &writable writable #f %this)))
 	 ((isa? desc JsAccessorDescriptor)
 	  ;; 4
 	  (with-access::JsAccessorDescriptor desc (get set)
-	     (js-put! obj 'get get #f %this)
-	     (js-put! obj 'set set #f %this)))
+	     (js-put! obj &get get #f %this)
+	     (js-put! obj &set set #f %this)))
 	 ((isa? desc JsWrapperDescriptor)
 	  (with-access::JsWrapperDescriptor desc (%get writable)
-	     (js-put! obj 'value (%get owner owner propname %this) #f %this)
-	     (js-put! obj 'writable writable #f %this))))
+	     (js-put! obj &value (%get owner owner propname %this) #f %this)
+	     (js-put! obj &writable writable #f %this))))
       (with-access::JsPropertyDescriptor desc (enumerable configurable)
 	 ;; 5
-	 (js-put! obj 'enumerable enumerable #f %this)
+	 (js-put! obj &enumerable enumerable #f %this)
 	 ;; 6
-	 (js-put! obj 'configurable configurable #f %this))
+	 (js-put! obj &configurable configurable #f %this))
       obj)
 
    (if (eq? desc (js-undefined))
@@ -1149,20 +1086,20 @@
 ;*---------------------------------------------------------------------*/
 (define (js-to-property-descriptor %this::JsGlobalObject obj name::obj)
    (let* ((obj (js-cast-object obj %this "ToPropertyDescriptor"))
-	  (enumerable (if (js-has-property obj 'enumerable %this)
-			  (js-toboolean (js-get obj 'enumerable %this))
+	  (enumerable (if (js-has-property obj &enumerable %this)
+			  (js-toboolean (js-get obj &enumerable %this))
 			  (js-undefined)))
-	  (configurable (if (js-has-property obj 'configurable %this)
-			    (js-toboolean (js-get obj 'configurable %this))
+	  (configurable (if (js-has-property obj &configurable %this)
+			    (js-toboolean (js-get obj &configurable %this))
 			    (js-undefined)))
-	  (hasget (js-has-property obj 'get %this))
-	  (hasset (js-has-property obj 'set %this)))
+	  (hasget (js-has-property obj &get %this))
+	  (hasset (js-has-property obj &set %this)))
       (cond
 	 ((or hasget hasset)
-	  (let ((get (js-get obj 'get %this))
-		(set (js-get obj 'set %this)))
-	     (if (or (js-has-property obj 'writable %this)
-		     (js-has-property obj 'value %this)
+	  (let ((get (js-get obj &get %this))
+		(set (js-get obj &set %this)))
+	     (if (or (js-has-property obj &writable %this)
+		     (js-has-property obj &value %this)
 		     (and (not (isa? get JsFunction))
 			  (not (eq? get (js-undefined))))
 		     (and (not (isa? set JsFunction))
@@ -1177,20 +1114,20 @@
 		    (%set (function1->proc set %this))
 		    (enumerable enumerable)
 		    (configurable configurable)))))
-	 ((js-has-property obj 'value %this)
-	  (let ((writable (if (js-has-property obj 'writable %this)
-			      (js-toboolean (js-get obj 'writable %this))
+	 ((js-has-property obj &value %this)
+	  (let ((writable (if (js-has-property obj &writable %this)
+			      (js-toboolean (js-get obj &writable %this))
 			      (js-undefined))))
 	     (instantiate::JsValueDescriptor
 		(name name)
-		(value (js-get obj 'value %this))
+		(value (js-get obj &value %this))
 		(writable writable)
 		(enumerable enumerable)
 		(configurable configurable))))
-	 ((js-has-property obj 'writable %this)
+	 ((js-has-property obj &writable %this)
 	  (instantiate::JsDataDescriptor
 	     (name name)
-	     (writable (js-toboolean (js-get obj 'writable %this)))
+	     (writable (js-toboolean (js-get obj &writable %this)))
 	     (enumerable enumerable)
 	     (configurable configurable)))
 	 (else
@@ -1632,8 +1569,8 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get-length o::obj %this::JsGlobalObject #!optional cache)
    (if cache
-       (js-get-name/cache o 'length #f %this cache)
-       (js-get o 'length %this)))
+       (js-get-name/cache o &length #f %this cache)
+       (js-get o &length %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lengthu32::uint32 ::obj ...                               */
@@ -1655,8 +1592,8 @@
       (else
        (js-touint32
 	  (if cache
-	      (js-get-name/cache o 'length #f %this cache)
-	      (js-get o 'length %this))
+	      (js-get-name/cache o &length #f %this cache)
+	      (js-get o &length %this))
 	  %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -1669,17 +1606,18 @@
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (if (or (not (isa? prop JsStringLiteral)) (not (js-object? o)))
        (js-get o prop %this)
-       (let* ((pname (js-jsstring-toname prop))
-	      (cache (getprop pname 'pcache)))
+       (let ((pname (js-jsstring-toname prop)))
 	  (cond
-	     (cache
-	      (js-object-get-name/cache o pname #f
-		 %this cache point cspecs))
+	     ((js-name-pcache pname)
+	      =>
+	      (lambda (cache)
+		 (js-object-get-name/cache o pname #f
+		    %this cache point cspecs)))
 	     ((js-isindex? (js-toindex prop))
 	      (js-get o prop %this))
 	     (else
 	      (let ((cache (instantiate::JsPropertyCache)))
-		 (putprop! pname 'pcache cache)
+		 (js-name-pcache-set! pname cache)
 		 (js-object-get-name/cache o pname #f
 		    %this cache point cspecs)))))))
 
@@ -1692,7 +1630,7 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-get-name/cache obj name::obj throw::bool
+(define (js-get-name/cache obj name::JsStringLiteral throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (if (isa? obj JsObject)
@@ -1704,7 +1642,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden by a macro in property.sch                         */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache o::JsObject name::obj
+(define (js-object-get-name/cache o::JsObject name::JsStringLiteral
 	   throw::bool %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-object-get-name/cache o name throw %this cache point cspecs))
@@ -1751,7 +1689,8 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-object-get-name/cache-miss obj::JsObject name::obj
+(define-generic (js-object-get-name/cache-miss obj::JsObject
+		   name::JsStringLiteral
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache
 		   #!optional (point -1) (cspecs '()))
@@ -1762,7 +1701,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache-cmap+ obj::JsObject name::obj
+(define (js-object-get-name/cache-cmap+ obj::JsObject name::JsStringLiteral
 	   throw::bool %this::JsGlobalObject
 	   cache::JsPropertyCache
 	   #!optional (point -1) (cspecs '()))
@@ -1774,7 +1713,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache-imap+ obj::JsObject name::obj
+(define (js-object-get-name/cache-imap+ obj::JsObject name::JsStringLiteral
 	   throw::bool %this::JsGlobalObject
 	   cache::JsPropertyCache
 	   #!optional (point -1) (cspecs '()))
@@ -1876,8 +1815,8 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-put-length! o::obj v::obj throw::bool cache %this::JsGlobalObject)
    (if cache
-       (js-put-name/cache! o 'length v throw %this cache)
-       (js-put! o 'length v throw %this)))
+       (js-put-name/cache! o &length v throw %this cache)
+       (js-put! o &length v throw %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsObject ...                                           */
@@ -2233,17 +2172,17 @@
 		    %this cache point cspecs))
 		((js-isindex? (js-toindex prop))
 		 (js-put! o prop v throw %this))
-		((eq? pname 'length)
+		((eq? pname &length)
 		 (js-put-length! o v throw cache %this))
 		((eq? name '||)
 		 (set! name pname)
 		 (js-object-put-name/cache! o pname v throw
 		    %this cache point cspecs))
 		(else
-		 (let ((cache (getprop pname 'pcache)))
+		 (let ((cache (js-name-pcache pname)))
 		    (unless cache
 		       (set! cache (instantiate::JsPropertyCache))
-		       (putprop! pname 'pcache cache))
+		       (js-name-pcache-set! pname cache))
 		    (js-object-put-name/cache! o pname v throw
 		       %this cache point cspecs))))))))
 
@@ -2264,7 +2203,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden by a macro in property.sch                         */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache! o::JsObject prop::JsStringLiteral v::obj throw::bool
+(define (js-object-put-name/cache! o::JsObject prop::JsStringLiteral
+	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    ;; rewritten by macro expansion
@@ -2273,8 +2213,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-miss! ...                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-miss! o::JsObject prop::JsStringLiteral v::obj
-	   throw::bool
+(define (js-object-put-name/cache-miss! o::JsObject prop::JsStringLiteral
+	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (with-access::JsObject o (cmap)
@@ -2300,8 +2240,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-imap+! o::JsObject prop::JsStringLiteral v::obj
-	   throw::bool
+(define (js-object-put-name/cache-imap+! o::JsObject prop::JsStringLiteral
+	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-object-put-name/cache! o prop v throw %this cache point
@@ -2312,8 +2252,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-cmap+! o::JsObject prop::JsStringLiteral v::obj
-	   throw::bool
+(define (js-object-put-name/cache-cmap+! o::JsObject prop::JsStringLiteral
+	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-object-put-name/cache! o prop v throw %this cache point
@@ -2324,8 +2264,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-pmap+! o::JsObject prop::JsStringLiteral v::obj
-	   throw::bool
+(define (js-object-put-name/cache-pmap+! o::JsObject prop::JsStringLiteral
+	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-object-put-name/cache! o prop v throw %this cache point
@@ -2349,7 +2289,7 @@
 ;*    [[DefineOwnProperty]]                                            */
 ;*       http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9    */
 ;*---------------------------------------------------------------------*/
-(define (js-bind! %this::JsGlobalObject o::JsObject name::obj
+(define (js-bind! %this::JsGlobalObject o::JsObject name::JsStringLiteral
 	   #!key
 	   (value #f)
 	   (get #f)
@@ -2531,6 +2471,9 @@
 	 (js-define-own-property o name desc #f %this)
 	 (js-undefined)))
 
+   (when (symbol? name)
+      (error "bind!" "illegal property name" name))
+   
    (with-access::JsObject o (cmap)
       (if (not (eq? cmap (js-not-a-cmap)))
 	  (jsobject-map-find o name
@@ -2545,7 +2488,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Wrapper to js-bind! used to keep generated files smaller.        */
 ;*---------------------------------------------------------------------*/
-(define (js-define %this obj id get set src pos #!key (hidden-class #t))
+(define (js-define %this obj id::JsStringLiteral
+	   get set src pos #!key (hidden-class #t))
    (let ((name (string-append src ":" (integer->string pos))))
       (js-bind! %this obj id
 	 :configurable #f
@@ -2573,7 +2517,7 @@
 	 (throw 
 	  (js-raise-type-error %this
 	     (string-append "delete: cannot delete ~s."
-		(symbol->string! (js-toname p %this)))
+		(js-jsstring->string (js-toname p %this)))
 	     o))
 	 (else
 	  #f)))
@@ -3132,12 +3076,12 @@
    (define (for next)
       (let loop ()
 	 (let ((n (js-call0 %this next iterator)))
-	    (unless (eq? (js-get n 'done %this) #t)
-	       (proc (js-get n 'value %this) %this)
+	    (unless (eq? (js-get n &done %this) #t)
+	       (proc (js-get n &value %this) %this)
 	       (loop))))
       #t)
    
-   (let ((next (js-get iterator 'next %this))
+   (let ((next (js-get iterator &next %this))
 	 (exn #t))
       (if (isa? next JsFunction)
 	  (if close
@@ -3146,7 +3090,7 @@
 		    (for next)
 		    (set! exn #f))
 		 (when exn
-		    (let ((return (js-get iterator 'return %this)))
+		    (let ((return (js-get iterator &return %this)))
 		       (when (isa? return JsFunction)
 			  (js-call0 %this return iterator)))))
 	      (for next)))))

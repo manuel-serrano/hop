@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/generator.scm           */
+;*    serrano/prgm/project/hop/hop/hopscript/generator.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Tue Feb 26 08:20:21 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 09:29:40 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -45,11 +45,6 @@
 	   (js-make-list-iterator ::pair-nil ::procedure ::JsGlobalObject)
 	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)))
-
-;*---------------------------------------------------------------------*/
-;*    Jsstringliteral begin                                            */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    %spawn ...                                                       */
@@ -160,7 +155,7 @@
 		   (lambda (ip)
 		      (%js-eval ip 'eval %this this %this))))))
       
-      (js-bind! %this js-gen-proto 'next
+      (js-bind! %this js-gen-proto (& "next")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
 		   (lambda (this val)
@@ -168,7 +163,7 @@
 		   1 "next")
 	 :hidden-class #t)
       
-      (js-bind! %this js-gen-proto 'return
+      (js-bind! %this js-gen-proto (& "return")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
 		   (lambda (this val)
@@ -176,7 +171,7 @@
 		   1 "return")
 	 :hidden-class #t)
       
-      (js-bind! %this js-gen-proto 'throw
+      (js-bind! %this js-gen-proto (& "throw")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
 		   (lambda (this val)
@@ -189,7 +184,7 @@
 	 :value (js-string->jsstring "Generator"))
 
       
-      (js-bind! %this js-genfun-proto 'constructor
+      (js-bind! %this js-genfun-proto (& "constructor")
 	 :configurable #t :enumerable #f :writable #f
 	 :value (js-make-function %this
 		   js-generator-construct
@@ -272,7 +267,7 @@
 		     (lambda (%v %e)
 			(let ((i 0))
 			   (let loop ((%v %v) (%e %e))
-			      (let ((len (js-get obj 'length %this)))
+			      (let ((len (js-get obj (& "length") %this)))
 				 (if (>=fx i len)
 				     (js-generator-yield %gen
 					(js-undefined) #t
@@ -360,11 +355,11 @@
 (define (js-generator-yield* gen val done kont %this)
    
    (define (yield* val)
-      (let ((next (js-get val 'next %this)))
+      (let ((next (js-get val (& "next") %this)))
 	 (let loop ((v (js-undefined)) (e #f))
 	    (let* ((n (js-call0 %this next val))
-		   (value (js-get n 'value %this))
-		   (done (js-get n 'done %this)))
+		   (value (js-get n (& "value") %this))
+		   (done (js-get n (& "done") %this)))
 	       (if done
 		   (kont value #f)
 		   (js-generator-yield gen value #f
@@ -380,9 +375,4 @@
 	     (yield* (js-call0 %this g val))))
 	 (else
 	  (yield* val)))))
-
-;*---------------------------------------------------------------------*/
-;*    Jsstringliteral end                                              */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
 

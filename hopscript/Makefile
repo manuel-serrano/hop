@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/hopscript/Makefile                */
+#*    serrano/prgm/project/hop/hop/hopscript/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Mar 28 15:22:06 2019 (serrano)                */
+#*    Last change :  Sat Mar 30 06:58:12 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -43,7 +43,7 @@ _OBJECTS = types rts object function string number regexp boolean \
   error array arguments date json math worker private public lib service \
   property websocket pair obj arraybuffer arraybufferview stringliteral dom \
   symbol promise generator proxy reflect map set spawn expanders profile \
-  arithmetic arithmetic32 arithmetic64 builtin
+  arithmetic arithmetic32 arithmetic64 builtin names
 
 _C_OBJECTS = _bglhopscript
 

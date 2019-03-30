@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Mar 29 13:39:24 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 07:26:11 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -97,7 +97,7 @@
 	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))
 	      (point::long (default -1))
-	      (name::obj (default '||))
+	      (name::JsStringLiteral (default '||))
 	      (method::obj (default #f))
 	      (function::obj (default #f))
 	      (pctable::obj (default #f))
@@ -188,7 +188,7 @@
 	      val::obj)
 
 	   (final-class JsSymbolLiteral
-	      val::bstring)
+	      val::JsStringLiteral)
 	   
 	   (class JsFunction::JsObject
 	      (procedure::procedure read-only)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Mar 29 19:01:16 2019 (serrano)                */
+;*    Last change :  Sat Mar 30 09:31:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -69,7 +69,7 @@
 	 (let ((nobj (call-next-method)))
 	    (with-access::JsNumber nobj (__proto__ val)
 	       (with-access::JsNumber obj ((_val val))
-		  (set! __proto__ (js-get js-number 'prototype %this))
+		  (set! __proto__ (js-get js-number (& "prototype") %this))
 		  (set! val (js-donate _val worker %_this))))
 	    nobj))))
 
@@ -125,7 +125,7 @@
 			(size 1))))
 	       (instantiateJsNumber
 		  (cmap constrmap)
-		  (__proto__ (js-object-get-name/cache constructor 'prototype
+		  (__proto__ (js-object-get-name/cache constructor (& "prototype")
 				#f %this
 				(js-pcache-ref %pcache 1))))))
 
@@ -161,34 +161,34 @@
 	       :shared-cmap #f))
 	 
 	 ;; other properties of the Number constructor
-	 (js-bind! %this js-number 'POSITIVE_INFINITY
+	 (js-bind! %this js-number (& "POSITIVE_INFINITY")
 	    :value +inf.0
 	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number 'NEGATIVE_INFINITY
+	 (js-bind! %this js-number (& "NEGATIVE_INFINITY")
 	    :value -inf.0
 	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number 'MAX_VALUE
+	 (js-bind! %this js-number (& "MAX_VALUE")
 	    :value (*fl 1.7976931348623157 (exptfl 10. 308.))
 	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number 'MAX_SAFE_INTEGER
+	 (js-bind! %this js-number (& "MAX_SAFE_INTEGER")
 	    :value (-fl (exptfl 2. 53.) 1.)
 	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number 'MIN_VALUE
+	 (js-bind! %this js-number (& "MIN_VALUE")
 	    :value 5e-324
 	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number 'MIN_SAFE_INTEGER
+	 (js-bind! %this js-number (& "MIN_SAFE_INTEGER")
 	    :value (negfl (-fl (exptfl 2. 53.) 1.))
 	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number 'NaN
+	 (js-bind! %this js-number (& "NaN")
 	    :value +nan.0
 	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number 'isInteger
+	 (js-bind! %this js-number (& "isInteger")
 	    :value (js-make-function %this is-integer? 1 "isInteger")
 	    :writable #f :configurable #f :enumerable #f :hidden-class #f)
 	 ;; bind the builtin prototype properties
 	 (init-builtin-number-prototype! %this js-number js-number-prototype)
 	 ;; bind Number in the global object
-	 (js-bind! %this %this 'Number
+	 (js-bind! %this %this (& "Number")
 	    :configurable #f :enumerable #f :value js-number :hidden-class #f)
 	 js-number)))
 
@@ -240,7 +240,7 @@
 (define (init-builtin-number-prototype! %this::JsGlobalObject js-number obj)
    
    ;; constructor
-   (js-bind! %this obj 'constructor
+   (js-bind! %this obj (& "constructor")
       :value js-number
       :writable #t
       :configurable #t
@@ -258,7 +258,7 @@
    (define (js-number-tostring this #!optional (radix (js-undefined)))
       (js-jsnumber-tostring (js-cast-number this typeof) radix %this))
 
-   (js-bind! %this obj 'toString
+   (js-bind! %this obj (& "toString")
       :value (js-make-function %this js-number-tostring 2 "toString")
       :writable #t
       :configurable #t
@@ -270,7 +270,7 @@
    (define (js-number-tolocalestring this #!optional (radix (js-undefined)))
       (js-number-tostring this radix))
 
-   (js-bind! %this obj 'toLocaleString
+   (js-bind! %this obj (& "toLocaleString")
       :value (js-make-function %this js-number-tolocalestring 2 "toLocaleString")
       :writable #t
       :configurable #t
@@ -282,7 +282,7 @@
    (define (js-number-valueof this)
       (js-cast-number this #f))
 
-   (js-bind! %this obj 'valueOf
+   (js-bind! %this obj (& "valueOf")
       :value (js-make-function %this js-number-valueof 0 "valueOf")
       :writable #t
       :configurable #t
@@ -342,7 +342,7 @@
 					       ".")
 					   (substring s (-fx l f)))))))))))))))
 
-   (js-bind! %this obj 'toFixed
+   (js-bind! %this obj (& "toFixed")
       :value (js-make-function %this js-number-tofixed 1 "toFixed")
       :writable #t
       :configurable #t
@@ -351,7 +351,7 @@
 
    ;; toExponential
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.6
-   (js-bind! %this obj 'toExponential
+   (js-bind! %this obj (& "toExponential")
       :value (js-make-function %this
 		(lambda (this val)
 		   (error "toExponential" "not implemented" "yet"))
@@ -363,7 +363,7 @@
 
    ;; toPrecision
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.7
-   (js-bind! %this obj 'toPrecision
+   (js-bind! %this obj (& "toPrecision")
       :value (js-make-function %this
 		(lambda (this val)
 		   (error "toPrecision" "not implemented" "yet"))
@@ -466,12 +466,11 @@
 		(else
 		 (js-ascii->jsstring s))))))
 
-   (js-ascii->jsstring
       (cond
-	 ((not (= obj obj)) "NaN")
-	 ((= obj +inf.0) "Infinity")
-	 ((= obj -inf.0) "-Infinity")
-	 (else (js-real->string obj)))))
+	 ((not (= obj obj)) (& "NaN"))
+	 ((= obj +inf.0) (& "Infinity"))
+	 ((= obj -inf.0) (& "-Infinity"))
+	 (else (js-ascii->jsstring (js-real->string obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsnumber-tostring ...                                         */
@@ -486,11 +485,11 @@
 	 ((fixnum? val)
 	  (js-string->jsstring (fixnum->string val r)))
 	 ((and (flonum? val) (nanfl? val))
-	  (js-ascii->jsstring "NaN"))
+	  (& "NaN"))
 	 ((= val +inf.0)
-	  (js-ascii->jsstring "Infinity"))
+	  (& "Infinity"))
 	 ((= val -inf.0)
-	  (js-ascii->jsstring "-Infinity"))
+	  (& "-Infinity"))
 	 ((or (= r 10) (= r 0))
 	  (js-tojsstring val %this))
 	 ((integer? val)
@@ -507,7 +506,7 @@
 	 ((js-number? this)
 	  (js-jsnumber-tostring this radix %this))
 	 ((isa? this JsObject)
-	  (js-call1 %this (js-get this 'toString %this) this radix))
+	  (js-call1 %this (js-get this (& "toString") %this) this radix))
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -525,8 +524,8 @@
 ;*    js-slow+ ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-slow+ left right %this)
-   (let* ((left (js-toprimitive left 'any %this))
-	  (right (js-toprimitive right 'any %this)))
+   (let* ((left (js-toprimitive left (& "any") %this))
+	  (right (js-toprimitive right (& "any") %this)))
       (cond
 	 ((js-jsstring? left)
 	  (js-jsstring-append left (js-tojsstring right %this)))
