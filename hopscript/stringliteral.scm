@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Mar 29 07:39:15 2019 (serrano)                */
+;*    Last change :  Fri Mar 29 18:35:05 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -358,7 +358,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-utf8->jsstring::JsStringLiteralUTF8 val::bstring)
    (instantiate::JsStringLiteralUTF8
-      (weight (string-length val))
+      (weight (fixnum->uint32 (string-length val)))
       (left val)
       (right #f)))
 
