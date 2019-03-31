@@ -1,9 +1,9 @@
-!;*=====================================================================*/
+;*=====================================================================*/
 ;*    serrano/prgm/project/hop/hop/hopscript/array.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 30 08:59:08 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 09:20:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2958,7 +2958,7 @@
 (define (js-array-put! o::JsArray p v throw %this)
    
    (define (aput! o::JsArray q::obj v)
-      (when (symbol? p) (js-profile-log-put p #f))
+      (when (isa? p JsStringLiteral) (js-profile-log-put p #f))
       (if (not (js-can-put o q %this))
 	  ;; 1
 	  (if throw

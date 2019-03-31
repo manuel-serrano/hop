@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Mar 30 07:46:42 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 10:41:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -194,9 +194,13 @@
 	    (js-make-function %this
 	       (lambda (this . args)
 		  (instantiate::JsSymbolLiteral
-		     (val (if (null? args)
-			      (js-ascii->jsstring "")
-			      (js-tostring (car args) %this)))))
+		     (val (cond
+			     ((null? args)
+			      (js-ascii->jsstring ""))
+			     ((isa? (car args) JsStringLiteral)
+			      (car args))
+			     (else
+			      (js-string->jsstring (js-tostring (car args) %this)))))))
 	       1 "Symbol"
 	       :__proto__ js-function-prototype
 	       :prototype js-symbol-prototype
@@ -230,10 +234,9 @@
 	    (let* ((stringkey (js-tostring key %this))
 		   (old (hashtable-get js-symbol-table stringkey)))
 	       (or old
-		   (let ((new (instantiate::JsSymbolLiteral
-				 (val stringkey))))
-		      (hashtable-put! js-symbol-table stringkey new)
-		      new))))
+		   (begin
+		      (hashtable-put! js-symbol-table stringkey stringkey)
+		      stringkey))))
 
 	 (js-bind! %this js-symbol (& "for")
 	    :value (js-make-function %this js-symbol-for 1 "for")

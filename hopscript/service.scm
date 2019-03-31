@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/service.scm             */
+;*    serrano/prgm/project/hop/hop/hopscript/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Jan 28 16:32:05 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 07:45:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -20,7 +20,6 @@
    
    (import __hopscript_types
 	   __hopscript_arithmetic
-	   __hopscript_rts
 	   __hopscript_object
 	   __hopscript_error
 	   __hopscript_private
@@ -38,11 +37,6 @@
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-create-service::JsService ::JsGlobalObject ::obj ::obj ::obj ::bool ::bool ::WorkerHopThread)
 	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::bool ::int ::obj ::obj)))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsService ...                                */

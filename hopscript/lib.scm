@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/lib.scm                 */
+;*    serrano/prgm/project/hop/hop/hopscript/lib.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Mar 28 15:42:40 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 08:03:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -16,7 +16,7 @@
 
    (library hop)
 
-   (include "types.sch" "property.sch")
+   (include "types.sch" "property.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -139,7 +139,7 @@
       ((struct? obj) (js-struct->jsobject obj %this))
       ((regexp? obj) (js-regexp->jsregexp obj %this))
       ((keyword? obj) (js-string->jsstring (keyword->string obj)))
-      ((symbol? obj) (js-string->jsstring (symbol->string obj)))
+      ((symbol? obj) (js-string->jsstring (symbol->string! obj)))
       ((pair? obj) (js-pair->jsobject obj %this))
       ((u8vector? obj) (js-u8vector->jsarraybuffer obj %this))
       ((null? obj) (js-undefined))
@@ -232,9 +232,11 @@
 		      obj
 		      (let* ((name (cond
 				      ((keyword? (caar alist))
-				       (keyword->symbol (caar alist)))
+				       (& (keyword->string (caar alist))))
 				      ((string? (caar alist))
-				       (string->symbol (caar alist)))
+				       (& (caar alist)))
+				      ((symbol? (caar alist))
+				       (& (symbol->string (caar alist))))
 				      (else
 				       (caar alist))))
 			     (val (js-obj->jsobject (cdar alist) %this)))
@@ -266,9 +268,11 @@
 		      (elements elements)))
 		(let* ((name (cond
 				((keyword? (car plist))
-				 (keyword->symbol (car plist)))
+				 (& (keyword->string (car plist))))
+				((keyword? (car plist))
+				 (& (symbol->string (car plist))))
 				((string? (car plist))
-				 (string->symbol (car plist)))
+				 (& (car plist)))
 				(else
 				 (car plist))))
 		       (val (js-obj->jsobject (cadr plist) %this)))
@@ -370,19 +374,19 @@
 		     (__proto__ __proto__)
 		     (data #unspecified)
 		     (obj obj))))
-	 (js-bind! %this sock 'hostname
+	 (js-bind! %this sock (& "hostname")
 	    :value (js-string->jsstring (socket-hostname obj))
 	    :writable #f :configurable #f
 	    :hidden-class #t)
-	 (js-bind! %this sock 'hostAddress
+	 (js-bind! %this sock (& "hostAddress")
 	    :value (js-string->jsstring (socket-host-address obj))
 	    :writable #f :configurable #f
 	    :hidden-class #t)
-	 (js-bind! %this sock 'localAddress
+	 (js-bind! %this sock (& "localAddress")
 	    :value (js-string->jsstring (socket-local-address obj))
 	    :writable #f :configurable #f
 	    :hidden-class #t)
-	 (js-bind! %this sock 'port
+	 (js-bind! %this sock (& "port")
 	    :value (socket-port-number obj)
 	    :writable #f :configurable #f
 	    :hidden-class #t)

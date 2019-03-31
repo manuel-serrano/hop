@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Mar 30 06:45:53 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 07:34:59 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -16,7 +16,7 @@
 
    (library hop)
 
-   (include "types.sch")
+   (include "types.sch" "names.sch")
    
    (import __hopscript_types
 	   __hopscript_names
@@ -30,11 +30,13 @@
    (export (js-jsstring-debug msg obj)
 	   (js-jsstring-for-in str ::procedure ::JsGlobalObject)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
-	   (inline js-ascii->jsstring::bstring ::bstring)
+	   (inline js-ascii->jsstring::JsStringLiteralASCII ::bstring)
 	   (inline js-utf8->jsstring::JsStringLiteralUTF8 ::bstring)
-	   (js-string->jsstring::obj ::bstring)
+	   (js-string->jsstring::JsStringLiteral ::bstring)
+	   (js-integer->jsstring::JsStringLiteralASCII ::long)
 	   (js-stringlist->jsstring ::pair-nil)
-	   (inline js-jsstring->string::bstring ::obj)
+	   (inline js-jsstring->string::bstring ::JsStringLiteral)
+	   (js-jsstring->number::obj ::JsStringLiteral) 
 	   (inline js-jsstring?::bool ::obj)
 	   (js-jsstring-character-ref ::obj ::uint32)
 	   (js-jsstring-ref ::obj ::uint32)
@@ -54,42 +56,41 @@
 	   (js-string->number::obj ::bstring ::JsGlobalObject)
 	   (js-string-parseint ::bstring ::int32 ::bool)
 	   (js-string-parsefloat ::bstring ::bool)
-	   (js-integer->jsstring ::long)
 	   (js-string->bool::bool ::bstring)
 	   (js-jsstring->bool::bool ::JsStringLiteral)
 	   (generic js-jsstring-normalize!::JsStringLiteral ::JsStringLiteral)
 	   
 	   (js-jsstring-normalize-ASCII!::bstring ::JsStringLiteral)
 	   (js-jsstring-normalize-UTF8!::bstring ::JsStringLiteral)
-	   (inline js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral))
+	   (inline js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (utf8-codeunit-length::long ::bstring)
 	   (js-utf8-ref ::JsStringLiteralUTF8 ::bstring ::long)
-	   (js-get-string ::obj ::obj ::obj)
-	   (js-put-string! ::bstring ::obj ::obj ::bool ::obj)
-	   (js-jsstring-indexof ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-get-string ::JsStringLiteral ::obj ::obj)
+	   (js-put-string! ::JsStringLiteral ::obj ::obj ::bool ::obj)
+	   (js-jsstring-indexof ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-indexof ::obj ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-lastindexof ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-lastindexof ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-lastindexof ::obj ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-charcodeat ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-charcodeat ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-charcodeat-as-int32::int32 ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-charcodeatu32 ::obj ::uint32 ::JsGlobalObject)
-	   (js-jsstring-charcodeatu32-as-int32::int32 ::obj ::uint32 ::JsGlobalObject)
+	   (js-jsstring-charcodeatu32 ::JsStringLiteral ::uint32 ::JsGlobalObject)
+	   (js-jsstring-charcodeatu32-as-int32::int32 ::JsStringLiteral ::uint32 ::JsGlobalObject)
 	   (js-jsstring-maybe-charcodeat ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-charat ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-charat ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-charat ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-substring ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-substring::JsStringLiteral ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-substring ::obj ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-substr ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-substr ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-substr ::obj ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-tolowercase ::obj)
+	   (js-jsstring-tolowercase ::JsStringLiteral)
 	   (js-jsstring-maybe-tolowercase ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-tolocalelowercase ::obj)
+	   (js-jsstring-tolocalelowercase ::JsStringLiteral)
 	   (js-jsstring-maybe-tolocalelowercase ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-touppercase ::obj)
+	   (js-jsstring-touppercase ::JsStringLiteral)
 	   (js-jsstring-maybe-touppercase ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-tolocaleuppercase ::obj)
+	   (js-jsstring-tolocaleuppercase ::JsStringLiteral)
 	   (js-jsstring-maybe-tolocaleuppercase ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-split ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-split ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-split ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-replace-regexp ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
 	   (js-jsstring-replace-regexp-fun1 ::obj ::regexp ::long ::bool ::procedure ::JsGlobalObject)
@@ -98,20 +99,20 @@
 	   (js-jsstring-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-replace ::obj ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-match ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-match ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-match ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-naturalcompare ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-naturalcompare ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-naturalcompare ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-localecompare ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-localecompare ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-trim ::obj)
+	   (js-jsstring-trim ::JsStringLiteral)
 	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-fromcharcode ::JsObject ::obj ::JsGlobalObject)
-	   (js-jsstring-escape ::obj)
-	   (js-jsstring-unescape ::obj ::JsGlobalObject)
-	   (js-jsstring-slice ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-escape ::JsStringLiteral)
+	   (js-jsstring-unescape ::JsStringLiteral ::JsGlobalObject)
+	   (js-jsstring-slice ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-slice ::obj ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring->jsarray ::obj ::JsGlobalObject)
+	   (js-jsstring->jsarray ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring->list ::obj))
 
    (cond-expand
@@ -174,12 +175,8 @@
 ;*    js-toindex ::JsStringLiteral ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (js-toindex obj::JsStringLiteral)
-   (string->index (js-jsstring->string p)))
 
-;*---------------------------------------------------------------------*/
-;*    js-toindex ::JsStringLiteralIndex ...                            */
-;*---------------------------------------------------------------------*/
-(define-method (js-toindex obj::JsStringLiteralIndex)
+   (define false (-u32 #u32:0 #u32:1))
    
    (define (string->index p::bstring)
       (let ((num (string->number p)))
@@ -189,7 +186,13 @@
 		 false)
 	     (js-toindex num))))
    
-   (with-access::JsStringLiteralIndex p (index)
+   (string->index (js-jsstring->string obj)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toindex ::JsStringLiteralIndex ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (js-toindex obj::JsStringLiteralIndex)
+   (with-access::JsStringLiteralIndex obj (index)
       index))
 
 ;*---------------------------------------------------------------------*/
@@ -238,22 +241,17 @@
    (scheme->response (js-jsstring->string obj) req))
 
 ;*---------------------------------------------------------------------*/
-;*    empty-string ...                                                 */
-;*---------------------------------------------------------------------*/
-(define empty-string (js-ascii->jsstring ""))
-
-;*---------------------------------------------------------------------*/
 ;*    indexes ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define indexes
-   (let ((v (create-vector 356)))
+   (let ((v ($create-vector 356)))
       (let loop ((i 0))
-	 (if (=fx v 356)
+	 (if (=fx i 356)
 	     v
-	     (let* ((str (string->integer (-fx i 100)))
+	     (let* ((str (fixnum->string (-fx i 100)))
 		    (idx (instantiate::JsStringLiteralIndex
-			    (weight (fixnum->uint32 (string-length st)))
-			    (left st)
+			    (weight (fixnum->uint32 (string-length str)))
+			    (left str)
 			    (index (fixnum->uint32 (-fx i 100))))))
 		(vector-set! v i idx)
 		(loop (+fx i 1)))))))
@@ -286,7 +284,7 @@
       ((=fx end (+fx start 1))
        (vector-ref chars (char->integer (string-ref s start))))
       ((>=fx start end)
-       empty-string)
+       (& ""))
       (else
        (js-string->jsstring (substring s start end)))))
 
@@ -298,7 +296,7 @@
       ((=fx end (+fx start 1))
        (vector-ref chars (char->integer (string-ref s start))))
       ((>=fx start end)
-       empty-string)
+       (& ""))
       (utf8
        (js-utf8->jsstring (substring s start end)))
       (else
@@ -346,13 +344,30 @@
 ;*    -------------------------------------------------------------    */
 ;*    Create a JsStringLiteral from a Scheme string literal.           */
 ;*---------------------------------------------------------------------*/
-(define (js-string->jsstring::obj val::bstring)
+(define (js-string->jsstring::JsStringLiteral val::bstring)
    (let ((enc (string-minimal-charset val)))
       (case enc
 	 ((ascii) (js-ascii->jsstring val))
 	 ((latin1 utf8) (js-utf8->jsstring val))
 	 (else (error "string->jsstring" "unsupported encoding" enc)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-integer->jsstring ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-integer->jsstring::JsStringLiteralASCII num::long)
+   (cond
+      ((and (>fx num -10) (<fx num 100))
+       (js-integer-name->jsstring num))
+      ((and (>fx num 0) (<fx num 65535))
+       (let ((str (fixnum->string num)))
+	  (instantiate::JsStringLiteralIndex
+	     (weight (string-length str))
+	     (left str)
+	     (right #f)
+	     (index num))))
+      (else
+       (js-ascii->jsstring (integer->string num)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-stringlist->jsstring ...                                      */
 ;*    -------------------------------------------------------------    */
@@ -361,7 +376,7 @@
 (define (js-stringlist->jsstring val::pair-nil)
    (cond
       ((null? val)
-       empty-string)
+       (& ""))
       ((null? (cdr val))
        (js-string->jsstring (car val)))
       ((null? (cddr val))
@@ -379,13 +394,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->string ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-jsstring->string::bstring js::obj)
+(define-inline (js-jsstring->string::bstring js::JsStringLiteral)
    (with-access::JsStringLiteral js (left right)
       (if (not right)
 	  left
 	  (begin
 	     (js-jsstring-normalize! js)
 	     left))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring->number ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring->number::obj js::JsStringLiteral)
+   (if (isa? js JsStringLiteralIndex)
+       (with-access::JsStringLiteralIndex js (index)
+	  (uint32->fixnum index))
+       (string->number (js-jsstring->string js))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-ASCII! ...                                 */
@@ -411,7 +435,7 @@
 	     r))
 	 (else
 	  (let ((buffer (make-string
-			   (uint32->fixnum (js-string-literal-length js)))))
+			   (uint32->fixnum (js-jsstring-length js)))))
 	     (let loop ((i 0)
 			(s js)
 			(stack '()))
@@ -474,7 +498,7 @@
 		    r))))
 	 (else
 	  (let ((buffer (make-string
-			   (uint32->fixnum (js-string-literal-length js)))))
+			   (uint32->fixnum (js-jsstring-length js)))))
 	     (let loop ((i 0)
 			(s js)
 			(stack '()))
@@ -531,13 +555,13 @@
    js)
 
 ;*---------------------------------------------------------------------*/
-;*    js-string-length ...                                             */
+;*    js-jsstring-length ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Returns the number of scheme caracters (i.e., bytes) forming the */
 ;*    string. For an UTF* string, this number differs from the number  */
 ;*    of letters of that string.                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-string-length::uint32 js::JsStringLiteral)
+(define (js-jsstring-length::uint32 js::JsStringLiteral)
    (let loop ((len #u32:0)
 	      (js js))
       (cond
@@ -565,7 +589,7 @@
        (with-access::JsStringLiteralASCII js (right left weight)
 	  (if (not right)
 	      weight
-	      (js-string-literal-length js)))
+	      (js-jsstring-length js)))
        (fixnum->uint32 (utf8-string-length (js-jsstring->string js)))))
 
 ;*---------------------------------------------------------------------*/
@@ -583,7 +607,7 @@
        (with-access::JsStringLiteralASCII js (right left weight)
 	  (if (not right)
 	      weight
-	      (js-string-literal-length js)))))
+	      (js-jsstring-length js)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    display-js-string ...                                            */
@@ -829,14 +853,6 @@
 (define-method (js-tointeger this::JsStringLiteralIndex %this)
    (with-access::JsStringLiteralIndex this (index)
       (js-uint32-tointeger index)))
-
-;*---------------------------------------------------------------------*/
-;*    js-index->jsstring ...                                           */
-;*---------------------------------------------------------------------*/
-(define (js-index->jsstring num::long)
-   (if (or (<fx num 0) (>=fx num (vector-length indexes)))
-       (js-ascii->jsstring (integer->string n))
-       (vector-ref indexes num)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->bool ...                                              */
@@ -1140,7 +1156,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-put-string! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-put-string! _o::bstring prop v throw %this)
+(define (js-put-string! _o::JsStringLiteral prop v throw %this)
    (let ((o (js-toobject %this _o)))
       (js-put! o prop v throw %this)))
 
@@ -1458,28 +1474,28 @@
       (if (fixnum? position)
 	  (cond
 	     ((<fx position 0)
-	      empty-string)
+	      (& ""))
 	     ((>=fx position (string-length val))
-	      empty-string)
+	      (& ""))
 	     (else
 	      (ascii-charat/table val position)))
 	  (let ((pos (js-tointeger position %this)))
 	     (if (or (< pos 0) (>= pos (string-length val)))
-		 empty-string
+		 (& "")
 		 (ascii-charat/table val (->fixnum pos))))))
 
    (define (utf8-charat val::bstring)
       (if (fixnum? position)
 	  (cond
 	     ((<fx position 0)
-	      empty-string)
+	      (& ""))
 	     ((>=u32 (fixnum->uint32 position) (js-jsstring-codeunit-length this))
-	      empty-string)
+	      (& ""))
 	     (else
 	      (js-utf8-ref this val position)))
 	  (let ((pos (js-tointeger position %this)))
 	     (if (or (< pos 0) (>= pos (js-jsstring-codeunit-length this)))
-		 empty-string
+		 (& "")
 		 (js-utf8-ref this val (->fixnum pos))))))
 
    (string-dispatch charat this))
@@ -1552,7 +1568,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-substr this start length %this)
    
-   (define (ascii-substr r1)
+   (define (ascii-substr r1::bstring)
       (let* ((r2 (js-tointeger start %this))
 	     (r3 (if (eq? length (js-undefined))
 		     (maxvalfx)
@@ -1561,10 +1577,10 @@
 	     (r5 (if (>=fx r2 0) r2 (maxfx (+fx r4 r2) 0)))
 	     (r6 (minfx (maxfx r3 0) (-fx r4 r5))))
 	 (if (<=fx r6 0)
-	     empty-string
+	     (& "")
 	     (js-ascii->jsstring (substring r1 r5 (+fx r5 r6))))))
    
-   (define (utf8-substr r1)
+   (define (utf8-substr r1::bstring)
       (let* ((r2 (js-tointeger start %this))
 	     (r3 (if (eq? length (js-undefined))
 		     (maxvalfx)
@@ -1573,10 +1589,10 @@
 	     (r5 (if (>=fx r2 0) r2 (maxfx (+fx r4 r2) 0)))
 	     (r6 (minfx (maxfx r3 0) (-fx r4 r5))))
 	 (if (<=fx r6 0)
-	     empty-string
+	     (& "")
 	     (js-string->jsstring (utf8-substring r1 r5 (+fx r5 r6))))))
    
-   (string-dispatch substr (js-jsstring->string this)))
+   (string-dispatch substr this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-substr ...                                     */
@@ -1727,7 +1743,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.14    */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-split this::obj separator limit %this)
+(define (js-jsstring-split this::JsStringLiteral separator limit %this)
    
    (define (minelong2::elong n1::elong n2::elong)
       (if (<elong n1 n2) n1 n2))
@@ -1882,7 +1898,7 @@
    (let ((stop (-fx (string-length fmt) 1)))
       (let loop ((i 0)
 		 (j 0)
-		 (res empty-string))
+		 (res (& "")))
 	 (cond
 	    ((>=fx i stop)
 	     (js-jsstring-append res (js-substring fmt j (+fx stop 1))))
@@ -1976,7 +1992,7 @@
       (map (lambda (m)
 	      (if (pair? m)
 		  (js-substring/enc s (car m) (cdr m) enc)
-		  empty-string))
+		  (& "")))
 	 matches))
 
    (with-access::JsGlobalObject %this (js-regexp js-array)
@@ -2002,7 +2018,7 @@
 	    (else
 	     (let loop ((len (string-length s)))
 		(let loop ((i 0)
-			   (res empty-string))
+			   (res (& "")))
 		   (let ((r (pregexp-match-positions rx s i)))
 		      (if (not r)
 			  (cond
@@ -2050,7 +2066,7 @@
    (define (first-match pos::vector s::bstring)
       (if (>=fx (vector-ref pos 0) 0)
 	  (js-substring s (vector-ref pos 0) (vector-ref pos 1))
-	  empty-string))
+	  (& "")))
 
    (with-access::JsGlobalObject %this (js-regexp js-array)
       (let* ((s (js-jsstring->string this))
@@ -2075,7 +2091,7 @@
 			     (vector-ref pos 1) (string-length s) enc)))))))
 	    (else
 	     (let loop ((i 0)
-			(res empty-string))
+			(res (& "")))
 		(let ((r (pregexp-match-n-positions! rx s pos i len)))
 		   (if (<=fx r 0)
 		       (cond
@@ -2125,7 +2141,7 @@
       (map (lambda (m)
 	      (if (pair? m)
 		  (js-substring/enc s (car m) (cdr m) enc)
-		  empty-string))
+		  (& "")))
 	 matches))
 
    (let* ((s (js-jsstring->string this))
@@ -2149,13 +2165,13 @@
 		 (js-jsstring-append
 		    (js-substring/enc s 0 (caar r) enc)
 		    (js-jsstring-append
-		       newstring
+		       replacevalue
 		       (js-substring/enc s (cdar r)
 			  (string-length s) enc)))))))
 	 (else
 	  (if (string-index newstring #\$)
 	      (let loop ((i 0)
-			 (res empty-string))
+			 (res (& "")))
 		 (let ((r (pregexp-match-positions rx s i)))
 		    (if (not r)
 			(cond
@@ -2191,7 +2207,7 @@
 				  v)))))))
 	      (let ((pos (vector -1 -1)))
 		 (let loop ((i 0)
-			    (res empty-string))
+			    (res (& "")))
 		    (let ((r (pregexp-match-n-positions! rx s pos i len)))
 		       (if (<=fx r 0)
 			   (begin
@@ -2203,7 +2219,7 @@
 				 (else
 				  (js-jsstring-append res
 				     (js-substring/enc s i len enc)))))
-			   (let ((v newstring))
+			   (let ((v replacevalue))
 			      (cond
 				 ((>fx (vector-ref pos 1) i)
 				  (loop (vector-ref pos 1)
@@ -2244,7 +2260,7 @@
 		(reverse! l)
 		(let ((v (js-get a (js-toname i %this) %this)))
 		   (loop (+fx i 1)
-		      (cons (if (eq? v (js-undefined)) empty-string v)
+		      (cons (if (eq? v (js-undefined)) (& "") v)
 			 l)))))))
 
    (let* ((string (js-jsstring->string this))
@@ -2723,7 +2739,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-slice ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-slice jss::obj start end %this)
+(define (js-jsstring-slice jss::JsStringLiteral start end %this)
    (let* ((len (uint32->fixnum (js-jsstring-length jss)))
 	  (intstart (js-tointeger start %this))
 	  (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
@@ -2754,20 +2770,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->jsarray ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring->jsarray o %this)
+(define (js-jsstring->jsarray o::JsStringLiteral %this)
    
-   (define (ascii->array val %this)
-      (let* ((len (string-length o))
+   (define (ascii->array val::bstring %this)
+      (let* ((len (string-length val))
 	     (vec (make-vector len)))
 	 (let loop ((i 0))
 	    (if (<fx i len)
 		(let ((val (vector-ref chars
-			      (char->integer (string-ref-ur o i)))))
+			      (char->integer (string-ref-ur val i)))))
 		   (vector-set! vec i val)
 		   (loop (+fx i 1)))
 		(js-vector->jsarray vec %this)))))
       
-   (define (utf8->array val %this)
+   (define (utf8->array val::bstring %this)
       (let* ((len (string-length val))
 	     (vec (make-vector len)))
 	 (let loop ((i 0))

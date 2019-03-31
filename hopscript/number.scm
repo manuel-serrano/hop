@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 30 09:31:26 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 09:34:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -230,7 +230,7 @@
 ;*    js-toindex ::JsNumber ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-toindex this::JsNumber)
-   (with-access::JsNumber p (val) (js-toindex val)))
+   (with-access::JsNumber this (val) (js-toindex val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-number-prototype! ...                               */
@@ -389,7 +389,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.8.1        */
 ;*---------------------------------------------------------------------*/
 (define (js-real->string obj)
-
+   
    (define (js-bignum->string m)
       (if (=bx m #z0)
 	  "0"
@@ -432,7 +432,7 @@
 				     (if (>= n 1) "+" "-")
 				     (number->string (abs (- n 1))))))))
 			(liip (+ k 1) (*bx t #z10))))))))
-
+   
    (define (match->bignum::bignum m::pair)
       (let ((exp (string->integer (cadddr m)))) 
 	 (+bx
@@ -441,7 +441,7 @@
 	    (*bx (string->bignum (caddr m))
 	       (exptbx #z10
 		  (fixnum->bignum (-fx exp (string-length (caddr m)))))))))
-
+   
    (define (js-real->string m)
       (if (=fl m 0.0)
 	  "0"
@@ -465,12 +465,12 @@
 		 cadr)
 		(else
 		 (js-ascii->jsstring s))))))
-
-      (cond
-	 ((not (= obj obj)) (& "NaN"))
-	 ((= obj +inf.0) (& "Infinity"))
-	 ((= obj -inf.0) (& "-Infinity"))
-	 (else (js-ascii->jsstring (js-real->string obj))))))
+   
+   (cond
+      ((not (= obj obj)) (& "NaN"))
+      ((= obj +inf.0) (& "Infinity"))
+      ((= obj -inf.0) (& "-Infinity"))
+      (else (js-ascii->jsstring (js-real->string obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsnumber-tostring ...                                         */
@@ -524,8 +524,8 @@
 ;*    js-slow+ ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-slow+ left right %this)
-   (let* ((left (js-toprimitive left (& "any") %this))
-	  (right (js-toprimitive right (& "any") %this)))
+   (let* ((left (js-toprimitive left 'any %this))
+	  (right (js-toprimitive right 'any %this)))
       (cond
 	 ((js-jsstring? left)
 	  (js-jsstring-append left (js-tojsstring right %this)))

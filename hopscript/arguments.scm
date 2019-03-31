@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Mar 29 13:40:30 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 07:50:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -82,7 +82,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsArguments op compile isexpr)
    (let* ((%this (js-initial-global-object))
-	  (len::uint32 (js-touint32 (js-get o 'length %this) %this)))
+	  (len::uint32 (js-touint32 (js-get o (& "length") %this) %this)))
       (if (=u32 len (fixnum->uint32 0))
 	  (display "sc_vector2array([])" op)
 	  (begin
@@ -124,7 +124,7 @@
    (if (js-object-mode-inline? arr)
        (with-access::JsArguments arr (vec)
 	  (vector-length vec))
-       (js-get arr 'length %this)))
+       (js-get arr &length %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::JsArguments ...                                  */
@@ -156,7 +156,7 @@
 ;*    js-put-length! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put-length! o::JsArguments v::obj throw::bool cache %this)
-   (js-put! o 'length v throw %this))
+   (js-put! o (& "length") v throw %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsArguments ...                                        */
@@ -168,7 +168,7 @@
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((not (js-isindex? i))
-	     (when (eq? (js-toname p %this) 'length)
+	     (when (eq? (js-toname p %this) (& "length"))
 		(js-object-mode-inline-set! o #f))
 	     (call-next-method))
 	    ((<uint32 i (vector-length vec))
@@ -304,7 +304,7 @@
 			  ;; define-own-property%
 			  ;; has replace the property)
 			  #unspecified))))))
-	 ((eq? p 'length)
+	 ((eq? p (& "length"))
 	  (js-object-mode-inline-set! o #f)
 	  (call-next-method))
 	 (else
@@ -398,8 +398,8 @@
 (define arguments-cmap
    (instantiate::JsConstructMap
       (methods (make-vector 2))
-      (props `#(,(prop 'length (property-flags #t #f #t #f))
-		,(prop 'callee (property-flags #t #f #t #f))))))
+      (props `#(,(prop (& "length") (property-flags #t #f #t #f))
+		,(prop (& "callee") (property-flags #t #f #t #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments ...                                                 */
@@ -421,7 +421,7 @@
    
    (define (value->descriptor v i)
       (instantiate::JsValueDescriptor
-	 (name (string->symbol (integer->string i)))
+	 (name (js-integer->jsstring i))
 	 (value v)
 	 (writable #t)
 	 (configurable #t)
@@ -441,16 +441,16 @@
 		       (vec vec)
 		       (elements ($create-vector 3))
 		       (__proto__ __proto__))))
-	    (js-bind! %this obj 'length
+	    (js-bind! %this obj (& "length")
 	       :value len
 	       :enumerable #f :configurable #t :writable #t
 	       :hidden-class #t)
-	    (js-bind! %this obj 'caller
+	    (js-bind! %this obj (& "caller")
 	       :get thrower-get
 	       :set thrower-set
 	       :enumerable #f :configurable #f
 	       :hidden-class #t)
-	    (js-bind! %this obj 'callee
+	    (js-bind! %this obj (& "callee")
 	       :get thrower-get
 	       :set thrower-set
 	       :enumerable #f :configurable #f
@@ -515,7 +515,8 @@
    (with-access::JsArguments o (vec)
       (if (>fx (vector-length vec) 0)
 	  (let ((len (minfx (vector-length vec)
-			(uint32->fixnum (js-touint32 (js-get o 'length %this) %this)))))
+			(uint32->fixnum
+			   (js-touint32 (js-get o (& "length") %this) %this)))))
 	     (let loop ((i 0))
 		(if (<fx i len)
 		    (begin
@@ -535,7 +536,7 @@
 	     (with-access::JsArguments o (vec)
 		(let ((len (minfx (vector-length vec)
 			      (uint32->fixnum
-				 (js-touint32 (js-get o 'length %this) %this)))))
+				 (js-touint32 (js-get o (& "length") %this) %this)))))
 		   (let loop ((i 0))
 		      (when (<fx i len)
 			 (proc (js-property-value o o i (vector-ref vec i) %this)

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat Mar 30 06:58:12 2019 (serrano)                */
+#*    Last change :  Sun Mar 31 07:45:22 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -39,7 +39,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = types rts object function string number regexp boolean \
+_OBJECTS = types object function string number regexp boolean \
   error array arguments date json math worker private public lib service \
   property websocket pair obj arraybuffer arraybufferview stringliteral dom \
   symbol promise generator proxy reflect map set spawn expanders profile \
@@ -55,8 +55,8 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm) $(_C_OBJECTS:%=%.c)
 
-INCLUDES = stringliteral.sch property_expd.sch property.sch expanders.sch \
-  arithmetic.sch call.sch array.sch number.sch public_expd.sch \
+INCLUDES = stringliteral.sch names.sch property_expd.sch property.sch \
+  expanders.sch arithmetic.sch call.sch array.sch number.sch public_expd.sch \
   stringliteral_expd.sch types.sch types_expd.sch \
   constant_expd.sch
 C_INCLUDES = bglhopscript.h bglhopscript_malloc.h

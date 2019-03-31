@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Mar 30 10:37:09 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 09:26:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -15,12 +15,13 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_types
+
+   (include "stringliteral.sch")
    
    (library hop)
    
    (use __hopscript_object
 	__hopscript_string
-	__hopscript_stringliteral
 	__hopscript_symbol
 	__hopscript_number
 	__hopscript_date
@@ -97,7 +98,7 @@
 	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))
 	      (point::long (default -1))
-	      (name::JsStringLiteral (default '||))
+	      (name::JsStringLiteral (default &empty))
 	      (method::obj (default #f))
 	      (function::obj (default #f))
 	      (pctable::obj (default #f))

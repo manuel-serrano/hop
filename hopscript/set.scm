@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Sat Mar 30 10:34:29 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 10:45:30 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -90,7 +90,7 @@
 	    (__proto__ __proto__)))
       
       (define js-set
-	 (js-make-function %this %js-set 0 (& name)
+	 (js-make-function %this %js-set 0 name
 	    :__proto__ js-function-prototype
 	    :prototype js-set-prototype
 	    :size 0

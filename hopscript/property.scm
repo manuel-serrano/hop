@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 29 19:23:01 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 09:45:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -322,7 +322,7 @@
 	 "\ntransitions="
 	 (map (lambda (tr)
 		 (format "~a[~a]->~a"
-		    (if (symbol? (transition-name-or-value tr))
+		    (if (isa? (transition-name-or-value tr) JsStringLiteral)
 			(transition-name-or-value tr)
 			(typeof (transition-name-or-value tr)))
 		    (transition-flags tr)
@@ -871,12 +871,12 @@
 			  (set! keys (cons name keys))))
 	    names)
 	 (for-each (lambda (k)
-		      (let ((val (js-get-jsobject fro k %this)))
-			 (js-put-jsobject! target k val #t %this)))
+		      (let ((val (js-get-jsobject fro fro k %this)))
+			 (js-put-jsobject! target k val #t #t %this #f)))
 	    (sort idx-cmp idx))
 	 (for-each (lambda (k)
-		      (let ((val (js-get-jsobject fro k %this)))
-			 (js-put-jsobject! target k val #t %this)))
+		      (let ((val (js-get-jsobject fro fro k %this)))
+			 (js-put-jsobject! target k val #t #t %this #f)))
 	    (reverse! keys))))
 
    target)
@@ -1034,18 +1034,18 @@
    (define (from-object obj desc)
       ;; proxy getOwnPropertyDescriptor returns regular objects
       ;; as property descriptors
-      (js-put! obj &value
+      (js-put! obj (& "value")
 	 (js-get desc &value %this) #f %this)
-      (js-put! obj &get
-	 (js-get desc &get %this) #f %this)
-      (js-put! obj &set
-	 (js-get desc &set %this) #f %this)
-      (js-put! obj &writable
-	 (js-or (js-get desc &writable %this) #f) #f %this)
-      (js-put! obj &enumerable
-	 (js-or (js-get desc &enumerable %this) #f) #f %this)
-      (js-put! obj &configurable
-	 (js-or (js-get desc &configurable %this) #f) #f %this)
+      (js-put! obj (& "get")
+	 (js-get desc (& "get") %this) #f %this)
+      (js-put! obj (& "set")
+	 (js-get desc (& "set") %this) #f %this)
+      (js-put! obj (& "writable")
+	 (js-or (js-get desc (& "writable") %this) #f) #f %this)
+      (js-put! obj (& "enumerable")
+	 (js-or (js-get desc (& "enumerable") %this) #f) #f %this)
+      (js-put! obj (& "configurable")
+	 (js-or (js-get desc (& "configurable") %this) #f) #f %this)
       obj)
 
    (define (from-desc obj desc)
@@ -1058,17 +1058,17 @@
 	 ((isa? desc JsAccessorDescriptor)
 	  ;; 4
 	  (with-access::JsAccessorDescriptor desc (get set)
-	     (js-put! obj &get get #f %this)
-	     (js-put! obj &set set #f %this)))
+	     (js-put! obj (& "get") get #f %this)
+	     (js-put! obj (& "set") set #f %this)))
 	 ((isa? desc JsWrapperDescriptor)
 	  (with-access::JsWrapperDescriptor desc (%get writable)
-	     (js-put! obj &value (%get owner owner propname %this) #f %this)
-	     (js-put! obj &writable writable #f %this))))
+	     (js-put! obj (& "value") (%get owner owner propname %this) #f %this)
+	     (js-put! obj (& "writable") writable #f %this))))
       (with-access::JsPropertyDescriptor desc (enumerable configurable)
 	 ;; 5
-	 (js-put! obj &enumerable enumerable #f %this)
+	 (js-put! obj (& "enumerable") enumerable #f %this)
 	 ;; 6
-	 (js-put! obj &configurable configurable #f %this))
+	 (js-put! obj (& "configurable") configurable #f %this))
       obj)
 
    (if (eq? desc (js-undefined))
@@ -1092,14 +1092,14 @@
 	  (configurable (if (js-has-property obj &configurable %this)
 			    (js-toboolean (js-get obj &configurable %this))
 			    (js-undefined)))
-	  (hasget (js-has-property obj &get %this))
-	  (hasset (js-has-property obj &set %this)))
+	  (hasget (js-has-property obj (& "get") %this))
+	  (hasset (js-has-property obj (& "set") %this)))
       (cond
 	 ((or hasget hasset)
-	  (let ((get (js-get obj &get %this))
-		(set (js-get obj &set %this)))
-	     (if (or (js-has-property obj &writable %this)
-		     (js-has-property obj &value %this)
+	  (let ((get (js-get obj (& "get") %this))
+		(set (js-get obj (& "set") %this)))
+	     (if (or (js-has-property obj (& "writable") %this)
+		     (js-has-property obj (& "value") %this)
 		     (and (not (isa? get JsFunction))
 			  (not (eq? get (js-undefined))))
 		     (and (not (isa? set JsFunction))
@@ -1114,13 +1114,13 @@
 		    (%set (function1->proc set %this))
 		    (enumerable enumerable)
 		    (configurable configurable)))))
-	 ((js-has-property obj &value %this)
+	 ((js-has-property obj (& "value") %this)
 	  (let ((writable (if (js-has-property obj &writable %this)
 			      (js-toboolean (js-get obj &writable %this))
 			      (js-undefined))))
 	     (instantiate::JsValueDescriptor
 		(name name)
-		(value (js-get obj &value %this))
+		(value (js-get obj (& "value") %this))
 		(writable writable)
 		(enumerable enumerable)
 		(configurable configurable))))
@@ -1239,8 +1239,8 @@
 (define-method (js-properties-name::vector o::JsObject enump::bool %this::JsGlobalObject)
    (apply vector
       (filter-map (lambda (n)
-		     (when (symbol? n)
-			(js-string->jsstring (symbol->string! n))))
+		     (when (isa? n JsStringLiteral)
+			n))
 	 (js-properties-names o enump %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -1442,8 +1442,6 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get o prop %this::JsGlobalObject)
    (cond
-      ((string? o)
-       (js-get-string o prop %this))
       ((pair? o)
        (js-get-pair o (js-toname prop %this) %this))
       ((null? o)
@@ -1484,12 +1482,10 @@
 (define (js-get/debug _o prop %this::JsGlobalObject loc)
    (when *profile-cache*
       (cond
-	 ((symbol? prop)
+	 ((isa? prop JsStringLiteral)
 	  (js-profile-log-get prop loc))
-	 ((string? prop)
-	  (js-profile-log-get (string->symbol prop) loc))
 	 ((number? prop)
-	  (js-profile-log-get (string->symbol (number->string prop)) loc))))
+	  (js-profile-log-get (js-ascii-name->jsstring (number->string prop)) loc))))
    (cond
       ((pair? _o)
        (js-get-pair _o (js-toname prop %this) %this))
@@ -1584,7 +1580,7 @@
       ((isa? o JsArray)
        (js-array-length o))
       ((isa? o JsStringLiteralASCII)
-       (js-string-length o))
+       (js-jsstring-length o))
       ((isa? o JsStringLiteral)
        (js-jsstring-codeunit-length o))
       ((isa? o JsTypedArray)
@@ -1800,8 +1796,6 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-put! _o prop v::obj throw::bool %this::JsGlobalObject)
    (cond
-      ((string? _o)
-       (js-put-string! _o prop v throw %this))
       ((pair? _o)
        (js-put-pair! _o prop v throw %this))
       (else
@@ -1980,7 +1974,7 @@
    
    (define (extend-mapped-object!)
       (js-object-mode-enumerable-set! o #t)
-      (when (and (symbol? name) (string->number (symbol->string! name)))
+      (when (and (isa? name JsStringLiteral) (js-jsstring->number name))
 	 (js-object-mode-hasnumeralprop-set! o #t))
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
@@ -2144,12 +2138,10 @@
 (define (js-put/debug! _o prop v::obj throw::bool %this::JsGlobalObject loc)
    (when *profile-cache*
       (cond
-	 ((symbol? prop)
+	 ((isa? prop JsStringLiteral)
 	  (js-profile-log-put prop loc))
-	 ((string? prop)
-	  (js-profile-log-put (string->symbol prop) loc))
 	 ((number? prop)
-	  (js-profile-log-put (string->symbol (number->string prop)) loc))))
+	  (js-profile-log-put (js-ascii-name->jsstring (number->string prop)) loc))))
    (cond
       ((pair? _o)
        (js-put-pair! _o (js-toname prop %this) v throw %this))
@@ -2362,7 +2354,7 @@
    (define (extend-mapped-object!)
       (when enumerable
 	 (js-object-mode-enumerable-set! o #t))
-      (when (and (symbol? name) (string->number (symbol->string! name)))
+      (when (and (isa? name JsStringLiteral) (js-jsstring->number name))
 	 (js-object-mode-hasnumeralprop-set! o #t))
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
@@ -2716,7 +2708,7 @@
    
    ;; MS CARE, to be improved
    (js-object-unmap! o)
-   (when (and (symbol? name) (string->number (symbol->string! name)))
+   (when (and (isa? name JsStringLiteral) (js-jsstring->number name))
       (js-object-mode-hasnumeralprop-set! o #t))
    (let ((current (js-get-own-property o name %this)))
       ;; 1 & 2
@@ -2970,9 +2962,9 @@
    (define (in-mapped-property prop)
       (when prop
 	 (let ((name (prop-name prop)))
-	    (when (symbol? name)
+	    (when (isa? name JsStringLiteral)
 	       (when (flags-enumerable? (prop-flags prop))
-		  (proc (js-symbol->jsstring name) %this))))))
+		  (proc name %this))))))
    
    (define (vfor-in vecname)
       (let ((len (vector-length vecname)))
@@ -2984,9 +2976,9 @@
    (define (in-property p)
       (when (isa? p JsPropertyDescriptor)
 	 (with-access::JsPropertyDescriptor p (name enumerable)
-	    (when (symbol? name)
+	    (when (isa? name JsStringLiteral)
 	       (when (eq? enumerable #t)
-		  (proc (js-symbol->jsstring name) %this))))))
+		  (proc name %this))))))
    
    (with-access::JsObject obj (cmap __proto__ elements)
       (when (js-object-mode-enumerable? obj)
@@ -3009,10 +3001,10 @@
    (define (in-mapped-property prop)
       (when prop
 	 (let ((name (prop-name prop)))
-	    (when (symbol? name)
+	    (when (isa? name JsStringLiteral)
 	       (when (flags-enumerable? (prop-flags prop))
 		  (unless (js-has-upto-property owner obj name %this)
-		     (proc (js-symbol->jsstring name) %this)))))))
+		     (proc name %this)))))))
    
    (define (vfor-in vecname)
       (let ((len (vector-length vecname)))
@@ -3024,10 +3016,10 @@
    (define (in-property p)
       (when (isa? p JsPropertyDescriptor)
 	 (with-access::JsPropertyDescriptor p (name enumerable)
-	    (when (symbol? name)
+	    (when (isa? name JsStringLiteral)
 	       (when (eq? enumerable #t)
 		  (unless (js-has-upto-property owner obj name %this)
-		     (proc (js-symbol->jsstring name) %this)))))))
+		     (proc name %this)))))))
    
    (with-access::JsObject obj (cmap __proto__ elements)
       (when (js-object-mode-enumerable? obj)
@@ -3076,8 +3068,8 @@
    (define (for next)
       (let loop ()
 	 (let ((n (js-call0 %this next iterator)))
-	    (unless (eq? (js-get n &done %this) #t)
-	       (proc (js-get n &value %this) %this)
+	    (unless (eq? (js-get n (& "done") %this) #t)
+	       (proc (js-get n (& "value") %this) %this)
 	       (loop))))
       #t)
    

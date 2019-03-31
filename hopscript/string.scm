@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Mar 30 10:36:11 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 09:35:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -71,7 +71,7 @@
 ;*    js-toindex ::JsString ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-toindex obj::JsString)
-   (with-access::JsString p (val)
+   (with-access::JsString obj (val)
       (js-toindex (js-jsstring->string val))))
 
 ;*---------------------------------------------------------------------*/
@@ -605,7 +605,7 @@
    ;; substr
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.3
    (define (substr this::obj start length)
-      (js-jsstring-substr (js-tostring this %this) start length %this))
+      (js-jsstring-substr (js-tojsstring this %this) start length %this))
    
    (js-bind! %this obj (& "substr")
       :value (js-make-function %this substr 2 "substr"

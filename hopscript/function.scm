@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/function.scm            */
+;*    serrano/prgm/project/hop/hop/hopscript/function.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Mar 19 06:45:29 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 08:00:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -81,7 +81,7 @@
 	 (with-access::JsFunction obj (procedure src)
 	    (if (eq? src 'builtin)
 		(let ((nobj (duplicate::JsFunction obj
-			       (__proto__ (js-get js-function 'prototype %this)))))
+			       (__proto__ (js-get js-function (& "prototype") %this)))))
 		   (js-object-properties-set! nobj '())
 		   (js-object-mode-set! nobj (js-object-mode obj))
 		   nobj)
@@ -100,7 +100,7 @@
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache
 		  #!optional (point -1) (cspecs '()))
-   (if (eq? p 'prototype)
+   (if (eq? p (& "prototype"))
        (with-access::JsFunction o (prototype) prototype)
        (call-next-method)))
    
@@ -127,7 +127,7 @@
 ;*---------------------------------------------------------------------*/
 (define prototype-property-rw
    (instantiate::JsWrapperDescriptor
-      (name 'prototype)
+      (name (& "prototype"))
       (enumerable #f)
       (configurable #f)
       (writable #t)
@@ -136,7 +136,7 @@
 
 (define prototype-property-ro
    (instantiate::JsWrapperDescriptor
-      (name 'prototype)
+      (name (& "prototype"))
       (enumerable #f)
       (configurable #f)
       (writable #f)
@@ -145,7 +145,7 @@
 
 (define prototype-property-null
    (instantiate::JsValueDescriptor
-      (name '%null)
+      (name (& "%null"))
       (enumerable #f)
       (configurable #f)
       (writable #f)
@@ -153,7 +153,7 @@
 
 (define prototype-property-undefined
    (instantiate::JsValueDescriptor
-      (name '%undefined)
+      (name (& "%undefined"))
       (enumerable #f)
       (configurable #f)
       (writable #f)
@@ -172,41 +172,41 @@
 ;*---------------------------------------------------------------------*/
 (define js-function-cmap
    (make-cmap
-      `#(,(prop 'prototype (property-flags #f #f #f #f))
-	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #t #f)))))
+      `#(,(prop (& "prototype") (property-flags #f #f #f #f))
+	 ,(prop (& "length") (property-flags #f #f #f #f))
+	 ,(prop (& "name") (property-flags #f #f #t #f)))))
 
 (define js-function-cmap-sans-prototype
    (make-cmap
-      `#(,(prop '%null (property-flags #f #f #f #f))
-	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #t #f)))))
+      `#(,(prop (& "%null") (property-flags #f #f #f #f))
+	 ,(prop (& "length") (property-flags #f #f #f #f))
+	 ,(prop (& "name") (property-flags #f #f #t #f)))))
 
 (define js-function-strict-cmap
    (make-cmap
-      `#(,(prop 'prototype (property-flags #f #f #f #f))
-	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #t #f))
-	 ,(prop 'arguments (property-flags #f #f #f #f))
-	 ,(prop 'caller (property-flags #f #f #f #f)))))
+      `#(,(prop (& "prototype") (property-flags #f #f #f #f))
+	 ,(prop (& "length") (property-flags #f #f #f #f))
+	 ,(prop (& "name") (property-flags #f #f #t #f))
+	 ,(prop (& "arguments") (property-flags #f #f #f #f))
+	 ,(prop (& "caller") (property-flags #f #f #f #f)))))
 
 (define js-function-writable-cmap
    (make-cmap
-      `#(,(prop 'prototype (property-flags #t #f #f #f))
-	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #t #f)))))
+      `#(,(prop (& "prototype") (property-flags #t #f #f #f))
+	 ,(prop (& "length") (property-flags #f #f #f #f))
+	 ,(prop (& "name") (property-flags #f #f #t #f)))))
 
 (define js-function-writable-strict-cmap
    (make-cmap
-      `#(,(prop 'prototype (property-flags #t #f #f #f))
-	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #t #f))
-	 ,(prop 'arguments (property-flags #f #f #f #f))
-	 ,(prop 'caller (property-flags #f #f #f #f)))))
+      `#(,(prop (& "prototype") (property-flags #t #f #f #f))
+	 ,(prop (& "length") (property-flags #f #f #f #f))
+	 ,(prop (& "name") (property-flags #f #f #t #f))
+	 ,(prop (& "arguments") (property-flags #f #f #f #f))
+	 ,(prop (& "caller") (property-flags #f #f #f #f)))))
 
 (define js-function-prototype-cmap
    (make-cmap
-      `#(,(prop 'constructor (property-flags #t #f #t #f)))))
+      `#(,(prop (& "constructor") (property-flags #t #f #t #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
@@ -281,7 +281,7 @@
 	 (set! thrower-set thrower)
 	 (set! strict-arguments-property
 	    (instantiate::JsAccessorDescriptor
-	       (name 'arguments)
+	       (name (& "arguments"))
 	       (get thrower-get)
 	       (set thrower-set)
 	       (%get throw)
@@ -290,7 +290,7 @@
 	       (configurable #f)))
 	 (set! strict-caller-property
 	    (instantiate::JsAccessorDescriptor
-	       (name 'caller)
+	       (name (& "caller"))
 	       (get thrower-get)
 	       (set thrower-set)
 	       (%get throw)
@@ -302,7 +302,7 @@
       (init-builtin-function-prototype! %this js-function js-function-prototype)
       
       ;; bind Function in the global object
-      (js-bind! %this %this 'Function
+      (js-bind! %this %this (& "Function")
 	 :value js-function
 	 :configurable #f :enumerable #f)
       ;; return the js-function object
@@ -337,7 +337,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-function-debug-name::bstring obj::JsFunction %this)
    (with-access::JsFunction obj (src)
-      (let ((name (js-object-get-name/cache obj 'name #f %this
+      (let ((name (js-object-get-name/cache obj (& "name") #f %this
 		     (js-pcache-ref %pcache 0) -1 '())))
 	 (cond
 	    ((js-jsstring? name) (js-jsstring->string name))
@@ -429,7 +429,7 @@
 			 (set! %prototype p)
 			 prototype-property-rw))
 		     ((js-object? prototype)
-		      (js-bind! %this prototype 'constructor
+		      (js-bind! %this prototype (& "constructor")
 			 :value fun
 			 :configurable #t :enumerable #f :writable #t
 			 :hidden-class #t)
@@ -474,7 +474,7 @@
       (let ((desc (if (eq? cmap (js-not-a-cmap))
 		      (find (lambda (d)
 			       (with-access::JsPropertyDescriptor d (name)
-				  (eq? name 'prototype)))
+				  (eq? name (& "prototype"))))
 			 (js-object-properties o))
 		      (vector-ref elements 0))))
 	 (with-access::JsDataDescriptor desc (writable)
@@ -509,19 +509,19 @@
 (define (init-builtin-function-prototype! %this::JsGlobalObject js-function obj)
    
    ;; length
-   (js-bind! %this obj 'length
+   (js-bind! %this obj (& "length")
       :value 0
       :enumerable #f :configurable #f :writable #f
       :hidden-class #t)
    
    ;; constructor
-   (js-bind! %this obj 'constructor
+   (js-bind! %this obj (& "constructor")
       :value js-function
       :enumerable #f :configurable #t :writable #t
       :hidden-class #t)
 
    ;; name
-   (js-bind! %this obj 'name
+   (js-bind! %this obj (& "name")
       :value (js-ascii->jsstring "builtin")
       :enumerable #f :configurable #t :writable #f
       :hidden-class #t)
@@ -538,7 +538,7 @@
 		     (js-string->jsstring
 			(format "[Function ~a:~a]"
 			   (cadr (car src)) (caddr (car src)))))
-		 (let ((name (js-get this 'name %this)))
+		 (let ((name (js-get this (& "name") %this)))
 		    (if (js-jsstring? name)
 			(js-jsstring-append
 			   (js-ascii->jsstring "[function ")
@@ -550,7 +550,7 @@
 	  (js-raise-type-error %this "toString: not a function ~s"
 	     (js-typeof this)))))
 
-   (js-bind! %this obj 'toString
+   (js-bind! %this obj (& "toString")
       :value (js-make-function %this tostring 0 "toString"
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
@@ -567,7 +567,7 @@
 	  (js-raise-type-error %this "source: not a function ~s"
 	     (js-typeof this))))
    
-   (js-bind! %this obj 'source
+   (js-bind! %this obj (& "source")
       :value (js-make-function %this source 0 "source"
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
@@ -587,7 +587,7 @@
    (define (prototype-apply this::obj thisarg argarray)
       (js-apply-array %this this thisarg argarray))
 
-   (js-bind! %this obj 'apply
+   (js-bind! %this obj (& "apply")
       :value (js-make-function %this prototype-apply 2 "apply"
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
@@ -611,7 +611,7 @@
    (with-access::JsGlobalObject %this (js-call)
       (set! js-call
 	 (js-make-function %this call 1 "call" :prototype (js-undefined)))
-      (js-bind! %this obj 'call
+      (js-bind! %this obj (& "call")
 	 :value js-call
 	 :enumerable #f :writable #t :configurable #t
 	 :hidden-class #t))
@@ -629,19 +629,19 @@
 			    %this
 			    proc
 			    (maxfx 0 (-fx len (length args)))
-			    (js-tostring (js-get this 'name %this) %this)
+			    (js-tostring (js-get this (& "name") %this) %this)
 			    :strict 'strict
 			    :alloc alloc
 			    :construct proc)))
 		fun))))
 
-   (js-bind! %this obj 'bind
+   (js-bind! %this obj (& "bind")
       :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
    
    ;; hopscript does not support caller
-   (js-bind! %this obj 'caller
+   (js-bind! %this obj (& "caller")
       :get thrower-get
       :set thrower-set
       :enumerable #f :configurable #f
@@ -671,7 +671,7 @@
        (js-raise-type-error %this
 	  "apply: argument not an object ~s" argarray))
       ((isa? argarray JsArray)
-       (let ((len (js-get argarray 'length %this)))
+       (let ((len (js-get argarray (& "length") %this)))
 	  (with-access::JsArray argarray (vec)
 	     (cond
 		((js-object-mode-inline? argarray)
@@ -695,7 +695,7 @@
        ;; slow path
        (let ((len (uint32->fixnum
 		     (js-touint32
-			(js-get argarray 'length %this)
+			(js-get argarray (& "length") %this)
 			%this))))
 	  ;; assumes here a fixnum length as an iteration over the range
 	  ;; 1..2^32-1 is not computable with 2014 computer's performance

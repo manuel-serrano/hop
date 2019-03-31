@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/make_lib.scm            */
+;*    serrano/prgm/project/hop/hop/hopscript/make_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Mar 12 10:59:33 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 09:23:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -33,6 +33,7 @@
 	   __hopscript_arraybuffer	   
 	   __hopscript_string
 	   __hopscript_stringliteral
+	   __hopscript_names
 	   __hopscript_number 
 	   __hopscript_math
 	   __hopscript_boolean

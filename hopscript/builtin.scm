@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jan 26 08:54:32 2019                          */
-;*    Last change :  Sat Mar 30 09:20:38 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 10:47:30 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop builtin JavaScript objects                                   */
@@ -51,7 +51,7 @@
                                      nodes)))
                            (apply ,(symbol-append '< tag '>)
                               nodes)))
-                    2 (js-ascii->jsstring ,(symbol->string tag))
+                    2 ,(symbol->string tag)
 		    :__proto__ ,__proto__
 		    :src "object.scm")
           :writable #t :configurable #f :enumerable #f :hidden-class #f)))

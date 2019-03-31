@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sat Mar 30 10:41:21 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 08:17:06 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -57,11 +57,6 @@
 	   (generic js-worker-post-master-message ::JsWorker ::obj)
 	   (generic js-worker-add-handler! ::object ::JsFunction)
 	   (generic js-worker-remove-handler! ::object ::JsFunction)))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsWorker ...                                 */
@@ -635,9 +630,4 @@
       (synchronize mutex
 	 (set! state 'terminated)
 	 (condition-variable-signal! condv))))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
 

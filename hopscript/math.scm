@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/math.scm                */
+;*    serrano/prgm/project/hop/hop/hopscript/math.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Feb  1 11:34:23 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 08:11:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -18,7 +18,7 @@
    
    (library hop)
    
-   (include "types.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -63,49 +63,49 @@
 	    (__proto__ __proto__)
 	    (elements ($create-vector 26))))
       ;; other properties
-      (js-bind! %this js-math 'E
+      (js-bind! %this js-math (& "E")
 	 :value 2.7182818284590452354
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
 	 :hidden-class #f)
-      (js-bind! %this js-math 'LN10
+      (js-bind! %this js-math (& "LN10")
 	 :value (log 10)
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
 	 :hidden-class #f)
-      (js-bind! %this js-math 'LN2
+      (js-bind! %this js-math (& "LN2")
 	 :value (log 2)
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
 	 :hidden-class #f)
-      (js-bind! %this js-math 'LOG2E
+      (js-bind! %this js-math (& "LOG2E")
 	 :value 1.4426950408889634
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
 	 :hidden-class #f)
-      (js-bind! %this js-math 'LOG10E
+      (js-bind! %this js-math (& "LOG10E")
 	 :value 0.4342944819032518
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
 	 :hidden-class #f)
-      (js-bind! %this js-math 'PI
+      (js-bind! %this js-math (& "PI")
 	 :value (* 2 (atan 1 0))
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
 	 :hidden-class #f)
-      (js-bind! %this js-math 'SQRT1_2
+      (js-bind! %this js-math (& "SQRT1_2")
 	 :value (sqrt (/ 1 2))
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
 	 :hidden-class #f)
-      (js-bind! %this js-math 'SQRT2
+      (js-bind! %this js-math (& "SQRT2")
 	 :value (sqrt 2)
 	 :writable #f
 	 :configurable #f
@@ -120,7 +120,7 @@
 	    ((< x 0) (- x))
 	    (else x)))
       
-      (js-bind! %this js-math 'abs
+      (js-bind! %this js-math (& "abs")
 	 :value (js-make-function %this js-math-abs 1 "abs")
 	 :writable #t
 	 :configurable #t
@@ -132,7 +132,7 @@
       (define (js-math-acos this x)
 	 (acos x))
       
-      (js-bind! %this js-math 'acos
+      (js-bind! %this js-math (& "acos")
 	 :value (js-make-function %this js-math-acos 1 "acos")
 	 :writable #t
 	 :configurable #t
@@ -144,7 +144,7 @@
       (define (js-math-asin this x)
 	 (asin x))
       
-      (js-bind! %this js-math 'asin
+      (js-bind! %this js-math (& "asin")
 	 :value (js-make-function %this js-math-asin 1 "asin")
 	 :writable #t
 	 :configurable #t
@@ -156,7 +156,7 @@
       (define (js-math-atan this x)
 	 (atan x))
       
-      (js-bind! %this js-math 'atan
+      (js-bind! %this js-math (& "atan")
 	 :value (js-make-function %this js-math-atan 1 "atan")
 	 :writable #t
 	 :configurable #t
@@ -184,14 +184,14 @@
 		 0.0))
 	     (atan y x)))
       
-      (js-bind! %this js-math 'atan2
+      (js-bind! %this js-math (& "atan2")
 	 :value (js-make-function %this js-math-atan2 2 "atan2")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #f)
       
-      (js-bind! %this js-math 'ceil
+      (js-bind! %this js-math (& "ceil")
 	 :value (js-make-function %this
 		   (lambda (this x) (js-math-ceil x)) 1 "ceil")
 	 :writable #t
@@ -204,7 +204,7 @@
       (define (js-math-cos this x)
 	 (cos x))
       
-      (js-bind! %this js-math 'cos
+      (js-bind! %this js-math (& "cos")
 	 :value (js-make-function %this js-math-cos 1 "cos")
 	 :writable #t
 	 :configurable #t
@@ -216,14 +216,14 @@
       (define (js-math-exp this x)
 	 (exp x))
       
-      (js-bind! %this js-math 'exp
+      (js-bind! %this js-math (& "exp")
 	 :value (js-make-function %this js-math-exp 1 "exp")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #f)
       
-      (js-bind! %this js-math 'floor
+      (js-bind! %this js-math (& "floor")
 	 :value (js-make-function %this
 		   (lambda (this x) (js-math-floor x %this)) 1 "floor")
 	 :writable #t
@@ -236,7 +236,7 @@
       (define (js-math-log this x)
 	 (log (js-tonumber x %this)))
       
-      (js-bind! %this js-math 'log
+      (js-bind! %this js-math (& "log")
 	 :value (js-make-function %this js-math-log 1 "log")
 	 :writable #t
 	 :configurable #t
@@ -255,7 +255,7 @@
 		       n
 		       (loop (cdr l) (if (> n r) n r)))))))
       
-      (js-bind! %this js-math 'max
+      (js-bind! %this js-math (& "max")
 	 :value (js-make-function %this js-math-max 2 "max")
 	 :writable #t
 	 :configurable #t
@@ -274,7 +274,7 @@
 		       n
 		       (loop (cdr l) (if (< n r) n r)))))))
       
-      (js-bind! %this js-math 'min
+      (js-bind! %this js-math (& "min")
 	 :value (js-make-function %this js-math-min 2 "min")
 	 :writable #t
 	 :configurable #t
@@ -320,7 +320,7 @@
 		      (else
 		       (bignum->js-number (* x (loop x (- y 1)))))))))))
       
-      (js-bind! %this js-math 'pow
+      (js-bind! %this js-math (& "pow")
 	 :value (js-make-function %this js-math-pow 1 "pow")
 	 :writable #t
 	 :configurable #t
@@ -332,7 +332,7 @@
       (define (js-math-random this)
 	 (randomfl))
       
-      (js-bind! %this js-math 'random
+      (js-bind! %this js-math (& "random")
 	 :value (js-make-function %this js-math-random 1 "random")
 	 :writable #t
 	 :configurable #t
@@ -341,7 +341,7 @@
       
       ;; round
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.15
-      (js-bind! %this js-math 'round
+      (js-bind! %this js-math (& "round")
 	 :value (js-make-function %this
 		   (lambda (this x) (js-math-round x)) 1 "round")
 	 :writable #t
@@ -354,7 +354,7 @@
       (define (js-math-sin this x)
 	 (sin x))
       
-      (js-bind! %this js-math 'sin
+      (js-bind! %this js-math (& "sin")
 	 :value (js-make-function %this js-math-sin 1 "sin")
 	 :writable #t
 	 :configurable #t
@@ -366,7 +366,7 @@
       (define (js-math-prototype-sqrt this x)
 	 (js-math-sqrt x %this))
       
-      (js-bind! %this js-math 'sqrt
+      (js-bind! %this js-math (& "sqrt")
 	 :value (js-make-function %this
 		   (lambda (this x) (js-math-sqrt x %this)) 1 "sqrt")
 	 :writable #t
@@ -379,7 +379,7 @@
       (define (js-math-tan this x)
 	 (tan x))
       
-      (js-bind! %this js-math 'tan
+      (js-bind! %this js-math (& "tan")
 	 :value (js-make-function %this js-math-tan 1 "tan")
 	 :writable #t
 	 :configurable #t
@@ -387,7 +387,7 @@
 	 :hidden-class #f)
       
       ;; bind Math in the global object
-      (js-bind! %this %this 'Math
+      (js-bind! %this %this (& "Math")
 	 :configurable #f :enumerable #f :value js-math
 	 :hidden-class #f)
       js-math))

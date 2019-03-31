@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/json.scm                */
+;*    serrano/prgm/project/hop/hop/hopscript/json.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Nov 28 12:09:52 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Sun Mar 31 07:32:05 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */
@@ -36,11 +36,6 @@
 	   (js-json-parser ::input-port ::obj ::bool ::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
-
-;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsJSON ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsJSON worker::WorkerHopThread %_this)
@@ -57,21 +52,22 @@
 	 (instantiateJsJSON
 	    (__proto__ __proto__)))
       ;; parse
-      (js-bind! %this js-json 'parse
+      (js-bind! %this js-json (& "parse")
 	 :value (js-make-function %this (js-json-parse %this) 2 "parse")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #t)
       ;; stringify
-      (js-bind! %this js-json 'stringify
+      (js-bind! %this js-json (& "stringify")
 	 :value (js-make-function %this (js-json-stringify %this) 3 "stringify")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #t)
       ;; bind the global object
-      (js-bind! %this %this 'JSON :configurable #t :value js-json :enumerable #f
+      (js-bind! %this %this (& "JSON")
+	 :configurable #t :value js-json :enumerable #f
 	 :hidden-class #t)
       js-json))
 
@@ -140,7 +136,7 @@
       
       (define (toJSON value key)
 	 (if (isa? value JsObject)
-	     (let ((tojson (js-get value 'toJSON %this)))
+	     (let ((tojson (js-get value (& "toJSON") %this)))
 		(if (isa? tojson JsFunction)
 		    (toVALUE (js-call1 %this tojson value key))
 		    (toVALUE value)))
@@ -252,7 +248,7 @@
       (define gap "")
       
       (define (lst::obj holder value mind opar::bstring cpar::bstring proc)
-	 (let ((len (js-get value 'length %this)))
+	 (let ((len (js-get value (& "length") %this)))
 	    (js-string->jsstring 
 	       (if (= len 0)
 		   (string-append opar cpar)
@@ -435,10 +431,5 @@
       
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((holder (js-new %this js-object)))
-	    (js-put! holder '|| value #f %this)
-	    (str '|| holder '())))))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
+	    (js-put! holder (& "") value #f %this)
+	    (str (& "") holder '())))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sat Mar 30 10:38:44 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 07:33:19 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -15,20 +15,27 @@
 (module __hopscript_names
 
    (include "types.sch")
+
+   (library hop)
    
-   (import __hopscript_types
-	   __hopscript_stringliteral)
+   (use    __hopscript_types
+	   __hopscript_stringliteral
+	   __hopscript_lib
+	   __hopscript_public)
 
    (export (inline js-name-pcache::JsPropertyCache ::JsStringLiteral)
 	   (inline js-name-pcache-set! ::JsStringLiteral ::JsPropertyCache)
 	   (inline js-jsstring-toname::JsStringLiteral ::JsStringLiteral)
 	   (js-toname::obj ::obj ::JsGlobalObject)
+	   (inline js-jsstring-name ::JsStringLiteral)
 	   (inline js-name->string::bstring ::JsStringLiteral)
+	   (js-jsstring->name!::JsStringLiteral ::JsStringLiteral)
 	   (js-ascii-name->jsstring::JsStringLiteralASCII ::bstring)
 	   (js-utf8-name->jsstring::JsStringLiteralUTF8 ::bstring)
-	   (js-integer-name->jsstring::JsStringLiteralASCII ::bstring)
+	   (js-integer-name->jsstring::JsStringLiteralASCII ::long)
 	   (js-name->jsstring::JsStringLiteral ::bstring)
 	   ;; known names
+	   &empty
 	   &__proto__
 	   &charAt
 	   &charCodeAt
@@ -174,56 +181,77 @@
 	    (unless n
 	       (set! n o)
 	       (hashtable-put! names str n))
-	    (js-jstring-name-set! o n)
+	    (js-jsstring-name-set! o n)
 	    n))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-ascii-name->jsstring::JsStringLiteralASCII val::bstring)
+(define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring)
    (with-lock js-names-mutex
-      (let ((n (hashtable-get names val)))
+      (let ((n (hashtable-get names str)))
 	 (or n
 	     (let ((n (instantiate::JsStringLiteralASCII
-			 (weight (fixnum->uint32 (string-length val)))
-			 (left val)
+			 (weight (fixnum->uint32 (string-length str)))
+			 (left str)
 			 (right #f))))
 		(hashtable-put! names str n)
-		(js-jstring-name-set! n n)
+		(js-jsstring-name-set! n n)
+		n)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-index-name->jsstring ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-index-name->jsstring::JsStringLiteralASCII num::uint32)
+   (with-lock js-names-mutex
+      (let ((n (hashtable-get names num)))
+	 (or n
+	     (let* ((str (fixnum->string (uint32->fixnum num)))
+		    (n (instantiate::JsStringLiteralIndex
+			  (weight (string-length str))
+			  (left str)
+			  (right #f)
+			  (index num))))
+		(hashtable-put! names str n)
+		(js-jsstring-name-set! n n)
 		n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-name->jsstring ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-utf8-name->jsstring val::bstring)
+(define (js-utf8-name->jsstring str::bstring)
    (with-lock js-names-mutex
-      (let ((n (hashtable-get names val)))
+      (let ((n (hashtable-get names str)))
 	 (or n
 	     (let ((n (instantiate::JsStringLiteralUTF8
-			 (weight (fixnum->uint32 (string-length val)))
-			 (left val)
+			 (weight (fixnum->uint32 (string-length str)))
+			 (left str)
 			 (right #f))))
 		(hashtable-put! names str n)
-		(js-jstring-name-set! n n)
+		(js-jsstring-name-set! n n)
 		n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name->jsstring ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-name->jsstring::JsStringLiteral val::bstring)
-   (let ((enc (string-minimal-charset val)))
+(define (js-name->jsstring::JsStringLiteral str::bstring)
+   (let ((enc (string-minimal-charset str)))
       (case enc
-	 ((ascii) (js-ascii-name->jsstring val))
-	 ((latin1 utf8) (js-utf8-name->jsstring val))
+	 ((ascii) (js-ascii-name->jsstring str))
+	 ((latin1 utf8) (js-utf8-name->jsstring str))
 	 (else (error "js-name->jsstring" "unsupported encoding" enc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-integer-name->jsstring ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-integer-name->jsstring num::long)
-   (if (and (>fx num -10) (<fx num 100))
-       (vector-ref &integers (+fx num 10))
-       (js-ascii-name->jsstring (fixnum->string num))))
+   (cond
+      ((and (>fx num -10) (<fx num 100))
+       (vector-ref &integers (+fx num 10)))
+      ((and (>fx num 0) (<fx num 65535))
+       (js-index-name->jsstring (fixnum->uint32 num)))
+      (else
+       (js-ascii-name->jsstring (fixnum->string num)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    integers                                                         */
@@ -237,6 +265,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    known strings ...                                                */
 ;*---------------------------------------------------------------------*/
+(define &empty (js-ascii->jsstring ""))
 (define &__proto__ (js-ascii-name->jsstring "__proto__"))
 (define &charAt (js-ascii-name->jsstring "charAt"))
 (define &charCodeAt (js-ascii-name->jsstring "charCodeAt"))

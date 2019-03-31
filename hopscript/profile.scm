@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/profile.scm             */
+;*    serrano/prgm/project/hop/hop/hopscript/profile.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue Jan 22 18:14:00 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 10:01:50 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -33,22 +33,22 @@
 	      #!key imap emap cmap pmap amap vtable)
 	   (js-profile-log-index ::long)
 	   
-	   (js-profile-log-get ::symbol loc)
-	   (js-profile-log-put ::symbol loc)
-	   (js-profile-log-method ::symbol point)
+	   (js-profile-log-get ::JsStringLiteral loc)
+	   (js-profile-log-put ::JsStringLiteral loc)
+	   (js-profile-log-method ::JsStringLiteral point)
 
 	   (inline js-profile-log-call ::vector ::long)
 	   (js-profile-log-funcall ::vector ::long ::obj ::obj)
 
-	   (js-profile-log-method-function ::symbol ::obj)
-	   (js-profile-log-method-method ::symbol ::obj)
+	   (js-profile-log-method-function ::JsStringLiteral ::obj)
+	   (js-profile-log-method-method ::JsStringLiteral ::obj)
 	   
 	   (log-cache-miss!)
 	   (log-pmap-invalidation! ::obj)
 	   (log-vtable! ::int ::vector ::vector)
 	   (log-vtable-conflict!)
 	   
-	   (profile-hint ::obj ::symbol)
+	   (profile-hint ::obj ::JsStringLiteral)
 	   (profile-cache-index ::long)
 	   (profile-cache-extension ::long)
 	   (profile-vector-extension ::long ::long)))

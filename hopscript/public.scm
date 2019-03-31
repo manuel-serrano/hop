@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Mar 30 10:28:44 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 09:34:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -16,7 +16,7 @@
 
    (option (set! *compiler-debug-trace* 0))
 
-   (include "types.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (library hop js2scheme)
    
@@ -27,7 +27,6 @@
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_string
-	   __hopscript_stringliteral
 	   __hopscript_boolean
 	   __hopscript_number
 	   __hopscript_property
@@ -129,7 +128,7 @@
 	   (generic js-tointeger ::obj ::JsGlobalObject)
 	   (js-touint16::uint16 ::obj ::JsGlobalObject)
 	   
-	   (js-toindex::uint32 ::obj)
+	   (generic js-toindex::uint32 ::obj)
 	   (inline js-isindex?::bool ::uint32)
 	   (inline js-index?::bool ::obj)
 
@@ -1144,7 +1143,7 @@
       ((eq? obj #f) "false")
       ((eq? obj (js-null)) "null")
       ((js-number? obj) (js-number->string obj))
-      ((symbol? obj) (js-symbol->jsstring obj))
+      ((symbol? obj) (js-string->jsstring (symbol->string! obj)))
       (else (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -1156,7 +1155,6 @@
       ((eq? obj #t) "true")
       ((eq? obj #f) "false")
       ((js-number? obj) (js-number->string obj))
-      ((symbol? obj) (js-symbol->jsstring obj))
       (else (js-tostring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -1289,7 +1287,7 @@
 		  (or (js-jsstring-null? y) (equality? x (js-tonumber y %this)))
 		  (equality? x (js-tonumber y %this))))
 	     ((isa? y JsObject)
-	      (equality? x (js-toprimitive y 'any %this)))
+	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this)))
 	     ((boolean? y)
 	      (equality? x (js-tonumber y %this)))
 	     (else #f)))
@@ -1302,7 +1300,7 @@
 		  (or (js-jsstring-null? x) (equality? (js-tonumber x %this) y))
 		  (equality? (js-tonumber x %this) y)))
 	     ((isa? y JsObject)
-	      (equality? x (js-toprimitive y 'any %this)))
+	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this)))
 	     ((eq? y #f)
 	      (js-jsstring-null? x))
 	     ((boolean? y)
@@ -1319,15 +1317,15 @@
 	 ((isa? x JsObject)
 	  (cond
 	     ((js-jsstring? y)
-	      (equality? (js-toprimitive x 'any %this) y))
+	      (equality? ((@ js-toprimitive __hopscript_public) x 'any %this) y))
 	     ((js-number? y)
-	      (equality? (js-toprimitive x 'any %this) y))
+	      (equality? ((@ js-toprimitive __hopscript_public) x 'any %this) y))
 	     ((isa? y JsSymbolLiteral)
-	      (equality? (js-toprimitive x 'any %this) y))
+	      (equality? ((@ js-toprimitive __hopscript_public) x 'any %this) y))
 	     (else #f)))
 	 ((isa? x JsSymbolLiteral)
 	  (if (isa? y JsObject)
-	      (equality? x (js-toprimitive y 'any %this))
+	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this))
 	      #f))
 	 (else
 	  #f))))
@@ -1664,12 +1662,10 @@
        "true")
       ((js-jsstring? obj)
        (js-jsstring->string obj))
-      ((symbol? obj)
-       (js-symbol->jsstring obj))
       ((or (js-number? obj) (int32? obj) (uint32? obj))
        (number->string obj))
       (else
-       (js-jsstring->string (js-tostring obj %this)))))
+       (js-tostring obj %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error ...                                          */

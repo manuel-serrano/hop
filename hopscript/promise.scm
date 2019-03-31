@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/promise.scm             */
+;*    serrano/prgm/project/hop/hop/hopscript/promise.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Jan 23 08:35:03 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 07:44:26 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -40,11 +40,6 @@
 	   (js-promise-resolve ::JsPromise ::obj)
 	   (js-promise-reject ::JsPromise ::obj)
 	   (js-promise-then-catch ::JsGlobalObject ::JsPromise proc fail np)))
-
-;*---------------------------------------------------------------------*/
-;*    Jsstringliteral begin                                            */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsPromise ...                                */
@@ -129,10 +124,10 @@
 	     (iterable-vector this (jsarray->vector iterable %this)))
 	    ((isa? iterable JsGenerator)
 	     (let loop ((acc '()))
-		(let ((next (js-get iterable 'next %this)))
+		(let ((next (js-get iterable (& "next") %this)))
 		   (let* ((v (js-call0 %this next iterable))
-			  (done (js-get v 'done %this))
-			  (val (js-get v 'value %this)))
+			  (done (js-get v (& "done") %this))
+			  (val (js-get v (& "value") %this)))
 		      (if (eq? done #t)
 			  (iterable-vector this 
 			     (list->vector (reverse! acc)))
@@ -144,11 +139,11 @@
 		    (err "Promise.all is not a function")
 		    (let ((it (js-call0 %this iterator iterable)))
 		       (let loop ((acc '()))
-			  (let ((next (js-get it 'next %this)))
+			  (let ((next (js-get it (& "next") %this)))
 			     (if (isa? next JsFunction)
 				 (let* ((v (js-call0 %this next it))
-					(done (js-get v 'done %this))
-					(val (js-get v 'value %this)))
+					(done (js-get v (& "done") %this))
+					(val (js-get v (& "value") %this)))
 				    (if (eq? done #t)
 					(iterable-vector this 
 					   (list->vector (reverse! acc)))
@@ -201,7 +196,7 @@
       (instantiateJsPromise
 	 (worker (js-current-worker))
 	 (%this %this)
-	 (__proto__ (js-get constructor 'prototype %this))))
+	 (__proto__ (js-get constructor (& "prototype") %this))))
    
    (define (js-promise-alloc/name::JsPromise %this constructor::JsFunction name)
       (let ((promise (js-promise-alloc %this constructor)))
@@ -248,7 +243,7 @@
 		  it)))
 	 promise))
    
-   (js-bind! %this js-promise 'all
+   (js-bind! %this js-promise (& "all")
       :configurable #f :enumerable #f
       :value (js-make-function %this js-promise-all 1 "all")
       :hidden-class #t)
@@ -275,7 +270,7 @@
 		  it)))
 	 promise))
 
-   (js-bind! %this js-promise 'race
+   (js-bind! %this js-promise (& "race")
       :configurable #f :enumerable #f
       :value (js-make-function %this js-promise-race 1 "race")
       :hidden-class #t)
@@ -295,7 +290,7 @@
 		(js-promise-reject promise val))
 	     promise))))
    
-   (js-bind! %this js-promise 'reject
+   (js-bind! %this js-promise (& "reject")
       :configurable #f :enumerable #f
       :value (js-make-function %this promise-reject 1 "reject")
       :hidden-class #t)
@@ -307,7 +302,7 @@
 	 ((not (isa? this JsObject))
 	  ;; .2
 	  (js-raise-type-error %this "This not an object ~a" (typeof this)))
-	 ((and (isa? val JsPromise) (eq? (js-get val 'constructor %this) this))
+	 ((and (isa? val JsPromise) (eq? (js-get val (& "constructor") %this) this))
 	  ;; .3
 	  val)
 	 (else
@@ -318,7 +313,7 @@
 		(js-promise-resolve promise val))
 	     promise))))
    
-   (js-bind! %this js-promise 'resolve
+   (js-bind! %this js-promise (& "resolve")
       :configurable #f :enumerable #f
       :value (js-make-function %this promise-resolve 1 "resolve")
       :hidden-class #t)
@@ -333,7 +328,7 @@
 	 :hidden-class #t))
    
    ;; bind Promise in the global object
-   (js-bind! %this %this 'Promise
+   (js-bind! %this %this (& "Promise")
       :configurable #f :enumerable #f :value js-promise
       :hidden-class #t)
 
@@ -398,7 +393,7 @@
       
    ;; catch
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.5.1
-   (js-bind! %this obj 'catch
+   (js-bind! %this obj (& "catch")
       :value (js-make-function %this
 		(lambda (this fail)
 		   (then-catch this (js-undefined) fail))
@@ -408,7 +403,7 @@
    
    ;; then
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.5.3
-   (js-bind! %this obj 'then
+   (js-bind! %this obj (& "then")
       :value (js-make-function %this
 		(lambda (this proc fail)
 		   (then-catch this proc fail))
@@ -564,7 +559,7 @@
 	     (lambda (e)
 		;; resolve .9.a
 		(js-reject o e))
-	     (let ((then (js-get resolution 'then %this)))
+	     (let ((then (js-get resolution (& "then") %this)))
 		(if (not (isa? then JsFunction))
 		    ;; resolve .11
 		    (js-fullfill o resolution)
@@ -581,8 +576,3 @@
 (define (js-promise-async o::JsPromise thunk)
    (with-access::JsPromise o (worker)
       (js-worker-push-thunk! worker "async" thunk)))
-
-;*---------------------------------------------------------------------*/
-;*    Jsstringliteral end                                              */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)

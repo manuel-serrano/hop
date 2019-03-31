@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/private.scm             */
+;*    serrano/prgm/project/hop/hop/hopscript/private.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Mar 17 07:06:32 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 11:16:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -137,7 +137,7 @@
 		     (js-toprimitive ,tmp 'number ,this))))
 	    ((?- ?val 'string ?this)
 	     `(let ((,tmp ,(e val e)))
-		 (if ,(e `(string? ,tmp) e)
+		 (if ,(e `(js-jsstring? ,tmp) e)
 		     ,tmp
 		     (js-toprimitive ,tmp 'string ,this))))
 	    ((?- ?val 'any ?this)

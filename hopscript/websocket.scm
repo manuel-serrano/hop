@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/websocket.scm           */
+;*    serrano/prgm/project/hop/hop/hopscript/websocket.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Jan 23 08:42:20 2019 (serrano)                */
+;*    Last change :  Sun Mar 31 07:47:53 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -59,11 +59,6 @@
 	   
    (export (js-init-websocket! ::JsGlobalObject)
 	   (js-websocket-post ::JsObject ::JsHopFrame ::int)))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsWebSocket ...                              */
@@ -195,13 +190,13 @@
 				   ((js-jsstring? options)
 				    (js-jsstring->string options))
 				   ((isa? options JsArray)
-				    (let ((join (js-get options 'join %this)))
+				    (let ((join (js-get options (& "join") %this)))
 				       (js-jsstring->string 
 					  (js-call1 %this join options
 					     (js-ascii->jsstring ", ")))))
 				   ((isa? options JsObject)
 				    (js-jsstring->string
-				       (js-get options 'protocol %this)))))
+				       (js-get options (& "protocol") %this)))))
 		      (url (js-tostring url %this))
 		      (queue (make-cell '()))
 		      (ws (instantiate::websocket
@@ -229,10 +224,10 @@
 		  (for-each (lambda (act)
 			       (bind-websocket-listener! %this obj act))
 		     (list
-			(cons 'onmessage #f)
-			(cons 'onopen #f)
-			(cons 'onclose #f)
-			(cons 'onerror #f)))
+			(cons "onmessage" #f)
+			(cons "onopen" #f)
+			(cons "onclose" #f)
+			(cons "onerror" #f)))
 		  ;; connect the socket to the server
 		  (js-worker-push-thunk! worker "ws-listener"
 		     (lambda ()
@@ -265,9 +260,9 @@
 			(for-each (lambda (act)
 				     (bind-websocket-client-listener! %this
 					ws act))
-			   (list (cons 'onmessage #f)
-			      (cons 'onclose #f)
-			      (cons 'onerror #f)))
+			   (list (cons "onmessage" #f)
+			      (cons "onclose" #f)
+			      (cons "onerror" #f)))
 			(let ((evt (instantiate::server-event
 				      (name "connection")
 				      (target wss)
@@ -351,11 +346,11 @@
 			       ((js-jsstring? opt)
 				(js-jsstring->string opt))
 			       ((isa? opt JsObject)
-				(js->hop (js-get opt 'path %this)))
+				(js->hop (js-get opt (& "path") %this)))
 			       (else
  				(js->hop opt))))
 		      (proto (if (isa? opt JsObject)
-				 (let ((proto (js-get opt 'protocol %this)))
+				 (let ((proto (js-get opt (& "protocol") %this)))
 				    (cond
 				       ((string? proto)
 					(list proto))
@@ -376,8 +371,8 @@
 	       ;; listeners
 	       (for-each (lambda (act)
 			    (bind-websocket-server-listener! %this wss act))
-		  (list (cons 'onconnection #f)
-		     (cons 'onclose #f)))
+		  (list (cons "onconnection" #f)
+		     (cons "onclose" #f)))
 	       wss))
 
 	 ;; prototypes properties
@@ -410,26 +405,26 @@
 	       :construct js-websocket-server-construct
 	       :shared-cmap #f))
 	 
-	 (js-bind! %this %this 'WebSocket
+	 (js-bind! %this %this (& "WebSocket")
 	    :configurable #f :enumerable #f :value js-websocket
 	    :hidden-class #t)
-	 (js-bind! %this %this 'WebSocketServer
+	 (js-bind! %this %this (& "WebSocketServer")
 	    :configurable #f :enumerable #f :value js-websocket-server
 	    :hidden-class #t)
 
-	 (js-bind! %this js-websocket 'CONNECTING
+	 (js-bind! %this js-websocket (& "CONNECTING")
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-connecting)
 	    :hidden-class #f)
-	 (js-bind! %this js-websocket 'OPEN
+	 (js-bind! %this js-websocket (& "OPEN")
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-open)
 	    :hidden-class #f)
-	 (js-bind! %this js-websocket 'CLOSING
+	 (js-bind! %this js-websocket (& "CLOSING")
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-closing)
 	    :hidden-class #f)
-	 (js-bind! %this js-websocket 'CLOSED
+	 (js-bind! %this js-websocket (& "CLOSED")
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-closed)
 	    :hidden-class #f)
@@ -441,7 +436,7 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-websocket-prototype! %this obj)
    ;; readyState
-   (js-bind! %this obj 'readyState
+   (js-bind! %this obj (& "readyState")
       :get (js-make-function %this
 	      (lambda (this)
 		 (with-access::JsWebSocket this (ws)
@@ -455,7 +450,7 @@
 	      0 "readyState")
       :hidden-class #t)
    ;; url
-   (js-bind! %this obj 'url
+   (js-bind! %this obj (& "url")
       :get (js-make-function %this
 	      (lambda (this)
 		 (with-access::JsWebSocket this (ws)
@@ -472,7 +467,7 @@
 	      0 "url")
       :hidden-class #t)
    ;; send
-   (js-bind! %this obj 'send
+   (js-bind! %this obj (& "send")
       :value (js-make-function %this
 		(lambda (this value)
 		   (with-access::JsWebSocket this (ws)
@@ -484,7 +479,7 @@
 		1 "send")
       :hidden-class #t)
    ;; close
-   (js-bind! %this obj 'close
+   (js-bind! %this obj (& "close")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsWebSocket this (ws)
@@ -493,7 +488,7 @@
 		0 "close")
       :hidden-class #t)
    ;; addEventListener
-   (js-bind! %this obj 'addEventListener
+   (js-bind! %this obj (& "addEventListener")
       :value (js-make-function %this
 		(lambda (this message proc)
 		   (add-event-listener! this (js-tostring message %this) proc))
@@ -525,10 +520,10 @@
 ;*    bind-websocket-listener! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-listener! %this obj action)
-   (js-bind! %this obj (car action) 
+   (js-bind! %this obj (& (car action) )
       :get (js-make-function %this
               (lambda (this) (cdr action))
-              0 (symbol->string (car action)))
+              0 (car action))
       :set (js-make-function %this
 	      (lambda (this proc)
 		 (set-cdr! action proc)
@@ -543,7 +538,7 @@
 ;*    bind-websocket-server-listener! ...                              */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-server-listener! %this obj action)
-   (js-bind! %this obj (car action) 
+   (js-bind! %this obj (& (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
               0 (symbol->string (car action)))
@@ -561,7 +556,7 @@
 ;*    bind-websocket-client-listener! ...                              */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-client-listener! %this obj action)
-   (js-bind! %this obj (car action) 
+   (js-bind! %this obj (& (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
               0 (symbol->string (car action)))
@@ -581,7 +576,7 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-websocket-server-prototype! %this obj)
    ;; close
-   (js-bind! %this obj 'close
+   (js-bind! %this obj (& "close")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsWebSocketServer this (svc state closes worker downp)
@@ -601,7 +596,7 @@
 		0 "close")
       :hidden-class #t)
    ;; addEventListner
-   (js-bind! %this obj 'addEventListener
+   (js-bind! %this obj (& "addEventListener")
       :value (js-make-function %this
 		(lambda (this message proc)
 		   (with-access::JsWebSocketServer this (worker)
@@ -688,12 +683,12 @@
 	     (instantiateJsHopFrame
 		(%this %this)
 		(args (map! cdr
-			 (js-jsobject->alist (js-get val 'args %this) %this)))
-		(srv (js-get val 'srv %this))
-		(options (js-get val 'options %this))
-		(header (js-get val 'header %this))
+			 (js-jsobject->alist (js-get val (& "args") %this) %this)))
+		(srv (js-get val (& "srv") %this))
+		(options (js-get val (& "options") %this))
+		(header (js-get val (& "header") %this))
 		(path (string-append
-			 (hop-service-base) "/" (js-get val 'path %this)))))
+			 (hop-service-base) "/" (js-get val (& "path") %this)))))
 	    ((pair? val)
 	     (instantiateJsHopFrame
 		(%this %this)
@@ -780,7 +775,7 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-websocket-client-prototype! %this obj)
    ;; readyState
-   (js-bind! %this obj 'readyState
+   (js-bind! %this obj (& "readyState")
       :get (js-make-function %this
 	      (lambda (this)
 		 (with-access::JsWebSocketClient this (socket state)
@@ -788,7 +783,7 @@
 	      0 "readyState")
       :hidden-class #t)
    ;; close
-   (js-bind! %this obj 'close
+   (js-bind! %this obj (& "close")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsWebSocketClient this (socket oncloses wss state %mutex)
@@ -810,7 +805,7 @@
 		0 "close")
       :hidden-class #t)
    ;; client
-   (js-bind! %this obj 'socket
+   (js-bind! %this obj (& "socket")
       :get (js-make-function %this
 	      (lambda (this)
 		 (with-access::JsWebSocketClient this (socket)
@@ -818,7 +813,7 @@
 	      0 "socket")
       :hidden-class #t)
    ;; send
-   (js-bind! %this obj 'send
+   (js-bind! %this obj (& "send")
       :value (js-make-function %this
 		(lambda (this value)
 		   (with-access::JsWebSocketClient this (socket %mutex)
@@ -829,7 +824,7 @@
 		1 "send")
       :hidden-class #t)
    ;; addEventListner
-   (js-bind! %this obj 'addEventListener
+   (js-bind! %this obj (& "addEventListener")
       :value (js-make-function %this
 		(lambda (this message proc)
 		   (with-access::JsWebSocketClient this (wss)
@@ -1026,8 +1021,3 @@
 		   (cons
 		      (lambda (evt) (for-each abort-post recvqueue))
 		      oncloses))))))))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
