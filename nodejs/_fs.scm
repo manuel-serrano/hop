@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_fs.scm                    */
+;*    serrano/prgm/project/hop/hop/nodejs/_fs.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Jan 23 09:54:18 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 14:50:37 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -173,8 +173,8 @@
 					 (js-string->jsstring
 					    (format "readdir: cannot read dir ~a"
 					       path)))))
-			      (js-put! obj 'errno 20 #f %this)
-			      (js-put! obj 'code (js-string->jsstring "ENOTDIR") #f %this)
+			      (js-put! obj (& "errno") 20 #f %this)
+			      (js-put! obj (& "code") (js-string->jsstring "ENOTDIR") #f %this)
 			      obj))))
 		(if (isa? cb JsFunction)
 		    (js-worker-push-thunk! %worker "readdir"
@@ -263,7 +263,7 @@
 ;* 	    (let ((obj (js-new %this js-object)))                      */
 	    (let ((obj (js-make-jsobject 2 constrmap %prototype)))
 	       
-	       (js-put! obj 'start
+	       (js-put! obj (& "start")
 		  (js-make-function %this
 		     (lambda (this::JsHandle path options interval)
 			(with-access::JsHandle this (handle)
@@ -271,9 +271,9 @@
 			      handle
 			      (js-tostring path %this)
 			      (lambda (_ status prev curr)
-				 (let ((onchange (js-get this 'onchange %this)))
+				 (let ((onchange (js-get this (& "onchange") %this)))
 				    (unless (=fx status 0)
-				       (js-put! process '_errno
+				       (js-put! process (& "_errno")
 					  (nodejs-err-name status)
 					  #f %this))
 				    (!js-callback3 'fs-watcher %worker %this
@@ -285,10 +285,10 @@
 		     3 "start")
 		  #f %this)
 	       
-	       (js-put! obj 'stop
+	       (js-put! obj (& "stop")
 		  (js-make-function %this
 		     (lambda (this)
-			(let ((onstop (js-get this 'onstop %this)))
+			(let ((onstop (js-get this (& "onstop") %this)))
 			   (when (isa? onstop JsFunction)
 			      (!js-callback0 'fs-watcher %worker %this
 				 onstop this)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sun Mar 31 08:03:42 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 15:21:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -34,7 +34,7 @@
 	   __hopscript_arraybuffer
 	   __hopscript_arraybufferview)
 
-   (export (js-constant-init ::obj ::bstring ::JsGlobalObject)
+   (export (js-constant-init ::obj ::obj ::JsGlobalObject)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
 	   (js-alist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
@@ -51,11 +51,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-constant-init ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-constant-init vec-or-false str %this)
-   (let ((cnsts (string->obj str)))
+(define (js-constant-init vec-or-false str-or-vec %this)
+   (let ((cnsts (if (string? str-or-vec) (string->obj str-or-vec) str-or-vec)))
+      (tprint "js-constant-init " (typeof vec-or-false) " " (typeof str-or-vec)
+	 " " (typeof cnsts))
       (let loop ((i (-fx (vector-length cnsts) 1)))
 	 (when (>=fx i 0)
 	    (let ((el (vector-ref cnsts i)))
+	       (tprint "i=" i " el=" (typeof el))
 	       (cond
 		  ((isa? el JsRegExp)
 		   ;; patch the regexp prototype
@@ -64,6 +67,7 @@
 			 (set! cmap js-regexp-cmap)
 			 (set! __proto__ js-regexp-prototype))))
 		  ((vector? el)
+		   (tprint "vector i=" i " el=" (vector-ref el 0))
 		   (vector-set! cnsts i
 		      (case (vector-ref el 0)
 			 ((0)
@@ -98,6 +102,8 @@
 			 ((2)
 			  ;; a literal cmap
 			  (let ((props (vector-ref el 1)))
+			     (tprint "CMAP props=" props
+				(vector-map typeof props))
 			     (js-names->cmap props)))
 			 ((3 5)
 			  ;; an inlined regexp

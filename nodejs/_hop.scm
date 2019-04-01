@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_hop.scm                   */
+;*    serrano/prgm/project/hop/hop/nodejs/_hop.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat Jan 26 09:06:17 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 14:37:50 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -134,26 +134,26 @@
       (define js-compiler-driver
 	 (let ((driver (instantiateJsObject
 			  (__proto__ __proto__))))
-	    (js-bind! %this driver 'pending
+	    (js-bind! %this driver (& "pending")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-compile-pending))
 		       0 "get")
 	       :writable #f
 	       :configurable #f)
-	    (js-bind! %this driver 'addEventListener
+	    (js-bind! %this driver (& "addEventListener")
 	       :value (js-make-function %this
 			 js-compiler-driver-add-event-listener
 			 3 "addEventListener")
 	       :writable #f
 	       :configurable #f)
-	    (js-bind! %this driver 'removeEventListener
+	    (js-bind! %this driver (& "removeEventListener")
 	       :value (js-make-function %this
 			 js-compiler-driver-remove-event-listener
 			 3 "removeEventListener")
 	       :writable #f
 	       :configurable #f)
-	    (js-bind! %this driver 'policy
+	    (js-bind! %this driver (& "policy")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (js-string->jsstring
@@ -169,34 +169,34 @@
 	       :configurable #f)
 	    driver))
       
-      (js-bind! %this js-urlframe-prototype 'post
+      (js-bind! %this js-urlframe-prototype (& "post")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame success opt)
 		      (post-url this success opt %this #f))
 		   2 "post"))
-      (js-bind! %this js-urlframe-prototype 'postSync
+      (js-bind! %this js-urlframe-prototype (& "postSync")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame opt)
 		      (post-url this #f opt %this #t))
 		   1 "postSync"))
-      (js-bind! %this js-urlframe-prototype 'toString
+      (js-bind! %this js-urlframe-prototype (& "toString")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame)
 		      (js-string->jsstring (urlframe->string this %this)))
 		   0 "toString"))
-      (js-bind! %this js-urlframe-prototype 'getHeader
+      (js-bind! %this js-urlframe-prototype (& "getHeader")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame hd)
-		      (js-get this 'header %this))
+		      (js-get this (& "header") %this))
 		   0 "getHeader"))
-      (js-bind! %this js-urlframe-prototype 'setHeader
+      (js-bind! %this js-urlframe-prototype (& "setHeader")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame hd)
-		      (js-put! this 'header hd #f %this)
+		      (js-put! this (& "header") hd #f %this)
 		      this)
 		   1 "setHeader"))
 
-      (js-bind! %this server-prototype 'addEventListener
+      (js-bind! %this server-prototype (& "addEventListener")
 	 :value (js-make-function %this
 		   (lambda (this::JsServer event proc . capture)
 		      (with-access::JsServer this (obj data)
@@ -210,7 +210,7 @@
 				     (js-tostring event %this) f)))))
 		   3 "addEventListener")
 	 :enumerable #f)
-      (js-bind! %this server-prototype 'removeEventListener
+      (js-bind! %this server-prototype (& "removeEventListener")
 	 :value (js-make-function %this
 		   (lambda (this::JsServer event proc . capture)
 		      (with-access::JsServer this (obj data)
@@ -221,7 +221,7 @@
 					(js-tostring event %this) (cdr f)))))))
 		   3 "removeEventListener")
 	 :enumerable #f)
-      (js-bind! %this server-prototype 'port
+      (js-bind! %this server-prototype (& "port")
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
@@ -230,7 +230,7 @@
 			     port))))
 		 0 "port")
 	 :writable #f)
-      (js-bind! %this server-prototype 'host
+      (js-bind! %this server-prototype (& "host")
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
@@ -239,7 +239,7 @@
 			     (js-string->jsstring host)))))
 		 0 "host")
 	 :writable #f)
-      (js-bind! %this server-prototype 'authorization
+      (js-bind! %this server-prototype (& "authorization")
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
@@ -249,7 +249,7 @@
 				(js-string->jsstring authorization))))))
 		 0 "authorization")
 	 :writable #f)
-      (js-bind! %this server-prototype 'ssl
+      (js-bind! %this server-prototype (& "ssl")
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
@@ -286,8 +286,8 @@
 	       (define-js port 0 (lambda (this) (hop-port)))
 
 	       ;; services
-	       `(Service . ,(js-get %this 'Service %this))
-	       `(HopFrame . ,(js-get %this 'HopFrame %this))
+	       `(Service . ,(js-get %this (& "Service") %this))
+	       `(HopFrame . ,(js-get %this (& "HopFrame") %this))
 	       
 	       ;; webService
 	       (define-js webService 1
@@ -344,7 +344,7 @@
 
 	       (define-js addEventListener 3
 		  (lambda (this name proc capture)
-		     (add-event-listener! 'hop (js-tostring name %this)
+		     (add-event-listener! (& "hop") (js-tostring name %this)
 			(lambda (evt)
 			   (js-worker-push-thunk! (js-current-worker) "hop"
 			      (lambda ()
@@ -472,17 +472,17 @@
 	 ((isa? opt JsFunction)
 	  (set! fail (fail->handler opt)))
 	 ((not (eq? opt (js-undefined)))
-	  (let ((h (js-get opt 'hostname %this))
-		(p (js-get opt 'port %this))
-		(a (js-get opt 'authorization %this))
-		(f (js-get opt 'fail %this))
-		(y (js-get opt 'asynchronous %this))
-		(s (js-get opt 'scheme %this))
-		(c (js-get opt 'ssl %this))
-		(t (js-get opt 'timeout %this))
-		(m (js-get opt 'method %this))
-		(r (js-get opt 'header %this))
-		(b (js-get opt 'body %this)))
+	  (let ((h (js-get opt (& "hostname") %this))
+		(p (js-get opt (& "port") %this))
+		(a (js-get opt (& "authorization") %this))
+		(f (js-get opt (& "fail") %this))
+		(y (js-get opt (& "asynchronous") %this))
+		(s (js-get opt (& "scheme") %this))
+		(c (js-get opt (& "ssl") %this))
+		(t (js-get opt (& "timeout") %this))
+		(m (js-get opt (& "method") %this))
+		(r (js-get opt (& "header") %this))
+		(b (js-get opt (& "body") %this)))
 	     (unless (eq? h (js-undefined))
 		(set! host (js-tostring h %this)))
 	     (unless (eq? p (js-undefined))
@@ -490,7 +490,7 @@
 	     (unless (eq? a (js-undefined))
 		(set! authorization (js-tostring a %this)))
 	     (unless (js-totest y)
-		(when (js-in? %this 'asynchronous opt)
+		(when (js-in? %this (& "asynchronous") opt)
 		   (set! asynchronous #f)))
 	     (when (js-totest c)
 		(set! scheme "https"))
@@ -618,11 +618,11 @@
 (define (hopjs-response-hop this obj req %this)
    (if (isa? req JsObject)
        (instantiate::http-response-hop
-	  (backend (get/default req 'backend %this (hop-xml-backend)))
-	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
-	  (content-type (get/default req 'contentType %this "application/x-json-hop"))
-	  (charset (get/default req 'charset %this (hop-charset)))
-	  (header (get/list req 'header %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
+	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
+	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
+	  (content-type (get/default req (& "contentType") %this "application/x-json-hop"))
+	  (charset (get/default req (& "charset") %this (hop-charset)))
+	  (header (get/list req (& "header") %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (value obj))
        (instantiate::http-response-hop
 	  (backend (hop-xml-backend))
@@ -635,11 +635,11 @@
 (define (hopjs-response-xml this obj req %this)
    (if (isa? req JsObject)
        (instantiate::http-response-xml
-	  (backend (get/default req 'backend %this (hop-xml-backend)))
-	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
-	  (content-type (get/default req 'contentType %this "application/x-javascript"))
-	  (charset (get/default req 'charset %this (hop-charset)))
-	  (header (get/list req 'header %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
+	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
+	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
+	  (content-type (get/default req (& "contentType") %this "application/x-javascript"))
+	  (charset (get/default req (& "charset") %this (hop-charset)))
+	  (header (get/list req (& "header") %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (xml obj))
        (instantiate::http-response-xml
 	  (backend (hop-xml-backend))
@@ -654,9 +654,9 @@
 (define (hopjs-response-file this file req %this)
    (if (isa? req JsObject)
        (instantiate::http-response-file
-	  (charset (get/default req 'charset %this (hop-charset)))
-	  (content-type (get/default req 'contentType %this #f))
-	  (header (get/list req 'header %this '()))
+	  (charset (get/default req (& "charset") %this (hop-charset)))
+	  (content-type (get/default req (& "contentType") %this #f))
+	  (header (get/list req (& "header") %this '()))
 	  (file (js-tostring file %this)))
        (instantiate::http-response-file
 	  (file (js-tostring file %this)))))
@@ -667,10 +667,10 @@
 (define (hopjs-response-string this string req %this)
    (if (isa? req JsObject)
        (instantiate::http-response-string
-	  (charset (get/default req 'charset %this (hop-charset)))
-	  (content-type (get/default req 'contentType %this #f))
-	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
-	  (header (get/list req 'header %this '()))
+	  (charset (get/default req (& "charset") %this (hop-charset)))
+	  (content-type (get/default req (& "contentType") %this #f))
+	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
+	  (header (get/list req (& "header") %this '()))
 	  (body (js-tostring string %this)))
        (instantiate::http-response-string
 	  (body (js-tostring string %this)))))
@@ -719,11 +719,11 @@
 	  (js-raise-type-error %this "not a request" req)))
    
    (if (isa? req JsObject)
-       (let ((req (get/default req 'currentRequest %this #f)))
+       (let ((req (get/default req (& "currentRequest") %this #f)))
 	  (instantiate::http-response-async
-	     (charset (get/default req 'charset %this (hop-charset)))
-	     (content-type (get/default req 'contentType %this #f))
-	     (header (get/list req 'header %this '()))
+	     (charset (get/default req (& "charset") %this (hop-charset)))
+	     (content-type (get/default req (& "contentType") %this #f))
+	     (header (get/list req (& "header") %this '()))
 	     (async (async-proc req))))
        (instantiate::http-response-async
 	  (async (async-proc req)))))

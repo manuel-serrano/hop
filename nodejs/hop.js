@@ -1,5 +1,5 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/nodejs/hop.js                     */
+/*    serrano/prgm/project/hop/hop/nodejs/hop.js                       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */

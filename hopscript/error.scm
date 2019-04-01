@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Mar 31 07:59:33 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 12:31:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -155,12 +155,13 @@
 	 (define js-error-prototype
 	    (instantiateJsError
 	       (__proto__ __proto__)
-	       (msg (js-ascii->jsstring ""))))
+	       (name (& "error"))
+	       (msg (& ""))))
 	 
 	 (define (js-error-alloc %this constructor::JsFunction)
 	    (instantiateJsError
 	       (name (js-get constructor (& "name") %this))
-	       (msg (js-ascii->jsstring ""))
+	       (msg (& ""))
 	       (__proto__ (js-get constructor (& "prototype") %this))
 	       (stack '())))
 	 
@@ -397,7 +398,8 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
+			     (name (& "error"))
+			     (msg (& "")))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack
 	       :src "error.scm"))
@@ -407,7 +409,8 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
+			     (name (& "error"))
+			     (msg (& "")))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack
 	       :src "error.scm"))
@@ -417,7 +420,8 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
+			     (name (& "error"))
+			     (msg (& "")))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack
 	       :src "error.scm"))
@@ -427,7 +431,8 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
+			     (name (& "error"))
+			     (msg (& "")))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack
 	       :src "error.scm"))
@@ -437,7 +442,8 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
+			     (name (& "error"))
+			     (msg (& "")))
 	       :alloc js-error-alloc
 	       :construct js-error-construct
 	       :src "error.scm"))
@@ -447,7 +453,8 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
+			     (name (& "error"))
+			     (msg (& "")))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack
 	       :src "error.scm"))

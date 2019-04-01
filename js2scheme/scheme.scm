@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Mar 28 15:42:06 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 08:21:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -196,7 +196,7 @@
 	 (with-access::J2SDeclExtern decl (hidden-class)
 	    (when (not hidden-class)
 	       `(:hidden-class #f)))))
-   
+
    (with-access::J2SDecl this (loc scope id vtype ronly)
       (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
@@ -205,12 +205,12 @@
 		(let ((fun-name (format "function:~a:~a"
 				   (cadr loc) (caddr loc))))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
-		       `(js-decl-eval-put! %scope
-			   ',id ,value ,(strict-mode? mode) %this)
+		       `(js-decl-eval-put! %scope ,(j2s-scheme-name id)
+			   ,value ,(strict-mode? mode) %this)
 		       (if (js-need-global? this scope mode)
 			   `(define ,ident
 			       (let ((%%tmp ,value))
-				  (js-define %this %scope ',id
+				  (js-define %this %scope ,(j2s-scheme-name id)
 				     (lambda (%) ,ident)
 				     (lambda (% %v) (set! ,ident %v))
 				     %source ,(caddr loc)
@@ -640,8 +640,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCmap mode return conf)
    (with-access::J2SCmap this (loc val)
+      ;; change the building of J2SCmap to build directly
+      ;; a list of string (do this when the new branch is full ready)
+      ;; see constant.scm
+      (tprint "TOBE IMPROVED j2s-scheme ::J2SCmap")
       (epairify loc
-	 `(js-names->cmap ',val))))
+	 `(js-names->cmap
+	     (vector ,@(map (lambda (s)
+			       `(& ,(symbol->string s)))
+			  (vector->list val)))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNull ...                                         */
@@ -778,7 +785,7 @@
 	     (if (usage? '(eval) usage)
 		 `(begin
 		     (define ,ident ,(j2s-scheme val mode return conf))
-		     (js-define %this ,scope ',id
+		     (js-define %this ,scope ,(j2s-scheme-name id)
 			(lambda (%) ,ident)
 			(lambda (% %v) (set! ,ident %v))
 			%source
@@ -793,7 +800,7 @@
 		    (define ,ident
 		       ,(j2sfun->scheme val tmp mode return conf))
 		    ,@(if (usage? '(eval) usage)
-			  `((js-define %this ,scope ',id
+			  `((js-define %this ,scope ,(j2s-scheme-name id)
 			       (lambda (%) ,ident)
 			       (lambda (% %v) (set! ,ident %v))
 			       %source
@@ -2319,14 +2326,11 @@
       (cond
 	 ((isa? name J2SString)
 	  (with-access::J2SString name (val)
-	     (let ((str (string-for-read val)))
-		(if (string=? str val)
-		    `(quote ,(string->symbol val))
-		    `(string->symbol ,val)))))
+	     `(& ,val)))
 	 ((isa? name J2SNumber)
 	  (with-access::J2SNumber name (val)
 	     (if (fixnum? val)
-		 `(quote ,(string->symbol (number->string val)))
+		 `(& ,(number->string val))
 		 `(js-toname ,(j2s-scheme val mode return conf) %this))))
 	 ((isa? name J2SPragma)
 	  `(js-toname ,(j2s-scheme name mode return conf) %this))
@@ -2342,12 +2346,11 @@
       (cond
 	 ((isa? name J2SString)
 	  (with-access::J2SString name (val)
-	     (let ((str (string-for-read val)))
-		`(quote ,(string->symbol val)))))
+	     `(& ,val)))
 	 ((isa? name J2SNumber)
 	  (with-access::J2SNumber name (val)
 	     (if (fixnum? val)
-		 `(quote ,(string->symbol (number->string val)))
+		 `(& ,(number->string val))
 		 `(js-toname ,(j2s-scheme val mode return conf) %this))))
 	 ((isa? name J2SLiteralCnst)
 	  (with-access::J2SLiteralCnst name (val)
@@ -2384,10 +2387,12 @@
 			  (with-access::J2SDataPropertyInit i (val)
 			     (j2s-scheme val mode return conf)))
 		     inits)))
-	 (if (every symbol? props)
-	     `(let ((,names ',(list->vector props))
-		    (,elements (vector ,@vals)))
-		 (js-literal->jsobject ,elements ,names %this))
+	 (if (every (match-lambda ((& (? string?)) #t) (else #f)) props)
+	     (begin
+		(tprint "TOBE OPTIMIZED (literal names init)")
+		`(let ((,names (vector ,@props))
+		       (,elements (vector ,@vals)))
+		    (js-literal->jsobject ,elements ,names %this)))
 	     (let ((len (length props)))
 		`(let ((,names (cond-expand
 				   (bigloo-c ($create-vector ,len))

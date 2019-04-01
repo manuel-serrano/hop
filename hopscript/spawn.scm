@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/spawn.scm               */
+;*    serrano/prgm/project/hop/hop/hopscript/spawn.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Tue Jan 15 09:50:23 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 12:36:29 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -51,6 +51,9 @@
 (module __hopscript_spawn
 
    (library hop)
+
+   (include "names.sch")
+   
    (import __hopscript_types
 	   __hopscript_property
 	   __hopscript_worker
@@ -127,19 +130,19 @@
 		     (cond
 			((not next)
 			 (js-undefined))
-			((js-totest (ref next 'done))
-			 (call resolve (js-undefined) (ref next 'value))
+			((js-totest (ref next (& "done")))
+			 (call resolve (js-undefined) (ref next (& "value")))
 			 (js-undefined))
 			(else
-			 (let ((promise (invoke js-promise 'resolve
-					   (ref next 'value))))
-			    (invoke promise 'then
+			 (let ((promise (invoke js-promise (& "resolve")
+					   (ref next (& "value")))))
+			    (invoke promise (& "then")
 			       (fun (this v)
 				  (begin
-				     (step (lambda () (invoke gen 'next v)))))
+				     (step (lambda () (invoke gen (& "next") v)))))
 			       (fun (this e)
-				  (step (lambda () (invoke gen 'throw e))))))))))
+				  (step (lambda () (invoke gen (& "throw") e))))))))))
 	       
-	       (step (lambda () (invoke gen 'next (js-undefined)))))
+	       (step (lambda () (invoke gen (& "next") (js-undefined)))))
 	    
 	    2 "AsyncPromise"))))

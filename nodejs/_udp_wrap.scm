@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_udp_wrap.scm              */
+;*    serrano/prgm/project/hop/hop/nodejs/_udp_wrap.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Jan 23 10:05:37 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 14:53:03 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
@@ -39,14 +39,14 @@
 
    (define (check-fail %this process r)
       (unless (=fx r 0)
-	 (js-put! process '_errno (nodejs-err-name r) #f %this))
+	 (js-put! process (& "_errno") (nodejs-err-name r) #f %this))
       r)
 
    (define (create-udp-proto)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (js-new %this js-object)))
 	    
-	    (js-put! obj 'bind
+	    (js-put! obj (& "bind")
 	       (js-make-function %this
 		  (lambda (this addr port flags)
 		     (with-access::JsHandle this (handle)
@@ -56,7 +56,7 @@
 		  3 "bind")
 	       #f %this)
 	    
-	    (js-put! obj 'send
+	    (js-put! obj (& "send")
 	       (js-make-function %this
 		  (lambda (this buffer offset length port address callback)
 		     (udp-send %worker process %this this
@@ -64,7 +64,7 @@
 		  6 "send")
 	       #f %this)
 	    
-	    (js-put! obj 'bind6
+	    (js-put! obj (& "bind6")
 	       (js-make-function %this
 		  (lambda (this addr port flags)
 		     (with-access::JsHandle this (handle)
@@ -74,7 +74,7 @@
 		  3 "bind6")
 	       #f %this)
 	    
-	    (js-put! obj 'send6
+	    (js-put! obj (& "send6")
 	       (js-make-function %this
 		  (lambda (this buffer offset length port address callback)
 		     (udp-send %worker process %this this 
@@ -82,21 +82,21 @@
 		  5 "send6")
 	       #f %this)
 	    
-	    (js-put! obj 'close
+	    (js-put! obj (& "close")
 	       (js-make-function %this
 		  (lambda (this cb)
 		     (nodejs-close %worker %this process this cb))
 		  1 "close")
 	       #f %this)
 	    
-	    (js-put! obj 'recvStart
+	    (js-put! obj (& "recvStart")
 	       (js-make-function %this
 		  (lambda (this)
 		     (udp-recv-start %worker %this process slab this))
 		  0 "recvStart")
 	       #f %this)
 	    
-	    (js-put! obj 'recvStop
+	    (js-put! obj (& "recvStop")
 	       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
@@ -104,7 +104,7 @@
 		  1 "recvStop")
 	       #f %this)
 	    
-	    (js-put! obj 'getsockname
+	    (js-put! obj (& "getsockname")
 	       (js-make-function %this
 		  (lambda (this val)
 		     (with-access::JsHandle this (handle)
@@ -112,7 +112,7 @@
 		  1 "getsockname")
 	       #f %this)
 	    
-	    (js-put! obj 'addMembership
+	    (js-put! obj (& "addMembership")
 	       (js-make-function %this
 		  (lambda (this addr iface)
 		     (with-access::JsHandle this (handle)
@@ -125,7 +125,7 @@
 		  3 "addMembership")
 	       #f %this)
 	    
-	    (js-put! obj 'dropMembership
+	    (js-put! obj (& "dropMembership")
 	       (js-make-function %this
 		  (lambda (this addr iface)
 		     (with-access::JsHandle this (handle)
@@ -137,7 +137,7 @@
 		  3 "dropMembership")
 	       #f %this)
 	    
-	    (js-put! obj 'setMulticastTTL
+	    (js-put! obj (& "setMulticastTTL")
 	       (js-make-function %this
 		  (lambda (this ttl)
 		     (with-access::JsHandle this (handle)
@@ -146,7 +146,7 @@
 		  2 "setMulticastTTL")
 	       #f %this)
 	    
-	    (js-put! obj 'setMulticastLoopback
+	    (js-put! obj (& "setMulticastLoopback")
 	       (js-make-function %this
 		  (lambda (this on)
 		     (with-access::JsHandle this (handle)
@@ -155,7 +155,7 @@
 		  2 "setMulticastLoopback")
 	       #f %this)
 	    
-	    (js-put! obj 'setBroadcast
+	    (js-put! obj (& "setBroadcast")
 	       (js-make-function %this
 		  (lambda (this on)
 		     (with-access::JsHandle this (handle)
@@ -164,7 +164,7 @@
 		  2 "setBroadcast")
 	       #f %this)
 	    
-	    (js-put! obj 'setTTL
+	    (js-put! obj (& "setTTL")
 	       (js-make-function %this
 		  (lambda (this ttl)
 		     (with-access::JsHandle this (handle)
@@ -173,7 +173,7 @@
 		  2 "setTTL")
 	       #f %this)
 	    
-	    (js-put! obj 'ref
+	    (js-put! obj (& "ref")
 	       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
@@ -181,7 +181,7 @@
 		  0 "ref")
 	       #f %this)
 	    
-	    (js-put! obj 'unref
+	    (js-put! obj (& "unref")
 	       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
@@ -204,7 +204,7 @@
 		       (__proto__ (get-udp-proto))
 		       (cmap (instantiate::JsConstructMap))
 		       (elements ($create-vector 1)))))
-	    (js-bind! %this obj 'fd
+	    (js-bind! %this obj (& "fd")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-stream-fd %worker hdl))
@@ -223,7 +223,7 @@
 		  :alloc (lambda (%this o) #unspecified)
 		  :prototype (get-udp-proto)
 		  :construct UDP))
-	    (js-put! obj 'UDP js-udp #f %this)
+	    (js-put! obj (& "UDP") js-udp #f %this)
 	    obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -247,7 +247,7 @@
 	    (len (->fixnum (js-tointeger length %this)))
 	    (port (->fixnum (js-tointeger port %this)))
 	    (req (js-new %this js-object)))
-	 (js-put! req 'buffer buffer #f %this)
+	 (js-put! req (& "buffer") buffer #f %this)
 	 (with-access::JsHandle this (handle)
 	    (with-access::JsTypedArray buffer (%data byteoffset length)
 	       (let ((r (nodejs-udp-send %worker %this handle %data
@@ -259,7 +259,7 @@
 				 (trace-item "status=" status
 				    " req=" (typeof req) " this=" (typeof this)
 				    " buffer=" (typeof buffer))
-				 (let ((oncomp (js-get req 'oncomplete %this)))
+				 (let ((oncomp (js-get req (& "oncomplete") %this)))
 				    ;; MS: nodejs set the buffer into the req
 				    ;; object using a setHiddenValue method
 				    ;; that I don't understand
@@ -271,7 +271,7 @@
 		  (if (=fx r 0)
 		      req
 		      (begin
-			 (js-put! process '_errno (nodejs-err-name r) #f %this)
+			 (js-put! process (& "_errno") (nodejs-err-name r) #f %this)
 			 (js-undefined)))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -292,14 +292,14 @@
 			   ((not status)
 			    ;; read error
 			    (slab-shrink! slab buf offset 0)
-			    (js-put! process '_errno (nodejs-err-name len) #f %this)
-			    (let ((onmsg (js-get this 'onmessage %this)))
+			    (js-put! process (& "_errno") (nodejs-err-name len) #f %this)
+			    (let ((onmsg (js-get this (& "onmessage") %this)))
 			       (!js-callback0 "recv-start" %worker %this
 				  onmsg this)))
 			   (else
 			    ;; characters read
 			    (let ((b (slab-shrink! slab buf offset len)))
-			       (let ((onmsg (js-get this 'onmessage %this)))
+			       (let ((onmsg (js-get this (& "onmessage") %this)))
 				  (!js-callback5 "recv-start" %worker %this
 				     onmsg this this b offset len
 				     (js-alist->jsobject addr %this))
@@ -307,7 +307,7 @@
 	 (if (=fx r 0)
 	     #t
 	     (begin
-		(js-put! process '_errno (nodejs-err-name r) #f %this)
+		(js-put! process (& "_errno") (nodejs-err-name r) #f %this)
 		#f)))))
 		
 

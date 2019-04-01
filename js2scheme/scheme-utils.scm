@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-utils.scm        */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-utils.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Mar 15 14:23:08 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 08:26:24 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-utils
    
-   (include "ast.sch")
+   (include "ast.sch" "../hopscript/names_expd.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -38,6 +38,7 @@
 	   (j2s-fast-id id)
 	   (j2s-fast-constructor-id id)
 	   (j2s-scheme-id id pref)
+	   (j2s-scheme-name ::symbol)
 	   (j2s-decl-scheme-id ::J2SDecl)
 	   (js-need-global? ::J2SDecl scope mode)
 	   (flatten-stmt stmt)
@@ -67,7 +68,7 @@
 	   (is-string? expr::J2SExpr)
 
 	   (j2s-jsstring val loc)
-	   (js-string->jsstring ::bstring)
+	   (j2s-string->jsstring ::bstring)
 	   
 	   (j2s-unresolved name throw cache loc)
 	   (js-not expr)
@@ -164,6 +165,13 @@
       ((memq id '(GLOBAL global arguments)) id)
       (else (symbol-append pref id))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-name ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-name id)
+   (js-&-expander `(& ,(symbol->string id))
+      (lambda (x e) x)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-decl-scheme-id ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -459,8 +467,7 @@
 ;*    j2s-jsstring ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-jsstring val loc)
-   (epairify loc
-      (js-string->jsstring val)))
+   (epairify loc (j2s-string->jsstring val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved ...                                               */
@@ -470,12 +477,14 @@
       ((eq? name 'undefined)
        `(js-undefined))
       (cache
-       `(js-global-object-get-name/cache ,j2s-unresolved-get-workspace ',name
+       `(js-global-object-get-name/cache ,j2s-unresolved-get-workspace
+	   (& ,(symbol->string name))
 	   ,(if (pair? throw) `',throw throw)
 	   %this
 	   ,(js-pcache cache) ,(loc->point loc)))
       (else
-       `(js-global-object-get-name ,j2s-unresolved-get-workspace ',name
+       `(js-global-object-get-name ,j2s-unresolved-get-workspace
+	   (& ,(symbol->string name))
 	   ,(if (pair? throw) `',throw throw)
 	   %this))))
 
@@ -488,14 +497,10 @@
       (else `(not ,expr))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string->jsstring ...                                          */
+;*    j2s-string->jsstring ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-string->jsstring val::bstring)
-   (case (string-minimal-charset val)
-      ((ascii) `(js-ascii->jsstring ,val))
-      ((latin1 utf8) `(js-utf8->jsstring ,val))
-      (else (error "string->jsstring" "unsupported encoding"
-	       (string-minimal-charset val)))))
+(define (j2s-string->jsstring val::bstring)
+   `(& ,val))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache ...                                                    */
@@ -527,7 +532,7 @@
       (cond
 	 ((> (bigloo-debug) 0)
 	  (if (string? prop)
-	      `(js-get/debug ,obj ',(string->symbol prop) %this ',loc)
+	      `(js-get/debug ,obj (& ,prop) %this ',loc)
 	      `(js-get/debug ,obj ,(box prop typrop conf) %this ',loc)))
 	 ((eq? tyobj 'array)
 	  (case typrop
@@ -569,15 +574,15 @@
 		  (case tyobj
 		     ((object this)
 		      `(js-object-get-name/cache ,obj
-			  ',(string->symbol prop) #f %this
+			  (& ,prop) #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 		     ((global)
 		      `(js-global-object-get-name/cache ,obj
-			  ',(string->symbol prop) #f %this
+			  (& ,prop) #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 		     (else
 		      `(js-get-name/cache ,obj
-			  ',(string->symbol prop) #f %this
+			  (& ,prop) #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs)))))
 	     ((memq typrop '(int32 uint32))
 	      (js-get obj (box prop typrop conf) '%this))
@@ -591,7 +596,7 @@
 	      (if (eq? tyval 'uint32)
 		  `(js-get-lengthu32 ,obj %this #f)
 		  `(js-get-length ,obj %this #f))
-	      `(js-get ,(box obj tyobj conf) ',(string->symbol prop) %this)))
+	      `(js-get ,(box obj tyobj conf) (& ,prop) %this)))
 	 ((and field optim-arrayp (mightbe-number? field))
 	  (let ((o (gensym '%obj))
 		(p (gensym '%prop)))
@@ -640,7 +645,7 @@
       (cond
 	 ((> (bigloo-debug) 0)
 	  (if (string? prop)
-	      `(js-put/debug! ,obj ',(string->symbol prop)
+	      `(js-put/debug! ,obj (& ,prop)
 		  ,(box val tyval conf) ,mode %this ',loc)
 	      `(js-put/debug! ,obj ,(box prop typrop conf)
 		  ,(box val tyval conf) ,mode %this ',loc)))
@@ -668,12 +673,12 @@
 		     (case tyobj
 			((object global this)
 			 `(js-object-put-name/cache! ,obj
-			     ',(string->symbol prop)
+			     (& ,prop)
 			     ,(box val tyval conf)
 			     ,mode %this
 			     ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 			(else
-			 `(js-put-name/cache! ,obj ',(string->symbol prop)
+			 `(js-put-name/cache! ,obj (& ,prop)
 			     ,(box val tyval conf)
 			     ,mode %this
 			     ,(js-pcache cache) ,(loc->point loc) ',cspecs))))))
@@ -692,7 +697,7 @@
 	 (else
 	  (cond
 	     ((string? prop)
-	      (js-put! obj `',(string->symbol prop)
+	      (js-put! obj `'(& ,prop)
 		  (box val tyval conf) mode '%this))
 	     ((and optim-arrayp (memq typrop '(int32 uint32)))
 	      (maybe-array-set! (box prop typrop conf) (box val tyval conf)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sun Mar 31 07:53:46 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 12:55:54 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -399,7 +399,7 @@
 				#f))))))))
 	  (js-raise-type-error %this "Object must be a TypedArray" this)))
    
-   (js-bind! %this proto 'includes
+   (js-bind! %this proto (& "includes")
       :value (js-make-function %this js-typedarray-includes 1 "includes")
       :configurable #t
       :writable #t
@@ -711,11 +711,11 @@
 		     (%js-typedarray (js-undefined) buffer
 			(uint32->fixnum beg) (uint32->fixnum len))))))
 
-	 (js-bind! %this js-typedarray 'from
+	 (js-bind! %this js-typedarray (& "from")
 	    :configurable #f :enumerable #f :value (js-not-implemented %this)
 	    :hidden-class #t)
 	    
-	 (js-bind! %this js-typedarray 'of
+	 (js-bind! %this js-typedarray (& "of")
 	    :configurable #f :enumerable #f :value (js-not-implemented %this)
 	    :hidden-class #t)
 	 

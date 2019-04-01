@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Sun Mar 31 07:36:55 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 12:58:15 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -62,7 +62,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-map! ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (init-map! %this::JsGlobalObject name init-prototype! weak::symbol)
+(define (init-map! %this::JsGlobalObject name::bstring init-prototype! weak::symbol)
    
    (with-access::JsGlobalObject %this (__proto__ js-function-prototype)
       

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_pipe_wrap.scm             */
+;*    serrano/prgm/project/hop/hop/nodejs/_pipe_wrap.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Jan 23 10:06:09 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 14:56:45 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -41,7 +41,7 @@
 	 (js-new %this js-object)))
    
    ;; close
-   (js-put! pipe-prototype 'close
+   (js-put! pipe-prototype (& "close")
       (js-make-function %this
 		  (lambda (this cb)
 		     (nodejs-close %worker %this process this cb))
@@ -49,7 +49,7 @@
       #f %this)
 
    ;; unref
-   (js-put! pipe-prototype 'unref
+   (js-put! pipe-prototype (& "unref")
       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
@@ -58,7 +58,7 @@
       #f %this)
 
    ;; ref
-   (js-put! pipe-prototype 'ref
+   (js-put! pipe-prototype (& "ref")
       (js-make-function %this
 	 (lambda (this)
 	    (with-access::JsHandle this (handle)
@@ -67,7 +67,7 @@
       #f %this)
 
    ;; readStart
-   (js-put! pipe-prototype 'readStart
+   (js-put! pipe-prototype (& "readStart")
       (js-make-function %this
 	 (lambda (this)
 	    (stream-read-start %worker %this process slab this))
@@ -75,7 +75,7 @@
       #f %this)
    
    ;; readStop
-   (js-put! pipe-prototype 'readStop
+   (js-put! pipe-prototype (& "readStop")
       (js-make-function %this
 	 (lambda (this)
 	    (stream-read-stop %worker %this this))
@@ -83,7 +83,7 @@
       #f %this)
    
    ;; shutdown
-   (js-put! pipe-prototype 'shutdown
+   (js-put! pipe-prototype (& "shutdown")
       (js-make-function %this 
 	 (lambda (this)
 	    (stream-shutdown %worker %this process this))
@@ -91,7 +91,7 @@
       #f %this)
    
    ;; writeBuffer
-   (js-put! pipe-prototype 'writeBuffer
+   (js-put! pipe-prototype (& "writeBuffer")
       (js-make-function %this
 	 (lambda (this buffer)
 	    (stream-write-buffer %worker %this process this buffer))
@@ -99,7 +99,7 @@
       #f %this)
    
    ;; writeAsciiString
-   (js-put! pipe-prototype 'writeAsciiString
+   (js-put! pipe-prototype (& "writeAsciiString")
       (js-make-function %this 
 	 (lambda (this string handle)
 	    (stream-write-string %worker %this process this
@@ -109,7 +109,7 @@
       #f %this)
    
    ;; writeUtf8String
-   (js-put! pipe-prototype 'writeUtf8String
+   (js-put! pipe-prototype (& "writeUtf8String")
       (js-make-function %this
 	 (lambda (this string handle)
 	    (stream-write-string %worker %this process this
@@ -119,7 +119,7 @@
       #f %this)
    
    ;; writeUcs2String
-   (js-put! pipe-prototype 'writeUcs2String
+   (js-put! pipe-prototype (& "writeUcs2String")
       (js-make-function %this
 	 (lambda (this string handle)
 	    (let* ((ucs2string (utf8-string->ucs2-string string))
@@ -131,7 +131,7 @@
       #f %this)
    
    ;; bind
-   (js-put! pipe-prototype 'bind
+   (js-put! pipe-prototype (& "bind")
       (js-make-function %this 
 	 (lambda (this name)
 	    (with-access::JsHandle this (handle)
@@ -140,7 +140,7 @@
       #f %this)
    
    ;; listen
-   (js-put! pipe-prototype 'listen
+   (js-put! pipe-prototype (& "listen")
       (js-make-function %this
 		  (lambda (this backlog)
 		     (with-access::JsHandle this (handle)
@@ -150,7 +150,7 @@
       #f %this)
    
    ;; connect
-   (js-put! pipe-prototype 'connect
+   (js-put! pipe-prototype (& "connect")
       (js-make-function %this 
 	 (lambda (this name callback)
 	    (with-access::JsGlobalObject %this (js-object)
@@ -159,9 +159,9 @@
 		     (nodejs-pipe-connect %worker %this handle name
 			(lambda (status handle)
 			   (when (<fx status 0)
-			      (js-put! process '_errno
+			      (js-put! process (& "_errno")
 				 (nodejs-err-name status) #f %this))
-			   (let ((oncomp (js-get req 'oncomplete %this)))
+			   (let ((oncomp (js-get req (& "oncomplete") %this)))
 			      (!js-callback5 'connect %worker %this
 				 oncomp req status this req #t #t)
 			      (js-undefined))))
@@ -170,7 +170,7 @@
       #f %this)
    
    ;; open
-   (js-put! pipe-prototype 'open
+   (js-put! pipe-prototype (& "open")
       (js-make-function %this 
 	 (lambda (this fd)
 	    (with-access::JsHandle this (handle)
@@ -188,7 +188,7 @@
 			(cmap (instantiate::JsConstructMap))
 			(elements ($create-vector 1)))))
 	    ;; fd
-	    (js-bind! %this obj 'fd
+	    (js-bind! %this obj (& "fd")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (with-access::JsHandle this (handle)
@@ -196,7 +196,7 @@
 		       0 "getGD")
 	       :writable #f :configurable #f)
 	    ;; writeQueueSize
-	    (js-put! obj 'writeQueueSize
+	    (js-put! obj (& "writeQueueSize")
 	       (nodejs-stream-write-queue-size hdl) #f %this)
 	    obj)))
    
@@ -209,5 +209,5 @@
 		  :construct pipe
 		  :prototype pipe-prototype
 		  :alloc (lambda (%this o) #unspecified)))
-	    (js-put! obj 'Pipe js-pipe #t %this)
+	    (js-put! obj (& "Pipe") js-pipe #t %this)
 	    obj))))

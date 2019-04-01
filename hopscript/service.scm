@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Mar 31 07:45:17 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 12:58:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -253,13 +253,13 @@
 		  (method list)
 		  (svc #f))))
 
-	 (js-bind! %this js-service-prototype 'name
+	 (js-bind! %this js-service-prototype (& "name")
 	    :value (js-ascii->jsstring "service")
 	    :writable #f
 	    :configurable #f
 	    :enumerable #f
 	    :hidden-class #t)
-	 (js-bind! %this js-service-prototype 'resource
+	 (js-bind! %this js-service-prototype (& "resource")
 	    :value (js-make-function %this
 		      (lambda (this file)
 			 (js-string->jsstring
@@ -269,7 +269,7 @@
 	    :configurable #t
 	    :enumerable #f
 	    :hidden-class #t)
-	 (js-bind! %this js-service-prototype 'unregister
+	 (js-bind! %this js-service-prototype (& "unregister")
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (when (isa? this JsService)
@@ -282,7 +282,7 @@
 	    :enumerable #f
 	    :hidden-class #t)
 	 
-	 (js-bind! %this js-service-prototype 'timeout
+	 (js-bind! %this js-service-prototype (& "timeout")
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (with-access::JsService this (svc)
@@ -291,7 +291,7 @@
 		    0 "timeout")
 	    :hidden-class #t)
 	 
-	 (js-bind! %this js-service-prototype 'ttl
+	 (js-bind! %this js-service-prototype (& "ttl")
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (with-access::JsService this (svc)
@@ -306,21 +306,21 @@
 		    0 "ttl")
 	    :hidden-class #t)
 	 
-	 (js-bind! %this js-service-prototype 'addURL
+	 (js-bind! %this js-service-prototype (& "addURL")
 	    :value (js-make-function %this
 		      (lambda (this url)
 			 (service-add-url! this url %this))
 		      1 "addURL")
 	    :hidden-class #t)
 	 
-	 (js-bind! %this js-service-prototype 'removeURL
+	 (js-bind! %this js-service-prototype (& "removeURL")
 	    :value (js-make-function %this
 		      (lambda (this url)
 			 (service-remove-url! this url %this))
 		      1 "removeURL")
 	    :hidden-class #t)
 	 
-	 (js-bind! %this js-service-prototype 'getURLs
+	 (js-bind! %this js-service-prototype (& "getURLs")
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (service-get-urls this %this))
@@ -332,40 +332,40 @@
 	    (instantiateJsObject
 	       (__proto__ __proto__)))
 	 
-	 (js-bind! %this js-hopframe-prototype 'post
+	 (js-bind! %this js-hopframe-prototype (& "post")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame success fail-or-opt)
 			 (with-access::JsHopFrame this (url args)
 			    (post this success fail-or-opt %this #t)))
 		      3 "post")
 	    :hidden-class #t)
-	 (js-bind! %this js-hopframe-prototype 'postSync
+	 (js-bind! %this js-hopframe-prototype (& "postSync")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame opt)
 			 (with-access::JsHopFrame this (url args)
 			    (post this #f opt %this #f)))
 		      2 "postSync")
 	    :hidden-class #t)
-	 (js-bind! %this js-hopframe-prototype 'toString
+	 (js-bind! %this js-hopframe-prototype (& "toString")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
 			 (js-string->jsstring (hopframe->string this %this)))
 		      0 "toString")
 	    :hidden-class #t)
-	 (js-bind! %this js-hopframe-prototype 'inspect
+	 (js-bind! %this js-hopframe-prototype (& "inspect")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
 			 (js-string->jsstring (hopframe->string this %this)))
 		      0 "inspect")
 	    :hidden-class #t)
-	 (js-bind! %this js-hopframe-prototype 'getHeader
+	 (js-bind! %this js-hopframe-prototype (& "getHeader")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
 			 (with-access::JsHopFrame this (header)
 			    header))
 		      0 "getHeader")
 	    :hidden-class #t)
-	 (js-bind! %this js-hopframe-prototype 'setHeader
+	 (js-bind! %this js-hopframe-prototype (& "setHeader")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame hd)
 			 (with-access::JsHopFrame this (header)
@@ -373,13 +373,13 @@
 			    this))
 		      1 "setHeader")
 	    :hidden-class #t)
-	 (js-bind! %this js-hopframe-prototype 'getOptions
+	 (js-bind! %this js-hopframe-prototype (& "getOptions")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame opts)
 			 opts)
 		      0 "getOptions")
 	    :hidden-class #t)
-	 (js-bind! %this js-hopframe-prototype 'setOptions
+	 (js-bind! %this js-hopframe-prototype (& "setOptions")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame opts)
 			 (with-access::JsHopFrame this (options)
@@ -411,14 +411,14 @@
 				  :construct (lambda (this path args)
 						(js-make-hopframe %this 
 						   this path args)))))
-	    (js-bind! %this %this 'Service
+	    (js-bind! %this %this (& "Service")
 	       :configurable #f :enumerable #f :value js-service
 	       :hidden-class #t)
-	    (js-bind! %this %this 'HopFrame
+	    (js-bind! %this %this (& "HopFrame")
 	       :configurable #f :enumerable #f :value js-hopframe
 	       :hidden-class #t)
 	    
-	    (js-bind! %this js-service 'exists
+	    (js-bind! %this js-service (& "exists")
 	       :configurable #f :enumerable #f
 	       :value (js-make-function %this
 			 (lambda (this svc)
@@ -426,7 +426,7 @@
 			 1 "exists")
 	       :hidden-class #t)
 	    
-	    (js-bind! %this js-service 'allowURL
+	    (js-bind! %this js-service (& "allowURL")
 	       :configurable #f :enumerable #f
 	       :value (js-make-function %this
 			 (lambda (this url)
@@ -508,8 +508,8 @@
 	 (with-hop-remote path callback fail
 	    :scheme scheme
 	    :host host :port port 
-	    :user (js-get-string options 'user)
-	    :password (js-get-string options 'password)
+	    :user (js-get-string options (& "user"))
+	    :password (js-get-string options (& "password"))
 	    :authorization auth
 	    :header (when header (js-jsobject->alist header %this))
 	    :ctx %this
@@ -580,8 +580,8 @@
 	 (with-hop-remote path scheme->js #f
 	    :scheme scheme
 	    :host host :port port 
-	    :user (js-get-string options 'user)
-	    :password (js-get-string options 'password)
+	    :user (js-get-string options (& "user"))
+	    :password (js-get-string options (& "password"))
 	    :authorization auth
 	    :header (when header (js-jsobject->alist header %this))
 	    :ctx %this
@@ -713,18 +713,18 @@
 		       (lambda ()
 			  (js-call1 %this opt %this obj)))))))
 	 ((not (eq? opt (js-undefined)))
-	  (let* ((v (js-get opt 'server %this))
+	  (let* ((v (js-get opt (& "server") %this))
 		 (o (if (eq? v (js-undefined)) opt v))
-		 (a (js-get o 'authorization %this))
-		 (h (js-get o 'host %this))
-		 (p (js-get o 'port %this))
-		 (u (js-get opt 'user %this))
-		 (w (js-get opt 'password %this))
-		 (f (js-get opt 'fail %this))
-		 (y (js-get opt 'asynchronous %this))
-		 (s (js-get opt 'scheme %this))
-		 (c (js-get opt 'ssl %this))
-		 (r (js-get opt 'header %this)))
+		 (a (js-get o (& "authorization") %this))
+		 (h (js-get o (& "host") %this))
+		 (p (js-get o (& "port") %this))
+		 (u (js-get opt (& "user") %this))
+		 (w (js-get opt (& "password") %this))
+		 (f (js-get opt (& "fail") %this))
+		 (y (js-get opt (& "asynchronous") %this))
+		 (s (js-get opt (& "scheme") %this))
+		 (c (js-get opt (& "ssl") %this))
+		 (r (js-get opt (& "header") %this)))
 	     (unless (eq? h (js-undefined))
 		(set! host (js-tostring h %this)))
 	     (unless (eq? p (js-undefined))
@@ -736,7 +736,7 @@
 	     (unless (eq? a (js-undefined))
 		(set! authorization (js-tostring a %this)))
 	     (unless (js-totest y)
-		(when (js-in? %this 'asynchronous opt)
+		(when (js-in? %this (& "asynchronous") opt)
 		   (set! asynchronous #f)))
 	     (when (js-totest c)
 		(set! scheme 'https))
@@ -882,7 +882,7 @@
 				(path hoppath)
 				(id id)
 				(wid wid)
-				(args (fix-args (js-get proc 'length %this)))
+				(args (fix-args (js-get proc (& "length") %this)))
 				(resource (dirname src))
 				(source src)))))
 	    svcjs))))
@@ -1018,16 +1018,16 @@
 	 (svc (or svc (default-service)))
 	 (properties (list
 			(instantiate::JsValueDescriptor
-			   (name 'length)
+			   (name (& "length"))
 			   (value 0))
 			(instantiate::JsAccessorDescriptor
-			   (name 'path)
+			   (name (& "path"))
 			   (get (js-make-function %this get-path 1 "path"))
 			   (set (js-make-function %this set-path 2 "path"))
 			   (%get get-path)
 			   (%set set-path))
 			(instantiate::JsAccessorDescriptor
-			   (name 'name)
+			   (name (& "name"))
 			   (get (js-make-function %this get-name 1 "name"))
 			   (set (js-make-function %this set-name 2 "name"))
 			   (%get get-name)

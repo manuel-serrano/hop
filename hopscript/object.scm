@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Mar 30 09:33:02 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 12:29:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -54,7 +54,11 @@
    (with   __hopscript_dom)
    
    (export (js-initial-global-object)
-	   (js-new-global-object::JsGlobalObject #!optional (size 64))))
+	   (js-new-global-object::JsGlobalObject #!optional (size 64))
+	   
+	   (generic js-extensible?::bool ::obj ::JsGlobalObject)
+	   (generic js-preventextensions ::obj ::JsGlobalObject)
+	   (generic js-ownkeys ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsObject ...                                 */
@@ -66,6 +70,34 @@
       (if (eq? %this 'hop)
 	  o
 	  (js-plist->jsobject o (or %this (js-initial-global-object))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-extensible? ...                                               */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13    */
+;*---------------------------------------------------------------------*/
+(define-generic (js-extensible? obj::obj %this)
+   (let ((o (js-cast-object obj %this "Object.isExtensible")))
+      (js-object-mode-extensible? o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-preventextensions ...                                         */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.10    */
+;*---------------------------------------------------------------------*/
+(define-generic (js-preventextensions obj::obj %this)
+   (let ((o (js-cast-object obj %this "Object.preventExtensions")))
+      (js-prevent-extensions o)
+      obj))
+
+;*---------------------------------------------------------------------*/
+;*    js-ownkeys ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14    */
+;*---------------------------------------------------------------------*/
+(define-generic (js-ownkeys obj %this)
+   (let ((o (js-cast-object obj %this "Object.keys")))
+      (js-ownkeys o %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsObject ...                                       */

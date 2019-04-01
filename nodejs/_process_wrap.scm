@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_process_wrap.scm          */
+;*    serrano/prgm/project/hop/hop/nodejs/_process_wrap.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 17 17:07:03 2014                          */
-;*    Last change :  Tue Jan 15 09:56:11 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 14:49:31 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs child processes bindings                                  */
@@ -33,28 +33,28 @@
 	 (js-new %this js-object)))
    
    ;; bind the methods of the prototype object
-   (js-put! process-prototype 'spawn
+   (js-put! process-prototype (& "spawn")
       (js-make-function %this 
 	 (lambda (this options)
 	    (nodejs-process-spawn %worker %this process this options))
 	 1 "spawn")
       #f %this)
    
-   (js-put! process-prototype 'kill
+   (js-put! process-prototype (& "kill")
       (js-make-function %this 
 	 (lambda (this pid)
 	    (nodejs-process-kill %worker %this process this pid))
 	 1 "kill")
       #f %this)
    
-   (js-put! process-prototype 'close
+   (js-put! process-prototype (& "close")
       (js-make-function %this
 	 (lambda (this cb)
 	    (nodejs-close %worker %this process this cb))
 	 1 "close")
       #f %this)
    
-   (js-put! process-prototype 'ref
+   (js-put! process-prototype (& "ref")
       (js-make-function %this
 	 (lambda (this)
 	    (with-access::JsHandle this (handle)
@@ -62,7 +62,7 @@
 	 0 "ref")
       #f %this)
 	    
-   (js-put! process-prototype 'unref
+   (js-put! process-prototype (& "unref")
       (js-make-function %this
 	 (lambda (this)
 	    (with-access::JsHandle this (handle)

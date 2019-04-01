@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Sat Mar 30 09:29:40 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 16:58:42 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -200,7 +200,7 @@
       (set! js-generator-prototype js-gen-proto)
       (set! js-generatorfunction-prototype js-genfun-proto)
       
-      (set! js-yield-cmap (js-names->cmap '#(value done)))
+      (set! js-yield-cmap (js-names->cmap (vector (& "value") (& "done"))))
       
       ))
 	    

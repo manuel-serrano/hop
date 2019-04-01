@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Mar 31 07:34:59 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 10:36:13 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -37,7 +37,6 @@
 	   (js-stringlist->jsstring ::pair-nil)
 	   (inline js-jsstring->string::bstring ::JsStringLiteral)
 	   (js-jsstring->number::obj ::JsStringLiteral) 
-	   (inline js-jsstring?::bool ::obj)
 	   (js-jsstring-character-ref ::obj ::uint32)
 	   (js-jsstring-ref ::obj ::uint32)
 	   (js-ascii-ref ::JsStringLiteralASCII ::uint32)
@@ -614,12 +613,6 @@
 ;*---------------------------------------------------------------------*/
 (define (display-js-string jstr::JsStringLiteral op)
    (display (js-jsstring->string jstr) op))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring? ...                                                 */
-;*---------------------------------------------------------------------*/
-(define-inline (js-jsstring? obj)
-   (isa? obj JsStringLiteral))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-register-value ::JsStringLiteral ...                         */

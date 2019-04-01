@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/ctor.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/ctor.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Thu Jan 24 10:48:52 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 17:04:23 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -251,19 +251,18 @@
 			   (values nodes ns ref)))))))))
 
    (define (init-names inits)
-      `,(list->vector
-	   (filter-map (lambda (n)
-			  (when (isa? n J2SStmtExpr)
-			     (with-access::J2SStmtExpr n (expr)
-				(when (isa? expr J2SAssig)
-				   (with-access::J2SAssig expr (lhs)
-				      (when (isa? lhs J2SAccess)
-					 (with-access::J2SAccess lhs (obj field)
-					    (when (and (isa? obj J2SThis)
-						       (isa? field J2SString))
-					       (with-access::J2SString field (val)
-						  (string->symbol val))))))))))
-	      inits)))
+      (filter-map (lambda (n)
+		     (when (isa? n J2SStmtExpr)
+			(with-access::J2SStmtExpr n (expr)
+			   (when (isa? expr J2SAssig)
+			      (with-access::J2SAssig expr (lhs)
+				 (when (isa? lhs J2SAccess)
+				    (with-access::J2SAccess lhs (obj field)
+				       (when (and (isa? obj J2SThis)
+						  (isa? field J2SString))
+					  (with-access::J2SString field (val)
+					     `(& ,val))))))))))
+	 inits))
 
    (multiple-value-bind (init rest ref)
       (split-init-sequence this)
@@ -285,7 +284,7 @@
 		(set! globals
 		   (cons* `(define ,cmap0 #f)
 		      `(define ,cmap1 #f)
-		      `(define ,cmap2 (js-names->cmap ',(init-names init)))
+		      `(define ,cmap2 (js-names->cmap (vector ,@(init-names init))))
 		      `(define ,offset -1)
 		      globals)))
 	     ;; then split the init sequence

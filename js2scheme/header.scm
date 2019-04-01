@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/header.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/header.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Wed Jan 30 16:37:55 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 08:16:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -20,7 +20,8 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_parser
-	   __js2scheme_scheme)
+	   __js2scheme_scheme
+	   __js2scheme_scheme-utils)
 
    (export j2s-hopscript-stage
 	   (generic j2s-hopscript-header::J2SProgram ::J2SProgram ::obj)))
@@ -82,7 +83,7 @@
 	 (js-def-extern 'GLOBAL #t #f '%this :type 'object)
 	 (js-def-extern 'module #t #t '%module :type 'object :hidden-class #f)
 	 (js-def-extern 'exports #t #t
-	    '(js-get %module 'exports %scope))
+	    '(js-get %module (& "exports") %scope))
 	 (js-def-extern 'require #t #f
 	    (instantiate::J2SRef
 	       (loc loc)
@@ -94,12 +95,16 @@
 	 (js-def-extern 'Worker #t #t
 	    '(nodejs-worker %this %scope %module))
 	 (js-def-extern '__filename #t #f
-	    '(js-get %module 'filename %scope) :type 'string)
+	    '(js-get %module (& "filename") %scope) :type 'string)
 	 (js-def-extern '__dirname #t #f
-	    '(js-string->jsstring (dirname (js-jsstring->string (js-get %module 'filename %scope)))) :type 'string)
+	    '(js-string->jsstring
+	      (dirname
+		 (js-jsstring->string
+		    (js-get %module (& "filename") %scope))))
+	    :type 'string)
 	 (js-def-extern '%__GLOBAL #f #f
 	    ;; this will not be compiled as a global (see scheme.scm)
-	    '(js-put! GLOBAL 'global GLOBAL #f %this))
+	    '(js-put! GLOBAL (& "global") GLOBAL #f %this))
 	 (js-def-extern 'process #t #t '(nodejs-process %worker %this)
 	    :type 'object)
 	 (js-def-extern 'Object #t #t
@@ -114,63 +119,6 @@
 		(loc loc))
 	     (js-def-extern 'console #t #f
 		'(nodejs-require-core "console" %worker %this) :type 'object))
-;* 	 (if (string=? id "buffer.js")                                 */
-;* 	     (instantiate::J2SUndefined                                */
-;* 		(type 'undefined)                                      */
-;* 		(loc loc))                                             */
-;* 	     (js-def-extern 'Buffer #t #f                              */
-;* 		'(js-get (nodejs-require-core "buffer" %worker %this)  */
-;* 		  'Buffer %this)                                       */
-;* 		:type 'object))                                        */
-;* 	 (if (string=? id "timers.js")                                 */
-;* 	     (instantiate::J2SUndefined                                */
-;* 		(type 'undefined)                                      */
-;* 		(loc loc))                                             */
-;* 	     (js-def-extern '%__timers #t #f                           */
-;* 		'(nodejs-require-core "timers" %worker %this)          */
-;* 		  :type 'object))                                      */
-;* 	 (if (string=? id "timers.js")                                 */
-;* 	     (instantiate::J2SUndefined                                */
-;* 		(type 'undefined)                                      */
-;* 		(loc loc))                                             */
-;* 	     (js-def-extern 'clearImmediate #t #f                      */
-;* 		'(js-get %__timers 'clearImmediate %this)              */
-;* 		:type 'object))                                        */
-;* 	 (if (string=? id "timers.js")                                 */
-;* 	     (instantiate::J2SUndefined                                */
-;* 		(type 'undefined)                                      */
-;* 		(loc loc))                                             */
-;* 	     (js-def-extern 'clearInterval #t #f                       */
-;* 		'(js-get %__timers 'clearInterval %this)               */
-;* 		:type 'object))                                        */
-;* 	 (if (string=? id "timers.js")                                 */
-;* 	     (instantiate::J2SUndefined                                */
-;* 		(type 'undefined)                                      */
-;* 		(loc loc))                                             */
-;* 	     (js-def-extern 'clearTimeout #t #f                        */
-;* 		'(js-get %__timers 'clearTimeout %this)                */
-;* 		:type 'object))                                        */
-;* 	 (if (string=? id "timers.js")                                 */
-;* 	     (instantiate::J2SUndefined                                */
-;* 		(type 'undefined)                                      */
-;* 		(loc loc))                                             */
-;* 	     (js-def-extern 'setImmediate #t #f                        */
-;* 		'(js-get %__timers 'setImmediate %this)                */
-;* 		:type 'object))                                        */
-;* 	 (if (string=? id "timers.js")                                 */
-;* 	     (instantiate::J2SUndefined                                */
-;* 		(type 'undefined)                                      */
-;* 		(loc loc))                                             */
-;* 	     (js-def-extern 'setInterval #t #f                         */
-;* 		'(js-get %__timers 'setInterval %this)                 */
-;* 		:type 'object))                                        */
-;* 	 (if (string=? id "timers.js")                                 */
-;* 	     (instantiate::J2SUndefined                                */
-;* 		(type 'undefined)                                      */
-;* 		(loc loc))                                             */
-;* 	     (js-def-extern 'setTimeout #t #f                          */
-;* 		'(js-get %__timers 'setTimeout %this)                  */
-;* 		:type 'object))                                        */
 	 (if (string=? path "hop")
 	     (instantiate::J2SUndefined
 		(type 'undefined)
@@ -184,13 +132,17 @@
 		(nodejs-function %this %scope)
 		,(unless (string=? path "buffer")
 		    `(nodejs-bind-export! %this %scope
-			(nodejs-require-core "buffer" %worker %this) 'Buffer))
+			(nodejs-require-core "buffer" %worker %this)
+			(& "Buffer")))
 		,(unless (string=? path "timers")
 		    `(nodejs-bind-export! %this %scope
 			(nodejs-require-core "timers" %worker %this)
-			'clearImmediate 'clearInterval 'clearTimeout
-			'setImmediate 'setInterval 'setTimeout))
-		))
+			(& "clearImmediate")
+			(& "clearInterval")
+			(& "clearTimeout")
+			(& "setImmediate")
+			(& "setInterval")
+			(& "setTimeout")))))
 	 (instantiate::J2SUndefined
 	    (type 'undefined)
 	    (loc loc)))))

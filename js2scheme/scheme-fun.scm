@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-fun.scm          */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-fun.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Jan 24 07:27:17 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 15:00:56 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -274,7 +274,7 @@
 			 (epairify-deep loc
 			    `(set! ,scmid
 				,(if (js-need-global? this scope mode)
-				     `(js-bind! %this ,scope ',id
+				     `(js-bind! %this ,scope ,(j2s-scheme-name id)
 					 :configurable #f
 					 :value ,(j2s-make-function this
 						    mode return conf))
@@ -297,7 +297,7 @@
 		    (define ,fastid
 		       ,(jssvc->scheme val id scmid mode return conf))
 		    (define ,scmid
-		       (js-bind! %this ,scope ',id
+		       (js-bind! %this ,scope ,(j2s-scheme-name id)
 			  :configurable #f
 			  :writable #f
 			  :value ,fastid)))

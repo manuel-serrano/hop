@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Mar 31 09:45:06 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 12:40:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -825,7 +825,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-names->cmap names)
    (instantiate::JsConstructMap
-      (props (vector-map (lambda (n) (prop n (property-flags #t #t #t #f))) names))
+      (props (vector-map (lambda (n)
+			    (if (symbol? n)
+				(let* ((s (symbol->string n))
+				       (l (string-length s)))
+				   (print (/fx 1 (-fx l l)))))
+			    (prop n (property-flags #t #t #t #f))) names))
       (methods (make-vector (vector-length names) #unspecified))))
       
 ;*---------------------------------------------------------------------*/
@@ -2281,7 +2286,7 @@
 ;*    [[DefineOwnProperty]]                                            */
 ;*       http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9    */
 ;*---------------------------------------------------------------------*/
-(define (js-bind! %this::JsGlobalObject o::JsObject name::JsStringLiteral
+(define (js-bind! %this::JsGlobalObject o::JsObject name::obj
 	   #!key
 	   (value #f)
 	   (get #f)
@@ -2464,8 +2469,8 @@
 	 (js-undefined)))
 
    (when (symbol? name)
-      (error "bind!" "illegal property name" name))
-   
+      (error "bind!" "Illegal property name (symbol)" name))
+
    (with-access::JsObject o (cmap)
       (if (not (eq? cmap (js-not-a-cmap)))
 	  (jsobject-map-find o name

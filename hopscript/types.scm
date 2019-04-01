@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Mar 31 09:26:51 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 10:33:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -16,8 +16,6 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_types
 
-   (include "stringliteral.sch")
-   
    (library hop)
    
    (use __hopscript_object
@@ -30,7 +28,7 @@
 	__hopscript_private
 	__hopscript_function
 	__hopscript_property
-	__hopscript_public
+	;;__hopscript_public
 	__hopscript_lib)
 
    (extern (include "bglhopscript_malloc.h"))
@@ -98,7 +96,7 @@
 	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))
 	      (point::long (default -1))
-	      (name::JsStringLiteral (default &empty))
+	      (name::JsStringLiteral (default (class-nil JsStringLiteralASCII)))
 	      (method::obj (default #f))
 	      (function::obj (default #f))
 	      (pctable::obj (default #f))
@@ -247,7 +245,7 @@
 	      (val::bool (default #t)))
 	   
 	   (class JsError::JsObject
-	      (name (default ((@ js-string->jsstring __hopscript_stringliteral) "Error")))
+	      name
 	      msg
 	      (stack (default #f))
 	      (fname (default #f))
@@ -423,10 +421,6 @@
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
 	   
-	   (generic js-extensible?::bool ::obj ::JsGlobalObject)
-	   (generic js-preventextensions ::obj ::JsGlobalObject)
-	   (generic js-ownkeys ::obj ::JsGlobalObject)
-	   
 	   (inline js-undefined?::bool ::obj)
 	   (inline js-undefined)
 	   
@@ -436,8 +430,6 @@
 	   %absent-value
 	   (inline js-absent)
 	   (inline js-absent?::bool ::obj)
-	   
-	   (generic js-typeof obj)
 	   
 	   (generic js-arraybuffer-length ::JsArrayBuffer)
 	   (generic js-arraybuffer-ref ::JsArrayBuffer ::int)
@@ -452,6 +444,7 @@
 	   (inline js-not-a-cmap::JsConstructMap)
 	   (inline js-not-a-index::long)
 	   
+	   (inline js-jsstring?::bool ::obj)
 	   (inline js-number?::bool ::obj)
 	   (inline js-object?::bool ::obj)
 	   (inline js-array?::bool ::obj)
@@ -859,34 +852,6 @@
        obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-extensible? ...                                               */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13    */
-;*---------------------------------------------------------------------*/
-(define-generic (js-extensible? obj::obj %this)
-   (let ((o (js-cast-object obj %this "Object.isExtensible")))
-      (js-object-mode-extensible? o)))
-
-;*---------------------------------------------------------------------*/
-;*    js-preventextensions ...                                         */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.10    */
-;*---------------------------------------------------------------------*/
-(define-generic (js-preventextensions obj::obj %this)
-   (let ((o (js-cast-object obj %this "Object.preventExtensions")))
-      (js-prevent-extensions o)
-      obj))
-
-;*---------------------------------------------------------------------*/
-;*    js-ownkeys ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14    */
-;*---------------------------------------------------------------------*/
-(define-generic (js-ownkeys obj %this)
-   (let ((o (js-cast-object obj %this "Object.keys")))
-      (js-ownkeys o %this)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-undefined? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-undefined? obj)
@@ -928,43 +893,6 @@
 
 (define-inline (js-absent? x)
    (eq? x %absent-value))
-
-;*---------------------------------------------------------------------*/
-;*    Constant strings ...                                             */
-;*---------------------------------------------------------------------*/
-(define js-string-undefined (& "undefined"))
-(define js-string-object (& "object"))
-(define js-string-symbol (& "symbol"))
-(define js-string-number (& "number"))
-(define js-string-boolean (& "boolean"))
-(define js-string-string (& "string"))
-(define js-string-function (& "function"))
-
-;*---------------------------------------------------------------------*/
-;*    js-typeof ...                                                    */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3       */
-;*---------------------------------------------------------------------*/
-(define-generic (js-typeof obj)
-   (cond
-      ((isa? obj JsFunction)
-       js-string-function)
-      ((isa? obj JsSymbolLiteral)
-       js-string-symbol)
-      ((isa? obj JsObject)
-       js-string-object)
-      ((or (real? obj) (integer? obj))
-       js-string-number)
-      ((boolean? obj)
-       js-string-boolean)
-      ((eq? obj (js-undefined))
-       js-string-undefined)
-      ((js-jsstring? obj)
-       js-string-string)
-      ((eq? obj (js-null))
-       js-string-object)
-      (else
-       (js-string->jsstring (typeof obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arraybuffer-length ::JsArrayBuffer ...                        */
@@ -1033,6 +961,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-not-a-index::long)
    (bit-lsh 1 28))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring? obj)
+   (isa? obj JsStringLiteral))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number? ...                                                   */

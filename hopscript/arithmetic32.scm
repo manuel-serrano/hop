@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/hopscript/arithmetic32.scm       */
+;*    serrano/prgm/project/hop/hop/hopscript/arithmetic32.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Tue Aug 28 09:10:31 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Mon Apr  1 09:11:30 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
 
    (library hop)
 
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "names.sch")
 
    (import __hopscript_types
 	   __hopscript_object

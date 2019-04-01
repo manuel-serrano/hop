@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Mar 31 10:41:51 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 12:42:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -275,7 +275,7 @@
 	 (set! js-symbol-unscopables (bind-symbol! "unscopables"))
 
 	 ;; hasinstance has already been allocated
-	 (js-bind! %this js-symbol "hasInstance"
+	 (js-bind! %this js-symbol (& "hasInstance")
 	    :value js-symbol-hasinstance
 	    :writable #f
 	    :enumerable #f

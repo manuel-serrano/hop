@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Mar 31 09:34:24 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 10:32:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -178,6 +178,8 @@
 	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
 	   (generic js-inspect ::obj ::int)
 
+	   (generic js-typeof ::obj)
+
 	   (js-html-head ::JsGlobalObject)
 	   (js-html-script ::JsGlobalObject)
 
@@ -186,8 +188,6 @@
 	   (js-parseint-any ::obj ::JsGlobalObject)
 	   (js-parseint-string-uint32 ::obj ::uint32)
 	   (js-parsefloat ::obj ::JsGlobalObject)))
-	   
-	   
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */
@@ -1791,6 +1791,43 @@
 	  (call-with-output-string
 	     (lambda (op)
 		(write-circle o op)))))))
+
+;*---------------------------------------------------------------------*/
+;*    Constant strings ...                                             */
+;*---------------------------------------------------------------------*/
+(define js-string-undefined (& "undefined"))
+(define js-string-object (& "object"))
+(define js-string-symbol (& "symbol"))
+(define js-string-number (& "number"))
+(define js-string-boolean (& "boolean"))
+(define js-string-string (& "string"))
+(define js-string-function (& "function"))
+
+;*---------------------------------------------------------------------*/
+;*    js-typeof ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3       */
+;*---------------------------------------------------------------------*/
+(define-generic (js-typeof obj)
+   (cond
+      ((isa? obj JsFunction)
+       js-string-function)
+      ((isa? obj JsSymbolLiteral)
+       js-string-symbol)
+      ((isa? obj JsObject)
+       js-string-object)
+      ((or (real? obj) (integer? obj))
+       js-string-number)
+      ((boolean? obj)
+       js-string-boolean)
+      ((eq? obj (js-undefined))
+       js-string-undefined)
+      ((js-jsstring? obj)
+       js-string-string)
+      ((eq? obj (js-null))
+       js-string-object)
+      (else
+       (js-string->jsstring (typeof obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-html-head ...                                                 */

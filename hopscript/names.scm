@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sun Mar 31 07:33:19 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 08:13:50 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -17,9 +17,10 @@
    (include "types.sch")
 
    (library hop)
+
+   (import __hopscript_types)
    
-   (use    __hopscript_types
-	   __hopscript_stringliteral
+   (use    __hopscript_stringliteral
 	   __hopscript_lib
 	   __hopscript_public)
 
@@ -37,16 +38,26 @@
 	   ;; known names
 	   &empty
 	   &__proto__
+	   &Array
+	   &Buffer
+	   &GLOBAL
+	   &Object
+	   &String
+	   &Worker
 	   &charAt
 	   &charCodeAt
 	   &compiler
 	   &configurable
+	   &console
 	   &constructor
 	   &done
 	   &enumerable
 	   &exec
+	   &exports
 	   &for
 	   &forEach
+	   &global
+	   &hop
 	   &indexOf
 	   &iterator
 	   &keyFor
@@ -54,12 +65,15 @@
 	   &lastIndexOf
 	   &length
 	   &localeCompare
+	   &log
 	   &match
 	   &map
+	   &module
 	   &naturalCompare
 	   &next
 	   &prototype
 	   &replace
+	   &require
 	   &return
 	   &slice
 	   &split
@@ -159,6 +173,8 @@
 	     val))
 	 ((symbol? p)
 	  (error "js-toname" "Illegal `symbol'" p))
+	 ((string? p)
+	  (error "js-toname" "Illegal `string'" p))
 	 (else
 	  (loop (js-tostring p %this))))))
 
@@ -189,32 +205,34 @@
 ;*---------------------------------------------------------------------*/
 (define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring)
    (with-lock js-names-mutex
-      (let ((n (hashtable-get names str)))
-	 (or n
-	     (let ((n (instantiate::JsStringLiteralASCII
-			 (weight (fixnum->uint32 (string-length str)))
-			 (left str)
-			 (right #f))))
-		(hashtable-put! names str n)
-		(js-jsstring-name-set! n n)
-		n)))))
+      (lambda ()
+	 (let ((n (hashtable-get names str)))
+	    (or n
+		(let ((n (instantiate::JsStringLiteralASCII
+			    (weight (fixnum->uint32 (string-length str)))
+			    (left str)
+			    (right #f))))
+		   (hashtable-put! names str n)
+		   (js-jsstring-name-set! n n)
+		   n))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-index-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-index-name->jsstring::JsStringLiteralASCII num::uint32)
    (with-lock js-names-mutex
-      (let ((n (hashtable-get names num)))
-	 (or n
-	     (let* ((str (fixnum->string (uint32->fixnum num)))
-		    (n (instantiate::JsStringLiteralIndex
-			  (weight (string-length str))
-			  (left str)
-			  (right #f)
-			  (index num))))
-		(hashtable-put! names str n)
-		(js-jsstring-name-set! n n)
-		n)))))
+      (lambda ()
+	 (let ((n (hashtable-get names num)))
+	    (or n
+		(let* ((str (fixnum->string (uint32->fixnum num)))
+		       (n (instantiate::JsStringLiteralIndex
+			     (weight (string-length str))
+			     (left str)
+			     (right #f)
+			     (index num))))
+		   (hashtable-put! names str n)
+		   (js-jsstring-name-set! n n)
+		   n))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-name->jsstring ...                                       */
@@ -267,30 +285,43 @@
 ;*---------------------------------------------------------------------*/
 (define &empty (js-ascii->jsstring ""))
 (define &__proto__ (js-ascii-name->jsstring "__proto__"))
+(define &Array (js-ascii-name->jsstring "Array"))
+(define &Buffer (js-ascii-name->jsstring "Buffer"))
+(define &GLOBAL (js-ascii-name->jsstring "GLOBAL"))
+(define &Object (js-ascii-name->jsstring "Object"))
+(define &String (js-ascii-name->jsstring "String"))
+(define &Worker (js-ascii-name->jsstring "Worker"))
 (define &charAt (js-ascii-name->jsstring "charAt"))
 (define &charCodeAt (js-ascii-name->jsstring "charCodeAt"))
 (define &compiler (js-ascii-name->jsstring "compiler"))
 (define &configurable (js-ascii-name->jsstring "configurable"))
+(define &console (js-ascii-name->jsstring "console"))
 (define &constructor (js-ascii-name->jsstring "constructor"))
 (define &done (js-ascii-name->jsstring "done"))
+(define &exports (js-ascii-name->jsstring "exports"))
 (define &exec (js-ascii-name->jsstring "exec"))
 (define &enumerable (js-ascii-name->jsstring "enumerable"))
 (define &for (js-ascii-name->jsstring "for"))
+(define &forEach (js-ascii-name->jsstring "forEach"))
 (define &get (js-ascii-name->jsstring "get"))
+(define &global (js-ascii-name->jsstring "global"))
+(define &hop (js-ascii-name->jsstring "hop"))
 (define &indexOf (js-ascii-name->jsstring "indexOf"))
 (define &iterator (js-ascii-name->jsstring "iterator"))
-(define &forEach (js-ascii-name->jsstring "forEach"))
 (define &keyFor (js-ascii-name->jsstring "keyFor"))
 (define &lastIndex (js-ascii-name->jsstring "lastIndex"))
 (define &lastIndexOf (js-ascii-name->jsstring "lastIndexOf"))
 (define &length (js-ascii-name->jsstring "length"))
 (define &localeCompare (js-ascii-name->jsstring "localCompare"))
+(define &log (js-ascii-name->jsstring "log"))
 (define &match (js-ascii-name->jsstring "match"))
 (define &map (js-ascii-name->jsstring "map"))
+(define &module (js-ascii-name->jsstring "module"))
 (define &naturalCompare (js-ascii-name->jsstring "naturalCompare"))
 (define &next (js-ascii-name->jsstring "next"))
 (define &prototype (js-ascii-name->jsstring "prototype"))
 (define &replace (js-ascii-name->jsstring "replace"))
+(define &require (js-ascii-name->jsstring "require"))
 (define &return (js-ascii-name->jsstring "return"))
 (define &set (js-ascii-name->jsstring "set"))
 (define &slice (js-ascii-name->jsstring "slice"))

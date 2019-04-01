@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/expanders.scm           */
+;*    serrano/prgm/project/hop/hop/hopscript/expanders.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 08:18:53 2017                          */
-;*    Last change :  Thu Mar 28 15:28:21 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 09:12:00 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders                                              */
@@ -25,6 +25,7 @@
 	    "stringliteral_expd.sch"
 	    "types_expd.sch"
 	    "constant_expd.sch"
+	    "names_expd.sch"
 	    "expanders.sch")
 
    (import  __hopscript_types

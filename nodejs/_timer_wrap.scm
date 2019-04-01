@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_timer_wrap.scm            */
+;*    serrano/prgm/project/hop/hop/nodejs/_timer_wrap.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Fri Jan 18 09:51:51 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 14:47:02 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -49,7 +49,7 @@
 	 :alloc js-no-alloc
 	 :construct (js-timer-construct! %worker %this process js-timer-prototype)))
 
-   (js-bind! %this Timer 'now
+   (js-bind! %this Timer (& "now")
       :value (js-make-function %this
 		(lambda (this)
 		   (nodejs-now %worker))
@@ -82,27 +82,27 @@
       (js-make-function %this
 	 (lambda (this . l)
 	    (error "timer_wrap" "binding not implemented" name))
-	 0 (symbol->string name)))
+	 0 name))
    
-   (js-bind! %this obj 'start
+   (js-bind! %this obj (& "start")
       :value (js-make-function %this
 		(lambda (this start rep)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-start worker timer start rep)))
 		2 "start"))
-   (js-bind! %this obj 'close
+   (js-bind! %this obj (& "close")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-close worker timer)))
 		0 "close"))
-   (js-bind! %this obj 'stop
+   (js-bind! %this obj (& "stop")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-stop worker timer)))
 		0 "stop"))
-   (js-bind! %this obj 'unref
+   (js-bind! %this obj (& "unref")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsTimer this (timer worker)
@@ -110,6 +110,6 @@
 		0 "unref"))
 
    (for-each (lambda (id)
-		(js-bind! %this obj id
+		(js-bind! %this obj (& id)
 		   :value (not-implemented id)))
-      '(setRepeat getRepeat again)))
+      '("setRepeat" "getRepeat" "again")))

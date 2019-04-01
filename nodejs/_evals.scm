@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_evals.scm                 */
+;*    serrano/prgm/project/hop/hop/nodejs/_evals.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Wed Jan 23 11:48:30 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 14:47:39 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
@@ -143,10 +143,10 @@
    (define nodescript-proto
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (js-new0 %this js-object)))
-	    (js-put! obj 'createContext createContext #f %this)
-	    (js-put! obj 'runInContext runInContext #f %this)
-	    (js-put! obj 'runInThisContext runInThisContext #f %this)
-	    (js-put! obj 'runInNewContext runInNewContext #f %this)
+	    (js-put! obj (& "createContext") createContext #f %this)
+	    (js-put! obj (& "runInContext") runInContext #f %this)
+	    (js-put! obj (& "runInThisContext") runInThisContext #f %this)
+	    (js-put! obj (& "runInNewContext") runInNewContext #f %this)
 	    obj)))
    
    (define (NodeScript this code ctx filename)
@@ -160,10 +160,10 @@
 		 :alloc (lambda (%this o) #unspecified)
 		 :prototype nodescript-proto
 		 :construct NodeScript)))
-      (js-put! obj 'createContext createContext #f %this)
-      (js-put! obj 'runInContext runInContextVM #f %this)
-      (js-put! obj 'runInNewContext runInNewContextVM #f %this)
-      (js-put! obj 'runInThisContext runInThisContextVM #f %this)
+      (js-put! obj (& "createContext") createContext #f %this)
+      (js-put! obj (& "runInContext") runInContextVM #f %this)
+      (js-put! obj (& "runInNewContext") runInNewContextVM #f %this)
+      (js-put! obj (& "runInThisContext") runInThisContextVM #f %this)
       (js-alist->jsobject
 	 `((NodeScript . ,obj))
 	 %this)))

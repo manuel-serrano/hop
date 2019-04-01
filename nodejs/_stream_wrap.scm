@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_stream_wrap.scm           */
+;*    serrano/prgm/project/hop/hop/nodejs/_stream_wrap.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Mon Oct  8 14:26:47 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Mon Apr  1 14:57:42 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
 ;*=====================================================================*/
@@ -50,10 +50,10 @@
 		(res (nodejs-stream-shutdown %worker %this handle
 			(lambda (status handle)
 			   (when (<fx status 0)
-			      (js-put! process '_errno
+			      (js-put! process (& "_errno")
 				 (nodejs-err-name status) #f %this))
 			   (set! reqs (remq req reqs))
-			   (let ((oncomp (js-get req 'oncomplete %this)))
+			   (let ((oncomp (js-get req (& "oncomplete") %this)))
 			      (!js-callback3 "shutdown" %worker %this
 				 oncomp req status this req)
 			      '(js-worker-tick %worker))))))
@@ -84,25 +84,25 @@
 	    (set! reqs (cons req reqs))
 	    (with-access::JsProcess process (using-domains)
 	       (if using-domains
-		   (let ((dom (js-object-get-name/cache process 'domain #f %this
+		   (let ((dom (js-object-get-name/cache process (& "domain") #f %this
 				 (js-pcache-ref %pcache 0))))
-		      (js-object-put-name/cache! req 'domain dom #f %this
+		      (js-object-put-name/cache! req (& "domain") dom #f %this
 			 (js-pcache-ref %pcache 1)))
-		   (js-object-put-name/cache! req 'domain (js-null) #f %this
+		   (js-object-put-name/cache! req (& "domain") (js-null) #f %this
 		      (js-pcache-ref %pcache 2))))
-	    (js-object-put-name/cache! req 'bytes len #f %this
+	    (js-object-put-name/cache! req (& "bytes") len #f %this
 	       (js-pcache-ref %pcache 3))
 	    (with-access::JsHandle this (handle)
 	       (set! reqs (remq req reqs))
 	       (let ((cb (lambda (status)
-			    (js-object-put-name/cache! this 'writeQueueSize
+			    (js-object-put-name/cache! this (& "writeQueueSize")
 			       (nodejs-stream-write-queue-size handle) #f %this
 			       (js-pcache-ref %pcache 4))
 			    (when (<fx status 0)
-			       (js-put! process '_errno
+			       (js-put! process (& "_errno")
 				  (nodejs-err-name status) #f %this))
 			    (let ((oncomp (js-object-get-name/cache req
-					     'oncomplete #f %this
+					     (& "oncomplete") #f %this
 					     (js-pcache-ref %pcache 5))))
 			       (js-call3 %this oncomp req status this req)
 			       '(js-worker-tick %worker)
@@ -111,7 +111,7 @@
 		      (if (isa? sendhandle JsHandle)
 			  (with-access::JsHandle sendhandle ((shdl handle))
 			     (begin
-				(js-object-put-name/cache! req 'handle
+				(js-object-put-name/cache! req (& "handle")
 				   sendhandle #f %this
 				   (js-pcache-ref %pcache 6))
 				(nodejs-stream-write2 %worker %this handle
@@ -120,7 +120,7 @@
 			     string offset len #f cb))
 		      (nodejs-stream-write %worker %this handle
 			 string offset len cb)))
-	       (js-object-put-name/cache! this 'writeQueueSize
+	       (js-object-put-name/cache! this (& "writeQueueSize")
 		  (nodejs-stream-write-queue-size handle) #f %this
 		  (js-pcache-ref %pcache 7)))
 	    req))))
@@ -156,16 +156,16 @@
 		  (cond
 		     ((eof-object? status)
 		      ;; eof
-		      (js-put! process '_errno (js-string->jsstring "EOF")
+		      (js-put! process (& "_errno") (js-string->jsstring "EOF")
 			 #f %this)
-		      (let ((onread (js-get this 'onread %this)))
+		      (let ((onread (js-get this (& "onread") %this)))
 			 (!js-callback3 "read-start" %worker %this onread this
 			    (js-undefined) (js-undefined) (js-undefined))))
 		     ((not status)
 		      ;; read error
 		      (slab-shrink! slab buf offset 0)
-		      (js-put! process '_errno (nodejs-err-name len) #f %this)
-		      (let ((onread (js-get this 'onread %this)))
+		      (js-put! process (& "_errno") (nodejs-err-name len) #f %this)
+		      (let ((onread (js-get this (& "onread") %this)))
 			 (!js-callback0 "read-start" %worker %this onread this)))
 		     ((=fx len 0)
 		      ;; nothing read
@@ -173,7 +173,7 @@
 		     (else
 		      ;; characters read
 		      (let* ((b (slab-shrink! slab buf offset len))
-			     (onread (js-get this 'onread %this)))
+			     (onread (js-get this (& "onread") %this)))
 			 (if (and (nodejs-pipe-ipc? handle) pending-type)
 			     (!js-callback4 "read-start" %worker %this
 				onread this b offset len

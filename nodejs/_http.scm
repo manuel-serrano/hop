@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_http.scm                  */
+;*    serrano/prgm/project/hop/hop/nodejs/_http.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Fri Jan 18 13:46:28 2019 (serrano)                */
+;*    Last change :  Mon Apr  1 14:49:15 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -125,7 +125,7 @@
    (define http-parser-proto
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((proto (js-new0 %this js-object)))
-	    (js-put! proto 'reinitialize
+	    (js-put! proto (& "reinitialize")
 	       (js-make-function %this
 		  (lambda (this kind)
 		     (if (not (or (eq? kind 0) (eq? kind 1)))
@@ -136,7 +136,7 @@
 			    (js-undefined))))
 		  1 "reinitialize")
 	       #f %this)
-	    (js-put! proto 'execute
+	    (js-put! proto (& "execute")
 	       (js-make-function %this
 		  (lambda (this buf offset length)
 		     (let ((off (->fixnum (js-tointeger offset %this)))
@@ -144,7 +144,7 @@
 			(http-parser-execute %this this buf off len)))
 		  1 "execute")
 	       #f %this)
-	    (js-put! proto 'finish
+	    (js-put! proto (& "finish")
 	       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHttpParser this (buffer ip)
@@ -154,7 +154,7 @@
 			   (set! ip #f))))
 		  0 "finish")
 	       #f %this)
-	    (js-put! proto 'pause
+	    (js-put! proto (& "pause")
 	       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHttpParser this (errno)
@@ -162,7 +162,7 @@
 		     (js-undefined))
 		  0 "pause")
 	       #f %this)
-	    (js-put! proto 'resume
+	    (js-put! proto (& "resume")
 	       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHttpParser this (errno)
@@ -175,8 +175,8 @@
    (define http-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (js-put! proto 'REQUEST 0 #f %this)
-	 (js-put! proto 'RESPONSE 1  #f %this)
+	 (js-put! proto (& "REQUEST") 0 #f %this)
+	 (js-put! proto (& "RESPONSE") 1  #f %this)
 	 proto))
    
    (define (http-parser this kind)
@@ -340,8 +340,8 @@
 		       (with-access::JsGlobalObject %this (js-type-error)
 			  (let ((e (js-new %this js-type-error
 				      (js-string->jsstring "Parse Error"))))
-			     (js-put! e 'bytesParsed nparsed #f %this)
-			     (js-put! e 'code errname #f %this)
+			     (js-put! e (& "bytesParsed") nparsed #f %this)
+			     (js-put! e (& "code") errname #f %this)
 			     e))
 		       nparsed)))))))
 
@@ -1017,7 +1017,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-on-body %this parser off length)
    (with-access::JsHttpParser parser (buffer shift offset)
-      (let ((cb (js-get parser 'onBody %this)))
+      (let ((cb (js-get parser (& "onBody") %this)))
 	 (when (>fx debug-parser 0)
 	    (tprint "http-on-body offset=" offset
 	       " off=" off " (" (+fx offset (-fx off shift))
@@ -1032,7 +1032,7 @@
 (define (http-on-message-complete %this parser)
    (when (>fx debug-parser 0)
       (tprint "http-on-message-complete"))
-   (let ((cb (js-get parser 'onMessageComplete %this)))
+   (let ((cb (js-get parser (& "onMessageComplete") %this)))
       (when (isa? cb JsFunction)
 	 (js-call0 %this cb parser))))
 
@@ -1082,13 +1082,13 @@
 					status-code
 					http-major http-minor
 					url parsemode flags)
-      (let ((cb (js-get parser 'onHeaders %this))
+      (let ((cb (js-get parser (& "onHeaders") %this))
 	    (jsheaders (headers->jsheaders %this parser))
 	    (jsurl (js-string->jsstring url)))
 	 (when (and (pair? headers) (isa? cb JsFunction))
 	    (js-call2 %this cb parser jsheaders jsurl))
 	 (unless (memq 'trailer flags)
-	    (let ((cb (js-get parser 'onHeadersComplete %this)))
+	    (let ((cb (js-get parser (& "onHeadersComplete") %this)))
 	       (when (isa? cb JsFunction)
 		  (with-access::JsGlobalObject %this (js-object)
 		     (let ((info (js-new0 %this js-object)))
@@ -1098,24 +1098,24 @@
 				      (string=? method "CONNECT"))
 			      (set! parsemode 'upgrade)))
 			;; headers
-			(js-put! info 'headers jsheaders #f %this)
+			(js-put! info (& "headers") jsheaders #f %this)
 			;; request or resposne
 			(if (string? method)
 			    ;; request
 			    (begin
-			       (js-put! info 'method
+			       (js-put! info (& "method")
 				  (js-string->jsstring method) #f %this)
-			       (js-put! info 'url jsurl #t %this))
+			       (js-put! info (& "url") jsurl #t %this))
 			    ;; response
-			    (js-put! info 'statusCode status-code #f %this))
+			    (js-put! info (& "statusCode") status-code #f %this))
 			;; http-version
-			(js-put! info 'versionMajor http-major #f %this)
-			(js-put! info 'versionMinor http-minor #f %this)
+			(js-put! info (& "versionMajor") http-major #f %this)
+			(js-put! info (& "versionMinor") http-minor #f %this)
 			;; keep-alive
 			(let ((kalive (should-keep-alive? parser)))
-			   (js-put! info 'shouldKeepAlive kalive #f %this))
+			   (js-put! info (& "shouldKeepAlive") kalive #f %this))
 			;; upgrade
-			(js-put! info 'upgrade (eq? parsemode 'upgrade) #f %this)
+			(js-put! info (& "upgrade") (eq? parsemode 'upgrade) #f %this)
 			;; invoke the callback
 			(let ((r (js-call2 %this cb parser info (js-undefined))))
 			   (when (js-totest r)
