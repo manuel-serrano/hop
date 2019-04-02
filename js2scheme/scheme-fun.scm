@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Apr  1 15:00:56 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 11:36:58 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -823,9 +823,9 @@
 	     (when (pair? ,rest)
 		,(init-argument `(car ,rest) 'i)
 		(loop (cdr ,rest) (+fx i 1))))
-	  (js-define-own-property arguments 'callee
+	  (js-define-own-property arguments (& "callee")
 	     (instantiate::JsValueDescriptor
-		(name 'callee)
+		(name (& "callee"))
 		(value (js-make-function %this
 			  ,(j2s-fast-id id) 0 ,(symbol->string! id)))
 		(writable #t)

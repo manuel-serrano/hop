@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Apr  1 12:40:42 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 07:42:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -64,6 +64,7 @@
 	   (inline property-name::JsStringLiteral ::struct)
 	   
 	   (js-names->cmap::JsConstructMap ::vector)
+	   (js-strings->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
 	   (js-object-literal-spread-assign! ::JsObject ::obj ::JsGlobalObject)
 
@@ -825,12 +826,19 @@
 ;*---------------------------------------------------------------------*/
 (define (js-names->cmap names)
    (instantiate::JsConstructMap
-      (props (vector-map (lambda (n)
-			    (if (symbol? n)
-				(let* ((s (symbol->string n))
-				       (l (string-length s)))
-				   (print (/fx 1 (-fx l l)))))
-			    (prop n (property-flags #t #t #t #f))) names))
+      (props (vector-map (lambda (n) (prop n (property-flags #t #t #t #f)))
+		names))
+      (methods (make-vector (vector-length names) #unspecified))))
+      
+;*---------------------------------------------------------------------*/
+;*    js-strings->cmap ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Used by j2sscheme to create literal objects.                     */
+;*---------------------------------------------------------------------*/
+(define (js-strings->cmap names)
+   (instantiate::JsConstructMap
+      (props (vector-map (lambda (n) (prop (& n) (property-flags #t #t #t #f)))
+		names))
       (methods (make-vector (vector-length names) #unspecified))))
       
 ;*---------------------------------------------------------------------*/
@@ -2956,43 +2964,6 @@
        (js-jsstring-for-in obj proc %this))
       (else
        (js-for-in (js-cast-object obj %this "for") proc %this))))
-
-;*---------------------------------------------------------------------*/
-;*    js-for-in ::JsObject ...                                         */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.6.4       */
-;*---------------------------------------------------------------------*/
-(define-method (js-for-in obj::JsObject proc %this)
-   
-   (define (in-mapped-property prop)
-      (when prop
-	 (let ((name (prop-name prop)))
-	    (when (isa? name JsStringLiteral)
-	       (when (flags-enumerable? (prop-flags prop))
-		  (proc name %this))))))
-   
-   (define (vfor-in vecname)
-      (let ((len (vector-length vecname)))
-	 (let loop ((i 0))
-	    (when (<fx i len)
-	       (in-mapped-property (vector-ref vecname i))
-	       (loop (+fx i 1))))))
-   
-   (define (in-property p)
-      (when (isa? p JsPropertyDescriptor)
-	 (with-access::JsPropertyDescriptor p (name enumerable)
-	    (when (isa? name JsStringLiteral)
-	       (when (eq? enumerable #t)
-		  (proc name %this))))))
-   
-   (with-access::JsObject obj (cmap __proto__ elements)
-      (when (js-object-mode-enumerable? obj)
-	 (if (not (eq? cmap (js-not-a-cmap)))
-	     (with-access::JsConstructMap cmap (props)
-		(vfor-in props))
-	     (for-each in-property (js-object-properties obj))))
-      (when (js-object? __proto__)
-	 (js-for-in-prototype __proto__ obj proc %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in-prototype ...                                          */

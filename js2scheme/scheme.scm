@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Apr  1 08:21:58 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 07:50:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -417,7 +417,7 @@
 		`(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this)))
 	    ((and (memq scope '(global %scope export)) (in-eval? return))
 	     (epairify loc
-		`(js-global-object-get-name %scope ',id #f %this)))
+		`(js-global-object-get-name %scope (& ,(symbol->string id)) #f %this)))
 	    (else
 	     (j2s-decl-scheme-id decl))))))
 
@@ -643,12 +643,10 @@
       ;; change the building of J2SCmap to build directly
       ;; a list of string (do this when the new branch is full ready)
       ;; see constant.scm
-      (tprint "TOBE IMPROVED j2s-scheme ::J2SCmap")
+      (tprint "TOBE OPTIMIZED J2SCmap")
       (epairify loc
-	 `(js-names->cmap
-	     (vector ,@(map (lambda (s)
-			       `(& ,(symbol->string s)))
-			  (vector->list val)))))))
+	 `(js-strings->cmap
+	     (vector ,@(map symbol->string (vector->list val)))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNull ...                                         */
@@ -2142,14 +2140,14 @@
       (memq (j2s-type obj) '(any undefined unknown object array)))
 
    (define (canbe-string? obj)
-      (when (memq (j2s-type obj) '(any undefined unknown object string))
+      (when (memq (j2s-type obj) '(any unknown string))
 	 (if (isa? obj J2SRef)
 	     (with-access::J2SRef obj (hint)
 		(not (pair? (assq 'no-string hint))))
 	     #t)))
 
    (define (maybe-string? obj)
-      (when (memq (j2s-type obj) '(any undefined unknown object))
+      (when (memq (j2s-type obj) '(any unknown string))
 	 (if (isa? obj J2SRef)
 	     (with-access::J2SRef obj (hint)
 		(let ((cs (assq 'string hint))
@@ -2177,9 +2175,10 @@
 			(get obj tmp field cache cspecs #f loc))))
 		'())
 	     ,@(if (and (canbe-string? obj) (maybe-string? obj))
-		`(((js-jsstring? ,tmp)
-		   ,(or (j2s-string-ref this mode return conf)
-			(get obj tmp field cache cspecs #f loc))))
+		(begin
+		   `(((js-jsstring? ,tmp)
+		      ,(or (j2s-string-ref this mode return conf)
+			   (get obj tmp field cache cspecs #f loc)))))
 		'())
 	     (else
 	      ,(get obj tmp field cache cspecs #f loc)))))

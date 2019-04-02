@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Apr  1 12:29:22 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 09:26:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1257,3 +1257,40 @@
        (primitive-as-string))
       (else
        (primitive-as-number))))
+
+;*---------------------------------------------------------------------*/
+;*    js-for-in ::JsObject ...                                         */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.6.4       */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-in obj::JsObject proc %this)
+   
+   (define (in-mapped-property prop)
+      (when prop
+	 (let ((name (prop-name prop)))
+	    (when (isa? name JsStringLiteral)
+	       (when (flags-enumerable? (prop-flags prop))
+		  (proc name %this))))))
+   
+   (define (vfor-in vecname)
+      (let ((len (vector-length vecname)))
+	 (let loop ((i 0))
+	    (when (<fx i len)
+	       (in-mapped-property (vector-ref vecname i))
+	       (loop (+fx i 1))))))
+   
+   (define (in-property p)
+      (when (isa? p JsPropertyDescriptor)
+	 (with-access::JsPropertyDescriptor p (name enumerable)
+	    (when (isa? name JsStringLiteral)
+	       (when (eq? enumerable #t)
+		  (proc name %this))))))
+   
+   (with-access::JsObject obj (cmap __proto__ elements)
+      (when (js-object-mode-enumerable? obj)
+	 (if (not (eq? cmap (js-not-a-cmap)))
+	     (with-access::JsConstructMap cmap (props)
+		(vfor-in props))
+	     (for-each in-property (js-object-properties obj))))
+      (when (js-object? __proto__)
+	 (js-for-in-prototype __proto__ obj proc %this))))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-cast.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-cast.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Fri Mar 29 07:47:53 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 08:01:40 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -551,7 +551,7 @@
 	 ((%$$NN ?x ?y)
 	  `(js-toflonum ,v))
 	 ((js-tonumber
-	     (js-global-object-get-name %scope ((kwote quote) Infinity) ?- %this)
+	     (js-global-object-get-name %scope (& "Infinity") ?- %this)
 	     %this)
 	  +inf.0)
 	 (else

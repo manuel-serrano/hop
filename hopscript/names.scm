@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Apr  1 08:13:50 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 11:28:25 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -24,7 +24,7 @@
 	   __hopscript_lib
 	   __hopscript_public)
 
-   (export (inline js-name-pcache::JsPropertyCache ::JsStringLiteral)
+   (export (inline js-name-pcache::obj ::JsStringLiteral)
 	   (inline js-name-pcache-set! ::JsStringLiteral ::JsPropertyCache)
 	   (inline js-jsstring-toname::JsStringLiteral ::JsStringLiteral)
 	   (js-toname::obj ::obj ::JsGlobalObject)
@@ -103,7 +103,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcache ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-name-pcache o::JsStringLiteral)
+(define-inline (js-name-pcache::obj o::JsStringLiteral)
    (with-access::JsStringLiteral o (pcache)
       pcache))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Apr  1 15:17:53 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 08:58:54 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -536,7 +536,7 @@
 		(vector (if inline 3 1) val flags)))
 	    ((isa? this J2SCmap)
 	     (with-access::J2SCmap this (val)
-		(vector 2 val)))
+		(vector 2 (vector-map symbol->string val))))
 	    (else
 	     (error "j2s-constant" "wrong literal" this))))
       

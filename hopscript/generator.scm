@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Mon Apr  1 16:58:42 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 07:47:39 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -20,7 +20,7 @@
    
    (library hop)
    
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "names.sch" "property.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -37,7 +37,6 @@
 	   __hopscript_spawn)
    
    (export (js-init-generator! ::JsGlobalObject)
-	   js-yield-cmap
 	   (js-make-generator::JsGenerator ::procedure ::JsObject ::JsGlobalObject)
 	   (js-make-iterator ::obj ::JsGlobalObject)
 	   (js-make-map-iterator ::object ::procedure ::JsGlobalObject)
@@ -54,7 +53,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-yield-cmap ...                                                */
 ;*---------------------------------------------------------------------*/
-(define js-yield-cmap #f)
+(define js-yield-cmap
+   (let ((props `#(,(prop (& "value") (property-flags #t #t #t #f))
+		   ,(prop (& "done") (property-flags #t #t #t #f)))))
+      (instantiate::JsConstructMap
+	 (props props)
+	 (methods (make-vector (vector-length props))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsGenerator ...                              */
@@ -76,7 +80,7 @@
 (define-expander current-loc
    (lambda (x e)
       (when (epair? x) `',(cer x))))
-	 
+
 ;*---------------------------------------------------------------------*/
 ;*    js-init-generator! ...                                           */
 ;*    -------------------------------------------------------------    */
@@ -199,8 +203,6 @@
       
       (set! js-generator-prototype js-gen-proto)
       (set! js-generatorfunction-prototype js-genfun-proto)
-      
-      (set! js-yield-cmap (js-names->cmap (vector (& "value") (& "done"))))
       
       ))
 	    

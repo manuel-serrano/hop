@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/uv.scm                     */
+;*    serrano/prgm/project/hop/hop/nodejs/uv.scm                       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Dec 21 10:31:11 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Tue Apr  2 11:43:54 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -211,7 +211,7 @@
    (with-access::WorkerHopThread %worker (%process async)
       (with-access::JsProcess %process (tick-callback)
 	 (unless tick-callback
-	    (set! tick-callback (js-get %process '_tickCallback %this)))
+	    (set! tick-callback (js-get %process (& "_tickCallback") %this)))
 	 (js-call0 %this tick-callback (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
@@ -337,8 +337,8 @@
 ;*    process-fail ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (process-fail %this process errno)
-   (js-put! process 'errno errno #f %this)
-   (js-put! process '_errno (js-string->jsstring (uv-err-name errno)) #f %this)
+   (js-put! process (& "errno") errno #f %this)
+   (js-put! process (& "_errno") (js-string->jsstring (uv-err-name errno)) #f %this)
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -401,7 +401,7 @@
 						(pair? services)
 						(pair? actions))
 				       (uv-unref async)
-				       (when (js-totest (js-get %process '_exiting %this))
+				       (when (js-totest (js-get %process (& "_exiting") %this))
 					  (uv-stop loop)))))))))
 	 (synchronize mutex
 	    (nodejs-process th %this)
@@ -436,13 +436,13 @@
 		     (uv-run loop)))
 	       ;; call the cleanup function
 	       (when (=fx %retval 0)
-		  (unless (js-totest (js-get %process '_exiting %this))
+		  (unless (js-totest (js-get %process (& "_exiting") %this))
 		     (with-handler
 			(lambda (e)
 			   (exception-notify e)
 			   (set! %retval 8))
 			(when (isa? onexit JsFunction)
-			   (js-put! %process '_exiting #t #f %this)
+			   (js-put! %process (& "_exiting") #t #f %this)
 			   (js-call1 %this onexit %process %retval)))))
 	       ;; when the parent died, kill the application
 	       (unless parent
@@ -595,7 +595,7 @@
 	    (trace-item "timer-"
 	       (integer->string (uv-id timer) 16)
 	       " repeat=" repeat)
-	    (let ((proc (js-get obj 'ontimeout %this)))
+	    (let ((proc (js-get obj (& "ontimeout") %this)))
 	       (when (isa? proc JsFunction)
 		  (js-worker-push-thunk! %worker "tick-spinner"
                      (lambda ()
@@ -739,7 +739,7 @@
    (let ((check (instantiate::UvCheck
 		   (loop (worker-loop %worker))
 		   (cb (lambda (_)
-			  (let ((cb (js-get process '_immediateCallback %this)))
+			  (let ((cb (js-get process (& "_immediateCallback") %this)))
 			     (when (isa? cb JsFunction)
 				(!js-callback0 '_immedateCallback %worker %this
 				   cb (js-undefined)))))))))
@@ -833,8 +833,8 @@
 		     (if (string? ename)
 			 (js-stringlist->jsstring (list ename ", " msg))
 			 (js-string->jsstring msg)))))
-	 (js-put! obj 'errno errno #f %this)
-	 (js-put! obj 'code (js-string->jsstring ename) #f %this)
+	 (js-put! obj (& "errno") errno #f %this)
+	 (js-put! obj (& "code") (js-string->jsstring ename) #f %this)
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -843,7 +843,7 @@
 (define (fs-errno-path-exn fmt::bstring errno %this path)
    (let ((exn (fs-errno-exn fmt errno %this)))
       (when (js-jsstring? path)
-	 (js-put! exn 'path path #t %this))
+	 (js-put! exn (& "path") path #t %this))
       exn))
 
 ;*---------------------------------------------------------------------*/
@@ -869,8 +869,8 @@
    (with-access::JsGlobalObject %this (js-error)
       (let ((err (js-new %this js-error
 		    (js-string->jsstring (format "EBADF, ~a" name)))))
-	 (js-put! err 'errno EBADF #f %this)
-	 (js-put! err 'code  (js-string->jsstring "EBADF") #f %this)
+	 (js-put! err (& "errno") EBADF #f %this)
+	 (js-put! err (& "code")  (js-string->jsstring "EBADF") #f %this)
 	 (if (isa? callback JsFunction)
 	     (js-worker-push-thunk! %worker name
 		(lambda ()
@@ -1060,7 +1060,7 @@
 	  (let ((exn (fs-errno-exn
 			(format "open '~a'" (js-jsstring->string path))
 			res %this)))
-	     (js-put! exn 'path path #f %this)
+	     (js-put! exn (& "path") path #f %this)
 	     (!js-callback2 'open %worker %this
 		callback (js-undefined) exn #f))))
    
@@ -1075,7 +1075,7 @@
 		 (let ((exn (fs-errno-exn
 			       (format "open '~a'" name)
 			       res %this)))
-		    (js-put! exn 'path name #f %this)
+		    (js-put! exn (& "path") name #f %this)
 		    (js-raise exn)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1261,7 +1261,7 @@
 			       (js-string->jsstring
 				  (format "readlink: cannot read link ~a"
 				     (js-jsstring->string src))))))
-		    (js-put! exn 'errno r #f %this)
+		    (js-put! exn (& "errno") r #f %this)
 		    (js-raise exn)))
 	      (js-string->jsstring r)))))
 
@@ -1506,7 +1506,7 @@
 	    :loop (worker-loop %worker)
 	    :callback
 	    (lambda (res)
-	       (let ((oncomplete (js-get wrap 'oncomplete %this)))
+	       (let ((oncomplete (js-get wrap (& "oncomplete") %this)))
 		  (if (isa? oncomplete JsFunction)
 		      (if (pair? res)
 			  (!js-callback1 'getaddrinfo %worker %this
@@ -1672,7 +1672,7 @@
 			    (let ((r (uv-accept handle client)))
 			       (if (< r 0)
 				   (process-fail %this process r)
-				   (let ((onconn (js-get this 'onconnection %this)))
+				   (let ((onconn (js-get this (& "onconnection") %this)))
 				      (!js-callback1 'listen %worker %this
 					 onconn this
 					 (tcp-wrap client))))))))))))
@@ -1910,7 +1910,7 @@
 	 (else (js-string->jsstring "SIG???"))))
    
    (define (process-options-stdio-set! opts::UvProcessOptions i hdl)
-      (let ((type (js-jsstring->string (js-get hdl 'type %this))))
+      (let ((type (js-jsstring->string (js-get hdl (& "type") %this))))
 	 (cond
 	    ((string=? type "ignore")
 	     (uv-process-options-stdio-container-flags-set! opts i
@@ -1922,24 +1922,24 @@
 		   (bit-or
 		      (UV-READABLE-PIPE)
 		      (UV-WRITABLE-PIPE))))
-	     (with-access::JsHandle (js-get hdl 'handle %this) (handle)
+	     (with-access::JsHandle (js-get hdl (& "handle") %this) (handle)
 		(uv-process-options-stdio-container-stream-set! opts i
 		   handle)))
 	    ((string=? type "wrap")
 	     (uv-process-options-stdio-container-flags-set! opts i
 		(UV-INHERIT-STREAM))
-	     (with-access::JsHandle (js-get hdl 'handle %this) (handle)
+	     (with-access::JsHandle (js-get hdl (& "handle") %this) (handle)
 		(uv-process-options-stdio-container-stream-set! opts i
 		   handle)))
 	    (else
 	     
-	     (let ((handle (int->uvhandle %worker %this (js-get hdl 'fd %this))))
+	     (let ((handle (int->uvhandle %worker %this (js-get hdl (& "fd") %this))))
 		(uv-process-options-stdio-container-flags-set! opts i
 		   (UV-INHERIT-FD))
 		(uv-process-options-stdio-container-fd-set! opts i handle))))))
    
    (define (onexit this status term)
-      (let ((onexit (js-get process 'onexit %this))
+      (let ((onexit (js-get process (& "onexit") %this))
 	    (status (flonum->fixnum (int64->flonum status))))
 	 (with-trace 'nodejs-spawn "process-onexit"
 	    (trace-item "status=" status)
@@ -1963,7 +1963,7 @@
 
 	 (with-trace 'nodejs-spawn "spawn"
 	    ;; options.uid
-	    (let ((uid (js-get options 'uid %this)))
+	    (let ((uid (js-get options (& "uid") %this)))
 	       (when (integer? uid)
 		  (trace-item "uid=" uid)
 		  (let ((uid (js-toint32 uid %this)))
@@ -1971,7 +1971,7 @@
 		     (set! ouid uid))))
 	    
 	    ;; options.gid
-	    (let ((gid (js-get options 'gid %this)))
+	    (let ((gid (js-get options (& "gid") %this)))
 	       (when (integer? gid)
 		  (trace-item "gid=" gid)
 		  (let ((gid (js-toint32 gid %this)))
@@ -1979,14 +1979,14 @@
 		     (set! ogid gid))))
 	    
 	    ;; options.file
-	    (let ((file (js-get options 'file %this)))
+	    (let ((file (js-get options (& "file") %this)))
 	       (trace-item "file=" file)
 	       (unless (js-jsstring? file)
 		  (js-raise-type-error %this "Bad argument ~a" file))
 	       (set! ofile (js-jsstring->string file)))
 	    
 	    ;; options.args
-	    (let ((args (js-get options 'args %this)))
+	    (let ((args (js-get options (& "args") %this)))
 	       (when (isa? args JsArray)
 		  (trace-item "args=" args)
 		  (set! oargs
@@ -1994,14 +1994,14 @@
 			(jsarray->vector args %this)))))
 	    
 	    ;; options.cwd
-	    (let ((cwd (js-get options 'cwd %this)))
+	    (let ((cwd (js-get options (& "cwd") %this)))
 	       (when (and (js-jsstring? cwd)
 			  (>u32 (js-jsstring-length cwd) #u32:0))
 		  (trace-item "cwd=" cwd)
 		  (set! ocwd (js-jsstring->string cwd))))
 	    
 	    ;; options.env
-	    (let ((env (js-get options 'envPairs %this)))
+	    (let ((env (js-get options (& "envPairs") %this)))
 	       (when (isa? env JsArray)
 		  (trace-item "env=" env)
 		  (set! oenv
@@ -2009,10 +2009,10 @@
 			(jsarray->vector env %this)))))
 	    
 	    ;; options.stdio
-	    (let ((stdios (js-get options 'stdio %this)))
+	    (let ((stdios (js-get options (& "stdio") %this)))
 	       (when (isa? stdios JsArray)
 		  (trace-item "stdios=" stdios)
-		  (let ((len (js-get stdios 'length %this)))
+		  (let ((len (js-get stdios (& "length") %this)))
 		     (uv-process-options-stdio-container-set! opts len)
 		     (let loop ((i 0))
 			(when (<fx i len)
@@ -2021,12 +2021,12 @@
 			   (loop (+fx i 1)))))))
 	    
 	    ;; options.windows_verbatim_arguments
-	    (when (js-totest (js-get options 'windowsVerbatimArguments %this))
+	    (when (js-totest (js-get options (& "windowsVerbatimArguments") %this))
 	       (set! oflags
 		  (bit-or oflags (UV-PROCESS-WINDOWS-VERBATIM-ARGUMENTS))))
 	    
 	    ;; options.detached
-	    (when (js-totest (js-get options 'detached %this))
+	    (when (js-totest (js-get options (& "detached") %this))
 	       (set! oflags (bit-or oflags (UV-PROCESS-DETACHED)))
 	       (with-access::JsHandle process (handle)
 		  (with-access::JsChild handle (detached)
@@ -2041,7 +2041,7 @@
 		  (case r
 		     ((0)
 		      (with-access::JsChild handle (pid)
-			 (js-put! process 'pid pid #f %this)
+			 (js-put! process (& "pid") pid #f %this)
 			 0))
 		     (else
 		      (process-fail %this %process r)
@@ -2152,7 +2152,7 @@
 		  ;; (tprint "pipe-listen listen status=" status)
 		  (if (< status 0)
 		      (process-fail %this process status)
-		      (let ((onconn (js-get this 'onconnection %this)))
+		      (let ((onconn (js-get this (& "onconnection") %this)))
 			 (!js-callback0 'listen %worker %this onconn this)))))))
       (when (<fx r 0)
 	 (process-fail %this process r))	  

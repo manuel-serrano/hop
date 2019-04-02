@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Apr  1 08:44:36 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 11:45:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1587,7 +1587,7 @@
 		  (with-handler
 		     (lambda (e)
 			(with-access::WorkerHopThread worker (module-cache %this)
-			   (js-delete! module-cache filename #f %this))
+			   (js-delete! module-cache (& filename) #f %this))
 			(raise e))
 		     (hopscript %this this scope mod))
 		  ;; set the loaded property
@@ -1617,7 +1617,7 @@
 		  (with-handler
 		     (lambda (e)
 			(with-access::WorkerHopThread worker (module-cache %this)
-			   (js-delete! module-cache filename #f %this))
+			   (js-delete! module-cache (& filename) #f %this))
 			(raise e))
 		     ;; exports the HTML value
 		     (js-put! mod (& "exports") (hopscript %this this scope mod)
