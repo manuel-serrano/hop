@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/property.sch            */
+;*    serrano/prgm/project/hop/hop/hopscript/property.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Jan 26 12:05:44 2019 (serrano)                */
+;*    Last change :  Wed Apr  3 08:05:01 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -95,19 +95,6 @@
 (define-expander js-non-object-method-call-name
    js-non-object-method-call-name-expander)
 		    
-;*---------------------------------------------------------------------*/
-;*    js-toname                                                        */
-;*---------------------------------------------------------------------*/
-(define-expander js-toname
-   (lambda (x e)
-      (match-case x
-	 ((?- (and ?n (? integer?)))
-	  (string->symbol (integer->string n)))
-	 ((?- ?n)
-	  `((@ js-toname __hopscript_property) ,(e n e)))
-	 (else
-	  (map (lambda (x) (e x e)) x)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    descr ...                                                        */
 ;*---------------------------------------------------------------------*/

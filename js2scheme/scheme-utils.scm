@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Apr  1 08:26:24 2019 (serrano)                */
+;*    Last change :  Wed Apr  3 21:34:45 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -617,6 +617,7 @@
 	   optim-arrayp #!optional (cspecs '(cmap pmap amap vtable)))
 
    (define (js-put! o p v mode %this)
+      (tprint "js-put p=" p " " (typeof p) " loc=" loc)
       (if (config-get conf :profile-cache #f)
 	  `(js-put/debug! ,o ,p ,v ,mode %this ',loc)
 	  `(js-put! ,o ,p ,v ,mode %this)))
@@ -636,8 +637,9 @@
       (and (not (number? prop))
 	   (not (type-number? typrop))
 	   (not (eq? typrop 'array))))
-   
-   (let ((prop (match-case prop
+
+   (tprint "j2s-put prop=" prop " " (typeof prop))
+   (let ((prop2 (match-case prop
 		  ((js-utf8->jsstring ?str) str)
 		  ((js-ascii->jsstring ?str) str)
 		  ((js-string->jsstring ?str) str)
@@ -697,7 +699,7 @@
 	 (else
 	  (cond
 	     ((string? prop)
-	      (js-put! obj `'(& ,prop)
+	      (js-put! obj `(& ,prop)
 		  (box val tyval conf) mode '%this))
 	     ((and optim-arrayp (memq typrop '(int32 uint32)))
 	      (maybe-array-set! (box prop typrop conf) (box val tyval conf)))

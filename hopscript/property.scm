@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Apr  2 07:42:57 2019 (serrano)                */
+;*    Last change :  Wed Apr  3 08:02:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1860,7 +1860,7 @@
 	   throw::bool extend::bool
 	   %this::JsGlobalObject
 	   cache #!optional (loc #f) (cspecs '()))
-   
+
    (define name (js-toname prop %this))
    
    (define (reject msg)

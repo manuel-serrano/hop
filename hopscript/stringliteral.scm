@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Apr  1 10:36:13 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 18:21:39 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -252,6 +252,7 @@
 			    (weight (fixnum->uint32 (string-length str)))
 			    (left str)
 			    (index (fixnum->uint32 (-fx i 100))))))
+		(object-widening-set! idx #f)
 		(vector-set! v i idx)
 		(loop (+fx i 1)))))))
 
@@ -325,18 +326,22 @@
 ;*    js-ascii->jsstring ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-ascii->jsstring::JsStringLiteralASCII val::bstring)
-   (instantiate::JsStringLiteralASCII
-      (weight (fixnum->uint32 (string-length val)))
-      (left val)))
+   (let ((o (instantiate::JsStringLiteralASCII
+	       (weight (fixnum->uint32 (string-length val)))
+	       (left val))))
+      (object-widening-set! o #f)
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8->jsstring ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-utf8->jsstring::JsStringLiteralUTF8 val::bstring)
-   (instantiate::JsStringLiteralUTF8
-      (weight (fixnum->uint32 (string-length val)))
-      (left val)
-      (right #f)))
+   (let ((o (instantiate::JsStringLiteralUTF8
+	       (weight (fixnum->uint32 (string-length val)))
+	       (left val)
+	       (right #f))))
+      (object-widening-set! o #f)
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->jsstring ...                                          */
@@ -359,11 +364,13 @@
        (js-integer-name->jsstring num))
       ((and (>fx num 0) (<fx num 65535))
        (let ((str (fixnum->string num)))
-	  (instantiate::JsStringLiteralIndex
-	     (weight (string-length str))
-	     (left str)
-	     (right #f)
-	     (index num))))
+	  (let ((o (instantiate::JsStringLiteralIndex
+		      (weight (string-length str))
+		      (left str)
+		      (right #f)
+		      (index num))))
+	     (object-widening-set! o #f)
+	     o)))
       (else
        (js-ascii->jsstring (integer->string num)))))
    
@@ -387,8 +394,10 @@
 	  (let loop ((lav (cdr lav))
 		     (acc (js-string->jsstring (car lav))))
 	     (if (null? (cdr lav))
-		 (js-jsstring-append (car lav) acc)
-		 (loop (cdr lav) (js-jsstring-append (car lav) acc))))))))
+		 (js-jsstring-append (js-string->jsstring (car lav)) acc)
+		 (loop (cdr lav)
+		    (js-jsstring-append
+		       (js-string->jsstring (car lav)) acc))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->string ...                                          */
@@ -871,15 +880,18 @@
 ;*    js-jsstring-append ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-append::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
-   (if (or (isa? left JsStringLiteralUTF8) (isa? right JsStringLiteralUTF8))
-       (instantiate::JsStringLiteralUTF8
-	  (weight (js-jsstring-length left))
-	  (left left)
-	  (right right))
-       (instantiate::JsStringLiteralASCII
-	  (weight (js-jsstring-length left))
-	  (left left)
-	  (right right))))
+   (let ((s (if (or (isa? left JsStringLiteralUTF8)
+		    (isa? right JsStringLiteralUTF8))
+		(instantiate::JsStringLiteralUTF8
+		   (weight (js-jsstring-length left))
+		   (left left)
+		   (right right))
+		(instantiate::JsStringLiteralASCII
+		   (weight (js-jsstring-length left))
+		   (left left)
+		   (right right)))))
+      (object-widening-set! s #f)
+      s))
 
 ;*---------------------------------------------------------------------*/
 ;*    utf8-codeunit-length ...                                         */

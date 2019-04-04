@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Tue Apr  2 11:28:25 2019 (serrano)                */
+;*    Last change :  Wed Apr  3 08:08:31 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -123,13 +123,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-name-set! ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-jsstring-name-set! o::JsStringLiteral name)
+(define-inline (js-jsstring-name-set! o::JsStringLiteral name::JsStringLiteral)
    (object-widening-set! o name))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-toname ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-toname::JsStringLiteral p::JsStringLiteral)
+   (when (and (object-widening p) (not (isa? (object-widening p) JsStringLiteral)))
+      (tprint "PAS BON: " p " " (object-widening p)))
    (or (js-jsstring-name p) (js-jsstring->name! p)))
 
 ;*---------------------------------------------------------------------*/
@@ -193,12 +195,13 @@
    ;; before being potentially added in the name hashtable
    (let ((str (js-jsstring->string o)))
       (with-lock js-names-mutex
-	 (let ((n (hashtable-get names str)))
-	    (unless n
-	       (set! n o)
-	       (hashtable-put! names str n))
-	    (js-jsstring-name-set! o n)
-	    n))))
+	 (lambda ()
+	    (let ((n (hashtable-get names str)))
+	       (unless n
+		  (set! n o)
+		  (hashtable-put! names str n))
+	       (js-jsstring-name-set! o n)
+	       n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii-name->jsstring ...                                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Mar 31 09:20:40 2019 (serrano)                */
+;*    Last change :  Tue Apr  2 18:06:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1193,7 +1193,7 @@
 			  ","
 			  (js-tostring separator %this))))
 	     (if (=u32 lenval #u32:0)
-		 (js-ascii->jsstring "")
+		 (& "")
 		 (let ((el0 (el->string (js-get o 0 %this))))
 		    (let loop ((r (list el0))
 			       (i #u32:1))
@@ -3020,7 +3020,7 @@
 	    ((<u32 idx ilen)
 	     (vector-set! vec (uint32->fixnum idx) v)
 	     v)
-	    ((property-check-and-setter o idx %this)
+	    ((and (js-isindex? idx) (property-check-and-setter o idx %this))
 	     =>
 	     (lambda (desc)
 		(if (>=u32 idx length)
@@ -3617,7 +3617,7 @@
 		   ","
 		   (js-tostring separator %this))))
       (if (=u32 lenval #u32:0)
-	  (js-ascii->jsstring "")
+	  (& "")
 	  (let loop ((r '())
 		     (i (-u32 lenval #u32:1)))
 	     (if (=u32 i 0)

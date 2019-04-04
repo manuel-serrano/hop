@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Apr  2 07:50:02 2019 (serrano)                */
+;*    Last change :  Wed Apr  3 21:42:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -318,7 +318,7 @@
 		((and (memq scope '(global %scope)) (in-eval? return))
 		 `(begin
 		     ,(j2s-put! loc '%scope #f (j2s-vtype lhs)
-			 `',id 'propname
+			 `(& ,(symbol->string id)) 'propname
 			 val tyval (strict-mode? mode) conf #f #f)
 		     ,result))
 		((pair? exports)

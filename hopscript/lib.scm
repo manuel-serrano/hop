@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Apr  2 07:59:13 2019 (serrano)                */
+;*    Last change :  Wed Apr  3 21:02:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -288,8 +288,8 @@
    (let ((args '()))
       (js-for-in obj
 	 (lambda (p %this)
-	    (let ((p (string->symbol (js-jsstring->string p))))
-	       (set! args (cons (symbol->keyword p) args))
+	    (let ((s (string->symbol (js-jsstring->string p))))
+	       (set! args (cons (symbol->keyword s) args))
 	       (set! args (cons (js-get obj p %this) args))))
 	 %this)
       (reverse! args)))
@@ -301,8 +301,8 @@
    (let ((args '()))
       (js-for-in obj
 	 (lambda (p %this)
-	    (let ((p (string->symbol (js-jsstring->string p))))
-	       (set! args (cons (symbol->keyword p) args))
+	    (let ((s (string->symbol (js-jsstring->string p))))
+	       (set! args (cons (symbol->keyword s) args))
 	       (set! args (cons (js-get obj p %this) args))))
 	 %this)
       (reverse! args)))
