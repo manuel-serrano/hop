@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/doc/doc.js                        */
+/*    serrano/prgm/project/hop/hop/doc/doc.js                          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sun Oct  7 16:29:30 2018 (serrano)                */
-/*    Copyright   :  2015-18 Manuel Serrano                            */
+/*    Last change :  Fri Apr  5 16:17:47 2019 (serrano)                */
+/*    Copyright   :  2015-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
 /*=====================================================================*/

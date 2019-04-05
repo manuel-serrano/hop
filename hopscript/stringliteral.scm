@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Apr  2 18:21:39 2019 (serrano)                */
+;*    Last change :  Fri Apr  5 08:04:49 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -168,6 +168,12 @@
 ;*    js-tostring::bstring ::JsStringLiteral ...                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-tostring::bstring obj::JsStringLiteral %this)
+   (js-jsstring->string obj))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->obj ::JsStringLiteral ...                           */
+;*---------------------------------------------------------------------*/
+(define-method (js-jsobject->obj obj::JsStringLiteral %this)
    (js-jsstring->string obj))
 
 ;*---------------------------------------------------------------------*/
@@ -1249,7 +1255,7 @@
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
-	  (js-jsstring-indexof this (js-tostring search %this) position %this))
+	  (js-jsstring-indexof this search position %this))
 	 ((js-array? this)
 	  (js-array-indexof this search position %this
 	     (or cache (js-pcache-ref %pcache 23))))
@@ -1323,7 +1329,7 @@
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
-	  (js-jsstring-lastindexof this (js-tostring search %this) position %this))
+	  (js-jsstring-lastindexof this search position %this))
 	 ((isa? this JsObject)
 	  (js-call2 %this
 	     (js-get-name/cache this &lastIndexOf #f %this
@@ -1509,6 +1515,10 @@
 ;*    js-jsstring-maybe-charat ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-charat this index %this cache)
+   (tprint "THIS= " this " index=" index " " (typeof this))
+   (if (eq? this (js-undefined))
+       (let ((x (-fx (string-length (string-append "to" "to")) 4)))
+	  (print (/fx 1 x))))
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Apr  3 21:02:26 2019 (serrano)                */
+;*    Last change :  Fri Apr  5 08:03:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -35,6 +35,7 @@
 	   __hopscript_arraybufferview)
 
    (export (js-constant-init ::obj ::obj ::JsGlobalObject)
+	   (generic js-jsobject->obj ::obj ::JsGlobalObject)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
 	   (js-alist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
@@ -123,6 +124,12 @@
       ;; of the constant vector (see constant_expd.sch)
       (when vec-or-false (vector-copy! vec-or-false 1 cnsts 0))
       cnsts))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->obj ...                                             */
+;*---------------------------------------------------------------------*/
+(define-generic (js-jsobject->obj obj %this)
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-obj->jsobject ...                                             */
@@ -290,7 +297,8 @@
 	 (lambda (p %this)
 	    (let ((s (string->symbol (js-jsstring->string p))))
 	       (set! args (cons (symbol->keyword s) args))
-	       (set! args (cons (js-get obj p %this) args))))
+	       (set! args (cons (js-jsobject->obj (js-get obj p %this) %this)
+			     args))))
 	 %this)
       (reverse! args)))
 
@@ -303,7 +311,8 @@
 	 (lambda (p %this)
 	    (let ((s (string->symbol (js-jsstring->string p))))
 	       (set! args (cons (symbol->keyword s) args))
-	       (set! args (cons (js-get obj p %this) args))))
+	       (set! args (cons (js-jsobject->obj (js-get obj p %this) %this)
+			     args))))
 	 %this)
       (reverse! args)))
 
@@ -316,7 +325,8 @@
 	 (lambda (p %this)
 	    (let* ((n (js-jsstring->string p))
 		   (k (string->symbol n))
-		   (e (cons (string->keyword n) (js-get obj k %this))))
+		   (e (cons (string->keyword n)
+			 (js-jsobject->obj (js-get obj k %this) %this))))
 	       (set! args (cons e args))))
 	 %this)
       (reverse! args)))

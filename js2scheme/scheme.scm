@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr  3 21:42:28 2019 (serrano)                */
+;*    Last change :  Fri Apr  5 07:55:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2388,7 +2388,7 @@
 		     inits)))
 	 (if (every (match-lambda ((& (? string?)) #t) (else #f)) props)
 	     (begin
-		(tprint "TOBE OPTIMIZED (literal names init)")
+		(tprint "TOBE OPTIMIZED (literal names init) " props)
 		`(let ((,names (vector ,@props))
 		       (,elements (vector ,@vals)))
 		    (js-literal->jsobject ,elements ,names %this)))

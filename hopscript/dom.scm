@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Sun Mar 31 07:26:31 2019 (serrano)                */
+;*    Last change :  Fri Apr  5 08:11:25 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -369,7 +369,7 @@
 	  (with-access::xml-markup o (attributes)
 	     (let ((name (if (eq? pname (& "className"))
 			     "class"
-			     (symbol->string pname))))
+			     (js-jsstring->string pname))))
 		(if (dom-has-attribute? o name)
 		    (let ((v (dom-get-attribute o name)))
 		       (if (string? v)

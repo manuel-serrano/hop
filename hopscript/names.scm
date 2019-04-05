@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Wed Apr  3 08:08:31 2019 (serrano)                */
+;*    Last change :  Fri Apr  5 08:19:52 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -225,14 +225,14 @@
 (define (js-index-name->jsstring::JsStringLiteralASCII num::uint32)
    (with-lock js-names-mutex
       (lambda ()
-	 (let ((n (hashtable-get names num)))
+	 (let* ((str (fixnum->string (uint32->fixnum num)))
+		(n (hashtable-get names str)))
 	    (or n
-		(let* ((str (fixnum->string (uint32->fixnum num)))
-		       (n (instantiate::JsStringLiteralIndex
-			     (weight (string-length str))
-			     (left str)
-			     (right #f)
-			     (index num))))
+		(let ((n (instantiate::JsStringLiteralIndex
+			    (weight (string-length str))
+			    (left str)
+			    (right #f)
+			    (index num))))
 		   (hashtable-put! names str n)
 		   (js-jsstring-name-set! n n)
 		   n))))))

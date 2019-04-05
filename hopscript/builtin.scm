@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jan 26 08:54:32 2019                          */
-;*    Last change :  Sun Mar 31 10:47:30 2019 (serrano)                */
+;*    Last change :  Fri Apr  5 08:00:23 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop builtin JavaScript objects                                   */
@@ -42,13 +42,13 @@
           :value (js-make-function ,%this
                     (lambda (this attrs . nodes)
                        (if (isa? attrs JsObject)
-                           (if (null? nodes)
-                               (apply ,(symbol-append '< tag '>)
-                                  (js-jsobject->keyword-plist attrs ,%this))
-                               (apply ,(symbol-append '< tag '>)
-                                  (append
-                                     (js-jsobject->keyword-plist attrs ,%this)
-                                     nodes)))
+			   (if (null? nodes)
+			       (apply ,(symbol-append '< tag '>)
+				  (js-jsobject->keyword-plist attrs ,%this))
+			       (apply ,(symbol-append '< tag '>)
+				  (append
+				     (js-jsobject->keyword-plist attrs ,%this)
+				     nodes)))
                            (apply ,(symbol-append '< tag '>)
                               nodes)))
                     2 ,(symbol->string tag)
