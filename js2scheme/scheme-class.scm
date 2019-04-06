@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Apr  6 07:17:22 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 20:51:23 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -118,7 +118,7 @@
 	 (else
 	  (let ((superid (gensym 'super)))
 	     `(let* ((,superid ,(j2s-scheme super mode return conf))
-		     (%super (js-get ,superid 'prototype %this))
+		     (%super (js-get ,superid (& "prototype") %this))
 		     (%superctor ,superid))
 		 ,(proc superid))))))
    

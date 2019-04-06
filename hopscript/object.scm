@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Apr  6 07:59:04 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 20:57:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1033,7 +1033,7 @@
       ;; propertyIsEnumerable
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.7
       (define (js-object-prototype-propertyisenumerable this v)
-	 (let* ((p (js-tostring v %this))
+	 (let* ((p (js-toname v %this))
 		(o (js-toobject %this this))
 		(desc (js-get-own-property o p %this)))
 	    (if (eq? desc (js-undefined))

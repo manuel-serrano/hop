@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Apr  6 16:33:06 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 20:47:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1320,7 +1320,8 @@
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id loc)
 		(epairify loc
-		   (j2s-unresolved-put! `',id name #f mode return loc))))
+		   (j2s-unresolved-put! `(& ,(symbol->string id))
+		      name #f mode return loc))))
 	    ((isa? lhs J2SAccess)
 	     (with-access::J2SAccess lhs (obj field loc)
 		(epairify loc
@@ -1665,7 +1666,7 @@
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id loc)
 		(epairify loc
-		   (j2s-unresolved-put! `',id
+		   (j2s-unresolved-put! `(& ,(symbol->string id))
 		      (box (j2s-scheme rhs mode return conf) (j2s-type rhs) conf)
 		      #f mode return loc))))
 	    ((isa? lhs J2SHopRef)
@@ -1764,14 +1765,14 @@
 		    ,(new-or-old tmp `(+fx/overflow ,tmp ,inc)
 		       (lambda (val tmp)
 			  `(begin
-			      ,(j2s-unresolved-put! `',id
+			      ,(j2s-unresolved-put! `(& ,(symbol->string id))
 				  (box val (j2s-type lhs) conf)
 				  #t mode return loc)
 			      ,tmp)))
 		    ,(new-or-old tmp `(js+ ,tmp ,inc %this)
 		       (lambda (val tmp)
 			  `(let ((,tmp (js-tonumber ,tmp %this)))
-			      ,(j2s-unresolved-put! `',id
+			      ,(j2s-unresolved-put! `(& ,(symbol->string id))
 				  (box val (j2s-type lhs) conf)
 				  #t mode return loc)
 			      ,tmp))))))))
@@ -2115,7 +2116,7 @@
 			    mode return conf #f loc))))
 		  ((isa? lhs J2SUnresolvedRef)
 		   (with-access::J2SUnresolvedRef lhs (id loc)
-		      (j2s-unresolved-put! `',id
+		      (j2s-unresolved-put! `(& ,(symbol->string id))
 			 (box (js-binop2 loc op type lhs rhs mode return conf)
 			    type conf)
 			 #t mode return loc)))

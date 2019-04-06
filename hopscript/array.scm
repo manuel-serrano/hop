@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Apr  6 16:39:43 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 20:03:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2722,7 +2722,6 @@
 (define-method (js-get o::JsArray p %this)
    (with-access::JsArray o (vec ilen length)
       (let ((i::uint32 (js-toindex p)))
-	 (tprint "p=" p " " (typeof p) " i=" i " " (js-isindex? i))
 	 (cond
 	    ((<u32 i ilen)
 	     (u32vref vec i))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Apr  6 07:58:36 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 19:53:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2186,7 +2186,7 @@
 		 (js-put! o prop v throw %this))
 		((eq? pname &length)
 		 (js-put-length! o v throw cache %this))
-		((eq? name '||)
+		((eq? name (class-nil JsStringLiteralASCII))
 		 (set! name pname)
 		 (js-object-put-name/cache! o pname v throw
 		    %this cache point cspecs))
