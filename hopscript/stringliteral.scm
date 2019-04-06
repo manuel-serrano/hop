@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Apr  5 18:29:38 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 17:20:59 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2456,6 +2456,7 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-match this regexp %this))
 	 ((isa? this JsObject)
+	  (tprint "MAYBE-MATCH this=" this " " (typeof this))
 	  (js-call1 %this
 	     (js-get-name/cache this &match #f %this
 		(or cache (js-pcache-ref %pcache 18)))

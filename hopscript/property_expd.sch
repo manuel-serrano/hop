@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/property_expd.sch       */
+;*    serrano/prgm/project/hop/hop/hopscript/property_expd.sch         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Mar 17 07:19:51 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 17:10:00 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -316,10 +316,8 @@
 
    (define (cache-miss-fun prop)
       (match-case prop
-	 (((kwote quote) length)
+	 ((& "length")
 	  '(@ js-object-get-name/cache-miss __hopscript_property))
-	 (((kwote quote) length)
-	  '(@ js-object-get-prototype/cache-miss __hopscript_property))
 	 (else
 	  '(@ js-object-get-lookup __hopscript_property))))
 

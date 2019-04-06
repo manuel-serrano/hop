@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Apr  6 07:59:22 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 16:33:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -440,7 +440,8 @@
 	    (if (null? withs)
 		(j2s-scheme expr mode return conf)
 		`(if ,(j2s-in? loc `',id (car withs))
-		     ,(j2s-get loc (car withs) #f 'object `',id 'string 'any conf #f #f)
+		     ,(j2s-get loc (car withs) #f 'object
+			 `(& ,(symbol->string id)) 'string 'any conf #f #f)
 		     ,(loop (cdr withs))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -567,15 +568,15 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-property-scheme this::J2SExpr mode return conf)
    (cond
-      ((isa? this J2SLiteralCnst)
-       (with-access::J2SLiteralCnst this (val)
-	  (with-access::J2SLiteralValue val (val)
-	     val)))
-      ((isa? this J2SString)
-       (with-access::J2SString this (val)
-	  (if (eq? (string-minimal-charset val) 'ascii)
-	      val
-	      (j2s-scheme this mode return conf))))
+;*       ((isa? this J2SLiteralCnst)                                   */
+;*        (with-access::J2SLiteralCnst this (val)                      */
+;* 	  (with-access::J2SLiteralValue val (val)                      */
+;* 	     val)))                                                    */
+;*       ((isa? this J2SString)                                        */
+;*        (with-access::J2SString this (val)                           */
+;* 	  (if (eq? (string-minimal-charset val) 'ascii)                */
+;* 	      val                                                      */
+;* 	      (j2s-scheme this mode return conf))))                    */
       (else
        (j2s-scheme this mode return conf))))
    

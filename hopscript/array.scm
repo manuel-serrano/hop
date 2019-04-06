@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Apr  2 18:06:37 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 16:39:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -202,6 +202,12 @@
       (/u32 (MAX-EXPANDABLE-ARRAY-SIZE) #u32:2))
 (define-inline (MAX-EXPANDABLE-ARRAY-SIZE/8::uint32)
    (/u32 (MAX-EXPANDABLE-ARRAY-SIZE) #u32:8))
+
+;*---------------------------------------------------------------------*/
+;*    js-isname? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-isname?::bool p name::JsStringLiteral %this::JsGlobalObject)
+   (or (eq? p name) (eq? (js-toname p %this) name)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArray ...                                  */
@@ -2621,7 +2627,7 @@
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((<u32 i ilen) #t)
-	    ((eq? p (& "length")) #t)
+	    ((js-isname? p (& "length") %this) #t)
 	    ((and (js-object-mode-holey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec)))
 		  (<u32 i length))
@@ -2636,7 +2642,7 @@
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((<u32 i ilen) #t)
-	    ((eq? p (& "length")) #t)
+	    ((js-isname? p (& "length") %this) #t)
 	    ((and (js-object-mode-holey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec)))
 		  (<u32 i length))
@@ -2695,6 +2701,7 @@
 	     (u32vref vec i))
 	    ;; MS: 23 feb 2017
 	    ((not (js-isindex? i))
+	     (set! p (js-toname p %this))
 	     (if (eq? p (& "length"))
 		 (js-uint32-tointeger length)
 		 (call-next-method)))
@@ -2715,11 +2722,13 @@
 (define-method (js-get o::JsArray p %this)
    (with-access::JsArray o (vec ilen length)
       (let ((i::uint32 (js-toindex p)))
+	 (tprint "p=" p " " (typeof p) " i=" i " " (js-isindex? i))
 	 (cond
 	    ((<u32 i ilen)
 	     (u32vref vec i))
 	    ;; MS: 23 feb 2017
 	    ((not (js-isindex? i))
+	     (set! p (js-toname p %this))
 	     (if (eq? p (& "length"))
 		 (js-uint32-tointeger length)
 		 (call-next-method)))
@@ -2803,6 +2812,7 @@
 	    ((<u32 i ilen)
 	     (u32vref vec i))
 	    ((not (js-isindex? i))
+	     (set! p (js-toname p %this))
 	     (if (eq? p (& "length"))
 		 (js-uint32-tointeger length)
 		 (call-next-method)))
@@ -2972,7 +2982,7 @@
 	     ;; 2
 	     (if (js-is-data-descriptor? owndesc)
 		 ;; 3
-		 (if (eq? q (& "length"))
+		 (if (js-isname? q (& "length") %this)
 		     (let ((newdesc (duplicate::JsValueDescriptor owndesc
 				       (value v))))
 			(js-array-mark-invalidate!)
@@ -3133,7 +3143,7 @@
 		(u32vset! vec i (js-absent))
 		(set! ilen i)
 		#t))
-	    ((or (eq? p (& "length")) (eq? (js-toname p %this) (& "length")))
+	    ((js-isname? p (& "length") %this)
 	     #f)
 	    (else
 	     (when (<u32 i (fixnum->uint32 (vector-length vec)))
@@ -3422,7 +3432,7 @@
 	     (js-object-mode-array-plain-set! a #f)
 	     (js-define-own-property% a (js-toname p %this) desc #f %this)))))
 
-   (if (eq? p (& "length"))
+   (if (js-isname? p (& "length") %this)
        ;; 3
        (define-own-property-length (js-get-own-property a (& "length") %this))
        (let ((index::uint32 (js-toindex p)))

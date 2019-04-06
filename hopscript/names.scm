@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sat Apr  6 08:00:39 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 16:50:44 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -160,45 +160,46 @@
 ;*    www.ecma-international.org/ecma-262/7.0/#sec-topropertykey       */
 ;*---------------------------------------------------------------------*/
 (define (js-toname p %this)
-   (let loop ((p p))
-      (cond
-	 ((isa? p JsStringLiteral)
-	  (js-jsstring-toname p))
-	 ((fixnum? p)
-	  (js-integer-name->jsstring p))
-	 ((uint32? p)
-	  (cond-expand
-	     (bint30
-	      (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
-		  (js-integer-name->jsstring (uint32->fixnum p))
-		  (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
-	     (bint32
-	      (if (<u32 p (bit-lshu32 (fixnum->uint32 1) 31))
-		  (js-integer-name->jsstring (uint32->fixnum p))
-		  (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
-	     (else
-	      (js-integer-name->jsstring (uint32->fixnum p)))))
-	 ((int32? p)
-	  (cond-expand
-	     (bint30
-	      (if (and (>s32 p 0) (<s32 p (fixnum->int32 (bit-lsh 1 29))))
-		  (js-integer-name->jsstring (int32->fixnum p))
-		  (js-ascii-name->jsstring (llong->string (int32->llong p)))))
-	     (bint32
-	      (js-ascii-name->jsstring (fixnum->string (int32->fixnum p))))
-	     (else
-	      (js-integer-name->jsstring (int32->fixnum p)))))
-	 ((isa? p JsSymbolLiteral)
-	  p)
-	 ((isa? p JsSymbol)
-	  (with-access::JsSymbol p (val)
-	     val))
-	 ((symbol? p)
-	  (error "js-toname" "Illegal `symbol'" p))
-	 ((string? p)
-	  (error "js-toname" "Illegal `string'" p))
-	 (else
-	  (loop (js-tostring p %this))))))
+   (cond
+      ((isa? p JsStringLiteral)
+       (js-jsstring-toname p))
+      ((fixnum? p)
+       (js-integer-name->jsstring p))
+      ((uint32? p)
+       (cond-expand
+	  (bint30
+	   (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
+	       (js-integer-name->jsstring (uint32->fixnum p))
+	       (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
+	  (bint32
+	   (if (<u32 p (bit-lshu32 (fixnum->uint32 1) 31))
+	       (js-integer-name->jsstring (uint32->fixnum p))
+	       (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
+	  (else
+	   (js-integer-name->jsstring (uint32->fixnum p)))))
+      ((int32? p)
+       (cond-expand
+	  (bint30
+	   (if (and (>s32 p 0) (<s32 p (fixnum->int32 (bit-lsh 1 29))))
+	       (js-integer-name->jsstring (int32->fixnum p))
+	       (js-ascii-name->jsstring (llong->string (int32->llong p)))))
+	  (bint32
+	   (js-ascii-name->jsstring (fixnum->string (int32->fixnum p))))
+	  (else
+	   (js-integer-name->jsstring (int32->fixnum p)))))
+      ((isa? p JsSymbolLiteral)
+       p)
+      ((isa? p JsSymbol)
+       (with-access::JsSymbol p (val)
+	  val))
+      ((symbol? p)
+       (error "js-toname" "Illegal `symbol'" p))
+      ((string? p)
+       (error "js-toname" "Illegal `string'" p))
+      ((number? p)
+       (js-ascii-name->jsstring (js-tostring p %this)))
+      (else
+       (js-name->jsstring (js-tostring p %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name->string ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Apr  5 16:13:16 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 15:54:57 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -525,10 +525,11 @@
 	   (not (eq? typrop 'array))))
 
    (let ((prop (match-case prop
-		  ((js-utf8->jsstring ?str) str)
-		  ((js-ascii->jsstring ?str) str)
-		  ((js-string->jsstring ?str) str)
+;* 		  ((js-utf8->jsstring ?str) str)                       */
+;* 		  ((js-ascii->jsstring ?str) str)                      */
+;* 		  ((js-string->jsstring ?str) str)                     */
 		  (else prop))))
+      (tprint "prop=" prop " " (typeof prop))
       (cond
 	 ((> (bigloo-debug) 0)
 	  (if (string? prop)

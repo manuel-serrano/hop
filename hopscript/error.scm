@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Apr  2 12:03:51 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 16:55:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -101,7 +101,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (exception-notify exc::JsError)
    (with-access::JsError exc (name msg stack fname location)
-      (tprint "exc=" exc)
       (if (isa? msg &exception)
 	  (exception-notify msg)
 	  (let* ((name (js-jsstring->string name))

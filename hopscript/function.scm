@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Apr  2 12:11:36 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 17:12:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -100,7 +100,7 @@
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache
 		  #!optional (point -1) (cspecs '()))
-   (if (eq? p (& "prototype"))
+   (if (eq? (js-toname p %this) (& "prototype"))
        (with-access::JsFunction o (prototype) prototype)
        (call-next-method)))
    

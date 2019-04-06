@@ -349,6 +349,7 @@ function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
     }
   }
   keys.forEach(function(key) {
+     #:tprint( "key=", key, " ", typeof key );
     if (!key.match(/^\d+$/)) {
       output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
           key, true));
@@ -400,6 +401,7 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
     }
   }
   if (typeof name === 'undefined') {
+     #:tprint( "key=", key, " ", typeof key );
     if (array && key.match(/^\d+$/)) {
       return str;
     }
@@ -407,6 +409,7 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
       return str;
     }
      name = JSON.stringify('' + key);
+     #:tprint( "name=", name, " ", typeof  );
      if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
       name = name.substr(1, name.length - 2);
       name = ctx.stylize(name, 'name');
