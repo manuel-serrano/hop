@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Mon Apr  1 12:55:54 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 21:02:18 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -45,10 +45,10 @@
        (let ((this (or %this (js-initial-global-object))))
 	  (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
 	     (let ((abuf (instantiateJsArrayBuffer
-			    (__proto__ (js-get js-arraybuffer 'prototype this))
+			    (__proto__ (js-get js-arraybuffer (& "prototype") this))
 			    (data o))))
 		(,(symbol-append 'instantiate:: type)
-		 (__proto__ (js-get js-int8array 'prototype this))
+		 (__proto__ (js-get js-int8array (& "prototype") this))
 		 (%data o)
 		 (bpe 1)
 		 (length (u8vector-length o))
@@ -90,10 +90,10 @@
       (let ((this (or %this (js-initial-global-object))))
 	 (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
 	    (let ((abuf (instantiateJsArrayBuffer
-			   (__proto__ (js-get js-arraybuffer 'prototype this))
+			   (__proto__ (js-get js-arraybuffer (& "prototype") this))
 			   (data o))))
 	       (instantiateJsDataView
-		  (__proto__ (js-get js-int8array 'prototype this))
+		  (__proto__ (js-get js-int8array (& "prototype") this))
 		  (%data o)
 		  (byteoffset 0)
 		  (buffer abuf)))))))
@@ -107,7 +107,7 @@
 	 (with-access::JsDataView obj (%data buffer frozen byteoffset)
 	    (let ((nbuffer (js-donate buffer worker %_this)))
 	       (instantiateJsDataView
-		  (__proto__ (js-get js-arraybuffer 'prototype %this))
+		  (__proto__ (js-get js-arraybuffer (& "prototype") %this))
 		  (frozen frozen)
 		  (buffer nbuffer)
 		  (%data (with-access::JsArrayBuffer nbuffer (data) data))
@@ -124,7 +124,7 @@
 		  (obj (class-constructor (object-class obj))))
 	       (with-access::JsTypedArray obj (__proto__ frozen buffer
 						 %data byteoffset bpe length)
-		  (set! __proto__ (js-get js-arraybuffer 'prototype %this))
+		  (set! __proto__ (js-get js-arraybuffer (& "prototype") %this))
  		  (set! frozen frozen)
 		  (set! buffer nbuffer)
 		  (set! %data (with-access::JsArrayBuffer nbuffer (data) data))
@@ -158,7 +158,7 @@
 		    (byteoffset (fixnum->uint32 (cadr args)))
 		    (buffer (caddr args))
 		    (%data data))))
-	 (js-put! buf 'length (u8vector-length data) #f %this)
+	 (js-put! buf (& "length") (u8vector-length data) #f %this)
 	 buf)))
 
 ;*---------------------------------------------------------------------*/
@@ -440,7 +440,7 @@
 		     (set! byteoffset off)
 		     (set! length len)
 		     ;; buffer
-		     (js-bind! %this this 'buffer
+		     (js-bind! %this this (& "buffer")
 			:value buffer
 			:configurable #f
 			:writable #f
@@ -448,7 +448,7 @@
 			:hidden-class #t)
 		     
 		     ;; BYTES_PER_ELEMENT
-		     (js-bind! %this this 'BYTES_PER_ELEMENT
+		     (js-bind! %this this (& "BYTES_PER_ELEMENT")
 			:value (uint32->fixnum bpe)
 			:configurable #f
 			:writable #f
@@ -456,7 +456,7 @@
 			:hidden-class #t)
 
 		     ;; length
-		     (js-bind! %this this 'length
+		     (js-bind! %this this (& "length")
 			:value (uint32->fixnum len)
 			:configurable #f
 			:writable #f
@@ -464,7 +464,7 @@
 			:hidden-class #t)
 		     
 		     ;; byteLength
-		     (js-bind! %this this 'byteLength
+		     (js-bind! %this this (& "byteLength")
 			:value (uint32->fixnum (*u32 bpe length))
 			:configurable #f
 			:writable #f
@@ -472,7 +472,7 @@
 			:hidden-class #t)
 		     
 		     ;; byteOffset
-		     (js-bind! %this this 'byteOffset
+		     (js-bind! %this this (& "byteOffset")
 			:value (uint32->fixnum off)
 			:configurable #f
 			:writable #f
@@ -480,7 +480,7 @@
 			:hidden-class #t)
 
 		     ;; set
-		     (js-bind! %this this 'set
+		     (js-bind! %this this (& "set")
 			:value (js-make-function %this js-set 2 "set")
 			:configurable #t
 			:writable #t
@@ -488,7 +488,7 @@
 			:hidden-class #t)
 
 		     ;; get
-		     (js-bind! %this this 'get
+		     (js-bind! %this this (& "get")
 			:value (js-make-function %this
 				  (lambda (this num)
 				     (js-get this num %this))
@@ -499,7 +499,7 @@
 			:hidden-class #t)
 		     
 		     ;; subarray
-		     (js-bind! %this this 'subarray
+		     (js-bind! %this this (& "subarray")
 			:value (js-make-function %this js-subarray 2 "subarray")
 			:configurable #t
 			:writable #t
@@ -511,7 +511,7 @@
 	    (cond
 	       ((null? items)
 		(js-create-from-arraybuffer this
-		   (js-new %this (js-get %this 'ArrayBuffer %this))
+		   (js-new %this (js-get %this (& "ArrayBuffer") %this))
 		   #u32:0 #u32:0))
 	       ((js-number? (car items))
 		(cond
@@ -532,7 +532,7 @@
 		   (else
 		    (let ((len (js-touint32 (car items) %this)))
 		       (js-create-from-arraybuffer this
-			  (js-new %this (js-get %this 'ArrayBuffer %this)
+			  (js-new %this (js-get %this (& "ArrayBuffer") %this)
 			     (uint32->fixnum (*u32 (fixnum->uint32 bp) len)))
 			  #u32:0 len)))))
 	       ((isa? (car items) JsArrayBuffer)
@@ -592,7 +592,7 @@
 				    (fixnum->uint32 off)
 				    (fixnum->uint32 l))))))))))
 	       ((or (isa? (car items) JsArray) (isa? (car items) JsTypedArray))
-		(let ((len (js-get (car items) 'length %this)))
+		(let ((len (js-get (car items) (& "length") %this)))
 		   (let* ((arr (js-typedarray-construct this (list len)))
 			  (vset (js-typedarray-set! arr)))
 		      (with-access::JsTypedArray arr (buffer)
@@ -621,7 +621,7 @@
 		  (set! cmap (js-not-a-cmap))
 		  (set! bpe (fixnum->uint32 bp))
 		  (set! elements '#())
-		  (set! __proto__ (js-get constructor 'prototype %this)))
+		  (set! __proto__ (js-get constructor (& "prototype") %this)))
 	       o))
 	 
 	 (define js-typedarray
@@ -672,7 +672,7 @@
 						    (tbuffer buffer))
 		      (with-access::JsArrayBuffer tbuffer ((target data))
 			 (let ((tstart (+u32 (*u32 (fixnum->uint32 bp) off) toff))
-			       (slength (js-get array 'length %this)))
+			       (slength (js-get array (& "length") %this)))
 			    (cond
 			       ((>=u32 tstart tlength)
 				(js-raise-range-error %this
