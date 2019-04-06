@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri Apr  5 18:42:18 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 08:00:39 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -86,7 +86,9 @@
 	   &next
 	   &null
 	   &path
+	   &pop
 	   &prototype
+	   &push
 	   &replace
 	   &require
 	   &return
@@ -354,7 +356,9 @@
 (define &next (js-ascii-name->jsstring "next"))
 (define &null (js-ascii-name->jsstring "null"))
 (define &path (js-ascii-name->jsstring "path"))
+(define &pop (js-ascii-name->jsstring "pop"))
 (define &prototype (js-ascii-name->jsstring "prototype"))
+(define &push (js-ascii-name->jsstring "push"))
 (define &replace (js-ascii-name->jsstring "replace"))
 (define &require (js-ascii-name->jsstring "require"))
 (define &return (js-ascii-name->jsstring "return"))

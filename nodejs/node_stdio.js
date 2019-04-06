@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct  9 18:26:51 2014                          */
-/*    Last change :  Sat Apr  6 07:41:49 2019 (serrano)                */
+/*    Last change :  Sat Apr  6 08:08:27 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Stdio initialization                                             */
@@ -74,6 +74,7 @@ function createWritableStdioStream(fd) {
    return stream;
 }
 
+#:tprint( ">>>> >>>>" );
 startup.processStdio = function( process ) {
    var stdin, stdout, stderr;
    process.__defineGetter__('stdout', function() {
@@ -167,6 +168,7 @@ startup.processStdio = function( process ) {
       return process.stdin;
    };
 }
+#:js-debug-object( startup, "startup=" );
 #:tprint( "ICI1: ", startup.processStdio, " ", "processStdio" );
 #:tprint( "ICI2: ", startup[ "process" + "Stdio" ] );
 

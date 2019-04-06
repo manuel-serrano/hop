@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Apr  6 06:50:49 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 07:59:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2388,8 +2388,8 @@
 		     inits)))
 	 (cond
 	    ((null? props)
-	     '(instantiate::JsObject
-	       (cmap (js-initial-cmap %this))))
+	     '(instantiateJsObject
+	       (cmap js-initial-cmap)))
 	    ((every (match-lambda ((& (? string?)) #t) (else #f)) props)
 	     (with-access::J2SObjInit this (loc)
 		(tprint "TOBE OPTIMIZED (literal names init) " props " " loc))

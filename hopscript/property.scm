@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Apr  6 06:55:27 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 07:58:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -63,7 +63,7 @@
 	   
 	   (inline property-name::JsStringLiteral ::struct)
 
-	   (inline js-initial-cmap::JsConstructMap ::JsGlobalObject)
+	   js-initial-cmap
 	   (js-names->cmap::JsConstructMap ::vector)
 	   (js-strings->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
@@ -823,9 +823,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-initial-cmap ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-initial-cmap::JsConstructMap %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (cmap)
-      cmap))
+(define js-initial-cmap
+   (instantiate::JsConstructMap))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-names->cmap ...                                               */
@@ -3266,7 +3265,6 @@
    (js-profile-log-method name point)
 
    (let ((n (js-toname name %this)))
-      (tprint "name=" name " -> n=" n)
       (let loop ((obj o))
 	 (jsobject-find obj n
 	    ;; map search

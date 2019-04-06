@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Fri Apr  5 18:41:57 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 08:01:02 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -29,7 +29,7 @@
 			 "iterator" "join" "keyFor" "lastIndex" "lastIndexOf"
 			 "length" "localeCompare" "log" "match" "map" "module"
 			 "name" "naturalCompare" "next" "null" "path"
-			 "prototype" "replace"
+			 "pop" "prototype" "push" "replace"
 			 "require" "return" "set" "slice" "split" "substr"
 			 "substring" "toLowerCase" "toLocaleLowerCase"
 			 "toUpperCase"
