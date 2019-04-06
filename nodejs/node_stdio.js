@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/nodejs/node_stdio.js              */
+/*    serrano/prgm/project/hop/hop/nodejs/node_stdio.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct  9 18:26:51 2014                          */
-/*    Last change :  Tue Sep 22 07:58:38 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Sat Apr  6 07:41:49 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Stdio initialization                                             */
 /*=====================================================================*/
@@ -167,11 +167,14 @@ startup.processStdio = function( process ) {
       return process.stdin;
    };
 }
+#:tprint( "ICI1: ", startup.processStdio, " ", "processStdio" );
+#:tprint( "ICI2: ", startup[ "process" + "Stdio" ] );
 
 /*---------------------------------------------------------------------*/
 /*    initNodeStdio ...                                                */
 /*---------------------------------------------------------------------*/
 function initNodeStdio( process ) {
+   #:tprint( "ps=", startup.processStdio );
    startup.processStdio( process );
 /*    process.stdout.__proto__ = events.EventEmitter.prototype;        */
 /*    process.stderr.__proto__ = events.EventEmitter.prototype;        */

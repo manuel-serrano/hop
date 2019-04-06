@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Mar 31 07:32:05 2019 (serrano)                */
+;*    Last change :  Fri Apr  5 18:38:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -293,7 +293,7 @@
 		     (loop (+fx i 1))))))
 
 	 (define (in-mapped-property el-or-descr prop)
-	    (when (and (symbol? (prop-name prop))
+	    (when (and (js-jsstring? (prop-name prop))
 		       (flags-enumerable? (prop-flags prop)))
 	       (cond
 		  ((isa? el-or-descr JsPropertyDescriptor)
@@ -306,7 +306,7 @@
 	 (define (in-property p)
 	    (when (isa? p JsPropertyDescriptor)
 	       (with-access::JsPropertyDescriptor p (name enumerable)
-		  (when (and (symbol? name) enumerable)
+		  (when (and (js-jsstring? name) enumerable)
 		     (proc name)))))
 	 
 	 (cond
@@ -348,11 +348,11 @@
 		   (else
 		    "-Infinity")))
 	       ((eq? (js-null) value)
-		(js-ascii->jsstring "null"))
+		(& "null"))
 	       ((eq? value #t)
-		(js-ascii->jsstring "true"))
+		(& "true"))
 	       ((eq? value #f)
-		(js-ascii->jsstring "false"))
+		(& "false"))
 	       ((eq? value (js-undefined))
 		symbol)
 	       ((isa? value JsSymbolLiteral)
@@ -370,7 +370,6 @@
 		       (set! gap mind)
 		       res))
 		   ((and (isa? rep JsObject) (not (isa? rep JsFunction)))
-		    ;; rep is an array
 		    (let ((res (lst holder value mind "{" "}"
 				  (lambda (i)
 				     (let ((k (js-get rep i %this)))
@@ -382,10 +381,8 @@
 						       (js-jsstring->string k))
 						    (js-jsstring-append
 						       (if gap
-							   (js-ascii->jsstring
-							      ": ")
-							   (js-ascii->jsstring
-							      ":"))
+							   (& ": ")
+							   (& ":"))
 						       v))))))))))
 		       (set! gap mind)
 		       res))
@@ -412,7 +409,7 @@
 						    (begin
 						       (display ",\n" op)
 						       (display gap op))))
-					    (let ((s (symbol->string! k)))
+					    (let ((s (js-jsstring->string k)))
 					       (display (string-quote s) op))
 					    (display
 					       (if (string-null? gap) ":" ": ")

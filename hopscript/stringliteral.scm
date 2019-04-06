@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Apr  5 08:04:49 2019 (serrano)                */
+;*    Last change :  Fri Apr  5 18:29:38 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1515,10 +1515,6 @@
 ;*    js-jsstring-maybe-charat ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-charat this index %this cache)
-   (tprint "THIS= " this " index=" index " " (typeof this))
-   (if (eq? this (js-undefined))
-       (let ((x (-fx (string-length (string-append "to" "to")) 4)))
-	  (print (/fx 1 x))))
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)

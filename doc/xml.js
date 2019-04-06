@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Fri Apr  5 16:28:13 2019 (serrano)                */
+/*    Last change :  Fri Apr  5 18:15:49 2019 (serrano)                */
 /*    Copyright   :  2015-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -206,7 +206,6 @@ function downloadButton( attrs ) {
 /*    entryLetter ...                                                  */
 /*---------------------------------------------------------------------*/
 function entryLetter( en ) {
-   #:tprint( "ENTRY LETTER ", en.key );
    return en.key.charAt( 0 ).toUpperCase();
 }
 
@@ -219,8 +218,6 @@ function idxLetters( es ) {
    var mark = 0;
 
    for( var i = 0; i < es.length; i++ ) {
-      #:tprint( "ES=", #:typeof( es ), " typeof=", #:typeof( es[ i ] ), " es[i]=", es[ i ] );
-      console.error( "es=", es, " es[i=]", es[i] );
       var l = entryLetter( es[ i ] );
       if( l != letter ) {
 	 if( i > 0 ) {
@@ -285,7 +282,6 @@ function idxEntry( e, idx = undefined, arr = undefined ) {
 	 </tr>;
       } else {
 	 if( lbl.indexOf( "&lt;" ) === 0 && lbl.lastIndexOf( "&gt;" ) === -1 ) {
-	    #:tprint( "LBL ", lbl );
 	    if( lbl.charAt( lbl.length - 1 ) === " " ) {
 	       lbl = lbl.substring( 0, lbl.length - 1 ) + "&gt;";
 	    } else {
@@ -306,7 +302,6 @@ function idxEntry( e, idx = undefined, arr = undefined ) {
 /*    idx ...                                                          */
 /*---------------------------------------------------------------------*/
 function idx( attrs, entries ) {
-   console.error( "entries=", entries );
    var en = idxLetters( entries.filter( x => x ) );
    var collen = en.length / 3;
    

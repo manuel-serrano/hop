@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Mon Apr  1 17:14:06 2019 (serrano)                */
+;*    Last change :  Fri Apr  5 18:41:57 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -18,20 +18,23 @@
    (match-case x
       ((& (and ?val (? string?)))
        (cond
-	  ((member val '("__proto__" "Array" "Buffer"
-			 "GLOBAL" "Object" "String" "Worker"
-			 "charAt" "charCodeAt" "compiler"
-			 "configurable" "console"
+	  ((member val '("__proto__" "Array" "Buffer" "Error"
+			 "GLOBAL" "Infinity" "-Infinity" "NaN" "Object"
+			 "String" "Worker" "apply" "call" "callee" "caller"
+			 "charAt" "charCodeAt"
+			 "compiler" "configurable" "console"
 			 "constructor" "done" "enumerable"
-			 "exec" "exports" "for" "forEach" "global"
-			 "hop" "indexOf"
-			 "iterator" "keyFor" "lastIndex" "lastIndexOf"
+			 "exec" "exports" "false" "for" "forEach" "get" "global"
+			 "hop" "indexOf" "init"
+			 "iterator" "join" "keyFor" "lastIndex" "lastIndexOf"
 			 "length" "localeCompare" "log" "match" "map" "module"
-			 "naturalCompare" "next" "prototype" "replace"
-			 "require" "return" "slice" "split" "substr"
+			 "name" "naturalCompare" "next" "null" "path"
+			 "prototype" "replace"
+			 "require" "return" "set" "slice" "split" "substr"
 			 "substring" "toLowerCase" "toLocaleLowerCase"
 			 "toUpperCase"
-			 "toLocaleUpperCase" "toString" "trim" "value"
+			 "toLocaleUpperCase" "toString" "trim" "true"
+			 "undefined" "value"
 			 "valueOf" "writable"))
 	   `(@ ,(symbol-append '& (string->symbol val)) __hopscript_names))
 	  ((string=? val "")
@@ -43,6 +46,7 @@
 		  (evepairify `(js-integer->jsstring ,n) x)
 		  (evepairify `(js-ascii-name->jsstring ,val) x))))
 	  ((eq? (string-minimal-charset val) 'ascii)
+	   (tprint "ASCII " val)
 	   (evepairify `(js-ascii-name->jsstring ,val) x))
 	  (else
 	   (evepairify `(js-name-utf8->jsstring ,val) x))))

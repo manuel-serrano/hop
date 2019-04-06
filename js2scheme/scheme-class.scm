@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-class.scm        */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-class.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Tue Mar 26 18:24:50 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 07:17:22 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -64,13 +64,11 @@
 	 ((isa? name J2SString)
 	  (with-access::J2SString name (val)
 	     (let ((str (string-for-read val)))
-		(if (string=? str val)
-		    `(quote ,(string->symbol val))
-		    `(string->symbol ,val)))))
+		`(& ,val))))
 	 ((isa? name J2SNumber)
 	  (with-access::J2SNumber name (val)
 	     (if (fixnum? val)
-		 `(quote ,(string->symbol (number->string val)))
+		 `(js-integer-name->jsstring ,val)
 		 `(js-toname ,(j2s-scheme val mode return conf) %this))))
 	 ((isa? name J2SPragma)
 	  `(js-toname ,(j2s-scheme name mode return conf) %this))

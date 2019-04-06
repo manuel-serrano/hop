@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Apr  3 08:02:12 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 06:55:27 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -62,7 +62,8 @@
 	   (inline js-pcache-amap ::JsPropertyCache)
 	   
 	   (inline property-name::JsStringLiteral ::struct)
-	   
+
+	   (inline js-initial-cmap::JsConstructMap ::JsGlobalObject)
 	   (js-names->cmap::JsConstructMap ::vector)
 	   (js-strings->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
@@ -818,6 +819,13 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (property-name p)
    (struct-ref p 0))
+
+;*---------------------------------------------------------------------*/
+;*    js-initial-cmap ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-initial-cmap::JsConstructMap %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (cmap)
+      cmap))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-names->cmap ...                                               */
@@ -3256,59 +3264,48 @@
 	  #f)))
 
    (js-profile-log-method name point)
-   
-   (let loop ((obj o))
-      (jsobject-find obj (js-toname name %this)
-	 ;; map search
-	 (lambda (obj i)
-	    (with-access::JsObject o ((omap cmap) __proto__)
-	       (with-access::JsObject obj ((wmap cmap) elements)
-		  (with-access::JsConstructMap wmap (methods %id)
-		     (let ((el-or-desc (vector-ref elements i)))
-			(cond
-			   ((or (isa? el-or-desc JsAccessorDescriptor)
-				(isa? el-or-desc JsWrapperDescriptor))
-			    (with-access::JsPropertyCache ccache (pmap emap cmap)
-			       (set! pmap #t)
-			       (set! emap #t)
-			       (set! cmap #t))
-			    (jsapply (js-property-value o obj name el-or-desc %this)))
-			   ((isa? (vector-ref methods i) JsFunction)
-			    (let ((f (funval obj el-or-desc)))
-			       (cond
-				  ((procedure? f)
-				   (with-access::JsPropertyCache ccache (pmap emap cmap index method function)
-				      ;; correct arity, put in cache
-				      (js-validate-pcaches-pmap! %this)
-				      (set! pmap omap)
-				      (set! emap #t)
-				      (set! cmap #f)
-				      (set! index i)
-				      (set! function #f)
-				      (set! method (method->procedure f))))
-				  ((isa? f JsFunction)
-				   (with-access::JsFunction f (len method arity)
-				      (cond
-					 ((<fx arity 0)
-					  ;; varargs functions, currently not cached...
-					  (with-access::JsPropertyCache ccache (pmap emap cmap)
-					     (set! pmap #t)
-					     (set! emap #t)
-					     (set! cmap #t)))
-					 ((=fx (procedure-arity method) (+fx 1 (length args)))
-					  (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
-					     ;; correct arity, put in cache
-					     (js-validate-pcaches-pmap! %this)
-					     (set! pmap omap)
-					     (set! emap #t)
-					     (set! cmap #f)
-					     (set! index i)
-					     (set! function f)
-					     (procedure-attr-set! method f)
-					     (set! cmethod method)))
-					 ((procedureN method (length args))
-					  =>
-					  (lambda (procedure)
+
+   (let ((n (js-toname name %this)))
+      (tprint "name=" name " -> n=" n)
+      (let loop ((obj o))
+	 (jsobject-find obj n
+	    ;; map search
+	    (lambda (obj i)
+	       (with-access::JsObject o ((omap cmap) __proto__)
+		  (with-access::JsObject obj ((wmap cmap) elements)
+		     (with-access::JsConstructMap wmap (methods %id)
+			(let ((el-or-desc (vector-ref elements i)))
+			   (cond
+			      ((or (isa? el-or-desc JsAccessorDescriptor)
+				   (isa? el-or-desc JsWrapperDescriptor))
+			       (with-access::JsPropertyCache ccache (pmap emap cmap)
+				  (set! pmap #t)
+				  (set! emap #t)
+				  (set! cmap #t))
+			       (jsapply (js-property-value o obj name el-or-desc %this)))
+			      ((isa? (vector-ref methods i) JsFunction)
+			       (let ((f (funval obj el-or-desc)))
+				  (cond
+				     ((procedure? f)
+				      (with-access::JsPropertyCache ccache (pmap emap cmap index method function)
+					 ;; correct arity, put in cache
+					 (js-validate-pcaches-pmap! %this)
+					 (set! pmap omap)
+					 (set! emap #t)
+					 (set! cmap #f)
+					 (set! index i)
+					 (set! function #f)
+					 (set! method (method->procedure f))))
+				     ((isa? f JsFunction)
+				      (with-access::JsFunction f (len method arity)
+					 (cond
+					    ((<fx arity 0)
+					     ;; varargs functions, currently not cached...
+					     (with-access::JsPropertyCache ccache (pmap emap cmap)
+						(set! pmap #t)
+						(set! emap #t)
+						(set! cmap #t)))
+					    ((=fx (procedure-arity method) (+fx 1 (length args)))
 					     (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
 						;; correct arity, put in cache
 						(js-validate-pcaches-pmap! %this)
@@ -3317,35 +3314,48 @@
 						(set! cmap #f)
 						(set! index i)
 						(set! function f)
-						(procedure-attr-set! procedure f)
-						(set! cmethod procedure))))
-					 (else
-					  ;; arity missmatch, never cache
-					  (with-access::JsPropertyCache ccache (pmap emap cmap)
-					     (set! pmap #t)
-					     (set! emap #t)
-					     (set! cmap #t))
-					  )))))
-			       (jsapply f)))
-			   (else
-			    (with-access::JsPropertyCache ccache (pmap cmap emap)
-			       ;; invalidate the call cache and update the
-			       ;; object cache
-			       (set! cmap #t)
-			       (set! pmap #t)
-			       (set! emap #t)
-			       (jsapply (funval obj el-or-desc))))))))))
-	 ;; property search
-	 (lambda (obj v)
-	    (with-access::JsPropertyCache ccache (cmap emap pmap)
-	       (set! pmap #t)
-	       (set! emap #t)
-	       (set! cmap #t)
-	       (jsapply (js-property-value o obj name v %this))))
-	 ;; not found
-	 (lambda ()
-	    (js-raise-type-error %this "call: not a function ~s"
-	       (js-undefined)))
-	 ;; loop
-	 loop)))
+						(procedure-attr-set! method f)
+						(set! cmethod method)))
+					    ((procedureN method (length args))
+					     =>
+					     (lambda (procedure)
+						(with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
+						   ;; correct arity, put in cache
+						   (js-validate-pcaches-pmap! %this)
+						   (set! pmap omap)
+						   (set! emap #t)
+						   (set! cmap #f)
+						   (set! index i)
+						   (set! function f)
+						   (procedure-attr-set! procedure f)
+						   (set! cmethod procedure))))
+					    (else
+					     ;; arity missmatch, never cache
+					     (with-access::JsPropertyCache ccache (pmap emap cmap)
+						(set! pmap #t)
+						(set! emap #t)
+						(set! cmap #t))
+					     )))))
+				  (jsapply f)))
+			      (else
+			       (with-access::JsPropertyCache ccache (pmap cmap emap)
+				  ;; invalidate the call cache and update the
+				  ;; object cache
+				  (set! cmap #t)
+				  (set! pmap #t)
+				  (set! emap #t)
+				  (jsapply (funval obj el-or-desc))))))))))
+	    ;; property search
+	    (lambda (obj v)
+	       (with-access::JsPropertyCache ccache (cmap emap pmap)
+		  (set! pmap #t)
+		  (set! emap #t)
+		  (set! cmap #t)
+		  (jsapply (js-property-value o obj name v %this))))
+	    ;; not found
+	    (lambda ()
+	       (js-raise-type-error %this "call: not a function ~s"
+		  (js-undefined)))
+	    ;; loop
+	    loop))))
 

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-call.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-call.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Mar 11 18:35:05 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 07:15:54 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -380,7 +380,7 @@
 			       ,j2s-unresolved-call-workspace
 			       ,(box (j2s-scheme obj mode return conf)
 				   (j2s-type obj) conf)
-			       ',(string->symbol val)
+			       (& ,val)
 			       ,(js-pcache ccache)
 			       ,(js-pcache ocache)
 			       ,(loc->point loc)

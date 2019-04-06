@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/constant.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/constant.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Mar 15 17:52:14 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 06:45:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -32,8 +32,7 @@
    (instantiate::J2SStageProc
       (name "constant")
       (comment "Pre-allocated constants")
-      (proc j2s-constant)
-      (optional 2)))
+      (proc j2s-constant)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-constant ...                                                 */

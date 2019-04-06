@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri Apr  5 08:19:52 2019 (serrano)                */
+;*    Last change :  Fri Apr  5 18:42:18 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -40,10 +40,18 @@
 	   &__proto__
 	   &Array
 	   &Buffer
+	   &Error
 	   &GLOBAL
+	   &Infinity
+	   &-Infinity
+	   &NaN
 	   &Object
 	   &String
 	   &Worker
+	   &apply
+	   &call
+	   &callee
+	   &caller
 	   &charAt
 	   &charCodeAt
 	   &compiler
@@ -54,12 +62,16 @@
 	   &enumerable
 	   &exec
 	   &exports
+	   &false
 	   &for
 	   &forEach
 	   &global
+	   &get
 	   &hop
 	   &indexOf
+	   &init
 	   &iterator
+	   &join
 	   &keyFor
 	   &lastIndex
 	   &lastIndexOf
@@ -69,12 +81,16 @@
 	   &match
 	   &map
 	   &module
+	   &name
 	   &naturalCompare
 	   &next
+	   &null
+	   &path
 	   &prototype
 	   &replace
 	   &require
 	   &return
+	   &set
 	   &slice
 	   &split
 	   &substr
@@ -85,6 +101,8 @@
 	   &toLocaleUpperCase
 	   &toString
 	   &trim
+	   &true
+	   &undefined
 	   &value
 	   &valueOf
 	   &writable))
@@ -290,10 +308,18 @@
 (define &__proto__ (js-ascii-name->jsstring "__proto__"))
 (define &Array (js-ascii-name->jsstring "Array"))
 (define &Buffer (js-ascii-name->jsstring "Buffer"))
+(define &Error (js-ascii-name->jsstring "Error"))
 (define &GLOBAL (js-ascii-name->jsstring "GLOBAL"))
+(define &Infinity (js-ascii-name->jsstring "Infinity"))
+(define &-Infinity (js-ascii-name->jsstring "-Infinity"))
+(define &NaN (js-ascii-name->jsstring "NaN"))
 (define &Object (js-ascii-name->jsstring "Object"))
 (define &String (js-ascii-name->jsstring "String"))
 (define &Worker (js-ascii-name->jsstring "Worker"))
+(define &apply (js-ascii-name->jsstring "apply"))
+(define &call (js-ascii-name->jsstring "call"))
+(define &callee (js-ascii-name->jsstring "callee"))
+(define &caller (js-ascii-name->jsstring "caller"))
 (define &charAt (js-ascii-name->jsstring "charAt"))
 (define &charCodeAt (js-ascii-name->jsstring "charCodeAt"))
 (define &compiler (js-ascii-name->jsstring "compiler"))
@@ -304,13 +330,16 @@
 (define &exports (js-ascii-name->jsstring "exports"))
 (define &exec (js-ascii-name->jsstring "exec"))
 (define &enumerable (js-ascii-name->jsstring "enumerable"))
+(define &false (js-ascii-name->jsstring "false"))
 (define &for (js-ascii-name->jsstring "for"))
 (define &forEach (js-ascii-name->jsstring "forEach"))
 (define &get (js-ascii-name->jsstring "get"))
 (define &global (js-ascii-name->jsstring "global"))
 (define &hop (js-ascii-name->jsstring "hop"))
 (define &indexOf (js-ascii-name->jsstring "indexOf"))
+(define &init (js-ascii-name->jsstring "init"))
 (define &iterator (js-ascii-name->jsstring "iterator"))
+(define &join (js-ascii-name->jsstring "join"))
 (define &keyFor (js-ascii-name->jsstring "keyFor"))
 (define &lastIndex (js-ascii-name->jsstring "lastIndex"))
 (define &lastIndexOf (js-ascii-name->jsstring "lastIndexOf"))
@@ -320,8 +349,11 @@
 (define &match (js-ascii-name->jsstring "match"))
 (define &map (js-ascii-name->jsstring "map"))
 (define &module (js-ascii-name->jsstring "module"))
+(define &name (js-ascii-name->jsstring "name"))
 (define &naturalCompare (js-ascii-name->jsstring "naturalCompare"))
 (define &next (js-ascii-name->jsstring "next"))
+(define &null (js-ascii-name->jsstring "null"))
+(define &path (js-ascii-name->jsstring "path"))
 (define &prototype (js-ascii-name->jsstring "prototype"))
 (define &replace (js-ascii-name->jsstring "replace"))
 (define &require (js-ascii-name->jsstring "require"))
@@ -337,6 +369,8 @@
 (define &toLocaleUpperCase (js-ascii-name->jsstring "toLocaleUpperCase"))
 (define &toString (js-ascii-name->jsstring "toString"))
 (define &trim (js-ascii-name->jsstring "trim"))
+(define &true (js-ascii-name->jsstring "true"))
+(define &undefined (js-ascii-name->jsstring "undefined"))
 (define &value (js-ascii-name->jsstring "value"))
 (define &valueOf (js-ascii-name->jsstring "valueOf"))
 (define &writable (js-ascii-name->jsstring "writable"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Apr  5 07:55:32 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 06:50:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2386,16 +2386,21 @@
 			  (with-access::J2SDataPropertyInit i (val)
 			     (j2s-scheme val mode return conf)))
 		     inits)))
-	 (if (every (match-lambda ((& (? string?)) #t) (else #f)) props)
-	     (begin
-		(tprint "TOBE OPTIMIZED (literal names init) " props)
-		`(let ((,names (vector ,@props))
-		       (,elements (vector ,@vals)))
-		    (js-literal->jsobject ,elements ,names %this)))
+	 (cond
+	    ((null? props)
+	     '(instantiate::JsObject
+	       (cmap (js-initial-cmap %this))))
+	    ((every (match-lambda ((& (? string?)) #t) (else #f)) props)
+	     (with-access::J2SObjInit this (loc)
+		(tprint "TOBE OPTIMIZED (literal names init) " props " " loc))
+	     `(let ((,names (vector ,@props))
+		    (,elements (vector ,@vals)))
+		 (js-literal->jsobject ,elements ,names %this)))
+	    (else
 	     (let ((len (length props)))
 		`(let ((,names (cond-expand
-				   (bigloo-c ($create-vector ,len))
-				   (else (make-vector ,len))))
+				  (bigloo-c ($create-vector ,len))
+				  (else (make-vector ,len))))
 		       (,elements (cond-expand
 				     (bigloo-c ($create-vector ,len))
 				     (else (make-vector ,len)))))
@@ -2403,7 +2408,7 @@
 				     `((vector-set! ,names ,idx ,name)
 				       (vector-set! ,elements ,idx ,val)))
 			 (iota len) props vals)
-		    (js-literal->jsobject ,elements ,names %this))))))
+		    (js-literal->jsobject ,elements ,names %this)))))))
 
    (define (cmap->jsobj inits cmap)
       (let ((vals (map (lambda (i)

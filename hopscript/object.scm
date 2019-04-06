@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Apr  2 09:26:25 2019 (serrano)                */
+;*    Last change :  Sat Apr  6 07:00:11 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -243,6 +243,7 @@
 ;*    js-new-global-object ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-new-global-object #!optional (size 64))
+   (tprint "js-new-global-object...")
    (let* ((%proto (instantiateJsObject
 		     (cmap (instantiate::JsConstructMap))
 		     (__proto__ (js-null))
