@@ -134,7 +134,6 @@ function test() {
 	 console.log( "serv2b...test passed" );
       } );
 
-   #:tprint(" ======================================" );
    serv3()
       .post( function( v ) {
 	 assert.ok( v.name === "foo", "serv3a" );
