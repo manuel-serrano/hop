@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Apr  7 19:10:12 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 19:37:05 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -440,9 +440,9 @@
 	 (with-access::J2SDecl decl ((w writable) loc)
 	    (cond
 	       ((isa? from J2SProgram)
-		`'#((& ,(symbol->string alias)) ,(cons index (redirect-index this id from loc)) ,w))
+		`(vector (& ,(symbol->string alias)) (cons ,index ,(redirect-index this id from loc)) ,w))
 	       (else
-		`'#((& ,(symbol->string alias)) ,index ,w))))))
+		`(vector (& ,(symbol->string alias)) ,index ,w))))))
    
    (with-access::J2SProgram this (exports imports path checksum)
       (let ((idx (j2sprogram-get-export-index this))
