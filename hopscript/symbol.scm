@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Apr  7 07:28:31 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 10:40:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -231,12 +231,14 @@
 	 ;; for
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-symbol.for
 	 (define (js-symbol-for this key)
-	    (let* ((stringkey (js-tostring key %this))
+	    (let* ((str (js-tojsstring key %this))
+		   (stringkey (js-jsstring->string str))
 		   (old (hashtable-get js-symbol-table stringkey)))
 	       (or old
-		   (begin
-		      (hashtable-put! js-symbol-table stringkey stringkey)
-		      stringkey))))
+		   (let ((new (instantiate::JsSymbolLiteral
+				 (val str))))
+		      (hashtable-put! js-symbol-table stringkey new)
+		      new))))
 
 	 (js-bind! %this js-symbol (& "for")
 	    :value (js-make-function %this js-symbol-for 1 "for")
@@ -250,8 +252,10 @@
 	 (define (js-symbol-keyfor::obj this sym)
 	    (if (isa? sym JsSymbolLiteral)
 		(with-access::JsSymbolLiteral sym (val)
-		   (if (hashtable-get js-symbol-table val) val (js-undefined)))
-		(js-raise-type-error %this "not a symbol" sym)))
+		   (if (hashtable-get js-symbol-table (js-jsstring->string val))
+		       val
+		       (js-undefined)))
+		(js-raise-type-error %this "not a symbol ~a" sym)))
 
 	 (js-bind! %this js-symbol (& "keyFor")
 	    :value (js-make-function %this js-symbol-keyfor 1 "keyFor")
@@ -317,9 +321,9 @@
 	  (with-access::JsSymbol this (val)
 	     (js-tojsstring val %this)))
 	 ((isa? this JsObject)
-	  (js-raise-type-error %this "no internal slot" this))
+	  (js-raise-type-error %this "no internal slot ~a" this))
 	 (else
-	  (js-raise-type-error %this "not a symbol" this))))
+	  (js-raise-type-error %this "not a symbol ~a" this))))
    
    (js-bind! %this obj (& "toString")
       :value (js-make-function %this tostring 0 "toString")
@@ -334,9 +338,9 @@
 	  (with-access::JsSymbol this (val)
 	     val))
 	 ((isa? this JsObject)
-	  (js-raise-type-error %this "no internal slot" this))
+	  (js-raise-type-error %this "no internal slot ~a" this))
 	 (else
-	  (js-raise-type-error %this "not a symbol" this))))
+	  (js-raise-type-error %this "not a symbol ~a" this))))
    
    (js-bind! %this obj (& "valueOf")
       :value (js-make-function %this valueof 0 "valueOf")

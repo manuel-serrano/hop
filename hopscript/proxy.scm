@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Apr  7 09:50:50 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 10:16:07 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -243,7 +243,7 @@
    (with-access::JsProxy o (target handler)
       (let ((has (js-get handler (& "has") %this)))
 	 (if (isa? has JsFunction)
-	     (let ((v (js-call2 %this has o target 0)))
+	     (let ((v (js-call2 %this has o target p)))
 		(or v (proxy-check-property-has target p %this v)))
 	     (js-has-property target p %this)))))
 
@@ -287,7 +287,8 @@
    (with-access::JsProxy o (target handler)
       (let ((def (js-get handler (& "defineProperty") %this)))
 	 (if (isa? def JsFunction)
-	     (let ((v (js-call3 %this def o target p desc)))
+	     (let ((v (js-call3 %this def o target p
+			 (js-from-property-descriptor %this p desc target))))
 		(proxy-check-property-defprop target o p %this desc v))
 	     (js-define-own-property target p desc throw %this)))))
 

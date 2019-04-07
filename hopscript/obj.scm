@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/obj.scm                 */
+;*    serrano/prgm/project/hop/hop/hopscript/obj.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Tue Jan 15 09:43:34 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 10:20:36 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
@@ -106,7 +106,7 @@
 ;*    Accessing Bigloo objects from hopscript                          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::object prop %this)
-   (let* ((name (js-toname prop %this))
+   (let* ((name (string->symbol (js-tostring prop %this)))
 	  (clazz (object-class o))
 	  (field (find-class-field clazz name)))
       (if (not field)

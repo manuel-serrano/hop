@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Apr  7 05:59:15 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 10:35:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -664,7 +664,7 @@
 ;*    cmap-transition ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (cmap-transition name value flags nextmap)
-   (if (eq? name &__proto__)
+   (if (eq? name (& "__proto__"))
        (transition value flags nextmap)
        (transition name flags nextmap)))
 
@@ -675,13 +675,13 @@
    (with-access::JsConstructMap cmap (parent (%cid %id))
       (let ((flags (property-flags #t #t #t #f)))
 	 ;; 1- try to find a transition from the current cmap
-	 (let ((nextmap (cmap-find-transition cmap &__proto__ new flags)))
+	 (let ((nextmap (cmap-find-transition cmap (& "__proto__") new flags)))
 	    (or nextmap
 		;; 2- create a new plain cmap connected to its parent
 		;; via a regular link
 		(let ((newmap (duplicate::JsConstructMap cmap
 				 (%id (gencmapid)))))
-		   (link-cmap! cmap newmap &__proto__ new flags)
+		   (link-cmap! cmap newmap (& "__proto__") new flags)
 		   newmap))))))
 
 ;*---------------------------------------------------------------------*/
@@ -691,7 +691,7 @@
    
    (define (is-transition? t)
       (and (=fx (transition-flags t) flags)
-	   (if (eq? name &__proto__)
+	   (if (eq? name (& "__proto__"))
 	       (eq? (transition-name-or-value t) val)
 	       (eq? (transition-name-or-value t) name))))
    
@@ -1165,7 +1165,7 @@
    (cond
       ((isa? desc JsWrapperDescriptor)
        (with-access::JsWrapperDescriptor desc (%get)
-	  ;; JsWrapperDescriptor are used, amongst other, by JsProxy. 
+	  ;; JsWrapperDescriptor are used by JsFunction and JsProxy. 
 	  ;; Each proxy object, uses exactly one JsWrapperDescriptor for
 	  ;; all its attributes. Hence, the NAME property of the descriptor
 	  ;; is meaningless and this is why the %GET and %SET functions of

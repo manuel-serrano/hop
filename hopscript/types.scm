@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Apr  1 10:33:13 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 11:18:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -33,7 +33,9 @@
 
    (extern (include "bglhopscript_malloc.h"))
 
-   (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
+   (extern ($js-register-property-cache::obj (::obj ::obj)
+	      "bgl_register_pcache")
+	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
@@ -86,6 +88,7 @@
 	      (%set::procedure read-only))
 	   
 	   (final-class JsPropertyCache
+	      (js-property-cache-init!)
 	      (imap::obj (default #f))
 	      (emap::obj (default #f))
 	      (cmap::obj (default #f))
@@ -358,6 +361,8 @@
 	      (js-input-port (default #f))
 	      (js-new-target (default (js-undefined))))
 
+	   (js-property-cache-init!::JsPropertyCache ::JsPropertyCache)
+	   
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 
 	   (inline js-object-default-mode::uint32)
@@ -470,6 +475,12 @@
    (cond-expand
       ((not bigloo4.3a)
        (pragma (gencmapid default-inline)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-property-cache-init! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-property-cache-init! o)
+   ($js-register-property-cache o "%builtin"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-jsobject ...                                             */

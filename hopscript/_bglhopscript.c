@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/hopscript/_bglhopscript.c         */
+/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Jan 23 07:41:50 2019 (serrano)                */
+/*    Last change :  Sun Apr  7 11:22:41 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -61,10 +61,10 @@ static int pcaches_index = 0;
 
 /*---------------------------------------------------------------------*/
 /*    void                                                             */
-/*    bgl_register_pcache ...                                          */
+/*    bgl_register_pcaches ...                                         */
 /*---------------------------------------------------------------------*/
 void
-bgl_register_pcache( pcache_t *pcache, int len, obj_t src ) {
+bgl_register_pcaches( pcache_t *pcache, int len, obj_t src ) {
    if( pcaches_index == pcaches_len ) {
       if( !pcaches_len ) {
 	 pcaches =
@@ -85,6 +85,16 @@ bgl_register_pcache( pcache_t *pcache, int len, obj_t src ) {
    pcaches[ pcaches_index++ ].src = src;
 }
 
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_register_pcache ...                                          */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_register_pcache( obj_t pcache, obj_t src ) {
+   bgl_register_pcaches( (pcache_t *)COBJECT( pcache ), 1, src );
+   return pcache;
+}
+   
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
 /*    bgl_get_pcaches ...                                              */
@@ -141,7 +151,7 @@ bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t template ) {
       memcpy( &(pcache[ i ]), COBJECT( template ), sizeof( pcache_t ) );
    }
 
-   bgl_register_pcache( pcache, len, src );
+   bgl_register_pcaches( pcache, len, src );
 
    return BUNSPEC;
 }
