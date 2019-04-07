@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Apr  2 11:45:32 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 19:52:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -25,7 +25,7 @@
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj)
 	   (nodejs-import-module-hop::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj ::vector)
-	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::bstring ::obj)
+	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bstring ::obj)
 	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-exports-module::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
@@ -641,21 +641,22 @@
 ;*    https://github.com/tc39/proposal-dynamic-import                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-import-module-dynamic::JsPromise worker::WorkerHopThread
-	   %this::JsGlobalObject %module::JsObject name::bstring
+	   %this::JsGlobalObject %module::JsObject name::obj
 	   base::bstring loc)
    (with-access::JsGlobalObject %this (js-promise)
-      (js-new1 %this js-promise
-	 (js-make-function %this
-	    (lambda (this resolve reject)
-	       (with-handler
-		  (lambda (exn)
-		     (js-call1 %this reject (js-undefined) exn))
-		  (let* ((path (nodejs-resolve name %this %module 'body))
-			 (mod (nodejs-import-module worker %this %module
-				 path 0 loc)))
-		     (js-call1 %this resolve (js-undefined)
-			(nodejs-exports-module mod worker %this)))))
-	    2 "import"))))
+      (let ((name (js-tostring name %this)))
+	 (js-new1 %this js-promise
+	    (js-make-function %this
+	       (lambda (this resolve reject)
+		  (with-handler
+		     (lambda (exn)
+			(js-call1 %this reject (js-undefined) exn))
+		     (let* ((path (nodejs-resolve name %this %module 'body))
+			    (mod (nodejs-import-module worker %this %module
+				    path 0 loc)))
+			(js-call1 %this resolve (js-undefined)
+			   (nodejs-exports-module mod worker %this)))))
+	       2 "import")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import-meta ...                                           */
