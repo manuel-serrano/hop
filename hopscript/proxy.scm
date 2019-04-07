@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Mar 31 08:13:47 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 09:50:50 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -49,16 +49,17 @@
 (define %cache-set
    (instantiate::JsPropertyCache))
 
-(define proxy-property-descriptor
-   (instantiate::JsWrapperDescriptor
-      (writable #t)
-      (configurable #t)
-      (enumerable #t)
-      (name (& ""))
-      (%get js-proxy-property-value)
-      (%set js-proxy-property-value-set!)))
+(define proxy-property-descriptors
+   (vector
+      (instantiate::JsWrapperDescriptor
+	 (writable #t)
+	 (configurable #t)
+	 (enumerable #t)
+	 (name (& ""))
+	 (%get js-proxy-property-value)
+	 (%set js-proxy-property-value-set!))))
 
-(define proxy-cmap
+(define proxy-cmap-NOTUSED
    (instantiate::JsConstructMap
       (methods '#(#f))
       (props '#())))
@@ -70,10 +71,30 @@
    (with-access::JsGlobalObject %this (__proto__ js-function-prototype)
 
       (define (js-proxy-alloc %this constructor::JsFunction)
-	 (instantiateJsProxy
-	    (cmap proxy-cmap)
-	    (__proto__ (js-get constructor (& "prototype") %this))
-	    (elements (vector proxy-property-descriptor))))
+	 ;; MS 7apr2019: TO BE IMPROVED
+	 ;; ---------------------------
+	 ;; need modifications in:
+	 ;;    JS-PROPERTY-VALUE, JsWrapperDescriptor handling (property.scm)
+	 ;;    JS-OBJECT-GET-LOOKUP (property.scm)
+	 ;;    JS-PUT-JSOBJECT! (property.scm)
+	 ;;    property_expd.sch
+	 ;; 
+	 ;; CMAP cannot be currently shared by all proxies
+	 ;; because JS-PROPERTY-VALUE (property.scm) invokes the
+	 ;; JsWrapperDescriptor with the owner of the descriptor
+	 ;; and because proerty.scm fills the inline cache with
+	 ;; the last proxy seen as owner
+	 ;;
+	 ;; The current implement will raise a cache miss each time a
+	 ;; new proxy will be used on an access point. If all proxies
+	 ;; could share CMAP, this would avoid these misses.
+	 (let ((cmap (instantiate::JsConstructMap
+			(methods '#(#f))
+			(props '#()))))
+	    (instantiateJsProxy
+	       (cmap cmap)
+	       (__proto__ (js-get constructor (& "prototype") %this))
+	       (elements proxy-property-descriptors))))
 
       (define (js-proxy-construct this::JsProxy t h)
 	 (cond
