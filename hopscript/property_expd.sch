@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Mar 17 07:19:51 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 06:40:23 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -315,14 +315,12 @@
 (define (js-object-get-name/cache-expander x e)
 
    (define (cache-miss-fun prop)
-      (match-case prop
-	 (((kwote quote) length)
-	  '(@ js-object-get-name/cache-miss __hopscript_property))
-	 (((kwote quote) length)
-	  '(@ js-object-get-prototype/cache-miss __hopscript_property))
-	 (else
-	  '(@ js-object-get-lookup __hopscript_property))))
-
+      '(@ js-object-get-name/cache-miss __hopscript_property))
+;*       (match-case prop                                              */
+;* 	 (((kwote quote) length)                                       */
+;* 	  '(@ js-object-get-name/cache-miss __hopscript_property))     */
+;* 	 (else                                                         */
+;* 	  '(@ js-object-get-lookup __hopscript_property))))            */
 
    (define (let-cmap cs obj body)
       (if (pair? cs)

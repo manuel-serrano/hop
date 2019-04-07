@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Feb 28 07:59:48 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 07:46:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -458,7 +458,7 @@
 		 =>
 		 cadr)
 		(else
-		 (js-ascii->jsstring s))))))
+		 s)))))
 
    (js-ascii->jsstring
       (cond

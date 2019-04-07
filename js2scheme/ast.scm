@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Mar 11 19:11:29 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 19:23:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -664,8 +664,8 @@
 ;*    j2s-export? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-export? decl::J2SDecl)
-   (with-access::J2SDecl decl (scope id loc)
-      (eq? scope 'export)))
+   (with-access::J2SDecl decl (binder scope id loc)
+      (or (eq? binder 'export) (eq? scope 'export))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-id ...                                                    */
