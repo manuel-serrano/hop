@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sun Mar 31 07:47:53 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 13:38:32 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -520,18 +520,18 @@
 ;*    bind-websocket-listener! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-listener! %this obj action)
-   (js-bind! %this obj (& (car action) )
+   (js-bind! %this obj (& (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
               0 (car action))
       :set (js-make-function %this
 	      (lambda (this proc)
 		 (set-cdr! action proc)
-		 (let ((name (substring (symbol->string! (car action)) 2)))
+		 (let ((name (substring (car action) 2)))
 		    (with-access::JsWebSocket this (worker)
 		       (add-event-listener! this
 			     name (action->listener worker %this action this)))))
-	      1 (symbol->string (car action)))
+	      1 (car action))
       :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
@@ -541,15 +541,15 @@
    (js-bind! %this obj (& (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
-              0 (symbol->string (car action)))
+              0 (car action))
       :set (js-make-function %this
               (lambda (this proc)
                  (set-cdr! action proc)
-                 (let ((name (substring (symbol->string! (car action)) 2)))
+                 (let ((name (substring (car action) 2)))
 		    (with-access::JsWebSocketServer this (worker)
 		       (add-event-listener! this
 			     name (action->listener worker %this action this)))))
-              1 (symbol->string (car action)))
+              1 (car action))
       :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
@@ -559,16 +559,16 @@
    (js-bind! %this obj (& (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
-              0 (symbol->string (car action)))
+              0 (car action))
       :set (js-make-function %this
               (lambda (this proc)
                  (set-cdr! action proc)
-                 (let ((name (substring (symbol->string! (car action)) 2)))
+                 (let ((name (substring (car action) 2)))
 		    (with-access::JsWebSocketClient this (wss)
 		       (with-access::JsWebSocketServer wss (worker)
 			  (add-event-listener! this
 				name (action->listener worker %this action this))))))
-              1 (symbol->string (car action)))
+              1 (car action))
       :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/

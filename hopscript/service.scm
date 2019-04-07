@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Apr  1 12:58:58 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 13:47:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -496,7 +496,7 @@
 	  `("hop" ,(obj->string val 'hop-to-hop) "hop-encoding: hop"))))
    
    (define (scheme->js val)
-      val)
+      (js-obj->jsobject val %this))
    
    (define (js-get-string opt key)
       (let ((v (js-get opt key %this)))
@@ -755,7 +755,7 @@
 		(set! header (js-jsobject->alist r %this))))))
 
       (define (scheme->js val)
-	 val)
+	 (js-obj->jsobject val %this))
       
       (define (post-request callback)
 	 (with-hop-remote svc callback fail
