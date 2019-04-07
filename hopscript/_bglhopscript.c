@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sun Apr  7 11:22:41 2019 (serrano)                */
+/*    Last change :  Sun Apr  7 16:58:31 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -55,9 +55,13 @@ struct pcache_entry {
    int length;
    obj_t src;
 } *pcaches;
-   
+
+static obj_t *dpcaches;
+
 static int pcaches_len = 0;
 static int pcaches_index = 0;
+static int dpcaches_len = 0;
+static int dpcaches_index = 0;
 
 /*---------------------------------------------------------------------*/
 /*    void                                                             */
@@ -87,11 +91,27 @@ bgl_register_pcaches( pcache_t *pcache, int len, obj_t src ) {
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
-/*    bgl_register_pcache ...                                          */
+/*    bgl_register_dpcache ...                                         */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_register_pcache( obj_t pcache, obj_t src ) {
-   bgl_register_pcaches( (pcache_t *)COBJECT( pcache ), 1, src );
+bgl_register_dpcache( obj_t pcache ) {
+   if( dpcaches_index == dpcaches_len ) {
+      if( !dpcaches_len ) {
+	 dpcaches =
+	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * 10 );
+	 dpcaches_len = 10;
+      } else { 
+	 obj_t *new =
+	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * dpcaches_len * 2 );
+	 memcpy( new, dpcaches, sizeof( obj_t ) * dpcaches_len );
+	 GC_free( (void *)dpcaches );
+	 dpcaches = new;
+	 dpcaches_len *= 2;
+      }
+   }
+   
+   dpcaches[ dpcaches_index++ ] = pcache;
+
    return pcache;
 }
    
@@ -132,6 +152,9 @@ bgl_invalidate_pcaches_pmap( obj_t proc ) {
       for( j = 0; j < pcaches[ i ].length; j++ ) {
 	 PROCEDURE_ENTRY( proc )( proc, BOBJECT( &(pcaches[ i ].pcache[ j ]) ), BEOA );
       }
+   }
+   for( i = 0; i < dpcaches_index; i++ ) {
+      PROCEDURE_ENTRY( proc )( proc, dpcaches[ i ], BEOA );
    }
 }
 

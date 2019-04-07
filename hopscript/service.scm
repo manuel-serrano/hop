@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Apr  7 13:47:51 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 14:46:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -117,7 +117,7 @@
 		   (if (null? rest)
 		       srv
 		       (begin
-			  (js-put! srv (keyword->symbol (car rest))
+			  (js-put! srv (& (keyword->string (car rest)))
 			     (js-obj->jsobject (cadr rest) ctx)
 			     #f ctx)
 			  (loop (cddr rest)))))))
@@ -821,7 +821,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-create-service ...                                            */
 ;*    -------------------------------------------------------------    */
-;*    This function is called when the HopScript constructor.          */
+;*    This function is called when the HopScript constructor           */
 ;*    Service is directly invoked from user programs. The role         */
 ;*    of this function is to build an internal hop-service that        */
 ;*    merely calls the HopScript function passed as argument.          */
@@ -914,7 +914,7 @@
 		   (vecks '()))
 		;; first step
 		(for-each (lambda (arg)
-			     (let ((k (car arg))
+			     (let ((k (& (car arg)))
 				   (val (js-string->jsstring (cdr arg))))
 				(cond
 				   ((not (js-in? ctx k obj))

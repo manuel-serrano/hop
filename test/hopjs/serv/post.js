@@ -50,6 +50,7 @@ service serv3() {
    var o = {
       name: "foo",
       age: 34,
+      nage: new Number( 43 ),
       birth: new Date(),
       re: /[ab]*c/,
       bo: new Boolean( false ),
@@ -65,6 +66,7 @@ service serv3() {
       buf: new Buffer( [-3,-2,-1,0,1,2,3,127 ] ),
       el: <div style="border: 2px solid green" id="bar">toto</div>
    };
+   console.log( "********************************* BVO=", o.bo, o.bo instanceof Boolean );
    return o;
 }
    
@@ -132,24 +134,26 @@ function test() {
 	 console.log( "serv2b...test passed" );
       } );
 
+   #:tprint(" ======================================" );
    serv3()
       .post( function( v ) {
-	 assert.ok( v.name === "foo" );
-	 assert.ok( v.age === 34 );
-	 assert.ok( v.birth instanceof Date );
-	 assert.ok( v.re instanceof RegExp );
-	 assert.ok( v.bo instanceof Boolean );
-	 assert.ok( v.bo2 );
-	 assert.ok( v.arr[ 0 ].x == (v.arr[ 1 ].x - 4) );
-	 assert.ok( v.arr.length == 2 );
-	 assert.ok( v.i8[ 5 ] == -6 );
-	 assert.ok( v.i8[ 4 ] == 5 );
-	 assert.ok( v.u8[ 4 ] == 5 );
-	 assert.ok( v.i16[ 1 ] == 257 );
-	 assert.ok( v.f32[ 0 ] < 1.1 );
-	 assert.ok( v.f32[ 0 ] > 0.9 );
-	 assert.ok( v.buf instanceof Buffer );
-	 assert.ok( v.el.id === "bar" );
+	 assert.ok( v.name === "foo", "serv3a" );
+	 assert.ok( v.age === 34, "serv3b" );
+	 assert.ok( v.nage instanceof Number, "serv3b2" );
+	 assert.ok( v.birth instanceof Date, "serv3c" );
+	 assert.ok( v.re instanceof RegExp, "serv3d" );
+	 assert.ok( v.bo instanceof Boolean, "serv3e" );
+	 assert.ok( v.bo2, "serv3f" );
+	 assert.ok( v.arr[ 0 ].x == (v.arr[ 1 ].x - 4), "serv3g" );
+	 assert.ok( v.arr.length == 2, "serv3h" );
+	 assert.ok( v.i8[ 5 ] == -6, "serv3i" );
+	 assert.ok( v.i8[ 4 ] == 5, "serv3j" );
+	 assert.ok( v.u8[ 4 ] == 5, "serv3k" );
+	 assert.ok( v.i16[ 1 ] == 257, "serv3l" );
+	 assert.ok( v.f32[ 0 ] < 1.1, "serv3m" );
+	 assert.ok( v.f32[ 0 ] > 0.9, "serv3n" );
+	 assert.ok( v.buf instanceof Buffer, "serv3o" );
+	 assert.ok( v.el.id === "bar", "serv3p" );
 	 console.log( "serv3...test passed" );
 	 res++;
       } );

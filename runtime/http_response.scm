@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/hop/runtime/http_response.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Jul  2 18:02:44 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Sun Apr  7 18:47:25 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
