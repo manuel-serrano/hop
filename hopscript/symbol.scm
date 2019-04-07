@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr  1 12:42:12 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 07:28:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -312,10 +312,10 @@
    (define (tostring this)
       (cond
 	 ((isa? this JsSymbolLiteral)
-	  (js-tostring this %this))
+	  (js-tojsstring this %this))
 	 ((isa? this JsSymbol)
 	  (with-access::JsSymbol this (val)
-	     (js-tostring val %this)))
+	     (js-tojsstring val %this)))
 	 ((isa? this JsObject)
 	  (js-raise-type-error %this "no internal slot" this))
 	 (else

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Mar 31 09:34:47 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 07:43:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -34,7 +34,7 @@
    (export (js-init-number! ::JsGlobalObject)
 
 	   (js-number->jsNumber ::obj ::JsGlobalObject)
-	   (js-real->string ::double)
+	   (js-real->jsstring::JsStringLiteral ::double)
 	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
 	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject)
 	   
@@ -382,13 +382,13 @@
 	 (string-shrink! str n))))
       
 ;*---------------------------------------------------------------------*/
-;*    js-real->string ...                                              */
+;*    js-real->jsstring ...                                            */
 ;*    -------------------------------------------------------------    */
 ;*    MS 1 jan 2018: This should be improved not to use bignums!       */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.8.1        */
 ;*---------------------------------------------------------------------*/
-(define (js-real->string obj)
+(define (js-real->jsstring obj)
    
    (define (js-bignum->string m)
       (if (=bx m #z0)
@@ -464,7 +464,7 @@
 		 =>
 		 cadr)
 		(else
-		 (js-ascii->jsstring s))))))
+		 s)))))
    
    (cond
       ((not (= obj obj)) (& "NaN"))

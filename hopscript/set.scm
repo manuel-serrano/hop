@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Sun Mar 31 10:45:30 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 07:25:37 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -133,10 +133,10 @@
 	       (cond
 		  ((not ni)
 		   this)
-		  ((js-totest (js-get ni "done" %this))
+		  ((js-totest (js-get ni (& "done") %this))
 		   this)
 		  (else
-		   (let ((value (js-get ni "value" %this)))
+		   (let ((value (js-get ni (& "value") %this)))
 		      (js-call1 %this add this value)
 		      (loop))))))))
    

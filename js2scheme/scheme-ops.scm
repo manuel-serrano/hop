@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-ops.scm          */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-ops.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Jan 24 18:16:25 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 07:45:19 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1258,19 +1258,19 @@
 	 ((eq? tr 'real)
 	  (str-append flip
 	     left
-	     `(js-ascii->jsstring (js-real->string ,right))))
+	     `(js-real->jsstring ,right)))
 	 ((eq? tl 'number)
 	  (str-append flip
 	     `(if (fixnum? ,left)
 		  (js-integer->jsstring ,left)
-		  (js-ascii->jsstring (js-real->string ,left)))
+		  (js-real->jsstring ,left))
 	     right))
 	 ((eq? tr 'number)
 	  (str-append flip
 	     left
 	     `(if (fixnum? ,right)
 		  (js-integer->jsstring ,right)
-		  (js-ascii->jsstring (js-real->string ,right)))))
+		  (js-real->jsstring ,right))))
 	 (else
 	  (str-append flip
 	     left

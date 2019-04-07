@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr  5 18:38:22 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 07:49:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -344,9 +344,9 @@
 		   ((not (infinitefl? value))
 		    (js-ascii->jsstring (number->string value)))
 		   ((= value +inf.0)
-		    "Infinity")
+		    (& "Infinity"))
 		   (else
-		    "-Infinity")))
+		    (& "-Infinity"))))
 	       ((eq? (js-null) value)
 		(& "null"))
 	       ((eq? value #t)

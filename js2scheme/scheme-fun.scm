@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Apr  2 11:36:58 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 06:11:20 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -562,7 +562,7 @@
 	     (fundef (if generator
 			 (let ((tmp2 (gensym id)))
 			    `(letrec* ((,tmp ,(jsfun->lambda this mode return conf
-						 `(js-get ,tmp2 'prototype %this)
+						 `(js-get ,tmp2 (& "prototype") %this)
 						 #f))
 				       (,tmp2 ,(j2sfun->scheme this tmp mode return conf)))
 				,tmp2))
@@ -887,7 +887,7 @@
    (with-access::J2SDeclFun this (parent)
       (let* ((decl (if parent parent this))
 	     (scmid (j2s-decl-scheme-id decl)))
-	 `(js-get ,scmid 'prototype %this))))
+	 `(js-get ,scmid (& "prototype") %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ctor-body! ::J2SNode ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Mon Apr  1 12:58:15 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 07:25:19 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -142,12 +142,12 @@
 		   (close-iterator iter)
 		   (js-raise-type-error %this "Illegal IteratorValue" ni))
 		  (else
-		   (if (js-totest (js-get ni "done" %this))
+		   (if (js-totest (js-get ni (& "done") %this))
 		       this
-		       (let ((value (js-get ni "value" %this)))
+		       (let ((value (js-get ni (& "value") %this)))
 			  (if (js-object? value)
-			      (let ((k (js-get value "0" %this))
-				    (v (js-get value "1" %this)))
+			      (let ((k (js-get value (& "0") %this))
+				    (v (js-get value (& "1") %this)))
 				 (js-call2 %this set this k v)
 				 (loop))
 			      (begin
@@ -184,8 +184,8 @@
 		   (if (not (js-object? value))
 		       (js-raise-type-error %this "Illegal IteratorValue"
 			  i)
-		       (let ((k (js-get value "0" %this))
-			     (v (js-get value "1" %this)))
+		       (let ((k (js-get value (& "0") %this))
+			     (v (js-get value (& "1") %this)))
 			  (js-call2 %this set this k v)
 			  (loop (+u32 i #u32:1)))))))))
    

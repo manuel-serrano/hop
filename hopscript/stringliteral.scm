@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Apr  6 17:20:59 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 07:00:01 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1107,7 +1107,7 @@
    (define (utf8-string-character-ref val fxpos)
       (if (=u32 (fixnum->uint32 fxpos) (js-jsstring-codeunit-length o))
 	  (js-undefined)
-	  (utf8-string-ref val fxpos)))
+	  (js-utf8->jsstring (utf8-string-ref val fxpos))))
    
    (string-dispatch string-character-ref o (uint32->fixnum index)))
 
@@ -2290,10 +2290,10 @@
 		 tail)))
 	 ((isa? replacevalue JsFunction)
 	  (let ((j (+fx i (js-jsstring-lengthfx searchstr))))
-	     (js-stringlist->jsstring
-		(list
-		   (js-substring/enc string 0 i enc)
-		   (js-tostring
+	     (js-jsstring-append
+		(js-substring/enc string 0 i enc)
+		(js-jsstring-append
+		   (js-tojsstring
 		      (js-call3 %this replacevalue (js-undefined)
 			 searchstr i string) %this)
 		   (js-substring/enc string

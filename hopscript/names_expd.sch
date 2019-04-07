@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Sat Apr  6 08:01:02 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 06:13:08 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -49,7 +49,7 @@
 	   (tprint "ASCII " val)
 	   (evepairify `(js-ascii-name->jsstring ,val) x))
 	  (else
-	   (evepairify `(js-name-utf8->jsstring ,val) x))))
+	   (evepairify `(js-utf8-name->jsstring ,val) x))))
       ((& (and ?val ((kwote quot) (? symbol?))))
        (error "&" "wrong syntax" x))
       ((& ?val)

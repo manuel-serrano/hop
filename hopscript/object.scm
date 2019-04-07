@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Apr  6 20:57:29 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 06:49:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -365,7 +365,7 @@
 			 :src "object.scm")
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
-	    ;; check-utfi-validity
+	    ;; check-utf8-validity
 	    (define (check-utf8-validity str)
 	       (if (utf8-string? str)
 		   (js-string->jsstring str)

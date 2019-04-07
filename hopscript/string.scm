@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Mar 31 09:35:49 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 07:12:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -262,15 +262,13 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-cast-string-normalize!::obj %this::JsGlobalObject obj)
    (cond
-      ((string? obj)
-       obj)
       ((isa? obj JsStringLiteral)
        (js-jsstring-normalize! obj))
       ((isa? obj JsString)
        (with-access::JsString obj (val)
 	  (js-cast-string-normalize! %this val)))
       (else
-       (js-tostring (js-toobject %this obj) %this))))
+       (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-string ...                                                   */
@@ -367,6 +365,7 @@
    ;; charAt
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.4
    (define (charat this index)
+      (tprint "chart this=" (typeof this) " " this " index=" index)
       (js-jsstring-charat (js-cast-string-normalize! %this this) index %this))
    
    (js-bind! %this obj (& "charAt")

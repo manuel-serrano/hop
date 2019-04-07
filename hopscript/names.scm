@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sat Apr  6 16:50:44 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 05:45:11 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -263,15 +263,16 @@
 ;*---------------------------------------------------------------------*/
 (define (js-utf8-name->jsstring str::bstring)
    (with-lock js-names-mutex
-      (let ((n (hashtable-get names str)))
-	 (or n
-	     (let ((n (instantiate::JsStringLiteralUTF8
-			 (weight (fixnum->uint32 (string-length str)))
-			 (left str)
-			 (right #f))))
-		(hashtable-put! names str n)
-		(js-jsstring-name-set! n n)
-		n)))))
+      (lambda ()
+	 (let ((n (hashtable-get names str)))
+	    (or n
+		(let ((n (instantiate::JsStringLiteralUTF8
+			    (weight (fixnum->uint32 (string-length str)))
+			    (left str)
+			    (right #f))))
+		   (hashtable-put! names str n)
+		   (js-jsstring-name-set! n n)
+		   n))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name->jsstring ...                                            */

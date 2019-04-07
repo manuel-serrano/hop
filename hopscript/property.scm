@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Apr  6 19:53:01 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 05:59:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3041,7 +3041,8 @@
        (with-access::JsGlobalObject %this (js-symbol-iterator)
 	  (let ((fun (js-get obj js-symbol-iterator %this)))
 	     (when (isa? fun JsFunction)
-		(js-for-of-iterator (js-call0 %this fun obj) obj proc close %this))))))
+		(js-for-of-iterator (js-call0 %this fun obj)
+		   obj proc close %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-of-iterator ...                                           */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Apr  6 20:47:59 2019 (serrano)                */
+;*    Last change :  Sun Apr  7 06:09:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -439,7 +439,7 @@
 	 (let loop ((withs withs))
 	    (if (null? withs)
 		(j2s-scheme expr mode return conf)
-		`(if ,(j2s-in? loc `',id (car withs))
+		`(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs))
 		     ,(j2s-get loc (car withs) #f 'object
 			 `(& ,(symbol->string id)) 'string 'any conf #f #f)
 		     ,(loop (cdr withs))))))))
@@ -792,7 +792,7 @@
 		 `(define ,ident ,(j2s-scheme val mode return conf))))
 	    ((usage? '(ref get new set eval) usage)
 	     (let ((fun (jsfun->lambda val mode return conf
-			   `(js-get ,ident 'prototype %this) #f))
+			   `(js-get ,ident (& "prototype") %this) #f))
 		   (tmp (j2s-fast-id id)))
 		`(begin
 		    (define ,tmp ,fun)
@@ -808,7 +808,7 @@
 	    ((usage? '(call) usage)
 	     `(define ,(j2s-fast-id id)
 		 ,(jsfun->lambda val mode return conf
-		     `(js-get ,(j2s-fast-id id) 'prototype %this) #f)))
+		     `(js-get ,(j2s-fast-id id) (& "prototype") %this) #f)))
 	    (else
 	     '())))))
 
@@ -836,14 +836,14 @@
 			     (proc (gensym 'proc))
 			     (^tmp (j2s-decl-scheme-id decl))
 			     (fun (jsfun->lambda val mode return conf
-				     `(js-get ,ident 'prototype %this) #f)))
+				     `(js-get ,ident (& "prototype") %this) #f)))
 			  `((,^tmp #unspecified)
 			    (,tmp ,fun)
 			    (,var (let ((,proc ,(j2sfun->scheme val tmp mode return conf)))
 				     (set! ,^tmp ,proc)
 				     ,proc))))
 		       (let ((fun (jsfun->lambda val mode return conf
-				     `(js-get ,ident 'prototype %this) #f))
+				     `(js-get ,ident (& "prototype") %this) #f))
 			     (tmp (j2s-fast-id id)))
 			  `((,tmp ,fun)
 			    (,var ,(j2sfun->scheme val tmp mode return conf)))))))
@@ -1337,10 +1337,10 @@
 		   (let liip ((withs withs))
 		      (if (null? withs)
 			  (loop expr)
-			  `(if ,(j2s-in? loc `',id (car withs))
+			  `(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs))
 			       ,(j2s-put! loc (car withs) #f
 				   'object
-				   (symbol->string id) 'propname
+				   `(& ,(symbol->string id)) 'propname
 				   name 'any #f conf #t #f)
 			       ,(liip (cdr withs))))))))
 	    (else
@@ -1679,9 +1679,9 @@
 		   (let liip ((withs withs))
 		      (if (null? withs)
 			  (loop expr)
-			  `(if ,(j2s-in? loc `',id (car withs))
+			  `(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs))
 			       ,(j2s-put! loc (car withs) #f 'object
-				   (symbol->string id) 'propname
+				   `(& ,(symbol->string id)) 'propname
 				   (j2s-scheme rhs mode return conf)
 				   (j2s-vtype rhs)
 				   #f conf #f #f)
@@ -2217,7 +2217,7 @@
 		((string=? val "prototype")
 		 `(js-function-prototype-get
 		     ,(j2s-scheme obj mode return conf)
-		     (js-undefined) 'prototype %this))
+		     (js-undefined) (& "prototype") %this))
 		(else
 		 #f)))))
 		 
@@ -2244,7 +2244,7 @@
 		     (string=? val "prototype")))
 	     `(js-function-prototype-get
 		 ,(j2s-scheme obj mode return conf)
-		 (js-undefined) 'prototype %this))
+		 (js-undefined) (& "prototype") %this))
 	    ((mightbe-number? field)
 	     (index-ref obj field cache cspecs loc))
 	    ((and (builtin-object? obj)
@@ -2390,11 +2390,11 @@
 		     inits)))
 	 (cond
 	    ((null? props)
-	     '(instantiateJsObject
-	       (cmap js-initial-cmap)))
+	     '(with-access::JsGlobalObject %this (__proto__)
+	       (instantiateJsObject
+		  (__proto__ __proto__)
+		  (cmap js-initial-cmap))))
 	    ((every (match-lambda ((& (? string?)) #t) (else #f)) props)
-	     (with-access::J2SObjInit this (loc)
-		(tprint "TOBE OPTIMIZED (literal names init) " props " " loc))
 	     `(let ((,names (vector ,@props))
 		    (,elements (vector ,@vals)))
 		 (js-literal->jsobject ,elements ,names %this)))
@@ -2447,7 +2447,7 @@
 				     ;; initialization, it must be assigned
 				     ;; using the generic js-put! function
 				     (j2s-put! loc tmp #f 'obj
-					"__proto__" 'propname
+					'(& "__proto__") 'propname
 					(j2s-scheme val mode return conf)
 					(j2s-vtype val)
 					(strict-mode? mode) conf #f #f))
