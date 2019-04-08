@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Apr  8 13:27:54 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 20:16:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -254,6 +254,16 @@
 	 (elements elements))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-key-name->jsstring ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-key-name->jsstring s)
+   (cond
+      ((keyword? s) (js-name->jsstring (keyword->string! s)))
+      ((string? s) (js-name->jsstring s))
+      ((symbol? s) (js-name->jsstring (symbol->string! s)))
+      (else s)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-alist->jsobject ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    The cmap structure is defined in property.scm.                   */
@@ -276,15 +286,7 @@
 			  (alist alist))
 		  (if (=fx i len)
 		      obj
-		      (let* ((name (cond
-				      ((keyword? (caar alist))
-				       (js-keyword->jsstring (caar alist)))
-				      ((string? (caar alist))
-				       (js-string->jsstring (caar alist)))
-				      ((symbol? (caar alist))
-				       (js-symbol->jsstring (caar alist)))
-				      (else
-				       (caar alist))))
+		      (let* ((name (js-key-name->jsstring (caar alist)))
 			     (val (js-obj->jsobject (cdar alist) %this)))
 			 (vector-set! props i
 			    (prop name (property-flags-default)))
@@ -312,15 +314,7 @@
 		      (cmap cmap)
 		      (__proto__ __proto__)
 		      (elements elements)))
-		(let* ((name (cond
-				((keyword? (car plist))
-				 (js-keyword->jsstring (car plist)))
-				((keyword? (car plist))
-				 (js-symbol->jsstring (car plist)))
-				((string? (car plist))
-				 (js-string->jsstring (car plist)))
-				(else
-				 (car plist))))
+		(let* ((name (js-key-name->jsstring (cdr plist)))
 		       (val (js-obj->jsobject (cadr plist) %this)))
 		   (vector-set! props i (prop name (property-flags-default)))
 		   (vector-set! elements i val)

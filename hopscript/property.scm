@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Apr  8 15:17:09 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 19:59:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2493,7 +2493,6 @@
    (when (symbol? name)
       (error "bind!" "Illegal property name (symbol)" name))
 
-   (tprint "JS-BIND name=" name)
    (with-access::JsObject o (cmap)
       (if (not (eq? cmap (js-not-a-cmap)))
 	  (jsobject-map-find o name

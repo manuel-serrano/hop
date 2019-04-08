@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr  8 15:13:39 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 19:59:23 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -972,9 +972,6 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-array-prototype! %this js-array js-array-prototype)
 
-   (tprint "---------------------------------------------------"
-      (& "constructor"))
-   
    ;; constructor
    (js-bind! %this js-array-prototype (& "constructor")
       :value js-array :enumerable #f
@@ -1240,13 +1237,11 @@
 		    el))))
 	  (js-array-prototype-pop this %this)))
 
-   (tprint ">>> js-bind! pop")
    (js-bind! %this js-array-prototype (& "pop")
       :value (js-make-function %this array-prototype-pop 0 "pop"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
-   (tprint "<<< js-bind! pop")
    
    ;; push
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.7

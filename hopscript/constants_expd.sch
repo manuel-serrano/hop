@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Mon Apr  8 16:39:42 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 19:08:14 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -48,7 +48,7 @@
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
 	      (bigloo-c
-	       (free-pragma::obj "(__js_cnst_table.objs[ $1 ])" ,num))
+	       (free-pragma::obj ,(format "(__js_cnst_table.objs[ ~a ])" num)))
 	      (else
 	       (vector-ref-ur %cnst-table ,num)))
 	  e))
@@ -74,7 +74,10 @@
    (match-case x
       ((&end!)
        (let* ((xbeg (thread-parameter '&x-cnsts))
-	      (newx (e `(&define-cnst ,@(map car (thread-parameter '&cnsts))) e)))
+	      (newx (e `(&define-cnst
+			   ,@(map cadr
+				(reverse! (thread-parameter '&cnsts))))
+		       e)))
 	  (set-car! xbeg (car newx))
 	  (set-cdr! xbeg (cdr newx))
 	  #unspecified))
@@ -90,12 +93,12 @@
        (let* ((&cnsts (thread-parameter '&cnsts))
 	      (old (assoc str &cnsts)))
 	  (if (pair? old)
-	      (e `(&cnst-ref ,(cdr old)) e)
+	      (e `(&cnst-ref ,(cddr old)) e)
 	      (let ((cnst (&name-expander x e)))
 		 (if (vector? cnst)
 		     (let ((len (length &cnsts)))
 			(thread-parameter-set! '&cnsts
-			   (cons (cons cnst len) &cnsts))
+			   (cons (cons str (cons cnst len)) &cnsts))
 			(e `(&cnst-ref ,len) e))
 		     cnst)))))
       (else
@@ -130,7 +133,7 @@
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
 	      (bigloo-c
-	       (free-pragma::obj "(__js_cnst.objs[ $1 ])" ,num))
+	       (free-pragma::obj ,(format "(__js_cnst.objs[ ~a ])" num)))
 	      (else
 	       (vector-ref-ur __js_cnst ,num)))
 	  e))
