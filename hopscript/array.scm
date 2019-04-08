@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Apr  6 20:03:00 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:13:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -121,6 +121,11 @@
 	  (inline DEFAULT-EMPTY-ARRAY-SIZE::long)))
       (else
        (export (js-empty-vector->jsarray::JsArray ::JsGlobalObject)))))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ::JsArray ...                                    */
@@ -966,6 +971,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.3       */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-array-prototype! %this js-array js-array-prototype)
+
+   (tprint "---------------------------------------------------"
+      (& "constructor"))
    
    ;; constructor
    (js-bind! %this js-array-prototype (& "constructor")
@@ -1231,12 +1239,14 @@
 		    (js-put-length! o (js-uint32-tointeger indx) #f #f %this)
 		    el))))
 	  (js-array-prototype-pop this %this)))
-   
+
+   (tprint ">>> js-bind! pop")
    (js-bind! %this js-array-prototype (& "pop")
       :value (js-make-function %this array-prototype-pop 0 "pop"
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
+   (tprint "<<< js-bind! pop")
    
    ;; push
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.7
@@ -4064,3 +4074,8 @@
 (define-method (js-jsobject->jsarray o::JsArray %this)
    o)
 
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

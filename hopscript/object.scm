@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Apr  7 06:49:54 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:10:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -59,6 +59,11 @@
 	   (generic js-extensible?::bool ::obj ::JsGlobalObject)
 	   (generic js-preventextensions ::obj ::JsGlobalObject)
 	   (generic js-ownkeys ::obj ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsObject ...                                 */
@@ -1294,3 +1299,8 @@
 	     (for-each in-property (js-object-properties obj))))
       (when (js-object? __proto__)
 	 (js-for-in-prototype __proto__ obj proc %this))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

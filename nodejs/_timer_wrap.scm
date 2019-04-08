@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Mon Apr  1 14:47:02 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 16:35:16 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -25,6 +25,11 @@
 	      (marked (default #f))))
 
    (export (hopjs-process-timer ::WorkerHopThread ::JsGlobalObject ::JsObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -110,6 +115,11 @@
 		0 "unref"))
 
    (for-each (lambda (id)
-		(js-bind! %this obj (& id)
+		(js-bind! %this obj (js-string->jsstring id)
 		   :value (not-implemented id)))
       '("setRepeat" "getRepeat" "again")))
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
+

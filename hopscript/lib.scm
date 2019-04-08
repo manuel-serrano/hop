@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Fri Apr  5 08:03:45 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 13:27:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -34,7 +34,8 @@
 	   __hopscript_arraybuffer
 	   __hopscript_arraybufferview)
 
-   (export (js-constant-init ::obj ::obj ::JsGlobalObject)
+   (export (&cnst-init ::obj ::bstring)
+	   (js-constant-init ::obj ::obj ::JsGlobalObject)
 	   (generic js-jsobject->obj ::obj ::JsGlobalObject)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
@@ -48,6 +49,44 @@
 	   (js-iterable->list::pair-nil ::obj ::JsGlobalObject)
 	   (generic js-jsobject->jsarray ::obj ::JsGlobalObject)
 	   (inline fixnums?::bool ::obj ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
+
+;*---------------------------------------------------------------------*/
+;*    &cnst-init ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (&cnst-init vec-or-false str::bstring)
+   (let* ((cnsts (string->obj str))
+	  (target (if vec-or-false vec-or-false cnsts))
+	  (shift (if vec-or-false 1 0)))
+      ;; start fill at index 1 because of the C declaration
+      ;; of the constant vector (see constants_expd.sch)
+      (let loop ((i (-fx (vector-length cnsts) 1)))
+	 (when (>=fx i 0)
+	    (let ((el (vector-ref cnsts i)))
+	       (vector-set! target (+fx i shift)
+		  (case (vector-ref el 0)
+		     ((0)
+		      ;; an ascii name
+		      (let ((str (vector-ref el 1)))
+			 (js-ascii-name->jsstring str)))
+		     ((1)
+		      ;; an utf8 name
+		      (let ((str (vector-ref el 1)))
+			 (js-utf8-name->jsstring str)))
+		     ((2)
+		      ;; an fixnum name
+		      (let ((str (vector-ref el 1)))
+			 (js-integer->jsstring str)))
+		     ((3)
+		      ;; a literal cmap
+		      (let ((props (vector-ref el 1)))
+			 (js-strings->cmap props))))))
+	    (loop (-fx i 1))))
+      target))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-constant-init ...                                             */
@@ -121,7 +160,7 @@
 				   rx))))))))
 	       (loop (-fx i 1)))))
       ;; start fill at index 1 because of the C declaration
-      ;; of the constant vector (see constant_expd.sch)
+      ;; of the constant vector (see constants_expd.sch)
       (when vec-or-false (vector-copy! vec-or-false 1 cnsts 0))
       cnsts))
 
@@ -239,11 +278,11 @@
 		      obj
 		      (let* ((name (cond
 				      ((keyword? (caar alist))
-				       (& (keyword->string (caar alist))))
+				       (js-keyword->jsstring (caar alist)))
 				      ((string? (caar alist))
-				       (& (caar alist)))
+				       (js-string->jsstring (caar alist)))
 				      ((symbol? (caar alist))
-				       (& (symbol->string (caar alist))))
+				       (js-symbol->jsstring (caar alist)))
 				      (else
 				       (caar alist))))
 			     (val (js-obj->jsobject (cdar alist) %this)))
@@ -275,11 +314,11 @@
 		      (elements elements)))
 		(let* ((name (cond
 				((keyword? (car plist))
-				 (& (keyword->string (car plist))))
+				 (js-keyword->jsstring (car plist)))
 				((keyword? (car plist))
-				 (& (symbol->string (car plist))))
+				 (js-symbol->jsstring (car plist)))
 				((string? (car plist))
-				 (& (car plist)))
+				 (js-string->jsstring (car plist)))
 				(else
 				 (car plist))))
 		       (val (js-obj->jsobject (cadr plist) %this)))
@@ -453,3 +492,8 @@
        (pragma::bool "INTEGERP( TAG_INT == 0 ? ((long)$1 | (long)$2) : ((long)$1 & (long)$2) )" a b))
       (else
        (and (fixnum? a) (fixnum? b)))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

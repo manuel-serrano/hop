@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Apr  7 10:16:07 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:21:31 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -40,6 +40,11 @@
    (export (js-init-proxy! ::JsGlobalObject)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    local caches                                                     */
@@ -580,3 +585,8 @@
 			       (loop (-fx i 1)))
 			      (else
 			       (err))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

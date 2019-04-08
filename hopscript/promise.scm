@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Sun Mar 31 07:44:26 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:21:08 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -40,6 +40,11 @@
 	   (js-promise-resolve ::JsPromise ::obj)
 	   (js-promise-reject ::JsPromise ::obj)
 	   (js-promise-then-catch ::JsGlobalObject ::JsPromise proc fail np)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsPromise ...                                */
@@ -576,3 +581,8 @@
 (define (js-promise-async o::JsPromise thunk)
    (with-access::JsPromise o (worker)
       (js-worker-push-thunk! worker "async" thunk)))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

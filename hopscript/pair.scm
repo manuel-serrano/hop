@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Sun Mar 31 07:38:53 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:19:36 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -35,6 +35,11 @@
 	    (js-get-pair ::pair ::obj ::JsGlobalObject)
 	    (js-get-null ::nil ::obj ::JsGlobalObject)
 	    (js-put-pair! ::pair ::obj v throw::bool ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-name-pair ...                                      */
@@ -209,3 +214,8 @@
 	      (js-raise-type-error %this
 		 "[[PUT]], read-only or unbound ~s" (js-tostring prop %this))
 	      v)))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

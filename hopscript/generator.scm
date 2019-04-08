@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Tue Apr  2 07:47:39 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:21:18 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -44,6 +44,11 @@
 	   (js-make-list-iterator ::pair-nil ::procedure ::JsGlobalObject)
 	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    %spawn ...                                                       */
@@ -378,3 +383,8 @@
 	 (else
 	  (yield* val)))))
 
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

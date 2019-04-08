@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sun Apr  7 05:45:11 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 16:18:07 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -224,12 +224,20 @@
 	       (js-jsstring-name-set! o n)
 	       n)))))
 
+(define asciis '())
+
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring)
    (with-lock js-names-mutex
       (lambda ()
+;* 	 (let ((old (assoc str asciis)))                               */
+;* 	    (if (pair? old)                                            */
+;* 		(begin                                                 */
+;* 		   (set-cdr! old (+fx 1 (cdr old)))                    */
+;* 		   (tprint "js-ascii-name->jsstring " old))            */
+;* 		(set! asciis (cons (cons str 1) asciis))))             */
 	 (let ((n (hashtable-get names str)))
 	    (or n
 		(let ((n (instantiate::JsStringLiteralASCII

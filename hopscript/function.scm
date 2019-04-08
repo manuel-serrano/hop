@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Apr  6 17:12:15 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:11:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -51,6 +51,11 @@
 	   (inline js-function-prototype-get ::JsFunction ::obj ::obj ::JsGlobalObject)
 
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsFunction ...                               */
@@ -703,3 +708,8 @@
 	     (map! (lambda (idx)
 		      (js-get argarray idx %this))
 		(iota len)))))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

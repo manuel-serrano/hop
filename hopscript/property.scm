@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Apr  7 10:35:47 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:17:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -219,6 +219,11 @@
 	   (js-call/cache ::JsGlobalObject ::JsPropertyCache obj this . args)
 	   
 	   (js-get-vindex::long ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
@@ -844,7 +849,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-strings->cmap names)
    (instantiate::JsConstructMap
-      (props (vector-map (lambda (n) (prop (& n) (property-flags #t #t #t #f)))
+      (props (vector-map (lambda (n)
+			    (prop (js-string->jsstring n)
+			       (property-flags #t #t #t #f)))
 		names))
       (methods (make-vector (vector-length names) #unspecified))))
       
@@ -2486,6 +2493,7 @@
    (when (symbol? name)
       (error "bind!" "Illegal property name (symbol)" name))
 
+   (tprint "JS-BIND name=" name)
    (with-access::JsObject o (cmap)
       (if (not (eq? cmap (js-not-a-cmap)))
 	  (jsobject-map-find o name
@@ -3358,3 +3366,8 @@
 	    ;; loop
 	    loop))))
 
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

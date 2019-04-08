@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Apr  7 19:52:13 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:53:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -50,6 +50,11 @@
 	   (nodejs-function ::JsGlobalObject ::JsObject)
 	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-plugins-toplevel-loader)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;;(define-macro (bigloo-debug) 0)
 
@@ -490,7 +495,7 @@
 	    (module-init! m)
 	    ;; register the module in the current worker thread
 	    (with-access::WorkerHopThread worker (module-cache)
-	       (js-put! module-cache (& filename) m #f %this))
+	       (js-put! module-cache (js-string->jsstring filename) m #f %this))
 	    ;; return the newly allocated module
 	    (trace-item "module=" (typeof m))
 	    m))))
@@ -1588,7 +1593,8 @@
 		  (with-handler
 		     (lambda (e)
 			(with-access::WorkerHopThread worker (module-cache %this)
-			   (js-delete! module-cache (& filename) #f %this))
+			   (js-delete! module-cache
+			      (js-string->jsstring filename) #f %this))
 			(raise e))
 		     (hopscript %this this scope mod))
 		  ;; set the loaded property
@@ -1618,7 +1624,8 @@
 		  (with-handler
 		     (lambda (e)
 			(with-access::WorkerHopThread worker (module-cache %this)
-			   (js-delete! module-cache (& filename) #f %this))
+			   (js-delete! module-cache
+			      (js-string->jsstring filename) #f %this))
 			(raise e))
 		     ;; exports the HTML value
 		     (js-put! mod (& "exports") (hopscript %this this scope mod)
@@ -1818,7 +1825,8 @@
 
    (with-trace 'require (format "nodejs-load-module ~a" path)
       (with-access::WorkerHopThread worker (module-cache)
-	 (let ((mod (js-get-property-value module-cache module-cache (& path) %this)))
+	 (let ((mod (js-get-property-value module-cache module-cache
+		       (js-string->jsstring path) %this)))
 	    (trace-item "path=" path)
 	    (trace-item "mod=" (if (eq? mod (js-absent)) 'absent (typeof mod)))
 	    (if (eq? mod (js-absent))
@@ -1873,7 +1881,8 @@
    
    (with-trace 'require (format "nodejs-core-module ~a" name)
       (with-access::WorkerHopThread worker (module-cache)
-	 (let ((m (js-get-property-value module-cache module-cache (& name) %this)))
+	 (let ((m (js-get-property-value module-cache module-cache
+		     (js-string->jsstring name) %this)))
 	    (if (eq? m (js-absent))
 		(nodejs-init-core name worker %this)
 		m)))))
@@ -2282,3 +2291,8 @@
    (lambda (filename worker this)
       (nodejs-require-module filename worker this
 	 (nodejs-new-module (basename filename) filename worker this))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Apr  1 14:37:50 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 16:32:30 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -31,6 +31,11 @@
 	   (nodejs-modules-directory-set! ::bstring)
 	   (hopjs-standalone-set! ::bool)
 	   (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -737,3 +742,8 @@
       (charset-convert (js-tostring text %this)
 	 (if (string? from) (string->symbol from) (hop-locale))
 	 (if (string? to) (string->symbol to) (hop-charset)))))
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 30 10:33:05 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:13:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -36,6 +36,11 @@
 	   (inline js-regexp?::bool ::obj)
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
 	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
@@ -762,3 +767,8 @@
 (define (js-regexp->jsregexp val::regexp %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-regexp)
       (js-new1 %this js-regexp (js-string->jsstring (regexp-pattern val)))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

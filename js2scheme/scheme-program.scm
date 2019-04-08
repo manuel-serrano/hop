@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Apr  7 19:37:05 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 16:19:13 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -36,6 +36,7 @@
    (define (j2s-master-module module scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size globals cnsts)
 	 (list module
+	    '(&begin!)
 	    `(%define-cnst-table ,(length cnsts))
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
@@ -53,12 +54,14 @@
 		,esexports
 		,@globals
 		,@(exit-body body conf))
+	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
 
    (define (j2s-slave-module module scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size globals cnsts)
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
+	    '(&begin!)
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    `(%define-cnst-table ,(length cnsts))
@@ -75,6 +78,7 @@
 		,esexports
 		,@globals
 		,@(exit-body body conf))
+	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
 
@@ -109,6 +113,7 @@
 			   (cond-expand (enable-libuv (library libuv)))
 			   (main main))))
 	    (list module
+	       '(&begin!)
 	       `(%define-cnst-table ,(length cnsts))
 	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
@@ -139,7 +144,8 @@
 			   (j2s-worker-thunk path esimports esexports
 			      globals scmcnsts body conf)))
 		   ,(profilers conf)
-		   (thread-join! (thread-start-joinable! %worker)))))))
+		   (thread-join! (thread-start-joinable! %worker)))
+	       '(&end!)))))
 
    
    
@@ -215,6 +221,7 @@
 			(cond-expand (enable-libuv (library libuv)))
 			(main main))))
 	 `(,module (%define-cnst-table ,(length cnsts))
+	     (&begin!)
 	     (%define-pcache ,pcache-size)
 	     (define %pcache
 		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
@@ -249,7 +256,8 @@
 		(hopscript-install-expanders!)
 		(bigloo-library-path-set! ',(bigloo-library-path))
 		(set! !process (nodejs-process %worker %this))
-		,@(exit-body body conf))))))
+		,@(exit-body body conf))
+	     (&end!)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-imports ...                                           */

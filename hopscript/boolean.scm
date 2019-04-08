@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Apr  7 18:54:53 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 13:29:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -32,6 +32,11 @@
 
    (export (js-init-boolean! ::JsGlobalObject)
 	   (js-bool->jsBoolean::JsBoolean ::bool ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsBoolean ...                                */
@@ -168,4 +173,9 @@
 (define (js-bool->jsBoolean val::bool %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-boolean)
       (js-new1 %this js-boolean val)))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sun Mar 31 07:50:26 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:13:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -40,6 +40,11 @@
 	   (js-arguments-ref ::JsArguments ::obj ::JsGlobalObject)
 	   (js-arguments-index-ref ::JsArguments ::uint32 ::JsGlobalObject)
 	   (inline js-arguments-length::obj ::JsArguments ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArguments ...                              */
@@ -543,3 +548,8 @@
 			    %this)
 			 (loop (+fx i 1))))))))))
 
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

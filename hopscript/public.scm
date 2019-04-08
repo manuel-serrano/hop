@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Apr  3 21:26:16 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:14:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -188,6 +188,11 @@
 	   (js-parseint-any ::obj ::JsGlobalObject)
 	   (js-parseint-string-uint32 ::obj ::uint32)
 	   (js-parsefloat ::obj ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */
@@ -1908,3 +1913,8 @@
    (js-string-parsefloat (trim-whitespaces+ (js-tostring string %this) :plus #t)
       #f))
 
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

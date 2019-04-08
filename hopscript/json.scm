@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Apr  7 07:49:49 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:14:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -34,6 +34,11 @@
    (export (js-init-json! ::JsObject)
 	   (js-json-stringify ::JsGlobalObject)
 	   (js-json-parser ::input-port ::obj ::bool ::bool ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsJSON ...                                           */
@@ -430,3 +435,8 @@
 	 (let ((holder (js-new %this js-object)))
 	    (js-put! holder (& "") value #f %this)
 	    (str (& "") holder '())))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

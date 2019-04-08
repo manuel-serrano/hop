@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Apr  7 14:46:05 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:15:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -37,6 +37,11 @@
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-create-service::JsService ::JsGlobalObject ::obj ::obj ::obj ::bool ::bool ::WorkerHopThread)
 	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::bool ::int ::obj ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsService ...                                */
@@ -117,7 +122,7 @@
 		   (if (null? rest)
 		       srv
 		       (begin
-			  (js-put! srv (& (keyword->string (car rest)))
+			  (js-put! srv (js-keyword->jsstring (car rest))
 			     (js-obj->jsobject (cadr rest) ctx)
 			     #f ctx)
 			  (loop (cddr rest)))))))
@@ -914,7 +919,7 @@
 		   (vecks '()))
 		;; first step
 		(for-each (lambda (arg)
-			     (let ((k (& (car arg)))
+			     (let ((k (js-symbol->jsstring (car arg)))
 				   (val (js-string->jsstring (cdr arg))))
 				(cond
 				   ((not (js-in? ctx k obj))
@@ -1140,3 +1145,8 @@
 	 (let ((alias (hashtable-get *url-redirect* abspath)))
 	    (when alias (set! abspath alias))))
       req))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

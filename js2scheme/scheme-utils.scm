@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Apr  6 15:54:57 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 16:36:23 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-utils
    
-   (include "ast.sch" "../hopscript/names_expd.sch")
+   (include "ast.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -169,8 +169,7 @@
 ;*    j2s-scheme-name ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-name id)
-   (js-&-expander `(& ,(symbol->string id))
-      (lambda (x e) x)))
+   `(& ,(symbol->string! id)))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-decl-scheme-id ...                                           */
@@ -529,7 +528,6 @@
 ;* 		  ((js-ascii->jsstring ?str) str)                      */
 ;* 		  ((js-string->jsstring ?str) str)                     */
 		  (else prop))))
-      (tprint "prop=" prop " " (typeof prop))
       (cond
 	 ((> (bigloo-debug) 0)
 	  (if (string? prop)

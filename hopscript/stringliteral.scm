@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Apr  7 07:00:01 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:05:54 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -33,6 +33,8 @@
 	   (inline js-ascii->jsstring::JsStringLiteralASCII ::bstring)
 	   (inline js-utf8->jsstring::JsStringLiteralUTF8 ::bstring)
 	   (js-string->jsstring::JsStringLiteral ::bstring)
+	   (js-symbol->jsstring::JsStringLiteral ::symbol)
+	   (js-keyword->jsstring::JsStringLiteral ::keyword)
 	   (js-integer->jsstring::JsStringLiteralASCII ::long)
 	   (js-stringlist->jsstring ::pair-nil)
 	   (inline js-jsstring->string::bstring ::JsStringLiteral)
@@ -117,6 +119,11 @@
    (cond-expand
       ((not bigloo4.3a)
        (pragma (js-string->jsstring default-inline)))))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
@@ -360,6 +367,18 @@
 	 ((ascii) (js-ascii->jsstring val))
 	 ((latin1 utf8) (js-utf8->jsstring val))
 	 (else (error "string->jsstring" "unsupported encoding" enc)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-symbol->jsstring ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-symbol->jsstring::JsStringLiteral val::symbol)
+   (js-string->jsstring (symbol->string! val)))
+
+;*---------------------------------------------------------------------*/
+;*    js-keyword->jsstring ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-keyword->jsstring::JsStringLiteral val::keyword)
+   (js-string->jsstring (keyword->string! val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-integer->jsstring ...                                         */
@@ -2881,3 +2900,7 @@
    
    (string-dispatch for-of o proc %this))
 
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

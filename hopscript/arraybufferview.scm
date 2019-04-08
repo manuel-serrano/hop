@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sat Apr  6 21:02:18 2019 (serrano)                */
+;*    Last change :  Mon Apr  8 15:20:06 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -33,6 +33,11 @@
 
    (export (js-init-arraybufferview! ::JsGlobalObject)
 	   (js-typedarray-lengthu32 o::JsTypedArray %this #!optional cache)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(&begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
@@ -407,7 +412,7 @@
 
    (let ((not-implemented (js-not-implemented %this)))
       (for-each (lambda (id)
-		   (js-bind! %this proto (& id)
+		   (js-bind! %this proto (js-string->jsstring id)
 		      :value (js-make-function %this not-implemented 1
 				id)
 		      :configurable #t
@@ -720,7 +725,7 @@
 	    :hidden-class #t)
 	 
 	 ;; bind the Typedarray in the global object
-	 (js-bind! %this %this (& name)
+	 (js-bind! %this %this (js-string->jsstring name)
 	    :configurable #f :enumerable #f :value js-typedarray
 	    :hidden-class #t)
 	 
@@ -1408,3 +1413,8 @@
 (define (js-not-implemented %this)
    (lambda (js-not-implemented this::obj)
       (js-raise-type-error %this "Not implemented" this)))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
