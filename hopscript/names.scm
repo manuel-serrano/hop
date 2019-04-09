@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Apr  8 16:18:07 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 17:32:04 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -36,6 +36,7 @@
 	   (js-integer-name->jsstring::JsStringLiteralASCII ::long)
 	   (js-name->jsstring::JsStringLiteral ::bstring)
 	   ;; known names
+	   &integers
 	   &empty
 	   &__proto__
 	   &Array
@@ -89,6 +90,7 @@
 	   &pop
 	   &prototype
 	   &push
+	   &readable
 	   &replace
 	   &require
 	   &return
@@ -107,6 +109,7 @@
 	   &undefined
 	   &value
 	   &valueOf
+	   &write
 	   &writable))
 
 ;*---------------------------------------------------------------------*/
@@ -150,8 +153,6 @@
 ;*    js-jsstring-toname ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-toname::JsStringLiteral p::JsStringLiteral)
-   (when (and (object-widening p) (not (isa? (object-widening p) JsStringLiteral)))
-      (tprint "PAS BON: " p " " (object-widening p)))
    (or (js-jsstring-name p) (js-jsstring->name! p)))
 
 ;*---------------------------------------------------------------------*/
@@ -232,12 +233,13 @@
 (define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring)
    (with-lock js-names-mutex
       (lambda ()
-;* 	 (let ((old (assoc str asciis)))                               */
-;* 	    (if (pair? old)                                            */
-;* 		(begin                                                 */
-;* 		   (set-cdr! old (+fx 1 (cdr old)))                    */
-;* 		   (tprint "js-ascii-name->jsstring " old))            */
-;* 		(set! asciis (cons (cons str 1) asciis))))             */
+	 (let ((old (assoc str asciis)))
+	    (if (pair? old)
+		(begin
+		   (set-cdr! old (+fx 1 (cdr old)))
+		   (when (>=fx (cdr old) 10)
+		      (tprint "js-ascii-name->jsstring " old)))
+		(set! asciis (cons (cons str 1) asciis))))
 	 (let ((n (hashtable-get names str)))
 	    (or n
 		(let ((n (instantiate::JsStringLiteralASCII
@@ -309,9 +311,13 @@
 ;*---------------------------------------------------------------------*/
 (define &integers
    (list->vector
-      (map (lambda (i)
-	      (js-ascii-name->jsstring (fixnum->string i)))
-	 (iota 111 -10))))
+      (append
+	 (map (lambda (i)
+		 (js-ascii-name->jsstring (fixnum->string i)))
+	    (iota 10 -10))
+	 (map (lambda (i)
+		 (js-index-name->jsstring (fixnum->uint32 i)))
+	    (iota 100)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    known strings ...                                                */
@@ -369,6 +375,7 @@
 (define &pop (js-ascii-name->jsstring "pop"))
 (define &prototype (js-ascii-name->jsstring "prototype"))
 (define &push (js-ascii-name->jsstring "push"))
+(define &readable (js-ascii-name->jsstring "readable"))
 (define &replace (js-ascii-name->jsstring "replace"))
 (define &require (js-ascii-name->jsstring "require"))
 (define &return (js-ascii-name->jsstring "return"))
@@ -387,6 +394,7 @@
 (define &undefined (js-ascii-name->jsstring "undefined"))
 (define &value (js-ascii-name->jsstring "value"))
 (define &valueOf (js-ascii-name->jsstring "valueOf"))
+(define &write (js-ascii-name->jsstring "write"))
 (define &writable (js-ascii-name->jsstring "writable"))
 
 

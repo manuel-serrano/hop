@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Apr  9 17:23:06 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 21:04:42 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -528,8 +528,8 @@
 		     (else #f))))
       (cond
 	 ((> (bigloo-debug) 0)
-	  (if (string? prop)
-	      `(js-get/debug ,obj (& ,prop) %this ',loc)
+	  (if (string? propstr)
+	      `(js-get/debug ,obj ,prop %this ',loc)
 	      `(js-get/debug ,obj ,(box prop typrop conf) %this ',loc)))
 	 ((eq? tyobj 'array)
 	  (case typrop
@@ -576,8 +576,7 @@
 		      `(js-global-object-get-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 		     (else
-		      `(js-get-name/cache ,obj
-			  (& ,prop) #f %this
+		      `(js-get-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs)))))
 	     ((memq typrop '(int32 uint32))
 	      (js-get obj (box prop typrop conf) '%this))
@@ -637,8 +636,8 @@
 		     (else #f))))
       (cond
 	 ((> (bigloo-debug) 0)
-	  (if (string? prop)
-	      `(js-put/debug! ,obj (& ,prop)
+	  (if (string? propstr)
+	      `(js-put/debug! ,obj ,prop
 		  ,(box val tyval conf) ,mode %this ',loc)
 	      `(js-put/debug! ,obj ,(box prop typrop conf)
 		  ,(box val tyval conf) ,mode %this ',loc)))

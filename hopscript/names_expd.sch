@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Mon Apr  8 13:19:04 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 17:33:00 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -19,7 +19,20 @@
       ((?- (and ?val (? string?)))
        (cond
 	  ((member val '("__proto__"
-			 "prototype"))
+			 "GLOBAL"
+			 "apply"
+			 "exports"
+			 "get"
+			 "global"
+			 "length"
+			 "prototype"
+			 "readable"
+			 "require"
+			 "set"
+			 "toString"
+			 "value"
+			 "write"
+			 "writable"))
 ;* 			 "Array" "Buffer" "Error"                      */
 ;* 			 "GLOBAL" "Infinity" "-Infinity" "NaN" "Object" */
 ;* 			 "String" "Worker" "apply" "call" "callee" "caller" */
