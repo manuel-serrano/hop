@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Mon Apr  8 16:33:52 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 11:25:29 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -494,12 +494,6 @@
 ;*    make-slowbuffer ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (make-slowbuffer %this::JsGlobalObject)
-   
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "buffer" "buffer binding not implemented" name))
-	 0 name))
    
    (define slowbuffer-proto
       (with-access::JsGlobalObject %this (js-slowbuffer-proto js-object)

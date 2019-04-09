@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Apr  8 15:15:09 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 13:13:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -919,7 +919,7 @@
 		   (vecks '()))
 		;; first step
 		(for-each (lambda (arg)
-			     (let ((k (js-symbol->jsstring (car arg)))
+			     (let ((k (js-string->jsstring (car arg)))
 				   (val (js-string->jsstring (cdr arg))))
 				(cond
 				   ((not (js-in? ctx k obj))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Mon Apr  8 15:14:38 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 15:13:44 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -191,6 +191,10 @@
 			      (name (gensym (string-append "WebWorker@"
 					       (js-jsstring->string src))))
 			      (parent parent)
+			      (mutex (if (isa? parent WorkerHopThread)
+					 (with-access::WorkerHopThread parent (mutex)
+					    mutex)
+					 (make-mutex)))
 			      (tqueue (list (cons "init" thunk)))
 			      (%this this)
 			      (keep-alive #f)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Apr  8 20:16:31 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 11:17:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -99,7 +99,7 @@
 	       (cond
 		  ((isa? el JsRegExp)
 		   ;; patch the regexp prototype
-		   (with-access::JsGlobalObject %this (js-regexp-prototype)
+		   (with-access::JsGlobalObject %this (js-regexp-prototype js-regexp-cmap)
 		      (with-access::JsRegExp el (__proto__ cmap)
 			 (set! cmap js-regexp-cmap)
 			 (set! __proto__ js-regexp-prototype))))
@@ -314,7 +314,7 @@
 		      (cmap cmap)
 		      (__proto__ __proto__)
 		      (elements elements)))
-		(let* ((name (js-key-name->jsstring (cdr plist)))
+		(let* ((name (js-key-name->jsstring (car plist)))
 		       (val (js-obj->jsobject (cadr plist) %this)))
 		   (vector-set! props i (prop name (property-flags-default)))
 		   (vector-set! elements i val)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Apr  8 16:32:41 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 11:26:21 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -819,7 +819,7 @@
 (define (not-implemented-exn fun %this)
    (with-access::JsGlobalObject %this (js-error)
       (js-new %this js-error
-	 (js-string->jsstring (format "~a not implemented" fun)))))
+	 (js-ascii-name->jsstring (format "~a not implemented" fun)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fs-exn ...                                                       */

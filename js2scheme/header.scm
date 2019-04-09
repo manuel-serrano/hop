@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Mon Apr  1 08:16:54 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 10:21:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -95,7 +95,8 @@
 	 (js-def-extern 'Worker #t #t
 	    '(nodejs-worker %this %scope %module))
 	 (js-def-extern '__filename #t #f
-	    '(js-get %module (& "filename") %scope) :type 'string)
+	    '(js-get %module (& "filename") %scope)
+	    :type 'string)
 	 (js-def-extern '__dirname #t #f
 	    '(js-string->jsstring
 	      (dirname

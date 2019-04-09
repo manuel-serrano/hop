@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Apr  8 15:53:58 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 09:11:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1070,7 +1070,7 @@
       (with-trace 'require "nodejs-compile"
 	 (trace-item "filename=" filename)
 	 (or (hashtable-get compile-table filename)
-	     (let* ((mod (gensym))
+	     (let* ((mod (gensym (string->symbol (basename filename))))
 		    (expr (compile src mod))
 		    (evmod (eval-module)))
 		(when (eq? nodejs-debug-compile 'yes)
@@ -1085,16 +1085,10 @@
 			    (for-each (lambda (e) (pp e op)) expr)))))
 		(trace-item "expr=" (format "~s" expr))
 		(unwind-protect
-		   (begin
-		      (eval '(module g139933
-			      (library hop hopscript js2scheme nodejs)
-			      (export
-				 (hopscript
-				    ::JsGlobalObject
-				    ::JsObject
-				    ::JsObject
-				    ::JsObject))))
-		      (for-each eval expr)
+		   (let ((nexpr (map (lambda (x) (eval `(expand ',x))) expr)))
+		      ;; the forms to be evaluated have to be expanded first
+		      ;; in order to resolve the &begin! ... &end! construct
+		      (for-each eval nexpr)
 		      (let ((hopscript (eval! 'hopscript)))
 			 (hashtable-put! compile-table filename hopscript)
 			 hopscript))
@@ -1824,7 +1818,7 @@
 	     mod))))
 
    (with-trace 'require (format "nodejs-load-module ~a" path)
-      (with-access::WorkerHopThread worker (module-cache)
+      (with-access::WorkerHopThread worker (module-cache parent)
 	 (let ((mod (js-get-property-value module-cache module-cache
 		       (js-string->jsstring path) %this)))
 	    (trace-item "path=" path)

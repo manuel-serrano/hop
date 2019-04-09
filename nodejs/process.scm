@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon Apr  8 16:31:27 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 11:25:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -247,7 +247,7 @@
 		     (elements ($create-vector 45)))))
 
 	 (define (not-implemented name)
-	    (js-put! proc (js-string->jsstring name)
+	    (js-put! proc (js-ascii-name->jsstring name)
 	       (js-make-function %this
 		  (lambda (this . l)
 		     (error "process" "binding not implemented" name))

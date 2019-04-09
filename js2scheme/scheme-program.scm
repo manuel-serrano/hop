@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Apr  8 16:19:13 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 07:10:29 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -36,7 +36,8 @@
    (define (j2s-master-module module scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size globals cnsts)
 	 (list module
-	    '(&begin!)
+	    ;; (&begin!) must not be a constant! (_do not_ use quote)
+	    `(define __js_cnst (&begin!))
 	    `(%define-cnst-table ,(length cnsts))
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
@@ -61,7 +62,8 @@
    (define (j2s-slave-module module scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size globals cnsts)
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
-	    '(&begin!)
+	    ;; (&begin!) must not be a constant! (_do not_ use quote)
+	    `(define __js_cnst (&begin!))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    `(%define-cnst-table ,(length cnsts))
@@ -113,7 +115,8 @@
 			   (cond-expand (enable-libuv (library libuv)))
 			   (main main))))
 	    (list module
-	       '(&begin!)
+	       ;; (&begin!) must not be a constant! (_do not_ use quote)
+	       `(define __js_cnst (&begin!))
 	       `(%define-cnst-table ,(length cnsts))
 	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
@@ -180,22 +183,23 @@
 		   ((not name)
 		    ;; a mere expression
 		    `(lambda (%this this %scope %module)
-			(%define-cnst-table ,(length cnsts))
-			(%define-pcache ,pcache-size)	       
-			(define %pcache
-			   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
-			,@(if (config-get conf :profile-call #f)
-			      `((define %call-log (make-vector ,call-size #l0))
-				(define %call-locations ',(call-locations this)))
-			      '())
-			(define %worker (js-current-worker))
-			(define %source (or (the-loading-file) "/"))
-			(define %resource (dirname %source))
-			(define %cnst-table ,scmcnsts)
-			,@esimports
-			,esexports
-			,@globals
-			,@(exit-body body conf)))
+			(&with-cnst!
+			   (%define-cnst-table ,(length cnsts))
+			   (%define-pcache ,pcache-size)	       
+			   (define %pcache
+			      (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
+			   ,@(if (config-get conf :profile-call #f)
+				 `((define %call-log (make-vector ,call-size #l0))
+				   (define %call-locations ',(call-locations this)))
+				 '())
+			   (define %worker (js-current-worker))
+			   (define %source (or (the-loading-file) "/"))
+			   (define %resource (dirname %source))
+			   (define %cnst-table ,scmcnsts)
+			   ,@esimports
+			   ,esexports
+			   ,@globals
+			   ,@(exit-body body conf))))
 		   (main
 		    ;; generate a main hopscript module 
 		    (j2s-main-module/workers name scmcnsts
@@ -221,7 +225,8 @@
 			(cond-expand (enable-libuv (library libuv)))
 			(main main))))
 	 `(,module (%define-cnst-table ,(length cnsts))
-	     (&begin!)
+	     ;; (&begin!) must not be a constant! (_do not_ use quote)
+	     (define __js_cnst (&begin!))
 	     (%define-pcache ,pcache-size)
 	     (define %pcache
 		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/nodejs/node_stdio.js                */
+/*    serrano/prgm/project/hop/3.0.x/nodejs/node_stdio.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct  9 18:26:51 2014                          */
-/*    Last change :  Mon Apr  8 21:01:48 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Last change :  Tue Sep 22 07:58:38 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Stdio initialization                                             */
 /*=====================================================================*/
@@ -18,7 +18,6 @@ function createWritableStdioStream(fd) {
    var tty_wrap = process.binding('tty_wrap');
    // Note stream._type is used for test-module-load-list.js
 
-   #:tprint( "createWritableSttdioStream fd=", fd, " ", tty_wrap.guessHandleType(fd) );
    switch (tty_wrap.guessHandleType(fd)) {
    case 'TTY':
       var tty = NativeModule.require('tty');

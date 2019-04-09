@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Mon Apr  8 13:19:35 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 09:36:56 2019 (serrano)                */
 ;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -96,6 +96,8 @@
 
    (eval `(define-expander &
 	     ,&-expander))
+   (eval `(define-expander &with-cnst!
+	     ,&with-cnst!-expander))
    (eval `(define-expander &begin!
 	     ,&begin!-expander))
    (eval `(define-expander &end!

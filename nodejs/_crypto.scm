@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Mon Apr  8 16:33:28 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 11:25:37 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -111,12 +111,6 @@
 ;*---------------------------------------------------------------------*/
 (define (process-crypto %worker %this)
    
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "crypto" "crypto binding not implemented" name))
-	 0 name))
-
    (define (secure-context-init this . args)
       (with-access::JsSecureContext this (ctx)
 	 (let ((met (if (pair? args)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Mon Apr  8 16:35:07 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 11:26:03 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -35,12 +35,6 @@
 ;*    process-tty-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (process-tty-wrap %worker %this process::JsProcess slab slowbuffer::JsObject)
-   
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "tty_wrap" "binding not implemented" name))
-	 0 name))
    
    (define (create-tty-proto)
       (with-access::JsGlobalObject %this (js-object)

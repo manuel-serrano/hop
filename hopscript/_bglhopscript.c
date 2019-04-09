@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sun Apr  7 16:58:31 2019 (serrano)                */
+/*    Last change :  Tue Apr  9 16:10:00 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -54,9 +54,13 @@ struct pcache_entry {
    pcache_t *pcache;
    int length;
    obj_t src;
+   obj_t thread;
 } *pcaches;
 
-static obj_t *dpcaches;
+static struct dpcache_entry {
+   obj_t pcache;
+   obj_t thread;
+} *dpcaches;
 
 static int pcaches_len = 0;
 static int pcaches_index = 0;
@@ -64,11 +68,11 @@ static int dpcaches_len = 0;
 static int dpcaches_index = 0;
 
 /*---------------------------------------------------------------------*/
-/*    void                                                             */
+/*    static void                                                      */
 /*    bgl_register_pcaches ...                                         */
 /*---------------------------------------------------------------------*/
-void
-bgl_register_pcaches( pcache_t *pcache, int len, obj_t src ) {
+static void
+bgl_register_pcaches( pcache_t *pcache, int len, obj_t src, obj_t thread ) {
    if( pcaches_index == pcaches_len ) {
       if( !pcaches_len ) {
 	 pcaches =
@@ -86,7 +90,8 @@ bgl_register_pcaches( pcache_t *pcache, int len, obj_t src ) {
    
    pcaches[ pcaches_index ].pcache = pcache;
    pcaches[ pcaches_index ].length = len;
-   pcaches[ pcaches_index++ ].src = src;
+   pcaches[ pcaches_index ].src = src;
+   pcaches[ pcaches_index++ ].thread = thread;
 }
 
 /*---------------------------------------------------------------------*/
@@ -94,15 +99,15 @@ bgl_register_pcaches( pcache_t *pcache, int len, obj_t src ) {
 /*    bgl_register_dpcache ...                                         */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_register_dpcache( obj_t pcache ) {
+bgl_register_dpcache( obj_t pcache, obj_t thread ) {
    if( dpcaches_index == dpcaches_len ) {
       if( !dpcaches_len ) {
 	 dpcaches =
-	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * 10 );
+	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( struct dpcache_entry ) * 10 );
 	 dpcaches_len = 10;
       } else { 
-	 obj_t *new =
-	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * dpcaches_len * 2 );
+	 struct dpcache_entry *new =
+	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( struct dpcache_entry ) * dpcaches_len * 2 );
 	 memcpy( new, dpcaches, sizeof( obj_t ) * dpcaches_len );
 	 GC_free( (void *)dpcaches );
 	 dpcaches = new;
@@ -110,7 +115,8 @@ bgl_register_dpcache( obj_t pcache ) {
       }
    }
    
-   dpcaches[ dpcaches_index++ ] = pcache;
+   dpcaches[ dpcaches_index ].pcache = pcache;
+   dpcaches[ dpcaches_index++ ].thread = thread;
 
    return pcache;
 }
@@ -145,16 +151,20 @@ bgl_get_pcaches() {
 /*    bgl_invalidate_pcaches_pmap ...                                  */
 /*---------------------------------------------------------------------*/
 void
-bgl_invalidate_pcaches_pmap( obj_t proc ) {
+bgl_invalidate_pcaches_pmap( obj_t proc, obj_t thread ) {
    int i;
    for( i = 0; i < pcaches_index; i++ ) {
       int j;
-      for( j = 0; j < pcaches[ i ].length; j++ ) {
-	 PROCEDURE_ENTRY( proc )( proc, BOBJECT( &(pcaches[ i ].pcache[ j ]) ), BEOA );
+      if( pcaches[ i ].thread == thread ) {
+	 for( j = 0; j < pcaches[ i ].length; j++ ) {
+	    PROCEDURE_ENTRY( proc )( proc, BOBJECT( &(pcaches[ i ].pcache[ j ]) ), BEOA );
+	 }
       }
    }
    for( i = 0; i < dpcaches_index; i++ ) {
-      PROCEDURE_ENTRY( proc )( proc, dpcaches[ i ], BEOA );
+      if( dpcaches[ i ].thread == thread ) {
+	 PROCEDURE_ENTRY( proc )( proc, dpcaches[ i ].pcache, BEOA );
+      }
    }
 }
 
@@ -166,7 +176,7 @@ bgl_invalidate_pcaches_pmap( obj_t proc ) {
 /*    entries.                                                         */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t template ) {
+bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t thread, obj_t template ) {
    pcache_t *pcache = (pcache_t *)obj;
    int i;
 
@@ -174,7 +184,7 @@ bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t template ) {
       memcpy( &(pcache[ i ]), COBJECT( template ), sizeof( pcache_t ) );
    }
 
-   bgl_register_pcaches( pcache, len, src );
+   bgl_register_pcaches( pcache, len, src, thread );
 
    return BUNSPEC;
 }

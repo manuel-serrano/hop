@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Mon Apr  8 16:34:57 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 11:26:09 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
@@ -36,12 +36,6 @@
 ;*---------------------------------------------------------------------*/
 (define (process-udp-wrap %worker %this process::JsProcess slab slowbuffer::JsObject)
    
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "udp_wrap" "binding not implemented" name))
-	 0 (symbol->string name)))
-
    (define (check-fail %this process r)
       (unless (=fx r 0)
 	 (js-put! process (& "_errno") (nodejs-err-name r) #f %this))

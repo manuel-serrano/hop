@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Apr  7 09:26:04 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 16:18:29 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -86,8 +86,9 @@
        (e `(cond-expand
 	     ((and bigloo-c (not hopjs-worker-slave))
 	      ($js-make-pcache-table (pragma::obj "(obj_t)(__bgl_pcache)")
-		 ,num ,src (instantiate::JsPropertyCache
-			      (pctable (pragma::obj "(obj_t)(__bgl_pcache)")))))
+		 ,num ,src (current-thread)
+		 (instantiate::JsPropertyCache
+		    (pctable (pragma::obj "(obj_t)(__bgl_pcache)")))))
 	     (else
 	      ((@ js-make-pcache-table __hopscript_property) ,num ,src)))
 	  e))

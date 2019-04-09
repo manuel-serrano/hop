@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Apr  8 15:10:38 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 09:03:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -49,7 +49,8 @@
 	   __hopscript_public
 	   __hopscript_worker
 	   __hopscript_websocket
-	   __hopscript_lib)
+	   __hopscript_lib
+	   __hopscript_arguments)
    
    (with   __hopscript_dom)
    
@@ -63,7 +64,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_cnst (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsObject ...                                 */
@@ -237,14 +238,6 @@
    %this)
 
 ;*---------------------------------------------------------------------*/
-;*    make-cmap ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (make-cmap props)
-   (instantiate::JsConstructMap
-      (methods (make-vector (vector-length props)))
-      (props props)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-new-global-object ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-new-global-object #!optional (size 64))
@@ -253,7 +246,9 @@
 		     (__proto__ (js-null))
 		     (elements (make-vector 128))))
 	  (%this (instantiateJsGlobalObject
-		    (cmap (make-cmap '#()))
+		    (cmap (instantiate::JsConstructMap
+			     (methods '#())
+			     (props '#())))
 		    (__proto__ %proto)
 		    (elements (make-vector size)))))
       ;; mark the top proto has holding no numeral properties
@@ -266,9 +261,11 @@
       ;; init the builtin function class
       (js-init-function! %this)
       ;; the object constructor
-      (with-access::JsGlobalObject %this (js-function js-object)
+      (with-access::JsGlobalObject %this (js-function js-object js-initial-cmap)
+	 (set! js-initial-cmap (instantiate::JsConstructMap))
 	 (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	    ;; the prototypes and other builtin classes
+	    (js-init-arguments! %this)
 	    (js-init-symbol! %this)
 	    (js-init-array! %this)
 	    (js-init-arraybuffer! %this)

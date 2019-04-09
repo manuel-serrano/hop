@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Apr  7 17:01:10 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 15:25:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -33,7 +33,7 @@
 
    (extern (include "bglhopscript_malloc.h"))
 
-   (extern ($js-register-property-cache::obj (::obj)
+   (extern ($js-register-property-cache::obj (::obj ::obj)
 	      "bgl_register_dpcache")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
@@ -338,12 +338,6 @@
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))
-;* 	      (js-proxy::JsObject (default (class-nil JsObject)))      */
-;* 	      (js-reflect::JsObject (default (class-nil JsObject)))    */
-;* 	      (js-map::JsObject (default (class-nil JsObject)))        */
-;* 	      (js-set::JsObject (default (class-nil JsObject)))        */
-;* 	      (js-weakmap::JsObject (default (class-nil JsObject)))    */
-;* 	      (js-weakset::JsObject (default (class-nil JsObject)))    */
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
 	      (js-symbol-ctor::procedure (default list))
@@ -359,7 +353,19 @@
 	      (js-vindex (default 0))
 	      (js-pmap-valid::bool (default #f))
 	      (js-input-port (default #f))
-	      (js-new-target (default (js-undefined))))
+	      (js-new-target (default (js-undefined)))
+	      (js-initial-cmap (default (class-nil JsConstructMap)))
+	      (js-arguments-cmap (default (class-nil JsConstructMap)))
+	      (js-array-cmap (default (class-nil JsConstructMap)))
+	      (js-function-cmap (default (class-nil JsConstructMap)))
+	      (js-function-cmap-sans-prototype (default (class-nil JsConstructMap)))
+	      (js-function-strict-cmap (default (class-nil JsConstructMap)))
+	      (js-function-writable-cmap (default (class-nil JsConstructMap)))
+	      (js-function-writable-strict-cmap (default (class-nil JsConstructMap)))
+	      (js-function-prototype-cmap (default (class-nil JsConstructMap)))
+	      (js-yield-cmap (default (class-nil JsConstructMap)))
+	      (js-regexp-cmap (default (class-nil JsConstructMap)))
+	      (js-regexp-exec-cmap (default (class-nil JsConstructMap))))
 
 	   (js-property-cache-init!::JsPropertyCache ::JsPropertyCache)
 	   
@@ -480,7 +486,7 @@
 ;*    js-property-cache-init! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-property-cache-init! o)
-   ($js-register-property-cache o))
+   ($js-register-property-cache o (current-thread)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-jsobject ...                                             */

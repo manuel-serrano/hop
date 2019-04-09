@@ -69,7 +69,6 @@ ReadStream.prototype.setRawMode = function(flag) {
 
 
 function WriteStream(fd) {
-   #:tprint( "WriteStream fd=", fd, " ", this, this._handle );
   if (!(this instanceof WriteStream)) return new WriteStream(fd);
   net.Socket.call(this, {
     handle: new TTY(fd, false),

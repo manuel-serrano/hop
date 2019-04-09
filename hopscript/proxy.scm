@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon Apr  8 15:21:31 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 11:06:54 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -44,7 +44,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_cnst (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    local caches                                                     */
@@ -63,11 +63,6 @@
 	 (name (& ""))
 	 (%get js-proxy-property-value)
 	 (%set js-proxy-property-value-set!))))
-
-(define proxy-cmap-NOTUSED
-   (instantiate::JsConstructMap
-      (methods '#(#f))
-      (props '#())))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-proxy! ...                                               */

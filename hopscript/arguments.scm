@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Apr  8 15:13:59 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 15:27:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -32,7 +32,8 @@
 	   __hopscript_worker
 	   __hopscript_array)
 
-   (export (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
+   (export (js-init-arguments! ::JsGlobalObject)
+	   (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
 	   (js-arguments ::JsGlobalObject ::vector)
 	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)
@@ -102,6 +103,16 @@
 			  (hop->javascript (js-get o i %this)
 			     op compile isexpr))
 		       (loop (+u32 i (fixnum->uint32 1))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-arguments! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-init-arguments! %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-arguments-cmap)
+      (set! js-arguments-cmap
+	 (instantiate::JsConstructMap
+	    (methods (make-vector (vector-length arguments-cmap-props)))
+	    (props arguments-cmap-props)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarguments-fields ...                                           */
@@ -400,11 +411,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    arguments-cmap ...                                               */
 ;*---------------------------------------------------------------------*/
-(define arguments-cmap
-   (instantiate::JsConstructMap
-      (methods (make-vector 2))
-      (props `#(,(prop (& "length") (property-flags #t #f #t #f))
-		,(prop (& "callee") (property-flags #t #f #t #f))))))
+(define arguments-cmap-props
+   `#(,(prop (& "length") (property-flags #t #f #t #f))
+      ,(prop (& "callee") (property-flags #t #f #t #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments ...                                                 */
@@ -412,12 +421,13 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
 ;*---------------------------------------------------------------------*/
 (define (js-arguments %this::JsGlobalObject vec::vector)
-   (with-access::JsObject %this (__proto__)
-      (instantiateJsArguments
-	 (vec vec)
-	 (cmap arguments-cmap)
-	 (elements (vector (vector-length vec) (js-undefined)))
-	 (__proto__ __proto__))))
+   (with-access::JsGlobalObject %this (js-arguments-cmap)
+      (with-access::JsObject %this (__proto__)
+	 (instantiateJsArguments
+	    (vec vec)
+	    (cmap js-arguments-cmap)
+	    (elements (vector (vector-length vec) (js-undefined)))
+	    (__proto__ __proto__)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments ...                                          */

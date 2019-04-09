@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr  8 15:13:00 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 15:45:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -32,7 +32,6 @@
 	   __hopscript_error)
 
    (export (js-init-regexp! ::JsGlobalObject)
-	   js-regexp-cmap
 	   (inline js-regexp?::bool ::obj)
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
 	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)))
@@ -47,12 +46,6 @@
 ;*---------------------------------------------------------------------*/
 (%define-pcache 1)
 (define %pcache (js-make-pcache-table 1 "hopscript/regexp.scm"))
-
-;*---------------------------------------------------------------------*/
-;*    js-regexp-cmap ...                                               */
-;*---------------------------------------------------------------------*/
-(define js-regexp-cmap
-   (js-not-a-cmap))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsRegExp ...                                 */
@@ -104,16 +97,20 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10        */
 ;*---------------------------------------------------------------------*/
 (define (js-init-regexp! %this::JsGlobalObject)
-   ;; first, create the builtin prototype
    (with-access::JsGlobalObject %this (__proto__ js-regexp js-function
-					 js-regexp-prototype)
+					 js-regexp-prototype
+					 js-regexp-cmap
+					 js-regexp-exec-cmap)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 
 	 ;; default regexp cmap
 	 (set! js-regexp-cmap
 	    (instantiate::JsConstructMap
 	       (methods (make-vector 1))
 	       (props `#(,(prop (& "lastIndex") (property-flags #t #f #f #f))))))
+	 (set! js-regexp-exec-cmap
+	    (instantiate::JsConstructMap
+	       (methods (make-vector (vector-length js-regexp-exec-cmap-props)))
+	       (props js-regexp-exec-cmap-props)))
 	 
 	 (set! js-regexp-prototype
 	    (instantiateJsRegExp
@@ -493,7 +490,7 @@
 			    'JAVASCRIPT_COMPAT
 			    (if (eq? enc 'ascii) 'JAVASCRIPT_COMPAT 'UTF8)
 			    (when (js-regexp-flags-multiline? flags) 'MULTILINE))))
-		  (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
+		  (with-access::JsGlobalObject %this (js-regexp js-regexp-cmap js-regexp-prototype)
 		     (instantiateJsRegExp
 			(cmap js-regexp-cmap)
 			(__proto__ js-regexp-prototype)
@@ -613,11 +610,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-exec-cmap ...                                          */
 ;*---------------------------------------------------------------------*/
-(define js-regexp-exec-cmap
-   (instantiate::JsConstructMap
-      (methods '#())
-      (props `#(,(prop (& "index") (property-flags #t #t #t #f))
-		,(prop (& "input") (property-flags #t #t #t #f))))))
+(define js-regexp-exec-cmap-props
+   `#(,(prop (& "index") (property-flags #t #t #t #f))
+      ,(prop (& "input") (property-flags #t #t #t #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    regexp-prototype-exec ...                                        */
@@ -671,7 +666,8 @@
 				 (els ($create-vector 2)))
 			     ;; bind the result cmap and add the elements
 			     (with-access::JsArray a (elements cmap)
-				(set! cmap js-regexp-exec-cmap)
+				(with-access::JsGlobalObject %this (js-regexp-exec-cmap)
+				   (set! cmap js-regexp-exec-cmap))
 				(set! elements els))
 			     ;; 15
 			     (vector-set! els 0 matchindex)

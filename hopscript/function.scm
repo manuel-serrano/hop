@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Apr  8 15:11:08 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 09:03:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -55,7 +55,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_cnst (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsFunction ...                               */
@@ -96,7 +96,7 @@
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 11)
-(define %pcache (js-make-pcache-table 11 "hopscript/array.scm"))
+(define %pcache (js-make-pcache-table 11 "hopscript/function.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ...                                */
@@ -173,47 +173,6 @@
       (props props)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-cmap ...                                             */
-;*---------------------------------------------------------------------*/
-(define js-function-cmap
-   (make-cmap
-      `#(,(prop (& "prototype") (property-flags #f #f #f #f))
-	 ,(prop (& "length") (property-flags #f #f #f #f))
-	 ,(prop (& "name") (property-flags #f #f #t #f)))))
-
-(define js-function-cmap-sans-prototype
-   (make-cmap
-      `#(,(prop (& "%null") (property-flags #f #f #f #f))
-	 ,(prop (& "length") (property-flags #f #f #f #f))
-	 ,(prop (& "name") (property-flags #f #f #t #f)))))
-
-(define js-function-strict-cmap
-   (make-cmap
-      `#(,(prop (& "prototype") (property-flags #f #f #f #f))
-	 ,(prop (& "length") (property-flags #f #f #f #f))
-	 ,(prop (& "name") (property-flags #f #f #t #f))
-	 ,(prop (& "arguments") (property-flags #f #f #f #f))
-	 ,(prop (& "caller") (property-flags #f #f #f #f)))))
-
-(define js-function-writable-cmap
-   (make-cmap
-      `#(,(prop (& "prototype") (property-flags #t #f #f #f))
-	 ,(prop (& "length") (property-flags #f #f #f #f))
-	 ,(prop (& "name") (property-flags #f #f #t #f)))))
-
-(define js-function-writable-strict-cmap
-   (make-cmap
-      `#(,(prop (& "prototype") (property-flags #t #f #f #f))
-	 ,(prop (& "length") (property-flags #f #f #f #f))
-	 ,(prop (& "name") (property-flags #f #f #t #f))
-	 ,(prop (& "arguments") (property-flags #f #f #f #f))
-	 ,(prop (& "caller") (property-flags #f #f #f #f)))))
-
-(define js-function-prototype-cmap
-   (make-cmap
-      `#(,(prop (& "constructor") (property-flags #t #f #t #f)))))
-
-;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-expander current-loc
@@ -243,7 +202,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-function! %this::JsGlobalObject)
-   ;; first, bind the builtin function prototype
+   ;; create function cmap
+   (js-init-function-cmap! %this)
+   ;; bind the builtin function prototype
    (with-access::JsGlobalObject %this ((js-object-prototype __proto__)
 				       js-function-prototype
 				       js-function-strict-prototype
@@ -314,6 +275,54 @@
       js-function))
 
 ;*---------------------------------------------------------------------*/
+;*    js-init-function-cmap! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-init-function-cmap! %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-function-cmap
+					 js-function-cmap-sans-prototype
+					 js-function-strict-cmap
+					 js-function-writable-cmap
+					 js-function-writable-strict-cmap
+					 js-function-prototype-cmap)
+      (set! js-function-cmap
+	 (make-cmap
+	    `#(,(prop (& "prototype") (property-flags #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f)))))
+      
+      (set! js-function-cmap-sans-prototype
+	 (make-cmap
+	    `#(,(prop (& "%null") (property-flags #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f)))))
+      
+      (set! js-function-strict-cmap
+	 (make-cmap
+	    `#(,(prop (& "prototype") (property-flags #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f))
+	       ,(prop (& "arguments") (property-flags #f #f #f #f))
+	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
+      
+      (set! js-function-writable-cmap
+	 (make-cmap
+	    `#(,(prop (& "prototype") (property-flags #t #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f)))))
+      
+      (set! js-function-writable-strict-cmap
+	 (make-cmap
+	    `#(,(prop (& "prototype") (property-flags #t #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f))
+	       ,(prop (& "arguments") (property-flags #f #f #f #f))
+	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
+      
+      (set! js-function-prototype-cmap
+	 (make-cmap
+	    `#(,(prop (& "constructor") (property-flags #t #f #t #f)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    %js-function ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.1.1     */
@@ -375,7 +384,13 @@
 	   (strict 'normal) arity (minlen -1) src rest
 	   (size 0) (constrsize 3) (maxconstrsize 100)
 	   (constrmap (js-not-a-cmap)) (shared-cmap #t))
-   (with-access::JsGlobalObject %this (js-function js-object)
+   (with-access::JsGlobalObject %this (js-function js-object
+					 js-function-cmap
+					 js-function-strict-cmap
+					 js-function-writable-cmap
+					 js-function-writable-strict-cmap
+					 js-function-cmap-sans-prototype
+					 js-function-prototype-cmap)
       (with-access::JsFunction js-function ((%__proto__ __proto__))
 	 (let* ((els ($create-vector (+fx size (if (eq? strict 'normal) 3 5))))
 		(cmap (if (eq? strict 'normal)

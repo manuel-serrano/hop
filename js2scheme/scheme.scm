@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Apr  7 06:09:04 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 15:24:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2390,7 +2390,7 @@
 		     inits)))
 	 (cond
 	    ((null? props)
-	     '(with-access::JsGlobalObject %this (__proto__)
+	     '(with-access::JsGlobalObject %this (__proto__ js-initial-cmap)
 	       (instantiateJsObject
 		  (__proto__ __proto__)
 		  (cmap js-initial-cmap))))

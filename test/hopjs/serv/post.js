@@ -66,7 +66,6 @@ service serv3() {
       buf: new Buffer( [-3,-2,-1,0,1,2,3,127 ] ),
       el: <div style="border: 2px solid green" id="bar">toto</div>
    };
-   console.log( "********************************* BVO=", o.bo, o.bo instanceof Boolean );
    return o;
 }
    

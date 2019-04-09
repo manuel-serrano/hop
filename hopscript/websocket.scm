@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon Apr  8 15:18:05 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 11:29:50 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -525,7 +525,7 @@
 ;*    bind-websocket-listener! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-listener! %this obj action)
-   (js-bind! %this obj (js-string->jsstring (car action))
+   (js-bind! %this obj (js-ascii-name->jsstring (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
               0 (car action))
@@ -543,7 +543,7 @@
 ;*    bind-websocket-server-listener! ...                              */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-server-listener! %this obj action)
-   (js-bind! %this obj (js-string->jsstring (car action))
+   (js-bind! %this obj (js-ascii-name->jsstring (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
               0 (car action))
@@ -561,7 +561,7 @@
 ;*    bind-websocket-client-listener! ...                              */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-client-listener! %this obj action)
-   (js-bind! %this obj (js-string->jsstring (car action))
+   (js-bind! %this obj (js-ascii-name->jsstring (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
               0 (car action))

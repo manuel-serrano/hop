@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Mon Apr  8 15:21:50 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 10:05:40 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -111,7 +111,7 @@
       (init-prototype! %this js-map js-map-prototype)
       
       ;; bind MAP/WEAKMAP in the global object
-      (js-bind! %this %this (js-string->jsstring name)
+      (js-bind! %this %this (js-ascii-name->jsstring name)
 	 :configurable #f :enumerable #f :value js-map
 	 :hidden-class #t)
       

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Apr  8 19:59:04 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 07:02:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -41,9 +41,9 @@
 	   __hopscript_names
 	   __hopscript_arraybufferview)
    
-   (extern ($js-make-pcache-table::obj (::obj ::int ::obj ::JsPropertyCache)
+   (extern ($js-make-pcache-table::obj (::obj ::int ::obj ::obj ::JsPropertyCache)
 	      "bgl_make_pcache_table")
-	   ($js-invalidate-pcaches-pmap!::void (::obj)
+	   ($js-invalidate-pcaches-pmap!::void (::obj ::obj)
 	      "bgl_invalidate_pcaches_pmap")
 	   ($js-get-pcaches::pair-nil ()
 	      "bgl_get_pcaches"))
@@ -63,7 +63,6 @@
 	   
 	   (inline property-name::JsStringLiteral ::struct)
 
-	   js-initial-cmap
 	   (js-names->cmap::JsConstructMap ::vector)
 	   (js-strings->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
@@ -223,12 +222,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
-
-;*---------------------------------------------------------------------*/
-;*    property caches ...                                              */
-;*---------------------------------------------------------------------*/
-(define %cache (instantiate::JsPropertyCache))
+(define __js_cnst (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline thresholds ...                                            */
@@ -253,7 +247,8 @@
 			       (with-access::JsPropertyDescriptor d (name)
 				  name))
 			  properties)
-		       "\n  props=" properties))
+		       "\n  props="
+		       (map (lambda (p) (format "~s" p)) properties)))
 		 (with-access::JsConstructMap cmap (%id props methods size)
 		    (fprint (current-error-port) msg (typeof obj) " MAPPED"
 		       " length=" (vector-length elements)
@@ -268,7 +263,8 @@
 						 v))
 					  elements)
 		       "\n  cmap.%id=" %id
-		       " cmap.props=" props)))))
+		       "\n  prop.names=" (vector-map prop-name props)
+		       "\n  cmap.props=" props)))))
        (fprint (current-error-port) msg (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -465,6 +461,7 @@
 ;*---------------------------------------------------------------------*/
 (define (register-pcache-table! pctable len src)
    ;; bootstrap initialization
+   ;;(tprint "regsiter-pcache-table len=" len " src=" src " " (current-thread))
    (when (eq? *pctables* #unspecified) (set! *pctables* '()))
    (set! *pctables* (cons (vector pctable len src (current-thread)) *pctables*))
    pctable)
@@ -487,7 +484,7 @@
 ;*       4) a property hidding a prototype property is added.          */
 ;*---------------------------------------------------------------------*/
 (define (js-invalidate-pcaches-pmap! %this::JsGlobalObject reason)
-
+   
    (define (invalidate-pcache-pmap! pcache)
       (with-access::JsPropertyCache pcache (pmap emap amap)
 	 (when (isa? pmap JsConstructMap) (reset-cmap-vtable! pmap))
@@ -495,22 +492,23 @@
 	 (set! pmap #t)
 	 (set! emap #t)
 	 (set! amap #t)))
-
+   
    (with-access::JsGlobalObject %this (js-pmap-valid cmap)
       (when js-pmap-valid
-	 (set! js-pmap-valid #f)
-	 (log-pmap-invalidation! reason)
-	 ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap!)
-	 (for-each (lambda (pcache-entry)
-		      (let ((vec (vector-ref pcache-entry 0))
-			    (th (vector-ref pcache-entry 3)))
-			 (when (eq? th (current-thread))
-			    (let loop ((i (-fx (vector-ref pcache-entry 1) 1)))
-			       (when (>=fx i 0)
-				  (let ((pcache (vector-ref vec i)))
-				     (invalidate-pcache-pmap! pcache))
-				  (loop (-fx i 1)))))))
-	    *pctables*))))
+	 (let ((curth (current-thread)))
+	    (set! js-pmap-valid #f)
+	    (log-pmap-invalidation! reason)
+	    ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap! curth)
+	    (for-each (lambda (pcache-entry)
+			 (let ((vec (vector-ref pcache-entry 0))
+			       (th (vector-ref pcache-entry 3)))
+			    (when (eq? th curth)
+			       (let loop ((i (-fx (vector-ref pcache-entry 1) 1)))
+				  (when (>=fx i 0)
+				     (let ((pcache (vector-ref vec i)))
+					(invalidate-pcache-pmap! pcache))
+				     (loop (-fx i 1)))))))
+	       *pctables*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-invalidate-cache-method! ...                                  */
@@ -826,12 +824,6 @@
    (struct-ref p 0))
 
 ;*---------------------------------------------------------------------*/
-;*    js-initial-cmap ...                                              */
-;*---------------------------------------------------------------------*/
-(define js-initial-cmap
-   (instantiate::JsConstructMap))
-
-;*---------------------------------------------------------------------*/
 ;*    js-names->cmap ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    Used by j2sscheme to create literal objects.                     */
@@ -850,7 +842,7 @@
 (define (js-strings->cmap names)
    (instantiate::JsConstructMap
       (props (vector-map (lambda (n)
-			    (prop (js-string->jsstring n)
+			    (prop (js-name->jsstring n)
 			       (property-flags #t #t #t #f)))
 		names))
       (methods (make-vector (vector-length names) #unspecified))))
@@ -2490,9 +2482,8 @@
 	 (js-define-own-property o name desc #f %this)
 	 (js-undefined)))
 
-   (when (symbol? name)
-      (error "bind!" "Illegal property name (symbol)" name))
-
+   [assert (name) (not (symbol? name))]
+   [assert (name) (eq? name (js-toname name %this))]
    (with-access::JsObject o (cmap)
       (if (not (eq? cmap (js-not-a-cmap)))
 	  (jsobject-map-find o name

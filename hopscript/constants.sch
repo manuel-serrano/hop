@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Mon Apr  8 14:29:08 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 09:30:56 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    constants Helper macros.                                         */
@@ -19,6 +19,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    & ...                                                            */
 ;*---------------------------------------------------------------------*/
+(define-expander &with-cnst! &with-cnst!-expander)
 (define-expander &begin! &begin!-expander)
 (define-expander &end! &end!-expander)
 (define-expander & &-expander)

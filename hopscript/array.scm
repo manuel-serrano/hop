@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr  8 19:59:23 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 09:59:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -51,7 +51,6 @@
       (profile (import __hopscript_profile)))
    
    (export (js-init-array! ::JsGlobalObject)
-	   js-array-cmap
 	   (inline js-make-vector ::long ::obj)
 	   (inline js-array-mark::long)
 	   *JS-ARRAY-MARK*
@@ -125,7 +124,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_cnst (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ::JsArray ...                                    */
@@ -143,12 +142,6 @@
 	     (vector-set! v 19 "...")
 	     (fprint (current-error-port) " vec=" v)))
       (flush-output-port (current-error-port))))
-
-;*---------------------------------------------------------------------*/
-;*    js-array-cmap ...                                                */
-;*---------------------------------------------------------------------*/
-(define js-array-cmap
-   (js-not-a-cmap))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toindex ...                                                   */
@@ -396,7 +389,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-array! %this)
    (with-access::JsGlobalObject %this (__proto__ js-array js-array-prototype
-					 js-function)
+					 js-function js-array-cmap)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 ;; default arrays cmap
@@ -411,7 +404,6 @@
 	       (vec '#())
 	       (__proto__ __proto__)
 	       (cmap (js-not-a-cmap))
-	       ;;(cmap js-array-cmap)
 	       (properties (list
 			      ;; cannot be defined with js-bind! because
 			      ;; of bootstrap specificities
@@ -2478,7 +2470,6 @@
        (with-access::JsGlobalObject %this (js-array-prototype)
 	  ($js-make-jsarray (uint32->fixnum len) len
 	     (js-not-a-cmap)
-	     ;;js-array-cmap
 	     js-array-prototype
 	     (js-absent) (js-array-default-mode))))
       (else

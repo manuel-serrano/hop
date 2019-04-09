@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/src/main.scm                      */
+;*    serrano/prgm/project/hop/hop/src/main.scm                        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jan 29 11:35:39 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 08:08:21 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -310,7 +310,8 @@
 		       :driver-name "j2s-plain-driver"
 		       :parser 'repl
 		       :verbose 0
-		       :filename "repl.js")))))
+		       :hopscript-header #f
+		       :filename "javascript-init-hss")))))
       ;; force the module initialization
       (js-worker-push-thunk! %worker "hss"
 	 (lambda ()

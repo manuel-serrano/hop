@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Mon Apr  8 15:21:18 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 15:40:25 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -56,16 +56,6 @@
 (define %spawn::procedure list)
 
 ;*---------------------------------------------------------------------*/
-;*    js-yield-cmap ...                                                */
-;*---------------------------------------------------------------------*/
-(define js-yield-cmap
-   (let ((props `#(,(prop (& "value") (property-flags #t #t #t #f))
-		   ,(prop (& "done") (property-flags #t #t #t #f)))))
-      (instantiate::JsConstructMap
-	 (props props)
-	 (methods (make-vector (vector-length props))))))
-
-;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsGenerator ...                              */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsGenerator
@@ -92,13 +82,20 @@
 ;*    https://www.ecma-international.org/ecma-262/6.0/#sec-25.2        */
 ;*---------------------------------------------------------------------*/
 (define (js-init-generator! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype js-generatorfunction-prototype js-symbol-iterator js-symbol-tostringtag)
-
+   (js-init-generator-yield-cmap! %this)
+   (with-access::JsGlobalObject %this (__proto__
+					 js-function-prototype
+					 js-generator-prototype
+					 js-generatorfunction-prototype
+					 js-symbol-iterator
+					 js-symbol-tostringtag
+					 js-yield-cmap)
+      
       (define js-gen-proto-proto
 	 (let ((proto (instantiateJsObject
-		       (cmap (instantiate::JsConstructMap))
-		       (__proto__ __proto__)
-		       (elements ($create-vector 1)))))
+			 (cmap (instantiate::JsConstructMap))
+			 (__proto__ __proto__)
+			 (elements ($create-vector 1)))))
 	    (js-bind! %this proto js-symbol-iterator
 	       :value (js-make-function %this
 			 (lambda (this)
@@ -113,7 +110,7 @@
 	    (cmap (instantiate::JsConstructMap))
 	    (__proto__ js-gen-proto-proto)
 	    (elements ($create-vector 4))))
-
+      
       (define js-genfun-proto
 	 (instantiateJsObject
 	    (cmap (instantiate::JsConstructMap))
@@ -187,11 +184,11 @@
 		      (js-generator-next this val #t))
 		   1 "throw")
 	 :hidden-class #t)
-
+      
       (js-bind! %this js-gen-proto js-symbol-tostringtag
 	 :configurable #t :enumerable #f :writable #f
 	 :value (js-string->jsstring "Generator"))
-
+      
       
       (js-bind! %this js-genfun-proto (& "constructor")
 	 :configurable #t :enumerable #f :writable #f
@@ -209,7 +206,21 @@
       (set! js-generator-prototype js-gen-proto)
       (set! js-generatorfunction-prototype js-genfun-proto)
       
+      
+      
       ))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-generator-yield-cmap! ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-init-generator-yield-cmap! %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-yield-cmap)
+      (set! js-yield-cmap
+	 (let ((props `#(,(prop (& "value") (property-flags #t #t #t #f))
+			 ,(prop (& "done") (property-flags #t #t #t #f)))))
+	    (instantiate::JsConstructMap
+	       (props props)
+	       (methods (make-vector (vector-length props))))))))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    js-function-construct ...                                        */
@@ -350,7 +361,7 @@
 (define (js-generator-yield gen val done kont %this)
    (with-access::JsGenerator gen (%next)
       (set! %next kont)
-      (with-access::JsGlobalObject %this (__proto__)
+      (with-access::JsGlobalObject %this (__proto__ js-yield-cmap)
 	 (instantiateJsObject
 	    (cmap js-yield-cmap)
 	    (__proto__ __proto__)
