@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Apr  8 16:36:23 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 17:23:06 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -512,7 +512,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-get loc obj field tyobj prop typrop tyval conf cache
 	   optim-arrayp #!optional (cspecs '(cmap pmap amap vtable)))
-
+   
    (define (js-get obj prop %this)
       (if (config-get conf :profile-cache #f)
 	  `(js-get/debug ,(box obj tyobj conf) ,prop %this ',loc)
@@ -522,12 +522,10 @@
       (and (not (number? prop))
 	   (not (type-number? typrop))
 	   (not (eq? typrop 'array))))
-
-   (let ((prop (match-case prop
-;* 		  ((js-utf8->jsstring ?str) str)                       */
-;* 		  ((js-ascii->jsstring ?str) str)                      */
-;* 		  ((js-string->jsstring ?str) str)                     */
-		  (else prop))))
+   
+   (let ((propstr (match-case prop
+		     ((& ?str) str)
+		     (else #f))))
       (cond
 	 ((> (bigloo-debug) 0)
 	  (if (string? prop)
@@ -565,19 +563,17 @@
 	      `(js-get-string ,obj ,prop %this))))
 	 ((and cache cspecs)
 	  (cond
-	     ((string? prop)
-	      (if (string=? prop "length")
+	     ((string? propstr)
+	      (if (string=? propstr "length")
 		  (if (eq? tyval 'uint32)
 		      `(js-get-lengthu32 ,obj %this ,(js-pcache cache))
 		      `(js-get-length ,obj %this ,(js-pcache cache)))
 		  (case tyobj
 		     ((object this)
-		      `(js-object-get-name/cache ,obj
-			  (& ,prop) #f %this
+		      `(js-object-get-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 		     ((global)
-		      `(js-global-object-get-name/cache ,obj
-			  (& ,prop) #f %this
+		      `(js-global-object-get-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 		     (else
 		      `(js-get-name/cache ,obj
@@ -590,12 +586,12 @@
 		  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 	     (else
 	      (js-get obj prop '%this))))
-	 ((string? prop)
-	  (if (string=? prop "length")
+	 ((string? propstr)
+	  (if (string=? propstr "length")
 	      (if (eq? tyval 'uint32)
 		  `(js-get-lengthu32 ,obj %this #f)
 		  `(js-get-length ,obj %this #f))
-	      `(js-get ,(box obj tyobj conf) (& ,prop) %this)))
+	      `(js-get ,(box obj tyobj conf) ,prop %this)))
 	 ((and field optim-arrayp (mightbe-number? field))
 	  (let ((o (gensym '%obj))
 		(p (gensym '%prop)))
@@ -636,11 +632,9 @@
 	   (not (type-number? typrop))
 	   (not (eq? typrop 'array))))
 
-   (let ((prop2 (match-case prop
-		  ((js-utf8->jsstring ?str) str)
-		  ((js-ascii->jsstring ?str) str)
-		  ((js-string->jsstring ?str) str)
-		  (else prop))))
+   (let ((propstr (match-case prop
+		     ((& ?str) str)
+		     (else #f))))
       (cond
 	 ((> (bigloo-debug) 0)
 	  (if (string? prop)
@@ -664,20 +658,19 @@
 		  ,(strict-mode? mode) %this))))
 	 ((and cache cspecs)
 	  (cond
-	     ((string? prop)
-	      (if (string=? prop "length")
+	     ((string? propstr)
+	      (if (string=? propstr "length")
 		  `(js-put-length! ,obj ,val
 		      ,mode ,(js-pcache cache) %this)
 		  (begin
 		     (case tyobj
 			((object global this)
-			 `(js-object-put-name/cache! ,obj
-			     (& ,prop)
+			 `(js-object-put-name/cache! ,obj ,prop
 			     ,(box val tyval conf)
 			     ,mode %this
 			     ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 			(else
-			 `(js-put-name/cache! ,obj (& ,prop)
+			 `(js-put-name/cache! ,obj ,prop
 			     ,(box val tyval conf)
 			     ,mode %this
 			     ,(js-pcache cache) ,(loc->point loc) ',cspecs))))))
@@ -695,9 +688,8 @@
 	  (maybe-array-set! (box prop typrop conf) (box val tyval conf)))
 	 (else
 	  (cond
-	     ((string? prop)
-	      (js-put! obj `(& ,prop)
-		  (box val tyval conf) mode '%this))
+	     ((string? propstr)
+	      (js-put! obj prop (box val tyval conf) mode '%this))
 	     ((and optim-arrayp (memq typrop '(int32 uint32)))
 	      (maybe-array-set! (box prop typrop conf) (box val tyval conf)))
 	     (else

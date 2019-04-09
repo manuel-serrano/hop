@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/inline.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/inline.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Jan 23 14:08:49 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 17:21:31 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -596,6 +596,9 @@
    
    (with-access::J2SCall this (fun thisarg args type loc cache protocol)
       (cond
+	 ((null? stack)
+	  ;; don't inline at toplevel
+	  (call-default-walker))
 	 (cache
 	  (call-default-walker))
 	 ((eq? protocol 'spread)

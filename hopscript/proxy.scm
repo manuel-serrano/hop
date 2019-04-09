@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Tue Apr  9 11:06:54 2019 (serrano)                */
+;*    Last change :  Tue Apr  9 17:08:58 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -82,10 +82,10 @@
 	 ;; CMAP cannot be currently shared by all proxies
 	 ;; because JS-PROPERTY-VALUE (property.scm) invokes the
 	 ;; JsWrapperDescriptor with the owner of the descriptor
-	 ;; and because proerty.scm fills the inline cache with
+	 ;; and because property.scm fills the inline cache with
 	 ;; the last proxy seen as owner
 	 ;;
-	 ;; The current implement will raise a cache miss each time a
+	 ;; The current implementation will raise a cache miss each time a
 	 ;; new proxy will be used on an access point. If all proxies
 	 ;; could share CMAP, this would avoid these misses.
 	 (let ((cmap (instantiate::JsConstructMap
