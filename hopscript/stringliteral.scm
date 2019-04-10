@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Mar 29 18:35:05 2019 (serrano)                */
+;*    Last change :  Wed Apr  3 06:58:31 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -419,8 +419,11 @@
 	  (let loop ((lav (cdr lav))
 		     (acc (js-string->jsstring (car lav))))
 	     (if (null? (cdr lav))
-		 (js-jsstring-append (car lav) acc)
-		 (loop (cdr lav) (js-jsstring-append (car lav) acc))))))))
+		 (js-jsstring-append (js-string->jsstring (car lav)) acc)
+		 (loop (cdr lav)
+		    (js-jsstring-append
+		       (js-string->jsstring (car lav))
+		       acc))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-symbol->jsstring ...                                          */
