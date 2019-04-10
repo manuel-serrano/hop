@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Apr 10 07:01:01 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 18:52:14 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -657,7 +657,7 @@
 	      `(js-array-string-set! ,obj ,prop
 		  ,(box val tyval conf) ,(strict-mode? mode) %this))
 	     (else
-	      (if (mightbe-number? field)
+	      (if (or (not field) (mightbe-number? field))
 		  `(js-array-set! ,obj ,prop ,(box val tyval conf)
 		      ,(strict-mode? mode) %this)
 		  `(js-array-noindex-set! ,obj ,prop ,(box val tyval conf)

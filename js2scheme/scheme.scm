@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr 10 15:50:45 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 19:29:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2046,7 +2046,9 @@
    (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache cspecs)
 	 (let* ((prov (j2s-property-scheme field mode return conf))
-		(pro (when (pair? prov) (gensym 'aprop))))
+		(pro (match-case prov
+			((& ?-) #f)
+			(else (gensym 'aprop)))))
 	    `(let* (,@(if pro (list `(,pro ,prov)) '()))
 		,(cond
 		    ((or (not cache) (is-integer? field))
