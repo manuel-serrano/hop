@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Wed Apr 10 13:46:55 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 13:55:51 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -20,7 +20,7 @@
        (e `(cond-expand
 	      (bigloo-c
 	       ;; see bigloo_vector.h for details
-	      (static-pragma ,(format "static struct { struct bgl_vector vec; obj_t objs[ ~a ]; } __js_cnst_table = \n#if( !defined( TAG_VECTOR ) )\n { { MAKE_HEADER( VECTOR_TYPE, 0 ), ~a } } \n#else\n { {~a } };\n#endif" num (+fx 1 num) (+fx 1 num)))))
+	      (static-pragma ,(format "static struct { struct bgl_vector vec; obj_t objs[ ~a ]; } __js_cnst_table = \n#if( !defined( TAG_VECTOR ) )\n { { MAKE_HEADER( VECTOR_TYPE, 0 ), ~a } }; \n#else\n { {~a } };\n#endif" num (+fx 1 num) (+fx 1 num)))))
 	  e))
       (else
        (error "%define-cnst" "bad syntax" x))))
@@ -60,7 +60,7 @@
 ;*---------------------------------------------------------------------*/
 (define (&-expander x e)
    (match-case x
-      ((& and ?str (? string?))
+      ((& (and ?str (? string?)))
        `',(string->symbol str))
       (else
        (error "&" "bad form" x))))

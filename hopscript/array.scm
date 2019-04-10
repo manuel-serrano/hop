@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Mar 17 09:43:43 2019 (serrano)                */
+;*    Last change :  Wed Apr  3 06:57:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3024,7 +3024,7 @@
 	    ((<u32 idx ilen)
 	     (vector-set! vec (uint32->fixnum idx) v)
 	     v)
-	    ((property-check-and-setter o idx %this)
+	    ((and (js-isindex? idx) (property-check-and-setter o idx %this))
 	     =>
 	     (lambda (desc)
 		(if (>=u32 idx length)
