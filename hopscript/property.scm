@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Apr 10 07:39:08 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 08:34:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1717,7 +1717,8 @@
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache
 		   #!optional (point -1) (cspecs '()))
-   (tprint "JS-OBJECT-GET-NAME/CACHE-MISS obj=" (typeof obj) " name=" name)
+   (tprint "JS-OBJECT-GET-NAME/CACHE-MISS obj=" (typeof obj) " name=" name
+      " " point)
    (js-object-get-lookup obj name throw %this cache point cspecs))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Apr  6 16:32:42 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 08:42:46 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -193,7 +193,7 @@
    (let ((array (config-get conf :array)))
       (if (isa? array J2SDeclExtern)
 	  (with-access::J2SDeclExtern array (usage)
-	     (only-usage? '(new init call) usage))
+	     (only-usage? '(new init call get) usage))
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -203,7 +203,7 @@
    (let ((string (config-get conf :string)))
       (if (isa? string J2SDeclExtern)
 	  (with-access::J2SDeclExtern string (usage)
-	     (only-usage? '(new init call) usage))
+	     (only-usage? '(new init call get) usage))
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
