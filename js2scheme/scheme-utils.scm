@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Apr  9 21:04:42 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 07:01:01 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -538,11 +538,15 @@
 	     ((int32)
 	      `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
 	     (else
-	      (if (and (string? prop) (string=? prop "length"))
+	      (cond
+		 ((and (string? prop) (string=? prop "length"))
 		  (if (eq? tyval 'uint32)
 		      `(js-array-length ,obj)
-		      (box `(js-array-length ,obj) 'uint32 conf))
-		  `(js-array-ref ,obj ,prop %this)))))
+		      (box `(js-array-length ,obj) 'uint32 conf)))
+		 ((mightbe-number? field)
+		  `(js-array-ref ,obj ,prop %this))
+		 (else
+		  `(js-array-noindex-ref ,obj ,prop %this))))))
 	 ((eq? tyobj 'string)
 	  (cond
 	     ((type-uint32? typrop)
@@ -653,8 +657,11 @@
 	      `(js-array-string-set! ,obj ,prop
 		  ,(box val tyval conf) ,(strict-mode? mode) %this))
 	     (else
-	      `(js-array-set! ,obj ,prop ,(box val tyval conf)
-		  ,(strict-mode? mode) %this))))
+	      (if (mightbe-number? field)
+		  `(js-array-set! ,obj ,prop ,(box val tyval conf)
+		      ,(strict-mode? mode) %this)
+		  `(js-array-noindex-set! ,obj ,prop ,(box val tyval conf)
+		      ,(strict-mode? mode))))))
 	 ((and cache cspecs)
 	  (cond
 	     ((string? propstr)

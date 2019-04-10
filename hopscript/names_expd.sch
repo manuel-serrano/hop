@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Tue Apr  9 17:33:00 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 06:39:19 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -18,12 +18,17 @@
    (match-case x
       ((?- (and ?val (? string?)))
        (cond
-	  ((member val '("__proto__"
+	  ((member val '("__dirname"
+			 "__filename"
+			 "__proto__"
 			 "GLOBAL"
+			 "HEAD"
 			 "apply"
+			 "default"
 			 "exports"
 			 "get"
 			 "global"
+			 "filename"
 			 "length"
 			 "prototype"
 			 "readable"

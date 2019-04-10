@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Tue Apr  9 17:32:04 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 06:40:09 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -38,11 +38,14 @@
 	   ;; known names
 	   &integers
 	   &empty
+	   &__filename
+	   &__dirname
 	   &__proto__
 	   &Array
 	   &Buffer
 	   &Error
 	   &GLOBAL
+	   &HEAD
 	   &Infinity
 	   &-Infinity
 	   &NaN
@@ -59,11 +62,13 @@
 	   &configurable
 	   &console
 	   &constructor
+	   &default
 	   &done
 	   &enumerable
 	   &exec
 	   &exports
 	   &false
+	   &filename
 	   &for
 	   &forEach
 	   &global
@@ -323,11 +328,14 @@
 ;*    known strings ...                                                */
 ;*---------------------------------------------------------------------*/
 (define &empty (js-ascii->jsstring ""))
+(define &__dirname (js-ascii-name->jsstring "__dirname"))
+(define &__filename (js-ascii-name->jsstring "__filename"))
 (define &__proto__ (js-ascii-name->jsstring "__proto__"))
 (define &Array (js-ascii-name->jsstring "Array"))
 (define &Buffer (js-ascii-name->jsstring "Buffer"))
 (define &Error (js-ascii-name->jsstring "Error"))
 (define &GLOBAL (js-ascii-name->jsstring "GLOBAL"))
+(define &HEAD (js-ascii-name->jsstring "HEAD"))
 (define &Infinity (js-ascii-name->jsstring "Infinity"))
 (define &-Infinity (js-ascii-name->jsstring "-Infinity"))
 (define &NaN (js-ascii-name->jsstring "NaN"))
@@ -344,11 +352,13 @@
 (define &configurable (js-ascii-name->jsstring "configurable"))
 (define &console (js-ascii-name->jsstring "console"))
 (define &constructor (js-ascii-name->jsstring "constructor"))
+(define &default (js-ascii-name->jsstring "default"))
 (define &done (js-ascii-name->jsstring "done"))
 (define &exports (js-ascii-name->jsstring "exports"))
 (define &exec (js-ascii-name->jsstring "exec"))
 (define &enumerable (js-ascii-name->jsstring "enumerable"))
 (define &false (js-ascii-name->jsstring "false"))
+(define &filename (js-ascii-name->jsstring "filename"))
 (define &for (js-ascii-name->jsstring "for"))
 (define &forEach (js-ascii-name->jsstring "forEach"))
 (define &get (js-ascii-name->jsstring "get"))

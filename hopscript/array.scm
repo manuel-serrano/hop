@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Apr  9 09:59:24 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 06:48:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -64,6 +64,7 @@
 	   (js-array-ref-ur ::JsArray ::uint32 ::JsGlobalObject)
 	   (inline js-array-inl-ref ::JsArray ::obj
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
+	   (js-array-noindex-ref ::JsArray ::obj ::JsGlobalObject)
 	   (inline js-array-index-ref ::JsArray ::uint32 ::JsGlobalObject)
 	   (inline js-array-index-inl-ref ::JsArray ::uint32
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
@@ -75,6 +76,7 @@
 	   (inline js-array-set! ::JsArray idx ::obj ::bool ::JsGlobalObject)
 	   (inline js-array-inl-set! ::JsArray ::obj ::obj
 	      ::vector ::uint32 ::obj ::bool ::JsGlobalObject)
+	   (js-array-noindex-set! ::JsArray ::obj ::obj ::bool ::JsGlobalObject)
 	   (inline js-array-index-set! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
 	   (inline js-array-index-inl-set! ::JsArray ::uint32 ::obj
 	      ::vector ::uint32 ::obj ::bool ::JsGlobalObject)
@@ -704,7 +706,7 @@
 	  (else
 	   (and (fixnum? idx) (pragma::bool "(unsigned long)($1) <= (unsigned long)($2)" idx (-fx (bit-lsh 1 32) 2)))))
        (js-array-index-ref arr (fixnum->uint32 idx) %this)
-       (js-get arr idx %this)))
+       (js-array-noindex-ref arr idx %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-inl-ref ...                                             */
@@ -717,6 +719,16 @@
        (vector-ref avec idx)
        (js-array-ref arr (fixnum->uint32 idx) %this)))
    
+;*---------------------------------------------------------------------*/
+;*    js-array-noindex-ref ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-noindex-ref arr::JsArray prop::obj %this)
+   (with-access::JsArray arr (vec ilen length)
+      (let ((i::uint32 (js-toindex prop)))
+	 (if (<u32 i ilen)
+	     (u32vref vec i)
+	     (js-get arr prop %this)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-array-index-ref ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -907,6 +919,18 @@
 	 (else
 	  (js-array-put! arr idx val throw %this)))))
    
+;*---------------------------------------------------------------------*/
+;*    js-array-noindex-set! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-array-noindex-set! arr::JsArray p::obj val throw %this)
+   (with-access::JsArray arr (vec ilen length)
+      (let ((idx::uint32 (js-toindex p)))
+	 (if (<u32 idx ilen)
+	     (begin
+		(vector-set! vec (uint32->fixnum idx) val)
+		val)
+	     (js-array-put! arr p val throw %this)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-array-index-set! ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -2797,7 +2821,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-object-get-name/cache-miss o::JsArray p::obj
+(define-method (js-object-get-name/cache-miss o::JsArray p::JsStringLiteral
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache
 		  #!optional (point -1) (cspecs '()))
@@ -3020,7 +3044,6 @@
 
    (with-access::JsArray o (vec ilen length)
       (let ((idx::uint32 (js-toindex p)))
-;* 	 (tprint "js-array-put! idx=" idx " ilen=" ilen " vlen=" (vector-length vec) " inline=" (js-object-mode-inline? o)) */
 	 (cond
 	    ((<u32 idx ilen)
 	     (vector-set! vec (uint32->fixnum idx) v)
