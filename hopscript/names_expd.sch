@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Wed Apr 10 06:39:19 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 14:07:56 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -18,28 +18,32 @@
    (match-case x
       ((?- (and ?val (? string?)))
        (cond
-	  ((member val '("__dirname"
-			 "__filename"
-			 "__proto__"
-			 "GLOBAL"
-			 "HEAD"
-			 "apply"
+	  ((member val '("__dirname" "__filename" "__proto__"
+			 "Array" "Buffer" "Error" "GLOBAL" "HEAD"
+			 "Infinity" "-Infinity" "NaN" "Object"
+			 "SCRIPT" "String" "Worker"
+			 "apply" "call" "callee" "caller"
+			 "clearImmediate" "clearInterval" "clearTimeout"
+			 "console" "constructor"
 			 "default"
 			 "exports"
+			 "filename"
 			 "get"
 			 "global"
-			 "filename"
+			 "hop"
 			 "length"
+			 "module"
+			 "process"
 			 "prototype"
 			 "readable"
 			 "require"
-			 "set"
+			 "set" "setImmediate" "setInterval" "setTimeout"
 			 "toString"
 			 "value"
 			 "write"
 			 "writable"))
-;* 			 "Array" "Buffer" "Error"                      */
-;* 			 "GLOBAL" "Infinity" "-Infinity" "NaN" "Object" */
+			 
+
 ;* 			 "String" "Worker" "apply" "call" "callee" "caller" */
 ;* 			 "charAt" "charCodeAt"                         */
 ;* 			 "compiler" "configurable" "console"           */

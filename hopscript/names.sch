@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Mon Apr  8 13:18:30 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 14:22:29 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    names Helper macros.                                             */
@@ -16,10 +16,5 @@
    (option (loadq "names_expd.sch"))
    (include "constants.sch")
    (import __hopscript_names))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-name->jsstring                                                *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-expander & js-&-expander)                                   */
 
    

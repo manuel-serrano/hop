@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Apr 10 07:39:30 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 15:00:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -352,7 +352,7 @@
 (define (js-function-debug-name::bstring obj::JsFunction %this)
    (with-access::JsFunction obj (src)
       (let ((name (js-object-get-name/cache obj (& "name") #f %this
-		     (js-pcache-ref %pcache 0) -1 '())))
+		     (js-pcache-ref %pcache 0) -1)))
 	 (cond
 	    ((js-jsstring? name) (js-jsstring->string name))
 	    ((pair? src) (format "~a:~a" (cadr (car src)) (caddr (car src))))

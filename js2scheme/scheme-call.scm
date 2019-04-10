@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Apr 10 08:42:46 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 14:55:38 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -116,6 +116,7 @@
 	("pop" js-array-pop array () %this #t ,j2s-array-plain?)
 	("pop" js-array-maybe-pop any () %this #t ,j2s-array-plain?)
 	;; functions
+	("call" ,j2s-call function (any) #f)
 	("call" ,j2s-call function (any any) #f))))
 
 ;*---------------------------------------------------------------------*/

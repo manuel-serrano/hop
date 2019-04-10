@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Apr  9 11:25:47 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 15:41:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -244,7 +244,7 @@
       (let ((proc (instantiateJsProcess
 		     (cmap (instantiate::JsConstructMap))
 		     (__proto__ (js-new %this js-object))
-		     (elements ($create-vector 45)))))
+		     (elements ($create-vector 46)))))
 
 	 (define (not-implemented name)
 	    (js-put! proc (js-ascii-name->jsstring name)
@@ -712,13 +712,17 @@
 	       3 "ioctl")
 	    #t %this)
 
+	 ;; noDeprecation (bound to avoid cache misses)
+	 (js-put! proc (& "noDeprecation")
+	    #f #t %this)
+	 
 	 ;; mainModule
 	 (with-access::JsGlobalObject %this (js-main) 
 	    (js-bind! %this proc (& "mainModule")
 	       :get (js-make-function %this (lambda (this) js-main) 0 "main")
 	       :configurable #f
 	       :writable #f))
-	 
+
 	 (for-each not-implemented
 	    '("_getActiveRequests"
 	      "_getActiveHandles"

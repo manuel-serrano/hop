@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Wed Apr 10 06:40:09 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 14:12:32 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -50,6 +50,7 @@
 	   &-Infinity
 	   &NaN
 	   &Object
+	   &SCRIPT
 	   &String
 	   &Worker
 	   &apply
@@ -58,6 +59,9 @@
 	   &caller
 	   &charAt
 	   &charCodeAt
+	   &clearImmediate
+	   &clearInterval
+	   &clearTimeout
 	   &compiler
 	   &configurable
 	   &console
@@ -93,6 +97,7 @@
 	   &null
 	   &path
 	   &pop
+	   &process
 	   &prototype
 	   &push
 	   &readable
@@ -100,6 +105,9 @@
 	   &require
 	   &return
 	   &set
+	   &setImmediate
+	   &setInterval
+	   &setTimeout
 	   &slice
 	   &split
 	   &substr
@@ -238,13 +246,6 @@
 (define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring)
    (with-lock js-names-mutex
       (lambda ()
-	 (let ((old (assoc str asciis)))
-	    (if (pair? old)
-		(begin
-		   (set-cdr! old (+fx 1 (cdr old)))
-		   (when (>=fx (cdr old) 10)
-		      (tprint "js-ascii-name->jsstring " old)))
-		(set! asciis (cons (cons str 1) asciis))))
 	 (let ((n (hashtable-get names str)))
 	    (or n
 		(let ((n (instantiate::JsStringLiteralASCII
@@ -340,6 +341,7 @@
 (define &-Infinity (js-ascii-name->jsstring "-Infinity"))
 (define &NaN (js-ascii-name->jsstring "NaN"))
 (define &Object (js-ascii-name->jsstring "Object"))
+(define &SCRIPT (js-ascii-name->jsstring "SCRIPT"))
 (define &String (js-ascii-name->jsstring "String"))
 (define &Worker (js-ascii-name->jsstring "Worker"))
 (define &apply (js-ascii-name->jsstring "apply"))
@@ -348,6 +350,9 @@
 (define &caller (js-ascii-name->jsstring "caller"))
 (define &charAt (js-ascii-name->jsstring "charAt"))
 (define &charCodeAt (js-ascii-name->jsstring "charCodeAt"))
+(define &clearImmediate (js-ascii-name->jsstring "clearImmediate"))
+(define &clearInterval (js-ascii-name->jsstring "clearInterval"))
+(define &clearTimeout (js-ascii-name->jsstring "clearTimeout"))
 (define &compiler (js-ascii-name->jsstring "compiler"))
 (define &configurable (js-ascii-name->jsstring "configurable"))
 (define &console (js-ascii-name->jsstring "console"))
@@ -383,6 +388,7 @@
 (define &null (js-ascii-name->jsstring "null"))
 (define &path (js-ascii-name->jsstring "path"))
 (define &pop (js-ascii-name->jsstring "pop"))
+(define &process (js-ascii-name->jsstring "process"))
 (define &prototype (js-ascii-name->jsstring "prototype"))
 (define &push (js-ascii-name->jsstring "push"))
 (define &readable (js-ascii-name->jsstring "readable"))
@@ -390,6 +396,9 @@
 (define &require (js-ascii-name->jsstring "require"))
 (define &return (js-ascii-name->jsstring "return"))
 (define &set (js-ascii-name->jsstring "set"))
+(define &setImmediate (js-ascii-name->jsstring "setImmediate"))
+(define &setInterval (js-ascii-name->jsstring "setInterval"))
+(define &setTimeout (js-ascii-name->jsstring "setTimeout"))
 (define &slice (js-ascii-name->jsstring "slice"))
 (define &split (js-ascii-name->jsstring "split"))
 (define &substr (js-ascii-name->jsstring "substr"))

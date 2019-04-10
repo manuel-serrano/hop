@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Apr  9 11:17:43 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 14:39:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -78,7 +78,7 @@
 		      (let ((str (vector-ref el 1)))
 			 (js-utf8-name->jsstring str)))
 		     ((2)
-		      ;; an fixnum name
+		      ;; a fixnum name
 		      (let ((str (vector-ref el 1)))
 			 (js-integer->jsstring str)))
 		     ((3)

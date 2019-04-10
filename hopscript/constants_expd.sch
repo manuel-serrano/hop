@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Tue Apr  9 08:13:14 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 13:44:24 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -69,6 +69,7 @@
 		 (cnsts (map cadr (reverse! (thread-parameter '&cnsts)))))
 	     `(let ((__js_cnst (&cnst-init #f ,(obj->string (apply vector cnsts)))))
 		 ,@nbody))
+	  (thread-parameter-set! '&cnsts #f)
 	  (unregister-srfi! '&with-cnst!)))
       (else
        (error "&with-cnst!" "Illegal form" x))))
@@ -97,6 +98,7 @@
 		       e)))
 	  (set-car! xbeg (car newx))
 	  (set-cdr! xbeg (cdr newx))
+	  (thread-parameter-set! '&cnsts #f)
 	  #unspecified))
       (else
        (error "&end!" "Illegal form" x))))
@@ -107,17 +109,19 @@
 (define (&-expander x e)
    (match-case x
       ((& (and ?str (? string?)))
-       (let* ((&cnsts (thread-parameter '&cnsts))
-	      (old (assoc str &cnsts)))
-	  (if (pair? old)
-	      (e `(&cnst-ref ,(cddr old)) e)
-	      (let ((cnst (&name-expander x e)))
-		 (if (vector? cnst)
-		     (let ((len (length &cnsts)))
-			(thread-parameter-set! '&cnsts
-			   (cons (cons str (cons cnst len)) &cnsts))
-			(e `(&cnst-ref ,len) e))
-		     cnst)))))
+       (if (not (thread-parameter '&cnsts))
+	   (e `(js-name->jsstring ,str) e)
+	   (let* ((&cnsts (thread-parameter '&cnsts))
+		  (old (assoc str &cnsts)))
+	      (if (pair? old)
+		  (e `(&cnst-ref ,(cddr old)) e)
+		  (let ((cnst (&name-expander x e)))
+		     (if (vector? cnst)
+			 (let ((len (length &cnsts)))
+			    (thread-parameter-set! '&cnsts
+			       (cons (cons str (cons cnst len)) &cnsts))
+			    (e `(&cnst-ref ,len) e))
+			 cnst))))))
       (else
        (error "&" "bad form" x))))
 

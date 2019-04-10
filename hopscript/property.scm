@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Apr 10 08:34:54 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 15:02:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -241,31 +241,31 @@
 	  (let ((properties (js-object-properties obj)))
 	     (if (eq? cmap (js-not-a-cmap))
 		 (with-access::JsConstructMap cmap (%id props)
-		    (fprint (current-error-port) msg (typeof obj) " UNMAPPED"
+		    (fprint (current-error-port) "=== " msg (typeof obj) " UNMAPPED"
 		       " length=" (length properties)
-		       "\n  prop.names="
+		       "\n   prop.names="
 		       (map (lambda (d)
 			       (with-access::JsPropertyDescriptor d (name)
 				  name))
 			  properties)
-		       "\n  props="
+		       "\n   props="
 		       (map (lambda (p) (format "~s" p)) properties)))
 		 (with-access::JsConstructMap cmap (%id props methods size)
-		    (fprint (current-error-port) msg (typeof obj) " MAPPED"
+		    (fprint (current-error-port) "===" msg (typeof obj) " MAPPED"
 		       " length=" (vector-length elements)
 		       " inline=" (js-object-inline-elements? obj)
 		       " size=" size
 		       " extensible=" (js-object-mode-extensible? obj)
 		       " mlengths=" (vector-length methods)
-		       "\n  elements=" (vector-map
+		       "\n   cmap.%id=" %id
+		       "\n   elements=" (vector-map
 					  (lambda (v)
 					     (if (isa? v JsObject)
 						 (typeof v)
 						 v))
 					  elements)
-		       "\n  cmap.%id=" %id
-		       "\n  prop.names=" (vector-map prop-name props)
-		       "\n  cmap.props=" props)))))
+		       "\n   prop.names=" (vector-map prop-name props)
+		       "\n   cmap.props=" props)))))
        (fprint (current-error-port) msg (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -1717,8 +1717,6 @@
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache
 		   #!optional (point -1) (cspecs '()))
-   (tprint "JS-OBJECT-GET-NAME/CACHE-MISS obj=" (typeof obj) " name=" name
-      " " point)
    (js-object-get-lookup obj name throw %this cache point cspecs))
 
 ;*---------------------------------------------------------------------*/

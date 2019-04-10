@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Apr  9 15:24:09 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 15:50:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -644,7 +644,7 @@
       ;; change the building of J2SCmap to build directly
       ;; a list of string (do this when the new branch is full ready)
       ;; see constant.scm
-      (tprint "TOBE OPTIMIZED J2SCmap")
+      (tprint "TOBE OPTIMIZED J2SCmap " loc)
       (epairify loc
 	 `(js-strings->cmap
 	     (vector ,@(map symbol->string (vector->list val)))))))
