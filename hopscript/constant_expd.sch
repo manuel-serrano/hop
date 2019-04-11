@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Wed Apr  3 07:36:29 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 13:55:51 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -55,4 +55,12 @@
       (else
        (error "js-cnst-table-ref" "bad syntax" x))))
 
-
+;*---------------------------------------------------------------------*/
+;*    &-expander                                                       */
+;*---------------------------------------------------------------------*/
+(define (&-expander x e)
+   (match-case x
+      ((& (and ?str (? string?)))
+       `',(string->symbol str))
+      (else
+       (error "&" "bad form" x))))
