@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sun Mar 17 11:42:53 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 10:36:26 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -177,6 +177,17 @@
 	    :writable #t
 	    :enumerable #t
 	    :hidden-class #t)))
+
+   (define (onexit th)
+      (with-access::WorkerHopThread th (keep-alive parent exitlisteners)
+	 (when (pair? exitlisteners)
+	    (js-worker-push-thunk! parent "slave-terminate"
+	       (lambda ()
+		  (let ((e (instantiate::MessageEvent
+			      (name "exit")
+			      (target (js-undefined))
+			      (data (js-undefined)))))
+		     (apply-listeners exitlisteners e)))))))
    
    (lambda (_ src)
       (with-access::JsGlobalObject %this (js-worker js-worker-prototype js-object)
@@ -191,7 +202,15 @@
 			      (name (gensym (string-append "WebWorker@"
 					       (js-jsstring->string src))))
 			      (parent parent)
+			      (mutex (if (isa? parent WorkerHopThread)
+					 (with-access::WorkerHopThread parent (mutex)
+					    mutex)
+					 (make-mutex)))
 			      (tqueue (list (cons "init" thunk)))
+			      (onexit (js-make-function %this
+					 (lambda (this process retval)
+					    (onexit thread))
+					 2 "onexit"))
 			      (%this this)
 			      (keep-alive #f)
 			      (module-cache (js-new0 %this js-object))
