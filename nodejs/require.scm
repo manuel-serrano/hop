@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 11 11:22:08 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 18:11:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -821,11 +821,14 @@
 		     ;; the resolution
 		     (nodejs-resolve name this m 'body)))))))
    (let ((%this (js-new-global-object 256)))
-      (with-access::JsGlobalObject %this (js-object __proto__)
+      (with-access::JsGlobalObject %this (js-object __proto__ js-nodejs-pcache)
 	 (let ((proto (instantiateJsObject
 			 (cmap (instantiate::JsConstructMap))
 			 (__proto__ (js-get js-object (& "prototype") %this))
 			 (elements (make-vector 190)))))
+	    ;; allocate the pcache for the nodejs modules
+	    (set! js-nodejs-pcache
+	       ((@ js-make-pcache-table __hopscript_property) 11 "nodejs"))
 	    ;; mark object non-enumerable (i.e., it contains no enumerable
 	    ;; property) in order to optimize for..in
 	    (js-object-mode-enumerable-set! proto #f)

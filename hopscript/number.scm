@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr  8 15:12:03 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 17:54:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -49,12 +49,6 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (&begin!)
-
-;*---------------------------------------------------------------------*/
-;*    property caches ...                                              */
-;*---------------------------------------------------------------------*/
-(%define-pcache 2)
-(define %pcache (js-make-pcache-table 2 "hopscript/number.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsNumber ...                                 */
@@ -105,6 +99,9 @@
 (define (js-init-number! %this)
    (with-access::JsGlobalObject %this (__proto__ js-number js-function)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
+
+	 (define js-number-pcache
+	    (instantiate::JsPropertyCache))
 	 
 	 (define js-number-prototype
 	    (instantiateJsNumber
@@ -130,9 +127,9 @@
 			(size 1))))
 	       (instantiateJsNumber
 		  (cmap constrmap)
-		  (__proto__ (js-object-get-name/cache constructor (& "prototype")
-				#f %this
-				(js-pcache-ref %pcache 1))))))
+		  (__proto__ (js-object-get-name/cache constructor
+				(& "prototype")
+				#f %this js-number-pcache)))))
 
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
 	 (define (%js-number this . arg)

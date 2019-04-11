@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Apr 10 15:00:28 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 17:51:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -92,12 +92,6 @@
 		   nobj)
 		(js-undefined))))))
    
-;*---------------------------------------------------------------------*/
-;*    property caches ...                                              */
-;*---------------------------------------------------------------------*/
-(%define-pcache 11)
-(define %pcache (js-make-pcache-table 11 "hopscript/function.scm"))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ...                                */
 ;*---------------------------------------------------------------------*/
@@ -208,7 +202,10 @@
    (with-access::JsGlobalObject %this ((js-object-prototype __proto__)
 				       js-function-prototype
 				       js-function-strict-prototype
-				       js-function)
+				       js-function js-function-pcache)
+      (set! js-function-pcache
+	 ((@ js-make-pcache-table __hopscript_property) 1 "function"))
+      
       (let ((proc (lambda l (js-undefined))))
 	 (set! js-function-prototype
 	    (instantiateJsFunction
@@ -351,12 +348,13 @@
 ;*---------------------------------------------------------------------*/
 (define (js-function-debug-name::bstring obj::JsFunction %this)
    (with-access::JsFunction obj (src)
-      (let ((name (js-object-get-name/cache obj (& "name") #f %this
-		     (js-pcache-ref %pcache 0) -1)))
-	 (cond
-	    ((js-jsstring? name) (js-jsstring->string name))
-	    ((pair? src) (format "~a:~a" (cadr (car src)) (caddr (car src))))
-	    (else "function")))))
+      (with-access::JsGlobalObject %this (js-function-pcache)
+	 (let ((name (js-object-get-name/cache obj (& "name") #f %this
+			(js-pcache-ref js-function-pcache 0) -1)))
+	    (cond
+	       ((js-jsstring? name) (js-jsstring->string name))
+	       ((pair? src) (format "~a:~a" (cadr (car src)) (caddr (car src))))
+	       (else "function"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    INSTANTIATE-JSFUNCTION ...                                       */

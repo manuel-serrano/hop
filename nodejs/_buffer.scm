@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Apr  9 11:25:29 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 18:11:46 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -267,24 +267,26 @@
 ;*---------------------------------------------------------------------*/
 (define (hopscript %this this %scope %module)
    ((@ hopscript __nodejs_buffer) %this this %scope %module)
-   (let* ((exp (js-object-get-name/cache %module (& "exports") #f %this
-		  (js-pcache-ref %pcache 0)))
-	  (buf (js-object-get-name/cache exp (& "Buffer") #f %this
-		  (js-pcache-ref %pcache 1)))
-	  (proto (js-object-get-name/cache buf (& "prototype") #f %this
-		    (js-pcache-ref %pcache 2))))
-
-      (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
-	 (set! js-buffer-proto proto))
-
-      (with-access::JsFunction buf (alloc)
-	 (set! alloc
-	    (lambda (%this ctor)
-	       ;; see makeFastBuffer below for the complete JavaScript
-	       ;; land JsTypedArray initialization
-	       (js-buffer-constr proto %this))))
-
-      exp))
+   
+   (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto js-nodejs-pcache)
+      (let* ((exp (js-object-get-name/cache %module (& "exports") #f %this
+		     (js-pcache-ref js-nodejs-pcache 0)))
+	     (buf (js-object-get-name/cache exp (& "Buffer") #f %this
+		     (js-pcache-ref js-nodejs-pcache 1)))
+	     (proto (js-object-get-name/cache buf (& "prototype") #f %this
+		       (js-pcache-ref js-nodejs-pcache 2))))
+	 
+	 (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
+	    (set! js-buffer-proto proto))
+	 
+	 (with-access::JsFunction buf (alloc)
+	    (set! alloc
+	       (lambda (%this ctor)
+		  ;; see makeFastBuffer below for the complete JavaScript
+		  ;; land JsTypedArray initialization
+		  (js-buffer-constr proto %this))))
+	 
+	 exp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    utf8-substring-length ...                                        */
