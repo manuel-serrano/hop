@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Apr  9 09:11:09 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 07:37:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -958,9 +958,7 @@
    (js-bind! scope scope (& "head")
       :value (js-html-head scope)
       :enumerable #f :writable #f :configurable #f :hidden-class #f))
-;*                                                                     */
-;*    (js-put! scope 'HEAD (js-html-head scope) #f scope))             */
-;*                                                                     */
+
 ;*---------------------------------------------------------------------*/
 ;*    debug-compile-trace ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -1329,7 +1327,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-socompile ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-socompile src::obj filename::bstring lang)
+(define (nodejs-socompile src::obj filename::bstring lang
+	   #!key worker-slave)
    
    (define (exec line::pair ksucc::procedure kfail::procedure)
       
@@ -1460,6 +1459,8 @@
 				  "--js-plugins"
 				  ;; profiling
 				  ,@(if (hop-profile) '("--profile") '())
+				  ;; worker
+				  ,@(if worker-slave '("--js-worker-slave") '())
 				  ;; debug
 				  ,@(if (eq? nodejs-debug-compile 'yes)
 					`("-t" ,(make-file-name "/tmp/HOP"
