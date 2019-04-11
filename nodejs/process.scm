@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Apr 10 15:41:19 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 10:17:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -129,6 +129,7 @@
 		     (cond
 			((and (string=? sig "exit") (not exitarmed))
 			 (with-access::WorkerHopThread %worker (onexit)
+			    (tprint "SETTING ONEXIT " %worker " " proc)
 			    (set! onexit proc))
 			 (js-call2 %this add this signame proc))
 			((assq (string->symbol sig) signals)
@@ -144,10 +145,6 @@
 				   (lambda (s)
 				      (!js-callback0 "signal" %worker %this
 					 proc this))))))
-;* 				   (lambda (s)                         */
-;* 				      (js-worker-push-thunk! %worker sig */
-;* 					 (lambda ()                    */
-;* 					    (js-call0 %this proc this)))))))) */
 			(else
 			 (js-call2 %this add this signame proc)))))
 	       

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/hop/runtime/read.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Mar 18 08:09:58 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 08:26:45 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -73,8 +73,8 @@
 			       (module #f))
 	    (hop-unload! ::bstring)
 
-	    (hop-find-sofile::obj ::bstring)
-	    (hop-sofile-path::bstring ::bstring)
+	    (hop-find-sofile::obj ::bstring #!key (suffix ""))
+	    (hop-sofile-path::bstring ::bstring #!key (suffix ""))
 	    
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
@@ -987,7 +987,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-find-sofile ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (hop-find-sofile path)
+(define (hop-find-sofile path #!key (suffix ""))
    
    (define (more-recent? sopath)
       (when (file-exists? sopath)
@@ -1030,14 +1030,14 @@
 	     (cons 'error (errfile sopath)))
 	    (else
 	     ;; if not found check the user global libs repository
-	     (let ((sopath (hop-sofile-path path)))
+	     (let ((sopath (hop-sofile-path path :suffix suffix)))
 		(cond
 		   ((more-recent? sopath)
 		    sopath)
 		   ((more-recent? (errfile sopath))
 		    (cons 'error (errfile sopath)))
 		   (else
-		    (or (find-in-unix-path (hop-soname path))
+		    (or (find-in-unix-path (hop-soname path suffix))
 			(find-in-unix-path path)
 			(let ((sopath (make-file-name dir
 					 (string-append base (so-suffix)))))
@@ -1047,18 +1047,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-soname ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (hop-soname path)
+(define (hop-soname path::bstring suffix::bstring)
    (let ((base (prefix (basename path))))
-      (string-append base "-" (md5sum-string path) (so-suffix))))
+      (string-append base "-" (md5sum-string path) suffix (so-suffix))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-sofile-path ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (hop-sofile-path path)
+(define (hop-sofile-path path #!key (suffix ""))
    (make-file-path
       (hop-sofile-directory)
       (hop-version) (hop-build-id) (so-arch-directory)
-      (hop-soname path)))
+      (hop-soname path suffix)))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-file ...                                                */

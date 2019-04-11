@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 11 07:37:25 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 08:32:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -56,8 +56,6 @@
 ;*---------------------------------------------------------------------*/
 (&begin!)
 
-;;(define-macro (bigloo-debug) 0)
-
 ;*---------------------------------------------------------------------*/
 ;*    builtin-language? ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -89,6 +87,7 @@
 ;*    socompile ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-struct socompile proc cmd src ksucc kfail abortp)
+(define-struct soentry filename lang mtime wslave key)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */
@@ -632,11 +631,15 @@
 		       (symbol->string (car sym)))
 		   %module))))))
 
+   (define (worker-suffix worker)
+      (with-access::WorkerHopThread worker (parent)
+	 (if parent "_w" "")))
+
    (let ((mod (nodejs-import-module worker %this %module path checksum loc))
-	 (sopath (hop-sofile-path path)))
+	 (sopath (hop-sofile-path path :suffix (worker-suffix worker))))
       (with-access::JsModule mod (evars)
-	 (set! evars (vector-map! (lambda (s) (import-var mod s sopath))
-			symbols)))
+	 (set! evars
+	    (vector-map! (lambda (s) (import-var mod s sopath)) symbols)))
       mod))
 
 ;*---------------------------------------------------------------------*/
@@ -1200,13 +1203,16 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile-workers-inits!)
    
-   (define (compile-worker e::pair)
+   (define (compile-worker e::struct)
       (let loop ()
 	 (if (<fx socompile-worker-count (hop-sofile-max-workers))
 	     (begin
-		(set! socompile-worker-count (+fx 1 socompile-worker-count))
-		(set! socompile-queue (remq! e socompile-queue))
-		(set! socompile-incompile (cons (car e) socompile-incompile))
+		(set! socompile-worker-count
+		   (+fx 1 socompile-worker-count))
+		(set! socompile-queue
+		   (remq! e socompile-queue))
+		(set! socompile-incompile
+		   (cons (soentry-key e) socompile-incompile))
 		(thread-start! (make-compile-worker e)))
 	     (begin
 		(condition-variable-wait! socompile-condv socompile-mutex)
@@ -1228,8 +1234,11 @@
 			(let loop ()
 			   (let liip ()
 			      (when (pair? socompile-queue)
-				 (let ((e (nodejs-select-socompile socompile-queue)))
-				    (or (string? (find-new-sofile (car e)))
+				 (let ((e (nodejs-select-socompile
+					     socompile-queue)))
+				    (or (string? (find-new-sofile
+						    (soentry-filename e)
+						    (soentry-wslave e)))
 					(compile-worker e))
 				    (liip))))
 			   (condition-variable-wait!
@@ -1267,7 +1276,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-compile-worker ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (make-compile-worker e::pair)
+(define (make-compile-worker en::struct)
    (instantiate::hopthread
       (name (soworker-name))
       (body (lambda ()
@@ -1276,15 +1285,18 @@
 		     (exception-notify e))
 		  (with-trace 'sorequire "make-compile-worker"
 		     (trace-item "thread=" (current-thread))
-		     (trace-item "e=" e)
-		     (nodejs-socompile (car e) (car e) (cdr e))
+		     (trace-item "en=" en)
+		     (nodejs-socompile (soentry-filename en)
+			(soentry-filename en)
+			(soentry-lang en)
+			(soentry-wslave en))
 		     (synchronize socompile-mutex
 			(set! socompile-worker-count
 			   (-fx socompile-worker-count 1))
 			(set! socompile-compiled
-			   (cons (car e) socompile-compiled))
+			   (cons (soentry-key en) socompile-compiled))
 			(set! socompile-incompile
-			   (remq! (car e) socompile-incompile))
+			   (remq! (soentry-key en) socompile-incompile))
 			(condition-variable-broadcast! socompile-condv))))))))
    
 ;*---------------------------------------------------------------------*/
@@ -1293,14 +1305,14 @@
 ;*    Select one entry amongst the compile queue. The current          */
 ;*    strategy is to select the last modified file.                    */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-select-socompile queue::pair)
+(define (nodejs-select-socompile::struct queue::pair)
    ;; socompile-mutex is already acquired
    (let loop ((entries (cdr queue))
-	      (entry (car queue)))
+	      (entry (cadr queue)))
       (cond
 	 ((null? entries)
 	  entry)
-	 ((<elong (cer (car entries)) (cer entry))
+	 ((<elong (soentry-mtime (cadr entries)) (soentry-mtime entry))
 	  ;; select the oldest entry
 	  (loop (cdr entries) (car entries)))
 	 (else
@@ -1309,26 +1321,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-socompile-queue-push ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-socompile-queue-push filename lang)
+(define (nodejs-socompile-queue-push filename lang worker-slave)
    (with-trace 'sorequire "nodejs-socompile-queue-push"
       (synchronize socompile-mutex
 	 (trace-item "filename=" filename)
+	 (trace-item "workfer-slave=" worker-slave)
 	 (trace-item "socompile-queue=" (map car socompile-queue))
 	 (trace-item "socompile-compiled=" socompile-compiled)
-	 (when (and (file-exists? filename)
-		    (not (member filename socompile-compiled))
-		    (not (member filename socompile-incompile))
-		    (not (assoc filename socompile-queue)))
-	    (set! socompile-queue
-	       (cons (econs filename lang (file-modification-time filename))
-		  socompile-queue)))
+	 (let ((key (if worker-slave (string-append filename "_w") filename)))
+	    (when (and (file-exists? filename)
+		       (not (member key socompile-compiled))
+		       (not (member key socompile-incompile))
+		       (not (assoc key socompile-queue)))
+	       (let ((en (soentry filename lang
+			    (file-modification-time filename)
+			    (if worker-slave #t #f) key)))
+		  (set! socompile-queue (cons (cons key en) socompile-queue)))))
 	 (condition-variable-broadcast! socompile-condv))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-socompile ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-socompile src::obj filename::bstring lang
-	   #!key worker-slave)
+(define (nodejs-socompile src::obj filename::bstring lang worker-slave::bool)
    
    (define (exec line::pair ksucc::procedure kfail::procedure)
       
@@ -1406,7 +1420,7 @@
 	 (when (file-exists? sopath) (delete-file sopath))
 	 (when (file-exists? sopathtmp) (delete-file sopathtmp))
 	 (when (and misctmp (file-exists? misctmp)) (delete-file misctmp))))
-   
+
    (with-trace 'sorequire (format "nodejs-socompile ~a" filename)
       (let loop ()
 	 (let ((tmp (synchronize socompile-mutex
@@ -1430,7 +1444,8 @@
 	       (else
 		(with-handler
 		   exception-notify
-		   (let* ((sopath (hop-sofile-path filename))
+		   (let* ((sopath (hop-sofile-path filename
+				     :suffix (if worker-slave "_w" "")))
 			  (sopathtmp (make-file-name
 					(dirname sopath)
 					(string-append "#" (basename sopath))))
@@ -1525,8 +1540,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    find-new-sofile ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (find-new-sofile filename)
-   (let ((sopath (hop-find-sofile filename)))
+(define (find-new-sofile filename::bstring worker-slave)
+   (let ((sopath (hop-find-sofile filename
+		    :suffix (if worker-slave "_w" ""))))
       (if (string? sopath)
 	  (when (> (file-modification-time sopath)
 		   (file-modification-time filename))
@@ -1540,35 +1556,36 @@
 	   #!key lang srcalias commonjs-export)
 
    (define (loadso-or-compile filename lang worker-slave)
-      (if worker-slave
-	  (nodejs-compile src filename %ctxthis %ctxmodule
-	     :lang lang :worker-slave #t :commonjs-export commonjs-export)
-	  (let loop ((sopath (find-new-sofile filename)))
-	     (cond
-		((string? sopath)
-		 (multiple-value-bind (p _)
-		    (hop-dynamic-load sopath)
-		    (if (and (procedure? p) (=fx (procedure-arity p) 4))
-			p
-			(js-raise-error %ctxthis
-			   (format "Wrong compiled file format ~s" sopath)
-			   sopath))))
-		((and (not (eq? sopath 'error)) (hop-sofile-enable))
-		 (case (hop-sofile-compile-policy)
-		    ((aot)
-		     (loop (nodejs-socompile src filename lang)))
-		    ((nte nte1 nte+)
-		     (nodejs-socompile-queue-push filename lang)
-		     (nodejs-compile src filename %ctxthis %ctxmodule
-			:lang lang :commonjs-export commonjs-export))
-		    (else
-		     (nodejs-compile src filename %ctxthis %ctxmodule
-			:lang lang :commonjs-export commonjs-export))))
-		(else
-		 (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
-		    (nodejs-socompile-queue-push filename lang))
+      (tprint "loadso-or-compile filename=" filename " ws=" worker-slave)
+      (let loop ((sopath (find-new-sofile filename worker-slave)))
+	 (cond
+	    ((string? sopath)
+	     (multiple-value-bind (p _)
+		(hop-dynamic-load sopath)
+		(if (and (procedure? p) (=fx (procedure-arity p) 4))
+		    p
+		    (js-raise-error %ctxthis
+		       (format "Wrong compiled file format ~s" sopath)
+		       sopath))))
+	    ((and (not (eq? sopath 'error)) (hop-sofile-enable))
+	     (case (hop-sofile-compile-policy)
+		((aot)
+		 (loop (nodejs-socompile src filename lang worker-slave)))
+		((nte nte1 nte+)
+		 (nodejs-socompile-queue-push filename lang worker-slave)
 		 (nodejs-compile src filename %ctxthis %ctxmodule
-		    :lang lang :commonjs-export commonjs-export))))))
+		    :lang lang :commonjs-export commonjs-export
+		    :worker-slave worker-slave))
+		(else
+		 (nodejs-compile src filename %ctxthis %ctxmodule
+		    :lang lang :commonjs-export commonjs-export
+		    :worker-slave worker-slave))))
+	    (else
+	     (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
+		(nodejs-socompile-queue-push filename lang worker-slave))
+	     (nodejs-compile src filename %ctxthis %ctxmodule
+		:lang lang :commonjs-export commonjs-export
+		:worker-slave worker-slave)))))
 
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
@@ -1647,30 +1664,30 @@
 		   (else
 		    (values #f #f)))))))
 
-   (define (hop-load/cache filename)
-      (let loop ((sopath (find-new-sofile filename)))
+   (define (hop-load/cache filename worker-slave)
+      (let loop ((sopath (find-new-sofile filename worker-slave)))
 	 (cond
 	    ((string? sopath)
 	     (hop-dynamic-load sopath))
 	    ((and (not (eq? sopath 'error)) (hop-sofile-enable))
 	     (case (hop-sofile-compile-policy)
 		((aot)
-		 (loop (nodejs-socompile src filename lang)))
+		 (loop (nodejs-socompile src filename lang worker-slave)))
 		((nte nte1 nte+)
-		 (nodejs-socompile-queue-push filename lang)
+		 (nodejs-socompile-queue-push filename lang worker-slave)
 		 (hop-eval filename))
 		(else
 		 (hop-eval filename))))
 	    (else
 	     (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
-		(nodejs-socompile-queue-push filename lang))
+		(nodejs-socompile-queue-push filename lang worker-slave))
 	     (hop-eval filename)))))
    
    (define (load-module-hop)
-      (with-access::WorkerHopThread worker (%this)
+      (with-access::WorkerHopThread worker (%this parent)
 	 (with-access::JsGlobalObject %this (js-object)
 	    (multiple-value-bind (init module)
-	       (hop-load/cache filename)
+	       (hop-load/cache filename parent)
 	       (let ((this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-new-module filename
@@ -2244,7 +2261,9 @@
 	    :construct (js-worker-construct %this loader))))
 
    (js-bind! %this scope (& "Worker") :value js-worker
-      :configurable #f :enumerable #f))
+      :configurable #f :enumerable #f)
+
+   js-worker)
 
 ;*---------------------------------------------------------------------*/
 ;*    make-plugins-loader ...                                          */
