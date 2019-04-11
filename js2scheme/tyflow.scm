@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jan 25 10:12:09 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 08:01:28 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -778,13 +778,14 @@
 	 (when (isa? thisp J2SDecl)
 	    (decl-itype-add! thisp 'object fix))))
    
-   (with-access::J2SDeclFun this (val ronly)
+   (with-access::J2SDeclFun this (val ronly scope id)
       (if ronly
 	  (decl-vtype-set! this 'function fix)
 	  (decl-vtype-add! this 'function fix))
       (cond
-	 ((isa? this J2SDeclSvc)
-	  ;; services are as escaping function, the arguments are "any"
+	 ((or (isa? this J2SDeclSvc) (eq? scope 'export))
+	  ;; services and exported function are as escaping functions,
+	  ;; the arguments and return types are "any"
 	  (escape-fun val fix #f))
 	 ((constructor-only? this)
 	  ;; a mere constructor
@@ -989,7 +990,7 @@
 ;*    node-type-fun ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (node-type-fun this::J2SFun env::pair-nil fix::cell)
-   (with-access::J2SFun this (body thisp params rtype %info vararg argumentsp type)
+   (with-access::J2SFun this (body thisp params %info vararg argumentsp type)
       (let ((envp (map (lambda (p::J2SDecl)
 			  (with-access::J2SDecl p (usage utype itype)
 			     (cond
@@ -1040,7 +1041,7 @@
 ;*    node-type-fun-decl ::J2SFun ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (node-type-fun-decl this::J2SFun env::pair-nil fix)
-   (with-access::J2SFun this (body rtype decl)
+   (with-access::J2SFun this (body decl)
       (when (isa? decl J2SDecl)
 	 (decl-vtype-set! decl 'function fix))
       (filter-map (lambda (c)
