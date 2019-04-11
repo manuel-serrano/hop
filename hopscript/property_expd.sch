@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Apr  9 16:18:29 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 16:46:01 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -99,12 +99,16 @@
 ;*    js-pcache-ref-expander ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-ref-expander x e)
-   (e `(cond-expand
-	  ((and bigloo-c (not hopjs-worker-slave))
-	   (free-pragma::JsPropertyCache "(BgL_jspropertycachez00_bglt)BOBJECT(&(__bgl_pcache[ $1 ]))" ,(caddr x)))
-	  (else
-	   ((@ js-pcache-ref __hopscript_property) ,(cadr x) ,(caddr x))))
-      e))
+   (match-case x
+      ((js-pcache-ref %pcache ?-)
+       (e `(cond-expand
+	      ((and bigloo-c (not hopjs-worker-slave))
+	       (free-pragma::JsPropertyCache "(BgL_jspropertycachez00_bglt)BOBJECT(&(__bgl_pcache[ $1 ]))" ,(caddr x)))
+	      (else
+	       ((@ js-pcache-ref __hopscript_property) ,(cadr x) ,(caddr x))))
+	  e))
+      (else
+       (e `((@ js-pcache-ref __hopscript_property) ,(cadr x) ,(caddr x)) e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-pctable-expander ...                                   */

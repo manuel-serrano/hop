@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 10 06:48:17 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 16:48:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -165,12 +165,6 @@
       (else
        `((@ js-toindex  __hopscript_public) ,p))))
        
-;*---------------------------------------------------------------------*/
-;*    property caches ...                                              */
-;*---------------------------------------------------------------------*/
-(%define-pcache 14)
-(define %pcache (js-make-pcache-table 14 "hopscript/array.scm"))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-make-vector ...                                               */
 ;*    -------------------------------------------------------------    */
@@ -391,9 +385,14 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-array! %this)
    (with-access::JsGlobalObject %this (__proto__ js-array js-array-prototype
-					 js-function js-array-cmap)
+					 js-function js-array-cmap
+					 js-array-pcache)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
+	 ;; array pcache
+	 (set! js-array-pcache
+	    ((@ js-make-pcache-table __hopscript_property) 14 "array"))
+	 
 	 ;; default arrays cmap
 	 (set! js-array-cmap
 	    (instantiate::JsConstructMap
@@ -2418,7 +2417,7 @@
 ;*    js-array-species-create ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-array-species-create %this origin new-len)
-   (with-access::JsGlobalObject %this (js-symbol-species js-array js-array-prototype)
+   (with-access::JsGlobalObject %this (js-symbol-species js-array js-array-prototype js-array-pcache)
       (define (check-array val)
 	 (if (isa? val JsArray)
 	     val
@@ -2430,7 +2429,7 @@
 		(js-array-alloc %this)
 		(fixnum->uint32 new-len))
 	     (let ((ctor (js-get-name/cache origin (& "constructor") #f %this
-			    (js-pcache-ref %pcache 13))))
+			    (js-pcache-ref js-array-pcache 13))))
 		(if (and (isa? ctor JsFunction) (not (eq? js-array ctor)))
 		    (let ((species (js-get ctor js-symbol-species %this)))
 		       (check-array
@@ -2473,11 +2472,11 @@
 ;*    js-array-alloc-ctor ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-array-alloc-ctor::JsArray %this constructor::JsFunction)
-   (with-access::JsGlobalObject %this (js-array js-array-prototype)
+   (with-access::JsGlobalObject %this (js-array js-array-prototype js-array-pcache)
       (let ((proto (if (eq? constructor js-array)
 		       js-array-prototype
 		       (js-get-name/cache constructor (& "prototype") #f %this
-			  (js-pcache-ref %pcache 0)))))
+			  (js-pcache-ref js-array-pcache 0)))))
 	 (instantiateJsArray
 	    (cmap (js-not-a-cmap))
 	    (__proto__ proto)))))
@@ -3662,10 +3661,11 @@
 (define (js-array-join this::JsArray separator %this cache)
    (if (js-object-mode-array-plain? this)
        (js-array-prototype-join this separator %this)
-       (js-call1 %this
-	  (js-get-name/cache this (& "join") #f %this
-	     (or cache (js-pcache-ref %pcache 2)))
-	  this separator)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "join") #f %this
+		(or cache (js-pcache-ref js-array-pcache 2)))
+	     this separator))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-join ...                                          */
@@ -3673,10 +3673,11 @@
 (define (js-array-maybe-join this separator %this cache)
    (if (js-array? this)
        (js-array-join this separator %this cache)
-       (js-call1 %this
-	  (js-get-name/cache this (& "join") #f %this
-	     (or cache (js-pcache-ref %pcache 3)))
-	  this separator)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "join") #f %this
+		(or cache (js-pcache-ref js-array-pcache 3)))
+	     this separator))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-fill ...                                      */
@@ -3729,10 +3730,11 @@
 (define (js-array-fill this::JsArray value start end %this cache)
    (if (js-object-mode-array-plain? this)
        (js-array-prototype-fill this value start end %this)
-       (js-call3 %this
-	  (js-get-name/cache this (& "fill") #f %this
-	     (or cache (js-pcache-ref %pcache 4)))
-	  this value start end)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call3 %this
+	     (js-get-name/cache this (& "fill") #f %this
+		(or cache (js-pcache-ref js-array-pcache 4)))
+	     this value start end))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-fill ...                                          */
@@ -3740,10 +3742,11 @@
 (define (js-array-maybe-fill this value start end %this cache)
    (if (js-array? this)
        (js-array-fill this value start end %this cache)
-       (js-call3 %this
-	  (js-get-name/cache this (& "fill") #f %this
-	     (or cache (js-pcache-ref %pcache 5)))
-	  this value start end)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call3 %this
+	     (js-get-name/cache this (& "fill") #f %this
+		(or cache (js-pcache-ref js-array-pcache 5)))
+	     this value start end))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-foreach ...                                   */
@@ -3785,10 +3788,11 @@
 (define (js-array-foreach this::JsArray proc thisarg %this cache)
    (if (js-object-mode-array-plain? this)
        (js-array-prototype-foreach this proc thisarg %this)
-       (js-call2 %this
-	  (js-get-name/cache this (& "forEach") #f %this
-	     (or cache (js-pcache-ref %pcache 11)))
-	  this proc thisarg)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "forEach") #f %this
+		(or cache (js-pcache-ref js-array-pcache 11)))
+	     this proc thisarg))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-foreach ...                                       */
@@ -3796,10 +3800,11 @@
 (define (js-array-maybe-foreach this proc thisarg %this cache)
    (if (js-array? this)
        (js-array-foreach this proc thisarg %this cache)
-       (js-call2 %this
-	  (js-get-name/cache this (& "forEach") #f %this
-	     (or cache (js-pcache-ref %pcache 12)))
-	  this proc thisarg)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "forEach") #f %this
+		(or cache (js-pcache-ref js-array-pcache 12)))
+	     this proc thisarg))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-foreach-procedure ...                         */
@@ -3889,10 +3894,11 @@
 (define (js-array-push o::JsArray item %this::JsGlobalObject cache)
    (if (js-object-mode-array-plain? o)
        (js-array-prototype-push o item %this)
-       (js-call1 %this
-	  (js-get-name/cache o (& "push") #f %this
-	     (or cache (js-pcache-ref %pcache 6)))
-	  o item)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache o (& "push") #f %this
+		(or cache (js-pcache-ref js-array-pcache 6)))
+	     o item))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-push ...                                          */
@@ -3900,10 +3906,11 @@
 (define (js-array-maybe-push this item %this cache)
    (if (js-array? this)
        (js-array-push this item %this cache)
-       (js-call1 %this
-	  (js-get-name/cache this (& "push") #f %this
-	     (or cache (js-pcache-ref %pcache 7)))
-	  this item)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "push") #f %this
+		(or cache (js-pcache-ref js-array-pcache 7)))
+	     this item))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-pop ...                                       */
@@ -3938,10 +3945,11 @@
 (define (js-array-pop o::JsArray %this cache)
    (if (js-object-mode-array-plain? o)
        (js-array-prototype-pop o %this)
-       (js-call0 %this
-	  (js-get-name/cache o (& "pop") #f %this
-	     (or cache (js-pcache-ref %pcache 8)))
-	  o)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call0 %this
+	     (js-get-name/cache o (& "pop") #f %this
+		(or cache (js-pcache-ref js-array-pcache 8)))
+	     o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-pop ...                                           */
@@ -3949,10 +3957,11 @@
 (define (js-array-maybe-pop this %this cache)
    (if (js-array? this)
        (js-array-pop this %this cache)
-       (js-call0 %this
-	  (js-get-name/cache this (& "pop") #f %this
-	     (or cache (js-pcache-ref %pcache 9)))
-	  this)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call0 %this
+	     (js-get-name/cache this (& "pop") #f %this
+		(or cache (js-pcache-ref js-array-pcache 9)))
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-indexof ...                                   */
@@ -4030,10 +4039,11 @@
 (define (js-array-indexof o::JsArray el indx %this cache)
    (if (js-object-mode-array-plain? o)
        (js-array-prototype-indexof o el indx %this)
-       (js-call2 %this
-	  (js-get-name/cache o (& "indexOf") #f %this
-	     (or cache (js-pcache-ref %pcache 10)))
-	  o el indx)))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache o (& "indexOf") #f %this
+		(or cache (js-pcache-ref js-array-pcache 10)))
+	     o el indx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-iterator-to-array ...                                         */
