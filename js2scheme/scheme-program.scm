@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Mar 28 15:31:34 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 11:52:17 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -499,21 +499,23 @@
        body))
 
 ;*---------------------------------------------------------------------*/
-;*    %cnst-table ...                                                       */
+;*    %cnst-table ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (%cnst-table cnsts mode return conf)
    
    (define (%cnst-table-debug cnsts)
-      `(vector
-	  ,@(map (lambda (n)
-		    (let ((s (j2s-scheme n mode return conf)))
-		       (if (isa? n J2SRegExp)
-			   (with-access::J2SRegExp n (loc val flags inline)
-			      (if inline
-				  `(with-access::JsRegExp ,s (rx) rx)
-				  s))
-			   s)))
-	       cnsts)))
+      `(js-constant-init (js-cnst-table)
+	  (vector
+	     ,@(map (lambda (n)
+		       (let ((s (j2s-scheme n mode return conf)))
+			  (if (isa? n J2SRegExp)
+			      (with-access::J2SRegExp n (loc val flags inline)
+				 (if inline
+				     `(with-access::JsRegExp ,s (rx) rx)
+				     s))
+			      s)))
+		  cnsts))
+	  %this))
    
    (define (%cnst-table-intext cnsts)
       

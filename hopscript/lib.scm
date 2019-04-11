@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Mar 28 15:42:40 2019 (serrano)                */
+;*    Last change :  Wed Apr 10 11:57:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -34,7 +34,7 @@
 	   __hopscript_arraybuffer
 	   __hopscript_arraybufferview)
 
-   (export (js-constant-init ::obj ::bstring ::JsGlobalObject)
+   (export (js-constant-init ::obj ::obj ::JsGlobalObject)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
 	   (js-alist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
@@ -51,8 +51,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-constant-init ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-constant-init vec-or-false str %this)
-   (let ((cnsts (string->obj str)))
+(define (js-constant-init vec-or-false vec-or-str %this)
+   (let ((cnsts (if (vector? vec-or-str) vec-or-str (string->obj vec-or-str))))
       (let loop ((i (-fx (vector-length cnsts) 1)))
 	 (when (>=fx i 0)
 	    (let ((el (vector-ref cnsts i)))
