@@ -177,6 +177,17 @@
 	    :writable #t
 	    :enumerable #t
 	    :hidden-class #t)))
+
+   (define (onexit th)
+      (with-access::WorkerHopThread th (keep-alive parent exitlisteners)
+	 (when (pair? exitlisteners)
+	    (js-worker-push-thunk! parent "slave-terminate"
+	       (lambda ()
+		  (let ((e (instantiate::MessageEvent
+			      (name "exit")
+			      (target (js-undefined))
+			      (data (js-undefined)))))
+		     (apply-listeners exitlisteners e)))))))
    
    (lambda (_ src)
       (with-access::JsGlobalObject %this (js-worker js-worker-prototype js-object)
@@ -196,6 +207,10 @@
 					    mutex)
 					 (make-mutex)))
 			      (tqueue (list (cons "init" thunk)))
+			      (onexit (js-make-function %this
+					 (lambda (this process retval)
+					    (onexit thread))
+					 2 "onexit"))
 			      (%this this)
 			      (keep-alive #f)
 			      (module-cache (js-new0 %this js-object))

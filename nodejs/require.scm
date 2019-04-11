@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 11 08:32:35 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 11:22:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1107,6 +1107,7 @@
 (define sofile-cache (make-hashtable))
 (define soload-mutex (make-mutex))
 
+(define socompile-mutex-debug #f)
 (define socompile-mutex (make-mutex))
 (define socompile-condv (make-condition-variable))
 (define socompile-files '())
@@ -1117,6 +1118,33 @@
 (define socompile-queue '())
 (define socompile-compiled '())
 (define socompile-incompile '())
+
+;*---------------------------------------------------------------------*/
+;*    synchronize/debug ...                                            */
+;*---------------------------------------------------------------------*/
+(define-expander synchronize/debug
+   (lambda (x e)
+      (match-case x
+	 ((synchronize/debug socompile-mutex . ?body)
+	  (let ((nx `(synchronize ,(cadr x)
+			(set! socompile-mutex-debug
+			   (cons ',(cer x) (current-thread)))
+			,@(cddr x))))
+	     (e nx e)))
+	 (else
+	  (error "synchronize/debug" "bad form" x)))))
+
+(define-expander condition-variable-wait!/debug
+   (lambda (x e)
+      (match-case x
+	 ((condition-variable-wait!/debug ?condv socompile-mutex)
+	  (let ((nx `(begin
+			(condition-variable-wait! ,condv socompile-mutex)
+			(set! socompile-mutex-debug
+			   (cons ',(cer x) (current-thread))))))
+	     (e nx e)))
+	 (else
+	  (error "condition-variable-wait!/debug" "bad form" x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-dynamic-load ...                                             */
@@ -1171,7 +1199,7 @@
 	     ((socompile-ksucc p))
 	     ((socompile-kfail p)))))
 
-   (synchronize socompile-mutex
+   (synchronize/debug socompile-mutex
       (for-each (lambda (p)
 		   (define debug-abort #f)
 		   (case (hop-sofile-compile-policy)
@@ -1215,7 +1243,7 @@
 		   (cons (soentry-key e) socompile-incompile))
 		(thread-start! (make-compile-worker e)))
 	     (begin
-		(condition-variable-wait! socompile-condv socompile-mutex)
+		(condition-variable-wait!/debug socompile-condv socompile-mutex)
 		(loop)))))
 
    (register-exit-function!
@@ -1230,7 +1258,7 @@
 		  (with-handler
 		     (lambda (e)
 			(exception-notify e))
-		     (synchronize socompile-mutex
+		     (synchronize/debug socompile-mutex
 			(let loop ()
 			   (let liip ()
 			      (when (pair? socompile-queue)
@@ -1241,7 +1269,7 @@
 						    (soentry-wslave e)))
 					(compile-worker e))
 				    (liip))))
-			   (condition-variable-wait!
+			   (condition-variable-wait!/debug
 			      socompile-condv socompile-mutex)
 			   (loop)))))))))
 
@@ -1271,7 +1299,7 @@
    (let ((count 0))
       (lambda ()
 	 (set! count (+fx 1 count))
-	 (string-append "socompiler-worker-" (integer->string count)))))
+	 (string-append "socompile-worker-" (integer->string count)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-compile-worker ...                                          */
@@ -1290,7 +1318,7 @@
 			(soentry-filename en)
 			(soentry-lang en)
 			(soentry-wslave en))
-		     (synchronize socompile-mutex
+		     (synchronize/debug socompile-mutex
 			(set! socompile-worker-count
 			   (-fx socompile-worker-count 1))
 			(set! socompile-compiled
@@ -1308,11 +1336,11 @@
 (define (nodejs-select-socompile::struct queue::pair)
    ;; socompile-mutex is already acquired
    (let loop ((entries (cdr queue))
-	      (entry (cadr queue)))
+	      (entry (car queue)))
       (cond
 	 ((null? entries)
 	  entry)
-	 ((<elong (soentry-mtime (cadr entries)) (soentry-mtime entry))
+	 ((<elong (soentry-mtime (car entries)) (soentry-mtime entry))
 	  ;; select the oldest entry
 	  (loop (cdr entries) (car entries)))
 	 (else
@@ -1323,20 +1351,22 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-socompile-queue-push filename lang worker-slave)
    (with-trace 'sorequire "nodejs-socompile-queue-push"
-      (synchronize socompile-mutex
+      (synchronize/debug socompile-mutex
 	 (trace-item "filename=" filename)
 	 (trace-item "workfer-slave=" worker-slave)
-	 (trace-item "socompile-queue=" (map car socompile-queue))
+	 (trace-item "socompile-queue=" (map soentry-filename socompile-queue))
 	 (trace-item "socompile-compiled=" socompile-compiled)
 	 (let ((key (if worker-slave (string-append filename "_w") filename)))
 	    (when (and (file-exists? filename)
 		       (not (member key socompile-compiled))
 		       (not (member key socompile-incompile))
-		       (not (assoc key socompile-queue)))
+		       (not (find (lambda (e)
+				     (eq? (soentry-key e) key))
+			       socompile-queue)))
 	       (let ((en (soentry filename lang
 			    (file-modification-time filename)
 			    (if worker-slave #t #f) key)))
-		  (set! socompile-queue (cons (cons key en) socompile-queue)))))
+		  (set! socompile-queue (cons en socompile-queue)))))
 	 (condition-variable-broadcast! socompile-condv))))
 
 ;*---------------------------------------------------------------------*/
@@ -1351,7 +1381,7 @@
 	    (estr #f)
 	    (proc #f))
 	 
-	 (synchronize socompile-mutex
+	 (synchronize/debug socompile-mutex
 	    (set! proc (unless socompile-ended
 			  (register-socompile-process!
 			     (apply run-process (car line)
@@ -1420,16 +1450,16 @@
 	 (when (file-exists? sopath) (delete-file sopath))
 	 (when (file-exists? sopathtmp) (delete-file sopathtmp))
 	 (when (and misctmp (file-exists? misctmp)) (delete-file misctmp))))
-
+   
    (with-trace 'sorequire (format "nodejs-socompile ~a" filename)
       (let loop ()
-	 (let ((tmp (synchronize socompile-mutex
+	 (let ((tmp (synchronize/debug socompile-mutex
 		       (cond
 			  ((hop-find-sofile filename)
 			   =>
 			   (lambda (x) x))
 			  ((member filename socompile-files)
-			   (condition-variable-wait!
+			   (condition-variable-wait!/debug
 			      socompile-condv socompile-mutex)
 			   'loop)
 			  (else
@@ -1450,48 +1480,48 @@
 					(dirname sopath)
 					(string-append "#" (basename sopath))))
 			  (astfile (when (isa? src J2SProgram)
-				     (make-file-name (dirname sopath)
-					(string-append (basename filename) ".ast"))))
+				      (make-file-name (dirname sopath)
+					 (string-append (basename filename) ".ast"))))
 			  (cmd `(,(hop-hopc)
-				  ;; bigloo
-				  ,(format "--bigloo=~a" (hop-bigloo))
-				  ;; verbosity
-				  ,@(if (= (hop-verbose) 0)
-					(if (eq? nodejs-debug-compile 'yes) '("-v4") '())
+				 ;; bigloo
+				 ,(format "--bigloo=~a" (hop-bigloo))
+				 ;; verbosity
+				 ,@(if (= (hop-verbose) 0)
+				       (if (eq? nodejs-debug-compile 'yes) '("-v4") '())
 				       (list (format "-v~a" (hop-verbose))))
-				  ;; source
-				  ,@(cond
-				       ((string? src)
-					(list src))
-				       ((isa? src J2SProgram)
-					`(,filename "--ast-file" ,astfile))
-				       (else
-					(error "nodejs-socompile"
-					   (format "bad source format `~a'" (typeof src)) filename)))
-				  ;; target
-				  "-y" "--js-no-module-main" "-o" ,sopathtmp
-				  ;; js plugins
-				  "--js-plugins"
-				  ;; profiling
-				  ,@(if (hop-profile) '("--profile") '())
-				  ;; worker
-				  ,@(if worker-slave '("--js-worker-slave") '())
-				  ;; debug
-				  ,@(if (eq? nodejs-debug-compile 'yes)
-					`("-t" ,(make-file-name "/tmp/HOP"
-						   (string-append
-						      (prefix (basename filename))
-						      ".scm")))
-					'())
-				  ;; config
-				  ,@(if (pair? (j2s-compile-options))
-					`("--js-config"
-					    ,(string-for-read
-						(format "~s"
-						   (j2s-compile-options))))
-					'())
-				  ;; other options
-				  ,@(call-with-input-string (hop-hopc-flags) port->string-list)))
+				 ;; source
+				 ,@(cond
+				      ((string? src)
+				       (list src))
+				      ((isa? src J2SProgram)
+				       `(,filename "--ast-file" ,astfile))
+				      (else
+				       (error "nodejs-socompile"
+					  (format "bad source format `~a'" (typeof src)) filename)))
+				 ;; target
+				 "-y" "--js-no-module-main" "-o" ,sopathtmp
+				 ;; js plugins
+				 "--js-plugins"
+				 ;; profiling
+				 ,@(if (hop-profile) '("--profile") '())
+				 ;; worker
+				 ,@(if worker-slave '("--js-worker-slave") '())
+				 ;; debug
+				 ,@(if (eq? nodejs-debug-compile 'yes)
+				       `("-t" ,(make-file-name "/tmp/HOP"
+						  (string-append
+						     (prefix (basename filename))
+						     ".scm")))
+				       '())
+				 ;; config
+				 ,@(if (pair? (j2s-compile-options))
+				       `("--js-config"
+					   ,(string-for-read
+					       (format "~s"
+						  (j2s-compile-options))))
+				       '())
+				 ;; other options
+				 ,@(call-with-input-string (hop-hopc-flags) port->string-list)))
 			  (ksucc (make-ksucc sopath sopathtmp astfile))
 			  (kfail (make-kfail sopath sopathtmp astfile)))
 		      (make-directories (dirname sopath))
@@ -1530,7 +1560,7 @@
 					 " " cmd "\n" msg)
 				      (dump-error cmd sopath msg)
 				      'error))
-				  (synchronize socompile-mutex
+				  (synchronize/debug socompile-mutex
 				     (unless socompile-ended
 					(set! socompile-files
 					   (delete! filename socompile-files))
@@ -1556,7 +1586,6 @@
 	   #!key lang srcalias commonjs-export)
 
    (define (loadso-or-compile filename lang worker-slave)
-      (tprint "loadso-or-compile filename=" filename " ws=" worker-slave)
       (let loop ((sopath (find-new-sofile filename worker-slave)))
 	 (cond
 	    ((string? sopath)

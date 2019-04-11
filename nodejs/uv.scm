@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Apr  9 11:26:21 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 11:02:07 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -405,7 +405,8 @@
 				 (with-access::JsLoop loop (actions)
 				    (unless (or keep-alive
 						(pair? services)
-						(pair? actions))
+						(pair? actions)
+						(active-subworkers? th))
 				       (uv-unref async)
 				       (when (js-totest (js-get %process (& "_exiting") %this))
 					  (uv-stop loop)))))))))
@@ -440,6 +441,7 @@
 			(uv-async-send async)
 			(run))
 		     (uv-run loop)))
+	       (tprint "JS-WORKER-LOOP th=" th " retval=" %retval)
 	       ;; call the cleanup function
 	       (when (=fx %retval 0)
 		  (unless (js-totest (js-get %process (& "_exiting") %this))
@@ -465,7 +467,24 @@
 				  (js-worker-push-thunk! w "ping"
 				     (lambda ()
 					(uv-async-send async))))))
-		  subworkers))))))
+		  subworkers))
+	    (with-access::WorkerHopThread th (mutex condv parent state)
+	       ;; notify the parent that we are now dead
+	       (when parent
+		  (synchronize mutex
+		     (set! state 'end)
+		     (condition-variable-broadcast! condv))))))))
+
+;*---------------------------------------------------------------------*/
+;*    active-subworkers? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (active-subworkers? th::WorkerHopThread)
+   (with-access::WorkerHopThread th (subworkers parent)
+      (find (lambda (w)
+	       (with-access::WorkerHopThread w (exitlisteners state mutex)
+		  (synchronize mutex
+		     (and (pair? exitlisteners) (not (eq? state 'end))))))
+	 subworkers)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-terminate! ::WorkerHopThread ...                       */

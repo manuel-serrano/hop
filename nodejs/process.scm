@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu Apr 11 10:17:07 2019 (serrano)                */
+;*    Last change :  Thu Apr 11 12:13:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -129,7 +129,6 @@
 		     (cond
 			((and (string=? sig "exit") (not exitarmed))
 			 (with-access::WorkerHopThread %worker (onexit)
-			    (tprint "SETTING ONEXIT " %worker " " proc)
 			    (set! onexit proc))
 			 (js-call2 %this add this signame proc))
 			((assq (string->symbol sig) signals)
@@ -444,6 +443,7 @@
 			(js-put! proc (& "_exiting") #t #f %this)
 			(let ((emit (js-get proc (& "emit") %this)))
 			   (js-call2 %this emit proc "exit" r))
+			(tprint "exit...")
 			(nodejs-compile-abort-all!)
 			(exit r))))
 	       1 "exit")
@@ -451,7 +451,7 @@
 	 (js-put! proc (& "reallyExit")
 	    (js-make-function %this
 	       (lambda (this status)
-		  (nodejs-compile-abort-all!)
+		  ;;(nodejs-compile-abort-all!)
 		  (exit (js-tointeger status %this)))
 	       1 "exit")
 	    #f %this)
