@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Sun Mar 31 07:34:40 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 14:03:30 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JsStringLiteral Helper macros.                                   */
@@ -13,8 +13,16 @@
 ;*    The directives                                                   */
 ;*---------------------------------------------------------------------*/
 (directives
+   
+   (static __js_strings::vector)
+   
    (import __hopscript_stringliteral)
-   (include "names.sch"))
+   
+   (include "names.sch")
+
+   (cond-expand
+      ((config 'thread-local-storage #t)
+       (pragma (__js_strings 'thread-local-storage)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->jsstring                                              */
@@ -27,7 +35,8 @@
 	      (evepairify `(js-ascii->jsstring ,val) x)
 	      (evepairify `(js-utf8->jsstring ,val) x)))
 	 ((js-string->jsstring ?val)
-	  `(js-string->jsstring ,(e (evepairify val x) e)))
+	  `(js-string->jsstring
+	      ,(e (evepairify val x) e)))
 	 (else
 	  (error "js-string->jsstring" "wrong syntax" x)))))
-   
+

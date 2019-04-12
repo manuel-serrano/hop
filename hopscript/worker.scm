@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue Apr  9 15:13:44 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 14:35:25 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -61,7 +61,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsWorker ...                                 */
@@ -98,7 +98,10 @@
 	       (lambda (this proc)
 		  (js-new %this js-worker proc))))
 
-	 ;; first, create the builtin prototype
+	 ;; local constant strings
+	 (set! __js_strings (&init!))
+	 
+	 ;; create the builtin prototype
 	 (set! js-worker-prototype
 	    (instantiateJsWorker
 	       (__proto__ __proto__)))

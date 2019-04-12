@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr  8 15:20:59 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 16:14:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -42,7 +42,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsSymbol ...                                 */
@@ -168,6 +168,7 @@
 ;*    js-init-symbol! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-symbol! %this::JsGlobalObject)
+   (set! __js_strings (&init!))
    (with-access::JsGlobalObject %this (__proto__
 					 js-function
 					 js-symbol
@@ -225,7 +226,7 @@
 						  (string-append "Symbol." s))))))
 			       (set! symbols (cons (cons s sym) symbols))
 			       sym))))
-	       (js-bind! %this js-symbol (js-ascii-name->jsstring s)
+	       (js-bind! %this js-symbol (js-ascii-name->jsstring s %this)
 		  :value v
 		  :writable #f
 		  :enumerable #f

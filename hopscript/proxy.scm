@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Apr 10 07:37:00 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 16:15:49 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -44,7 +44,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(define __js_cnst (&begin!))
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    local caches                                                     */
@@ -68,6 +68,7 @@
 ;*    js-init-proxy! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-proxy! %this::JsGlobalObject)
+   (set! __js_strings (&init!))
    (with-access::JsGlobalObject %this (__proto__ js-function-prototype)
 
       (define (js-proxy-alloc %this constructor::JsFunction)

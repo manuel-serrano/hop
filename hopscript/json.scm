@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr  8 15:14:21 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 14:34:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -38,7 +38,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsJSON ...                                           */
@@ -53,6 +53,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-json! %this)
    (with-access::JsGlobalObject %this (__proto__ js-json)
+      ;; local constant strings
+      (set! __js_strings (&init!))
       (set! js-json
 	 (instantiateJsJSON
 	    (__proto__ __proto__)))

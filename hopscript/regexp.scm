@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 11 17:56:13 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 14:25:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -39,7 +39,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsRegExp ...                                 */
@@ -96,6 +96,10 @@
 					 js-regexp-cmap
 					 js-regexp-exec-cmap
 					 js-regexp-pcache)
+      ;; local constant strings
+      (set! __js_strings (&init!))
+
+      ;; regexp pcache
       (set! js-regexp-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 1 "regexp"))
       

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr  8 15:14:10 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 14:34:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -37,7 +37,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsDate ...                                   */
@@ -113,6 +113,9 @@
    (with-access::JsGlobalObject %this (__proto__ js-date js-function)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
+	 ;; local constant strings
+	 (set! __js_strings (&init!))
+	 
 	 (define js-date-prototype
 	    (instantiateJsDate
 	       (val (current-date))

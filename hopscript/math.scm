@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr  8 15:14:30 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 14:34:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -41,7 +41,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math ...                                                      */
@@ -61,6 +61,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-math! %this)
    (with-access::JsGlobalObject %this (__proto__ js-math)
+      ;; local constant strings
+      (set! __js_strings (&init!))
       ;; create the math object
       (set! js-math
 	 (instantiateJsMath

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Apr 11 17:51:02 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 13:43:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -55,7 +55,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(define __js_cnst (&begin!))
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsFunction ...                               */
@@ -196,6 +196,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-function! %this::JsGlobalObject)
+   ;; local constant strings
+   (set! __js_strings (&init!))
    ;; create function cmap
    (js-init-function-cmap! %this)
    ;; bind the builtin function prototype
@@ -566,7 +568,7 @@
 			(js-ascii->jsstring "[Function]"))))))
 	 (else
 	  (js-raise-type-error %this "toString: not a function ~s"
-	     (js-typeof this)))))
+	     (js-typeof this %this)))))
 
    (js-bind! %this obj (& "toString")
       :value (js-make-function %this tostring 0 "toString"
@@ -583,7 +585,7 @@
 		(js-string->jsstring
 		   (format "~a:~a" (cadr (car src)) (caddr (car src))))))
 	  (js-raise-type-error %this "source: not a function ~s"
-	     (js-typeof this))))
+	     (js-typeof this %this))))
    
    (js-bind! %this obj (& "source")
       :value (js-make-function %this source 0 "source"

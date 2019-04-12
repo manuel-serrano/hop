@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Apr  9 16:10:00 2019 (serrano)                */
+/*    Last change :  Fri Apr 12 08:04:10 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -22,6 +22,15 @@
 #  define FILLER_COMMA 
 #else
 #  define FILLER_COMMA ,
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    thread local %this variable                                      */
+/*---------------------------------------------------------------------*/
+#if( BGL_HAS_THREAD_LOCALSTORAGE )
+BGL_THREAD_DECL obj_t THIS = 0L;
+#else
+error "no tls yet"
 #endif
 
 /*---------------------------------------------------------------------*/

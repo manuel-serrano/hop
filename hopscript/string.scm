@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Apr 11 17:57:21 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 09:47:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -43,7 +43,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -117,9 +117,12 @@
    (with-access::JsGlobalObject %this (__proto__ js-string js-function)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
+	 ;; local constant strings
+	 (set! __js_strings (&init!))
+	 
 	 ;; string pcache
 	 (define js-string-pcache
-	    (instantiate::JsPropertyCache))
+	    ((@ js-make-pcache-table __hopscript_property) 35 "string"))
 	 
 	 ;; builtin prototype
 	 (define js-string-prototype
@@ -165,7 +168,7 @@
 	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
 	       (__proto__ (js-object-get-name/cache constructor (& "prototype") #f
-			     %this js-string-pcache))))
+			     %this (js-pcache-ref js-string-pcache 34)))))
 
 	 ;; then, create a HopScript object
 	 (set! js-string

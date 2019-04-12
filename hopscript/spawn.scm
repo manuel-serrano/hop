@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Mon Apr  8 15:22:46 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 09:43:23 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -68,7 +68,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    macro-init ...                                                   */
@@ -82,10 +82,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    ref ...                                                          */
 ;*---------------------------------------------------------------------*/
-(define-macro (ref obj prop)
-   (eval '(set! idx (+fx 1 idx)))
-   (eval '(when (>=fx idx 10) (error "ref" "index out-of-bound" idx)))
-   `(js-get-name/cache ,obj ,prop #f %this (js-pcache-ref %pcache ,(eval idx))))
+(define-macro (ref idx obj prop)
+   `(js-get-name/cache ,obj ,prop #f %this
+       (js-pcache-ref js-spawn-pcache ,idx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    call ...                                                         */
@@ -97,28 +96,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    invoke ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-macro (invoke self met . args)
+(define-macro (invoke idx self met . args)
    (let ((call (string-append "js-call" (number->string (length args)))))
       `(let ((self ,self))
-	  (,(string->symbol call) %this (ref self ,met) self ,@args))))
+	  (,(string->symbol call) %this (ref ,idx self ,met) self ,@args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-macro (fun args body)
    `(js-make-function %this (lambda ,args ,body) ,(length args) "fun"))
-
-;*---------------------------------------------------------------------*/
-;*    %pcache ...                                                      */
-;*---------------------------------------------------------------------*/
-(%define-pcache 10)
-(define %pcache (js-make-pcache-table 10 "hopscript/spawn.scm"))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-spawn ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-spawn genF self %this)
-   (with-access::JsGlobalObject %this (js-promise)
+   (with-access::JsGlobalObject %this (js-promise js-spawn-pcache)
+      (when (=fx (vector-length js-spawn-pcache) 0)
+	 (set! __js_strings (&init!))
+	 (set! js-spawn-pcache
+	    ((@ js-make-pcache-table __hopscript_property) 8 "spawn")))
       (js-new1 %this js-promise
 	 (js-make-function %this 
 	    (lambda (this resolve reject)
@@ -135,20 +131,21 @@
 		     (cond
 			((not next)
 			 (js-undefined))
-			((js-totest (ref next (& "done")))
-			 (call resolve (js-undefined) (ref next (& "value")))
+			((js-totest (ref 0 next (& "done")))
+			 (call resolve (js-undefined) (ref 1 next (& "value")))
 			 (js-undefined))
 			(else
-			 (let ((promise (invoke js-promise (& "resolve")
-					   (ref next (& "value")))))
-			    (invoke promise (& "then")
+			 (let ((promise (invoke js-promise 3 (& "resolve")
+					   (ref 2 next (& "value")))))
+			    (invoke 4 promise (& "then")
 			       (fun (this v)
-				  (begin
-				     (step (lambda () (invoke gen (& "next") v)))))
+				  (step
+				     (lambda () (invoke 5 gen (& "next") v))))
 			       (fun (this e)
-				  (step (lambda () (invoke gen (& "throw") e))))))))))
+				  (step
+				     (lambda () (invoke 6 gen (& "throw") e))))))))))
 	       
-	       (step (lambda () (invoke gen (& "next") (js-undefined)))))
+	       (step (lambda () (invoke 7 gen (& "next") (js-undefined)))))
 	    
 	    2 "AsyncPromise"))))
 

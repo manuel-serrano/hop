@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Apr  9 07:10:29 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 09:27:00 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -531,9 +531,6 @@
 	  %this))
    
    (define (%cnst-table-intext cnsts)
-      
-      (define %this
-	 '(js-new-global-object))
       
       (define (j2s-constant this::J2SLiteralValue)
 	 (cond

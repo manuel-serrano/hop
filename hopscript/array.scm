@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 11 16:48:57 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 10:40:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -126,7 +126,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(define __js_cnst (&begin!))
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ::JsArray ...                                    */
@@ -389,6 +389,9 @@
 					 js-array-pcache)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
+	 ;; local constant strings
+	 (set! __js_strings (&init!))
+	 
 	 ;; array pcache
 	 (set! js-array-pcache
 	    ((@ js-make-pcache-table __hopscript_property) 14 "array"))
@@ -2404,8 +2407,10 @@
       (let ((unscopables (instantiateJsObject
 			    (__proto__ __proto__))))
 	 (for-each (lambda (id)
-		      (js-bind! %this unscopables (js-ascii-name->jsstring id)
-			 :value #t :writable #f :enumerable #f :configurable #t))
+		      (js-bind! %this unscopables
+			 (js-ascii-name->jsstring id %this)
+			 :value #t :writable #f
+			 :enumerable #f :configurable #t))
 	    '("copyWithin" "entries" "fill" "find" "findIndex" "keys" "values"))
 	 
 	 (js-bind! %this js-array-prototype js-symbol-unscopables

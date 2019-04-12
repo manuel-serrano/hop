@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Apr  9 09:03:02 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 10:04:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -50,9 +50,9 @@
 	   __hopscript_worker
 	   __hopscript_websocket
 	   __hopscript_lib
-	   __hopscript_arguments)
-   
-   (with   __hopscript_dom)
+	   __hopscript_arguments
+	   __hopscript_pair
+	   __hopscript_dom)
    
    (export (js-initial-global-object)
 	   (js-new-global-object::JsGlobalObject #!optional (size 64))
@@ -64,7 +64,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(define __js_cnst (&begin!))
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsObject ...                                 */
@@ -217,7 +217,7 @@
 	       (display p op)
 	       (display "\":" op)
 	       (hop->javascript
-		  (js-get o (js-jsstring-toname p) %this)
+		  (js-get o (js-jsstring-toname p %this) %this)
 		  op compile isexpr)
 	       (set! sep ","))
 	    %this))
@@ -265,11 +265,15 @@
 	 (set! js-initial-cmap (instantiate::JsConstructMap))
 	 (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	    ;; the prototypes and other builtin classes
+	    (js-init-names! %this)
+	    (js-init-public! %this)
+	    (js-init-property! %this)
 	    (js-init-arguments! %this)
 	    (js-init-symbol! %this)
 	    (js-init-array! %this)
 	    (js-init-arraybuffer! %this)
 	    (js-init-arraybufferview! %this)
+	    (js-init-stringliteral! %this)
 	    (js-init-string! %this)
 	    (js-init-boolean! %this)
 	    (js-init-number! %this)
@@ -291,7 +295,12 @@
 	    (js-init-weakset! %this)
 	    (js-init-object! %this)
 	    (js-init-object-prototype! %this)
+	    (js-init-pair! %this)
+	    (js-init-dom! %this)
 
+	    ;; local constant strings
+	    (set! __js_strings (&init!))
+	    
 	    ;; bind the global object properties
 	    (js-bind! %this %this (& "Object")
 	       :value js-object

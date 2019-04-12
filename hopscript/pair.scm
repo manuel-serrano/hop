@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Mon Apr  8 15:19:36 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 15:25:23 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -29,7 +29,8 @@
 	   __hopscript_array
 	   __hopscript_lib)
    
-   (export  (js-properties-name-pair::vector ::pair ::JsGlobalObject)
+   (export  (js-init-pair! ::JsGlobalObject)
+	    (js-properties-name-pair::vector ::pair ::JsGlobalObject)
 	    (js-get-own-property-pair ::pair ::obj ::JsGlobalObject)
 	    (js-get-property-value-pair ::pair ::pair ::obj ::JsGlobalObject)
 	    (js-get-pair ::pair ::obj ::JsGlobalObject)
@@ -39,20 +40,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-pair! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-init-pair! %this)
+   (set! __js_strings (&init!)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-name-pair ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-properties-name-pair::vector o::pair %this)
    (if (epair? o)
-       `#(,(js-ascii-name->jsstring "car")
-	  ,(js-ascii-name->jsstring "cdr")
-	  ,(js-ascii-name->jsstring "cer")
-	  ,(js-ascii-name->jsstring "toArray"))
-       `#(,(js-ascii-name->jsstring "car")
-	  ,(js-ascii-name->jsstring "cdr")
-	  ,(js-ascii-name->jsstring "toArray"))))
+       `#(,(& "car") ,(& "cdr") ,(& "cer") ,(& "toArray"))
+       `#(,(& "car") ,(& "cdr") ,(& "toArray"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property-pair ...                                     */

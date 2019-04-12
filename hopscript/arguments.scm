@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Apr 10 07:39:56 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 10:27:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -40,12 +40,12 @@
 	   (js-arguments->jsarray ::JsArguments ::JsGlobalObject)
 	   (js-arguments-ref ::JsArguments ::obj ::JsGlobalObject)
 	   (js-arguments-index-ref ::JsArguments ::uint32 ::JsGlobalObject)
-	   (inline js-arguments-length::obj ::JsArguments ::JsGlobalObject)))
+	   (js-arguments-length::obj ::JsArguments ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArguments ...                              */
@@ -109,6 +109,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-arguments! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-arguments-cmap)
+      ;; local constant strings
+      (set! __js_strings (&init!))
+      ;; arguments cmap
       (set! js-arguments-cmap
 	 (instantiate::JsConstructMap
 	    (methods (make-vector (vector-length arguments-cmap-props)))
@@ -136,11 +139,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-length ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-arguments-length arr::JsArguments %this)
+(define (js-arguments-length arr::JsArguments %this)
    (if (js-object-mode-inline? arr)
        (with-access::JsArguments arr (vec)
 	  (vector-length vec))
-       (js-get arr &length %this)))
+       (js-get arr (& "length") %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::JsArguments ...                                  */

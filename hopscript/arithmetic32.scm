@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Apr  1 09:11:30 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 16:18:54 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -67,6 +67,11 @@
 	  (inline *s32/overflow::obj ::int32 ::int32)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow::obj ::obj ::obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    __js_strings ...                                                 */
+;*---------------------------------------------------------------------*/
+(define __js_strings '#())
 
 ;*---------------------------------------------------------------------*/
 ;*    oveflow? ...                                                     */

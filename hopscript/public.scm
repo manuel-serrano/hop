@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Apr  8 15:14:55 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 14:40:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -39,7 +39,8 @@
    (with   __hopscript_stringliteral
            __hopscript_expanders)
 
-   (export (js-new ::JsGlobalObject f . args)
+   (export (js-init-public! %this::JsGlobalObject)
+	   (js-new ::JsGlobalObject f . args)
 	   (js-new/debug ::JsGlobalObject loc f . args)
 	   (js-new0 ::JsGlobalObject f)
 	   (js-new1 ::JsGlobalObject f a0)
@@ -154,7 +155,6 @@
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
 	   (inline js-null-or-undefined?::bool ::obj)
-	   
 
 	   (js-super ::obj ::obj ::JsGlobalObject)
 	   
@@ -178,7 +178,7 @@
 	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
 	   (generic js-inspect ::obj ::int)
 
-	   (generic js-typeof ::obj)
+	   (generic js-typeof ::obj ::JsGlobalObject)
 
 	   (js-html-head ::JsGlobalObject)
 	   (js-html-script ::JsGlobalObject)
@@ -192,7 +192,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-public! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-init-public! %this::JsGlobalObject)
+   (set! __js_strings (&init!)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */
@@ -1656,7 +1662,7 @@
       ((isa? obj JsObject)
        (with-handler
 	  (lambda (e)
-	     (js-jsstring->string (js-typeof obj)))
+	     (js-jsstring->string (js-typeof obj %this)))
 	  (js-jsstring->string
 	     (js-call0 %this (js-get obj (& "toString") %this) obj))))
       ((eq? obj #unspecified)
@@ -1798,39 +1804,28 @@
 		(write-circle o op)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    Constant strings ...                                             */
-;*---------------------------------------------------------------------*/
-(define js-string-undefined (& "undefined"))
-(define js-string-object (& "object"))
-(define js-string-symbol (& "symbol"))
-(define js-string-number (& "number"))
-(define js-string-boolean (& "boolean"))
-(define js-string-string (& "string"))
-(define js-string-function (& "function"))
-
-;*---------------------------------------------------------------------*/
 ;*    js-typeof ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-typeof obj)
+(define-generic (js-typeof obj %this)
    (cond
       ((isa? obj JsFunction)
-       js-string-function)
+       (& "function"))
       ((isa? obj JsSymbolLiteral)
-       js-string-symbol)
+       (& "symbol"))
       ((isa? obj JsObject)
-       js-string-object)
+       (& "object"))
       ((or (real? obj) (integer? obj))
-       js-string-number)
+       (& "number"))
       ((boolean? obj)
-       js-string-boolean)
+       (& "boolean"))
       ((eq? obj (js-undefined))
-       js-string-undefined)
+       (& "undefined"))
       ((js-jsstring? obj)
-       js-string-string)
+       (& "string"))
       ((eq? obj (js-null))
-       js-string-object)
+       (& "object"))
       (else
        (js-string->jsstring (typeof obj)))))
 
@@ -1912,7 +1907,6 @@
 (define (js-parsefloat string %this)
    (js-string-parsefloat (trim-whitespaces+ (js-tostring string %this) :plus #t)
       #f))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

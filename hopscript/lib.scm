@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Apr 10 14:39:38 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 10:40:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -19,6 +19,7 @@
    (include "types.sch" "property.sch" "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_names
 	   __hopscript_arithmetic
 	   __hopscript_property
 	   __hopscript_object
@@ -34,7 +35,7 @@
 	   __hopscript_arraybuffer
 	   __hopscript_arraybufferview)
 
-   (export (&cnst-init ::obj ::bstring)
+   (export (&cnst-init ::bstring ::JsGlobalObject)
 	   (js-constant-init ::obj ::obj ::JsGlobalObject)
 	   (generic js-jsobject->obj ::obj ::JsGlobalObject)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
@@ -53,40 +54,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    &cnst-init ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (&cnst-init vec-or-false str::bstring)
-   (let* ((cnsts (string->obj str))
-	  (target (if vec-or-false vec-or-false cnsts))
-	  (shift (if vec-or-false 1 0)))
+(define (&cnst-init str::bstring %this)
+   (let ((cnsts (string->obj str)))
       ;; start fill at index 1 because of the C declaration
       ;; of the constant vector (see constants_expd.sch)
       (let loop ((i (-fx (vector-length cnsts) 1)))
 	 (when (>=fx i 0)
 	    (let ((el (vector-ref cnsts i)))
-	       (vector-set! target (+fx i shift)
+	       (vector-set! cnsts i
 		  (case (vector-ref el 0)
 		     ((0)
 		      ;; an ascii name
 		      (let ((str (vector-ref el 1)))
-			 (js-ascii-name->jsstring str)))
+			 (js-ascii-name->jsstring str %this)))
 		     ((1)
 		      ;; an utf8 name
 		      (let ((str (vector-ref el 1)))
-			 (js-utf8-name->jsstring str)))
+			 (js-utf8-name->jsstring str %this)))
 		     ((2)
 		      ;; a fixnum name
 		      (let ((str (vector-ref el 1)))
-			 (js-integer->jsstring str)))
-		     ((3)
-		      ;; a literal cmap
-		      (let ((props (vector-ref el 1)))
-			 (js-strings->cmap props))))))
+			 (js-integer-name->jsstring str %this))))))
 	    (loop (-fx i 1))))
-      target))
+      cnsts))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-constant-init ...                                             */
@@ -109,15 +104,15 @@
 			 ((0)
 			  ;; a plain string
 			  (let ((str (vector-ref el 1)))
-			     (js-name->jsstring str)))
+			     (js-name->jsstring str %this)))
 			 ((6)
 			  ;; an ascii name
 			  (let ((str (vector-ref el 1)))
-			     (js-ascii-name->jsstring str)))
+			     (js-ascii-name->jsstring str %this)))
 			 ((7)
 			  ;; an utf8 name
 			  (let ((str (vector-ref el 1)))
-			     (js-utf8-name->jsstring str)))
+			     (js-utf8-name->jsstring str %this)))
 			 ((1 4)
 			  ;; a plain regexp
 			  (with-access::JsGlobalObject %this (js-regexp)
@@ -138,7 +133,7 @@
 			 ((2)
 			  ;; a literal cmap
 			  (let ((props (vector-ref el 1)))
-			     (js-strings->cmap props)))
+			     (js-strings->cmap props %this)))
 			 ((3 5)
 			  ;; an inlined regexp
 			  (with-access::JsGlobalObject %this (js-regexp)
@@ -214,7 +209,7 @@
 ;*    js-pair->jsobject ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-pair->jsobject l %this)
-   
+
    (define (plist? l)
       (let loop ((l l))
 	 (cond
@@ -256,11 +251,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-key-name->jsstring ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-key-name->jsstring s)
+(define (js-key-name->jsstring s %this)
    (cond
-      ((keyword? s) (js-name->jsstring (keyword->string! s)))
-      ((string? s) (js-name->jsstring s))
-      ((symbol? s) (js-name->jsstring (symbol->string! s)))
+      ((keyword? s) (js-name->jsstring (keyword->string! s) %this))
+      ((string? s) (js-name->jsstring s %this))
+      ((symbol? s) (js-name->jsstring (symbol->string! s) %this))
       (else s)))
 
 ;*---------------------------------------------------------------------*/
@@ -286,7 +281,7 @@
 			  (alist alist))
 		  (if (=fx i len)
 		      obj
-		      (let* ((name (js-key-name->jsstring (caar alist)))
+		      (let* ((name (js-key-name->jsstring (caar alist) %this))
 			     (val (js-obj->jsobject (cdar alist) %this)))
 			 (vector-set! props i
 			    (prop name (property-flags-default)))
@@ -314,7 +309,7 @@
 		      (cmap cmap)
 		      (__proto__ __proto__)
 		      (elements elements)))
-		(let* ((name (js-key-name->jsstring (car plist)))
+		(let* ((name (js-key-name->jsstring (car plist) %this))
 		       (val (js-obj->jsobject (cadr plist) %this)))
 		   (vector-set! props i (prop name (property-flags-default)))
 		   (vector-set! elements i val)
@@ -381,7 +376,7 @@
 ;*    js-object->keyword-arguments* ...                                */
 ;*---------------------------------------------------------------------*/
 (define (js-object->keyword-arguments* obj %this)
-   
+
    (define (flatten lst)
       (let flatten ((lst lst)
 		    (res '()))
@@ -413,6 +408,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-socket->jsobject obj %this)
    (with-access::JsGlobalObject %this (__proto__)
+      (when (=fx (vector-length __js_strings) 0)
+	 (set! __js_strings (&init!)))
       (let ((sock (instantiateJsWrapper
 		     (__proto__ __proto__)
 		     (data #unspecified)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Tue Apr  9 10:01:52 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 15:30:55 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -37,7 +37,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
@@ -412,7 +412,7 @@
 
    (let ((not-implemented (js-not-implemented %this)))
       (for-each (lambda (id)
-		   (js-bind! %this proto (js-ascii-name->jsstring id)
+		   (js-bind! %this proto (js-ascii-name->jsstring id %this)
 		      :value (js-make-function %this not-implemented 1
 				id)
 		      :configurable #t
@@ -427,6 +427,7 @@
 ;*    js-init-typedarray! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-init-typedarray! %this name::bstring bp::int proto)
+   (set! __js_strings (&init!))
    (with-access::JsGlobalObject %this (__proto__ js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
@@ -725,7 +726,7 @@
 	    :hidden-class #t)
 	 
 	 ;; bind the Typedarray in the global object
-	 (js-bind! %this %this (js-name->jsstring name)
+	 (js-bind! %this %this (js-name->jsstring name %this)
 	    :configurable #f :enumerable #f :value js-typedarray
 	    :hidden-class #t)
 	 

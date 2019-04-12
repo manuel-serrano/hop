@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr  8 15:13:23 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 14:32:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -42,7 +42,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    constructor                                                      */
@@ -156,6 +156,9 @@
 					 js-uri-error js-eval-error
 					 js-range-error js-reference-error)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
+	 
+	 ;; local constant strings
+	 (set! __js_strings (&init!))
 	 
 	 (define js-error-prototype
 	    (instantiateJsError

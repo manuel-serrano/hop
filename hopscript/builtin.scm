@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jan 26 08:54:32 2019                          */
-;*    Last change :  Mon Apr  8 15:23:06 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 16:19:23 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop builtin JavaScript objects                                   */
@@ -36,7 +36,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind-tag! ...                                                 */
@@ -90,6 +90,7 @@
 ;*    js-init-hop-builtin! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-init-hop-builtin! %this builtin::JsObject)
+   (set! __js_strings (&init!))
    (with-access::JsGlobalObject %this (js-function-prototype)
       ;; html_base
       (js-bind-tags! %this builtin js-function-prototype

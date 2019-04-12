@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Mon Apr  8 15:20:49 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 14:52:46 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -38,12 +38,20 @@
 	   __hopscript_public
 	   __hopscript_worker
 	   __hopscript_websocket
-	   __hopscript_lib))
+	   __hopscript_lib)
+
+   (export (js-init-dom! ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-dom! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-init-dom! %this)
+   (set! __js_strings (&init!)))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    js-cast-object ::xml ...                                         *} */
@@ -88,7 +96,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-inspect ::xml-comment ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (js-inspect o::xml-comment %this)
+(define-method (js-inspect o::xml-comment cnt)
    (with-access::xml-comment o (data)
       (js-stringlist->jsstring (list "<!--" data "-->"))))
 
@@ -527,22 +535,22 @@
 (define-method (js-properties-names o::xml-markup enump %this)
    (with-access::xml-markup o (attributes)
       (let loop ((attributes attributes)
-		 (attrs `(,(js-ascii-name->jsstring "nodeType")
-			  ,(js-ascii-name->jsstring "tagName")
-			  ,(js-ascii-name->jsstring "attributes")
-			  ,(js-ascii-name->jsstring "className")
-			  ,(js-ascii-name->jsstring "attributes")
-			  ,(js-ascii-name->jsstring "childNodes")
-			  ,(js-ascii-name->jsstring "parentNode")
-			  ,(js-ascii-name->jsstring "getElementById")
-			  ,(js-ascii-name->jsstring "getElementsByTagName")
-			  ,(js-ascii-name->jsstring "getElementsByClassName")
-			  ,(js-ascii-name->jsstring "appendChild")
-			  ,(js-ascii-name->jsstring "removeChild"))))
+		 (attrs `(,(& "nodeType")
+			  ,(& "tagName")
+			  ,(& "attributes")
+			  ,(& "className")
+			  ,(& "attributes")
+			  ,(& "childNodes")
+			  ,(& "parentNode")
+			  ,(& "getElementById")
+			  ,(& "getElementsByTagName")
+			  ,(& "getElementsByClassName")
+			  ,(& "appendChild")
+			  ,(& "removeChild"))))
 	 (cond
 	    ((null? attributes)
 	     (if (or (isa? o xml-element) (isa? o xml-html))
-		 (cons (js-ascii-name->jsstring "id") attrs)
+		 (cons (& "id") attrs)
 		 attrs))
 	    (else
 	     (loop (cddr attributes)
@@ -595,15 +603,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-names o::xml-html enump::bool %this)
    (with-access::xml-markup o (attributes)
-      `(,(js-ascii-name->jsstring "createTextNode")
-	,(js-ascii-name->jsstring "createElement"))))
+      `(,(& "createTextNode")
+	,(& "createElement"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::xml-element ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in o::xml-element proc %this)
    (with-access::xml-markup o (id)
-      (proc (js-ascii-name->jsstring "id") %this)
+      (proc (& "id") %this)
       (call-next-method)))
 	 
 ;*---------------------------------------------------------------------*/
@@ -611,7 +619,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in o::xml-html proc %this)
    (with-access::xml-markup o (id)
-      (proc (js-ascii-name->jsstring "id") %this)
+      (proc (& "id") %this)
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/

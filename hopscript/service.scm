@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Apr  9 13:13:10 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 15:16:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -41,7 +41,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsService ...                                */
@@ -240,6 +240,9 @@
 					 js-service-prototype
 					 js-hopframe-prototype)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
+
+	 ;; local constant strings initialization
+	 (set! __js_strings (&init!))
 	 
 	 ;; service prototype
 	 (with-access::JsGlobalObject %this (__proto__)

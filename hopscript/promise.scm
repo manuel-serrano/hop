@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Mon Apr  8 15:21:08 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 16:14:56 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -44,7 +44,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsPromise ...                                */
@@ -247,6 +247,8 @@
 		     (loop (-fx i 1)))
 		  it)))
 	 promise))
+
+   (set! __js_strings (&init!))
    
    (js-bind! %this js-promise (& "all")
       :configurable #f :enumerable #f

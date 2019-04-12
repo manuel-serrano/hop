@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Tue Apr  9 10:06:05 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 16:17:03 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -45,7 +45,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    global parameters                                                */
@@ -68,7 +68,9 @@
 ;*    init-set! ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (init-set! %this::JsGlobalObject name init-prototype! weak::symbol)
-   
+
+   (set! __js_strings (&init!))
+
    (with-access::JsGlobalObject %this (__proto__ js-function-prototype)
       
       (define (%js-set this . args)
@@ -111,7 +113,7 @@
       (init-prototype! %this js-set js-set-prototype)
       
       ;; bind SET/WEAKSET in the global object
-      (js-bind! %this %this (js-ascii-name->jsstring name)
+      (js-bind! %this %this (js-ascii-name->jsstring name %this)
 	 :configurable #f :enumerable #f :value js-set
 	 :hidden-class #t)
       

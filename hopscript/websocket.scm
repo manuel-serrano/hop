@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Tue Apr  9 11:29:50 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 10:32:36 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -63,7 +63,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsWebSocket ...                              */
@@ -170,6 +170,8 @@
 ;*    js-init-websocket! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-init-websocket! %this::JsGlobalObject)
+
+   (set! __js_strings (&init!))
    
    (with-access::JsGlobalObject %this (__proto__ js-object js-function)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
@@ -525,7 +527,7 @@
 ;*    bind-websocket-listener! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-listener! %this obj action)
-   (js-bind! %this obj (js-ascii-name->jsstring (car action))
+   (js-bind! %this obj (js-ascii-name->jsstring (car action) %this)
       :get (js-make-function %this
               (lambda (this) (cdr action))
               0 (car action))
@@ -543,7 +545,7 @@
 ;*    bind-websocket-server-listener! ...                              */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-server-listener! %this obj action)
-   (js-bind! %this obj (js-ascii-name->jsstring (car action))
+   (js-bind! %this obj (js-ascii-name->jsstring (car action) %this)
       :get (js-make-function %this
               (lambda (this) (cdr action))
               0 (car action))
@@ -561,7 +563,7 @@
 ;*    bind-websocket-client-listener! ...                              */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-client-listener! %this obj action)
-   (js-bind! %this obj (js-ascii-name->jsstring (car action))
+   (js-bind! %this obj (js-ascii-name->jsstring (car action) %this)
       :get (js-make-function %this
               (lambda (this) (cdr action))
               0 (car action))

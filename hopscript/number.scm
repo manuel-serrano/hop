@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 11 17:54:01 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 14:24:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -48,7 +48,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsNumber ...                                 */
@@ -97,6 +97,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-number! %this)
+   (&init!)
    (with-access::JsGlobalObject %this (__proto__ js-number js-function)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 

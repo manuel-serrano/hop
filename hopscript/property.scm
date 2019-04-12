@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Apr 10 15:02:21 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 09:58:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -48,7 +48,8 @@
 	   ($js-get-pcaches::pair-nil ()
 	      "bgl_get_pcaches"))
 
-   (export (generic js-debug-object ::obj #!optional (msg ""))
+   (export (js-init-property! ::JsGlobalObject)
+	   (generic js-debug-object ::obj #!optional (msg ""))
 	   (js-debug-pcache ::obj #!optional (msg ""))
 	   (js-debug-cmap ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
@@ -65,7 +66,7 @@
 	   (inline property-name::JsStringLiteral ::struct)
 
 	   (js-names->cmap::JsConstructMap ::vector)
-	   (js-strings->cmap::JsConstructMap ::vector)
+	   (js-strings->cmap::JsConstructMap ::vector ::JsGlobalObject)
 	   (js-object-literal-init! ::JsObject)
 	   (js-object-literal-spread-assign! ::JsObject ::obj ::JsGlobalObject)
 
@@ -223,7 +224,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(define __js_cnst (&begin!))
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline thresholds ...                                            */
@@ -232,6 +233,12 @@
 (define (vtable-threshold) #u32:200)
 (define (method-invalidation-threshold) 10)
    
+;*---------------------------------------------------------------------*/
+;*    js-init-property! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-init-property! %this)
+   (set! __js_strings (&init!)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -335,6 +342,7 @@
 	    transitions)
 	 "\n")))
    
+
 ;*---------------------------------------------------------------------*/
 ;*    js-object-add! ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -437,6 +445,21 @@
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
+;*    *pctables* ...                                                   */
+;*---------------------------------------------------------------------*/
+(define *pctables* *pctables*)
+
+;*---------------------------------------------------------------------*/
+;*    register-pcachet-table! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (register-pcache-table! pctable len src)
+   ;; bootstrap initialization
+   ;;(tprint "regsiter-pcache-table len=" len " src=" src " " (current-thread))
+   (when (eq? *pctables* #unspecified) (set! *pctables* '()))
+   (set! *pctables* (cons (vector pctable len src (current-thread)) *pctables*))
+   pctable)
+
+;*---------------------------------------------------------------------*/
 ;*    js-make-pcache-table ...                                         */
 ;*    -------------------------------------------------------------    */
 ;*    This function is used by a macro of property_expd.sch.           */
@@ -451,21 +474,6 @@
 		   (instantiate::JsPropertyCache
 		      (pctable pctable)))
 		(loop (+fx i 1)))))))
-
-;*---------------------------------------------------------------------*/
-;*    *pctables* ...                                                   */
-;*---------------------------------------------------------------------*/
-(define *pctables* *pctables*)
-
-;*---------------------------------------------------------------------*/
-;*    register-pcachet-table! ...                                      */
-;*---------------------------------------------------------------------*/
-(define (register-pcache-table! pctable len src)
-   ;; bootstrap initialization
-   ;;(tprint "regsiter-pcache-table len=" len " src=" src " " (current-thread))
-   (when (eq? *pctables* #unspecified) (set! *pctables* '()))
-   (set! *pctables* (cons (vector pctable len src (current-thread)) *pctables*))
-   pctable)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-validate-pcaches-pmap! ...                                    */
@@ -667,7 +675,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cmap-transition ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (cmap-transition name value flags nextmap)
+(define (cmap-transition name value flags nextmap %this)
    (if (eq? name (& "__proto__"))
        (transition value flags nextmap)
        (transition name flags nextmap)))
@@ -685,7 +693,7 @@
 		;; via a regular link
 		(let ((newmap (duplicate::JsConstructMap cmap
 				 (%id (gencmapid)))))
-		   (link-cmap! cmap newmap (& "__proto__") new flags)
+		   (link-cmap! cmap newmap (& "__proto__") new flags %this)
 		   newmap))))))
 
 ;*---------------------------------------------------------------------*/
@@ -722,10 +730,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    link-cmap! ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (link-cmap! omap::JsConstructMap nmap::JsConstructMap name value flags::int)
+(define (link-cmap! omap::JsConstructMap nmap::JsConstructMap name value flags::int %this)
    (with-access::JsConstructMap omap (transitions)
       (set! transitions
-	 (cons (cmap-transition name value flags nmap) transitions))
+	 (cons (cmap-transition name value flags nmap %this) transitions))
       nmap))
 
 ;*---------------------------------------------------------------------*/
@@ -840,10 +848,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Used by j2sscheme to create literal objects.                     */
 ;*---------------------------------------------------------------------*/
-(define (js-strings->cmap names)
+(define (js-strings->cmap names %this)
    (instantiate::JsConstructMap
       (props (vector-map (lambda (n)
-			    (prop (js-name->jsstring n)
+			    (prop (js-name->jsstring n %this)
 			       (property-flags #t #t #t #f)))
 		names))
       (methods (make-vector (vector-length names) #unspecified))))
@@ -1055,7 +1063,7 @@
       ;; proxy getOwnPropertyDescriptor returns regular objects
       ;; as property descriptors
       (js-put! obj (& "value")
-	 (js-get desc &value %this) #f %this)
+	 (js-get desc (& "value") %this) #f %this)
       (js-put! obj (& "get")
 	 (js-get desc (& "get") %this) #f %this)
       (js-put! obj (& "set")
@@ -1073,8 +1081,8 @@
 	 ((isa? desc JsValueDescriptor)
 	  ;; 3
 	  (with-access::JsValueDescriptor desc (writable value)
-	     (js-put! obj &value value #f %this)
-	     (js-put! obj &writable writable #f %this)))
+	     (js-put! obj (& "value") value #f %this)
+	     (js-put! obj (& "writable") writable #f %this)))
 	 ((isa? desc JsAccessorDescriptor)
 	  ;; 4
 	  (with-access::JsAccessorDescriptor desc (get set)
@@ -1106,11 +1114,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-to-property-descriptor %this::JsGlobalObject obj name::obj)
    (let* ((obj (js-cast-object obj %this "ToPropertyDescriptor"))
-	  (enumerable (if (js-has-property obj &enumerable %this)
-			  (js-toboolean (js-get obj &enumerable %this))
+	  (enumerable (if (js-has-property obj (& "enumerable") %this)
+			  (js-toboolean (js-get obj (& "enumerable") %this))
 			  (js-undefined)))
-	  (configurable (if (js-has-property obj &configurable %this)
-			    (js-toboolean (js-get obj &configurable %this))
+	  (configurable (if (js-has-property obj (& "configurable") %this)
+			    (js-toboolean (js-get obj (& "configurable") %this))
 			    (js-undefined)))
 	  (hasget (js-has-property obj (& "get") %this))
 	  (hasset (js-has-property obj (& "set") %this)))
@@ -1135,8 +1143,8 @@
 		    (enumerable enumerable)
 		    (configurable configurable)))))
 	 ((js-has-property obj (& "value") %this)
-	  (let ((writable (if (js-has-property obj &writable %this)
-			      (js-toboolean (js-get obj &writable %this))
+	  (let ((writable (if (js-has-property obj (& "writable") %this)
+			      (js-toboolean (js-get obj (& "writable") %this))
 			      (js-undefined))))
 	     (instantiate::JsValueDescriptor
 		(name name)
@@ -1144,10 +1152,10 @@
 		(writable writable)
 		(enumerable enumerable)
 		(configurable configurable))))
-	 ((js-has-property obj &writable %this)
+	 ((js-has-property obj (& "writable") %this)
 	  (instantiate::JsDataDescriptor
 	     (name name)
-	     (writable (js-toboolean (js-get obj &writable %this)))
+	     (writable (js-toboolean (js-get obj (& "writable") %this)))
 	     (enumerable enumerable)
 	     (configurable configurable)))
 	 (else
@@ -1505,7 +1513,8 @@
 	 ((isa? prop JsStringLiteral)
 	  (js-profile-log-get prop loc))
 	 ((number? prop)
-	  (js-profile-log-get (js-ascii-name->jsstring (number->string prop)) loc))))
+	  (js-profile-log-get
+	     (js-ascii-name->jsstring (number->string prop) %this) loc))))
    (cond
       ((pair? _o)
        (js-get-pair _o (js-toname prop %this) %this))
@@ -1585,8 +1594,8 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get-length o::obj %this::JsGlobalObject #!optional cache)
    (if cache
-       (js-get-name/cache o &length #f %this cache)
-       (js-get o &length %this)))
+       (js-get-name/cache o (& "length") #f %this cache)
+       (js-get o (& "length") %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lengthu32::uint32 ::obj ...                               */
@@ -1608,8 +1617,8 @@
       (else
        (js-touint32
 	  (if cache
-	      (js-get-name/cache o &length #f %this cache)
-	      (js-get o &length %this))
+	      (js-get-name/cache o (& "length") #f %this cache)
+	      (js-get o (& "length") %this))
 	  %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -1629,7 +1638,7 @@
 		  cache::JsPropertyCache #!optional (point 1) (cspecs '()))
    (if (not (isa? prop JsStringLiteral))
        (js-get o prop %this)
-       (let ((pname (js-jsstring-toname prop)))
+       (let ((pname (js-jsstring-toname prop %this)))
 	  (cond
 	     ((js-name-pcache pname)
 	      =>
@@ -1836,8 +1845,8 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-put-length! o::obj v::obj throw::bool cache %this::JsGlobalObject)
    (if cache
-       (js-put-name/cache! o &length v throw %this cache)
-       (js-put! o &length v throw %this)))
+       (js-put-name/cache! o (& "length") v throw %this cache)
+       (js-put! o (& "length") v throw %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsObject ...                                           */
@@ -2084,7 +2093,7 @@
 				   (when cache
 				      (js-validate-pcaches-pmap! %this)
 				      (js-pcache-next-direct! cache o nextmap index))))
-			    (link-cmap! cmap nextmap name v flags)
+			    (link-cmap! cmap nextmap name v flags %this)
 			    (js-object-push/ctor! o index v ctor))
 			 (set! cmap nextmap)
 			 v))))))))
@@ -2168,7 +2177,8 @@
 	 ((isa? prop JsStringLiteral)
 	  (js-profile-log-put prop loc))
 	 ((number? prop)
-	  (js-profile-log-put (js-ascii-name->jsstring (number->string prop)) loc))))
+	  (js-profile-log-put
+	     (js-ascii-name->jsstring (number->string prop) %this) loc))))
    (cond
       ((pair? _o)
        (js-put-pair! _o (js-toname prop %this) v throw %this))
@@ -2190,7 +2200,7 @@
 		   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (if (not (js-jsstring? prop))
        (js-put! o prop v throw %this)
-       (let ((pname (js-toname prop %this)))
+       (let ((pname (js-jsstring-toname prop %this)))
 	  (with-access::JsPropertyCache cache (name)
 	     (cond
 		((eq? name pname)
@@ -2198,7 +2208,7 @@
 		    %this cache point cspecs))
 		((js-isindex? (js-toindex prop))
 		 (js-put! o prop v throw %this))
-		((eq? pname &length)
+		((eq? pname (& "length"))
 		 (js-put-length! o v throw cache %this))
 		((eq? name (class-nil JsStringLiteralASCII))
 		 (set! name pname)
@@ -2377,7 +2387,7 @@
 	 (with-access::JsConstructMap cmap (single)
 	    (if (and hidden-class (not single))
 		(let ((nextmap (extend-cmap cmap name flags)))
-		   (link-cmap! cmap nextmap name value flags)
+		   (link-cmap! cmap nextmap name value flags %this)
 		   (set! cmap nextmap)
 		   nextmap)
 		(begin
@@ -2560,7 +2570,7 @@
 			     (js-invalidate-pcaches-pmap! %this "js-delete")
 			     ;; create a new cmap for the object
 			     (let ((nextmap (clone-cmap cmap)))
-				(link-cmap! cmap nextmap n #f -1)
+				(link-cmap! cmap nextmap n #f -1 %this)
 				[assert (o) (isa? nextmap JsConstructMap)]
 				(set! cmap nextmap)
 				(with-access::JsConstructMap nextmap (props)
@@ -3069,7 +3079,7 @@
 	       (loop))))
       #t)
    
-   (let ((next (js-get iterator &next %this))
+   (let ((next (js-get iterator (& "next") %this))
 	 (exn #t))
       (if (isa? next JsFunction)
 	  (if close
@@ -3078,7 +3088,7 @@
 		    (for next)
 		    (set! exn #f))
 		 (when exn
-		    (let ((return (js-get iterator &return %this)))
+		    (let ((return (js-get iterator (& "return") %this)))
 		       (when (isa? return JsFunction)
 			  (js-call0 %this return iterator)))))
 	      (for next)))))
@@ -3369,7 +3379,6 @@
 		  (js-undefined)))
 	    ;; loop
 	    loop))))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
