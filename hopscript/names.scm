@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri Apr 12 10:01:21 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:14:46 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -187,7 +187,7 @@
 			 (left str)
 			 (right #f)
 			 (index num))))
-		(hashtable-put! names str n)
+		(hashtable-put! js-names str n)
 		(js-jsstring-name-set! n n)
 		n)))))
 

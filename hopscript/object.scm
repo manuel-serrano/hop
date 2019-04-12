@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Apr 12 10:04:47 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:42:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -251,13 +251,18 @@
 			     (props '#())))
 		    (__proto__ %proto)
 		    (elements (make-vector size)))))
+      ;; local constant strings
+      (js-init-names! %this)
+      (set! __js_strings (&init!))
+      (js-init-property! %this)
       ;; mark the top proto has holding no numeral properties
       (js-object-mode-hasnumeralprop-set! %proto #f)
-      ;; for bootstrap, first allocat hasInstance symbol
+      ;; for bootstrap, first allocate hasInstance symbol
       (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 	 (set! js-symbol-hasinstance
 	    (instantiate::JsSymbolLiteral
 	       (val (& "hasInstance")))))
+      
       ;; init the builtin function class
       (js-init-function! %this)
       ;; the object constructor
@@ -265,9 +270,7 @@
 	 (set! js-initial-cmap (instantiate::JsConstructMap))
 	 (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	    ;; the prototypes and other builtin classes
-	    (js-init-names! %this)
 	    (js-init-public! %this)
-	    (js-init-property! %this)
 	    (js-init-arguments! %this)
 	    (js-init-symbol! %this)
 	    (js-init-array! %this)
@@ -298,9 +301,6 @@
 	    (js-init-pair! %this)
 	    (js-init-dom! %this)
 
-	    ;; local constant strings
-	    (set! __js_strings (&init!))
-	    
 	    ;; bind the global object properties
 	    (js-bind! %this %this (& "Object")
 	       :value js-object

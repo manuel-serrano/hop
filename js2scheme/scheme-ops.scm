@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Apr  7 07:45:19 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:29:12 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -192,12 +192,12 @@
 	    ((isa? expr J2SUnresolvedRef)
 	     ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3
 	     (with-access::J2SUnresolvedRef expr (id loc cache)
-		`(js-typeof ,(j2s-unresolved id #f cache loc))))
+		`(js-typeof ,(j2s-unresolved id #f cache loc) %this)))
 	    ((isa? expr J2SParen)
 	     (with-access::J2SParen expr (expr)
 		(typeof->scheme expr)))
 	    (else
-	     `(js-typeof ,(j2s-scheme expr mode return conf))))))
+	     `(js-typeof ,(j2s-scheme expr mode return conf) %this)))))
 
    (define (bitnot loc expr)
       ;; optimize the pattern ~~expr that is sometime used to cast

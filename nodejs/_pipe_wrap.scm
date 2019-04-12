@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Mon Apr  8 16:34:46 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:09:47 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -28,7 +28,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-pipe-wrap ...                                            */
@@ -44,6 +44,8 @@
    (define pipe-prototype
       (with-access::JsGlobalObject %this (js-object)
 	 (js-new %this js-object)))
+
+   (set! __js_strings (&init!))
    
    ;; close
    (js-put! pipe-prototype (& "close")

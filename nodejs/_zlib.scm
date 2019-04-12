@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 27 19:12:38 2015                          */
-;*    Last change :  Mon Apr  8 16:35:59 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:14:10 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Zlib bindings                                                    */
@@ -28,7 +28,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -79,6 +79,8 @@
    (define (zlib this)
       (instantiateJsZlib
 	 (__proto__ zlib-proto)))
+
+   (set! __js_strings (&init!))
    
    (let* ((zlib (js-make-function %this zlib 0 "Zlib"
 		   :construct zlib

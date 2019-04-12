@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu Apr 11 12:13:42 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:16:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -69,7 +69,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-version ...                                               */
@@ -94,6 +94,8 @@
 (define (nodejs-process %worker::WorkerHopThread %this::JsGlobalObject)
    (with-access::WorkerHopThread %worker (%process)
       (unless %process
+	 ;; local constant strings
+	 (set! __js_strings (&init!))
 	 ;; create the process object
 	 (set! %process (new-process-object %worker %this))
 	 ;; bind process into %this
@@ -243,7 +245,7 @@
 		     (elements ($create-vector 46)))))
 
 	 (define (not-implemented name)
-	    (js-put! proc (js-ascii-name->jsstring name)
+	    (js-put! proc (js-ascii-name->jsstring name %this)
 	       (js-make-function %this
 		  (lambda (this . l)
 		     (error "process" "binding not implemented" name))

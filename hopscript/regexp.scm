@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Apr 12 14:25:09 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 20:31:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -102,17 +102,20 @@
       ;; regexp pcache
       (set! js-regexp-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 1 "regexp"))
-      
+
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 ;; default regexp cmap
 	 (set! js-regexp-cmap
 	    (instantiate::JsConstructMap
 	       (methods (make-vector 1))
 	       (props `#(,(prop (& "lastIndex") (property-flags #t #f #f #f))))))
-	 (set! js-regexp-exec-cmap
-	    (instantiate::JsConstructMap
-	       (methods (make-vector (vector-length js-regexp-exec-cmap-props)))
-	       (props js-regexp-exec-cmap-props)))
+	 
+	 (let ((props `#(,(prop (& "index") (property-flags #t #t #t #f))
+			 ,(prop (& "input") (property-flags #t #t #t #f)))))
+	    (set! js-regexp-exec-cmap
+	       (instantiate::JsConstructMap
+		  (methods (make-vector (vector-length props)))
+		  (props props))))
 	 
 	 (set! js-regexp-prototype
 	    (instantiateJsRegExp
@@ -608,13 +611,6 @@
       :configurable #t
       :enumerable #f
       :hidden-class #t))
-
-;*---------------------------------------------------------------------*/
-;*    js-regexp-exec-cmap ...                                          */
-;*---------------------------------------------------------------------*/
-(define js-regexp-exec-cmap-props
-   `#(,(prop (& "index") (property-flags #t #t #t #f))
-      ,(prop (& "input") (property-flags #t #t #t #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    regexp-prototype-exec ...                                        */

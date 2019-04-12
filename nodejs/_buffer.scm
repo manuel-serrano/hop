@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Apr 12 09:41:23 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:03:57 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -53,7 +53,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-buffer! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-init-buffer! %this)
+   (when (=fx (vector-length __js_strings) 0)
+      (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/
 ;*    buffer-parser ...                                                */
@@ -260,6 +267,7 @@
 ;*    order not to allocate a JsObject but a JsTypedArray.             */
 ;*---------------------------------------------------------------------*/
 (define (hopscript %this this %scope %module)
+   (js-init-buffer! %this)
    ((@ hopscript __nodejs_buffer) %this this %scope %module)
    
    (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto js-nodejs-pcache)
@@ -490,14 +498,13 @@
 ;*    make-slowbuffer ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (make-slowbuffer %this::JsGlobalObject)
-   
+
    (define slowbuffer-proto
       (with-access::JsGlobalObject %this (js-slowbuffer-proto js-object)
 	 (unless js-slowbuffer-proto
 	    (set! js-slowbuffer-proto
 	       (with-access::JsFunction js-object (constrmap %prototype)
 		  (js-make-jsobject 25 constrmap %prototype))))
-;* 	       (js-new %this js-object)))                              */
 	 js-slowbuffer-proto))
    
    (define (slowbuffer-constr this a0)
@@ -509,7 +516,6 @@
 		   ((>fl n (exptfl 2. 32.))
 		    (js-raise-type-error %this "Bad argument" a0))
 		   ((>=fl n 1073741823.0) ;; #x3fffffff + 1
-		    (tprint "a0=" a0 " " (typeof a0) " n=" n)
 		    (js-raise-range-error %this "length (~s) > kMaxLength" a0))
 		   (else
 		    (with-access::JsGlobalObject %this (js-object)
@@ -682,6 +688,8 @@
 		   (byte-set! data (+fx 6 i) (u8vector-ref buf 1))
 		   (byte-set! data (+fx 7 i) (u8vector-ref buf 0)))))))
 
+   (js-init-buffer! %this)
+   
    ;; binarySlice
    (js-put! slowbuffer-proto (& "binarySlice")
       (js-make-function %this

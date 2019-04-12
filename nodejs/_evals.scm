@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Mon Apr  8 16:35:42 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:04:30 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
@@ -29,7 +29,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -161,7 +161,8 @@
 	 (ctx ctx)
 	 (filename (js-tostring filename %this))
 	 (__proto__ nodescript-proto)))
-   
+
+   (set! __js_strings (&init!))
    (let ((obj (js-make-function %this NodeScript 3 "NodeScript"
 		 :alloc (lambda (%this o) #unspecified)
 		 :prototype nodescript-proto
@@ -173,10 +174,6 @@
       (js-alist->jsobject
 	 `((NodeScript . ,obj))
 	 %this)))
-
-
-
-
    
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

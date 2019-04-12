@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Fri Apr 12 10:42:19 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:20:48 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -60,16 +60,17 @@
 ;*---------------------------------------------------------------------*/
 (define (&with!-expander x e)
    (match-case x
-      ((&with-cnst! . ?body)
+      ((&with! . ?body)
        (let ((o (thread-parameter '&cnsts)))
 	  (thread-parameter-set! '&cnsts '())
 	  (thread-parameter-set! '&x-cnsts x)
 	  (unwind-protect
 	     (let* ((nbody (map (lambda (x) (e x e)) body))
 		    (cnsts (map cadr (reverse! (thread-parameter '&cnsts)))))
-		`(let ((__js_string (&cnst-init
-				     ,(obj->string (apply vector cnsts)) %this)))
-		    ,@nbody))
+		(e `(let ((__js_strings (&cnst-init
+					  ,(obj->string (apply vector cnsts)) %this)))
+		       ,@nbody)
+		   e))
 	     (thread-parameter-set! '&cnsts o))))
       (else
        (error "&with!" "Illegal form" x))))
@@ -92,7 +93,10 @@
    (match-case x
       ((&init!)
        (thread-parameter-set! '&x-cnsts x)
-       x)
+       ;; need to bind %this local to expand possible object access for %this
+       ;; (as the (&end!) that will actually expand the (&init) form will
+       ;; expand it in a different context that those of the (&init!)
+       `(let ((%this ,(e '%this e))) ,x))
       (else
        (error "&init!" "Illegal form" x))))
 
@@ -104,8 +108,7 @@
       ((&end!)
        (let* ((xbeg (thread-parameter '&x-cnsts))
 	      (cnsts (map cadr (reverse! (thread-parameter '&cnsts))))
-	      (newx (e `(&cnst-init ,(obj->string (apply vector cnsts)) %this)
-		       e)))
+	      (newx `(&cnst-init ,(obj->string (apply vector cnsts)) %this)))
 	  (if xbeg
 	      (begin
 		 (set-car! xbeg (car newx))
@@ -127,13 +130,13 @@
 	   (let* ((&cnsts (thread-parameter '&cnsts))
 		  (old (assoc str &cnsts)))
 	      (if (pair? old)
-		  (e `(vector-ref-ur __js_strings ,(cddr old)) e)
+		  (e `(vector-ref __js_strings ,(cddr old)) e)
 		  (let ((cnst (&name-expander x e)))
 		     (if (vector? cnst)
 			 (let ((len (length &cnsts)))
 			    (thread-parameter-set! '&cnsts
 			       (cons (cons str (cons cnst len)) &cnsts))
-			    (e `(vector-ref-ur __js_strings ,len) e))
+			    (e `(vector-ref __js_strings ,len) e))
 			 cnst))))))
       ((& strings)
        (&name-expander x e))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Apr  8 16:32:30 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:09:00 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -35,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -173,6 +173,8 @@
 	       :writable #t
 	       :configurable #f)
 	    driver))
+
+      (set! __js_strings (&init!))
       
       (js-bind! %this js-urlframe-prototype (& "post")
 	 :value (js-make-function %this

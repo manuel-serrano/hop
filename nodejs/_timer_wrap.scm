@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Tue Apr  9 11:24:36 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:13:54 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -29,7 +29,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -43,7 +43,9 @@
    
    (define js-timer-prototype
       (instantiateJsObject))
-   
+
+
+   (set! __js_strings (&init!))
    (init-timer-prototype! %this js-timer-prototype)
    
    (define Timer
@@ -115,7 +117,7 @@
 		0 "unref"))
 
    (for-each (lambda (id)
-		(js-bind! %this obj (js-ascii-name->jsstring id)
+		(js-bind! %this obj (js-string->jsstring id)
 		   :value (not-implemented id)))
       '("setRepeat" "getRepeat" "again")))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Apr 12 10:27:01 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 20:48:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -112,10 +112,13 @@
       ;; local constant strings
       (set! __js_strings (&init!))
       ;; arguments cmap
-      (set! js-arguments-cmap
-	 (instantiate::JsConstructMap
-	    (methods (make-vector (vector-length arguments-cmap-props)))
-	    (props arguments-cmap-props)))))
+      (let ((arguments-cmap-props
+	       `#(,(prop (& "length") (property-flags #t #f #t #f))
+		  ,(prop (& "callee") (property-flags #t #f #t #f)))))
+	 (set! js-arguments-cmap
+	    (instantiate::JsConstructMap
+	       (methods (make-vector (vector-length arguments-cmap-props)))
+	       (props arguments-cmap-props))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarguments-fields ...                                           */
@@ -410,13 +413,6 @@
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-get o p %this))
-
-;*---------------------------------------------------------------------*/
-;*    arguments-cmap ...                                               */
-;*---------------------------------------------------------------------*/
-(define arguments-cmap-props
-   `#(,(prop (& "length") (property-flags #t #f #t #f))
-      ,(prop (& "callee") (property-flags #t #f #t #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments ...                                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Mon Apr  8 16:33:05 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:05:03 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -48,7 +48,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -189,7 +189,8 @@
 	 (instantiateJsHttpParser
 	    (__proto__ http-parser-proto)
 	    (state http-line-state))))
-   
+
+   (set! __js_strings (&init!))
    (let ((http (js-make-function %this http-parser 1 "HTTPParser"
 		  :alloc js-no-alloc
 		  :construct http-parser

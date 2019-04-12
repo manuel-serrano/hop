@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Apr 12 16:15:49 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 20:33:52 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -54,22 +54,24 @@
 (define %cache-set
    (instantiate::JsPropertyCache))
 
-(define proxy-property-descriptors
-   (vector
-      (instantiate::JsWrapperDescriptor
-	 (writable #t)
-	 (configurable #t)
-	 (enumerable #t)
-	 (name (& ""))
-	 (%get js-proxy-property-value)
-	 (%set js-proxy-property-value-set!))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-init-proxy! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-proxy! %this::JsGlobalObject)
+   
    (set! __js_strings (&init!))
+   
    (with-access::JsGlobalObject %this (__proto__ js-function-prototype)
+
+      (define proxy-property-descriptors
+	 (vector
+	    (instantiate::JsWrapperDescriptor
+	       (writable #t)
+	       (configurable #t)
+	       (enumerable #t)
+	       (name (& ""))
+	       (%get js-proxy-property-value)
+	       (%set js-proxy-property-value-set!))))
 
       (define (js-proxy-alloc %this constructor::JsFunction)
 	 ;; MS 7apr2019: TO BE IMPROVED

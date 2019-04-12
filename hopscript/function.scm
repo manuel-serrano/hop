@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Apr 12 13:43:17 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 20:39:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -122,43 +122,6 @@
 (define strict-caller-property #f)
 
 ;*---------------------------------------------------------------------*/
-;*    pre-allocated prototype property descriptors                     */
-;*---------------------------------------------------------------------*/
-(define prototype-property-rw
-   (instantiate::JsWrapperDescriptor
-      (name (& "prototype"))
-      (enumerable #f)
-      (configurable #f)
-      (writable #t)
-      (%get js-function-prototype-get)
-      (%set js-function-prototype-set)))
-
-(define prototype-property-ro
-   (instantiate::JsWrapperDescriptor
-      (name (& "prototype"))
-      (enumerable #f)
-      (configurable #f)
-      (writable #f)
-      (%get js-function-prototype-get)
-      (%set js-function-prototype-set)))
-
-(define prototype-property-null
-   (instantiate::JsValueDescriptor
-      (name (& "%null"))
-      (enumerable #f)
-      (configurable #f)
-      (writable #f)
-      (value '())))
-
-(define prototype-property-undefined
-   (instantiate::JsValueDescriptor
-      (name (& "%undefined"))
-      (enumerable #f)
-      (configurable #f)
-      (writable #f)
-      (value (js-undefined))))
-
-;*---------------------------------------------------------------------*/
 ;*    make-cmap ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (make-cmap props)
@@ -200,6 +163,8 @@
    (set! __js_strings (&init!))
    ;; create function cmap
    (js-init-function-cmap! %this)
+   ;; pre-allocated prototype property descriptors
+   (js-init-function-property! %this)
    ;; bind the builtin function prototype
    (with-access::JsGlobalObject %this ((js-object-prototype __proto__)
 				       js-function-prototype
@@ -262,7 +227,7 @@
 	       (%set (lambda (this v) (throw this)))
 	       (enumerable #f)
 	       (configurable #f))))
-      
+
       ;; prototype properties
       (init-builtin-function-prototype! %this js-function js-function-prototype)
       
@@ -272,6 +237,49 @@
 	 :configurable #f :enumerable #f)
       ;; return the js-function object
       js-function))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-function-property! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-init-function-property! %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-function-prototype-property-rw 
+					 js-function-prototype-property-ro
+					 js-function-prototype-property-null
+					 js-function-prototype-property-undefined)
+      
+      (set! js-function-prototype-property-rw
+	 (instantiate::JsWrapperDescriptor
+	    (name (& "prototype"))
+	    (enumerable #f)
+	    (configurable #f)
+	    (writable #t)
+	    (%get js-function-prototype-get)
+	    (%set js-function-prototype-set)))
+      
+      (set! js-function-prototype-property-ro
+	 (instantiate::JsWrapperDescriptor
+	    (name (& "prototype"))
+	    (enumerable #f)
+	    (configurable #f)
+	    (writable #f)
+	    (%get js-function-prototype-get)
+	    (%set js-function-prototype-set)))
+      
+      (set! js-function-prototype-property-null
+	 (instantiate::JsValueDescriptor
+	    (name (& "%null"))
+	    (enumerable #f)
+	    (configurable #f)
+	    (writable #f)
+	    (value '())))
+      
+      (set! js-function-prototype-property-undefined
+	 (instantiate::JsValueDescriptor
+	    (name (& "%undefined"))
+	    (enumerable #f)
+	    (configurable #f)
+	    (writable #f)
+	    (value (js-undefined))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-function-cmap! ...                                       */
@@ -390,7 +398,11 @@
 					 js-function-writable-cmap
 					 js-function-writable-strict-cmap
 					 js-function-cmap-sans-prototype
-					 js-function-prototype-cmap)
+					 js-function-prototype-cmap
+					 js-function-prototype-property-rw 
+					 js-function-prototype-property-ro
+					 js-function-prototype-property-null
+					 js-function-prototype-property-undefined)
       (with-access::JsFunction js-function ((%__proto__ __proto__))
 	 (let* ((els ($create-vector (+fx size (if (eq? strict 'normal) 3 5))))
 		(cmap (if (eq? strict 'normal)
@@ -447,7 +459,7 @@
 				     (__proto__ __proto__)))))
 			 (set! fprototype p)
 			 (set! %prototype p)
-			 prototype-property-rw))
+			 js-function-prototype-property-rw))
 		     ((js-object? prototype)
 		      (js-bind! %this prototype (& "constructor")
 			 :value fun
@@ -455,15 +467,15 @@
 			 :hidden-class #t)
 		      (set! fprototype prototype)
 		      (set! %prototype prototype)
-		      prototype-property-ro)
+		      js-function-prototype-property-ro)
 		     ((eq? prototype (js-undefined))
 		      (set! fprototype  prototype)
 		      (set! %prototype %__proto__)
-		      prototype-property-undefined)
+		      js-function-prototype-property-undefined)
 		     ((null? prototype)
 		      (set! fprototype  prototype)
 		      (set! %prototype prototype)
-		      prototype-property-null)
+		      js-function-prototype-property-null)
 		     (else
 		      (error "js-make-function" "Illegal :prototype"
 			 prototype)))))

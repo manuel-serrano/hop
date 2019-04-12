@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Thu Apr 11 18:12:16 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:10:20 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -37,12 +37,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-stream-wrap! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-init-stream-wrap! %this)
+   (when (=fx (vector-length __js_strings) 0)
+      (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stream-shutdown ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (stream-shutdown %worker %this process this::JsHandle)
+   (js-init-stream-wrap! %this)
    (with-access::JsGlobalObject %this (js-object)
       (with-access::JsHandle this (handle reqs)
 	 (let* ((req (js-new %this js-object))
@@ -77,6 +85,7 @@
 (define (stream-write-string %worker %this process this::JsHandle
 	   string::bstring offset::long len::long
 	   encoding callback sendhandle)
+   (js-init-stream-wrap! %this)
    (with-access::JsGlobalObject %this (js-object js-nodejs-pcache)
       (with-access::JsHandle this (handle reqs)
 	 (let ((req (js-new %this js-object)))
@@ -145,6 +154,7 @@
 ;*---------------------------------------------------------------------*/
 (define (stream-read-start %worker %this process slab this)
    (with-trace 'nodejs-buffer "read-start"
+      (js-init-stream-wrap! %this)
       (with-access::JsHandle this (handle)
 	 (nodejs-stream-read-start %worker %this process handle
 	    (lambda (obj size) (slab-allocate slab obj size))

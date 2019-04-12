@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Fri Apr 12 14:52:46 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 20:50:04 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -51,7 +51,13 @@
 ;*    js-init-dom! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-init-dom! %this)
-   (set! __js_strings (&init!)))
+   (with-access::JsGlobalObject %this (js-xml-markups)
+      (set! __js_strings (&init!))
+      (set! js-xml-markups
+	 (list
+	    (& "classname") (& "id") (& "nodeType") (& "attributes")
+	    (& "children") (& "getElementsById") (& "getElementsByTagName")
+	    (& "getElementsByClassName")))))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    js-cast-object ::xml ...                                         *} */
@@ -503,26 +509,18 @@
    (or (eq? name (& "nodeType")) (eq? name (& "data"))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-markups ...                                                  */
-;*---------------------------------------------------------------------*/
-(define xml-markups
-   (list
-      (& "classname") (& "id") (& "nodeType") (& "attributes")
-      (& "children") (& "getElementsById") (& "getElementsByTagName")
-      (& "getElementsByClassName")))
-
-;*---------------------------------------------------------------------*/
 ;*    js-has-property ::xml-markup ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property o::xml-markup name %this)
-   (or (member name xml-markups)
-       (let ((k (string->keyword (js-jsstring->string name))))
-	  (with-access::xml-markup o (attributes)
-	     (let loop ((attributes attributes))
-		(cond
-		   ((null? attributes) #f)
-		   ((eq? k (car attributes)) #t)
-		   (else (loop (cddr attributes)))))))))
+   (with-access::JsGlobalObject %this (js-xml-markups)
+      (or (member name js-xml-markups)
+	  (let ((k (string->keyword (js-jsstring->string name))))
+	     (with-access::xml-markup o (attributes)
+		(let loop ((attributes attributes))
+		   (cond
+		      ((null? attributes) #f)
+		      ((eq? k (car attributes)) #t)
+		      (else (loop (cddr attributes))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    base-properties-name ...                                         */

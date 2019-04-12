@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 11 18:11:13 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:15:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -54,7 +54,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-require! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-init-require! %this)
+   (when (=fx (vector-length __js_strings) 0)
+      (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/
 ;*    builtin-language? ...                                            */
@@ -540,6 +547,8 @@
 		      #f)))))
 	 2 "require" :size 4 :src "require.scm"))
 
+   (js-init-require! this)
+   
    ;; require.lang
    (js-bind! this require (& "lang")
       :get (js-make-function this
@@ -821,6 +830,7 @@
 		     ;; the resolution
 		     (nodejs-resolve name this m 'body)))))))
    (let ((%this (js-new-global-object 256)))
+      (js-init-require! %this)
       (with-access::JsGlobalObject %this (js-object __proto__ js-nodejs-pcache)
 	 (let ((proto (instantiateJsObject
 			 (cmap (instantiate::JsConstructMap))

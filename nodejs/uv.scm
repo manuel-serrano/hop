@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Apr 11 11:02:07 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:17:51 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -193,7 +193,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 (cond-expand
    (enable-libuv
@@ -397,6 +397,7 @@
    (with-access::WorkerHopThread th (mutex condv tqueue
 				       %process %this keep-alive services
 				       call %retval prerun %loop)
+      (set! __js_strings (&init!))
       (letrec* ((loop %loop)
 		(async (instantiate::UvAsync
 			  (loop loop)
@@ -838,7 +839,7 @@
 (define (not-implemented-exn fun %this)
    (with-access::JsGlobalObject %this (js-error)
       (js-new %this js-error
-	 (js-ascii-name->jsstring (format "~a not implemented" fun)))))
+	 (js-string->jsstring (format "~a not implemented" fun)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fs-exn ...                                                       */

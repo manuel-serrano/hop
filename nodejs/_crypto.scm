@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Tue Apr  9 11:25:37 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:07:58 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -72,7 +72,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -1175,6 +1175,8 @@
 		      (js-call2 %this callback obj (js-undefined) r))
 		   r)))))
 
+   (set! __js_strings (&init!))
+   
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
 		:alloc js-no-alloc
 		:construct secure-context

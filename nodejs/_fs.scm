@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Mon Apr  8 16:32:54 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:06:20 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -47,7 +47,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    Constants                                                        */
@@ -265,7 +265,6 @@
    (define (create-fs-watcher-proto)
       (with-access::JsGlobalObject %this (js-object)
 	 (with-access::JsFunction js-object (%prototype constrmap)
-;* 	    (let ((obj (js-new %this js-object)))                      */
 	    (let ((obj (js-make-jsobject 2 constrmap %prototype)))
 	       
 	       (js-put! obj (& "start")
@@ -315,6 +314,8 @@
 	 (handle (nodejs-make-fs-poll %worker))
 	 (cmap (instantiate::JsConstructMap))
 	 (__proto__ (get-fs-watcher-proto process))))
+
+   (set! __js_strings (&init!))
    
    (js-alist->jsobject
       `((rename . ,(js-make-function %this rename 2 "rename"))
@@ -352,6 +353,7 @@
 			   :alloc (lambda (%this o) #unspecified)
 			   :construct fs-watcher)))
       %this))
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

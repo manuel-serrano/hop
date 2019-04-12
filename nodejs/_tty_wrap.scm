@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Tue Apr  9 11:26:03 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:03:27 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -29,7 +29,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-tty-wrap ...                                             */
@@ -146,7 +146,8 @@
    
    (define (TTY this fd readable)
       (tty-wrap (nodejs-tty-handle %worker fd readable)))
-   
+
+   (set! __js_strings (&init!))
    (with-access::JsGlobalObject %this (js-object)
       (with-access::JsProcess process (js-tty)
 	 (let ((obj (js-new %this js-object)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Apr 12 09:27:00 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:27:35 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -37,7 +37,7 @@
       (with-access::J2SProgram this (mode pcache-size call-size globals cnsts)
 	 (list module
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
-	    `(define __js_cnst (&begin!))
+	    `(define __js_strings (&begin!))
 	    `(%define-cnst-table ,(length cnsts))
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
@@ -51,6 +51,7 @@
 	    `(define (hopscript %this this %scope %module)
 		(define %worker (js-current-worker))
 		(define %cnst-table ,scmcnsts)
+		(set! __js_strings (&init!))
 		,@esimports
 		,esexports
 		,@globals
@@ -63,7 +64,7 @@
       (with-access::J2SProgram this (mode pcache-size call-size globals cnsts)
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
-	    `(define __js_cnst (&begin!))
+	    `(define __js_strings (&begin!))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    `(%define-cnst-table ,(length cnsts))
@@ -76,6 +77,7 @@
 		      '())
 		(define %worker (js-current-worker))
 		(define %cnst-table ,scmcnsts)
+		(set! __js_strings (&init!))
 		,@esimports
 		,esexports
 		,@globals
@@ -116,7 +118,7 @@
 			   (main main))))
 	    (list module
 	       ;; (&begin!) must not be a constant! (_do not_ use quote)
-	       `(define __js_cnst (&begin!))
+	       `(define __js_strings (&begin!))
 	       `(%define-cnst-table ,(length cnsts))
 	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
@@ -135,6 +137,7 @@
 	       `(define (main args)
 		   (define %worker
 		      (js-init-main-worker! %this #f nodejs-new-global-object))
+		   (set! __js_strings (&init!))
 		   (hopscript-install-expanders!)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (js-worker-push-thunk! %worker "nodejs-toplevel"
@@ -226,7 +229,7 @@
 			(main main))))
 	 `(,module (%define-cnst-table ,(length cnsts))
 	     ;; (&begin!) must not be a constant! (_do not_ use quote)
-	     (define __js_cnst (&begin!))
+	     (define __js_strings (&begin!))
 	     (%define-pcache ,pcache-size)
 	     (define %pcache
 		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
@@ -258,6 +261,7 @@
 		   '())
 	     (define (main args)
 		,(profilers conf)
+		(set! __js_strings (&init!))
 		(hopscript-install-expanders!)
 		(bigloo-library-path-set! ',(bigloo-library-path))
 		(set! !process (nodejs-process %worker %this))

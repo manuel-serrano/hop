@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Mon Apr  8 16:34:37 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:07:14 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
@@ -29,7 +29,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-tcp-wrap ...                                             */
@@ -264,6 +264,8 @@
    
    (define (TCP this)
       (tcp-wrap (nodejs-tcp-handle %worker)))
+
+   (set! __js_strings (&init!))
    
    (with-access::JsGlobalObject %this (js-object)
       (with-access::JsProcess process (js-tcp)
@@ -275,6 +277,7 @@
 		  :construct TCP))
 	    (js-put! obj (& "TCP") js-tcp #f %this)
 	    obj))))
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

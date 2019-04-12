@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Tue Apr  9 11:26:09 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:07:42 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
@@ -29,7 +29,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(&begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-udp-wrap ...                                             */
@@ -214,6 +214,8 @@
    (define (UDP this)
       (udp-wrap (nodejs-udp-handle %worker)))
 
+   (set! __js_strings (&init!))
+   
    (with-access::JsGlobalObject %this (js-object)
       (with-access::JsProcess process (js-udp)
 	 (let ((obj (js-new %this js-object)))
