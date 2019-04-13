@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr 12 09:47:04 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 06:16:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -114,14 +114,15 @@
 ;*    js-init-string! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-string! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-string js-function)
+   (with-access::JsGlobalObject %this (__proto__ js-string js-function
+					 js-string-pcache)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 ;; local constant strings
 	 (set! __js_strings (&init!))
 	 
 	 ;; string pcache
-	 (define js-string-pcache
+	 (set! js-string-pcache
 	    ((@ js-make-pcache-table __hopscript_property) 35 "string"))
 	 
 	 ;; builtin prototype
@@ -429,7 +430,7 @@
    ;; indexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.7
    (define (indexof this::obj search position)
-      (let ((searchstr (js-tostring search %this)))
+      (let ((searchstr (js-tojsstring search %this)))
 	 (js-jsstring-indexof
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
 
@@ -442,7 +443,7 @@
    ;; lastIndexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.8
    (define (last-indexof this search position)
-      (let ((searchstr (js-tostring search %this)))
+      (let ((searchstr (js-tojsstring search %this)))
 	 (js-jsstring-lastindexof
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
    

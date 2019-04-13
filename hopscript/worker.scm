@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Apr 12 14:35:25 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 07:01:02 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -195,8 +195,8 @@
    (lambda (_ src)
       (with-access::JsGlobalObject %this (js-worker js-worker-prototype js-object)
 	 (letrec* ((parent (js-current-worker))
-		   (this (%global-constructor))
 		   (source (js-tostring src %this))
+		   (this (%global-constructor :name (string-append source "_w")))
 		   (thunk (lambda ()
 			     (js-put! this (& "module")
 				(js-get %this (& "module") %this) #f this)

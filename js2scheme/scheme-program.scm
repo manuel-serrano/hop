@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Apr 12 18:27:35 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 06:02:00 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -49,9 +49,9 @@
 	    (when (config-get conf :profile-call #f)
 	       `(define %call-locations ',(call-locations this)))
 	    `(define (hopscript %this this %scope %module)
+		(define __js_strings (&init!))
 		(define %worker (js-current-worker))
 		(define %cnst-table ,scmcnsts)
-		(set! __js_strings (&init!))
 		,@esimports
 		,esexports
 		,@globals
@@ -69,6 +69,7 @@
 	    '(define %resource (dirname %source))
 	    `(%define-cnst-table ,(length cnsts))
 	    `(define (hopscript %this this %scope %module)
+		(define __js_strings (&init!))
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
 		,@(if (config-get conf :profile-call #f)
@@ -77,7 +78,6 @@
 		      '())
 		(define %worker (js-current-worker))
 		(define %cnst-table ,scmcnsts)
-		(set! __js_strings (&init!))
 		,@esimports
 		,esexports
 		,@globals
@@ -129,15 +129,15 @@
 	       (when (config-get conf :profile-call #f)
 		  `(define %call-locations ',(call-locations this)))
 	       '(hopjs-standalone-set! #t)
-	       `(define %this (nodejs-new-global-object))
+	       `(define %this (nodejs-new-global-object :name name))
 	       `(define %source ,path)
 	       '(define %resource (dirname %source))
 	       (when (config-get conf :libs-dir #f)
 		  `(hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
 	       `(define (main args)
+		   (define __js_strings (&init!))
 		   (define %worker
 		      (js-init-main-worker! %this #f nodejs-new-global-object))
-		   (set! __js_strings (&init!))
 		   (hopscript-install-expanders!)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (js-worker-push-thunk! %worker "nodejs-toplevel"
@@ -186,7 +186,7 @@
 		   ((not name)
 		    ;; a mere expression
 		    `(lambda (%this this %scope %module)
-			(&with-cnst!
+			(&with!
 			   (%define-cnst-table ,(length cnsts))
 			   (%define-pcache ,pcache-size)	       
 			   (define %pcache
@@ -239,7 +239,7 @@
 		   '())
 	     (hop-sofile-compile-policy-set! 'static)
 	     (hopjs-standalone-set! #t)
-	     (define %this (nodejs-new-global-object))
+	     (define %this (nodejs-new-global-object :name name))
 	     (define %source ,path)
 	     (define %resource (dirname %source))
 	     (define %scope (nodejs-new-scope-object %this))
@@ -260,8 +260,8 @@
 		   `((hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
 		   '())
 	     (define (main args)
+		(define __js_strings (&init!))
 		,(profilers conf)
-		(set! __js_strings (&init!))
 		(hopscript-install-expanders!)
 		(bigloo-library-path-set! ',(bigloo-library-path))
 		(set! !process (nodejs-process %worker %this))
@@ -282,28 +282,6 @@
    (define (reindex! this::J2SProgram iprgm::J2SProgram reindex)
       (with-access::J2SProgram this (%info)
 	 (set! %info (cons (cons iprgm  reindex) %info))))
-
-;*    (define (module-import-hop im idx)                               */
-;*       (with-access::J2SImport im (mvar ivar path iprgm names)       */
-;* 	 (with-access::J2SProgram iprgm (mode)                         */
-;* 	    (let ((impid (evar-ident idx)))                            */
-;* 	       (reindex! this iprgm idx)                               */
-;* 	       (set! mvar `(vector-ref %imports ,idx))                 */
-;* 	       (set! ivar impid)                                       */
-;* 	       `(define ,impid                                         */
-;* 		   (with-access::JsModule (vector-ref %imports ,idx) (evars) */
-;* 		      ,(format "import: ~a" path)                      */
-;* 		      evars))))))                                      */
-      
-;*    (define (module-imports prgm::J2SProgram)                        */
-;*       (with-access::J2SProgram prgm (imports)                       */
-;* 	 (map (lambda (im idx)                                         */
-;* 		 (with-access::J2SImport im (mvar ivar path iprgm)     */
-;* 		    (with-access::J2SProgram iprgm (mode)              */
-;* 		       (if (eq? mode 'hop)                             */
-;* 			   (module-import-hop im idx)                  */
-;* 			   (module-import-es6 im idx)))))              */
-;* 	    imports (iota (length imports)))))                         */
 
    (define (module-import-es6 im idx)
       (with-access::J2SImport im (mvar ivar path iprgm)

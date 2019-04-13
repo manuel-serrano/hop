@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr 12 21:31:16 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 06:20:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -72,6 +72,7 @@
 		 (location (vector-ref o 4)))
 	      (with-access::JsGlobalObject ctx (js-error)
 		 (instantiateJsError
+		    (%this ctx)
 		    (__proto__ (js-get js-error (& "prototype") ctx))
 		    (name (js-string->jsstring (vector-ref o 0)))
 		    (msg (js-string->jsstring (vector-ref o 1)))
@@ -105,11 +106,11 @@
 ;*    exception-notify ::JsError ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (exception-notify exc::JsError)
-   (with-access::JsError exc (name msg stack fname location)
+   (with-access::JsError exc (name msg stack fname location %this)
+      (tprint "name=" name " msg=" msg " stack=" stack " fname=" fname " location=" location)
       (if (isa? msg &exception)
 	  (exception-notify msg)
 	  (let* ((name (js-jsstring->string name))
-		 (%this (js-new-global-object))
 		 (stk (js-get exc (& "stack") %this))
 		 (port (current-error-port)))
 	     (cond
@@ -137,14 +138,15 @@
 ;*    exception-notify ::obj ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (exception-notify exc::JsObject)
-   (let* ((%this (js-new-global-object))
-	  (msg (js-get exc (& "message") %this))
-	  (stack (js-get exc (& "stack") %this))
-	  (name (js-get exc (& "name") %this))
-	  (port (current-error-port)))
-      (unless (or (eq? name (js-undefined)) (eq? msg (js-undefined)))
-	  (fprint port name ": " msg "\n"))
-      (display stack port)))
+   (with-access::JsObject exc (%this)
+      (let* ((%this (js-new-global-object))
+	     (msg (js-get exc (& "message") %this))
+	     (stack (js-get exc (& "stack") %this))
+	     (name (js-get exc (& "name") %this))
+	     (port (current-error-port)))
+	 (unless (or (eq? name (js-undefined)) (eq? msg (js-undefined)))
+	    (fprint port name ": " msg "\n"))
+	 (display stack port))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-error! ...                                               */
@@ -156,17 +158,20 @@
    (with-access::JsGlobalObject %this (__proto__ js-error js-function
 					 js-syntax-error js-type-error
 					 js-uri-error js-eval-error
-					 js-range-error js-reference-error)
+					 js-range-error js-reference-error
+					 name)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 (define js-error-prototype
 	    (instantiateJsError
+	       (%this %this)
 	       (__proto__ __proto__)
 	       (name (& "error"))
 	       (msg (& ""))))
 	 
 	 (define (js-error-alloc %this constructor::JsFunction)
 	    (instantiateJsError
+	       (%this %this)
 	       (name (js-get constructor (& "name") %this))
 	       (msg (& ""))
 	       (__proto__ (js-get constructor (& "prototype") %this))
@@ -403,7 +408,8 @@
 	    (js-make-function %this (%js-syntax-error %this) 1
 	       "SyntaxError"
 	       :__proto__ js-function-prototype
-	       :prototype (instantiateJsError 
+	       :prototype (instantiateJsError
+			     (%this %this)
 			     (__proto__ js-error-prototype)
 			     (name (& "error"))
 			     (msg (& "")))
@@ -414,7 +420,8 @@
 	    (js-make-function %this (%js-type-error %this) 1
 	       "TypeError"
 	       :__proto__ js-function-prototype
-	       :prototype (instantiateJsError 
+	       :prototype (instantiateJsError
+			     (%this %this)
 			     (__proto__ js-error-prototype)
 			     (name (& "error"))
 			     (msg (& "")))
@@ -425,7 +432,8 @@
 	    (js-make-function %this (%js-uri-error %this) 1
 	       "URIError"
 	       :__proto__ js-function-prototype
-	       :prototype (instantiateJsError 
+	       :prototype (instantiateJsError
+			     (%this %this)
 			     (__proto__ js-error-prototype)
 			     (name (& "error"))
 			     (msg (& "")))
@@ -437,6 +445,7 @@
 	       "EvalError"
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
+			     (%this %this)
 			     (__proto__ js-error-prototype)
 			     (name (& "error"))
 			     (msg (& "")))
@@ -448,6 +457,7 @@
 	       "RangeError"
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
+			     (%this %this)
 			     (__proto__ js-error-prototype)
 			     (name (& "error"))
 			     (msg (& "")))
@@ -459,6 +469,7 @@
 	       "ReferenceError"
 	       :__proto__ js-function-prototype
 	       :prototype (instantiateJsError 
+			     (%this %this)
 			     (__proto__ js-error-prototype)
 			     (name (& "error"))
 			     (msg (& "")))
@@ -507,7 +518,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-error)
+      (with-access::JsGlobalObject %this (js-error name)
 	 (js-new %this js-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -515,7 +526,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-syntax-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-syntax-error)
+      (with-access::JsGlobalObject %this (js-syntax-error name)
 	 (js-new %this js-syntax-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -523,7 +534,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-type-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-type-error)
+      (with-access::JsGlobalObject %this (js-type-error name)
 	 (js-new %this js-type-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -531,7 +542,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-uri-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-uri-error)
+      (with-access::JsGlobalObject %this (js-uri-error name)
 	 (js-new %this js-uri-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -539,7 +550,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-eval-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-eval-error)
+      (with-access::JsGlobalObject %this (js-eval-error name)
 	 (js-new %this js-eval-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -547,7 +558,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-range-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-range-error)
+      (with-access::JsGlobalObject %this (js-range-error name)
 	 (js-new %this js-range-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -555,7 +566,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-reference-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-reference-error)
+      (with-access::JsGlobalObject %this (js-reference-error name)
 	 (js-new %this js-reference-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/

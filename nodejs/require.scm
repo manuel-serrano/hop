@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Apr 12 18:15:06 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 05:56:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -44,7 +44,7 @@
 	   (nodejs-compile-remove-event-listener! ::bstring ::procedure)
 	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj ::symbol)
 	   (nodejs-resolve-extend-path! ::pair-nil)
-	   (nodejs-new-global-object::JsGlobalObject)
+	   (nodejs-new-global-object::JsGlobalObject #!key name)
 	   (nodejs-new-scope-object ::JsGlobalObject)
 	   (nodejs-eval ::JsGlobalObject ::JsObject)
 	   (nodejs-function ::JsGlobalObject ::JsObject)
@@ -174,7 +174,7 @@
 				   (js-raise-error %ctxthis
 				      "Wrong language compiler output"
 				      lang))))))
-		      (js-raise-error (js-new-global-object)
+		      (js-raise-error %ctxthis
 			 (format "Wrong language (~s) object `~a'"
 			    lang (typeof comp))
 			 lang))))))))
@@ -379,7 +379,7 @@
 	 ;; see sourcemap generation
 	 (cons offset tree)))
    
-   (let ((this (nodejs-new-global-object))
+   (let ((this (nodejs-new-global-object :name filename))
 	 (worker (js-current-worker))
 	 (esplainp (memq query '(mjs es))))
       (init-dummy-module! this worker)
@@ -411,7 +411,7 @@
 (define (nodejs-command-line-dummy-module)
    (synchronize compile-mutex
       (unless command-line-this
-	 (set! command-line-this (nodejs-new-global-object))
+	 (set! command-line-this (nodejs-new-global-object :name "dummy"))
 	 (let ((worker (js-current-worker))
 	       (filename (make-file-name (pwd) "")))
 	    (set! command-line-module
@@ -528,7 +528,7 @@
 				(comp (js-get lang key this)))
 			    (if (isa? comp JsFunction)
 				comp
-				(js-raise-error (js-new-global-object)
+				(js-raise-error this
 				   "Wrong language object"
 				   lang)))))
 		     ((js-jsstring? lang)
@@ -802,21 +802,18 @@
 ;*    *resolve-service* ...                                            */
 ;*---------------------------------------------------------------------*/
 (define *resolve-service* #f)
-(define *resolve-this* #f)
 (define *resolve-url-path* "public/require/resolve")
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-global-object ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-new-global-object)
+(define (nodejs-new-global-object #!key name)
    (unless (or *resolve-service* (<fx (hop-port) -1))
       (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
 	 (nodejs-compile-workers-inits!))
       (set! *resolve-service*
 	 (service :name *resolve-url-path* (name filename)
-	    (unless *resolve-this*
-	       (set! *resolve-this* (js-new-global-object)))
-	    (let ((this *resolve-this*))
+	    (let ((this (js-initial-global-object)))
 	       (with-access::JsGlobalObject this (js-object)
 		  (let ((m (js-new0 this js-object)))
 		     ;; module properties
@@ -829,7 +826,7 @@
 			#f this)
 		     ;; the resolution
 		     (nodejs-resolve name this m 'body)))))))
-   (let ((%this (js-new-global-object 256)))
+   (let ((%this (js-new-global-object :size 256 :name name)))
       (js-init-require! %this)
       (with-access::JsGlobalObject %this (js-object __proto__ js-nodejs-pcache)
 	 (let ((proto (instantiateJsObject
@@ -1609,10 +1606,14 @@
 		    (js-raise-error %ctxthis
 		       (format "Wrong compiled file format ~s" sopath)
 		       sopath))))
-	    ((and (not (eq? sopath 'error)) (hop-sofile-enable))
+	    ((and (or (not (pair? sopath)) (not (eq? (car sopath) 'error))))
 	     (case (hop-sofile-compile-policy)
 		((aot)
-		 (loop (nodejs-socompile src filename lang worker-slave)))
+		 (if (hop-sofile-enable)
+		     (loop (nodejs-socompile src filename lang worker-slave))
+		     (nodejs-compile src filename %ctxthis %ctxmodule
+			:lang lang :commonjs-export commonjs-export
+			:worker-slave worker-slave)))
 		((nte nte1 nte+)
 		 (nodejs-socompile-queue-push filename lang worker-slave)
 		 (nodejs-compile src filename %ctxthis %ctxmodule
@@ -1623,8 +1624,6 @@
 		    :lang lang :commonjs-export commonjs-export
 		    :worker-slave worker-slave))))
 	    (else
-	     (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
-		(nodejs-socompile-queue-push filename lang worker-slave))
 	     (nodejs-compile src filename %ctxthis %ctxmodule
 		:lang lang :commonjs-export commonjs-export
 		:worker-slave worker-slave)))))
@@ -1711,10 +1710,12 @@
 	 (cond
 	    ((string? sopath)
 	     (hop-dynamic-load sopath))
-	    ((and (not (eq? sopath 'error)) (hop-sofile-enable))
+	    ((or (not (pair? sopath)) (not (eq? (car sopath) 'error)))
 	     (case (hop-sofile-compile-policy)
 		((aot)
-		 (loop (nodejs-socompile src filename lang worker-slave)))
+		 (if (hop-sofile-enable)
+		     (loop (nodejs-socompile src filename lang worker-slave))
+		     (hop-eval filename)))
 		((nte nte1 nte+)
 		 (nodejs-socompile-queue-push filename lang worker-slave)
 		 (hop-eval filename))
@@ -1932,7 +1933,7 @@
 	       (trace-item "mod=" (typeof mod))
 	       (trace-item "gencmapid=" (gencmapid))
 	       mod))))
-   
+
    (with-trace 'require (format "nodejs-core-module ~a" name)
       (with-access::WorkerHopThread worker (module-cache)
 	 (let ((m (js-get-property-value module-cache module-cache
@@ -2334,7 +2335,7 @@
 ;*    (e.g., hopc).                                                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-plugins-toplevel-loader)
-   (let ((this (nodejs-new-global-object)))
+   (let ((this (nodejs-new-global-object :name "plugins")))
       (with-access::JsGlobalObject this (js-object)
 	 (let* ((worker (js-init-main-worker! this #f nodejs-new-global-object))
 		(mod (nodejs-new-module "hopc" "." worker this)))

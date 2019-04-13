@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Apr 12 18:42:30 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 06:12:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -55,7 +55,7 @@
 	   __hopscript_dom)
    
    (export (js-initial-global-object)
-	   (js-new-global-object::JsGlobalObject #!optional (size 64))
+	   (js-new-global-object::JsGlobalObject #!key (size 64) name)
 	   
 	   (generic js-extensible?::bool ::obj ::JsGlobalObject)
 	   (generic js-preventextensions ::obj ::JsGlobalObject)
@@ -147,7 +147,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsGlobalObject worker %_this)
    (with-access::JsGlobalObject obj (elements)
-      (js-new-global-object (vector-length elements))))
+      (js-new-global-object :size (vector-length elements) :name "donate")))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsObject ...                                  */
@@ -234,18 +234,19 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1         */
 ;*---------------------------------------------------------------------*/
 (define (js-initial-global-object)
-   (unless %this (set! %this (js-new-global-object)))
+   (unless %this (set! %this (js-new-global-object :name "initial")))
    %this)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-global-object ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-new-global-object #!optional (size 64))
+(define (js-new-global-object #!key (size 64) name)
    (let* ((%proto (instantiateJsObject
 		     (cmap (instantiate::JsConstructMap))
 		     (__proto__ (js-null))
 		     (elements (make-vector 128))))
 	  (%this (instantiateJsGlobalObject
+		    (name name)
 		    (cmap (instantiate::JsConstructMap
 			     (methods '#())
 			     (props '#())))
@@ -271,12 +272,12 @@
 	 (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	    ;; the prototypes and other builtin classes
 	    (js-init-public! %this)
+	    (js-init-stringliteral! %this)
 	    (js-init-arguments! %this)
 	    (js-init-symbol! %this)
 	    (js-init-array! %this)
 	    (js-init-arraybuffer! %this)
 	    (js-init-arraybufferview! %this)
-	    (js-init-stringliteral! %this)
 	    (js-init-string! %this)
 	    (js-init-boolean! %this)
 	    (js-init-number! %this)

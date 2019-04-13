@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Apr 12 18:17:51 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 06:09:09 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -442,7 +442,6 @@
 			(uv-async-send async)
 			(run))
 		     (uv-run loop)))
-	       (tprint "JS-WORKER-LOOP th=" th " retval=" %retval)
 	       ;; call the cleanup function
 	       (when (=fx %retval 0)
 		  (unless (js-totest (js-get %process (& "_exiting") %this))

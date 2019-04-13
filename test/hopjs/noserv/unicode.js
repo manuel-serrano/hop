@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:20:00 2014                          */
-/*    Last change :  Thu Apr 11 11:32:37 2019 (serrano)                */
+/*    Last change :  Sat Apr 13 09:39:22 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Unicode testing                                                  */
@@ -38,9 +38,7 @@ assert.strictEqual( s1 + s2, s );
 
 assert.strictEqual( "étèpasglop".indexOf( "é" ), 0 );
 assert.strictEqual( "étèpasglop".indexOf( "è" ), 2 );
-#:tprint( ">>> ici" );
 assert.strictEqual( "étèpasésglop".lastIndexOf( "è", 8 ), 2 );
-#:tprint( "<<< la" );
 assert.strictEqual( "user:password@[3ffe:2a00:100:7031::1".lastIndexOf( "@" ), 13 );
 
 assert.deepEqual( "été.étè.fr".split( "." ),

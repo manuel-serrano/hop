@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Apr 12 20:38:16 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 06:44:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -250,6 +250,7 @@
 	   (class JsError::JsObject
 	      name
 	      msg
+	      %this
 	      (stack (default #f))
 	      (fname (default #f))
 	      (location (default #f)))
@@ -296,6 +297,7 @@
 	      cursor::long)
 	   
 	   (class JsGlobalObject::JsObject
+	      (name read-only)
 	      (js-hop-builtin::JsObject (default (class-nil JsObject)))
 	      (js-object::JsFunction (default (class-nil JsFunction)))
 	      (js-array::JsFunction (default (class-nil JsFunction)))
@@ -362,9 +364,9 @@
 	      ;; dom elements
 	      (js-xml-markups (default #f))
 	      ;; names
-	      (js-names::obj (default #f))
-	      (js-string-names::vector (default '#()))
-	      (js-integer-names::vector (default '#()))
+;* 	      (js-names::obj (default #f))                             */
+;* 	      (js-string-names::vector (default '#()))                 */
+;* 	      (js-integer-names::vector (default '#()))                */
 	      ;; pcaches
 	      (js-nodejs-pcache::vector (default '#()))
 	      (js-array-pcache::vector (default '#()))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Apr  9 08:08:21 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 07:09:11 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -204,7 +204,7 @@
 ;*    javascript-init ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init args files exprs)
-   (let* ((%global (nodejs-new-global-object))
+   (let* ((%global (nodejs-new-global-object :name "main"))
 	  (%worker (js-init-main-worker! %global
 		      ;; keep-alive
 		      (or (hop-run-server) (eq? (hop-enable-repl) 'js))

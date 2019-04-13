@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Apr 12 18:09:00 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 06:08:44 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -70,9 +70,11 @@
 ;*    hopjs-process-hop ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-process-hop %worker %this)
+   (set! __js_strings (&init!))
+      
    (with-access::JsGlobalObject %this (js-object js-function-prototype 
 					 __proto__)
-      
+
       (define js-urlframe-prototype
 	 (instantiateJsObject
 	    (__proto__ __proto__)
@@ -174,7 +176,7 @@
 	       :configurable #f)
 	    driver))
 
-      (set! __js_strings (&init!))
+      
       
       (js-bind! %this js-urlframe-prototype (& "post")
 	 :value (js-make-function %this

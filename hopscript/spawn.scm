@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Fri Apr 12 09:43:23 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 07:48:47 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -106,6 +106,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (fun args body)
    `(js-make-function %this (lambda ,args ,body) ,(length args) "fun"))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-spawn ...                                                     */
 ;*---------------------------------------------------------------------*/
@@ -135,7 +136,7 @@
 			 (call resolve (js-undefined) (ref 1 next (& "value")))
 			 (js-undefined))
 			(else
-			 (let ((promise (invoke js-promise 3 (& "resolve")
+			 (let ((promise (invoke 3 js-promise (& "resolve")
 					   (ref 2 next (& "value")))))
 			    (invoke 4 promise (& "then")
 			       (fun (this v)

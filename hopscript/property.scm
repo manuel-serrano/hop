@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Apr 12 18:47:36 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 06:14:11 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2506,7 +2506,6 @@
 	 (js-define-own-property o name desc #f %this)
 	 (js-undefined)))
 
-   (tprint "NAME=" name)
    [assert (name) (not (symbol? name))]
    [assert (name) (eq? name (js-toname name %this))]
    (with-access::JsObject o (cmap)
