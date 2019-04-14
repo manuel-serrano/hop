@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Fri Apr 12 10:13:45 2019 (serrano)                */
+;*    Last change :  Sat Apr 13 16:06:13 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -12,40 +12,22 @@
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
-;*    &strings ...                                                     */
-;*---------------------------------------------------------------------*/
-;*    '#("" "__dirname" "__filename" "__proto__"                       */
-;*       "Array" "Buffer" "Error" "GLOBAL" "HEAD"                      */
-;*       "Infinity" "-Infinity" "NaN" "Object"                         */
-;*       "SCRIPT" "String" "Worker"                                    */
-;*       "apply" "call" "callee" "caller"                              */
-;*       "clearImmediate" "clearInterval" "clearTimeout"               */
-;*       "console" "constructor"                                       */
-;*       "default"                                                     */
-;*       "exports"                                                     */
-;*       "filename"                                                    */
-;*       "get"                                                         */
-;*       "global"                                                      */
-;*       "hop"                                                         */
-;*       "length"                                                      */
-;*       "module"                                                      */
-;*       "process"                                                     */
-;*       "prototype"                                                   */
-;*       "readable"                                                    */
-;*       "require"                                                     */
-;*       "set" "setImmediate" "setInterval" "setTimeout"               */
-;*       "toString"                                                    */
-;*       "value"                                                       */
-;*       "write"                                                       */
-;*       "writable"))                                                  */
-
-;*---------------------------------------------------------------------*/
 ;*    &name-expander ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (&name-expander x e)
 
    (define &strings
-      '#())
+      '#("" "__dirname" "__filename" "__proto__"
+	 "Array" "Buffer" "Error" "GLOBAL" "HEAD"
+	 "Infinity" "-Infinity" "NaN" "Object"
+	 "SCRIPT" "String" "Worker"
+	 "apply" "call" "callee" "caller"
+	 "clearImmediate" "clearInterval" "clearTimeout"
+	 "console" "constructor"
+	 "default" "exports" "filename" "get" "global"
+	 "hop" "length" "module" "process" "prototype"
+	 "readable" "require" "set" "setImmediate" "setInterval" "setTimeout"
+	 "toString" "value" "write" "writable"))
    
    (define (vector-index val vector)
       (let loop ((i (-fx (vector-length vector) 1)))

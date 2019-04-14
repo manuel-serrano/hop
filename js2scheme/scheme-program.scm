@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat Apr 13 06:02:00 2019 (serrano)                */
+;*    Last change :  Sun Apr 14 08:09:16 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -34,7 +34,7 @@
 (define-method (j2s-scheme this::J2SProgram mode return conf)
    
    (define (j2s-master-module module scmcnsts esexports esimports body)
-      (with-access::J2SProgram this (mode pcache-size call-size globals cnsts)
+      (with-access::J2SProgram this (mode pcache-size call-size globals cnsts loc)
 	 (list module
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
 	    `(define __js_strings (&begin!))
@@ -48,40 +48,42 @@
 	       `(define %call-log (make-vector ,call-size #l0)))
 	    (when (config-get conf :profile-call #f)
 	       `(define %call-locations ',(call-locations this)))
-	    `(define (hopscript %this this %scope %module)
-		(define __js_strings (&init!))
-		(define %worker (js-current-worker))
-		(define %cnst-table ,scmcnsts)
-		,@esimports
-		,esexports
-		,@globals
-		,@(exit-body body conf))
+	    (epairify-deep loc
+	       `(define (hopscript %this this %scope %module)
+		   (define __js_strings (&init!))
+		   (define %worker (js-current-worker))
+		   (define %cnst-table ,scmcnsts)
+		   ,@esimports
+		   ,esexports
+		   ,@globals
+		   ,@(exit-body body conf)))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
 
    (define (j2s-slave-module module scmcnsts esexports esimports body)
-      (with-access::J2SProgram this (mode pcache-size call-size globals cnsts)
+      (with-access::J2SProgram this (mode pcache-size call-size globals cnsts loc)
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
 	    `(define __js_strings (&begin!))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    `(%define-cnst-table ,(length cnsts))
-	    `(define (hopscript %this this %scope %module)
-		(define __js_strings (&init!))
-		(define %pcache
-		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
-		,@(if (config-get conf :profile-call #f)
-		      `((define %call-log (make-vector ,call-size #l0))
-			(define %call-locations ',(call-locations this)))
-		      '())
-		(define %worker (js-current-worker))
-		(define %cnst-table ,scmcnsts)
-		,@esimports
-		,esexports
-		,@globals
-		,@(exit-body body conf))
+	    (epairify-deep loc
+		`(define (hopscript %this this %scope %module)
+		   (define __js_strings (&init!))
+		   (define %pcache
+		      (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
+		   ,@(if (config-get conf :profile-call #f)
+			 `((define %call-log (make-vector ,call-size #l0))
+			   (define %call-locations ',(call-locations this)))
+			 '())
+		   (define %worker (js-current-worker))
+		   (define %cnst-table ,scmcnsts)
+		   ,@esimports
+		   ,esexports
+		   ,@globals
+		   ,@(exit-body body conf)))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
@@ -108,14 +110,15 @@
    
    (define (j2s-main-module/workers name scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size %this path
-				       globals cnsts)
-	 (let ((module `(module ,(string->symbol name)
-			   (eval (library hop)
-			      (library hopscript)
-			      (library nodejs))
-			   (library hop hopscript nodejs)
-			   (cond-expand (enable-libuv (library libuv)))
-			   (main main))))
+				       globals cnsts loc)
+	 (let ((module (epairify-deep loc
+			  `(module ,(string->symbol name)
+			      (eval (library hop)
+				 (library hopscript)
+				 (library nodejs))
+			      (library hop hopscript nodejs)
+			      (cond-expand (enable-libuv (library libuv)))
+			      (main main)))))
 	    (list module
 	       ;; (&begin!) must not be a constant! (_do not_ use quote)
 	       `(define __js_strings (&begin!))
@@ -157,7 +160,7 @@
    
    (with-access::J2SProgram this (module main nodes headers decls
 					 mode name pcache-size call-size
-					 cnsts globals)
+					 cnsts globals loc)
       (let* ((esimports (j2s-module-imports this))
 	     (esexports (j2s-module-exports this))
 	     (conf (cons* :array (j2s-find-extern-decl headers 'Array)
@@ -185,41 +188,44 @@
 		    (j2s-module module scmcnsts esexports esimports body))
 		   ((not name)
 		    ;; a mere expression
-		    `(lambda (%this this %scope %module)
-			(&with!
-			   (%define-cnst-table ,(length cnsts))
-			   (%define-pcache ,pcache-size)	       
-			   (define %pcache
-			      (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
-			   ,@(if (config-get conf :profile-call #f)
-				 `((define %call-log (make-vector ,call-size #l0))
-				   (define %call-locations ',(call-locations this)))
-				 '())
-			   (define %worker (js-current-worker))
-			   (define %source (or (the-loading-file) "/"))
-			   (define %resource (dirname %source))
-			   (define %cnst-table ,scmcnsts)
-			   ,@esimports
-			   ,esexports
-			   ,@globals
-			   ,@(exit-body body conf))))
+		    (epairify-deep loc
+		       `(lambda (%this this %scope %module)
+			   (&with!
+			      (%define-cnst-table ,(length cnsts))
+			      (%define-pcache ,pcache-size)	       
+			      (define %pcache
+				 (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
+			      ,@(if (config-get conf :profile-call #f)
+				    `((define %call-log (make-vector ,call-size #l0))
+				      (define %call-locations ',(call-locations this)))
+				    '())
+			      (define %worker (js-current-worker))
+			      (define %source (or (the-loading-file) "/"))
+			      (define %resource (dirname %source))
+			      (define %cnst-table ,scmcnsts)
+			      ,@esimports
+			      ,esexports
+			      ,@globals
+			      ,@(exit-body body conf)))))
 		   (main
 		    ;; generate a main hopscript module 
 		    (j2s-main-module/workers name scmcnsts
 		       esexports esimports body))
 		   (else
 		    ;; generate the module clause
-		    (let ((module `(module ,(string->symbol name)
+		    (let ((mod (epairify-deep loc
+				  `(module ,(string->symbol name)
 				      (library hop hopscript js2scheme nodejs)
-				      (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))))
-		       (j2s-module module scmcnsts esexports esimports body)))))))))
+				      (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject))))))
+		       (j2s-module mod scmcnsts esexports esimports body)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-main-sans-worker-module ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-main-sans-worker-module this name scmcnsts toplevel
 	   esexports esimports body conf)
-   (with-access::J2SProgram this (mode pcache-size call-size %this path globals cnsts)
+   (with-access::J2SProgram this (mode pcache-size call-size %this path globals
+				    cnsts loc)
       (let ((module `(module ,(string->symbol name)
 			(eval (library hop)
 			   (library hopscript)
@@ -227,46 +233,47 @@
 			(library hop hopscript nodejs)
 			(cond-expand (enable-libuv (library libuv)))
 			(main main))))
-	 `(,module (%define-cnst-table ,(length cnsts))
-	     ;; (&begin!) must not be a constant! (_do not_ use quote)
-	     (define __js_strings (&begin!))
-	     (%define-pcache ,pcache-size)
-	     (define %pcache
-		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
-	     ,@(if (config-get conf :profile-call #f)
-		   `((define %call-log (make-vector ,call-size #l0))
-		     (define %call-locations ',(call-locations this)))
-		   '())
-	     (hop-sofile-compile-policy-set! 'static)
-	     (hopjs-standalone-set! #t)
-	     (define %this (nodejs-new-global-object :name name))
-	     (define %source ,path)
-	     (define %resource (dirname %source))
-	     (define %scope (nodejs-new-scope-object %this))
-	     (define this
-		(with-access::JsGlobalObject %this (js-object)
-		   (js-new0 %this js-object)))
-	     (define %worker
-		(js-init-main-worker! %this #f nodejs-new-global-object))
-	     (define %module
-		(nodejs-new-module ,(basename path) ,(absolute path)
-		   %worker %this))
-	     (define %cnst-table ,scmcnsts)
-	     ,@esimports
-	     ,esexports
-	     ,@globals
-	     ,@toplevel
-	     ,@(if (config-get conf :libs-dir #f)
-		   `((hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
-		   '())
-	     (define (main args)
-		(define __js_strings (&init!))
-		,(profilers conf)
-		(hopscript-install-expanders!)
-		(bigloo-library-path-set! ',(bigloo-library-path))
-		(set! !process (nodejs-process %worker %this))
-		,@(exit-body body conf))
-	     (&end!)))))
+	 (epairify-deep loc
+	    `(,module (%define-cnst-table ,(length cnsts))
+		;; (&begin!) must not be a constant! (_do not_ use quote)
+		(define __js_strings (&begin!))
+		(%define-pcache ,pcache-size)
+		(define %pcache
+		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
+		,@(if (config-get conf :profile-call #f)
+		      `((define %call-log (make-vector ,call-size #l0))
+			(define %call-locations ',(call-locations this)))
+		      '())
+		(hop-sofile-compile-policy-set! 'static)
+		(hopjs-standalone-set! #t)
+		(define %this (nodejs-new-global-object :name name))
+		(define %source ,path)
+		(define %resource (dirname %source))
+		(define %scope (nodejs-new-scope-object %this))
+		(define this
+		   (with-access::JsGlobalObject %this (js-object)
+		      (js-new0 %this js-object)))
+		(define %worker
+		   (js-init-main-worker! %this #f nodejs-new-global-object))
+		(define %module
+		   (nodejs-new-module ,(basename path) ,(absolute path)
+		      %worker %this))
+		(define %cnst-table ,scmcnsts)
+		,@esimports
+		,esexports
+		,@globals
+		,@toplevel
+		,@(if (config-get conf :libs-dir #f)
+		      `((hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
+		      '())
+		(define (main args)
+		   (define __js_strings (&init!))
+		   ,(profilers conf)
+		   (hopscript-install-expanders!)
+		   (bigloo-library-path-set! ',(bigloo-library-path))
+		   (set! !process (nodejs-process %worker %this))
+		   ,@(exit-body body conf))
+		(&end!))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-imports ...                                           */

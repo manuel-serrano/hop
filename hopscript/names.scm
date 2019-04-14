@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sat Apr 13 06:34:17 2019 (serrano)                */
+;*    Last change :  Sun Apr 14 06:29:48 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -36,43 +36,44 @@
 	   (js-utf8-name->jsstring::JsStringLiteralUTF8 ::bstring ::JsGlobalObject)
 	   (js-integer-name->jsstring::JsStringLiteralASCII ::long ::JsGlobalObject)
 	   (js-name->jsstring::JsStringLiteral ::bstring ::JsGlobalObject))
-   
-   (static js-names js-integer-names js-string-names)
-   
-   (cond-expand
-      ((config thread-local-storage #t)
-       (pragma (js-names thread-local)
-	  (js-integer-names thread-local)
-	  (js-string-names thread-local)))))
+
+   )
+;*    (static js-names js-integer-names js-string-names)               */
+;*                                                                     */
+;*    (cond-expand                                                     */
+;*       ((config thread-local-storage #t)                             */
+;*        (pragma (js-names thread-local)                              */
+;* 	  (js-integer-names thread-local)                              */
+;* 	  (js-string-names thread-local)))))                           */
 
 ;*---------------------------------------------------------------------*/
 ;*    name tables                                                      */
 ;*---------------------------------------------------------------------*/
-(define js-names #f)
-(define js-integer-names #f)
-(define js-string-names #f)
+;* (define js-names #f)                                                */
+;* (define js-integer-names #f)                                        */
+;* (define js-string-names #f)                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-names! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-names! %this::JsGlobalObject)
-   (unless js-names
-   ;;   (with-access::JsGlobalObject %this (js-names js-integer-names js-string-names)
-      (set! js-names
-	 (create-hashtable :eqtest string=? :hash string-hash-number))
-      (set! js-integer-names
-	 (list->vector
-	    (append
-	       (map (lambda (i)
-		       (js-ascii-name->jsstring (fixnum->string i) %this))
-		  (iota 10 -10))
-	       (map (lambda (i)
-		       (js-index-name->jsstring (fixnum->uint32 i) %this))
-		  (iota 100)))))
-      (set! js-string-names
-	 (vector-map! (lambda (val)
-			 (js-ascii-name->jsstring val %this))
-	    (& strings)))))
+   (with-access::JsGlobalObject %this (js-names js-integer-names js-string-names)
+      (unless js-names
+	 (set! js-names
+	    (create-hashtable :eqtest string=? :hash string-hash-number))
+	 (set! js-integer-names
+	    (list->vector
+	       (append
+		  (map (lambda (i)
+			  (js-ascii-name->jsstring (fixnum->string i) %this))
+		     (iota 10 -10))
+		  (map (lambda (i)
+			  (js-index-name->jsstring (fixnum->uint32 i) %this))
+		     (iota 100)))))
+	 (set! js-string-names
+	    (vector-map! (lambda (val)
+			    (js-ascii-name->jsstring val %this))
+	       (& strings))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcache ...                                               */
@@ -166,8 +167,7 @@
 (define (js-jsstring->name!::JsStringLiteral o::JsStringLiteral %this)
    ;; call js-jsstring->string as the string must be normalized
    ;; before being potentially added in the name hashtable
-;*    (with-access::JsGlobalObject %this (js-names)                    */
-   (begin
+   (with-access::JsGlobalObject %this (js-names)
       (let ((str (js-jsstring->string o)))
 	 (let ((n (hashtable-get js-names str)))
 	    (unless n
@@ -180,8 +180,7 @@
 ;*    js-ascii-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring %this)
-;*    (with-access::JsGlobalObject %this (js-names)                    */
-   (begin
+   (with-access::JsGlobalObject %this (js-names)
       (let ((n (hashtable-get js-names str)))
 	 (or n
 	     (let ((n (instantiate::JsStringLiteralASCII
@@ -196,8 +195,7 @@
 ;*    js-index-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-index-name->jsstring::JsStringLiteralASCII num::uint32 %this)
-;*    (with-access::JsGlobalObject %this (js-names)                    */
-   (begin
+   (with-access::JsGlobalObject %this (js-names)
       (let* ((str (fixnum->string (uint32->fixnum num)))
 	     (n (hashtable-get js-names str)))
 	 (or n
@@ -214,8 +212,7 @@
 ;*    js-utf8-name->jsstring ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-utf8-name->jsstring str::bstring %this)
-;*    (with-access::JsGlobalObject %this (js-names)                    */
-   (begin
+   (with-access::JsGlobalObject %this (js-names)
       (let ((n (hashtable-get js-names str)))
 	 (or n
 	     (let ((n (instantiate::JsStringLiteralUTF8
@@ -242,8 +239,7 @@
 (define (js-integer-name->jsstring num::long %this)
    (cond
       ((and (>fx num -10) (<fx num 100))
-;*        (with-access::JsGlobalObject %this (js-integer-names)        */
-       (begin
+       (with-access::JsGlobalObject %this (js-integer-names)
 	  (vector-ref js-integer-names (+fx num 10))))
       ((and (>fx num 0) (<fx num 65535))
        (js-index-name->jsstring (fixnum->uint32 num) %this))

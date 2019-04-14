@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Apr 13 06:44:53 2019 (serrano)                */
+;*    Last change :  Sun Apr 14 06:29:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -364,9 +364,9 @@
 	      ;; dom elements
 	      (js-xml-markups (default #f))
 	      ;; names
-;* 	      (js-names::obj (default #f))                             */
-;* 	      (js-string-names::vector (default '#()))                 */
-;* 	      (js-integer-names::vector (default '#()))                */
+	      (js-names::obj (default #f))
+	      (js-string-names::vector (default '#()))
+	      (js-integer-names::vector (default '#()))
 	      ;; pcaches
 	      (js-nodejs-pcache::vector (default '#()))
 	      (js-array-pcache::vector (default '#()))
