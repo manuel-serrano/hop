@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-string.scm       */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-string.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Mar 29 07:33:21 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 11:41:02 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -39,12 +39,15 @@
 (define (j2s-string-ref this::J2SAccess mode return conf)
 
    (define (literal-ascii? obj)
-      (when (isa? obj J2SLiteralCnst)
-	 (with-access::J2SLiteralCnst obj (val)
-	    (when (isa? val J2SString)
-	       (with-access::J2SString val (val)
-		  (eq? (string-minimal-charset val) 'ascii))))))
-		     
+      (cond
+	 ((isa? obj J2SLiteralCnst)
+	  (with-access::J2SLiteralCnst obj (val)
+	     (when (isa? val J2SString)
+		(literal-ascii? val))))
+	 ((isa? obj J2SString)
+	  (with-access::J2SString obj (val)
+	     (eq? (string-minimal-charset val) 'ascii)))))
+   
    (define (jsstring-ref type obj index mode return conf)
       (let ((str (j2s-scheme obj mode return conf)))
 	 (if (literal-ascii? obj)

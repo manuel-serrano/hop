@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Apr 15 09:45:00 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 11:27:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -148,12 +148,6 @@
 (define-method (js-donate obj::JsGlobalObject worker %_this)
    (with-access::JsGlobalObject obj (elements)
       (js-new-global-object :size (vector-length elements) :name "donate")))
-
-;*---------------------------------------------------------------------*/
-;*    scheme->response ::JsObject ...                                  */
-;*---------------------------------------------------------------------*/
-(define-method (scheme->response obj::JsObject req)
-   (error "scheme->response" "Illegal response type" (typeof obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsResponse ...                                */

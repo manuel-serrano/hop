@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 27 19:12:38 2015                          */
-;*    Last change :  Fri Apr 12 18:14:10 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 13:55:14 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Zlib bindings                                                    */
@@ -42,6 +42,8 @@
 ;*---------------------------------------------------------------------*/
 (define (process-zlib %worker %this process)
 
+   (define __init (set! __js_strings (&init!)))
+   
    (define (zlib-write this . l)
       (tprint "zlib-write l=" l)
       (error "zlib" "binding not implemented" "write"))
@@ -80,8 +82,6 @@
       (instantiateJsZlib
 	 (__proto__ zlib-proto)))
 
-   (set! __js_strings (&init!))
-   
    (let* ((zlib (js-make-function %this zlib 0 "Zlib"
 		   :construct zlib
 		   :prototype zlib-proto)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Apr 12 09:47:42 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 14:01:43 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -500,10 +500,18 @@
 		       (if (not right)
 			   ;; plain left descent
 			   (loop i left stack)
-			   ;; full recursive call with pushed right
-			   (let* ((ni (+fx i (uint32->fixnum weight)))
-				  (nstack (cons (cons ni right) stack)))
-			      (loop i left nstack)))))))))))
+			   (with-access::JsStringLiteral right ((rr right)
+								(rl left))
+			      (if (not rr)
+				  ;; write the rhs in advance
+				  (let ((len (string-length rl)))
+				     (blit-buffer! rl buffer
+					(+fx i (uint32->fixnum weight)))
+				     (loop i left stack))
+				  ;; full recursive call with pushed right
+				  (let* ((ni (+fx i (uint32->fixnum weight)))
+					 (nstack (cons (cons ni right) stack)))
+				     (loop i left nstack)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-UTF8! ...                                  */
@@ -629,7 +637,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-character-length js)
    (if (isa? js JsStringLiteralASCII)
-       (with-access::JsStringLiteralASCII js (right left weight)
+       (with-access::JsStringLiteralASCII js (right weight)
 	  (if (not right)
 	      weight
 	      (js-jsstring-length js)))
@@ -647,7 +655,7 @@
 	  (when (=u32 %culen #u32:0)
 	     (set! %culen (utf8-codeunit-length (js-jsstring->string js))))
 	  %culen)
-       (with-access::JsStringLiteralASCII js (right left weight)
+       (with-access::JsStringLiteralASCII js (right weight)
 	  (if (not right)
 	      weight
 	      (js-jsstring-length js)))))
@@ -919,7 +927,7 @@
 		    (isa? right JsStringLiteralUTF8))
 		(instantiate::JsStringLiteralUTF8
 		   (weight (js-jsstring-length left))
-		   (left left)
+		   (left (js-jsstring->string left))
 		   (right right))
 		(instantiate::JsStringLiteralASCII
 		   (weight (js-jsstring-length left))

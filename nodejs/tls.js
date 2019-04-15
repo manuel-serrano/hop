@@ -65,8 +65,8 @@ if (process.env.NODE_DEBUG && /tls/.test(process.env.NODE_DEBUG)) {
 var Connection = null;
 try {
   Connection = process.binding('crypto').Connection;
-} catch (e) {
-  throw new Error('node.js not compiled with openssl crypto support.');
+/* } catch (e) {                                                       */
+/*   throw new Error('node.js not compiled with openssl crypto support.'); */
 }
 
 // Convert protocols array into valid OpenSSL protocols list

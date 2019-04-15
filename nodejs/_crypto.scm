@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Fri Apr 12 18:07:58 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 13:52:21 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -110,6 +110,8 @@
 ;*    process-crypto ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (process-crypto %worker %this)
+   
+   (define __init (set! __js_strings (&init!)))
    
    (define (secure-context-init this . args)
       (with-access::JsSecureContext this (ctx)
@@ -1175,8 +1177,6 @@
 		      (js-call2 %this callback obj (js-undefined) r))
 		   r)))))
 
-   (set! __js_strings (&init!))
-   
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
 		:alloc js-no-alloc
 		:construct secure-context
@@ -1309,7 +1309,6 @@
 	   data)
 	  ((binary)
 	   data)
-;* 	   (utf8->iso-latin data))                                     */
 	  (else
 	   (error "crypto" "bad encoding" encoding))))
       (else
