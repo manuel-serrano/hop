@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Apr 15 09:01:38 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 19:00:45 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -279,8 +279,7 @@
 (define (js-integer-name->jsstring num::long)
    (cond
       ((and (>fx num -10) (<fx num 100))
-       (synchronize-name
-	  (vector-ref js-integer-names (+fx num 10))))
+       (vector-ref js-integer-names (+fx num 10)))
       ((and (>fx num 0) (<fx num 65535))
        (js-index-name->jsstring (fixnum->uint32 num)))
       (else

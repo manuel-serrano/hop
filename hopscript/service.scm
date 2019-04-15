@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Apr 15 09:46:26 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 19:21:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -506,7 +506,7 @@
 	 ((keyword? val)
 	  `("keyword" ,(keyword->string val) "hop-encoding: keyword"))
 	 (else
-	  `("hop" ,(obj->string val 'hop-to-hop) "hop-encoding: hop"))))
+	  `("hop" ,(obj->string val (cons 'hop-to-hop %this)) "hop-encoding: hop"))))
    
    (define (scheme->js val)
       (js-obj->jsobject val %this))

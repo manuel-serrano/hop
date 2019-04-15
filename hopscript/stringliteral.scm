@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Apr 15 14:01:43 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 18:57:18 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -198,7 +198,7 @@
 		 (llong->uint32 (bignum->llong num))
 		 false)
 	     (js-toindex num))))
-   
+
    (string->index (js-jsstring->string obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -396,7 +396,7 @@
 (define (js-integer->jsstring::JsStringLiteralASCII num::long)
    (cond
       ((and (>fx num -10) (<fx num 100))
-       (vector-ref &integers (+fx num 10)))
+       (js-integer-name->jsstring num))
       ((and (>fx num 0) (<fx num 65535))
        (let ((str (fixnum->string num)))
 	  (let ((o (instantiate::JsStringLiteralIndex
