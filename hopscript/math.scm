@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Feb  1 11:34:23 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 18:34:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -116,6 +116,7 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.1
       (define (js-math-abs this x)
 	 (cond
+	    ((not (number? x)) (js-math-abs this (js-tonumber x %this)))
 	    ((not (= x x)) x)
 	    ((< x 0) (- x))
 	    (else x)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Wed Jan 30 16:36:51 2019 (serrano)                */
+;*    Last change :  Fri Apr 12 20:37:00 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -514,7 +514,6 @@
 		   ((>fl n (exptfl 2. 32.))
 		    (js-raise-type-error %this "Bad argument" a0))
 		   ((>=fl n 1073741823.0) ;; #x3fffffff + 1
-		    (tprint "a0=" a0 " " (typeof a0) " n=" n)
 		    (js-raise-range-error %this "length (~s) > kMaxLength" a0))
 		   (else
 		    (with-access::JsGlobalObject %this (js-object)
