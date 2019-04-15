@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Jan 24 18:16:25 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 19:09:17 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -335,19 +335,25 @@
        (if (=fx (config-get conf :optim 0) 0)
 	   (with-tmp lhs rhs mode return conf 'any
 	      (lambda (left right)
-		 (js-binop-arithmetic loc op left lhs right rhs conf)))
+		 (j2s-cast
+		    (js-binop-arithmetic loc op left lhs right rhs conf)
+		    #f 'any type conf)))
 	   (js-arithmetic-addsub loc op type lhs rhs mode return conf)))
       ((*)
        (if (=fx (config-get conf :optim 0) 0)
 	   (with-tmp lhs rhs mode return conf 'any
 	      (lambda (left right)
-		 (js-binop-arithmetic loc op left lhs right rhs conf)))
+		 (j2s-cast
+		    (js-binop-arithmetic loc op left lhs right rhs conf)
+		    #f 'any type conf)))
 	   (js-arithmetic-mul loc type lhs rhs mode return conf)))
       ((**)
        (if (=fx (config-get conf :optim 0) 0)
 	   (with-tmp lhs rhs mode return conf 'any
 	      (lambda (left right)
-		 (js-binop-arithmetic loc '** left lhs right rhs conf)))
+		 (j2s-cast
+		    (js-binop-arithmetic loc '** left lhs right rhs conf)
+		    #f 'any type conf)))
 	   (js-arithmetic-expt loc type lhs rhs mode return conf)))
       ((/)
        (js-arithmetic-div loc type lhs rhs mode return conf))
