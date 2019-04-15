@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Apr 15 08:40:49 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 08:49:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -61,7 +61,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-require! %this)
    (when (=fx (vector-length __js_strings) 0)
-      (set! __js_strings (&init!))))
+      (set! __js_strings (&init!))
+      (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
+	 (nodejs-compile-workers-inits!))
+      (unless (<=fx (hop-port) -1)
+	 (set! *resolve-service* (nodejs-make-resolve-service %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    builtin-language? ...                                            */
@@ -808,11 +812,6 @@
 ;*    nodejs-new-global-object ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-global-object #!key name)
-   (unless (or *resolve-service* (<fx (hop-port) -1))
-      (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
-	 (nodejs-compile-workers-inits!))
-      (set! *resolve-service*
-	 (nodejs-make-resolve-service (js-initial-global-object))))
    (let ((%this (js-new-global-object :size 256 :name name)))
       (js-init-require! %this)
       (with-access::JsGlobalObject %this (js-object __proto__ js-nodejs-pcache)

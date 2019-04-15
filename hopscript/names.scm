@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Apr 15 07:37:56 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 09:01:38 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -38,7 +38,9 @@
 	   (js-name->jsstring::JsStringLiteral ::bstring))
 
    (export js-name-lock
-	   (macro synchronize-name))
+	   (macro synchronize-name)
+	   ;;(expander synchronize-name)
+	   )
    
    (static js-names js-integer-names js-string-names))
 ;*                                                                     */
@@ -69,10 +71,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    synchronize-name ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-macro (synchronize-name . body)
+(define-macro (synchronize-name . body) 
    (cond-expand
       ((config thread-local #t) `(begin ,@body))
       (else `(synchronize js-name-lock ,@body))))
+
+(define-expander synchronize-name-DEBUG
+   (lambda (x e)
+      (match-case x
+	 ((?- . ?body)
+	  (cond-expand
+	     ((config thread-local #t)
+	      (e `(begin ,@body) e))
+	     (else
+	      (e `(begin
+		     (tprint ">>> IN LOCK " ',(cer x))
+		     (synchronize js-name-lock (tprint "--- IN LOCK " ',(cer x))
+			(let ((r ,@body))
+			   (tprint "<<< IN LOCK")
+			   r)))
+		 e))))
+	 (else
+	  (error "synchronize-name" "bad form" x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-names! ...                                               */
@@ -126,8 +146,7 @@
 ;*    js-jsstring-toname ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-toname::JsStringLiteral p::JsStringLiteral)
-   (synchronize-name
-      (or (js-jsstring-name p) (js-jsstring->name! p))))
+   (or (js-jsstring-name p) (synchronize-name (js-jsstring->name! p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toname ...                                                    */

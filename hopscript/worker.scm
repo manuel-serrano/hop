@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sat Apr 13 07:01:02 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 09:32:27 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -193,7 +193,7 @@
 		     (apply-listeners exitlisteners e)))))))
    
    (lambda (_ src)
-      (with-access::JsGlobalObject %this (js-worker js-worker-prototype js-object)
+      (with-access::JsGlobalObject %this (js-worker-prototype js-object worker)
 	 (letrec* ((parent (js-current-worker))
 		   (source (js-tostring src %this))
 		   (this (%global-constructor :name (string-append source "_w")))
@@ -222,6 +222,8 @@
 			      (cleanup (lambda (thread)
 					  (when (isa? parent WorkerHopThread)
 					     (remove-subworker! parent thread)))))))
+	    ;; store the worker in global object
+	    (set! worker thread)
 
 	    ;; prepare the worker loop
 	    (js-worker-init! thread)
@@ -496,7 +498,7 @@
 (define (js-init-main-worker! %this::JsGlobalObject keep-alive ctor)
    (unless %worker
       (set! %global-constructor ctor)
-      (with-access::JsGlobalObject %this (js-object)
+      (with-access::JsGlobalObject %this (js-object worker)
 	 (set! %worker
 	    (instantiate::WorkerHopThread
 	       (name "%worker@main")
@@ -504,7 +506,8 @@
 	       (onexit #f)
 	       (keep-alive keep-alive)
 	       (module-cache (js-new0 %this js-object))
-	       (body (lambda () (js-worker-loop %worker))))))
+	       (body (lambda () (js-worker-loop %worker)))))
+	 (set! worker %worker))
       (js-worker-init! %worker))
    %worker)
 

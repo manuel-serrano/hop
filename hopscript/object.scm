@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Apr 15 08:05:05 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 08:53:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -156,7 +156,7 @@
    (let* ((this (js-initial-global-object))
 	  (proc (js-get obj (& "toResponse") this)))
       (if (isa? proc JsFunction)
-	  (js-call1 this proc obj req)
+	  (scheme->response (js-call1 this proc obj req) req)
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/

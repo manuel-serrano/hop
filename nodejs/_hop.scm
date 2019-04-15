@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat Apr 13 06:08:44 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 08:55:54 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -746,6 +746,7 @@
       (charset-convert (js-tostring text %this)
 	 (if (string? from) (string->symbol from) (hop-locale))
 	 (if (string? to) (string->symbol to) (hop-charset)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

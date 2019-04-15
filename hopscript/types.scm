@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Apr 15 07:36:59 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 09:31:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -298,6 +298,7 @@
 	   
 	   (class JsGlobalObject::JsObject
 	      (name read-only)
+	      (worker::obj (default #f))
 	      (js-hop-builtin::JsObject (default (class-nil JsObject)))
 	      (js-object::JsFunction (default (class-nil JsFunction)))
 	      (js-array::JsFunction (default (class-nil JsFunction)))
@@ -384,6 +385,10 @@
 	      (js-yield-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-exec-cmap (default (class-nil JsConstructMap))))
+
+	   (final-class JsResponse
+	      (%this::JsGlobalObject read-only)
+	      (value::obj read-only))
 
 	   (js-property-cache-init!::JsPropertyCache ::JsPropertyCache)
 	   
