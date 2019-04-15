@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Fri Apr  5 18:15:49 2019 (serrano)                */
+/*    Last change :  Mon Apr 15 05:31:53 2019 (serrano)                */
 /*    Copyright   :  2015-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -143,7 +143,14 @@ function navbar( attrs, chapters ) {
 /*    copyrightYears ...                                               */
 /*---------------------------------------------------------------------*/
 function copyrightYears( iyear ) {
+   #:tprint( ">>> cy.1" );
+		    const nd = new Date();
+   #:js-debug-object( nd );
+   #:js-debug-object( nd.__proto__ );
+   		    #:tprint( "**** Date=", nd );
+		    #:tprint( "++++ ", nd.getFullYear );
    var y = new Date().getFullYear();
+   #:tprint( "--- cy.2" );
 
    if( y == iyear ) {
       return iyear + "";

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr 12 14:34:08 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 05:43:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -109,13 +109,13 @@
 ;*    js-init-date! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-init-date! %this)
+   ;; local constant strings
+   (set! __js_strings (&init!))
+   
    ;; first, bind the builtin date prototype
    (with-access::JsGlobalObject %this (__proto__ js-date js-function)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
-	 ;; local constant strings
-	 (set! __js_strings (&init!))
-	 
 	 (define js-date-prototype
 	    (instantiateJsDate
 	       (val (current-date))
@@ -124,6 +124,10 @@
 	       (__proto__ __proto__)))
 	 
 	 (define (js-date-alloc %this constructor::JsFunction)
+	    (with-access::JsGlobalObject %this (name)
+	       (tprint "js-date-alloc.1 ctor=" (typeof constructor) " this=" name)
+	       (tprint "js-date-alloc.2 ps=" (& "prototype"))
+	       (tprint "js-date-alloc.3 proto=" (typeof (js-get constructor (& "prototype") %this))))
 	    (instantiateJsDate
 	       (__proto__ (js-get constructor (& "prototype") %this))))
 

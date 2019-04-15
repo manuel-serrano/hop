@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Apr 13 06:20:32 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 05:29:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -107,7 +107,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (exception-notify exc::JsError)
    (with-access::JsError exc (name msg stack fname location %this)
-      (tprint "name=" name " msg=" msg " stack=" stack " fname=" fname " location=" location)
+      (with-access::JsGlobalObject %this ((gname name))
+	 (tprint "name=" name " msg=" msg " stack=" stack " fname=" fname " location=" location " %this=" gname))
       (if (isa? msg &exception)
 	  (exception-notify msg)
 	  (let* ((name (js-jsstring->string name))

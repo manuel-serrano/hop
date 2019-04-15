@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sun Apr 14 06:29:48 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 05:27:38 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -57,7 +57,8 @@
 ;*    js-init-names! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-names! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (js-names js-integer-names js-string-names)
+   (with-access::JsGlobalObject %this (js-names js-integer-names js-string-names name)
+      (tprint "js-init-names " name)
       (unless js-names
 	 (set! js-names
 	    (create-hashtable :eqtest string=? :hash string-hash-number))
@@ -71,7 +72,7 @@
 			  (js-index-name->jsstring (fixnum->uint32 i) %this))
 		     (iota 100)))))
 	 (set! js-string-names
-	    (vector-map! (lambda (val)
+	    (vector-map (lambda (val)
 			    (js-ascii-name->jsstring val %this))
 	       (& strings))))))
 
