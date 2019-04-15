@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Apr 13 05:56:34 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 08:40:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -812,20 +812,7 @@
       (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
 	 (nodejs-compile-workers-inits!))
       (set! *resolve-service*
-	 (service :name *resolve-url-path* (name filename)
-	    (let ((this (js-initial-global-object)))
-	       (with-access::JsGlobalObject this (js-object)
-		  (let ((m (js-new0 this js-object)))
-		     ;; module properties
-		     (js-put! m (& "id") (js-string->jsstring filename) #f this)
-		     ;; filename
-		     (js-put! m (& "filename") (js-string->jsstring filename) #f this)
-		     ;; paths
-		     (js-put! m (& "paths")
-			(js-vector->jsarray (nodejs-filename->paths filename) this)
-			#f this)
-		     ;; the resolution
-		     (nodejs-resolve name this m 'body)))))))
+	 (nodejs-make-resolve-service (js-initial-global-object))))
    (let ((%this (js-new-global-object :size 256 :name name)))
       (js-init-require! %this)
       (with-access::JsGlobalObject %this (js-object __proto__ js-nodejs-pcache)
@@ -845,6 +832,24 @@
 	    (nodejs-init-v8-global-object! %this __proto__)
 	    (nodejs-init-v8-global-object-prototype! %this %this)))
       %this))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-make-resolve-service ...                                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-make-resolve-service %this::JsGlobalObject)
+   (service :name *resolve-url-path* (name filename)
+      (with-access::JsGlobalObject %this (js-object)
+	 (let ((mod (js-new0 %this js-object)))
+	    ;; module properties
+	    (js-put! mod (& "id") (js-string->jsstring filename) #f %this)
+	    ;; filename
+	    (js-put! mod (& "filename") (js-string->jsstring filename) #f %this)
+	    ;; paths
+	    (js-put! mod (& "paths")
+	       (js-vector->jsarray (nodejs-filename->paths filename) %this)
+	       #f %this)
+	    ;; the resolution
+	    (nodejs-resolve name %this mod 'body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-init-v8-global-object! ...                                */
