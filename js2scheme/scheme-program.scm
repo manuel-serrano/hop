@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Apr 14 08:09:16 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 11:02:35 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -132,7 +132,7 @@
 	       (when (config-get conf :profile-call #f)
 		  `(define %call-locations ',(call-locations this)))
 	       '(hopjs-standalone-set! #t)
-	       `(define %this (nodejs-new-global-object :name name))
+	       `(define %this (nodejs-new-global-object :name ,name))
 	       `(define %source ,path)
 	       '(define %resource (dirname %source))
 	       (when (config-get conf :libs-dir #f)
@@ -246,7 +246,7 @@
 		      '())
 		(hop-sofile-compile-policy-set! 'static)
 		(hopjs-standalone-set! #t)
-		(define %this (nodejs-new-global-object :name name))
+		(define %this (nodejs-new-global-object :name ,name))
 		(define %source ,path)
 		(define %resource (dirname %source))
 		(define %scope (nodejs-new-scope-object %this))
