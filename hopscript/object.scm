@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Apr 13 06:12:59 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 08:05:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -217,7 +217,7 @@
 	       (display p op)
 	       (display "\":" op)
 	       (hop->javascript
-		  (js-get o (js-jsstring-toname p %this) %this)
+		  (js-get o (js-jsstring-toname p) %this)
 		  op compile isexpr)
 	       (set! sep ","))
 	    %this))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr 12 16:14:16 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 08:02:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -226,7 +226,7 @@
 						  (string-append "Symbol." s))))))
 			       (set! symbols (cons (cons s sym) symbols))
 			       sym))))
-	       (js-bind! %this js-symbol (js-ascii-name->jsstring s %this)
+	       (js-bind! %this js-symbol (js-ascii-name->jsstring s)
 		  :value v
 		  :writable #f
 		  :enumerable #f

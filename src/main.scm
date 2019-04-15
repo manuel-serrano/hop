@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Apr 13 07:09:11 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 08:18:52 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -60,6 +60,8 @@
 (define jsmutex (make-mutex))
 (define jscondv (make-condition-variable))
 (define jsinit #f)
+
+(define lock (make-spinlock))
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */

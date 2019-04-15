@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Apr 12 18:50:06 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 08:01:59 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -413,7 +413,7 @@
 
    (let ((not-implemented (js-not-implemented %this)))
       (for-each (lambda (id)
-		   (js-bind! %this proto (js-ascii-name->jsstring id %this)
+		   (js-bind! %this proto (js-ascii-name->jsstring id)
 		      :value (js-make-function %this not-implemented 1
 				id)
 		      :configurable #t
@@ -726,7 +726,7 @@
 	    :hidden-class #t)
 	 
 	 ;; bind the Typedarray in the global object
-	 (js-bind! %this %this (js-name->jsstring name %this)
+	 (js-bind! %this %this (js-name->jsstring name)
 	    :configurable #f :enumerable #f :value js-typedarray
 	    :hidden-class #t)
 	 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Apr 12 10:40:12 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 07:58:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2408,7 +2408,7 @@
 			    (__proto__ __proto__))))
 	 (for-each (lambda (id)
 		      (js-bind! %this unscopables
-			 (js-ascii-name->jsstring id %this)
+			 (js-ascii-name->jsstring id)
 			 :value #t :writable #f
 			 :enumerable #f :configurable #t))
 	    '("copyWithin" "entries" "fill" "find" "findIndex" "keys" "values"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Sat Apr 13 07:51:32 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 08:05:53 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -117,7 +117,7 @@
 		0 "unref"))
 
    (for-each (lambda (id)
-		(js-bind! %this obj (js-ascii-name->jsstring id %this)
+		(js-bind! %this obj (js-ascii-name->jsstring id)
 		   :value (not-implemented id)))
       '("setRepeat" "getRepeat" "again")))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Fri Apr 12 10:40:48 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 07:58:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -71,15 +71,15 @@
 		     ((0)
 		      ;; an ascii name
 		      (let ((str (vector-ref el 1)))
-			 (js-ascii-name->jsstring str %this)))
+			 (js-ascii-name->jsstring str)))
 		     ((1)
 		      ;; an utf8 name
 		      (let ((str (vector-ref el 1)))
-			 (js-utf8-name->jsstring str %this)))
+			 (js-utf8-name->jsstring str)))
 		     ((2)
 		      ;; a fixnum name
 		      (let ((str (vector-ref el 1)))
-			 (js-integer-name->jsstring str %this))))))
+			 (js-integer-name->jsstring str))))))
 	    (loop (-fx i 1))))
       cnsts))
 
@@ -104,15 +104,15 @@
 			 ((0)
 			  ;; a plain string
 			  (let ((str (vector-ref el 1)))
-			     (js-name->jsstring str %this)))
+			     (js-name->jsstring str)))
 			 ((6)
 			  ;; an ascii name
 			  (let ((str (vector-ref el 1)))
-			     (js-ascii-name->jsstring str %this)))
+			     (js-ascii-name->jsstring str)))
 			 ((7)
 			  ;; an utf8 name
 			  (let ((str (vector-ref el 1)))
-			     (js-utf8-name->jsstring str %this)))
+			     (js-utf8-name->jsstring str)))
 			 ((1 4)
 			  ;; a plain regexp
 			  (with-access::JsGlobalObject %this (js-regexp)
@@ -251,11 +251,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-key-name->jsstring ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-key-name->jsstring s %this)
+(define (js-key-name->jsstring s)
    (cond
-      ((keyword? s) (js-name->jsstring (keyword->string! s) %this))
-      ((string? s) (js-name->jsstring s %this))
-      ((symbol? s) (js-name->jsstring (symbol->string! s) %this))
+      ((keyword? s) (js-name->jsstring (keyword->string! s)))
+      ((string? s) (js-name->jsstring s))
+      ((symbol? s) (js-name->jsstring (symbol->string! s)))
       (else s)))
 
 ;*---------------------------------------------------------------------*/
@@ -281,7 +281,7 @@
 			  (alist alist))
 		  (if (=fx i len)
 		      obj
-		      (let* ((name (js-key-name->jsstring (caar alist) %this))
+		      (let* ((name (js-key-name->jsstring (caar alist)))
 			     (val (js-obj->jsobject (cdar alist) %this)))
 			 (vector-set! props i
 			    (prop name (property-flags-default)))
@@ -309,7 +309,7 @@
 		      (cmap cmap)
 		      (__proto__ __proto__)
 		      (elements elements)))
-		(let* ((name (js-key-name->jsstring (car plist) %this))
+		(let* ((name (js-key-name->jsstring (car plist)))
 		       (val (js-obj->jsobject (cadr plist) %this)))
 		   (vector-set! props i (prop name (property-flags-default)))
 		   (vector-set! elements i val)

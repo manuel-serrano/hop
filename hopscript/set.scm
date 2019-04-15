@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Fri Apr 12 16:17:03 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 08:02:46 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -113,7 +113,7 @@
       (init-prototype! %this js-set js-set-prototype)
       
       ;; bind SET/WEAKSET in the global object
-      (js-bind! %this %this (js-ascii-name->jsstring name %this)
+      (js-bind! %this %this (js-ascii-name->jsstring name)
 	 :configurable #f :enumerable #f :value js-set
 	 :hidden-class #t)
       

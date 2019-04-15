@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Apr 13 06:14:11 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 07:52:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -851,7 +851,7 @@
 (define (js-strings->cmap names %this)
    (instantiate::JsConstructMap
       (props (vector-map (lambda (n)
-			    (prop (js-name->jsstring n %this)
+			    (prop (js-name->jsstring n)
 			       (property-flags #t #t #t #f)))
 		names))
       (methods (make-vector (vector-length names) #unspecified))))
@@ -1514,7 +1514,7 @@
 	  (js-profile-log-get prop loc))
 	 ((number? prop)
 	  (js-profile-log-get
-	     (js-ascii-name->jsstring (number->string prop) %this) loc))))
+	     (js-ascii-name->jsstring (number->string prop)) loc))))
    (cond
       ((pair? _o)
        (js-get-pair _o (js-toname prop %this) %this))
@@ -1638,20 +1638,21 @@
 		  cache::JsPropertyCache #!optional (point 1) (cspecs '()))
    (if (not (isa? prop JsStringLiteral))
        (js-get o prop %this)
-       (let ((pname (js-jsstring-toname prop %this)))
-	  (cond
-	     ((js-name-pcache pname)
-	      =>
-	      (lambda (cache)
-		 (js-object-get-name/cache o pname #f
-		    %this cache point cspecs)))
-	     ((js-isindex? (js-toindex prop))
-	      (js-get o prop %this))
-	     (else
-	      (let ((cache (instantiate::JsPropertyCache)))
-		 (js-name-pcache-set! pname cache)
-		 (js-object-get-name/cache o pname #f
-		    %this cache point cspecs)))))))
+       (let ((pname (js-jsstring-toname prop)))
+	  (synchronize-name
+	     (cond
+		((js-name-pcache pname)
+		 =>
+		 (lambda (cache)
+		    (js-object-get-name/cache o pname #f
+		       %this cache point cspecs)))
+		((js-isindex? (js-toindex prop))
+		 (js-get o prop %this))
+		(else
+		 (let ((cache (instantiate::JsPropertyCache)))
+		    (js-name-pcache-set! pname cache)
+		    (js-object-get-name/cache o pname #f
+		       %this cache point cspecs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache ...                                            */
@@ -2178,7 +2179,7 @@
 	  (js-profile-log-put prop loc))
 	 ((number? prop)
 	  (js-profile-log-put
-	     (js-ascii-name->jsstring (number->string prop) %this) loc))))
+	     (js-ascii-name->jsstring (number->string prop)) loc))))
    (cond
       ((pair? _o)
        (js-put-pair! _o (js-toname prop %this) v throw %this))
@@ -2200,27 +2201,28 @@
 		   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (if (not (js-jsstring? prop))
        (js-put! o prop v throw %this)
-       (let ((pname (js-jsstring-toname prop %this)))
-	  (with-access::JsPropertyCache cache (name)
-	     (cond
-		((eq? name pname)
-		 (js-object-put-name/cache! o pname v throw
-		    %this cache point cspecs))
-		((js-isindex? (js-toindex prop))
-		 (js-put! o prop v throw %this))
-		((eq? pname (& "length"))
-		 (js-put-length! o v throw cache %this))
-		((eq? name (class-nil JsStringLiteralASCII))
-		 (set! name pname)
-		 (js-object-put-name/cache! o pname v throw
-		    %this cache point cspecs))
-		(else
-		 (let ((cache (js-name-pcache pname)))
-		    (unless cache
-		       (set! cache (instantiate::JsPropertyCache))
-		       (js-name-pcache-set! pname cache))
+       (let ((pname (js-jsstring-toname prop)))
+	  (synchronize-name
+	     (with-access::JsPropertyCache cache (name)
+		(cond
+		   ((eq? name pname)
 		    (js-object-put-name/cache! o pname v throw
-		       %this cache point cspecs))))))))
+		       %this cache point cspecs))
+		   ((js-isindex? (js-toindex prop))
+		    (js-put! o prop v throw %this))
+		   ((eq? pname (& "length"))
+		    (js-put-length! o v throw cache %this))
+		   ((eq? name (class-nil JsStringLiteralASCII))
+		    (set! name pname)
+		    (js-object-put-name/cache! o pname v throw
+		       %this cache point cspecs))
+		   (else
+		    (let ((cache (js-name-pcache pname)))
+		       (unless cache
+			  (set! cache (instantiate::JsPropertyCache))
+			  (js-name-pcache-set! pname cache))
+		       (js-object-put-name/cache! o pname v throw
+			  %this cache point cspecs)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache ...                                            */

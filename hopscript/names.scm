@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Apr 15 05:27:38 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 07:37:56 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -13,32 +13,34 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_names
-
+   
    (include "types.sch" "constants.sch")
-
+   
    (library hop)
-
+   
    (import __hopscript_types)
    
    (use    __hopscript_stringliteral
 	   __hopscript_lib
 	   __hopscript_public)
-
+   
    (export (js-init-names! ::JsGlobalObject)
 	   (inline js-name-pcache::obj ::JsStringLiteral)
 	   (inline js-name-pcache-set! ::JsStringLiteral ::JsPropertyCache)
-	   (inline js-jsstring-toname::JsStringLiteral ::JsStringLiteral ::JsGlobalObject)
+	   (inline js-jsstring-toname::JsStringLiteral ::JsStringLiteral)
+	   (js-jsstring->name!::JsStringLiteral o::JsStringLiteral)
 	   (js-toname::obj ::obj ::JsGlobalObject)
 	   (inline js-jsstring-name ::JsStringLiteral)
 	   (inline js-name->string::bstring ::JsStringLiteral)
-	   (js-jsstring->name!::JsStringLiteral ::JsStringLiteral ::JsGlobalObject)
-	   (js-ascii-name->jsstring::JsStringLiteralASCII ::bstring ::JsGlobalObject)
-	   (js-utf8-name->jsstring::JsStringLiteralUTF8 ::bstring ::JsGlobalObject)
-	   (js-integer-name->jsstring::JsStringLiteralASCII ::long ::JsGlobalObject)
-	   (js-name->jsstring::JsStringLiteral ::bstring ::JsGlobalObject))
+	   (js-ascii-name->jsstring::JsStringLiteralASCII ::bstring)
+	   (js-utf8-name->jsstring::JsStringLiteralUTF8 ::bstring)
+	   (js-integer-name->jsstring::JsStringLiteralASCII ::long)
+	   (js-name->jsstring::JsStringLiteral ::bstring))
 
-   )
-;*    (static js-names js-integer-names js-string-names)               */
+   (export js-name-lock
+	   (macro synchronize-name))
+   
+   (static js-names js-integer-names js-string-names))
 ;*                                                                     */
 ;*    (cond-expand                                                     */
 ;*       ((config thread-local-storage #t)                             */
@@ -49,16 +51,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    name tables                                                      */
 ;*---------------------------------------------------------------------*/
-;* (define js-names #f)                                                */
-;* (define js-integer-names #f)                                        */
-;* (define js-string-names #f)                                         */
+(define js-names #f)
+(define js-integer-names #f)
+(define js-string-names #f)
+
+;*---------------------------------------------------------------------*/
+;*    js-name-lock                                                     */
+;*---------------------------------------------------------------------*/
+(define js-name-lock
+   (cond-expand
+      ((config thread-local #t) #f)
+      (else (make-spinlock "js-names"))))
+
+(define js-name-mutex
+   (make-mutex))
+
+;*---------------------------------------------------------------------*/
+;*    synchronize-name ...                                             */
+;*---------------------------------------------------------------------*/
+(define-macro (synchronize-name . body)
+   (cond-expand
+      ((config thread-local #t) `(begin ,@body))
+      (else `(synchronize js-name-lock ,@body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-names! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-names! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (js-names js-integer-names js-string-names name)
-      (tprint "js-init-names " name)
+   (synchronize js-name-mutex
       (unless js-names
 	 (set! js-names
 	    (create-hashtable :eqtest string=? :hash string-hash-number))
@@ -66,14 +86,14 @@
 	    (list->vector
 	       (append
 		  (map (lambda (i)
-			  (js-ascii-name->jsstring (fixnum->string i) %this))
+			  (js-ascii-name->jsstring (fixnum->string i)))
 		     (iota 10 -10))
 		  (map (lambda (i)
-			  (js-index-name->jsstring (fixnum->uint32 i) %this))
+			  (js-index-name->jsstring (fixnum->uint32 i)))
 		     (iota 100)))))
 	 (set! js-string-names
 	    (vector-map (lambda (val)
-			    (js-ascii-name->jsstring val %this))
+			   (js-ascii-name->jsstring val))
 	       (& strings))))))
 
 ;*---------------------------------------------------------------------*/
@@ -105,8 +125,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-toname ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-jsstring-toname::JsStringLiteral p::JsStringLiteral %this)
-   (or (js-jsstring-name p) (js-jsstring->name! p %this)))
+(define-inline (js-jsstring-toname::JsStringLiteral p::JsStringLiteral)
+   (synchronize-name
+      (or (js-jsstring-name p) (js-jsstring->name! p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toname ...                                                    */
@@ -116,31 +137,31 @@
 (define (js-toname p %this)
    (cond
       ((isa? p JsStringLiteral)
-       (js-jsstring-toname p %this))
+       (js-jsstring-toname p))
       ((fixnum? p)
-       (js-integer-name->jsstring p %this))
+       (js-integer-name->jsstring p))
       ((uint32? p)
        (cond-expand
 	  (bint30
 	   (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
 	       (js-integer-name->jsstring (uint32->fixnum p))
-	       (js-ascii-name->jsstring (llong->string (uint32->llong p)) %this)))
+	       (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
 	  (bint32
 	   (if (<u32 p (bit-lshu32 (fixnum->uint32 1) 31))
 	       (js-integer-name->jsstring (uint32->fixnum p))
-	       (js-ascii-name->jsstring (llong->string (uint32->llong p)) %this)))
+	       (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
 	  (else
-	   (js-integer-name->jsstring (uint32->fixnum p) %this))))
+	   (js-integer-name->jsstring (uint32->fixnum p)))))
       ((int32? p)
        (cond-expand
 	  (bint30
 	   (if (and (>s32 p 0) (<s32 p (fixnum->int32 (bit-lsh 1 29))))
 	       (js-integer-name->jsstring (int32->fixnum p))
-	       (js-ascii-name->jsstring (llong->string (int32->llong p)) %this)))
+	       (js-ascii-name->jsstring (llong->string (int32->llong p)))))
 	  (bint32
-	   (js-ascii-name->jsstring (fixnum->string (int32->fixnum p)) %this))
+	   (js-ascii-name->jsstring (fixnum->string (int32->fixnum p))))
 	  (else
-	   (js-integer-name->jsstring (int32->fixnum p) %this))))
+	   (js-integer-name->jsstring (int32->fixnum p)))))
       ((isa? p JsSymbolLiteral)
        p)
       ((isa? p JsSymbol)
@@ -151,9 +172,9 @@
       ((string? p)
        (error "js-toname" "Illegal `string'" p))
       ((number? p)
-       (js-ascii-name->jsstring (js-tostring p %this) %this))
+       (js-ascii-name->jsstring (js-tostring p %this)))
       (else
-       (js-name->jsstring (js-tostring p %this) %this))))
+       (js-name->jsstring (js-tostring p %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name->string ...                                              */
@@ -165,23 +186,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->name! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring->name!::JsStringLiteral o::JsStringLiteral %this)
+(define (js-jsstring->name!::JsStringLiteral o::JsStringLiteral)
    ;; call js-jsstring->string as the string must be normalized
    ;; before being potentially added in the name hashtable
-   (with-access::JsGlobalObject %this (js-names)
-      (let ((str (js-jsstring->string o)))
-	 (let ((n (hashtable-get js-names str)))
-	    (unless n
-	       (set! n o)
-	       (hashtable-put! js-names str n))
-	    (js-jsstring-name-set! o n)
-	    n))))
+   (let ((str (js-jsstring->string o)))
+      (let ((n (hashtable-get js-names str)))
+	 (unless n
+	    (set! n o)
+	    (hashtable-put! js-names str n))
+	 (js-jsstring-name-set! o n)
+	 n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring %this)
-   (with-access::JsGlobalObject %this (js-names)
+(define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring)
+   (synchronize-name
       (let ((n (hashtable-get js-names str)))
 	 (or n
 	     (let ((n (instantiate::JsStringLiteralASCII
@@ -195,25 +215,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-index-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-index-name->jsstring::JsStringLiteralASCII num::uint32 %this)
-   (with-access::JsGlobalObject %this (js-names)
-      (let* ((str (fixnum->string (uint32->fixnum num)))
-	     (n (hashtable-get js-names str)))
-	 (or n
-	     (let ((n (instantiate::JsStringLiteralIndex
-			 (weight (string-length str))
-			 (left str)
-			 (right #f)
-			 (index num))))
-		(hashtable-put! js-names str n)
-		(js-jsstring-name-set! n n)
-		n)))))
+(define (js-index-name->jsstring::JsStringLiteralASCII num::uint32)
+   (let ((str (fixnum->string (uint32->fixnum num))))
+      (synchronize-name
+	 (let ((n (hashtable-get js-names str)))
+	    (or n
+		(let ((n (instantiate::JsStringLiteralIndex
+			    (weight (string-length str))
+			    (left str)
+			    (right #f)
+			    (index num))))
+		   (hashtable-put! js-names str n)
+		   (js-jsstring-name-set! n n)
+		   n))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-name->jsstring ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-utf8-name->jsstring str::bstring %this)
-   (with-access::JsGlobalObject %this (js-names)
+(define (js-utf8-name->jsstring str::bstring)
+   (synchronize-name
       (let ((n (hashtable-get js-names str)))
 	 (or n
 	     (let ((n (instantiate::JsStringLiteralUTF8
@@ -227,22 +247,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-name->jsstring ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-name->jsstring::JsStringLiteral str::bstring %this)
+(define (js-name->jsstring::JsStringLiteral str::bstring)
    (let ((enc (string-minimal-charset str)))
       (case enc
-	 ((ascii) (js-ascii-name->jsstring str %this))
-	 ((latin1 utf8) (js-utf8-name->jsstring str %this))
+	 ((ascii) (js-ascii-name->jsstring str))
+	 ((latin1 utf8) (js-utf8-name->jsstring str))
 	 (else (error "js-name->jsstring" "unsupported encoding" enc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-integer-name->jsstring ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-integer-name->jsstring num::long %this)
+(define (js-integer-name->jsstring num::long)
    (cond
       ((and (>fx num -10) (<fx num 100))
-       (with-access::JsGlobalObject %this (js-integer-names)
+       (synchronize-name
 	  (vector-ref js-integer-names (+fx num 10))))
       ((and (>fx num 0) (<fx num 65535))
-       (js-index-name->jsstring (fixnum->uint32 num) %this))
+       (js-index-name->jsstring (fixnum->uint32 num)))
       (else
-       (js-ascii-name->jsstring (fixnum->string num) %this))))
+       (js-ascii-name->jsstring (fixnum->string num)))))
