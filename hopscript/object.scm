@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Apr 15 08:53:41 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 09:45:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -153,11 +153,21 @@
 ;*    scheme->response ::JsObject ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::JsObject req)
-   (let* ((this (js-initial-global-object))
-	  (proc (js-get obj (& "toResponse") this)))
-      (if (isa? proc JsFunction)
-	  (scheme->response (js-call1 this proc obj req) req)
-	  (call-next-method))))
+   (error "scheme->response" "Illegal response type" (typeof obj)))
+
+;*---------------------------------------------------------------------*/
+;*    scheme->response ::JsResponse ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (scheme->response obj::JsResponse req)
+   (with-access::JsResponse obj (%this value)
+      (if (js-object? value)
+	  (with-access::JsGlobalObject %this (js-service-pcache)
+	     (let ((proc (js-object-get-name/cache value (& "toResponse") #f %this
+			    (js-pcache-ref js-service-pcache 0))))
+		(if (isa? proc JsFunction)
+		    (js-call1 %this proc value req)
+		    (scheme->response value req))))
+	  (scheme->response value req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */

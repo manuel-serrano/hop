@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Apr 12 15:16:01 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 09:46:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -237,12 +237,17 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-service! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (__proto__ js-function
+					 js-service-pcache
 					 js-service-prototype
 					 js-hopframe-prototype)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 ;; local constant strings initialization
 	 (set! __js_strings (&init!))
+
+	 ;; service pcache
+	 (set! js-service-pcache
+	    ((@ js-make-pcache-table __hopscript_property) 1 "service"))
 	 
 	 ;; service prototype
 	 (with-access::JsGlobalObject %this (__proto__)
@@ -883,7 +888,9 @@
 						(symbol->string! id)
 						(service-debug id
 						   (lambda ()
-						      (js-apply %this proc this args)))))
+						      (instantiate::JsResponse
+							 (%this %this)
+							 (value (js-apply %this proc this args)))))))
 					  (lambda (this . args)
 					     (js-undefined))))
 				(javascript "HopService( ~s, ~s )")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Apr 12 20:48:47 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 10:02:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -57,13 +57,6 @@
       (js-vector->jsarray o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-donate ::JsArguments ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (js-donate o::JsArguments worker %_this)
-   (js-raise-type-error (js-initial-global-object)
-      "[[DonationTypeError]] ~a" o))
-
-;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArguments ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-unpack obj::JsArguments)
@@ -103,6 +96,13 @@
 			  (hop->javascript (js-get o i %this)
 			     op compile isexpr))
 		       (loop (+u32 i (fixnum->uint32 1))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsArguments ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate o::JsArguments worker::WorkerHopThread %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (js-raise-type-error %this "[[DonationTypeError]] ~a" o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-arguments! ...                                           */

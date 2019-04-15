@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Fri Apr 12 18:20:48 2019 (serrano)                */
+;*    Last change :  Mon Apr 15 09:51:45 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -126,7 +126,7 @@
    (match-case x
       ((& (and ?str (? string?)))
        (if (not (thread-parameter '&cnsts))
-	   (e `(js-name->jsstring ,str %this) e)
+	   (e `(js-name->jsstring ,str) e)
 	   (let* ((&cnsts (thread-parameter '&cnsts))
 		  (old (assoc str &cnsts)))
 	      (if (pair? old)
