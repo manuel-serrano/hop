@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Apr 10 18:52:14 2019 (serrano)                */
+;*    Last change :  Tue Apr 16 07:33:00 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -585,8 +585,7 @@
 	     ((memq typrop '(int32 uint32))
 	      (js-get obj (box prop typrop conf) '%this))
 	     ((and (maybe-string? prop typrop) (symbol? obj))
-	      `(js-get/cache ,obj ,prop %this
-		  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
+	      `(js-get/name-cache ,obj ,prop %this ,(loc->point loc) ',cspecs))
 	     (else
 	      (js-get obj prop '%this))))
 	 ((string? propstr)
@@ -686,8 +685,8 @@
 	     ((or (number? prop) (null? cspecs))
 	      (maybe-array-set! prop (box val tyval conf)))
 	     ((and (maybe-string? prop typrop) (symbol? obj))
-	     `(js-put/cache! ,obj ,prop
-		  ,(box val tyval conf) ,mode %this ,(js-pcache cache)))
+	      `(js-put/name-cache! ,obj ,prop
+		  ,(box val tyval conf) ,mode %this ,(loc->point loc) ',cspecs))
 	     (else
 	      `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))))
 	 ((and field optim-arrayp (mightbe-number? field))

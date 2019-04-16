@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Apr 12 20:33:52 2019 (serrano)                */
+;*    Last change :  Tue Apr 16 07:32:33 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -220,10 +220,10 @@
    (js-proxy-property-value o o (js-toname prop %this) %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get/cache ::JsProxy ...                                       */
+;*    js-get/name-cache ::JsProxy ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get/cache o::JsProxy prop::obj %this::JsGlobalObject
-		  cache::JsPropertyCache #!optional (point 1) (cspecs '()))
+(define-method (js-get/name-cache o::JsProxy prop::obj %this::JsGlobalObject
+		  #!optional (point -1) (cspecs '()))
    (js-proxy-property-value o o (js-toname prop %this) %this))
 
 ;*---------------------------------------------------------------------*/
@@ -253,10 +253,10 @@
 	     (js-put! target prop v throw %this)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-put/cache! ::JsProxy ...                                      */
+;*    js-put/name-cache! ::JsProxy ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put/cache! o::JsProxy prop v::obj throw::bool %this
-		  cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+(define-method (js-put/name-cache! o::JsProxy prop v::obj throw::bool %this
+		  #!optional (point -1) (cspecs '()))
    (js-put! o prop v throw %this))
 
 ;*---------------------------------------------------------------------*/

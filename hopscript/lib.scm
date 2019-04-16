@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Apr 15 07:58:55 2019 (serrano)                */
+;*    Last change :  Tue Apr 16 08:08:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -37,11 +37,11 @@
 
    (export (&cnst-init ::bstring ::JsGlobalObject)
 	   (js-constant-init ::obj ::obj ::JsGlobalObject)
-	   (generic js-jsobject->obj ::obj ::JsGlobalObject)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
 	   (js-alist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
 	   (js-plist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
+	   (generic js-jsobject->obj ::obj ::JsGlobalObject)
 	   (js-jsobject->plist ::JsObject ::JsGlobalObject)
 	   (js-jsobject->keyword-plist ::JsObject ::JsGlobalObject)
 	   (js-jsobject->alist ::JsObject ::JsGlobalObject)
@@ -158,12 +158,6 @@
       ;; of the constant vector (see constants_expd.sch)
       (when vec-or-false (vector-copy! vec-or-false 1 cnsts 0))
       cnsts))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsobject->obj ...                                             */
-;*---------------------------------------------------------------------*/
-(define-generic (js-jsobject->obj obj %this)
-   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-obj->jsobject ...                                             */
@@ -317,49 +311,6 @@
 		   (loop (+fx i 1) (cddr plist))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsobject->plist ...                                           */
-;*---------------------------------------------------------------------*/
-(define (js-jsobject->plist obj %this)
-   (let ((args '()))
-      (js-for-in obj
-	 (lambda (p %this)
-	    (let ((s (string->symbol (js-jsstring->string p))))
-	       (set! args (cons (symbol->keyword s) args))
-	       (set! args (cons (js-jsobject->obj (js-get obj p %this) %this)
-			     args))))
-	 %this)
-      (reverse! args)))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsobject->keyword-plist ...                                   */
-;*---------------------------------------------------------------------*/
-(define (js-jsobject->keyword-plist obj %this)
-   (let ((args '()))
-      (js-for-in obj
-	 (lambda (p %this)
-	    (let ((s (string->symbol (js-jsstring->string p))))
-	       (set! args (cons (symbol->keyword s) args))
-	       (set! args (cons (js-jsobject->obj (js-get obj p %this) %this)
-			     args))))
-	 %this)
-      (reverse! args)))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsobject->alist ...                                           */
-;*---------------------------------------------------------------------*/
-(define (js-jsobject->alist obj %this)
-   (let ((args '()))
-      (js-for-in obj
-	 (lambda (p %this)
-	    (let* ((n (js-jsstring->string p))
-		   (k (string->symbol n))
-		   (e (cons (string->keyword n)
-			 (js-jsobject->obj (js-get obj k %this) %this))))
-	       (set! args (cons e args))))
-	 %this)
-      (reverse! args)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-dsssl-args->jsargs ...                                        */
 ;*    -------------------------------------------------------------    */
 ;*    Convert all dsssl values.                                        */
@@ -439,6 +390,12 @@
    (js-make-function %this obj (procedure-arity obj) "native"))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsobject->obj ...                                             */
+;*---------------------------------------------------------------------*/
+(define-generic (js-jsobject->obj obj %this)
+   obj)
+
+;*---------------------------------------------------------------------*/
 ;*    js-iterable->list ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-iterable->list obj %this)
@@ -473,6 +430,49 @@
 		(js-vector->jsarray (list->vector (reverse! acc)) %this))
 	     (js-raise-type-error %this "call: not an interator ~s"
 	       o)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->plist ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsobject->plist obj %this)
+   (let ((args '()))
+      (js-for-in obj
+	 (lambda (p %this)
+	    (let ((s (string->symbol (js-jsstring->string p))))
+	       (set! args (cons (symbol->keyword s) args))
+	       (set! args (cons (js-jsobject->obj (js-get obj p %this) %this)
+			     args))))
+	 %this)
+      (reverse! args)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->keyword-plist ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-jsobject->keyword-plist obj %this)
+   (let ((args '()))
+      (js-for-in obj
+	 (lambda (p %this)
+	    (let ((s (string->symbol (js-jsstring->string p))))
+	       (set! args (cons (symbol->keyword s) args))
+	       (set! args (cons (js-jsobject->obj (js-get obj p %this) %this)
+			     args))))
+	 %this)
+      (reverse! args)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->alist ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsobject->alist obj %this)
+   (let ((args '()))
+      (js-for-in obj
+	 (lambda (p %this)
+	    (let* ((n (js-jsstring->string p))
+		   (k (string->symbol n))
+		   (e (cons (string->keyword n)
+			 (js-jsobject->obj (js-get obj k %this) %this))))
+	       (set! args (cons e args))))
+	 %this)
+      (reverse! args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    fixnums? ...                                                     */
