@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/service.scm               */
+;*    serrano/prgm/project/hop/hop/runtime/service.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Jan  1 10:47:47 2017 (serrano)                */
-;*    Copyright   :  2006-17 Manuel Serrano                            */
+;*    Last change :  Tue Apr 16 08:15:11 2019 (serrano)                */
+;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -57,7 +57,6 @@
 	    (hop-service-path? ::bstring)
 	    (hop-apply-nice-url::bstring ::bstring ::pair-nil)
 	    (hop-apply-url::bstring ::bstring ::pair-nil)
-	    (hop-apply-service-url::bstring ::hop-service ::pair-nil)
 	    (hop-request-service-name::bstring ::http-request)
 	    (service-invoke ::hop-service ::http-request ::obj)
 	    (procedure->service::procedure ::procedure)
@@ -332,13 +331,6 @@
       (string-append base
 	 "?hop-encoding=hop"
 	 "&vals=" (url-path-encode (obj->string o 'hop-to-hop)))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-apply-service-url ...                                        */
-;*---------------------------------------------------------------------*/
-(define (hop-apply-service-url svc vals)
-   (with-access::hop-service svc (path)
-      (hop-apply-url path vals)))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-pack-cgi-arguments ::obj ...                             */
@@ -809,7 +801,7 @@
 		   (when (hop-force-reload-service)
 		      (set! svc (force-reload-service svc)))
 		   (set! service svc)
-		   (with-access::hop-service svc (ttl path id wid)
+		   (with-access::hop-service svc (ttl path id wid ctx)
 		      (cond
 			 ((service-expired? svc)
 			  (mark-service-path-expired! path)
@@ -822,13 +814,13 @@
 			     ((>fx ttl 0)
 			      (unwind-protect
 				 (scheme->response
-				    (service-handler svc req) req)
+				    (service-handler svc req) req ctx)
 				 (if (=fx ttl 1)
 				     (unregister-service! svc)
 				     (set! ttl (-fx ttl 1)))))
 			     (else
 			      (scheme->response
-				 (service-handler svc req) req))))
+				 (service-handler svc req) req ctx))))
 			 (else
 			  (service-denied req id)))))
 		  (else

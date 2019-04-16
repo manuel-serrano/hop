@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Apr 12 16:14:56 2019 (serrano)                */
+;*    Last change :  Tue Apr 16 08:47:30 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -69,7 +69,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsPromise ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (scheme->response obj::JsPromise req)
+(define-method (scheme->response obj::JsPromise req ctx)
    
    (define (async-proc k)
       (with-access::JsPromise obj (worker)

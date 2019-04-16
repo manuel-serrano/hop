@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Apr 16 05:21:16 2019 (serrano)                */
+;*    Last change :  Tue Apr 16 08:41:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -386,6 +386,10 @@
 	      (js-yield-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-exec-cmap (default (class-nil JsConstructMap))))
+
+	   (class JsResponse
+	      (%this::JsGlobalObject read-only)
+	      (obj::JsObject read-only))
 
 	   (js-property-cache-init!::JsPropertyCache ::JsPropertyCache)
 	   

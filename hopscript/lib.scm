@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Apr 16 08:08:56 2019 (serrano)                */
+;*    Last change :  Tue Apr 16 08:44:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -439,9 +439,12 @@
       (js-for-in obj
 	 (lambda (p %this)
 	    (let ((s (string->symbol (js-jsstring->string p))))
-	       (set! args (cons (symbol->keyword s) args))
-	       (set! args (cons (js-jsobject->obj (js-get obj p %this) %this)
-			     args))))
+	       (set! args
+		  (cons (symbol->keyword s) args))
+	       (set! args
+		  (cons (js-jsobject->obj
+			   (js-get/name-cache obj p %this) %this)
+		     args))))
 	 %this)
       (reverse! args)))
 
@@ -453,9 +456,12 @@
       (js-for-in obj
 	 (lambda (p %this)
 	    (let ((s (string->symbol (js-jsstring->string p))))
-	       (set! args (cons (symbol->keyword s) args))
-	       (set! args (cons (js-jsobject->obj (js-get obj p %this) %this)
-			     args))))
+	       (set! args
+		  (cons (symbol->keyword s) args))
+	       (set! args
+		  (cons (js-jsobject->obj
+			   (js-get/name-cache obj p %this) %this)
+		     args))))
 	 %this)
       (reverse! args)))
 
@@ -469,7 +475,8 @@
 	    (let* ((n (js-jsstring->string p))
 		   (k (string->symbol n))
 		   (e (cons (string->keyword n)
-			 (js-jsobject->obj (js-get obj k %this) %this))))
+			 (js-jsobject->obj
+			    (js-get/name-cache obj k %this) %this))))
 	       (set! args (cons e args))))
 	 %this)
       (reverse! args)))

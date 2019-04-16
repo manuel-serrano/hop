@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Apr 16 05:35:00 2019 (serrano)                */
+/*    Last change :  Tue Apr 16 18:16:33 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -560,112 +560,6 @@ function start_servevt_xhr_multipart_proxy( key ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    start_servevt_ajax_proxy ...                                     */
-/*---------------------------------------------------------------------*/
-function start_servevt_ajax_proxy( key ) {
-   if( !hop_servevt_proxy.httpreq ) {
-      var xhr_error_ttl = 18;
-      
-      if( !hop_config.server_event ) hop_config.server_event = "ajax";
-      
-      var register = function( id ) {
-	 var encid = encodeURIComponent( id );
-	 var svc = window.hop.serviceBase +
-	    "/public/server-event/register?event=" + encid +
-	    "&key=" + key  + "&mode=ajax";
-
-	 var success = function( val, xhr ) {
-	    if( server_ready != 2 ) {
-	       // mark the server ready
-	       hop_server.state = 2;
-	       hop_trigger_serverready_event();
-	    }
-	    
-	    // null is used as a marker for an abandonned connection
-	    if( val != null ) {
-	       // erase previous errors
-	       xhr_error_ttl = 18;
-	       // re-register the event as soon as possible
-	       register( "" );
-	       // invoke all the user handlers (we have received a list of
-	       // values corresponding to server buffer).
-	       while( sc_isPair( val ) ) {
-		  var v = val.__hop_car;
-		  var id = v.__hop_car;
-		  var vals = v.__hop_cdr;
-
-		  while( vals != null ) {
-		     hop_trigger_servevt( id, vals.__hop_car, vals.__hop_car, false );
-		     vals = vals.__hop_cdr;
-		  }
-
-		  val = val.__hop_cdr;
-	       }
-	    }
-	 }
-
-	 var failure = function( xhr ) {
-	    if( !xhr.status &&
-		(xhr_error_ttl > 0) &&
-		!xhr.getAllResponseHeaders() ) {
-	       // mark the connection timeout error in order to avoid
-	       // falling into an infinite loop when the server has crashed.
-	       xhr_error_ttl--;
-	       // we have reached a timeout, we just re-register
-	       register( id );
-	    } else {
-	       hop_servevt_onclose();
-	    }
-	 }
-
-	 hop_servevt_proxy.httpreq =
-	    hop_send_request( svc,
-			      // asynchronous call
-			      false,
-			      // success callback
-			      success,
-			      // failure callback
-			      failure,
-			      // no anim
-			      false,
-			      // no environment
-			      [] );
-
-      }
-
-      var unregister = function( id ) {
-	 hop_servevt_proxy.httpreq.abort();
-
-	 var encid = encodeURIComponent( id );
-	 var svc = window.hop.serviceBase +
-	    "/public/server-event/unregister?event=" + encid +
-   	    "&key=" + hop_servevt_proxy.key;
-	 
-	 hop_servevt_proxy.httpreq =
-	    hop_send_request( svc, false,
-			      function() { ; }, false,
-			      false, [] );
-      };
-
-      var reconnect = function( wait, max ) {
-	 register( "" );
-      }
-      
-      // complete the proxy definition
-      hop_servevt_proxy.register = register;
-      hop_servevt_proxy.unregister = unregister;
-      hop_servevt_proxy.reconnect = reconnect;
-
-      // register the unitialized events
-      for( var p in hop_servevt_table ) {
-	 if( sc_isPair( hop_servevt_table[ p ] ) ) {
-	    register( p );
-	 }
-      }
-   }
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_servevt_signal ...                                           */
 /*    -------------------------------------------------------------    */
 /*    This has to be a global function because it is called from       */
@@ -688,125 +582,6 @@ function hop_servevt_signal( val ) {
 
 	 val = val.__hop_cdr;
       }
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    servevt_script_url ...                                           */
-/*---------------------------------------------------------------------*/
-function servevt_script_url( id, key, nocache ) {
-   var encid = encodeURIComponent( id );
-   return window.hop.serviceBase
-      + "/public/server-event/register?event=" + encid 
-      + "&key=" + key  + "&mode=ajax&padding=hop_servevt_signal["
-      + nocache + "]";
-}
-
-/*---------------------------------------------------------------------*/
-/*    start_servevt_script_proxy ...                                   */
-/*---------------------------------------------------------------------*/
-function start_servevt_script_proxy( key ) {
-   var ttl_init = 18;
-   
-   if( !hop_servevt_proxy.script ) {
-      var nocache = 0;
-      var err_stamp = 0;
-      var ttl = ttl_init;
-
-      if( !hop_config.server_event ) hop_config.server_event = "script";
-
-      var register = function( id ) {
-	 var script = document.createElement( "script" );
-	 var cache = nocache++
-
-	 script.className = "hop_servevt_script";
-	 script.src = servevt_script_url( id, key, cache );
-	 
-	 script.onerror = function( e ) {
-	    hop_stop_propagation( e, false );
-
-	    if( ttl < 0 ) {
-	       script.onerror = false;
-	       script.parentNode.removeChild( script );
-	       
-	       hop_servevt_onclose();
-	    } else {
-	       if( (e.timeStamp - err_stamp) < 1000 ) {
-		  /* decrement the ttl counter if two errors are */
-		  /* raised within 1 second */
-		  ttl--;
-	       }
-	       
-	       err_stamp = e.timeStamp;
-	       
-	       script.parentNode.removeChild( script );
-	       sc_after( 1, function() { register( "" ) } );
-	    }
-	 };
-
-	 hop_servevt_signal[ cache ] = function( val ) {
-	    try {
-	       hop_servevt_signal( val );
-	    } catch( e ) {
-	    }
-	    delete( hop_servevt_signal[ cache ] );
-	    register( "" );
-	 }
-
-	 script.onload = function( e ) {
-	    ttl = ttl_init;
-	    script.parentNode.removeChild( script );
-	 }
-	 
-	 // hook the new script after a small timeout to avoid busy icons
-	 sc_after( 10, function () { document.body.appendChild( script ); } );
-      }
-
-      var unregister = function( id ) {
-	 var script = document.createElement( "script" );
-	 var encid = encodeURIComponent( id );
-	 var svc = window.hop.serviceBase +
-	 "/public/server-event/unregister?event=" + encid +
-	 "&key=" + hop_servevt_proxy.key;
-
-	 script.onload = function( e ) {
-	    script.parentNode.removeChild( script );
-	 }
-	 script.src = svc;
-
-	 document.body.appendChild( script );
-      };
-
-      // complete the proxy definition
-      hop_servevt_proxy.register = register;
-      hop_servevt_proxy.unregister = unregister;
-
-      // register the unitialized events
-      for( var p in hop_servevt_table ) {
-	 if( sc_isPair( hop_servevt_table[ p ] ) ) {
-	    register( p );
-	 }
-      }
-      
-      // trigger server_ready 
-      sc_after( 100, function() {
-	 hop_trigger_serverready_event();
-      } );
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    start_long_polling_proxy ...                                     */
-/*---------------------------------------------------------------------*/
-function start_long_polling_proxy( key, host, port ) {
-   hop_config.server_event = "long polling";
-
-   if( servevt_scriptp() ) {
-      // script polling
-      start_servevt_script_proxy( key );
-   } else {
-      // fallback xhr backend
-      start_servevt_ajax_proxy( key );
    }
 }
 
@@ -868,8 +643,6 @@ function hop_start_servevt_proxy() {
 	 } else if( servevt_xhr_multipartp() ) {
 	    // xhr_multipart backend
 	    start_servevt_xhr_multipart_proxy( key );
-	 } else {
-	    start_long_polling_proxy( key, host, port );
 	 }
 
 	 hop_add_native_event_listener(
@@ -1014,8 +787,7 @@ function hop_remove_serverdown_listener( obj, proc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_servevt_onclose ...                                          */
 /*    -------------------------------------------------------------    */
-/*    This function is invoked by WebSocket, and Ajax on               */
-/*    connection close.                                                */
+/*    This function is invoked by WebSocket, on connection close.      */
 /*---------------------------------------------------------------------*/
 function hop_servevt_onclose() {
    // allocate a new event in order to hide handler side effects

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Apr 16 05:21:23 2019 (serrano)                */
+;*    Last change :  Tue Apr 16 08:44:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -72,6 +72,18 @@
 (register-class-serialization! JsObject
    (lambda (o ctx)
       (js-jsobject->plist o (js-initial-global-object)))
+   (lambda (o %this)
+      (if (eq? %this 'hop)
+	  o
+	  (js-plist->jsobject o (or %this (js-initial-global-object))))))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsResponse ...                               */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsObject
+   (lambda (o ctx)
+      (with-access::JsResponse o (%this obj)
+	 (js-jsobject->plist obj %this)))
    (lambda (o %this)
       (if (eq? %this 'hop)
 	  o
@@ -148,6 +160,21 @@
 (define-method (js-donate obj::JsGlobalObject worker %_this)
    (with-access::JsGlobalObject obj (elements)
       (js-new-global-object :size (vector-length elements) :name "donate")))
+
+;*---------------------------------------------------------------------*/
+;*    scheme->response ::JsObject ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (scheme->response obj::JsObject req ctx)
+   (with-access::JsGlobalObject ctx (js-service-pcache)
+      (let ((proc (js-object-get-name/cache val (& "toResponse") #f %this
+		     (js-pcache-ref js-service-pcache 0))))
+	 (if (isa? proc JsFunction)
+	     (scheme->response (js-call1 this proc obj req) req ctx)
+	     (let ((rep (call-next-method)))
+		(when (isa? rep http-response-hop)
+		   (with-access::http-response-hop rep ((rctx ctx))
+		      (set! rctx ctx)))
+		rep)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */

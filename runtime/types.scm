@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/hop/runtime/types.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jul 12 07:03:54 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Tue Apr 16 08:57:41 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -119,7 +119,8 @@
 	   (class http-response-hop::%http-response-server
 	      (backend read-only)
 	      (padding::obj (default #f))
-	      (value::obj read-only))
+	      (value::obj read-only)
+	      (ctx::obj (default 'hop)))
 	   
 	   (class http-response-procedure::%http-response-server
 	      (proc::procedure read-only))

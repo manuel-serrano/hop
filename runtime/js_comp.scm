@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/js_comp.scm               */
+;*    serrano/prgm/project/hop/hop/runtime/js_comp.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon May 30 14:28:04 2016 (serrano)                */
-;*    Copyright   :  2005-16 Manuel Serrano                            */
+;*    Last change :  Tue Apr 16 09:01:14 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
 ;*=====================================================================*/
@@ -26,8 +26,8 @@
 	    __hop_clientc
 	    __hop_read-js)
 
-   (export  (obj->javascript-attr ::obj ::output-port)
-	    (obj->javascript-expr ::obj ::output-port)
+   (export  (obj->javascript-attr ::obj ::output-port ctx)
+	    (obj->javascript-expr ::obj ::output-port ctx)
 	    (generic hop-register-value ::obj ::procedure)
 	    (generic hop->javascript ::obj ::output-port ::procedure ::bool)
 	    (hop->js-callback ::obj)))
@@ -78,7 +78,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript-attr ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (obj->javascript-attr obj op::output-port)
+(define (obj->javascript-attr obj op::output-port ctx)
    
    (define (host-compiler obj op compile)
       (hop->javascript obj op compile #f))
@@ -89,7 +89,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript-expr ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (obj->javascript-expr obj op)
+(define (obj->javascript-expr obj op ctx)
    
    (define (host-compiler obj op compile)
       (hop->javascript obj op compile #t))
