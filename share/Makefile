@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/hop/share/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Sep 20 19:17:42 2018 (serrano)                */
-#*    Copyright   :  2004-18 Manuel Serrano                            */
+#*    Last change :  Tue Apr 16 05:33:50 2019 (serrano)                */
+#*    Copyright   :  2004-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -17,15 +17,6 @@ do: build
 #*---------------------------------------------------------------------*/
 -include ../etc/Makefile.hopconfig
 -include ../etc/Makefile.version
-
-#*---------------------------------------------------------------------*/
-#*    FLASHOBJS                                                        */
-#*---------------------------------------------------------------------*/
-FLASHOBJS	= HopServevt.swf HopAudio.swf HopVideo.swf \
-                  JavaScriptFlashGateway.swf JavaScriptFlashGateway.js
-FLASHSRC	= HopServevt.as HopAudio.as HopVideo.as
-FLASH		= $(FLASHOBJS) $(FLASHSRC)
-FLASHOPT	= player.swf swfobject.js
 
 #*---------------------------------------------------------------------*/
 #*    Client-side runtime library                                      */
@@ -135,7 +126,6 @@ POPULATION	= $(RTSCONFIG) $(EXTRA) \
                   $(ICONS:%=icons/%) \
                   $(BUTTONS:%=buttons/%) \
                   editor \
-		  $(FLASH:%=flash/%) \
                   values.sch \
                   Makefile
 
@@ -143,7 +133,7 @@ POPULATION	= $(RTSCONFIG) $(EXTRA) \
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
 build: .afile hop_u.js hop_s.js hopjs_u.js hopjs_s.js \
-   $(FLASHSRC:%.as=flash/%.swf) $(BACKEND) hop-password.scm
+   $(BACKEND) hop-password.scm
 
 #*---------------------------------------------------------------------*/
 #*    hop-password.scm ...                                             */
@@ -204,20 +194,6 @@ install:
 	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
 	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
         done
-	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/flash ]; then \
-	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/flash && \
-	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/flash; \
-        fi && \
-        for p in $(FLASHOBJS:%=flash/%); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
-	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
-        done && \
-	for p in $(FLASHOPT:%=flash/%); do \
-	  if [ -f $$p ]; then \
-            $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
-            chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
-          fi; \
-        done
 	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor ]; then \
 	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor && \
 	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor; \
@@ -237,7 +213,6 @@ install:
 uninstall:
 	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/.afile && \
 	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/icons && \
-	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/flash && \
 	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/buttons && \
 	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/editor && \
         for p in $(EXTRA); do \
@@ -342,12 +317,6 @@ hop-runtime.sch: $(EXPORTER) $(EXPORTED_RT_JS)
 #*---------------------------------------------------------------------*/
 .afile: hop-runtime.sch $(filter %.scm,$(EXTRA)) $(filter %.sch,$(EXTRA))
 	@ $(AFILE) -o $@ $^
-
-#*---------------------------------------------------------------------*/
-#*    Flash compilation                                                */
-#*---------------------------------------------------------------------*/
-flash/%.swf: flash/%.as
-	(cd flash && $(FLASHCC) $(FFLAGS) $(@F) $(<F))
 
 #*---------------------------------------------------------------------*/
 #*    JavaScript compilation                                           */

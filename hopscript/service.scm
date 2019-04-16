@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Apr 15 19:21:24 2019 (serrano)                */
+;*    Last change :  Tue Apr 16 05:14:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -506,7 +506,7 @@
 	 ((keyword? val)
 	  `("keyword" ,(keyword->string val) "hop-encoding: keyword"))
 	 (else
-	  `("hop" ,(obj->string val (cons 'hop-to-hop %this)) "hop-encoding: hop"))))
+	  `("hop" ,(obj->string val 'hop-to-hop) "hop-encoding: hop"))))
    
    (define (scheme->js val)
       (js-obj->jsobject val %this))
@@ -863,6 +863,16 @@
 	     (js-service/debug id loc proc))
 	  proc))
 
+   (define (service-response %this req val)
+      (if (js-object? val)
+	  (with-access::JsGlobalObject %this (js-service-pcache)
+	     (let ((proc (js-object-get-name/cache val (& "toResponse") #f %this
+			    (js-pcache-ref js-service-pcache 0))))
+		(if (isa? proc JsFunction)
+		    (js-call1 %this proc val req)
+		    val)))
+	  val))
+
    (when (and (eq? proc (js-undefined)) (not (eq? path (js-undefined))))
       (set! path (js-tostring proc %this)))
    
@@ -888,9 +898,8 @@
 						(symbol->string! id)
 						(service-debug id
 						   (lambda ()
-						      (instantiate::JsResponse
-							 (%this %this)
-							 (value (js-apply %this proc this args)))))))
+						      (service-response %this this
+							 (js-apply %this proc this args))))))
 					  (lambda (this . args)
 					     (js-undefined))))
 				(javascript "HopService( ~s, ~s )")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Apr 15 11:27:47 2019 (serrano)                */
+;*    Last change :  Tue Apr 16 05:21:23 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -148,20 +148,6 @@
 (define-method (js-donate obj::JsGlobalObject worker %_this)
    (with-access::JsGlobalObject obj (elements)
       (js-new-global-object :size (vector-length elements) :name "donate")))
-
-;*---------------------------------------------------------------------*/
-;*    scheme->response ::JsResponse ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (scheme->response obj::JsResponse req)
-   (with-access::JsResponse obj (%this value)
-      (if (js-object? value)
-	  (with-access::JsGlobalObject %this (js-service-pcache)
-	     (let ((proc (js-object-get-name/cache value (& "toResponse") #f %this
-			    (js-pcache-ref js-service-pcache 0))))
-		(if (isa? proc JsFunction)
-		    (js-call1 %this proc value req)
-		    (scheme->response value req))))
-	  (scheme->response value req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */

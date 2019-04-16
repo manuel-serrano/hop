@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/share/hop-event.js                */
+/*    serrano/prgm/project/hop/hop/share/hop-event.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu May 18 14:35:52 2017 (serrano)                */
-/*    Copyright   :  2007-17 Manuel Serrano                            */
+/*    Last change :  Tue Apr 16 05:35:00 2019 (serrano)                */
+/*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -796,80 +796,6 @@ function start_servevt_script_proxy( key ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    start_servevt_flash_proxy ...                                    */
-/*---------------------------------------------------------------------*/
-function start_servevt_flash_proxy( key, host, port ) {
-   
-   var object_proxy = function() {
-      return "<object id='" + hop_servevt_id + "' class='hop-servevt-proxy'" +
-      " style='visibility: visible; position: fixed; top: 0; right: 0'" +
-      " type='application/x-shockwave-flash'" +
-      " codebase='http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,22,0'" +
-      " width='1px' height='1px' title='hop-servevt' classId='HopServevt.swf'>" +
-      "<param name='movie' value='" + hop_share_directory() + "/flash/HopServevt.swf'/>" +
-      "<param name='allowScriptAccess' value='always'/>" +
-      "<param name='FlashVars' value='init=hop_servevt_proxy_flash_init" +
-      "&host=" + host + "&port=" + port + "&key=" + key +
-      "&onevent=hop_trigger_servevt&onclose=hop_servevt_onclose" +
-      "&onerror=hop_servevt_onerror'/>" +
-      "</object>";
-   }
-   
-   var embed_proxy = function() {
-      /* EMBED is not a legal XHTML markup, hence we cannot add the */
-      /* using a "innerHTML = xxx" expression. As a workaround we   */
-      /* use DOM constructor and methods.                           */
-      var embed = document.createElement( "embed" );
-      
-      embed.id = hop_servevt_id;
-      embed.className = "hop-servevt-proxy";
-      embed.setAttribute( "width", "1px" );
-      embed.setAttribute( "height", "1px" );
-      embed.setAttribute( "src", hop_share_directory() + "/flash/HopServevt.swf" );
-      embed.setAttribute( "type", "application/x-shockwave-flash" );
-      embed.setAttribute( "name", "__hop_servevt_proxy" );
-      embed.setAttribute( "swliveconnect", "true" );
-      embed.setAttribute( "allowScriptAccess", "always" );
-      embed.setAttribute( "FlashVars", "init=hop_servevt_proxy_flash_init" +
-			  "&host=" + host + "&port=" + port + "&key=" + key +
-			  "&onevent=hop_trigger_servevt" +
-			  "&onclose=hop_servevt_onclose" +
-			  "&onerror=hop_servevt_onerror" );
-      
-      return embed;
-   }
-
-   var proxy = document.createElement( "div" );
-/*    node_style_set( proxy, "visibility", "hidden" );                 */
-   node_style_set( proxy, "position", "fixed" );
-   node_style_set( proxy, "top", "0" );
-   node_style_set( proxy, "right", "0" );
-   node_style_set( proxy, "background", "transparent" );
-   
-   if( hop_config.flash_markup === "embed" ) {
-      proxy.appendChild( embed_proxy() );
-   } else {
-      proxy.innerHTML = object_proxy();
-   }
-
-   document.body.appendChild( proxy );
-
-   var fproxy = document.getElementById( hop_servevt_id );
-   fproxy.key = key;
-   fproxy.ready = false;
-
-   /* give 4 seconds to flash to succeed or switch to long polling */
-   sc_after( 4000, function() {
-      if( !fproxy.ready ) {
-	 document.body.removeChild( proxy );
-	 start_long_polling_proxy( key, host, port );
-      }
-   } );
-      
-   return proxy;
-}
-
-/*---------------------------------------------------------------------*/
 /*    start_long_polling_proxy ...                                     */
 /*---------------------------------------------------------------------*/
 function start_long_polling_proxy( key, host, port ) {
@@ -889,117 +815,6 @@ function start_long_polling_proxy( key, host, port ) {
 /*---------------------------------------------------------------------*/
 function hop_servevt_onerror( msg ) {
    sc_error( "servevt", msg, "internal server event error" );
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_servevt_proxy_flash_init ...                                 */
-/*    -------------------------------------------------------------    */
-/*    This function is called by Flash when the ActionScript           */
-/*    installation completes.                                          */
-/*    -------------------------------------------------------------    */
-/*    When the flash init completes, we ask the Hop server its         */
-/*    current server-event port number. When we get this number,       */
-/*    we open the flash socket. Then, events are ready to be           */
-/*    received.                                                        */
-/*---------------------------------------------------------------------*/
-function hop_servevt_proxy_flash_init() {
-   /* if we are here, we are sure that Flash v8 or better is running */
-   hop_flash_minversion_set( 8 );
-   hop_config.server_event = "flash";
-
-   var pending_events = 0;
-   var registry = {};
-
-   hop_servevt_proxy = document.getElementById( hop_servevt_id );
-   hop_servevt_proxy.ready = true;
-
-   var abort = function( id ) {
-      var encid = encodeURIComponent( id );
-      var svc = window.hop.serviceBase +
-         "/public/server-event/unregister?event=" + encid
-         + "&key=" + hop_servevt_proxy.key;
-      hop_servevt_proxy.httpreq = hop_send_request( svc, false,
-						    function() {;}, false,
-						    false, [] );
-   }
-      
-   var failure = function( e ) {
-      hop_servevt_onclose();
-      
-      for( var p in hop_servevt_table ) {
-	 if( is_isPair( hop_servevt_table[ p ] ) ) {
-	    abort( p );
-	 }
-      }
-
-      hop_send_request( window.hop.serviceBase +
-			"/public/server-event/close?key=" + hop_servevt_proxy.key,
-			false,
-			function() {;}, false,
-			false, [] );
-   }
-
-   var register = function( id ) {
-      if( !(id in registry) ) {
-	 registry[ id ] = true;
-	 var encid = encodeURIComponent( id );
-	 var svc = window.hop.serviceBase + "/public/server-event/register?event=" + encid
-            + "&key=" + hop_servevt_proxy.key + "&mode=flash";
-	 
-	 var success = function( e ) {
-	    if( pending_events > 0 ) {
-	       if( pending_events == 1 ) {
-		  hop_trigger_serverready_event();
-	       }
-	       pending_events--;
-	    }
-	 }
-
-	 hop_servevt_proxy.httpreq =
-	    hop_send_request( svc,
-			      // asynchronous call
-			      false,
-			      // success callback
-			      success,
-			      // failure callback
-			      failure,
-			      // no anim
-			      false,
-			      // no environment
-			      [] );
-      }
-   };
-
-   hop_servevt_proxy.register = register;
-   hop_servevt_proxy.unregister = function( id ) {
-      if( id in registry ) {
-	 delete registry[ id ];
-	 // This function does not close the socket, otherwise, no event
-	 // could take place because they all share the same socket.
-	 abort( id );
-      }
-   }
-
-   // register the event event deregistration
-   hop_add_event_listener( window, "unload", failure );
-
-   // count the number of pre-registered events
-   for( var p in hop_servevt_table ) {
-      if( sc_isPair( hop_servevt_table[ p ] ) ) {
-	 pending_events++;
-      }
-   }
-
-   if( pending_events > 0 ) {
-      // regsiter them
-      for( var p in hop_servevt_table ) {
-	 if( sc_isPair( hop_servevt_table[ p ] ) ) {
-	    register( p );
-	 }
-      }
-   } else {
-      hop_trigger_serverready_event();
-   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -1023,17 +838,6 @@ function servevt_scriptp() {
    return true;
 }
 
-/*---------------------------------------------------------------------*/
-/*    servevt_flashp ...                                               */
-/*---------------------------------------------------------------------*/
-function servevt_flashp( port ) {
-  return port &&
-      hop_config.flash_serverevent &&
-      (hop_config.flash_version >= 8) &&
-      (hop_config.flash_external_interface) &&
-      (hop_config.navigator_family != "msie");
-}
-      
 /*---------------------------------------------------------------------*/
 /*    hop_start_servevt_proxy ...                                      */
 /*    -------------------------------------------------------------    */
@@ -1064,13 +868,6 @@ function hop_start_servevt_proxy() {
 	 } else if( servevt_xhr_multipartp() ) {
 	    // xhr_multipart backend
 	    start_servevt_xhr_multipart_proxy( key );
-	 } else if( servevt_flashp( port ) ) {
-	    // flash backend
-	    try {
-	       start_servevt_flash_proxy( key, host, port );
-	    } catch( e ) {
-	       throw( e );
-	    }
 	 } else {
 	    start_long_polling_proxy( key, host, port );
 	 }
@@ -1217,7 +1014,7 @@ function hop_remove_serverdown_listener( obj, proc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_servevt_onclose ...                                          */
 /*    -------------------------------------------------------------    */
-/*    This function is invoked by Flash, WebSocket, and Ajax on        */
+/*    This function is invoked by WebSocket, and Ajax on               */
 /*    connection close.                                                */
 /*---------------------------------------------------------------------*/
 function hop_servevt_onclose() {

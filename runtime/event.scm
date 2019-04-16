@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/hop/runtime/event.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Jul  2 07:37:11 2018 (serrano)                */
-;*    Copyright   :  2005-18 Manuel Serrano                            */
+;*    Last change :  Tue Apr 16 05:39:29 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -117,7 +117,6 @@
 (define debug-ajax #f)
 (define debug-ajax-buffer #f)
 (define debug-multipart #f)
-(define debug-flash #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::obj ...                                    */
@@ -643,11 +642,6 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
-;*    -------------------------------------------------------------    */
-;*    Flash >= 9.0.115 enforces security policies using "policy files" */
-;*    which are described at:                                          */
-;*        http://www.adobe.com/devnet/flashplayer/articles/            */
-;*          fplayer9_security.html                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-init!)
    (synchronize *event-mutex*
@@ -688,28 +682,6 @@
 		      (with-access::http-request req (host)
 			 (vector host port key ssl))))))
 	 
-	 (set! *init-service*
-	    (service :name "public/server-event/init"
-	       :id server-event
-	       :timeout 0
-	       (#!key key)
-	       (synchronize *event-mutex*
-		  (lambda ()
-		     (let ((req (current-request)))
-			;; read the Flash's ending zero byte
-			(read-byte
-			   (socket-input
-			      (with-access::http-request req (socket) socket)))
-			(set! *flash-request-list*
-			   (cons (list (string->symbol key)
-				    req
-				    (current-seconds))
-			      *flash-request-list*))
-			;; increments the number of connected clients
-			(set! *clients-number* (+fx *clients-number* 1))
-			(instantiate::http-response-event
-			   (name key)))))))
-	 
 	 (set! *policy-file-service
 	    (service :name "public/server-event/policy-file"
 	       :id server-event
@@ -725,11 +697,7 @@
 	       (synchronize *event-mutex*
 		  (lambda ()
 		     (let ((key (string->symbol key)))
-			(set! *clients-number* (-fx *clients-number* 1))
-			(set! *flash-request-list*
-			   (filter! (lambda (e)
-				       (not (eq? (car e) key)))
-			      *flash-request-list*)))))))
+			(set! *clients-number* (-fx *clients-number* 1)))))))
 	 
 	 (set! *unregister-service*
 	    (service :name "public/server-event/unregister"
@@ -766,8 +734,6 @@
 (define (hop-event-tables)
    (synchronize *event-mutex*
       `((*clients-number* ,*clients-number*)
-	(*flash-request-list* ,*flash-request-list*)
-	(*flash-socket-table* ,*flash-socket-table*)
 	(*multipart-request-list* ,*multipart-request-list*)
 	(*multipart-socket-table* ,*multipart-socket-table*)
 	(*websocket-response-list* ,*websocket-response-list*)
@@ -778,19 +744,19 @@
 ;*    server-event-gc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (server-event-gc)
-
+   
    (define (ajax-connection-expired? conn)
       (with-access::ajax-connection conn (pingtime)
 	 (when (>elong pingtime #e0)
 	    (>fx (elong->fixnum (-elong (current-seconds) pingtime))
-		 (/fx (hop-connection-timeout) 1000)))))
-		 
+	       (/fx (hop-connection-timeout) 1000)))))
+   
    (define (ajax-connection-ping? conn)
       (with-access::ajax-connection conn (req marktime)
 	 (when req
 	    (>elong (-elong (current-seconds) marktime)
-		    (hop-event-keep-alive)))))
-
+	       (hop-event-keep-alive)))))
+   
    (define (ajax-connection-ping! conn)
       (with-access::ajax-connection conn (req mutex pingtime)
 	 (set! pingtime (current-seconds))
@@ -800,38 +766,27 @@
    (define (server-event-ajax-gc)
       ;; cleanup the ping-ed connections that did not respond
       (hashtable-for-each *ajax-connection-key-table*
-			  (lambda (key conn)
-			     (when (ajax-connection-expired? conn)
-				(when debug-ajax
-				   (tprint "*** ajax collecting: " conn))
-				(set! *clients-number* (-fx *clients-number* 1))
-				(with-access::ajax-connection conn (buffers)
-				   (for-each (lambda (buffer)
-						(ajax-connection-remove-event!
-						 conn (car buffer)))
-					     buffers))
-				(hashtable-remove! *ajax-connection-key-table*
-						   key))))
+	 (lambda (key conn)
+	    (when (ajax-connection-expired? conn)
+	       (when debug-ajax
+		  (tprint "*** ajax collecting: " conn))
+	       (set! *clients-number* (-fx *clients-number* 1))
+	       (with-access::ajax-connection conn (buffers)
+		  (for-each (lambda (buffer)
+			       (ajax-connection-remove-event!
+				  conn (car buffer)))
+		     buffers))
+	       (hashtable-remove! *ajax-connection-key-table*
+		  key))))
       ;; ping the old connection
       (hashtable-for-each *ajax-connection-key-table*
-			  (lambda (k conn)
-			     (when (ajax-connection-ping? conn)
-				(when debug-ajax
-				   (tprint "*** ping: " conn))
-				(ajax-connection-ping! conn)))))
-
-   (define (flash-connection-ping? e)
-      (>elong (-elong (current-seconds) (caddr e)) (hop-event-keep-alive)))
+	 (lambda (k conn)
+	    (when (ajax-connection-ping? conn)
+	       (when debug-ajax
+		  (tprint "*** ping: " conn))
+	       (ajax-connection-ping! conn)))))
    
-   (define (server-event-flash-gc)
-      ;; not implemented yet
-      (for-each (lambda (e)
-		   (when (flash-connection-ping? e)
-		      (flash-signal-value (cadr e) *ping* #unspecified)))
-		*flash-request-list*))
-   
-   (server-event-ajax-gc)
-   (server-event-flash-gc))
+   (server-event-ajax-gc))
 
 ;*---------------------------------------------------------------------*/
 ;*    server-event-register ...                                        */
@@ -874,15 +829,6 @@
 		   (instantiate::http-response-persistent
 		      (request req)))))))
    
-   (define (flash-register-event! req key name)
-      (with-trace 'event "flash-register-event!"
-	 (let ((req (cadr (assq key *flash-request-list*))))
-	    (hashtable-update! *flash-socket-table*
-			       name
-			       (lambda (l) (cons req l))
-			       (list req))
-	    (instantiate::http-response-string))))
-
    (define (multipart-register-event! req key name)
       (with-trace 'event "multipart-register-event!"
 	 (let ((content (format "--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
@@ -969,8 +915,6 @@
 				 (multipart-register-event! req key event))
 				((string=? mode "websocket")
 				 (websocket-register-event! req key event))
-				((string=? mode "flash")
-				 (flash-register-event! req key event))
 				(else
 				 (ajax-register-event! req key event padding)))))
 		       (notify-client! "connect" event req
@@ -990,19 +934,6 @@
       (let ((conn (ajax-find-connection-by-key key)))
 	 (when (isa? conn ajax-connection)
 	    (ajax-connection-remove-event! conn name))))
-   
-   (define (unregister-flash-event! event key)
-      (let ((c (assq (string->symbol key) *flash-request-list*)))
-	 (when (pair? c)
-	    (let ((req (cadr c)))
-	       (hashtable-update! *flash-socket-table*
-		  event
-		  (lambda (l) (delete! req l))
-		  '())
-	       ;; Ping the client to check it still exists. If the client
-	       ;; no longer exists, an error will be raised and the client
-	       ;; will be removed from the tables.
-	       (flash-signal-value req *ping* #unspecified)))))
    
    (define (unregister-multipart-event! event key)
       (let ((c (assq (string->symbol key) *multipart-request-list*)))
@@ -1056,31 +987,8 @@
 	    (unregister-websocket-event! event key)
 	    (unregister-multipart-event! event key)
 	    (unregister-ajax-event! event key)
-	    (unregister-flash-event! event key)
 	    #f))))
 
-;*---------------------------------------------------------------------*/
-;*    flash-close-request! ...                                         */
-;*    -------------------------------------------------------------    */
-;*    This assumes that the event-mutex has been acquired.             */
-;*---------------------------------------------------------------------*/
-(define (flash-close-request! req)
-   ;; close the socket
-   (with-access::http-request req (socket)
-      (socket-shutdown socket))
-   (set! *clients-number* (-fx *clients-number* 1))
-   ;; remove the request from the *flash-request-list*
-   (set! *flash-request-list*
-	 (filter! (lambda (e) (not (eq? (cadr e) req))) *flash-request-list*))
-   ;; remove the request from the *flash-socket-table*
-   (hashtable-for-each *flash-socket-table*
-		       (lambda (k l)
-			  (hashtable-update! *flash-socket-table*
-					     k
-					     (lambda (l) (delete! req l))
-					     '())))
-   (hashtable-filter! *flash-socket-table* (lambda (k l) (pair? l))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    multipart-close-request! ...                                     */
 ;*    -------------------------------------------------------------    */
@@ -1156,24 +1064,9 @@
 			 (not (socket-down? socket))))
 		    l))))
    
-   (define (flash-event-client-ready? name)
-      (let ((l (hashtable-get *flash-socket-table* name)))
-	 (and (pair? l)
-	      (any (lambda (req)
-		      (with-access::http-request req (socket)
-			 (not (socket-down? socket))))
-		 l))))
-   
    (or (multipart-event-client-ready? name)
        (websocket-event-client-ready? name)
-       (ajax-event-client-ready? name)
-       (flash-event-client-ready? name)))
-
-;*---------------------------------------------------------------------*/
-;*    *flash-socket-table* ...                                         */
-;*---------------------------------------------------------------------*/
-(define *flash-socket-table* (make-hashtable))
-(define *flash-request-list* '())
+       (ajax-event-client-ready? name)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *multipart-socket-table*                                         */
@@ -1221,30 +1114,6 @@
 	 (http-response resp request socket)
 	 (socket-shutdown socket)
 	 #t)))
-
-;*---------------------------------------------------------------------*/
-;*    flash-signal-value ...                                           */
-;*---------------------------------------------------------------------*/
-(define (flash-signal-value req name value)
-   (with-access::http-request req (socket)
-      (let ((p (socket-output socket)))
-	 (with-handler
-	    (lambda (e)
-	       (when debug-flash
-		  (tprint "FLASH EVENT ERROR: " e " thread=" (current-thread)))
-	       (if (isa? e &io-error)
-		   (flash-close-request! req)
-		   (raise e)))
-	    (begin
-	       (let ((p (current-error-port)))
-		  (fprintf p "<event name='~a'>" name)
-		  (display value p)
-		  (display "</event>\n" p))
-	       (fprintf p "<event name='~a'>" name)
-	       (display value p)
-	       (display "</event>\n" p)
-	       (display #a000 p)
-	       (flush-output-port p))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    multipart-signal ...                                             */
@@ -1366,22 +1235,6 @@
 	    (close-output-port op)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-make-flash-signal-value ...                                   */
-;*---------------------------------------------------------------------*/
-(define (js-make-flash-signal-value value)
-   (cond
-      ((isa? value xml)
-       (xml->string value (hop-xml-backend)))
-      ((or (string? value) (number? value))
-       value)
-      (else
-       (let ((op (open-output-string)))
-	  (display "<javascript>[CDATA[" op)
-	  (display (url-path-encode (obj->string value 'hop-client)) op)
-	  (display "]]></javascript>" op)
-	  (close-output-port op)))))
-
-;*---------------------------------------------------------------------*/
 ;*    for-each-socket ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (for-each-socket table name proc)
@@ -1428,16 +1281,6 @@
 			 (tprint "PUSHING: done")))
 		   #t)))))
    
-   (define (flash-event-signal! name value)
-      (for-each-socket
-       *flash-socket-table*
-       name
-       (lambda (l)
-	  (when (pair? l)
-	     (let ((val (js-make-flash-signal-value value)))
-		(flash-signal-value (car l) name val)
-		#t)))))
-
    (define (multipart-event-signal! name value)
       (for-each-socket
        *multipart-socket-table*
@@ -1474,23 +1317,19 @@
 	 ((0)
 	  (unless (multipart-event-signal! name value)
 	     (unless (websocket-event-signal! name value)
-		(unless (flash-event-signal! name value)
-		   (ajax-event-signal! name value)))))
+		(ajax-event-signal! name value))))
 	 ((1)
-	  (unless (flash-event-signal! name value)
-	     (unless (ajax-event-signal! name value)
-		(unless (multipart-event-signal! name value)
-		   (websocket-event-signal! name value)))))
+	  (unless (ajax-event-signal! name value)
+	     (unless (multipart-event-signal! name value)
+		(websocket-event-signal! name value))))
 	 ((2)
 	  (unless (ajax-event-signal! name value)
 	     (unless (multipart-event-signal! name value)
-		(unless (websocket-event-signal! name value)
-		   (flash-event-signal! name value)))))
+		(websocket-event-signal! name value))))
 	 ((3)
 	  (unless (websocket-event-signal! name value)
-	     (unless (flash-event-signal! name value)
-		(unless (ajax-event-signal! name value)
-		   (multipart-event-signal! name value)))))))
+	     (unless (ajax-event-signal! name value)
+		(multipart-event-signal! name value))))))
 	 
    #unspecified)
 
@@ -1520,17 +1359,6 @@
 			     (ajax-connection-event-push! conn name value)))))
 		(ajax-find-connections-by-name name)))
    
-   (define (flash-event-broadcast! name value)
-      (let ((val (js-make-flash-signal-value value)))
-	 (for-each-socket
-	    *flash-socket-table*
-	    name
-	    (lambda (l)
-	       (when (pair? l)
-		  (for-each (lambda (req)
-			       (flash-signal-value req name val))
-		     l))))))
-
    (define jsvalue #f)
    (define jsonvalue #f)
    
@@ -1586,8 +1414,7 @@
    (synchronize *event-mutex*
       (ajax-event-broadcast! name value)
       (websocket-event-broadcast! name value)
-      (multipart-event-broadcast! name value)
-      (flash-event-broadcast! name value))
+      (multipart-event-broadcast! name value))
    
    #unspecified)
 
