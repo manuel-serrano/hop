@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Apr 16 08:47:30 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:51:20 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -72,14 +72,14 @@
 (define-method (scheme->response obj::JsPromise req ctx)
    
    (define (async-proc k)
-      (with-access::JsPromise obj (worker)
+      (with-access::JsPromise obj (worker %this)
 	 (with-access::WorkerHopThread worker (%this)
 	    (js-promise-then-catch %this obj 
 	       (js-make-function %this
 		  (lambda (this resp)
 		     (js-promise-async obj
 			(lambda ()
-			   (k (scheme->response resp req)))))
+			   (k (scheme->response resp req %this)))))
 		  1 "reply")
 	       (js-make-function %this
 		  (lambda (this rej)
@@ -92,12 +92,16 @@
 				    (backend (hop-xml-backend))
 				    (content-type "application/x-hop")
 				    (header `((Hop-Error: . ,errobj)))
-				    (value rej)))))))
+				    (value rej)
+				    (ctx %this)))))))
 		  1 "reject")
 	       obj))))
    
-   (instantiate::http-response-async
-      (async async-proc)))
+   (with-access::JsPromise obj (worker)
+      (with-access::WorkerHopThread worker (%this)
+	 (instantiate::http-response-async
+	    (async async-proc)
+	    (ctx %this)))))
 		
 ;*---------------------------------------------------------------------*/
 ;*    js-init-promise! ...                                             */

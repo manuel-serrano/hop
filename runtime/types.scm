@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Apr 16 08:57:41 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:50:19 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -159,7 +159,8 @@
 	      (body (default #f)))
 	   
 	   (class http-response-async::%http-response
-	      (async::procedure read-only))
+	      (async::procedure read-only)
+	      (ctx::obj (default 'hop)))
 	   
 	   (class http-response-chunked::%http-response
 	      (body (default #f)))

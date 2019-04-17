@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr 15 08:02:26 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:58:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -48,12 +48,13 @@
 ;*    object-serializer ::JsSymbol ...                                 */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsSymbol
-   (lambda (o)
+   (lambda (o ctx)
       (with-access::JsSymbol o (val)
 	 val))
-   (lambda (o %this)
-      (let ((this (or %this (js-initial-global-object))))
-	 (js-toobject this o))))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-toobject %this o)
+	  (error "string->obj ::JsSymbol" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsSymbol ...                                         */
@@ -92,7 +93,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsSymbol op compile isexpr)
+(define-method (hop->javascript o::JsSymbol op compile isexpr ctx)
    (with-access::JsSymbol o (val)
       (display "Symbol(\"" op)
       (display (string-for-read (js-jsstring->string val)) op)
@@ -104,7 +105,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsSymbolLiteral op compile isexpr)
+(define-method (hop->javascript o::JsSymbolLiteral op compile isexpr ctx)
    (with-access::JsSymbolLiteral o (val)
       (display "Symbol(\"" op)
       (display (string-for-read (js-jsstring->string val)) op)

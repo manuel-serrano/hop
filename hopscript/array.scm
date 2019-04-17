@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr 15 07:58:19 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:24:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -207,10 +207,14 @@
 ;*    object-serializer ::JsArray ...                                  */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsArray
-   (lambda (o)
-      (jsarray->vector o (js-initial-global-object)))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (jsarray->vector o ctx)
+	  (error "obj->string ::JsArray" "Not a JavaScript context" ctx)))
    (lambda (o %this)
-      (js-vector->jsarray o (or %this (js-initial-global-object)))))
+      (if (isa? ctx JsGlobalObject)
+	  (js-vector->jsarray o ctx)
+	  (error "string->obj ::JsArray" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsArray ...                                          */
@@ -287,23 +291,28 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsArray op compile isexpr)
-   (let* ((%this (js-initial-global-object))
-	  (len::uint32 (js-array-length o)))
-      (if (=u32 len #u32:0)
-	  (display "sc_vector2array([])" op)
-	  (begin
-	     (display "sc_vector2array([" op)
-	     (hop->javascript (js-get o (js-toname 0 %this) %this) op compile isexpr)
-	     (let loop ((i #u32:1))
-		(if (=u32 i len)
-		    (display "])" op)
-		    (begin
-		       (display "," op)
-		       (when (js-has-property o (js-toname i %this) %this)
-			  (hop->javascript (js-get o i %this)
-			     op compile isexpr))
-		       (loop (+u32 i #u32:1)))))))))
+(define-method (hop->javascript o::JsArray op compile isexpr ctx)
+   (js-with-context ctx "hop->javascript"
+      (lambda ()
+	 (let* ((%this ctx)
+		(len::uint32 (js-array-length o)))
+	    (if (=u32 len #u32:0)
+		(display "sc_vector2array([])" op)
+		(begin
+		   (display "sc_vector2array([" op)
+		   (hop->javascript
+		      (js-array-index-ref o #u32:0 %this)
+		      op compile isexpr ctx)
+		   (let loop ((i #u32:1))
+		      (if (=u32 i len)
+			  (display "])" op)
+			  (let ((n (js-integer-name->jsstring (uint32->fixnum i))))
+			     (display "," op)
+			     (when (js-has-property o n %this)
+				(hop->javascript
+				   (js-array-index-ref o i %this)
+				   op compile isexpr ctx))
+			     (loop (+u32 i #u32:1)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::JsArray ...                                */
@@ -336,22 +345,20 @@
 		       (if (=fx i 0)
 			   (cons (vector-ref vec i) acc)
 			   (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
-	      (let ((%this (js-initial-global-object)))
-		 (let loop ((i #u32:0))
-		    (cond
-		       ((=u32 i len)
-			'())
-		       ((js-has-property o (js-toname i %this) %this)
-			(cons (js-get o i %this) (loop (+u32 i #u32:1))))
-		       (else
-			(cons (js-undefined) (loop (+u32 i #u32:1)))))))))))
+	      (let loop ((i #u32:0))
+		 (cond
+		    ((=u32 i len)
+		     '())
+		    ((js-has-property o (js-toname i %this) %this)
+		     (cons (js-get o i %this) (loop (+u32 i #u32:1))))
+		    (else
+		     (cons (js-undefined) (loop (+u32 i #u32:1))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarray->vector ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (jsarray->vector o::JsArray %this)
-   (let* ((%this (js-initial-global-object))
-	  (len::uint32 (js-array-length o)))
+   (let ((len::uint32 (js-array-length o)))
       (if (=u32 len #u32:0)
 	  '#()
 	  (let ((res (js-create-vector (uint32->fixnum len))))
@@ -394,7 +401,7 @@
 	 
 	 ;; array pcache
 	 (set! js-array-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 14 "array"))
+	    ((@ js-make-pcache-table __hopscript_property) 15 "array"))
 	 
 	 ;; default arrays cmap
 	 (set! js-array-cmap

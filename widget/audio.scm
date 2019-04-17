@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/widget/audio.scm                  */
+;*    serrano/prgm/project/hop/hop/widget/audio.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Nov 16 14:17:53 2012 (serrano)                */
-;*    Copyright   :  2007-12 Manuel Serrano                            */
+;*    Last change :  Wed Apr 17 07:09:52 2019 (serrano)                */
+;*    Copyright   :  2007-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
 ;*=====================================================================*/
@@ -813,7 +813,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::%audio-server ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript as::audio-server op compile isrep)
+(define-method (hop->javascript as::audio-server op compile isrep ctx)
    (with-access::audio-server as (%path)
       (fprintf op "\"~a/~a\"" (hop-service-base) %path))
    #t)

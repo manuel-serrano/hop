@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Apr 12 18:52:51 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:22:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -57,7 +57,9 @@
    (lambda (o)
       (with-access::JsNumber o (val) val))
    (lambda (o %this)
-      (js-number->jsNumber o (or %this (js-initial-global-object)))))
+      (if (isa ctx JsGlobalObject)
+	  (js-number->jsNumber o (or %this (js-initial-global-object)))
+	  (error "string->obj ::JsNumber" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsNumber ...                                         */
@@ -78,7 +80,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsNumber op compile isexpr)
+(define-method (hop->javascript o::JsNumber op compile isexpr ctx)
    (with-access::JsNumber o (val)
       (display "new Number(" op)
       (display (if (and (flonum? val) (nanfl? val)) "undefined" val) op)

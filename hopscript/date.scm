@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr 15 11:16:58 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:32:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -44,11 +44,11 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsDate
    (lambda (o ctx)
-      (tprint "date.serialize ctx=" (if (symbol? ctx) ctx (typeof ctx)))
       (with-access::JsDate o (val) val))
-   (lambda (o %this)
-      (tprint "date.unserialize ctx=" (if (symbol? %this) %this (typeof %this)))
-      (js-date->jsdate o (or %this (js-initial-global-object)))))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-date->jsdate o ctx)
+	  (error "string-obj ::JsData" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsDate ...                                           */
@@ -86,7 +86,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsDate op compile isexpr)
+(define-method (hop->javascript o::JsDate op compile isexpr ctx)
    (display "new Date(" op)
    (with-access::JsDate o (val)
       (if (date? val)

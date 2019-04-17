@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Apr 13 06:16:22 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:21:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -52,12 +52,13 @@
    (lambda (o)
       (with-access::JsString o (val)
 	 (js-jsstring->string val)))
-   (lambda (o %this)
-      (let ((this (or %this (js-initial-global-object))))
-	 (with-access::JsGlobalObject this (js-string)
-	    (instantiateJsString
-	       (val (js-string->jsstring o))
-	       (__proto__ (js-get js-string (& "prototype") this)))))))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (with-access::JsGlobalObject ctx (js-string)
+	     (instantiateJsString
+		(val (js-string->jsstring o))
+		(__proto__ (js-get js-string (& "prototype") this))))
+	  (error "obj->string ::JsString" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsString ...                                       */
@@ -91,7 +92,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsString op compile isexpr)
+(define-method (hop->javascript o::JsString op compile isexpr ctx)
    (with-access::JsString o (val)
       (display "new String(\"" op)
       (display (string-for-read (js-jsstring->string val)) op)
@@ -100,15 +101,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-literal ::JsString ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-js-literal o::JsString)
+(define-method (j2s-js-literal o::JsString ctx)
    (with-access::JsString o (val)
-      (j2s-js-literal (js-jsstring->string val))))
+      (j2s-js-literal val ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-literal ::JsStringLiteral ...                             */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-js-literal o::JsStringLiteral)
-   (j2s-js-literal (js-jsstring->string o)))
+(define-method (j2s-js-literal o::JsStringLiteral ctx)
+   (j2s-js-literal (js-jsstring->string o) ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-string! ...                                              */

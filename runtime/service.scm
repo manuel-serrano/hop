@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Apr 16 08:15:11 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:36:10 2019 (serrano)                */
 ;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -330,7 +330,7 @@
    (let ((o (if (vector? vals) (vector->list vals) vals)))
       (string-append base
 	 "?hop-encoding=hop"
-	 "&vals=" (url-path-encode (obj->string o 'hop-to-hop)))))
+	 "&vals=" (url-path-encode (obj->string o "hop-service")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-pack-cgi-arguments ::obj ...                             */

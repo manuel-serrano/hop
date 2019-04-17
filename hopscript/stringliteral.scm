@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Apr 15 18:57:18 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:57:53 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -214,8 +214,8 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsStringLiteral op compile isexpr)
-   (hop->javascript (js-jsstring->string o) op compile isexpr))
+(define-method (hop->javascript o::JsStringLiteral op compile isexpr ctx)
+   (hop->javascript (js-jsstring->string o) op compile isexpr ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsStringLiteral ...                        */
@@ -250,8 +250,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsStringLiteral ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (scheme->response obj::JsStringLiteral req)
-   (scheme->response (js-jsstring->string obj) req))
+(define-method (scheme->response obj::JsStringLiteral req ctx)
+   (scheme->response (js-jsstring->string obj) req ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    indexes ...                                                      */

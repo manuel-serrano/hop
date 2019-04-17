@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/js.scm                  */
+;*    serrano/prgm/project/hop/hop/js2scheme/js.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Mar 19 06:55:55 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:17:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -22,7 +22,7 @@
 	   __js2scheme_stage)
    
    (export j2s-javascript-stage
-	   (generic j2s-js-literal ::obj)
+	   (generic j2s-js-literal ::obj ctx)
 	   (generic j2s-js::pair-nil ::J2SNode tildec dollarc mode evalp conf)))
 
 ;*---------------------------------------------------------------------*/
@@ -54,13 +54,14 @@
 			(lambda (this::J2SDollar tildec dollarc mode evalp conf)
 			   (with-access::J2SDollar this (node)
 			      (let ((expr (j2s-scheme node mode evalp conf)))
-				 (list (j2s-js-literal (eval! expr))))))
+				 (list (j2s-js-literal (eval! expr)
+					  (config-get conf :%this))))))
 			'normal (lambda (x) x) conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-literal ::obj ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-js-literal obj::obj)
+(define-generic (j2s-js-literal obj::obj ctx)
    (cond
       ((number? obj)
        obj)

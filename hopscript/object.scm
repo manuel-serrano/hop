@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Apr 16 08:44:07 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:00:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -54,8 +54,7 @@
 	   __hopscript_pair
 	   __hopscript_dom)
    
-   (export (js-initial-global-object)
-	   (js-new-global-object::JsGlobalObject #!key (size 64) name)
+   (export (js-new-global-object::JsGlobalObject #!key (size 64) name)
 	   
 	   (generic js-extensible?::bool ::obj ::JsGlobalObject)
 	   (generic js-preventextensions ::obj ::JsGlobalObject)
@@ -71,23 +70,23 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsObject
    (lambda (o ctx)
-      (js-jsobject->plist o (js-initial-global-object)))
-   (lambda (o %this)
-      (if (eq? %this 'hop)
-	  o
-	  (js-plist->jsobject o (or %this (js-initial-global-object))))))
+      (if (isa? ctx JsGlobalObject)
+	  (js-jsobject->plist o ctx)
+	  (error "obj->string" "Not a JavaScript context" ctx)))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-plist->jsobject o ctx)
+	  (error "obj->string" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsResponse ...                               */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsObject
+(register-class-serialization! JsResponse
    (lambda (o ctx)
       (with-access::JsResponse o (%this obj)
 	 (js-jsobject->plist obj %this)))
-   (lambda (o %this)
-      (if (eq? %this 'hop)
-	  o
-	  (js-plist->jsobject o (or %this (js-initial-global-object))))))
+   (lambda (o)
+      (error "string->obj" "Cannot unserialize JsResponse" o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-extensible? ...                                               */
@@ -136,7 +135,7 @@
 	    (js-for-in obj
 	       (lambda (k %this)
 		  (js-put! nobj k
-		     (js-donate (js-get obj k %_this) worker %_this)
+		     (js-donate (js-get/name-cache obj k %_this) worker %_this)
 		     #f %this))
 	       %this)
 	    nobj))))
@@ -144,15 +143,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsObject ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-primitive-value obj::JsObject)
+(define-method (xml-primitive-value obj::JsObject ctx)
    (js-jsobject->plist obj (js-initial-global-object)))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->json ::JsObject ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (obj->json obj::JsObject op::output-port)
-   (let ((stringify (js-json-stringify (js-initial-global-object))))
-      (display (stringify (js-undefined) obj (js-undefined) 1) op)))
+(define-method (obj->json obj::JsObject op::output-port ctx)
+   (if (isa? ctx JsGlobalObject)
+       (let ((%this ctx))
+	  (let ((stringify (js-json-stringify %this)))
+	     (display (stringify (js-undefined) obj (js-undefined) 1) op)))
+       (error "obj->json" "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsGlobalObject ...                                   */
@@ -165,16 +167,19 @@
 ;*    scheme->response ::JsObject ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::JsObject req ctx)
-   (with-access::JsGlobalObject ctx (js-service-pcache)
-      (let ((proc (js-object-get-name/cache val (& "toResponse") #f %this
-		     (js-pcache-ref js-service-pcache 0))))
-	 (if (isa? proc JsFunction)
-	     (scheme->response (js-call1 this proc obj req) req ctx)
-	     (let ((rep (call-next-method)))
-		(when (isa? rep http-response-hop)
-		   (with-access::http-response-hop rep ((rctx ctx))
-		      (set! rctx ctx)))
-		rep)))))
+   (js-with-context ctx "scheme->response"
+      (lambda ()
+	 (let ((%this ctx))
+	    (with-access::JsGlobalObject %this (js-service-pcache)
+	       (let ((proc (js-object-get-name/cache obj (& "toResponse") #f %this
+			      (js-pcache-ref js-service-pcache 0))))
+		  (if (isa? proc JsFunction)
+		      (scheme->response (js-call1 %this proc obj req) req ctx)
+		      (let ((rep (call-next-method)))
+			 (when (isa? rep http-response-hop)
+			    (with-access::http-response-hop rep ((rctx ctx))
+			       (set! rctx ctx)))
+			 rep))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */
@@ -184,17 +189,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-unpack o::JsObject)
    (js-jsobject->keyword-plist o (js-initial-global-object)))
-
-;*---------------------------------------------------------------------*/
-;*    xml-to-errstring ::JsObject ...                                  */
-;*    -------------------------------------------------------------    */
-;*    This method is invoked when an native error occurs on a XML      */
-;*    object. This method is then invoked from Scheme code.            */
-;*---------------------------------------------------------------------*/
-(define-method (xml-to-errstring o::JsObject)
-   (format
-      (format "~a `~a'" (js-tostring o (js-initial-global-object))
-	 (typeof o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-fields ...                                              */
@@ -210,12 +204,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-literal ::JsObject ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-js-literal o::JsObject)
+(define-method (j2s-js-literal o::JsObject ctx)
    (with-access::JsService o (svc)
       (with-access::hop-service svc (path)
 	 (call-with-output-string
 	    (lambda (op)
-	       (obj->json o op))))))
+	       (obj->json o op ctx))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsObject ...                                   */
@@ -223,22 +217,23 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsObject op compile isexpr)
-   (with-access::WorkerHopThread (js-current-worker) (%this)
-      (display "{" op)
-      (let ((sep ""))
-	 (js-for-in o
-	    (lambda (p %this)
-	       (display sep op)
-	       (display "\"" op)
-	       (display p op)
-	       (display "\":" op)
-	       (hop->javascript
-		  (js-get o (js-jsstring-toname p) %this)
-		  op compile isexpr)
-	       (set! sep ","))
-	    %this))
-      (display "}" op)))
+(define-method (hop->javascript o::JsObject op compile isexpr ctx)
+   (js-with-context ctx "hop->javascript"
+      (lambda ()
+	 (display "{" op)
+	 (let ((sep ""))
+	    (js-for-in o
+	       (lambda (p %this)
+		  (display sep op)
+		  (display "\"" op)
+		  (display p op)
+		  (display "\":" op)
+		  (hop->javascript
+		     (js-get/name-cache o p %this)
+		     op compile isexpr ctx)
+		  (set! sep ","))
+	       ctx))
+	 (display "}" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %this ...                                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Apr 16 08:40:59 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:32:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -100,15 +100,20 @@
 ;*    object-serializer ::JsServer ...                                 */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsServer
-   (lambda (o)
-      (with-access::JsServer o (obj)
-	 (with-access::server obj (host port ssl authorization version)
-	    (vector host port ssl
-	       (if (string? authorization) authorization #f)
-	       version
-	       (js-jsobject->plist o (js-initial-global-object))))))
    (lambda (o ctx)
-      (if (and (vector? o) (=fx (vector-length o) 6))
+      (if (isa? ctx JsGlobalObject)
+	  (with-access::JsServer o (obj)
+	     (with-access::server obj (host port ssl authorization version)
+		(vector host port ssl
+		   (if (string? authorization) authorization #f)
+		   version
+		   (js-jsobject->plist o ctx))))
+	  (error "obj->string ::JsServer" "Not a JavaScript context" ctx)))
+   (lambda (o ctx)
+      (cond
+	 ((not (isa? ctx JsGlobalObject))
+	  (error "string->obj ::JsServer" "Not a JavaScript context" ctx))
+	 ((and (vector? o) (=fx (vector-length o) 6))
 	  (with-access::JsGlobalObject ctx (js-server-prototype)
 	     (let ((srv (instantiateJsServer
 			   (__proto__  js-server-prototype)
@@ -125,8 +130,9 @@
 			  (js-put! srv (js-keyword->jsstring (car rest))
 			     (js-obj->jsobject (cadr rest) ctx)
 			     #f ctx)
-			  (loop (cddr rest)))))))
-	  (error "JsServer" "wrong server" o))))
+			  (loop (cddr rest))))))))
+	 (else
+	  (error "JsServer" "wrong server" o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsHopFrame ...                                     */
@@ -181,14 +187,14 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsService op compile isexpr)
+(define-method (hop->javascript o::JsService op compile isexpr ctx)
    (with-access::JsService o (svc)
       (compile svc op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsHopFrame ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsHopFrame op compile isexpr)
+(define-method (hop->javascript o::JsHopFrame op compile isexpr ctx)
    (display "hop_url_encoded_to_obj('" op)
    (display (url-path-encode (obj->string o 'hop-client)) op)
    (display "')" op))
@@ -196,9 +202,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsServer ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsServer op compile isexpr)
+(define-method (hop->javascript o::JsServer op compile isexpr ctx)
    (display "hop_url_encoded_to_obj('" op)
-   (display (url-path-encode (obj->string o 'hop-client)) op)
+   (display (url-path-encode (obj->string o ctx)) op)
    (display "')" op))
 
 ;*---------------------------------------------------------------------*/
@@ -227,7 +233,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-literal ::JsService ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-js-literal o::JsService)
+(define-method (j2s-js-literal o::JsService ctx)
    (with-access::JsService o (svc)
       (with-access::hop-service svc (path)
 	 (format "HopService( '~a', undefined )" path))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Mon Apr 15 08:01:59 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:57:18 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -46,19 +46,21 @@
    (with-access::JsArrayBufferView o (%data) %data))
 
 (define-macro (arraybufferview-unserializer type bpe)
-   `(lambda (o %this)
-       (let ((this (or %this (js-initial-global-object))))
-	  (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
-	     (let ((abuf (instantiateJsArrayBuffer
-			    (__proto__ (js-get js-arraybuffer (& "prototype") this))
-			    (data o))))
-		(,(symbol-append 'instantiate:: type)
-		 (__proto__ (js-get js-int8array (& "prototype") this))
-		 (%data o)
-		 (bpe 1)
-		 (length (u8vector-length o))
-		 (byteoffset 0)
-		 (buffer abuf)))))))
+   `(lambda (o ctx)
+       (if (isa? ctx JsGlobalObject)
+	   (let ((this ctx))
+	      (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
+		 (let ((abuf (instantiateJsArrayBuffer
+				(__proto__ (js-get js-arraybuffer (& "prototype") this))
+				(data o))))
+		    (,(symbol-append 'instantiate:: type)
+		     (__proto__ (js-get js-int8array (& "prototype") this))
+		     (%data o)
+		     (bpe 1)
+		     (length (u8vector-length o))
+		     (byteoffset 0)
+		     (buffer abuf)))))
+	   (error (format "string->obj ::~a" type) "Not a JavaScript context" ctx))))
 
 (register-class-serialization! JsInt8Array
    arraybufferview-serializer
@@ -91,17 +93,19 @@
 
 (register-class-serialization! JsDataView
    arraybufferview-serializer
-   (lambda (o %this)
-      (let ((this (or %this (js-initial-global-object))))
-	 (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
-	    (let ((abuf (instantiateJsArrayBuffer
-			   (__proto__ (js-get js-arraybuffer (& "prototype") this))
-			   (data o))))
-	       (instantiateJsDataView
-		  (__proto__ (js-get js-int8array (& "prototype") this))
-		  (%data o)
-		  (byteoffset 0)
-		  (buffer abuf)))))))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (let ((this ctx))
+	     (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
+		(let ((abuf (instantiateJsArrayBuffer
+			       (__proto__ (js-get js-arraybuffer (& "prototype") this))
+			       (data o))))
+		   (instantiateJsDataView
+		      (__proto__ (js-get js-int8array (& "prototype") this))
+		      (%data o)
+		      (byteoffset 0)
+		      (buffer abuf)))))
+	  (error "string->obj ::JsDataView" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsDataView ...                                       */
@@ -141,14 +145,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsDataView ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsDataView op compile isexpr)
+(define-method (hop->javascript o::JsDataView op compile isexpr ctx)
    (with-access::JsDataView o (frozen byteoffset buffer)
       (display "hop_buffer( \"JsJsDataView\", " op)
       (display (if frozen "true" "false") op)
       (display ", " op)
       (display byteoffset op)
       (display ", " op)
-      (hop->javascript buffer op compile isexpr)
+      (hop->javascript buffer op compile isexpr ctx)
       (display ")" op)))
 
 ;*---------------------------------------------------------------------*/
@@ -169,7 +173,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsTypedArray ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsTypedArray op compile isexpr)
+(define-method (hop->javascript o::JsTypedArray op compile isexpr ctx)
    (with-access::JsTypedArray o (frozen byteoffset length bpe buffer)
       (display "hop_buffer( \"" op)
       (display (class-name (object-class o)) op)
@@ -182,7 +186,7 @@
       (display ", " op)
       (display bpe op)
       (display ", " op)
-      (hop->javascript buffer op compile isexpr)
+      (hop->javascript buffer op compile isexpr ctx)
       (display ")" op)))
 
 ;*---------------------------------------------------------------------*/

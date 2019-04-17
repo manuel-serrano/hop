@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Apr 16 05:21:03 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:59:20 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -723,7 +723,7 @@
 		      (js-call1 %this proc %this
 			 (js-make-function %this
 			    (lambda (this resp)
-			       (k (scheme->response resp req)))
+			       (k (scheme->response resp req %this)))
 			    1 "reply" :src 'builtin))))))
 	  (js-raise-type-error %this "not a request" req)))
    

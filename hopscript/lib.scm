@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Apr 16 08:44:43 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:08:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -37,6 +37,7 @@
 
    (export (&cnst-init ::bstring ::JsGlobalObject)
 	   (js-constant-init ::obj ::obj ::JsGlobalObject)
+	   (js-with-context ::obj ::bstring ::procedure)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
 	   (js-alist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
@@ -158,6 +159,15 @@
       ;; of the constant vector (see constants_expd.sch)
       (when vec-or-false (vector-copy! vec-or-false 1 cnsts 0))
       cnsts))
+
+;*---------------------------------------------------------------------*/
+;*    js-with-context ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-with-context ctx::obj ctxname::bstring thunk::procedure)
+   (if (isa? ctx JsGlobalObject)
+       (with-access::JsGlobalObject ctx (worker name)
+	  (js-worker-exec worker name thunk))
+       (error ctxname "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-obj->jsobject ...                                             */

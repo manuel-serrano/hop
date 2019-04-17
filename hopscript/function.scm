@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Apr 12 20:39:14 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:21:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -139,7 +139,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-literal ::JsFunction ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-js-literal o::JsFunction)
+(define-method (j2s-js-literal o::JsFunction ctx)
    (error "js" "Cannot compile function" o))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Apr 12 20:31:43 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:23:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -47,8 +47,10 @@
 (register-class-serialization! JsRegExp
    (lambda (o)
       (with-access::JsRegExp o (rx) rx))
-   (lambda (o %this)
-      (js-regexp->jsregexp o (or %this (js-initial-global-object)))))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-regexp->jsregexp o ctx)
+	  (error "obj->string ::JsRegExp" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp? ...                                                   */
@@ -75,15 +77,20 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsRegExp op compile isexpr)
-   (with-access::JsRegExp o (global)
-      (let ((%this (js-initial-global-object)))
-	 (display "/" op)
-	 (display (js-get o (& "source") %this) op)
-	 (display "/" op)
-	 (when (js-totest (js-get o (& "global") %this)) (display "g" op))
-	 (when (js-totest (js-get o (& "ignoreCase") %this)) (display "i" op))
-	 (when (js-totest (js-get o (& "multiline") %this)) (display "m" op)))))
+(define-method (hop->javascript o::JsRegExp op compile isexpr ctx)
+   (js-with-context ctx "hop->javascript"
+      (lambda ()
+	 (let ((%this ctx))
+	    (with-access::JsRegExp o (global)
+	       (display "/" op)
+	       (display (js-get o (& "source") %this) op)
+	       (display "/" op)
+	       (when (js-totest (js-get o (& "global") %this))
+		  (display "g" op))
+	       (when (js-totest (js-get o (& "ignoreCase") %this))
+		  (display "i" op))
+	       (when (js-totest (js-get o (& "multiline") %this))
+		  (display "m" op)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-regexp! ...                                              */

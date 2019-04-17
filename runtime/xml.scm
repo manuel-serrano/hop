@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/hop/runtime/xml.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Mar 12 17:23:37 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 06:47:29 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -91,12 +91,10 @@
 ;*    moved to xml_types!                                              */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! xml-markup
-   (lambda (o mode)
-      (if (eq? mode 'hop-to-hop)
-	  o
-	  (let ((p (open-output-string)))
-	     (obj->javascript-expr o p)
-	     (close-output-port p))))
+   (lambda (o ctx)
+      (let ((p (open-output-string)))
+	 (obj->javascript-expr o p ctx)
+	 (close-output-port p)))
    (lambda (o)
       o))
 

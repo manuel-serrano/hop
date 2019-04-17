@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Apr 15 10:02:00 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 06:57:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -52,9 +52,13 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsArguments
    (lambda (o)
-      (js-arguments->vector o (js-initial-global-object)))
-   (lambda (o %this)
-      (js-vector->jsarray o (or %this (js-initial-global-object)))))
+      (if (isa? ctx JsGlobalObject)
+	  (js-arguments->vector o ctx)
+	  (error "obj->string ::JsArguments" "Not a JavaScript context" ctx)))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-vector->jsarray o ctx)
+	  (error "string->obj ::JsArguments" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArguments ...                                     */
@@ -79,23 +83,26 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsArguments op compile isexpr)
-   (let* ((%this (js-initial-global-object))
-	  (len::uint32 (js-touint32 (js-get o (& "length") %this) %this)))
-      (if (=u32 len (fixnum->uint32 0))
-	  (display "sc_vector2array([])" op)
-	  (begin
-	     (display "sc_vector2array([" op)
-	     (hop->javascript (js-get o (js-toname 0 %this) %this) op compile isexpr)
-	     (let loop ((i (fixnum->uint32 1)))
-		(if (=u32 i len)
-		    (display "])" op)
-		    (begin
-		       (display "," op)
-		       (when (js-has-property o i %this)
-			  (hop->javascript (js-get o i %this)
-			     op compile isexpr))
-		       (loop (+u32 i (fixnum->uint32 1))))))))))
+(define-method (hop->javascript o::JsArguments op compile isexpr ctx)
+   (js-with-context ctx "hop->javascript"
+      (lambda ()
+	 (let* ((%this ctx)
+		(len::uint32 (js-touint32 (js-get o (& "length") %this) %this)))
+	    (if (=u32 len (fixnum->uint32 0))
+		(display "sc_vector2array([])" op)
+		(begin
+		   (display "sc_vector2array([" op)
+		   (hop->javascript
+		      (js-get o (js-toname 0 %this) %this) op compile isexpr ctx)
+		   (let loop ((i (fixnum->uint32 1)))
+		      (if (=u32 i len)
+			  (display "])" op)
+			  (let ((n (js-integer-name->jsstring (uint32->fixnum i))))
+			     (display "," op)
+			     (when (js-has-property o n %this)
+				(hop->javascript (js-get o n %this)
+				   op compile isexpr ctx))
+			     (loop (+u32 i (fixnum->uint32 1))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsArguments ...                                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Mon Apr 15 09:32:27 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 08:10:19 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -67,9 +67,10 @@
 ;*    object-serializer ::JsWorker ...                                 */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsWorker
-   (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-raise-type-error ctx "[[SerializeTypeError]] ~a" o)
+	  (error "obj->string" "Not a JavaScript context" ctx)))
    (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/

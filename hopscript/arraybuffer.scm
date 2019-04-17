@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Fri Apr 12 15:30:25 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:56:57 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -42,10 +42,12 @@
 ;*    object-serializer ::JsArrayBuffer ...                            */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsArrayBuffer
-   (lambda (o)
+   (lambda (o ctx)
       (with-access::JsArrayBuffer o (data) data))
-   (lambda (o %this)
-      (js-u8vector->jsarraybuffer o (or %this (js-initial-global-object)))))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-u8vector->jsarraybuffer o ctx)
+	  (error "string->obj ::JsArrayBuffer" "Not a JavaScript context" o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsArrayBuffer ...                                    */
@@ -74,7 +76,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsArrayBuffer op compile isexpr)
+(define-method (hop->javascript o::JsArrayBuffer op compile isexpr ctx)
    
    (define chars
       '#(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\a #\b #\c #\d #\e #\f))

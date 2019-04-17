@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr 12 14:32:12 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:24:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -42,10 +42,12 @@
 ;*    object-serializer ::JsBoolean ...                                */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsBoolean
-   (lambda (o)
+   (lambda (o ctx)
       (with-access::JsBoolean o (val) val))
-   (lambda (o %this)
-      (js-bool->jsBoolean o (or %this (js-initial-global-object)))))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-bool->jsBoolean o ctx)
+	  (error "string->obvj ::JsBoolean" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsBoolean ...                                        */
@@ -66,7 +68,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsBoolean op compile isexpr)
+(define-method (hop->javascript o::JsBoolean op compile isexpr ctx)
    (with-access::JsBoolean o (val)
       (display (if val "new Boolean(true)" "new Boolean(false)") op)))
 

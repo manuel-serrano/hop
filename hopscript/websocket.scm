@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon Apr 15 08:01:15 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 07:33:38 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -69,27 +69,30 @@
 ;*    object-serializer ::JsWebSocket ...                              */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsWebSocket
-   (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-raise-type-error ctx "[[SerializeTypeError]] ~a" o)
+	  (error "obj->string ::JsWebWocket" "Not a JavaScript context" ctx)))
    (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsWebSocketClient ...                        */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsWebSocketClient
-   (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-raise-type-error ctx "[[SerializeTypeError]] ~a" o)
+	  (error "obj->string ::JsWebWocketClient" "Not a JavaScript context" ctx)))
    (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsWebSocketServer ...                        */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsWebSocketServer
-   (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-raise-type-error ctx "[[SerializeTypeError]] ~a" o)
+	  (error "obj->string ::JsWebWocketServer" "Not a JavaScript context" ctx)))
    (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
@@ -724,7 +727,7 @@
 				(header (jsheader->header hd header))
 				(query path)))))
 		 (resp (invoke-websocket-service frame)))
-	     (http-ws-response resp nreq socket content-type 200 '())))
+	     (http-ws-response resp nreq socket content-type 200 '() %this)))
 	 (else
 	  (error "PoST-message" "bad message" (format "~s" msg))
 	  #f)))
@@ -846,26 +849,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-encode-value ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (http-encode-value obj content-type::bstring request)
-   
-   (define (request-type request)
-      (with-access::http-request request (header)
-	 (let ((c (assq 'hop-client: header)))
-	    (if (and (pair? c) (string=? (cdr c) "hop"))
-		'hop-to-hop
-		'hop-client))))
-   
+(define (http-encode-value obj content-type::bstring request %this)
    ;; see runtime/http-response.scm
    (cond
       ((or (string-prefix? "application/x-hop" content-type)
 	   (string-prefix? "application/x-frame-hop" content-type))
        ;; fast path, bigloo serialization
-       (obj->string obj (request-type request)))
+       (obj->string obj %this))
       ((or (string-prefix? "application/json" content-type)
 	   (string-prefix? "application/x-frame-json" content-type))
        ;; json encoding
        (call-with-output-string
-	  (lambda (p) (obj->json obj p))))
+	  (lambda (p) (obj->json obj p %this))))
       ((string-prefix? "text/plain" content-type)
        obj)
       (else
@@ -876,9 +871,9 @@
 ;*    ws-response-socket ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (ws-response-socket obj req::http-request socket::socket
- 	   content-type status header)
+ 	   content-type status header %this)
    (with-access::http-request req (id)
-      (let ((data (http-encode-value obj content-type req)))
+      (let ((data (http-encode-value obj content-type req %this)))
 	 (websocket-send-binary socket
 	    (string-append "PoST:"
 	       (integer->string id)
@@ -891,14 +886,14 @@
 ;*    http-ws-response ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-generic (http-ws-response resp req::http-request socket::socket
-		   content-type status header)
-   (ws-response-socket resp req socket content-type status header))
+		   content-type status header %this)
+   (ws-response-socket resp req socket content-type status header %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-ws-response ::JsPromise ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (http-ws-response resp::JsPromise req socket
-		  content-type status header)
+		  content-type status header %this)
    (with-access::JsPromise resp (worker)
       (with-access::WorkerHopThread worker (%this)
 	 (js-promise-then-catch %this resp 
@@ -907,14 +902,14 @@
 		  (js-promise-async resp
 		     (lambda ()
 			(http-ws-response result req socket
-			   content-type 200 header))))
+			   content-type 200 header %this))))
 	       1 "reply")
 	    (js-make-function %this
 	       (lambda (this rej)
 		  (js-promise-async resp
 		     (lambda ()
 			(http-ws-response rej req socket
-			   content-type 500 header))))
+			   content-type 500 header %this))))
 	       1 "reject")
 	    resp))))
 
@@ -922,9 +917,9 @@
 ;*    http-ws-response ::%http-response ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (http-ws-response resp::%http-response req socket
-		   content-type status header)
+		   content-type status header %this)
    (ws-response-socket (format "Method not implemented ~a" (typeof resp))
-      req socket content-type 500 '()))
+      req socket content-type 500 '() %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    start-line->status ...                                           */
@@ -938,30 +933,32 @@
 ;*    http-ws-response ::http-response-string ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (http-ws-response resp::http-response-string req socket
-		   content-type status header)
+		   content-type status header %this)
    (with-access::http-response-string resp (body header content-type)
       (ws-response-socket body req socket
 	 (or content-type "text/plain")
 	 (start-line->status resp)
-	 header)))
+	 header
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-ws-response ::http-response-async ...                       */
 ;*---------------------------------------------------------------------*/
 (define-method (http-ws-response resp::http-response-async req socket
-		  content-type status header)
-   (with-access::http-response-async resp (async content-type header)
+		  content-type status header %this)
+   (with-access::http-response-async resp (async content-type header ctx)
       (async (lambda (obj)
 		(http-ws-response resp req socket
 		   (or content-type "text/plain")
 		   (start-line->status obj)
-		   header)))))
+		   header
+		   ctx)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-ws-response ::http-response-hop ...                         */
 ;*---------------------------------------------------------------------*/
 (define-method (http-ws-response obj::http-response-hop req socket
-		  content-type status header)
+		  content-type status header %this)
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
