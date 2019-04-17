@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Apr 17 07:21:32 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 18:25:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -78,6 +78,15 @@
    obj)
 
 ;*---------------------------------------------------------------------*/
+;*    xml-unpack ::JsObject ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Simply returns the function. This will give XML write            */
+;*    a chance to raise an appropriate error messages.                 */
+;*---------------------------------------------------------------------*/
+(define-method (xml-unpack o::JsFunction)
+   o)
+
+;*---------------------------------------------------------------------*/
 ;*    js-donate ::Jsfunction ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsFunction worker::WorkerHopThread %_this)
@@ -103,15 +112,6 @@
        (with-access::JsFunction o (prototype) prototype)
        (call-next-method)))
    
-;*---------------------------------------------------------------------*/
-;*    xml-unpack ::JsObject ...                                        */
-;*    -------------------------------------------------------------    */
-;*    Simply returns the function. This will give XML write            */
-;*    a chance to raise an appropriate error messages.                 */
-;*---------------------------------------------------------------------*/
-(define-method (xml-unpack o::JsFunction)
-   o)
-
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Apr 17 06:47:29 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 18:26:45 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -53,6 +53,7 @@
 
 	    (xml-body ::obj)
 	    (generic xml-body-element ::obj)
+	    (generic xml-primitive-value ::obj)
 	    (generic xml-unpack ::obj)
 
  	    (generic xml-write ::obj ::output-port ::xml-backend)
@@ -61,7 +62,6 @@
 	    (xml-write-attributes ::pair-nil ::output-port ::xml-backend)
 	    (generic xml-attribute-encode ::obj)
 
-	    (generic xml-primitive-value ::obj)
 	    (generic xml-to-errstring::bstring ::obj)
 
 	    (xml-url-for-each ::obj ::procedure)
@@ -344,12 +344,16 @@
    obj)
 
 ;*---------------------------------------------------------------------*/
+;*    xml-primitive-value ::obj ...                                    */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-primitive-value x::obj)
+   x)
+
+;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::obj ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-unpack obj::obj)
-   (when (pair? obj)
-      (when (list? obj)
-	 obj)))
+   (when (list? obj) obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
@@ -801,12 +805,6 @@
 				  (string-set! nstr j c)
 				  (loop (+fx i 1) (+fx j 1))))))))))
 	  (encode obj ol (count obj ol)))))
-
-;*---------------------------------------------------------------------*/
-;*    xml-primitive-value ::obj ...                                    */
-;*---------------------------------------------------------------------*/
-(define-generic (xml-primitive-value x::obj)
-   x)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-to-errstring ::obj ...                                       */

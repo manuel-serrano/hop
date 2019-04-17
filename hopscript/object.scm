@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Apr 17 07:00:43 2019 (serrano)                */
+;*    Last change :  Wed Apr 17 18:29:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -147,6 +147,15 @@
    (js-jsobject->plist obj (js-initial-global-object)))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-unpack ::JsObject ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Used when an JS object is to pack the arguments sent to          */
+;*    an XML constructor.                                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-unpack o::JsObject)
+   (js-jsobject->keyword-plist o (js-initial-global-object)))
+
+;*---------------------------------------------------------------------*/
 ;*    obj->json ::JsObject ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (obj->json obj::JsObject op::output-port ctx)
@@ -180,15 +189,6 @@
 			    (with-access::http-response-hop rep ((rctx ctx))
 			       (set! rctx ctx)))
 			 rep))))))))
-
-;*---------------------------------------------------------------------*/
-;*    xml-unpack ::JsObject ...                                        */
-;*    -------------------------------------------------------------    */
-;*    Used when an JS object is to pack the arguments sent to          */
-;*    an XML constructor.                                              */
-;*---------------------------------------------------------------------*/
-(define-method (xml-unpack o::JsObject)
-   (js-jsobject->keyword-plist o (js-initial-global-object)))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-fields ...                                              */
