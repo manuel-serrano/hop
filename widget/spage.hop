@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/widget/spage.hop                  */
+;*    serrano/prgm/project/hop/hop/widget/spage.hop                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Sun Aug  7 08:23:19 2016 (serrano)                */
-;*    Copyright   :  2009-16 Manuel Serrano                            */
+;*    Last change :  Thu Apr 18 08:02:16 2019 (serrano)                */
+;*    Copyright   :  2009-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
 ;*=====================================================================*/
@@ -91,6 +91,7 @@
 ;*    SPTAB ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-tag <SPTAB> ((id (xml-make-id 'SPTAB) string)
+		     (%context #f)
 		     (onselect #f)
 		     (direction "push")
 		     (class #f)
@@ -137,7 +138,7 @@
 					   (let ((obj (proc (current-request))))
 					      (if (isa? obj xml-element)
 						  obj
-						  (xml-unpack obj)))))))))
+						  (xml-unpack obj %context)))))))))
 		   (when (=fx ttl 0) (unregister-service! svc))
 		   (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
 		      :onclick ~(begin

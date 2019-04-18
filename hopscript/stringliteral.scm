@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Apr 17 07:57:53 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:14:42 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -220,7 +220,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsStringLiteral ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-primitive-value o::JsStringLiteral)
+(define-method (xml-primitive-value o::JsStringLiteral ctx)
    (js-jsstring->string o))
 
 ;*---------------------------------------------------------------------*/

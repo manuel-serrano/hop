@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 17 07:22:54 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:05:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -56,9 +56,9 @@
 (register-class-serialization! JsNumber
    (lambda (o)
       (with-access::JsNumber o (val) val))
-   (lambda (o %this)
-      (if (isa ctx JsGlobalObject)
-	  (js-number->jsNumber o (or %this (js-initial-global-object)))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-number->jsNumber o ctx)
 	  (error "string->obj ::JsNumber" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/

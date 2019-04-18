@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr 15 05:29:50 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:06:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -54,22 +54,18 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsError
    (lambda (o ctx)
-      (let ((%this (js-initial-global-object)))
-	 (with-access::JsError o (name msg stack fname location)
-	    (vector (string-append "Server" (js-tostring name %this))
-	       (js-tostring msg %this)
-	       (obj->string stack %this)
-	       (js-tostring fname %this)
-	       (js-tonumber location %this)))))
+      (if (isa? ctx JsGlobalObject)
+	  (let ((%this ctx))
+	     (with-access::JsError o (name msg stack fname location)
+		(vector (string-append "Server" (js-tostring name %this))
+		   (js-tostring msg %this)
+		   (obj->string stack %this)
+		   (js-tostring fname %this)
+		   (js-tonumber location %this))))
+	  (error "obj->string ::JsError" "Not a JavaScript context" ctx)))
    (lambda (o ctx)
       (if (and (vector? o) (=fx (vector-length o) 5))
-	  (if (eq? ctx 'hop)
-	      (instantiate::&error
-		 (obj (js-string->jsstring (vector-ref o 0)))
-		 (msg (js-string->jsstring (vector-ref o 1)))
-		 (stack (string->obj (url-decode (vector-ref o 2)) ctx))
-		 (proc (js-string->jsstring (vector-ref o 3)))
-		 (location (vector-ref o 4)))
+	  (if (isa? ctx JsGlobalObject)
 	      (with-access::JsGlobalObject ctx (js-error)
 		 (instantiateJsError
 		    (%this ctx)
@@ -78,8 +74,13 @@
 		    (msg (js-string->jsstring (vector-ref o 1)))
 		    (stack (string->obj (url-decode (vector-ref o 2)) ctx))
 		    (fname (js-string->jsstring (vector-ref o 3)))
-		    (location (vector-ref o 4)))))
-	  (error "Error" "wrong error" o))))
+		    (location (vector-ref o 4))))
+	      (instantiate::&error
+		 (obj (js-string->jsstring (vector-ref o 0)))
+		 (msg (js-string->jsstring (vector-ref o 1)))
+		 (stack (string->obj (url-decode (vector-ref o 2)) ctx))
+		 (proc (js-string->jsstring (vector-ref o 3)))
+		 (location (vector-ref o 4)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsError ...                                          */

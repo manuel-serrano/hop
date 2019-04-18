@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/widget/video.scm                  */
+;*    serrano/prgm/project/hop/hop/widget/video.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Feb  9 14:26:07 2016 (serrano)                */
-;*    Copyright   :  2007-16 Manuel Serrano                            */
+;*    Last change :  Thu Apr 18 07:59:58 2019 (serrano)                */
+;*    Copyright   :  2007-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
 ;*=====================================================================*/
@@ -25,6 +25,7 @@
 ;*        http://www.longtailvideo.com/players/jw-flv-player/          */
 ;*---------------------------------------------------------------------*/
 (define-tag <VIDEO> ((id #unspecified)
+		     (%context #f)
 		     (src #f)
 		     (img #f)
 		     (width "auto")
@@ -66,17 +67,19 @@
 		  body))
    
    (let ((vid (symbol->string (gensym 'video-container)))
-	 (src (xml-primitive-value src)))
+	 (src (xml-primitive-value src %context)))
       (cond
 	 ((eq? backend 'flash)
 	  (<DIV> :id vid
 	     (<flash> src vid #t)))
 	 ((eq? backend 'html5)
 	  (instantiate::xml-element
-	     (id (xml-make-id (xml-primitive-value id) 'video))
+	     (id (xml-make-id (xml-primitive-value id %context) 'video))
 	     (tag 'VIDEO)
 	     (attributes `(:src ,src :width ,width :height ,height
-			     ,@(map xml-primitive-value attr)))
+			     ,@(map (lambda (a)
+				       (xml-primitive-value a %context))
+				  attr)))
 	     (body body)))
 	 ((string? src)
 	  (if (is-suffix? src "flv")
@@ -86,7 +89,9 @@
 		 (id (xml-make-id id 'video))
 		 (tag 'VIDEO)
 		 (attributes `(:src ,src :width ,width :height ,height
-				 ,@(map xml-primitive-value attr)))
+				 ,@(map (lambda (a)
+				       (xml-primitive-value a %context))
+				      attr)))
 		 (body body))))
 	 ((flv body)
 	  =>

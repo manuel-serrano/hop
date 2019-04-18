@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 18 05:28:26 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:07:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -211,7 +211,7 @@
       (if (isa? ctx JsGlobalObject)
 	  (jsarray->vector o ctx)
 	  (error "obj->string ::JsArray" "Not a JavaScript context" ctx)))
-   (lambda (o %this)
+   (lambda (o ctx)
       (if (isa? ctx JsGlobalObject)
 	  (js-vector->jsarray o ctx)
 	  (error "string->obj ::JsArray" "Not a JavaScript context" ctx))))
@@ -247,7 +247,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArray ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-unpack obj::JsArray)
+(define-method (xml-unpack obj::JsArray ctx)
    
    (define (subvector->list vec alen::long)
       (if (=fx alen 0)
@@ -258,26 +258,29 @@
 		 (cons (vector-ref vec i) acc)
 		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
    
-   (with-access::JsArray obj (vec length)
-      (if (js-array-full-inlined? obj)
-	  (subvector->list vec (uint32->fixnum length))
-	  (let* ((%this (js-initial-global-object))
-		 (len::uint32 length))
-	     (let loop ((i::uint32 #u32:0))
-		(cond
-		   ((=u32 i len)
-		    '())
-		   ((js-has-property obj (js-toname i %this) %this)
-		    (cons (js-get obj i %this) (loop (+u32 i #u32:1))))
-		   (else
-		    (loop (+u32 i #u32:1)))))))))
+   (if (isa? ctx JsGlobalObject)
+       (with-access::JsArray obj (vec length)
+	  (if (js-array-full-inlined? obj)
+	      (subvector->list vec (uint32->fixnum length))
+	      (let* ((%this ctx)
+		     (len::uint32 length))
+		 (let loop ((i::uint32 #u32:0))
+		    (cond
+		       ((=u32 i len)
+			'())
+		       ((js-has-property obj (js-toname i %this) %this)
+			(cons (js-get obj i %this) (loop (+u32 i #u32:1))))
+		       (else
+			(loop (+u32 i #u32:1))))))))
+       (error "xml-unpack ::JsArray" "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::JsArray ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::JsArray p backend)
-   (for-each (lambda (el) (xml-write el p backend))
-      (xml-unpack obj)))
+   (error "xml-write ::JsArray" "Should not be here" (typeof obj)))
+;*    (for-each (lambda (el) (xml-write el p backend))                 */
+;*       (xml-unpack obj)))                                            */
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */
@@ -312,17 +315,18 @@
 ;*    xml-write-attribute ::JsArray ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute o::JsArray id op backend)
-   (let ((v (xml-unpack o)))
-      (when (pair? v)
-	 (display (keyword->string! id) op)
-	 (display "='" op)
-	 (display (xml-attribute-encode (car v)) op)
-	 (let loop ((v (cdr v)))
-	    (when (pair? v)
-	       (display " " op)
-	       (display (xml-attribute-encode (car v)) op)
-	       (loop (cdr v))))
-	 (display "'" op))))
+   (error "xml-write-attribute ::JsArray" "should not be here" o))
+;*    (let ((v (xml-unpack o)))                                        */
+;*       (when (pair? v)                                               */
+;* 	 (display (keyword->string! id) op)                            */
+;* 	 (display "='" op)                                             */
+;* 	 (display (xml-attribute-encode (car v)) op)                   */
+;* 	 (let loop ((v (cdr v)))                                       */
+;* 	    (when (pair? v)                                            */
+;* 	       (display " " op)                                        */
+;* 	       (display (xml-attribute-encode (car v)) op)             */
+;* 	       (loop (cdr v))))                                        */
+;* 	 (display "'" op))))                                           */
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarray->list ...                                                */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/html_head.scm             */
+;*    serrano/prgm/project/hop/hop/runtime/html_head.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Dec 21 09:31:48 2018 (serrano)                */
-;*    Copyright   :  2005-18 Manuel Serrano                            */
+;*    Last change :  Thu Apr 18 07:39:54 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -88,7 +88,7 @@
 ;*    <HTML> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-tag <HTML> ((idiom "scheme")
-		    (context #f)
+		    (%context #f)
 		    (%location #f)
 		    (attr)
 		    body)
@@ -111,25 +111,26 @@
 		    (cond
 		       ((not (pair? body))
 			body)
-		       ((xml-unpack (car body))
+		       ((xml-unpack (car body) %context)
 			=>
 			(lambda (v) (loop (append v (cdr body)))))
-		       ((let ((v (xml-primitive-value (car body))))
+		       ((let ((v (xml-primitive-value (car body) %context)))
 			   (and (string? v) (not (string-skip v "\n\t "))))
 			(loop (cdr body)))
 		       (else
-			(append-map (lambda (n) (or (xml-unpack n) (list n)))
+			(append-map (lambda (n)
+				       (or (xml-unpack n %context) (list n)))
 			   body)))))
 	  (hbody (cond
 		    ((null? nbody)
-		     (list (<HEAD> :idiom idiom :context context
+		     (list (<HEAD> :idiom idiom :context %context
 			      :%location %location)))
 		    ((xml-markup-is? (car nbody) 'head)
 		     nbody)
 		    ((find-head body)
 		     nbody)
 		    (else
-		     (cons (<HEAD> :idiom idiom :context context
+		     (cons (<HEAD> :idiom idiom :context %context
 			      :%location %location)
 			nbody)))))
       (instantiate::xml-html
@@ -157,7 +158,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 ;*---------------------------------------------------------------------*/
 ;*    server-initial-context ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (server-initial-context location stack)
+(define (server-initial-context location stack ctx)
 
    (let* ((stk (filter-map (lambda (f)
 			      (match-case f
@@ -166,12 +167,12 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 				 (else
 				  f)))
 		  stack))
-	  (loc (match-case (xml-primitive-value location)
+	  (loc (match-case (xml-primitive-value location ctx)
 		  ((or (:filename ?fname :pos ?pos :name ?name)
 		       (:name ?name :pos ?pos :filename ?fname))
-		   `(,(xml-primitive-value name)
-		       (at ,(xml-primitive-value fname)
-			  ,(xml-primitive-value pos))
+		   `(,(xml-primitive-value name ctx)
+		       (at ,(xml-primitive-value fname ctx)
+			  ,(xml-primitive-value pos ctx))
 		       (type . server) (format . "$~a")))
 		  ((?name ?loc . ?rest)
 		   `(,name ,loc (type . server) (format . "$~a")))
@@ -345,15 +346,15 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		      ((module (? symbol?) . ?-) (loop (hop-read in)))
 		      (else '())))))))
    
-   (define (favicon p inl)
-      (<LINK> :rel "shortcut icon" :href p :inline inl))
+   (define (favicon p inl ctx)
+      (<LINK> :%context ctx :rel "shortcut icon" :href p :inline inl))
    
-   (define (css p base inl)
+   (define (css p base inl ctx)
       ;; force pre-loading the hss file in order to force
       ;; pre-evaluating hss type declarations.
       (when (string-suffix? ".hss" p)
 	 (preload-css p base))
-      (<LINK> :inline inl
+      (<LINK> :%context ctx :inline inl
 	 :rel "stylesheet"
 	 :type (hop-configure-css-mime-type)
 	 :href p))
@@ -435,21 +436,21 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 			   (set! res (cons (script p inl) res))))))
 	     (ss (let ((p (find-file/path (string-append f ".css") path)))
 		    (when (string? p)
-		       (set! res (cons (css p #f inl) res)))))
+		       (set! res (cons (css p #f inl context) res)))))
 	     (hss (let ((p (find-file/path (string-append f ".hss") path)))
 		     (when (string? p)
-			(set! res (cons (css p #f inl) res)))))
+			(set! res (cons (css p #f inl context) res)))))
 	     (uhss (let* ((n (string-append (basename f) ".hss"))
 			  (p (make-file-path (hop-rc-directory) (hop-hss-theme) n)))
 		      (when (file-exists? p)
-			 (set! res (cons (css p #f inl) res))))))
+			 (set! res (cons (css p #f inl context) res))))))
 	 (if (null? res)
 	     (cond
 		((not (file-exists? f))
 		 (error "<HEAD>" (format "Can't find include ~s in path" f)
 		    path))
 		((or (is-suffix? f "hss") (is-suffix? f "css"))
-		 (list (css f #f inl)))
+		 (list (css f #f inl context)))
 		((or (is-suffix? f "scm") (is-suffix? f "hop"))
 		 (list (script f inl)))
 		((is-suffix? f "js")
@@ -492,7 +493,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 			     (integer->string (bigloo-debug)) "};")
 			  (when (>fx (bigloo-debug) 0)
 			     (server-initial-context location
-				(get-trace-stack))))
+				(get-trace-stack) context)))
 		       (append (cond
 				  (inl (head-runtime-system-inline idiom))
 				  (packed (head-runtime-system-packed idiom))
@@ -512,10 +513,10 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		  (loop (cdr a) (car a) rts dir path base inl packed els))
 		 ((:favicon)
 		  (set! favico #t)
-		  (let ((v (xml-primitive-value (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a) context)))
 		     (if (string? v)
 			 (loop (cddr a) #f rts dir path base inl packed 
-			    (cons (favicon (absolute-path v dir) inl)
+			    (cons (favicon (absolute-path v dir) inl context)
 			       els))
 			 (error "<HEAD>" "Illegal :favicon" (cadr a)))))
 		 ((:rts)
@@ -523,29 +524,29 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		      (loop (cddr a) #f (cadr a) dir path base inl packed els)
 		      (error "<HEAD>" "Illegal :rts" (cadr a))))
 		 ((:title)
-		  (let ((v (xml-primitive-value (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a) context)))
 		     (if (string? v)
 			 (loop (cddr a) #f rts dir path base inl packed 
 			    (cons (<TITLE> v) els))
 			 (error "<HEAD>" "Illegal :title" (cadr a)))))
 		 ((:base)
-		  (let ((v (xml-primitive-value (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a) context)))
 		     (if (string? (cadr a))
 			 (loop (cddr a) #f rts dir path v inl packed
 			    (cons (<BASE> :href v) els))
 			 (error "<HEAD>" "Illegal :base" (cadr a)))))
 		 ((:dir)
-		  (let ((v (xml-primitive-value (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a) context)))
 		     (if (string? v)
 			 (loop (cddr a) #f rts v path base inl packed els)
 			 (error "<HEAD>" "Illegal :dir" v))))
 		 ((:path)
-		  (let ((v (xml-primitive-value (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a) context)))
 		     (if (string? v)
 			 (loop (cddr a) #f rts dir (append! path (list v))
 			    base inl packed els)
 			 (error "<HEAD>" "Illegal :path" v))))
-		 ((:context)
+		 ((:%context)
 		  (set! context (cadr a))
 		  (loop (cddr a) #f rts dir path base inl packed els))
 		 ((:module)
@@ -560,7 +561,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		      (loop (cddr a) #f rts dir path base inl (cadr a) els)
 		      (error "<HEAD>" "Illegal :inline" (cadr a))))
 		 ((:with-base)
-		  (let ((v (xml-primitive-value (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a) context)))
 		     (if (and (string? v) (pair? (cddr a)))
 			 (let ((wbels (loop (caddr a) #f #f v (list v)
 					 v inl packed '())))
@@ -568,14 +569,14 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 			       (append (reverse! wbels) els)))
 			 (error "<HEAD>" "Illegal :with-base argument" (cadr a)))))
 		 ((:idiom)
-		  (let ((v (xml-primitive-value (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a) context)))
 		     (if (string? v)
 			 (begin
 			    (set! idiom v)
 			    (loop (cddr a) #f rts dir path base inl packed els))
 			 (error "<HEAD>" "Illegal :idiom argument" (cadr a)))))
 		 ((:%location)
-		  (set! location (xml-primitive-value (cadr a)))
+		  (set! location (xml-primitive-value (cadr a) context))
 		  (loop (cddr a) mode rts dir path base inl packed els))
 ;* 		 ((:authorizations)                                    */
 ;* 		  (cell-set! attrs                                     */
@@ -593,7 +594,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 	     ((:css)
 	      (let ((file (or (find-file/path (car a) path) (car a))))
 		 (loop (cdr a) mode rts dir path base inl packed 
-		       (cons (css (absolute-path file dir) base inl) els))))
+		    (cons (css (absolute-path file dir) base inl context) els))))
 	     ((:jscript :script)
 	      (let ((file (or (find-file/path (car a) path) (car a))))
 		 (loop (cdr a) mode rts dir path base inl packed 
@@ -642,7 +643,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 	  (loop (cdr a) :jscript rts dir path base inl packed
 		(cons (car a) els)))
 	 (else
-	  (let ((v (xml-primitive-value (car a))))
+	  (let ((v (xml-primitive-value (car a) context)))
 	     (if (eq? v (car a))
 		 (loop (cdr a) #f rts dir path base inl packed (cons (car a) els))
 		 (loop (cons v (cdr a)) mode rts dir path base inl packed els)))))))
@@ -680,6 +681,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 ;*    LINK ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define-tag <LINK> ((id #unspecified)
+		    (%context #t)
 		    (inline #f boolean)
 		    (href #f)
 		    (attributes)
@@ -710,7 +712,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		(else
 		 (default href))))))
    
-   (let ((href (xml-primitive-value href)))
+   (let ((href (xml-primitive-value href %context)))
       (cond
 	 ((not (string? href))
 	  (bigloo-type-error "<LINK>" "string" href))
@@ -738,7 +740,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		      (src #unspecified)
 		      (type (hop-mime-type))
 		      (idiom #f)
-		      (context #f)
+		      (%context #f)
 		      (module #f)
 		      (lang #f)
 		      (attributes)
@@ -785,15 +787,15 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
       (<REQUIRE> :type mtype
 	 :inline inl :src p :mod m :lang lang))
 
-   (let ((src (xml-primitive-value src))
-	 (mtype (xml-primitive-value type))
-	 (lang (xml-primitive-value lang)))
+   (let ((src (xml-primitive-value src %context))
+	 (mtype (xml-primitive-value type %context))
+	 (lang (xml-primitive-value lang %context)))
       (purify
 	 (cond
 	    ((not (string? src))
 	     (default src))
 	    (lang
-	     (let ((file (clientc-resolve-filename src context module)))
+	     (let ((file (clientc-resolve-filename src %context module)))
 		(require file src inline lang mtype)))
 	    ((and inline (file-exists? src))
 	     (inl src))

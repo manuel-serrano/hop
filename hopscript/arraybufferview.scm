@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Apr 17 07:57:18 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:14:10 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -60,7 +60,7 @@
 		     (length (u8vector-length o))
 		     (byteoffset 0)
 		     (buffer abuf)))))
-	   (error (format "string->obj ::~a" type) "Not a JavaScript context" ctx))))
+	   (error ,(format "string->obj ::~a" type) "Not a JavaScript context" ctx))))
 
 (register-class-serialization! JsInt8Array
    arraybufferview-serializer

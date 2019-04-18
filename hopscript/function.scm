@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Apr 17 18:25:57 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:04:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -74,7 +74,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsFunction ...                             */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-primitive-value obj::JsFunction)
+(define-method (xml-primitive-value obj::JsFunction ctx)
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -83,7 +83,7 @@
 ;*    Simply returns the function. This will give XML write            */
 ;*    a chance to raise an appropriate error messages.                 */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-unpack o::JsFunction)
+(define-method (xml-unpack o::JsFunction ctx)
    o)
 
 ;*---------------------------------------------------------------------*/

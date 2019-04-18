@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr 18 05:28:56 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 07:53:56 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -17,6 +17,7 @@
    (library hop)
 
    (static  (class html-tree::xml-element
+	       (context read-only)
 	       (klass read-only)
 	       (head read-only)
 	       (open::obj read-only)
@@ -50,6 +51,7 @@
 ;*    <TREE> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-tag <TREE> ((id #unspecified string)
+		    (%context #f)
 		    (class #f)
 		    (visible #t)
 		    (open #f)
@@ -66,7 +68,7 @@
 		    (%location #f)
 		    body)
    (let ((head "")
-	 (body (xml-body body)))
+	 (body (xml-unpack body %context)))
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
 	 (set! head (car body))
 	 (set! body (cdr body)))
@@ -76,6 +78,7 @@
 		body))
       (instantiate::html-tree
 	 (tag 'tree)
+	 (context %context)
 	 (klass (if (string? class) class ""))
 	 (id (xml-make-id id 'TREE))
 	 (visible visible)
@@ -87,10 +90,10 @@
 	 (onunselect onunselect)
 	 (onopen onopen)
 	 (onclose onclose)
-	 (value (xml-primitive-value value))
+	 (value (xml-primitive-value value %context))
 	 (inline inline)
-	 (iconopen (xml-primitive-value iconopen))
-	 (iconclose (xml-primitive-value iconclose))
+	 (iconopen (xml-primitive-value iconopen %context))
+	 (iconclose (xml-primitive-value iconclose %context))
 	 (body body))))
 
 ;*---------------------------------------------------------------------*/
@@ -103,6 +106,7 @@
 ;*    <TRLEAF> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-tag <TRLEAF> ((id #unspecified string)
+		      (%context #f)
 		      (class #f)
 		      (value #unspecified)
 		      (inline #t boolean)
@@ -113,9 +117,9 @@
       (tag 'tree-leaf)
       (klass (if (string? class) class ""))
       (id (xml-make-id id 'TRLEAF))
-      (value (xml-primitive-value value))
-      (icon (tree-icon (xml-primitive-value icon) inline "file.png"))
-      (iconerr (xml-primitive-value icon))
+      (value (xml-primitive-value value %context))
+      (icon (tree-icon (xml-primitive-value icon %context) inline "file.png"))
+      (iconerr (xml-primitive-value icon %context))
       (body body)))
 
 ;*---------------------------------------------------------------------*/
@@ -171,7 +175,7 @@
 			 parent::bstring
 			 p::output-port
 			 be::xml-backend)
-   (with-access::html-tree obj (id visible
+   (with-access::html-tree obj (id visible context
 				   open head body
 				   multiselect
 				   onselect onunselect
@@ -207,7 +211,7 @@
 	    (lambda ()
 	       (let* ((p (open-output-string))
 		      (v (html-write-tree-body
-			    (+ 1 level) (car body) id p be))
+			    (+ 1 level) (car body) id p context be))
 		      (vp (close-output-port p)))
 		  (or v vp))))
 	   p))
@@ -217,13 +221,13 @@
 	    (lambda ()
 	       (let* ((p (open-output-string))
 		      (v (html-write-tree-body
-			    (+ 1 level) (car body) id p be))
+			    (+ 1 level) (car body) id p context be))
 		      (vp (close-output-port p)))
 		  (or v vp))))
 	   p))
 	 (else
 	  (display "function() {" p)
-	  (html-write-tree-body (+ 1 level) (car body) id p be)
+	  (html-write-tree-body (+ 1 level) (car body) id p context be)
 	  (display "}" p)))
       (display ", " p)
       ;; the title
@@ -341,7 +345,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    html-write-tree-body ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (html-write-tree-body level obj parent p be)
+(define (html-write-tree-body level obj parent p ctx be)
    (with-access::xml-element obj (body)
       (bind-exit (return)
 	 (for-each (lambda (b)
@@ -354,7 +358,7 @@
 				(loop (thunk))))
 			    ((service? b)
 			     (with-access::hop-service (service->hop-service b) (proc)
-				(loop (xml-unpack (proc #f)))))
+				(loop (xml-unpack (proc #f) ctx))))
 			    ((isa? b html-tree)
 			     (html-write-tree level b parent p be)
 			     (display ";\n" p))
@@ -372,7 +376,7 @@
 				 (start-line "HTTP/1.0 501 Internal Server Error")
 				 (content-type (hop-mime-type))
 				 (value b))))
-			    ((xml-unpack b)
+			    ((xml-unpack b ctx)
 			     =>
 			     loop)
 			    (else

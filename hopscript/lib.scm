@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Apr 17 07:08:00 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:12:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -345,14 +345,14 @@
 	    ((null? lst)
 	     (reverse! res))
 	    ((isa? (car lst) JsArray)
-	     (flatten (append (xml-unpack (car lst)) (cdr lst)) res))
+	     (flatten (append (xml-unpack (car lst) %this) (cdr lst)) res))
 	    (else
 	     (flatten (cdr lst) (cons (car lst) res))))))
 
    (let ((acc '()))
       (js-for-in obj
 	 (lambda (k %this)
-	    (let ((val (js-get obj k %this))
+	    (let ((val (js-get/name-cache obj k %this))
 		  (key (string->keyword (js-jsstring->string k))))
 	       (if (isa? val JsArray)
 		   (with-access::JsArray val (vec)

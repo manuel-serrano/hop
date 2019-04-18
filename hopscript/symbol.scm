@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr 17 07:58:17 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:15:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -53,7 +53,7 @@
 	 val))
    (lambda (o ctx)
       (if (isa? ctx JsGlobalObject)
-	  (js-toobject %this o)
+	  (js-toobject ctx o)
 	  (error "string->obj ::JsSymbol" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/

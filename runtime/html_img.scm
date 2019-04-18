@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/html_img.scm              */
+;*    serrano/prgm/project/hop/hop/runtime/html_img.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Tue Feb  9 14:17:32 2016 (serrano)                */
-;*    Copyright   :  2007-16 Manuel Serrano                            */
+;*    Last change :  Thu Apr 18 07:48:47 2019 (serrano)                */
+;*    Copyright   :  2007-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
 ;*=====================================================================*/
@@ -112,6 +112,7 @@
 ;*    IMG ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-tag <IMG> ((id #f)
+		   (%context #f)
 		   (inline #f boolean)
 		   (alt #f)
 		   (src #unspecified)
@@ -121,18 +122,24 @@
    (define (plain-img src cssrc)
       (instantiate::xml-empty-element
 	 (tag 'img)
-	 (id (xml-make-id (xml-primitive-value id) 'img))
+	 (id (xml-make-id (xml-primitive-value id %context) 'img))
 	 (attributes `(:src ,cssrc :alt ,(or alt (basename src))
-			 ,@(map xml-primitive-value attributes)))
+			 ,@(map (lambda (a)
+				   (xml-primitive-value a %context))
+			      attributes)))
 	 (body '())))
 
    (define (empty-img)
       (instantiate::xml-empty-element
 	 (tag 'img)
-	 (id (xml-make-id (xml-primitive-value id) 'img))
+	 (id (xml-make-id (xml-primitive-value id %context) 'img))
 	 (attributes (if alt
-			 `(:alt ,alt ,@(map xml-primitive-value attributes))
-			 (map xml-primitive-value attributes)))
+			 `(:alt ,alt ,@(map (lambda (a)
+					       (xml-primitive-value a %context))
+					  attributes))
+			 (map (lambda (a)
+				 (xml-primitive-value a %context))
+			    attributes)))
 	 (body '())))
    
    (define (onerror-img attributes src)
@@ -156,27 +163,30 @@
 		   attributes)))
 	    (else
 	     `(:onerror ,(secure-javascript-attr val)
-		 ,@(map xml-primitive-value attributes))))))
+		 ,@(map (lambda (a) (xml-primitive-value a %context))
+		      attributes))))))
    
    (define (inline-img src cssrc isrc)
       (if isrc
 	  (instantiate::xml-empty-element
 	     (tag 'img)
-	     (id (xml-make-id (xml-primitive-value id) 'img))
+	     (id (xml-make-id (xml-primitive-value id %context) 'img))
 	     (attributes `(:src ,isrc :alt ,(or alt (basename src))
 				,@(onerror-img attributes src)))
 	     (body '()))
 	  (plain-img src cssrc)))
 
-   (let ((src (xml-primitive-value src)))
+   (let ((src (xml-primitive-value src %context)))
       (cond
 	 ((isa? src xml-tilde)
 	  ;; see xml-write-initializations
 	  (instantiate::xml-empty-element
 	     (tag 'img)
 	     (id id)
-	     (attributes `(:src ,src :alt ,(xml-primitive-value alt)
-			     ,@(map xml-primitive-value attributes)))
+	     (attributes `(:src ,src :alt ,(xml-primitive-value alt %context)
+			     ,@(map (lambda (a)
+				       (xml-primitive-value a %context))
+				  attributes)))
 	     (body '())))
 	 ((string? src)
 	  (if (string-prefix? "data:" src)

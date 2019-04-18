@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr 17 07:32:31 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:11:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -76,7 +76,7 @@
 ;*    Used when an JS object is to pack the arguments sent to          */
 ;*    an XML constructor.                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-unpack o::JsDate)
+(define-method (xml-unpack o::JsDate ctx)
    (with-access::JsDate o (val)
       (list val)))
 

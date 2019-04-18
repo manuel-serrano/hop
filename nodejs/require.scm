@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 18 05:32:14 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 07:41:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -761,7 +761,7 @@
 	    (let ((rts (if (isa? attrs JsObject)
 			   (js-get attrs (& "rts") %scope)
 			   #t)))
-	       (apply <HEAD> :idiom "javascript" :context %scope
+	       (apply <HEAD> :idiom "javascript" :%context %scope
 		  (unless (eq? rts #f)
 		     (<SCRIPT>
 			(format "hop[ '%root' ] = ~s"
@@ -791,7 +791,7 @@
       (js-make-function %this
 	 (lambda (this attrs . nodes)
 	    (let ((tmp (apply <SCRIPT> :idiom "javascript"
-			  :context %scope :module %module
+			  :%context %scope :module %module
 			  (when (isa? attrs JsObject)
 			     (js-object->keyword-arguments* attrs %this))
 			  nodes)))

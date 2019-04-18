@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Apr 17 18:29:04 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 07:40:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -144,7 +144,9 @@
 ;*    xml-primitive-value ::JsObject ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-primitive-value obj::JsObject ctx)
-   (js-jsobject->plist obj (js-initial-global-object)))
+   (if (isa? ctx JsGlobalObject)
+       (js-jsobject->plist obj ctx)
+       (error "xml-primitive-value ::JsObject" "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */
@@ -152,8 +154,10 @@
 ;*    Used when an JS object is to pack the arguments sent to          */
 ;*    an XML constructor.                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-unpack o::JsObject)
-   (js-jsobject->keyword-plist o (js-initial-global-object)))
+(define-method (xml-unpack o::JsObject ctx)
+   (if (isa? ctx JsGlobalObject)
+       (js-jsobject->keyword-plist o ctx)
+       (error "xml-unpack ::JsObject" "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->json ::JsObject ...                                         */
@@ -234,20 +238,6 @@
 		  (set! sep ","))
 	       ctx))
 	 (display "}" op))))
-
-;*---------------------------------------------------------------------*/
-;*    %this ...                                                        */
-;*---------------------------------------------------------------------*/
-(define %this #f)
-
-;*---------------------------------------------------------------------*/
-;*    js-initial-global-object ...                                     */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1         */
-;*---------------------------------------------------------------------*/
-(define (js-initial-global-object)
-   (unless %this (set! %this (js-new-global-object :name "initial")))
-   %this)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-global-object ...                                         */
@@ -480,7 +470,7 @@
 	       (js-make-function %this
 		  (lambda (this attrs . nodes)
 		     (if (isa? attrs JsObject)
-			 (apply <HTML> :idiom "javascript" :context %this
+			 (apply <HTML> :idiom "javascript" :%context %this
 			    (append
 			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))

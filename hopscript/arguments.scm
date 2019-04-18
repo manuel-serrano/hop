@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Thu Apr 18 05:28:36 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:10:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -51,7 +51,7 @@
 ;*    object-serializer ::JsArguments ...                              */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsArguments
-   (lambda (o)
+   (lambda (o ctx)
       (if (isa? ctx JsGlobalObject)
 	  (js-arguments->vector o ctx)
 	  (error "obj->string ::JsArguments" "Not a JavaScript context" ctx)))
@@ -63,13 +63,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArguments ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-unpack obj::JsArguments)
-   (with-access::JsArguments obj (vec)
-      (map! (lambda (desc)
-	       (unless (eq? desc (js-absent))
-		  (with-access::JsPropertyDescriptor desc (name)
-		     (js-property-value obj obj name desc (js-initial-global-object)))))
-	 (vector->list vec))))
+(define-method (xml-unpack obj::JsArguments ctx)
+   (if (isa? ctx JsGlobalObject)
+       (with-access::JsArguments obj (vec)
+	  (map! (lambda (desc)
+		   (unless (eq? desc (js-absent))
+		      (with-access::JsPropertyDescriptor desc (name)
+			 (js-property-value obj obj name desc ctx))))
+	     (vector->list vec)))
+       (error "xml-unpack ::JsArguments" "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArguments ...                                */

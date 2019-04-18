@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr 17 07:21:46 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 08:05:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -57,7 +57,7 @@
 	  (with-access::JsGlobalObject ctx (js-string)
 	     (instantiateJsString
 		(val (js-string->jsstring o))
-		(__proto__ (js-get js-string (& "prototype") this))))
+		(__proto__ (js-get js-string (& "prototype") ctx))))
 	  (error "obj->string ::JsString" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
