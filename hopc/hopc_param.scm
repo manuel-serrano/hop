@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/hop/hopc/hopc_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Jan  6 07:53:54 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 18:31:43 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -96,6 +96,9 @@
 
 	    (hopc-js-worker-slave::bool)
 	    (hopc-js-worker-slave-set! ::bool)
+
+	    (hopc-js-thread-local::bool)
+	    (hopc-js-thread-local-set! ::bool)
 
 	    (hopc-js-module-name::obj)
 	    (hopc-js-module-name-set! ::obj)
@@ -320,6 +323,11 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-js-worker-slave
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-thread-local ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-thread-local #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-module-name ...                                          */

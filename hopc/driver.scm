@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Apr 17 07:05:34 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 18:31:32 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -194,6 +194,7 @@
 		  :driver-name (js-driver-name)
 		  :worker (hopc-js-worker)
 		  :worker-slave (hopc-js-worker-slave)
+		  :thread-local (hopc-js-thread-local)
 		  :module-main (if (boolean? (hopc-js-module-main))
 				   (hopc-js-module-main)
 				   (not (memq (hopc-pass) '(object so))))
@@ -225,6 +226,7 @@
 		  :driver-name (js-driver-name)
 		  :worker (hopc-js-worker)
 		  :worker-slave (hopc-js-worker-slave)
+		  :thread-local (hopc-js-thread-local)
 		  :module-main (if (boolean? (hopc-js-module-main))
 				   (hopc-js-module-main)
 				   (not (memq (hopc-pass) '(object so))))
@@ -386,6 +388,7 @@
 			:driver-name (js-driver-name)
 			:worker (hopc-js-worker)
 			:worker-slave (hopc-js-worker-slave)
+			:thread-local (hopc-js-thread-local)
 			:module-main (if (boolean? (hopc-js-module-main))
 					 (hopc-js-module-main)
 					 (not (memq (hopc-pass) '(object so))))

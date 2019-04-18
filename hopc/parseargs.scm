@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopc/parseargs.scm                */
+;*    serrano/prgm/project/hop/hop/hopc/parseargs.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Jan 24 16:28:48 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 18:32:53 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -204,6 +204,10 @@
 	     (hopc-js-worker-slave-set! #t))
 	    (("--js-no-worker-slave" (help "Compile a worker master code"))
 	     (hopc-js-worker-slave-set! #f))
+	    (("--js-thread-local" (help "Enable thread-local local compilation"))
+	     (hopc-js-thread-local-set! #t))
+	    (("--js-no-thread-local" (help "Disable thread-local compilation"))
+	     (hopc-js-thread-local-set! #f))
 	    (("--js-module-name" ?name (help "Set Bigloo module name"))
 	     (hopc-js-module-name-set! name))
 	    (("--js-module-path" ?path (help "Set Bigloo module path"))
