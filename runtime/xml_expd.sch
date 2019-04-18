@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/xml_expd.sch              */
+;*    serrano/prgm/project/hop/hop/runtime/xml_expd.sch                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Fri May 29 09:59:22 2015 (serrano)                */
-;*    Copyright   :  2006-15 Manuel Serrano                            */
+;*    Last change :  Thu Apr 18 05:37:51 2019 (serrano)                */
+;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -254,6 +254,7 @@
    
    (let ((args (gensym 'args))
 	 (loop (gensym 'loop))
+	 (ctx (gensym 'ctx))
 	 (name (symbol->string m)))
       `(define (,m . ,args)
 	  (let ,(map (lambda (b)
@@ -267,7 +268,8 @@
 				(attach-loc `(,b '()) b loc)
 				(error name "Illegal binding" b)))))
 		   bindings)
-	     (let ,loop ((,args ,args))
+	     (let ,loop ((,args ,args)
+			 (,ctx #f))
 		  (cond
 		     ((null? ,args)
 		      ,@(map (lambda (b)
@@ -297,6 +299,8 @@
 				    #unspecified)))
 			   bindings)
 		      (let () ,@body))
+		     ((eq? (car ,args) :%context)
+		      (,loop (cddr ,args) (cadr ,args)))
 		     ,@(map (lambda (b)
 			       (match-case b
 				  (((and (? symbol?) ?id) ?- . ?-)
@@ -305,34 +309,34 @@
 					(if (null? (cdr ,args))
 					    (begin
 					       (set! ,id #t)
-					       (,loop '()))
+					       (,loop '() ,ctx))
 					    (begin
 					       (set! ,id (cadr ,args))
-					       (,loop (cddr ,args)))))))
+					       (,loop (cddr ,args) ,ctx))))))
 				  (((and (? symbol?) ?id))
 				   (let ((id (untyped-ident id)))
 				      `((keyword? (car ,args))
 					(if (null? (cdr ,args))
 					    (begin
 					       (set! ,id #t)
-					       (,loop '()))
+					       (,loop '() ,ctx))
 					    (begin
 					       (set! ,id (cons* (cadr ,args) (car ,args) ,id))
-					       (,loop (cddr ,args)))))))
+					       (,loop (cddr ,args) ,ctx))))))
 				  ((and ?id (? symbol?))
 				   (let ((id (untyped-ident id)))
 				      `((not (keyword? (car ,args)))
 					(cond
-					   ((xml-unpack (car ,args))
+					   ((xml-unpack (car ,args) ,ctx)
 					    =>
-					    (lambda (l) (,loop (append l (cdr ,args)))))
+					    (lambda (l) (,loop (append l (cdr ,args)) ,ctx)))
 					   (else
 					    (set! ,id (cons (car ,args) ,id))
-					    (,loop (cdr ,args)))))))
+					    (,loop (cdr ,args) ,ctx))))))
 				  (else
-				   `((xml-unpack (car ,args))
+				   `((xml-unpack (car ,args) ,ctx)
 				     =>
-				     (lambda (l) (,loop (append l (cdr ,args))))))))
+				     (lambda (l) (,loop (append l (cdr ,args)) ,ctx))))))
 			bindings)
 		     (else
 		      (error ,name "Illegal argument" (car ,args)))))))))

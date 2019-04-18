@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Apr 15 08:49:10 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 05:32:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -773,7 +773,7 @@
 			     (or (isa? n xml-tilde)
 				 (isa? n xml-markup)
 				 (isa? n xml-cdata)))
-		     (xml-body nodes)))))
+		     (xml-body nodes %this)))))
 	 -1 "HEAD"))
 
    head)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jan 26 08:54:32 2019                          */
-;*    Last change :  Fri Apr 12 16:19:23 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 05:35:02 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop builtin JavaScript objects                                   */
@@ -49,12 +49,15 @@
                        (if (isa? attrs JsObject)
 			   (if (null? nodes)
 			       (apply ,(symbol-append '< tag '>)
+				  :%context ,%this
 				  (js-jsobject->keyword-plist attrs ,%this))
 			       (apply ,(symbol-append '< tag '>)
+				  :%context ,%this
 				  (append
 				     (js-jsobject->keyword-plist attrs ,%this)
 				     nodes)))
                            (apply ,(symbol-append '< tag '>)
+			      :%context ,%this
                               nodes)))
                     2 ,(symbol->string tag)
 		    :__proto__ ,__proto__

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/dom.scm                   */
+;*    serrano/prgm/project/hop/hop/runtime/dom.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Fri Jun 10 08:35:33 2016 (serrano)                */
-;*    Copyright   :  2005-16 Manuel Serrano                            */
+;*    Last change :  Thu Apr 18 05:45:57 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -42,7 +42,6 @@
 	   (dom-normalize! node)
 	   (generic dom-get-element-by-id obj ::bstring)
 	   (dom-get-elements-by-tag-name::pair-nil obj ::bstring)
-	   (dom-get-elements-by-hss-tag-name::pair-nil obj ::bstring)
 	   (dom-get-elements-by-class::pair-nil obj ::bstring)
 	   (generic dom-get-attribute node ::bstring)
 	   (generic dom-has-attribute?::bool node ::bstring)
@@ -618,23 +617,6 @@
 	     '())))))
 
 ;*---------------------------------------------------------------------*/
-;*    dom-get-elements-by-hss-tag-name ...                             */
-;*---------------------------------------------------------------------*/
-(define (dom-get-elements-by-hss-tag-name::pair-nil obj name)
-   (let loop ((obj obj))
-      (cond
-	 ((pair? obj)
-	  (append-map loop obj))
-	 ((isa? obj xml-markup)
-	  (with-access::xml-markup obj (body)
-	     (let ((c (xml-primitive-value (dom-get-attribute obj "data-hss-tag"))))
-		(if (and (string? c) (string=? c name))
-		    (cons obj (loop body))
-		    (loop body)))))
-	 (else
-	  '()))))
-
-;*---------------------------------------------------------------------*/
 ;*    dom-get-elements-by-class ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (dom-get-elements-by-class::pair-nil obj name)
@@ -660,7 +642,7 @@
 	  (append-map loop obj))
 	 ((isa? obj xml-markup)
 	  (with-access::xml-markup obj (body tag)
-	     (let ((c (xml-primitive-value (dom-get-attribute obj "class"))))
+	     (let ((c (dom-get-attribute obj "class")))
 		(if (and (string? c) (string-in? c name))
 		    (cons obj (loop body))
 		    (loop body)))))

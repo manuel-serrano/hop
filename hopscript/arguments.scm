@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Apr 17 06:57:55 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 05:28:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -70,12 +70,6 @@
 		  (with-access::JsPropertyDescriptor desc (name)
 		     (js-property-value obj obj name desc (js-initial-global-object)))))
 	 (vector->list vec))))
-
-;*---------------------------------------------------------------------*/
-;*    xml-body-element ::JsArguments ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (xml-body-element obj::JsArguments)
-   (xml-unpack obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArguments ...                                */

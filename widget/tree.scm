@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/widget/tree.scm                   */
+;*    serrano/prgm/project/hop/hop/widget/tree.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Mar  1 16:33:28 2017 (serrano)                */
-;*    Copyright   :  2005-17 Manuel Serrano                            */
+;*    Last change :  Thu Apr 18 05:28:56 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -354,7 +354,7 @@
 				(loop (thunk))))
 			    ((service? b)
 			     (with-access::hop-service (service->hop-service b) (proc)
-				(loop (xml-body-element (proc #f)))))
+				(loop (xml-unpack (proc #f)))))
 			    ((isa? b html-tree)
 			     (html-write-tree level b parent p be)
 			     (display ";\n" p))

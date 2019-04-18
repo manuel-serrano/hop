@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 17 07:24:40 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 05:28:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -271,12 +271,6 @@
 		    (cons (js-get obj i %this) (loop (+u32 i #u32:1))))
 		   (else
 		    (loop (+u32 i #u32:1)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    xml-body-element ::JsArray ...                                   */
-;*---------------------------------------------------------------------*/
-(define-method (xml-body-element obj::JsArray)
-   (xml-unpack obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::JsArray ...                                          */

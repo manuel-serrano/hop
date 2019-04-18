@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Apr 17 18:26:45 2019 (serrano)                */
+;*    Last change :  Thu Apr 18 05:27:47 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -51,10 +51,9 @@
 	    (hop-xml-backend::xml-backend)
 	    (hop-xml-backend-set! ::obj)
 
-	    (xml-body ::obj)
-	    (generic xml-body-element ::obj)
-	    (generic xml-primitive-value ::obj)
-	    (generic xml-unpack ::obj)
+	    (xml-body ::obj ::obj)
+	    (generic xml-primitive-value ::obj ::obj)
+	    (generic xml-unpack ::obj ::obj)
 
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::keyword ::output-port ::xml-backend)
@@ -254,7 +253,8 @@
    (let loop ((a args)
 	      (attr '())
 	      (body '())
-	      (id #unspecified))
+	      (id #unspecified)
+	      (ctx #f))
       (cond
 	 ((null? a)
 	  (instantiate::xml-element
@@ -266,26 +266,28 @@
 	  (cond
 	     ((not (pair? (cdr a)))
 	      (error (el->string el) "Illegal attribute" (car a)))
-	     ((eq? (car a) :id)
-	      (let ((v (xml-primitive-value (cadr a))))
+	     ((or (eq? (car a) :id) (eq? (car a) :class))
+	      (let ((v (xml-primitive-value (cadr a) ctx)))
 		 (if (or (string? v) (not v))
-		     (loop (cddr a) attr body v)
+		     (loop (cddr a) attr body v ctx)
 		     (bigloo-type-error el "string" (cadr a)))))
+	     ((eq? (car a) :%context)
+	      (loop (cddr a) attr body id (cadr a)))
 	     (else
-	      (loop (cddr a) (cons* (cadr a) (car a) attr) body id))))
+	      (loop (cddr a) (cons* (cadr a) (car a) attr) body id ctx))))
 	 ((null? (car a))
-	  (loop (cdr a) attr body id))
-	 ((xml-unpack (car a))
+	  (loop (cdr a) attr body id ctx))
+	 ((xml-unpack (car a) ctx)
 	  =>
 	  (lambda (l)
 	     (if (not (or (null? (cdr a)) (pair? (cdr a))))
 		 (error (el->string el) "Illegal arguments"
 		    `(,(el->string el) ,@args))
 		 (if (or (pair? l) (null? l))
-		     (loop (append l (cdr a)) attr body id)
-		     (loop (cdr a) attr (cons (car a) body) id)))))
+		     (loop (append l (cdr a)) attr body id ctx)
+		     (loop (cdr a) attr (cons (car a) body) id ctx)))))
 	 (else
-	  (loop (cdr a) attr (cons (car a) body) id)))))
+	  (loop (cdr a) attr (cons (car a) body) id ctx)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-markup-is? ...                                               */
@@ -329,30 +331,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-body ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (xml-body body)
+(define (xml-body body ctx)
    (if (null? body)
        body
-       (let ((el (xml-body-element (car body))))
+       (let ((el (xml-unpack (car body) ctx)))
 	  (if (pair? el)
-	      (append el (xml-body (cdr body)))
-	      (cons el (xml-body (cdr body)))))))
-
-;*---------------------------------------------------------------------*/
-;*    xml-body ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-generic (xml-body-element obj)
-   obj)
+	      (append el (xml-body (cdr body) ctx))
+	      (cons el (xml-body (cdr body) ctx))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::obj ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (xml-primitive-value x::obj)
+(define-generic (xml-primitive-value x::obj ctx)
    x)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::obj ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-generic (xml-unpack obj::obj)
+(define-generic (xml-unpack obj::obj ctx)
    (when (list? obj) obj))
 
 ;*---------------------------------------------------------------------*/
