@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Tue Mar 26 18:22:54 2019 (serrano)                */
+;*    Last change :  Fri Apr 19 14:15:17 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
@@ -99,6 +99,14 @@
 	 (with-access::J2SFun this (loc new-target)
 	    (set! new-target %info)
 	    (set! body (body-bind-new-target body %info))))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    newtarget! ::J2SArrow ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (newtarget! this::J2SArrow fun)
+   (with-access::J2SFun this (%info body)
+      (set! body (newtarget! body fun))
       this))
 
 ;*---------------------------------------------------------------------*/

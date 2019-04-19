@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Jan 24 07:27:17 2019 (serrano)                */
+;*    Last change :  Fri Apr 19 14:25:09 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -445,11 +445,15 @@
 (define (j2sfun->ctor this::J2SFun mode return conf decl::J2SDecl)
    
    (define (object-alloc this::J2SFun)
-      (with-access::J2SFun this (body)
+      (with-access::J2SFun this (body expr new-target)
 	 (let ((f (j2s-decl-scheme-id decl)))
-	    (if (cancall? body)
-		`(js-object-alloc %this ,f)
-		`(js-object-alloc-fast %this ,f)))))
+	    (cond
+	       (new-target
+		`(js-object-alloc/new-target %this ,f))
+	       ((cancall? body)
+		`(js-object-alloc %this ,f))
+	       (else
+		`(js-object-alloc-fast %this ,f))))))
    
    (with-access::J2SFun this (loc body vararg mode params generator thisp)
       (with-access::J2SDecl thisp (id)

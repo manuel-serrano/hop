@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Fri Apr 12 18:32:08 2019 (serrano)                */
+/*    Last change :  Fri Apr 19 14:37:27 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -71,7 +71,7 @@ assert.ok( p.toFixed( 2 ), "0.51" );
 var q = 0.49;
 assert.ok( q.toFixed( 2 ), "0.49" );
 
-assert.ok( Math.abs( null ), 0 );
+assert.ok( Math.abs( null ) === 0, "Math.abs( null )" );
 
 /*---------------------------------------------------------------------*/
 /*    integer limits                                                   */

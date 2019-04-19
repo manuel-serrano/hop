@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Tue Jan  1 06:37:49 2019 (serrano)                */
+/*    Last change :  Fri Apr 19 14:21:00 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 6 features                               */
@@ -115,6 +115,30 @@ function misch() {
    return o.newtarget0 === o.newtarget1;
 }
 
+function misci() {
+   var f;
+
+   function F() {
+      f =  new.target;
+   }
+
+   new F();
+
+   return f === F;
+}
+
+function miscj() {
+   var f;
+
+   function F() {
+      f = () => new.target;
+   }
+
+   new F();
+
+   return f() === F;
+}
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
@@ -123,6 +147,9 @@ console.log( "   miscd()"); assert.ok( miscd(), "miscd" );
 console.log( "   misce()"); assert.ok( misce(), "misce" );
 console.log( "   miscf()"); assert.ok( miscf(), "miscf" );
 console.log( "   miscg()"); assert.ok( miscg(), "miscg" );
+console.log( "   misch()"); assert.ok( misch(), "misch" );
+console.log( "   misci()"); assert.ok( misci(), "misci" );
+console.log( "   miscj()"); assert.ok( miscj(), "miscj" );
 
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */
