@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Apr 18 18:31:43 2019 (serrano)                */
+;*    Last change :  Fri Apr 19 07:50:34 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -327,7 +327,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-thread-local ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-parameter hopc-js-thread-local #f)
+(define-parameter hopc-js-thread-local
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-module-name ...                                          */

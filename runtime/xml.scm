@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Apr 18 05:27:47 2019 (serrano)                */
+;*    Last change :  Fri Apr 19 13:15:47 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -266,11 +266,20 @@
 	  (cond
 	     ((not (pair? (cdr a)))
 	      (error (el->string el) "Illegal attribute" (car a)))
-	     ((or (eq? (car a) :id) (eq? (car a) :class))
+	     ((eq? (car a) :id)
 	      (let ((v (xml-primitive-value (cadr a) ctx)))
 		 (if (or (string? v) (not v))
 		     (loop (cddr a) attr body v ctx)
 		     (bigloo-type-error el "string" (cadr a)))))
+	     ((eq? (car a) :class)
+	      (let ((v (xml-primitive-value (cadr a) ctx)))
+		 (cond
+		    ((or (string? v) (not v))
+		     (loop (cddr a) (cons* v (car a) attr) body id ctx))
+		    ((symbol? v)
+		     (loop (cddr a) (cons* (symbol->string! v) (car a) attr) body id ctx))
+		    (else
+		     (bigloo-type-error el "string" (cadr a))))))
 	     ((eq? (car a) :%context)
 	      (loop (cddr a) attr body id (cadr a)))
 	     (else

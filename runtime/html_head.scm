@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Apr 18 07:39:54 2019 (serrano)                */
+;*    Last change :  Fri Apr 19 12:57:43 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -123,14 +123,14 @@
 			   body)))))
 	  (hbody (cond
 		    ((null? nbody)
-		     (list (<HEAD> :idiom idiom :context %context
+		     (list (<HEAD> :idiom idiom :%context %context
 			      :%location %location)))
 		    ((xml-markup-is? (car nbody) 'head)
 		     nbody)
 		    ((find-head body)
 		     nbody)
 		    (else
-		     (cons (<HEAD> :idiom idiom :context %context
+		     (cons (<HEAD> :idiom idiom :%context %context
 			      :%location %location)
 			nbody)))))
       (instantiate::xml-html
@@ -578,10 +578,6 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		 ((:%location)
 		  (set! location (xml-primitive-value (cadr a) context))
 		  (loop (cddr a) mode rts dir path base inl packed els))
-;* 		 ((:authorizations)                                    */
-;* 		  (cell-set! attrs                                     */
-;* 		     `(:%authorizations ,(xml-primitive-value (cadr a)))) */
-;* 		  (loop (cddr a) mode rts dir path base inl packed els)) */
 		 ((:prefix)
 		  ;; RDF stuff
 		  (loop (cddr a) mode rts dir path base inl packed els))

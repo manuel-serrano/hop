@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/hop/src/parseargs.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 11 14:41:14 2019 (serrano)                */
+;*    Last change :  Fri Apr 19 07:47:55 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -477,7 +477,7 @@
 		     (obj->javascript-attr ev op)
 		     (close-output-port op)))
 	 :hop-compile (lambda (obj op compile)
-			 (hop->javascript obj op compile #f))
+			 (hop->javascript obj op compile #f #f))
 	 :hop-register hop-register-value
 	 :hop-library-path (hop-library-path)
 	 :features `(hop

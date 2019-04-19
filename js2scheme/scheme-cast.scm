@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Apr  2 08:01:40 2019 (serrano)                */
+;*    Last change :  Fri Apr 19 13:32:15 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -71,6 +71,7 @@
 	 (scmstring fixnum->string)
 	 (object ,js-number->jsobject)
 	 (iterable error)
+	 (bool ,(lambda (v expr conf) `(not (=fx ,v 0))))
 	 (any nop)))
      (integer
 	((int32 ,js-integer->int32)
