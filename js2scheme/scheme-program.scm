@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Apr 19 07:40:49 2019 (serrano)                */
+;*    Last change :  Sat Apr 20 06:59:54 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -93,31 +93,21 @@
 	  (j2s-slave-module module scmcnsts esexports esimports body)
 	  (j2s-master-module module scmcnsts esexports esimports body)))
    
-   (define (j2s-worker-thunk path esimports esexports globals scmcnsts body conf)
+   (define (j2s-worker-thunk bind path esimports esexports globals scmcnsts body conf)
       `(lambda ()
-	  (define %scope (nodejs-new-scope-object %this))
-	  (define this
+	  (,bind %scope (nodejs-new-scope-object %this))
+	  (,bind this
 	     (with-access::JsGlobalObject %this (js-object)
 		(js-new0 %this js-object)))
-	  (define %module
+	  (,bind %module
 	     (nodejs-new-module ,(basename path) ,(absolute path)
 		%worker %this))
-	  (define %cnst-table ,scmcnsts)
+	  (,bind %cnst-table ,scmcnsts)
 	  ,@esimports
 	  ,esexports
 	  ,@globals
 	  ,@(exit-body body conf)))
 
-   (define (j2s-worker-thread-local-thunk path esimports esexports globals scmcnsts body conf)
-      `(lambda ()
-	  (define %module
-	     (nodejs-new-module ,(basename path) ,(absolute path)
-		%worker %this))
-	  ,@esimports
-	  ,esexports
-	  ,@globals
-	  ,@(exit-body body conf)))
-   
    (define (j2s-main-module/workers name scmcnsts esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size path
 				       globals cnsts loc)
@@ -156,11 +146,11 @@
 		   (js-worker-push-thunk! %worker "nodejs-toplevel"
 		      ,(if (config-get conf :function-nice-name #f)
 			   (let ((id (string->symbol "#")))
-			      `(let ((,id ,(j2s-worker-thunk path
+			      `(let ((,id ,(j2s-worker-thunk 'define path
 					      esimports esexports
 					      globals scmcnsts body conf)))
 				  ,id))
-			   (j2s-worker-thunk path esimports esexports
+			   (j2s-worker-thunk 'define path esimports esexports
 			      globals scmcnsts body conf)))
 		   ,(profilers conf)
 		   (thread-join! (thread-start-joinable! %worker)))
@@ -209,34 +199,26 @@
 	       `(define %source ,path)
 	       '(define %resource (dirname %source))
 	       '(define %worker #unspecified)
-	       '(define %this (class-nil JsGlobalObject))
 	       '(define %scope (class-nil JsGlobalObject))
 	       '(define this (class-nil JsObject))
 	       `(define %cnst-table #f)
 	       `(define (main args)
 		   (set! %this
 		      (nodejs-new-global-object :name ,name))
-		   (set! %scope
-		      (nodejs-new-scope-object %this))
-		   (set! this
-		      (with-access::JsGlobalObject %this (js-object)
-			 (js-new0 %this js-object)))
 		   (set! %worker
 		      (js-init-main-worker! %this #f nodejs-new-global-object))
-		   (hopscript-install-expanders!)
-		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (set! __js_strings
 		      (&init!))
-		   (set! %cnst-table
-		      ,scmcnsts)
+		   (hopscript-install-expanders!)
+		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (js-worker-push-thunk! %worker "nodejs-toplevel"
 		      ,(if (config-get conf :function-nice-name #f)
 			   (let ((id (string->symbol "#")))
-			      `(let ((,id ,(j2s-worker-thread-local-thunk path
+			      `(let ((,id ,(j2s-worker-thunk 'set! path
 					      esimports esexports
 					      globals scmcnsts body conf)))
 				  ,id))
-			   (j2s-worker-thunk path esimports esexports
+			   (j2s-worker-thunk 'set! path esimports esexports
 			      globals scmcnsts body conf)))
 		   ,(profilers conf)
 		   (thread-join! (thread-start-joinable! %worker)))

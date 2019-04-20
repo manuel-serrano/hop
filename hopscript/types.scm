@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Apr 18 08:02:52 2019 (serrano)                */
+;*    Last change :  Sat Apr 20 07:47:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -55,7 +55,7 @@
 	      (errorlisteners::pair-nil (default '()))
 	      (onmessage::obj (default (js-undefined)))
 	      (onexit::obj (default (js-undefined)))
-	      (%this::JsGlobalObject read-only)
+	      (%this::JsGlobalObject (default (class-nil JsGlobalObject)))
 	      (%process (default #f))
 	      (%retval::int (default 0))
 	      (async (default #f))

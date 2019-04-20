@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Apr 18 08:12:34 2019 (serrano)                */
+;*    Last change :  Sat Apr 20 09:31:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -53,6 +53,11 @@
 	   (inline fixnums?::bool ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
+;*    *cnsts* ...                                                      */
+;*---------------------------------------------------------------------*/
+(define *cnsts* '())
+
+;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
@@ -62,6 +67,7 @@
 ;*---------------------------------------------------------------------*/
 (define (&cnst-init str::bstring %this)
    (let ((cnsts (string->obj str)))
+      (set! *cnsts* (cons cnsts *cnsts*))
       ;; start fill at index 1 because of the C declaration
       ;; of the constant vector (see constants_expd.sch)
       (let loop ((i (-fx (vector-length cnsts) 1)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Apr 15 08:18:52 2019 (serrano)                */
+;*    Last change :  Sat Apr 20 07:49:08 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -206,15 +206,13 @@
 ;*    javascript-init ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init args files exprs)
-   (let* ((%global (nodejs-new-global-object :name "main"))
-	  (%worker (js-init-main-worker! %global
-		      ;; keep-alive
-		      (or (hop-run-server) (eq? (hop-enable-repl) 'js))
-		      nodejs-new-global-object))
-	  (%module (nodejs-new-module "." "" %worker %global)))
+   (multiple-value-bind (%worker %global %module)
+      (js-main-worker! "main" (or (hop-run-server) (eq? (hop-enable-repl) 'js))
+	 nodejs-new-global-object nodejs-new-module)
       ;; js loader
       (hop-loader-add! "js"
-	 (lambda (path . test) (nodejs-load path path %global %module %worker)))
+	 (lambda (path . test)
+	    (nodejs-load path path %global %module %worker)))
       ;; profiling
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f))
@@ -222,11 +220,12 @@
       (when (string? (hop-rc-loaded))
 	 (javascript-rc %global %module %worker))
       ;; hss extension
-      (when (hop-javascript) (javascript-init-hss %worker %global))
+      (when (hop-javascript)
+	 (javascript-init-hss %worker %global))
       ;; create the repl JS module
-      (let ((path (file-name-canonicalize!
-		     (make-file-name (pwd) (car args)))))
-	 (nodejs-new-module "<repl>" path %worker %global))
+;*       (let ((path (file-name-canonicalize!                          */
+;* 		     (make-file-name (pwd) (car args)))))              */
+;* 	 (nodejs-new-module "<repl>" path %worker %global))            */
       ;; push user expressions
       (when (pair? exprs)
 	 (js-worker-push-thunk! %worker "cmdline"
@@ -258,11 +257,15 @@
 	    (thread-request-set! #unspecified #unspecified)))
       ;; install the hopscript expanders
       (hopscript-install-expanders!)
-      ;; start the javascript loop
-      (hop-hopscript-worker (hop-scheduler) %global %worker)
       ;; start the JS repl loop
       (when (eq? (hop-enable-repl) 'js)
-	 (hopscript-repl (hop-scheduler) %global %worker))
+	 (js-worker-push-thunk! %worker "repl"
+	    (lambda ()
+	       (hopscript-repl (hop-scheduler) %global %worker))))
+      ;; start the javascript loop
+      (with-access::WorkerHopThread %worker (mutex condv)
+	 (synchronize mutex
+	    (condition-variable-wait! condv mutex)))
       ;; return the worker for the main loop to join
       %worker))
 
@@ -280,7 +283,7 @@
       ;; set the preferred language
       (hop-preferred-language-set! "hopscript")
       ;; force the module initialization
-      (js-worker-push-thunk! %worker "hss"
+      (js-worker-push-thunk! %worker "rc"
 	 (lambda ()
 	    (let ((path (if (and (>fx (string-length path) 0)
 				 (char=? (string-ref path 0) (file-separator)))
@@ -304,9 +307,7 @@
 ;*    javascript-init-hss ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init-hss %worker %global)
-   (let ((mod (nodejs-new-module "hss" "hss" %worker %global))
-	 (scope (nodejs-new-scope-object %global))
-	 (exp (call-with-input-string "false"
+   (let ((exp (call-with-input-string "false"
 		 (lambda (in)
 		    (j2s-compile in :driver (j2s-plain-driver)
 		       :driver-name "j2s-plain-driver"
@@ -317,13 +318,17 @@
       ;; force the module initialization
       (js-worker-push-thunk! %worker "hss"
 	 (lambda ()
-	    ((eval! exp) %global %global scope mod)
-	    (hop-hss-foreign-eval-set!
-	       (lambda (ip)
-		  (js-put! mod 'filename
-		     (js-string->jsstring (input-port-name ip)) #f
-		     %global)
-		  (%js-eval-hss ip %global %worker scope)))))))
+	    (let ((mod (nodejs-new-module "hss" "hss" %worker %global))
+		  (scope (nodejs-new-scope-object %global)))
+	       (call-with-input-string "false"
+		  (lambda (in)
+		     (%js-eval in 'repl %global %global scope)))
+	       (hop-hss-foreign-eval-set!
+		  (lambda (ip)
+		     (js-put! mod 'filename
+			(js-string->jsstring (input-port-name ip)) #f
+			%global)
+		     (%js-eval-hss ip %global %worker scope))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    set-scheduler! ...                                               */
@@ -476,16 +481,3 @@
       (let ((serv (make-server-socket (hop-fast-server-event-port)
 		     :name (hop-server-listen-addr))))
 	 (scheduler-accept-loop scd serv #f))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-hopscript-worker ...                                         */
-;*---------------------------------------------------------------------*/
-(define (hop-hopscript-worker scd %global %worker)
-   (if (>fx (hop-max-threads) 2)
-       (with-access::WorkerHopThread %worker (mutex condv)
-	  (synchronize mutex
-	     (thread-start-joinable! %worker)
-	     (condition-variable-wait! condv mutex)))
-       (error "hop-repl"
-	  "not enough threads to start the main worker (see --threads-max option)"
-	  (hop-max-threads))))

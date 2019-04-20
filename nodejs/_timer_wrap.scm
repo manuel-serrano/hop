@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Mon Apr 15 08:05:53 2019 (serrano)                */
+;*    Last change :  Sat Apr 20 14:08:04 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -24,7 +24,9 @@
 	      (proc (default #f))
 	      (marked (default #f))))
 
-   (export (hopjs-process-timer ::WorkerHopThread ::JsGlobalObject ::JsObject)))
+   (export (hopjs-process-timer ::WorkerHopThread ::JsGlobalObject ::JsObject))
+
+   (static __js_strings::vector))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */

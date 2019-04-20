@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Apr 17 08:10:19 2019 (serrano)                */
+;*    Last change :  Sat Apr 20 07:44:43 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -37,7 +37,7 @@
    (export (js-init-worker! ::JsGlobalObject)
 	   (js-worker-construct ::JsGlobalObject ::procedure)
 	   
-	   (js-init-main-worker!::WorkerHopThread ::JsGlobalObject ::bool ::procedure)
+ 	   (js-main-worker!::WorkerHopThread ::bstring ::bool ::procedure ::procedure)
 	   (js-current-worker::WorkerHopThread)
 
 	   (js-worker-load::procedure)
@@ -480,6 +480,8 @@
 ;*    %worker ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define %worker #f)
+(define %global #f)
+(define %module #f)
 (define %global-constructor js-new-global-object)
 
 ;*---------------------------------------------------------------------*/
@@ -492,25 +494,37 @@
 	  %worker)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-init-main-worker! ...                                         */
+;*    js-main-worker! ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Start the initial WorkerHopThread                                */
 ;*---------------------------------------------------------------------*/
-(define (js-init-main-worker! %this::JsGlobalObject keep-alive ctor)
+(define (js-main-worker! name keep-alive ctor ctormod)
    (unless %worker
       (set! %global-constructor ctor)
-      (with-access::JsGlobalObject %this (js-object worker)
-	 (set! %worker
-	    (instantiate::WorkerHopThread
-	       (name "%worker@main")
-	       (%this %this)
-	       (onexit #f)
-	       (keep-alive keep-alive)
-	       (module-cache (js-new0 %this js-object))
-	       (body (lambda () (js-worker-loop %worker)))))
-	 (set! worker %worker))
-      (js-worker-init! %worker))
-   %worker)
+      (let ((mutex (make-mutex))
+	    (condv (make-condition-variable)))
+	 (synchronize mutex
+	    (set! %worker
+	       (instantiate::WorkerHopThread
+		  (name (string-append "%worker@" name))
+		  (onexit #f)
+		  (keep-alive keep-alive)
+		  (body (lambda ()
+			   (set! %global (ctor :name name))
+			   (with-access::JsGlobalObject %global (js-object worker)
+			      (set! worker %worker)
+			      (set! %module (ctormod "." "" %worker %global))
+			      (with-access::WorkerHopThread %worker (%this module-cache)
+				 (set! module-cache (js-new0 %this js-object))
+				 
+				 (set! %this %global))
+			      (synchronize mutex
+				 (condition-variable-broadcast! condv))
+			      (js-worker-init! %worker)
+			      (js-worker-loop %worker))))))
+	    (thread-start-joinable! %worker)
+	    (condition-variable-wait! condv mutex))))
+   (values %worker %global %module))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exception-handler ...                                  */

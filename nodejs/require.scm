@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 18 07:41:03 2019 (serrano)                */
+;*    Last change :  Sat Apr 20 09:10:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1098,6 +1098,7 @@
 		      (call-with-output-file tgt
 			 (lambda (op)
 			    (for-each (lambda (e) (pp e op)) expr)))))
+		(trace-item "thread=" (current-thread))
 		(trace-item "expr=" (format "~s" expr))
 		(unwind-protect
 		   (let ((nexpr (map (lambda (x) (eval `(expand ',x))) expr)))
@@ -2339,11 +2340,10 @@
 ;*    (e.g., hopc).                                                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-plugins-toplevel-loader)
-   (let ((this (nodejs-new-global-object :name "plugins")))
-      (with-access::JsGlobalObject this (js-object)
-	 (let* ((worker (js-init-main-worker! this #f nodejs-new-global-object))
-		(mod (nodejs-new-module "hopc" "." worker this)))
-	    (make-plugins-loader this mod worker)))))
+   (multiple-value-bind (worker this module)
+      (js-main-worker! "plugin" #f
+	 nodejs-new-global-object nodejs-new-module)
+      (make-plugins-loader this module worker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */
