@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Mon Apr 15 09:51:45 2019 (serrano)                */
+;*    Last change :  Sun Apr 21 16:18:23 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -67,8 +67,7 @@
 	  (unwind-protect
 	     (let* ((nbody (map (lambda (x) (e x e)) body))
 		    (cnsts (map cadr (reverse! (thread-parameter '&cnsts)))))
-		(e `(let ((__js_strings (&cnst-init
-					  ,(obj->string (apply vector cnsts)) %this)))
+		(e `(let ((__js_strings (&jsstring-init ,(obj->string (apply vector cnsts)))))
 		       ,@nbody)
 		   e))
 	     (thread-parameter-set! '&cnsts o))))
@@ -96,7 +95,9 @@
        ;; need to bind %this local to expand possible object access for %this
        ;; (as the (&end!) that will actually expand the (&init) form will
        ;; expand it in a different context that those of the (&init!)
-       `(let ((%this ,(e '%this e))) ,x))
+       ;; the LET construct is needed to prevent the location propagation
+       ;; to change the X list, which is mutated by the &end! macro!
+       `(let () ,x))
       (else
        (error "&init!" "Illegal form" x))))
 
@@ -108,7 +109,7 @@
       ((&end!)
        (let* ((xbeg (thread-parameter '&x-cnsts))
 	      (cnsts (map cadr (reverse! (thread-parameter '&cnsts))))
-	      (newx `(&cnst-init ,(obj->string (apply vector cnsts)) %this)))
+	      (newx `(&jsstring-init ,(obj->string (apply vector cnsts)))))
 	  (if xbeg
 	      (begin
 		 (set-car! xbeg (car newx))

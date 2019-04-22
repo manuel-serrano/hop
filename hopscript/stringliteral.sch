@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Sat Apr 13 07:35:50 2019 (serrano)                */
+;*    Last change :  Sun Apr 21 15:56:37 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JsStringLiteral Helper macros.                                   */
@@ -18,11 +18,7 @@
    
    (import __hopscript_stringliteral)
    
-   (include "names.sch")
-
-   (cond-expand
-      ((config thread-local-storage #t)
-       (pragma (__js_strings thread-local)))))
+   (include "names.sch"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->jsstring                                              */

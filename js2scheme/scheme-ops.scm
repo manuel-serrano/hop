@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Apr 12 18:29:12 2019 (serrano)                */
+;*    Last change :  Sun Apr 21 19:18:37 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -152,9 +152,9 @@
 	     (let loop ((withs withs))
 		(if (null? withs)
 		    `(begin ,(j2s-scheme expr mode return conf) #f)
-		    `(if ,(j2s-in? loc `',id (car withs))
+		    `(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs))
 			 (js-delete! ,(j2s-scheme (car withs) mode return conf)
-			    ',(j2s-scheme id mode return conf)
+			    (& ,(symbol->string (j2s-scheme id mode return conf)))
 			    #f
 			    %this)
 			 ,(loop (cdr withs)))))))
@@ -169,7 +169,8 @@
 	      (with-access::J2SUnresolvedRef expr (id)
 		 (err id))
 	      (with-access::J2SUnresolvedRef expr (id)
-		 `(js-delete! ,j2s-unresolved-del-workspace ',id #f %this))))
+		 `(js-delete! ,j2s-unresolved-del-workspace
+		     (& ,(symbol->string id)) #f %this))))
 	 ((and (isa? expr J2SRef) (not (isa? expr J2SThis)))
 	  (if (strict-mode? mode)
 	      (with-access::J2SRef expr (decl)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Apr 20 07:49:08 2019 (serrano)                */
+;*    Last change :  Sun Apr 21 07:46:19 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -207,7 +207,9 @@
 ;*---------------------------------------------------------------------*/
 (define (javascript-init args files exprs)
    (multiple-value-bind (%worker %global %module)
-      (js-main-worker! "main" (or (hop-run-server) (eq? (hop-enable-repl) 'js))
+      (js-main-worker! "main"
+	 (make-file-name (pwd) (if (pair? files) (car files) "."))
+	 (or (hop-run-server) (eq? (hop-enable-repl) 'js))
 	 nodejs-new-global-object nodejs-new-module)
       ;; js loader
       (hop-loader-add! "js"

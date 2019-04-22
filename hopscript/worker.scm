@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sat Apr 20 07:44:43 2019 (serrano)                */
+;*    Last change :  Sun Apr 21 07:41:39 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -37,7 +37,7 @@
    (export (js-init-worker! ::JsGlobalObject)
 	   (js-worker-construct ::JsGlobalObject ::procedure)
 	   
- 	   (js-main-worker!::WorkerHopThread ::bstring ::bool ::procedure ::procedure)
+ 	   (js-main-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure)
 	   (js-current-worker::WorkerHopThread)
 
 	   (js-worker-load::procedure)
@@ -498,7 +498,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Start the initial WorkerHopThread                                */
 ;*---------------------------------------------------------------------*/
-(define (js-main-worker! name keep-alive ctor ctormod)
+(define (js-main-worker! name path keep-alive ctor ctormod)
    (unless %worker
       (set! %global-constructor ctor)
       (let ((mutex (make-mutex))
@@ -513,7 +513,7 @@
 			   (set! %global (ctor :name name))
 			   (with-access::JsGlobalObject %global (js-object worker)
 			      (set! worker %worker)
-			      (set! %module (ctormod "." "" %worker %global))
+			      (set! %module (ctormod (basename path) path %worker %global))
 			      (with-access::WorkerHopThread %worker (%this module-cache)
 				 (set! module-cache (js-new0 %this js-object))
 				 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Apr 20 09:10:07 2019 (serrano)                */
+;*    Last change :  Sun Apr 21 14:01:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2341,7 +2341,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-plugins-toplevel-loader)
    (multiple-value-bind (worker this module)
-      (js-main-worker! "plugin" #f
+      (js-main-worker! "plugin" "plugin" #f
 	 nodejs-new-global-object nodejs-new-module)
       (make-plugins-loader this module worker)))
 

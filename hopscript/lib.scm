@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sat Apr 20 09:31:51 2019 (serrano)                */
+;*    Last change :  Sun Apr 21 14:08:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -35,7 +35,7 @@
 	   __hopscript_arraybuffer
 	   __hopscript_arraybufferview)
 
-   (export (&cnst-init ::bstring ::JsGlobalObject)
+   (export 
 	   (js-constant-init ::obj ::obj ::JsGlobalObject)
 	   (js-with-context ::obj ::bstring ::procedure)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
@@ -53,42 +53,9 @@
 	   (inline fixnums?::bool ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    *cnsts* ...                                                      */
-;*---------------------------------------------------------------------*/
-(define *cnsts* '())
-
-;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
-
-;*---------------------------------------------------------------------*/
-;*    &cnst-init ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (&cnst-init str::bstring %this)
-   (let ((cnsts (string->obj str)))
-      (set! *cnsts* (cons cnsts *cnsts*))
-      ;; start fill at index 1 because of the C declaration
-      ;; of the constant vector (see constants_expd.sch)
-      (let loop ((i (-fx (vector-length cnsts) 1)))
-	 (when (>=fx i 0)
-	    (let ((el (vector-ref cnsts i)))
-	       (vector-set! cnsts i
-		  (case (vector-ref el 0)
-		     ((0)
-		      ;; an ascii name
-		      (let ((str (vector-ref el 1)))
-			 (js-ascii-name->jsstring str)))
-		     ((1)
-		      ;; an utf8 name
-		      (let ((str (vector-ref el 1)))
-			 (js-utf8-name->jsstring str)))
-		     ((2)
-		      ;; a fixnum name
-		      (let ((str (vector-ref el 1)))
-			 (js-integer-name->jsstring str))))))
-	    (loop (-fx i 1))))
-      cnsts))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-constant-init ...                                             */

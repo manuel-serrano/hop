@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Apr 15 19:00:45 2019 (serrano)                */
+;*    Last change :  Sun Apr 21 13:59:59 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -24,7 +24,7 @@
 	   __hopscript_lib
 	   __hopscript_public)
    
-   (export (js-init-names! ::JsGlobalObject)
+   (export (js-init-names!)
 	   (inline js-name-pcache::obj ::JsStringLiteral)
 	   (inline js-name-pcache-set! ::JsStringLiteral ::JsPropertyCache)
 	   (inline js-jsstring-toname::JsStringLiteral ::JsStringLiteral)
@@ -38,17 +38,9 @@
 	   (js-name->jsstring::JsStringLiteral ::bstring))
 
    (export js-name-lock
-	   (macro synchronize-name)
-	   ;;(expander synchronize-name)
-	   )
+	   (macro synchronize-name))
    
-   (static js-names js-integer-names js-string-names))
-;*                                                                     */
-;*    (cond-expand                                                     */
-;*       ((config thread-local-storage #t)                             */
-;*        (pragma (js-names thread-local)                              */
-;* 	  (js-integer-names thread-local)                              */
-;* 	  (js-string-names thread-local)))))                           */
+   (export js-names js-integer-names js-string-names))
 
 ;*---------------------------------------------------------------------*/
 ;*    name tables                                                      */
@@ -60,44 +52,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-name-lock                                                     */
 ;*---------------------------------------------------------------------*/
-(define js-name-lock
-   (cond-expand
-      ((config thread-local #t) #f)
-      (else (make-spinlock "js-names"))))
-
-(define js-name-mutex
-   (make-mutex))
+(define js-name-lock (make-spinlock "js-names"))
+(define js-name-mutex (make-mutex))
 
 ;*---------------------------------------------------------------------*/
 ;*    synchronize-name ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-macro (synchronize-name . body) 
-   (cond-expand
-      ((config thread-local #t) `(begin ,@body))
-      (else `(synchronize js-name-lock ,@body))))
-
-(define-expander synchronize-name-DEBUG
-   (lambda (x e)
-      (match-case x
-	 ((?- . ?body)
-	  (cond-expand
-	     ((config thread-local #t)
-	      (e `(begin ,@body) e))
-	     (else
-	      (e `(begin
-		     (tprint ">>> IN LOCK " ',(cer x))
-		     (synchronize js-name-lock (tprint "--- IN LOCK " ',(cer x))
-			(let ((r ,@body))
-			   (tprint "<<< IN LOCK")
-			   r)))
-		 e))))
-	 (else
-	  (error "synchronize-name" "bad form" x)))))
+(define-macro (synchronize-name . body)
+   `(synchronize js-name-lock ,@body))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-names! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-init-names! %this::JsGlobalObject)
+(define (js-init-names!)
    (synchronize js-name-mutex
       (unless js-names
 	 (set! js-names

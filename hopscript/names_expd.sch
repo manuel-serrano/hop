@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Sat Apr 13 16:06:13 2019 (serrano)                */
+;*    Last change :  Mon Apr 22 07:36:15 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -39,20 +39,20 @@
    (match-case x
       ((?- strings)
        `',&strings)
-      
       ((?- (and ?val (? string?)))
        (cond
-;* 	  ((vector-index val &strings)                                 */
-;* 	   =>                                                          */
-;* 	   (lambda (i)                                                 */
-;* 	      `(with-access::JsGlobalObject %this (js-string-names)    */
-;* 		  (vector-ref js-string-names ,i))))                   */
+	  ((vector-index val &strings)
+	   =>
+	   (lambda (i)
+	      `(vector-ref js-string-names ,i)))
 	  ((string->number val)
 	   =>
 	   (lambda (n)
-	      (if (fixnum? n)
-		  (vector 2 n)
-		  (vector 0 val))))
+	      (cond
+		 ((not (fixnum? n)) (vector 0 val))
+		 ((string=? val "-0") (vector 0 val))
+		 ((char=? (string-ref val 0) #\+) (vector 0 val))
+		 (else (vector 2 n)))))
 	  ((eq? (string-minimal-charset val) 'ascii)
 	   (vector 0 val))
 	  (else

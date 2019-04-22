@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/method.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/method.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Jan 11 13:56:58 2019 (serrano)                */
+;*    Last change :  Sun Apr 21 16:27:38 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -11,7 +11,7 @@
 ;*    This optimization duplicates functions as methods, where THIS    */
 ;*    is statically known to be an object. This transformation applies */
 ;*    only when the occurrence number of THIS inside a function is     */
-;*    sufficient.                                                      */
+;*    above THIS-OCCURRENCE-THRESHOLD                                  */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -118,27 +118,6 @@
 			 (function (prof-fun val conf))
 			 (method met))))))))
       this))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    method-proxy ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (method-proxy this::J2SDeclFun fun)                         */
-;*    (with-access::J2SFun fun (thisp params body)                     */
-;*       (with-access::J2SDecl thisp (id)                              */
-;* 	 (with-access::J2SBlock body (loc endloc)                      */
-;* 	    (set! body                                                 */
-;* 	       (J2SBlock                                               */
-;* 		  (J2SIf (J2SHopCall/type 'bool (J2SHopRef 'js-object?) */
-;* 			    (J2SRef thisp))                            */
-;* 		     (J2SReturn #t                                     */
-;* 			(J2SMethodCall* (J2SRef this)                  */
-;* 			   (list (J2SRef thisp))                       */
-;* 			   (map (lambda (p)                            */
-;* 				   (with-access::J2SDecl p (loc)       */
-;* 				      (J2SRef p)))                     */
-;* 			      params)))                                */
-;* 		     body))))))                                        */
-;*    fun)                                                             */
 
 ;*---------------------------------------------------------------------*/
 ;*    prof-fun ...                                                     */

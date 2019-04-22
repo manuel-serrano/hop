@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Apr 20 06:56:05 2019 (serrano)                */
+;*    Last change :  Sun Apr 21 14:00:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -54,9 +54,6 @@
 	   __hopscript_pair
 	   __hopscript_dom)
 
-   (cond-expand ((config thread-local-storage #t) (export %this)))
-   (cond-expand ((config thread-local-storage #t) (pragma (%this thread-local))))
-      
    (export (js-new-global-object::JsGlobalObject #!key (size 64) name)
 	   
 	   (generic js-extensible?::bool ::obj ::JsGlobalObject)
@@ -243,13 +240,6 @@
 	 (display "}" op))))
 
 ;*---------------------------------------------------------------------*/
-;*    %this ...                                                        */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   ((config thread-local-storage #t)
-    (define %this (class-nil JsGlobalObject))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-new-global-object ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-new-global-object #!key (size 64) name)
@@ -265,7 +255,7 @@
 		    (__proto__ %proto)
 		    (elements (make-vector size)))))
       ;; local constant strings
-      (js-init-names! %this)
+      (js-init-names!)
       (set! __js_strings (&init!))
       (js-init-property! %this)
       ;; mark the top proto has holding no numeral properties

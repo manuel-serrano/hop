@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Apr 18 08:14:42 2019 (serrano)                */
+;*    Last change :  Mon Apr 22 07:40:22 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -28,6 +28,7 @@
 	   __hopscript_array)
 
    (export (js-init-stringliteral! ::JsGlobalObject)
+	   (&jsstring-init ::bstring)
 	   (js-jsstring-debug msg obj)
 	   (js-jsstring-for-in str ::procedure ::JsGlobalObject)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
@@ -131,6 +132,34 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-stringliteral! %this)
    (set! __js_strings (&init!)))
+
+;*---------------------------------------------------------------------*/
+;*    &jsstring-init ...                                               */
+;*---------------------------------------------------------------------*/
+(define (&jsstring-init str::bstring)
+   (js-init-names!)
+   (let ((cnsts (string->obj str)))
+      ;; start fill at index 1 because of the C declaration
+      ;; of the constant vector (see constants_expd.sch)
+      (let loop ((i (-fx (vector-length cnsts) 1)))
+	 (when (>=fx i 0)
+	    (let ((el (vector-ref cnsts i)))
+	       (vector-set! cnsts i
+		  (case (vector-ref el 0)
+		     ((0)
+		      ;; an ascii name
+		      (let ((str (vector-ref el 1)))
+			 (js-ascii-name->jsstring str)))
+		     ((1)
+		      ;; an utf8 name
+		      (let ((str (vector-ref el 1)))
+			 (js-utf8-name->jsstring str)))
+		     ((2)
+		      ;; a fixnum name
+		      (let ((str (vector-ref el 1)))
+			 (js-integer-name->jsstring str))))))
+	    (loop (-fx i 1))))
+      cnsts))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-debug ...                                            */
