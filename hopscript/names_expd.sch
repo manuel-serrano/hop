@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Mon Apr 22 07:36:15 2019 (serrano)                */
+;*    Last change :  Tue Apr 23 08:34:46 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -49,10 +49,16 @@
 	   =>
 	   (lambda (n)
 	      (cond
-		 ((not (fixnum? n)) (vector 0 val))
-		 ((string=? val "-0") (vector 0 val))
-		 ((char=? (string-ref val 0) #\+) (vector 0 val))
-		 (else (vector 2 n)))))
+		 ((not (fixnum? n))
+		  (vector 0 val))
+		 ((string=? val "-0")
+		  (vector 0 val))
+		 ((char=? (string-ref val 0) #\+)
+		  (vector 0 val))
+		 ((and (char=? (string-ref val 0) #\0) (not (=fx n 0)))
+		  (vector 0 val))
+		 (else
+		  (vector 2 n)))))
 	  ((eq? (string-minimal-charset val) 'ascii)
 	   (vector 0 val))
 	  (else
