@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sun Apr 21 07:41:39 2019 (serrano)                */
+;*    Last change :  Tue Apr 23 11:43:56 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -515,6 +515,8 @@
 			      (set! worker %worker)
 			      (set! %module (ctormod (basename path) path %worker %global))
 			      (with-access::WorkerHopThread %worker (%this module-cache)
+				 ;; module-cache is used in src/main to check
+				 ;; where the worker is running or not
 				 (set! module-cache (js-new0 %this js-object))
 				 
 				 (set! %this %global))

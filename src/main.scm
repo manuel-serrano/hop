@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Apr 21 07:46:19 2019 (serrano)                */
+;*    Last change :  Tue Apr 23 11:41:26 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -265,9 +265,12 @@
 	    (lambda ()
 	       (hopscript-repl (hop-scheduler) %global %worker))))
       ;; start the javascript loop
-      (with-access::WorkerHopThread %worker (mutex condv)
+      (with-access::WorkerHopThread %worker (mutex condv module-cache)
 	 (synchronize mutex
-	    (condition-variable-wait! condv mutex)))
+	    ;; module-cache is #f until the worker is initialized and running
+	    ;; (see hopscript/worker.scm)
+	    (unless module-cache
+	       (condition-variable-wait! condv mutex))))
       ;; return the worker for the main loop to join
       %worker))
 
