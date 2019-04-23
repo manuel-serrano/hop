@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Apr 10 14:55:38 2019 (serrano)                */
+;*    Last change :  Tue Apr 23 10:47:10 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -586,7 +586,7 @@
 	 (let loop ((withs withs))
 	    (if (null? withs)
 		(call-unknown-function fun '((js-undefined)) args)
-		`(if ,(j2s-in? loc `',id (car withs))
+		`(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs))
 		     ,(call-unknown-function
 			 (j2s-get loc (car withs) #f 'object
 			    `(& ,(symbol->string id)) 'string 'any conf #f #f)
