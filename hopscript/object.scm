@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Apr 21 14:00:10 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 06:52:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1237,7 +1237,7 @@
       (js-raise-type-error %this
 	 (format "toPrimitive: illegal default value \"~~a\" (~a)"
 	    preferredtype)
-	 (class-name (object-class o))))
+	 (symbol->string! (class-name (object-class o)))))
    
    (define (get-field-value . fields)
       (let loop ((fields fields))
@@ -1265,9 +1265,10 @@
       ((isa? o JsDate)
        (primitive-as-string))
       ((isa? o JsGlobalObject)
-       ;; according to http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.8
-       ;; the GlobalObject might be considered as a host object, which gives the
-       ;; freedom to default to string instead of number
+       ;; according to
+       ;;   http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.8
+       ;; the GlobalObject might be considered as a host object, which gives
+       ;; the freedom to default to string instead of number
        (primitive-as-string))
       (else
        (primitive-as-number))))
