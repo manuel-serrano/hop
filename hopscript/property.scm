@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Apr 16 07:33:20 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 07:53:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -111,6 +111,10 @@
 
 	   (generic js-get/name-cache ::obj ::obj ::JsGlobalObject
 	      #!optional (point -1) (cspecs '()))
+;* 	   (inline js-get/name-cache ::obj ::obj ::JsGlobalObject      */
+;* 	      #!optional (point -1) (cspecs '()))                      */
+;* 	   (js-jsobject-get/name-cache ::JsObject ::obj ::JsGlobalObject */
+;* 	      #!optional (point -1) (cspecs '()))                      */
 	   (js-get-name/cache ::obj ::JsStringLiteral ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   (js-object-get-name/cache ::JsObject ::JsStringLiteral
@@ -1631,12 +1635,38 @@
 		   #!optional (point -1) (cspecs '()))
    (js-get o prop %this))
 
+;* (define-inline (js-get/name-cache o prop::obj %this::JsGlobalObject */
+;* 		   #!optional (point -1) (cspecs '()))                 */
+;*    (if (js-object? o)                                               */
+;*        (js-jsobject-get/name-cache o prop %this point cspecs)       */
+;*        (js-get o prop %this)))                                      */
+
 ;*---------------------------------------------------------------------*/
 ;*    js-get/name-cache ::JsObject ...                                 */
 ;*---------------------------------------------------------------------*/
+(define (js-jsobject-get/name-cache o::JsObject prop::obj %this::JsGlobalObject
+		  #!optional (point -1) (cspecs '()))
+   (if (not (js-jsstring? prop))
+       (js-get o prop %this)
+       (let ((pname (js-jsstring-toname prop)))
+	  (synchronize-name
+	     (cond
+		((js-name-pcache pname)
+		 =>
+		 (lambda (cache)
+		    (js-object-get-name/cache o pname #f
+		       %this cache point cspecs)))
+		((js-isindex? (js-toindex prop))
+		 (js-get o prop %this))
+		(else
+		 (let ((cache (instantiate::JsPropertyCache)))
+		    (js-name-pcache-set! pname cache)
+		    (js-object-get-name/cache o pname #f
+		       %this cache point cspecs))))))))
+
 (define-method (js-get/name-cache o::JsObject prop::obj %this::JsGlobalObject
 		  #!optional (point -1) (cspecs '()))
-   (if (not (isa? prop JsStringLiteral))
+   (if (not (js-jsstring? prop))
        (js-get o prop %this)
        (let ((pname (js-jsstring-toname prop)))
 	  (synchronize-name
@@ -1666,7 +1696,7 @@
 (define (js-get-name/cache obj name::JsStringLiteral throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (if (isa? obj JsObject)
+   (if (js-object? obj)
        (js-object-get-name/cache obj name throw %this cache point cspecs)
        (js-get obj name %this)))
 
@@ -1986,10 +2016,23 @@
 			  (update-mapped-object-value! obj cmap i v)) 
 			 (else
 			  (reject "Read-only property"))))
-		     ((and (isa? el-or-desc JsWrapperDescriptor)
-			   (update-from-wrapper-descriptor! o obj v el-or-desc))
-		      (when cache
-			 (js-pcache-update-descriptor! cache i o o)))
+		     ((isa? el-or-desc JsWrapperDescriptor)
+		      (let ((v (js-property-value-set! o obj name el-or-desc v %this)))
+			 (if (eq? v (js-absent))
+			     (if (isa? obj JsProxy)
+				 ;; see js-proxy-property-value-set!
+				 (with-access::JsProxy obj (target)
+				    (let loop ((obj target))
+				       (jsobject-find obj name
+					  update-mapped-object!
+					  update-properties-object!
+					  extend-object!
+					  loop)))
+				 (reject "Illegal object"))
+			     (begin
+				(when cache
+				   (js-pcache-update-descriptor! cache i o o))
+				v))))
 		      ;; hopjs extension
 		     ((js-object-mode-frozen? obj)
 		      ;; 8.12.9, step 3
@@ -2117,10 +2160,24 @@
 			  (set! value v)
 			  v)))))
 	    ((isa? desc JsWrapperDescriptor)
-	     (or (update-from-wrapper-descriptor! o obj v desc)
-		 (if (js-object-mode-extensible? obj)
-		     (extend-object!)
-		     (reject "sealed object"))))
+	     (let ((v (update-from-wrapper-descriptor! o obj v desc)))
+		(cond
+		   ((eq? v (js-absent))
+		    (if (isa? obj JsProxy)
+			(with-access::JsProxy obj (target)
+			   (let loop ((obj target))
+			      (jsobject-find obj name
+				 update-mapped-object!
+				 update-properties-object!
+				 extend-object!
+				 loop)))
+			(reject "Illegal object")))
+		   (v
+		    v)
+		   ((js-object-mode-extensible? obj)
+		    (extend-object!))
+		   (else
+		    (reject "sealed object")))))
 	    ((not (js-object-mode-extensible? obj))
 	     ;; 8.12.9, step 3
 	     (reject "sealed object"))
@@ -3165,7 +3222,7 @@
       (set! cname name)
       (set! cpoint point)
       (set! usage 'call))
-
+   
    (with-access::JsPropertyCache ccache (pmap vindex method)
       (when (and (procedure? method)
 		 (isa? pmap JsConstructMap)

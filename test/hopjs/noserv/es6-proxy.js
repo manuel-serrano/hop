@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-proxy.js        */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-proxy.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Mar 18 15:17:08 2019 (serrano)                */
+/*    Last change :  Wed Apr 24 10:29:03 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -30,7 +30,7 @@ function misca() {
    const o4 = Object.create( o3, { id: {value: "o4"} } );
    const o5 = new Proxy( o0, {} );
    const o6 = Object.create( o5, { id: {value: "o6"} } );
-   
+
    return o1.x === "o1true" 
       && o2.x === "o2false"
       && o3.x === "o1false"
@@ -121,6 +121,42 @@ function miscf() {
    return test.apply( null, arr ) === 3004;
 }
 	 
+function miscg() {
+   var o = { a:1 };
+   var getp = { apply: function( target, self, alist ) { return 24; }
+   }
+   var h = { get: new Proxy( function() {}, getp ) };
+   var p = new Proxy( o, h );
+
+   return p.a === 24;
+}
+
+function misch() {
+   var o = { a:1 };
+   var p = new Proxy( o, {} );
+
+   p.a = 30;
+   
+   return p.a === 30 && o.hasOwnProperty( "a" );
+}
+
+function misci() {
+   var o = { 
+      get aa() { return 23 },
+      set aa( v ) { return 23 },
+   }
+
+   var p = new Proxy( o, {} );
+   
+   var c = Object.create( p );
+   var d = Object.create( c );
+   
+   d.a = 34;
+   d.aa = 35;
+   
+   return d.hasOwnProperty( "a" ) && !d.hasOwnProperty( "aa" );
+}
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
@@ -128,6 +164,9 @@ console.log( "   miscc()"); assert.ok( miscc(), "miscc" );
 console.log( "   miscd()"); assert.ok( miscd(), "miscd" );
 console.log( "   misce()"); assert.ok( misce(), "misce" );
 console.log( "   miscf()"); assert.ok( miscf(), "miscf" );
+console.log( "   miscg()"); assert.ok( miscg(), "miscg" );
+console.log( "   misch()"); assert.ok( misch(), "misch" );
+console.log( "   misci()"); assert.ok( misci(), "misci" );
       
 /*---------------------------------------------------------------------*/
 /*    mdn ...                                                          */

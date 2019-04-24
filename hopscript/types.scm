@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Apr 20 07:47:07 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 10:30:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -289,7 +289,13 @@
 	   (class JsProxy::JsObject
 	      (target::JsObject (default (class-nil JsObject)))
 	      (handler::JsObject (default (class-nil JsObject)))
-	      (revoked::bool (default #f)))
+	      (revoked::bool (default #f))
+	      (cacheget read-only (default (instantiate::JsPropertyCache)))
+	      (cachegetfun (default 'nocache))
+	      (cachegetproc (default #f))
+	      (cacheset read-only (default (instantiate::JsPropertyCache)))
+	      (cachesetfun (default 'nocache))
+	      (cachesetproc (default #f)))
 
 	   (class JsMap::JsObject
 	      (mapdata read-only)

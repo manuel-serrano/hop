@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Apr 18 08:04:58 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 12:13:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -473,7 +473,7 @@
 		      (set! %prototype %__proto__)
 		      js-function-prototype-property-undefined)
 		     ((null? prototype)
-		      (set! fprototype  prototype)
+		      (set! fprototype prototype)
 		      (set! %prototype prototype)
 		      js-function-prototype-property-null)
 		     (else

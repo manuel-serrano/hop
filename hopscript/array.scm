@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 18 08:07:10 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 13:06:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3249,10 +3249,10 @@
    
    (define (sym->string n)
       (cond
-	 ((symbol? n)
- 	  (symbol->string! n))
+	 ((js-jsstring? n)
+	  (js-jsstring->string n))
 	 ((isa? n JsSymbolLiteral)
-	  (with-access::JsSymbolLiteral n (val) val))
+	  (with-access::JsSymbolLiteral n (val) (sym->string val)))
 	 (else
 	  (error "js-define-own-property" "bad property" n))))
    
