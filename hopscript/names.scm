@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sun Apr 21 13:59:59 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 19:39:04 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -25,8 +25,10 @@
 	   __hopscript_public)
    
    (export (js-init-names!)
-	   (inline js-name-pcache::obj ::JsStringLiteral)
-	   (inline js-name-pcache-set! ::JsStringLiteral ::JsPropertyCache)
+	   (inline js-name-pcacher::obj ::JsStringLiteral)
+	   (inline js-name-pcacher-set! ::JsStringLiteral ::JsPropertyCache)
+	   (inline js-name-pcachew::obj ::JsStringLiteral)
+	   (inline js-name-pcachew-set! ::JsStringLiteral ::JsPropertyCache)
 	   (inline js-jsstring-toname::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring->name!::JsStringLiteral o::JsStringLiteral)
 	   (js-toname::obj ::obj ::JsGlobalObject)
@@ -84,18 +86,32 @@
 	       (& strings))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-name-pcache ...                                               */
+;*    js-name-pcacher ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-name-pcache::obj o::JsStringLiteral)
-   (with-access::JsStringLiteral o (pcache)
-      pcache))
+(define-inline (js-name-pcacher::obj o::JsStringLiteral)
+   (with-access::JsStringLiteral o (pcacher)
+      pcacher))
 
 ;*---------------------------------------------------------------------*/
-;*    js-name-pcache-set! ...                                          */
+;*    js-name-pcacher-set! ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-name-pcache-set! o::JsStringLiteral c::JsPropertyCache)
-   (with-access::JsStringLiteral o (pcache)
-      (set! pcache c)))
+(define-inline (js-name-pcacher-set! o::JsStringLiteral c::JsPropertyCache)
+   (with-access::JsStringLiteral o (pcacher)
+      (set! pcacher c)))
+
+;*---------------------------------------------------------------------*/
+;*    js-name-pcachew ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-name-pcachew::obj o::JsStringLiteral)
+   (with-access::JsStringLiteral o (pcachew)
+      pcachew))
+
+;*---------------------------------------------------------------------*/
+;*    js-name-pcachew-set! ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-name-pcachew-set! o::JsStringLiteral c::JsPropertyCache)
+   (with-access::JsStringLiteral o (pcachew)
+      (set! pcachew c)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-name ...                                             */
