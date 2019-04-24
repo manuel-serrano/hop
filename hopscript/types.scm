@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Apr 24 10:30:10 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 16:15:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -296,6 +296,8 @@
 	      (cacheset read-only (default (instantiate::JsPropertyCache)))
 	      (cachesetfun (default 'nocache))
 	      (cachesetproc (default #f)))
+	   
+;* 	      (cacheapply read-only (default (instantiate::JsPropertyCache)))) */
 
 	   (class JsMap::JsObject
 	      (mapdata read-only)

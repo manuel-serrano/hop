@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Apr 24 07:38:50 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 14:42:29 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -55,35 +55,32 @@
       (methods '#(#f))
       (props '#())))
 
+(define proxy-elements #f)
+
 ;*---------------------------------------------------------------------*/
 ;*    js-init-proxy! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-proxy! %this::JsGlobalObject)
    
    (set! __js_strings (&init!))
+
+   (set! proxy-elements
+      (vector
+	 (instantiate::JsWrapperDescriptor
+	    (writable #t)
+	    (configurable #t)
+	    (enumerable #t)
+	    (name (& ""))
+	    (%get js-proxy-property-value)
+	    (%set js-proxy-property-value-set!))))
    
    (with-access::JsGlobalObject %this (__proto__ js-function-prototype)
 
       (define (js-proxy-alloc %this constructor::JsFunction)
-	 (let ((proxy (instantiateJsProxy
-			 (cmap proxy-cmap)
-			 (__proto__ (js-null))
-			 (elements '#()))))
-	    (with-access::JsProxy proxy (elements __proto__)
-	       (set! elements
-		  (vector
-		     (instantiate::JsWrapperDescriptor
-			(writable #t)
-			(configurable #t)
-			(enumerable #t)
-			(name (& ""))
-			(%get (lambda (_ obj prop %this)
-				 (js-proxy-property-value
-				    proxy obj prop %this)))
-			(%set (lambda (_ obj prop v %this)
-				 (js-proxy-property-value-set!
-				    proxy obj prop v %this)))))))
-	    proxy))
+	 (instantiateJsProxy
+	    (cmap proxy-cmap)
+	    (__proto__ (js-null))
+	    (elements proxy-elements)))
 
       (define (js-proxy-construct this::JsProxy t h)
 	 (cond
@@ -94,7 +91,7 @@
 	     (js-raise-type-error %this
 		"Cannot create proxy with a non-object as target" this))
 	    (else
-	     (with-access::JsProxy this (target handler)
+	     (with-access::JsProxy this (target handler id)
 		(set! target t)
 		(set! handler h))))
 	 this)
@@ -172,7 +169,7 @@
 	  v
 	  (proxy-check-property-value target obj prop %this v (& "get"))))
    
-   (with-access::JsProxy proxy (target handler cacheget cachegetfun cachegetproc)
+   (with-access::JsProxy proxy (target handler cacheget cachegetfun cachegetproc id)
       (proxy-check-revoked! proxy "get" %this)
       (let ((get (js-object-get-name/cache handler (& "get") #f %this cacheget)))
 	 (cond
@@ -320,7 +317,7 @@
 	 (if (isa? get JsFunction)
 	     (let ((desc (js-call2 %this get o target p)))
 		(proxy-check-property-getown target p %this desc))
-	     (call-next-method)))))
+	     (js-get-own-property target p %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsProxy ...                                          */

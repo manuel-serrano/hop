@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Apr  7 06:11:20 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 18:58:30 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -772,7 +772,7 @@
    (define (init-argument val indx)
       `(js-arguments-define-own-property arguments ,indx
 	  (instantiate::JsValueDescriptor
-	     (name (string->symbol (integer->string ,indx)))
+	     (name (js-integer-name->jsstring ,indx))
 	     (value ,val)
 	     (writable #t)
 	     (configurable #t)
@@ -784,7 +784,7 @@
 	     (set! ,id (car ,rest))
 	     (js-arguments-define-own-property arguments ,indx
 		(instantiate::JsAccessorDescriptor
-		   (name (string->symbol (integer->string ,indx)))
+		   (name (js-integer-name->jsstring ,indx))
 		   (get (js-make-function %this
 			   (lambda (%) ,id) 0 "get"))
 		   (set (js-make-function %this

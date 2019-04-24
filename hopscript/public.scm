@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Apr 18 07:40:47 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 16:15:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -795,11 +795,13 @@
 ;*    These functions are used to invoked trapped proxy functions.     */
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-proxy-call %this fun this . args)
-   `(with-access::JsProxy ,fun (target handler)
+   `(with-access::JsProxy ,fun (target handler cacheapply)
        (if (not (isa? target JsFunction))
 	   (js-raise-type-error ,%this
 	      ,(format "call~a: not a function ~~s" (length args))
 	      ,fun)
+;* 	   (let ((xfun (js-object-get-name/cache handler (& "apply")   */
+;* 			  #f ,%this cacheapply)))                      */
 	   (let ((xfun (js-get handler (& "apply") ,%this)))
 	      (if (isa? xfun JsFunction)
 		  (with-access::JsFunction xfun (procedure)

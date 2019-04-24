@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Apr 24 07:53:31 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 15:59:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -593,7 +593,7 @@
 	    (set! pmap #t)
 	    (set! emap #t)
 	    (set! amap omap)
-	    (set! owner obj)
+	    (unless (isa? obj JsProxy) (set! owner obj))
 	    (set! index i)))))
 
 ;*---------------------------------------------------------------------*/
@@ -631,7 +631,7 @@
 	    (set! pmap omap)
 	    (set! emap #t)
 	    (set! amap #t)
-	    (set! owner obj)
+	    (unless (isa? obj JsProxy) (set! owner obj))
 	    (set! index i)))))
 
 ;*---------------------------------------------------------------------*/
