@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Mar 19 06:55:55 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:08:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -948,7 +948,20 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SString tildec dollarc mode evalp conf)
    (with-access::J2SString this (val)
-      (list this (string-append "\"" (string-for-read val) "\""))))
+      (if (ascii-string? val)
+	  (list this (string-append "\"" (string-for-read val) "\""))
+	  (let ((u (apply string-append
+		      (map (lambda (uc)
+			      (let ((n (ucs2->integer uc)))
+				 (cond
+				    ((<fx n 32)
+				     (string-for-read (string (integer->char n))))
+				    ((<=fx n 127)
+				     (string (integer->char n)))
+				    (else
+				     (format "\\u~4x" n)))))
+			 (ucs2-string->list (utf8-string->ucs2-string val))))))
+	     (list this (string-append "\"" u "\""))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2STemplate ...                                         */
