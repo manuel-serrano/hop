@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Apr 16 08:47:59 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 21:13:44 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -93,7 +93,7 @@
 (define-method (http-response r::http-response-hop request socket)
 
    (define (serialize val ctx)
-      (obj->string val (request-type request)))
+      (obj->string val ctx))
    
    (define (arraybuffer-request? request)
       (with-access::http-request request (header)

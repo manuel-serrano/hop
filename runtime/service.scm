@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Apr 17 07:36:10 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 19:44:10 2019 (serrano)                */
 ;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -55,8 +55,8 @@
 	    (get-all-services ::http-request)
 	    (gen-service-url::bstring #!key (prefix "") (public #f))
 	    (hop-service-path? ::bstring)
-	    (hop-apply-nice-url::bstring ::bstring ::pair-nil)
-	    (hop-apply-url::bstring ::bstring ::pair-nil)
+	    (hop-apply-nice-url::bstring ::bstring ::pair-nil #!optional (ctx 'hop-to-hop))
+	    (hop-apply-url::bstring ::bstring ::pair-nil #!optional (ctx 'hop-to-hop))
 	    (hop-request-service-name::bstring ::http-request)
 	    (service-invoke ::hop-service ::http-request ::obj)
 	    (procedure->service::procedure ::procedure)
@@ -292,7 +292,7 @@
 ;*    When at least one argument is not a string, it falls back to     */
 ;*    hop-apply-url.                                                   */
 ;*---------------------------------------------------------------------*/
-(define (hop-apply-nice-url base vals)
+(define (hop-apply-nice-url base vals #!optional (ctx 'hop-to-hop))
    
    (define (all-keyword-string? vals)
       (cond
@@ -321,16 +321,16 @@
 				(url-path-encode (cadr vals)))))
 		       (cons str strs))))))
       (else
-       (hop-apply-url base vals))))
+       (hop-apply-url base vals ctx))))
        
 ;*---------------------------------------------------------------------*/
 ;*    hop-apply-url ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-apply-url base vals)
+(define (hop-apply-url base vals #!optional (ctx 'hop-to-hop))
    (let ((o (if (vector? vals) (vector->list vals) vals)))
       (string-append base
 	 "?hop-encoding=hop"
-	 "&vals=" (url-path-encode (obj->string o "hop-service")))))
+	 "&vals=" (url-path-encode (obj->string o ctx)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-pack-cgi-arguments ::obj ...                             */
