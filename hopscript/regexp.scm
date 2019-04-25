@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan 23 08:31:34 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:48:11 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -83,7 +83,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsRegExp op compile isexpr)
+(define-method (hop->javascript o::JsRegExp op compile isexpr _)
    (with-access::JsRegExp o (global)
       (let ((%this (js-initial-global-object)))
 	 (display "/" op)

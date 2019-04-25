@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Feb 28 08:09:26 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:48:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -85,7 +85,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsString op compile isexpr)
+(define-method (hop->javascript o::JsString op compile isexpr _)
    (with-access::JsString o (val)
       (display "new String(\"" op)
       (display (string-for-read (js-jsstring->string val)) op)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Jan 28 16:32:05 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:48:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -182,14 +182,14 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsService op compile isexpr)
+(define-method (hop->javascript o::JsService op compile isexpr _)
    (with-access::JsService o (svc)
       (compile svc op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsHopFrame ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsHopFrame op compile isexpr)
+(define-method (hop->javascript o::JsHopFrame op compile isexpr _)
    (display "hop_url_encoded_to_obj('" op)
    (display (url-path-encode (obj->string o 'hop-client)) op)
    (display "')" op))
@@ -197,7 +197,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsServer ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsServer op compile isexpr)
+(define-method (hop->javascript o::JsServer op compile isexpr _)
    (display "hop_url_encoded_to_obj('" op)
    (display (url-path-encode (obj->string o 'hop-client)) op)
    (display "')" op))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Apr  3 06:58:31 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:48:36 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -159,8 +159,8 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsStringLiteral op compile isexpr)
-   (hop->javascript (js-jsstring->string o) op compile isexpr))
+(define-method (hop->javascript o::JsStringLiteral op compile isexpr _)
+   (hop->javascript (js-jsstring->string o) op compile isexpr #unspecified))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsStringLiteral ...                        */

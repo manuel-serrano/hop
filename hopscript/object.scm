@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Mar 18 14:29:58 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:48:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -173,7 +173,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsObject op compile isexpr)
+(define-method (hop->javascript o::JsObject op compile isexpr _)
    (with-access::WorkerHopThread (js-current-worker) (%this)
       (display "{" op)
       (let ((sep ""))
@@ -185,7 +185,7 @@
 	       (display "\":" op)
 	       (hop->javascript
 		  (js-get o (string->symbol (js-jsstring->string p)) %this)
-		  op compile isexpr)
+		  op compile isexpr #unspecified)
 	       (set! sep ","))
 	    %this))
       (display "}" op)))

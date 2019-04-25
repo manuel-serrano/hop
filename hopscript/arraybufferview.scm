@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sat Jan 26 09:53:01 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:47:14 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -136,14 +136,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsDataView ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsDataView op compile isexpr)
+(define-method (hop->javascript o::JsDataView op compile isexpr _)
    (with-access::JsDataView o (frozen byteoffset buffer)
       (display "hop_buffer( \"JsJsDataView\", " op)
       (display (if frozen "true" "false") op)
       (display ", " op)
       (display byteoffset op)
       (display ", " op)
-      (hop->javascript buffer op compile isexpr)
+      (hop->javascript buffer op compile isexpr #unspecified)
       (display ")" op)))
 
 ;*---------------------------------------------------------------------*/
@@ -164,7 +164,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsTypedArray ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsTypedArray op compile isexpr)
+(define-method (hop->javascript o::JsTypedArray op compile isexpr _)
    (with-access::JsTypedArray o (frozen byteoffset length bpe buffer)
       (display "hop_buffer( \"" op)
       (display (class-name (object-class o)) op)
@@ -177,7 +177,7 @@
       (display ", " op)
       (display bpe op)
       (display ", " op)
-      (hop->javascript buffer op compile isexpr)
+      (hop->javascript buffer op compile isexpr #unspecified)
       (display ")" op)))
 
 ;*---------------------------------------------------------------------*/

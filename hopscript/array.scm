@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr  3 06:57:29 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:47:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -291,14 +291,14 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsArray op compile isexpr)
+(define-method (hop->javascript o::JsArray op compile isexpr _)
    (let* ((%this (js-initial-global-object))
 	  (len::uint32 (js-array-length o)))
       (if (=u32 len #u32:0)
 	  (display "sc_vector2array([])" op)
 	  (begin
 	     (display "sc_vector2array([" op)
-	     (hop->javascript (js-get o (js-toname 0 %this) %this) op compile isexpr)
+	     (hop->javascript (js-get o (js-toname 0 %this) %this) op compile isexpr #unspecified)
 	     (let loop ((i #u32:1))
 		(if (=u32 i len)
 		    (display "])" op)
@@ -306,7 +306,7 @@
 		       (display "," op)
 		       (when (js-has-property o (js-toname i %this) %this)
 			  (hop->javascript (js-get o i %this)
-			     op compile isexpr))
+			     op compile isexpr #unspecified))
 		       (loop (+u32 i #u32:1)))))))))
 
 ;*---------------------------------------------------------------------*/

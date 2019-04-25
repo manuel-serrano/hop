@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Feb 25 18:24:00 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:48:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -91,7 +91,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsSymbol op compile isexpr)
+(define-method (hop->javascript o::JsSymbol op compile isexpr _)
    (with-access::JsSymbol o (val)
       (display "Symbol(\"" op)
       (display (string-for-read val) op)
@@ -103,7 +103,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsSymbolLiteral op compile isexpr)
+(define-method (hop->javascript o::JsSymbolLiteral op compile isexpr _)
    (with-access::JsSymbolLiteral o (val)
       (display "Symbol(\"" op)
       (display (string-for-read val) op)

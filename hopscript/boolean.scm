@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jan 15 09:48:24 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:47:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -66,7 +66,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsBoolean op compile isexpr)
+(define-method (hop->javascript o::JsBoolean op compile isexpr _)
    (with-access::JsBoolean o (val)
       (display (if val "new Boolean(true)" "new Boolean(false)") op)))
 

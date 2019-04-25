@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Apr 25 18:08:34 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 19:22:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -959,7 +959,7 @@
 				    ((<=fx n 127)
 				     (string (integer->char n)))
 				    (else
-				     (format "\\u~4x" n)))))
+				     (format "\\u~4,0x" n)))))
 			 (ucs2-string->list (utf8-string->ucs2-string val))))))
 	     (list this (string-append "\"" u "\""))))))
 	 

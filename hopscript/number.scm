@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Apr  7 07:46:24 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:47:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -79,7 +79,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsNumber op compile isexpr)
+(define-method (hop->javascript o::JsNumber op compile isexpr _)
    (with-access::JsNumber o (val)
       (display "new Number(" op)
       (display (if (and (flonum? val) (nanfl? val)) "undefined" val) op)

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopsh/main.scm                    */
+;*    serrano/prgm/project/hop/3.2.x/hopsh/main.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Nov 28 11:27:42 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Thu Apr 25 18:49:12 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
 ;*=====================================================================*/
@@ -63,7 +63,7 @@
 		  (obj->javascript-expr (eval e) op)
 		  (close-output-port op)))
       :hop-compile (lambda (obj op compile)
-		      (hop->javascript obj op compile #f))
+		      (hop->javascript obj op compile #f #unspecified))
       :hop-register hop-register-value
       :hop-library-path (hop-library-path)
       :javascript-version (hop-javascript-version)
