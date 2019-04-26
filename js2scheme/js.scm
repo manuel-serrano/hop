@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Apr 25 19:22:57 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 12:49:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -956,6 +956,8 @@
 				 (cond
 				    ((<fx n 32)
 				     (string-for-read (string (integer->char n))))
+				    ((=fx n 34)
+				     "\\\"")
 				    ((<=fx n 127)
 				     (string (integer->char n)))
 				    (else
