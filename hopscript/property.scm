@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Apr 24 19:01:39 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 09:07:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -109,9 +109,9 @@
 	   
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 
-	   (generic js-get/name-cache ::obj ::obj ::JsGlobalObject
+	   (generic js-get/cache ::obj ::obj ::JsGlobalObject
 	      #!optional (point -1) (cspecs '()))
-;* 	   (inline js-get/name-cache ::obj ::obj ::JsGlobalObject      */
+;* 	   (inline js-get/cache ::obj ::obj ::JsGlobalObject      */
 ;* 	      #!optional (point -1) (cspecs '()))                      */
 ;* 	   (js-jsobject-get/name-cache ::JsObject ::obj ::JsGlobalObject */
 ;* 	      #!optional (point -1) (cspecs '()))                      */
@@ -150,7 +150,7 @@
 	      ::JsGlobalObject
 	      ::obj #!optional (loc #f) (cspecs '()))
 	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
-	   (generic js-put/name-cache! ::obj ::obj ::obj ::bool ::JsGlobalObject
+	   (generic js-put/cache! ::obj ::obj ::obj ::bool ::JsGlobalObject
 	      #!optional (point -1) (cspecs '()))
 	   (js-put-name/cache! ::obj ::JsStringLiteral ::obj ::bool
 	      ::JsGlobalObject
@@ -631,7 +631,7 @@
 	    (set! pmap omap)
 	    (set! emap #t)
 	    (set! amap #t)
-	    (unless (isa? obj JsProxy) (set! owner obj))
+	    (set! owner obj)
 	    (set! index i)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1626,30 +1626,30 @@
 	  %this))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get/name-cache ::obj ...                                      */
+;*    js-get/cache ::obj ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Use a per site cache for the [[GET]] operation. The property     */
 ;*    name is not known statically.                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get/name-cache o prop::obj %this::JsGlobalObject
+(define-generic (js-get/cache o prop::obj %this::JsGlobalObject
 		   #!optional (point -1) (cspecs '()))
    (js-get o prop %this))
 
-;* (define-inline (js-get/name-cache o prop::obj %this::JsGlobalObject */
+;* (define-inline (js-get/cache o prop::obj %this::JsGlobalObject */
 ;* 		   #!optional (point -1) (cspecs '()))                 */
 ;*    (if (js-object? o)                                               */
 ;*        (js-jsobject-get/name-cache o prop %this point cspecs)       */
 ;*        (js-get o prop %this)))                                      */
 
 ;*---------------------------------------------------------------------*/
-;*    js-get/name-cache ::JsObject ...                                 */
+;*    js-get/cache ::JsObject ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-jsobject-get/name-cache o::JsObject prop::obj %this::JsGlobalObject
 		  #!optional (point -1) (cspecs '()))
    (if (not (js-jsstring? prop))
        (js-get o prop %this)
-       (let ((pname (js-jsstring-toname prop)))
-	  (synchronize-name
+       (synchronize-name
+	  (let ((pname (js-jsstring-toname-unsafe prop)))
 	     (cond
 		((js-name-pcacher pname)
 		 =>
@@ -1664,12 +1664,12 @@
 		    (js-object-get-name/cache o pname #f
 		       %this cache point cspecs))))))))
 
-(define-method (js-get/name-cache o::JsObject prop::obj %this::JsGlobalObject
+(define-method (js-get/cache o::JsObject prop::obj %this::JsGlobalObject
 		  #!optional (point -1) (cspecs '()))
    (if (not (js-jsstring? prop))
        (js-get o prop %this)
-       (let ((pname (js-jsstring-toname prop)))
-	  (synchronize-name
+       (synchronize-name
+	  (let ((pname (js-jsstring-toname-unsafe prop)))
 	     (cond
 		((js-name-pcacher pname)
 		 =>
@@ -1679,8 +1679,7 @@
 		((js-isindex? (js-toindex prop))
 		 (js-get o prop %this))
 		(else
-		 (let ((cache (instantiate::JsPropertyCache
-				 (usage 'r))))
+		 (let ((cache (instantiate::JsPropertyCache)))
 		    (js-name-pcacher-set! pname cache)
 		    (js-object-get-name/cache o pname #f
 		       %this cache point cspecs))))))))
@@ -2246,16 +2245,16 @@
 	  (js-put! _o prop v throw %this)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-put/name-cache! ::obj ...                                     */
+;*    js-put/cache! ::obj ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-put/name-cache! o prop v::obj throw::bool %this
+(define-generic (js-put/cache! o prop v::obj throw::bool %this
 		   #!optional (point -1) (cspecs '()))
    (js-put! o prop v throw %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-put/name-cache! ::JsObject ...                                */
+;*    js-put/cache! ::JsObject ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put/name-cache! o::JsObject prop v::obj throw::bool %this
+(define-method (js-put/cache! o::JsObject prop v::obj throw::bool %this
 		  #!optional (point -1) (cspecs '()))
    (if (not (js-jsstring? prop))
        (js-put! o prop v throw %this)

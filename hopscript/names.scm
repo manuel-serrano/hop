@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Wed Apr 24 19:39:04 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 09:24:05 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -22,7 +22,8 @@
    
    (use    __hopscript_stringliteral
 	   __hopscript_lib
-	   __hopscript_public)
+	   __hopscript_public
+	   __hopscript_private)
    
    (export (js-init-names!)
 	   (inline js-name-pcacher::obj ::JsStringLiteral)
@@ -30,6 +31,7 @@
 	   (inline js-name-pcachew::obj ::JsStringLiteral)
 	   (inline js-name-pcachew-set! ::JsStringLiteral ::JsPropertyCache)
 	   (inline js-jsstring-toname::JsStringLiteral ::JsStringLiteral)
+	   (inline js-jsstring-toname-unsafe::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring->name!::JsStringLiteral o::JsStringLiteral)
 	   (js-toname::obj ::obj ::JsGlobalObject)
 	   (inline js-jsstring-name ::JsStringLiteral)
@@ -132,6 +134,12 @@
    (or (js-jsstring-name p) (synchronize-name (js-jsstring->name! p))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-toname-unsafe ...                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-toname-unsafe::JsStringLiteral p::JsStringLiteral)
+   (or (js-jsstring-name p) (js-jsstring->name! p)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-toname ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    www.ecma-international.org/ecma-262/7.0/#sec-topropertykey       */
@@ -169,12 +177,12 @@
       ((isa? p JsSymbol)
        (with-access::JsSymbol p (val)
 	  val))
+      ((number? p)
+       (js-ascii-name->jsstring (js-number->string p)))
       ((symbol? p)
        (error "js-toname" "Illegal `symbol'" p))
       ((string? p)
        (error "js-toname" "Illegal `string'" p))
-      ((number? p)
-       (js-ascii-name->jsstring (js-tostring p %this)))
       (else
        (js-name->jsstring (js-tostring p %this)))))
 

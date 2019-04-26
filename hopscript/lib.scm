@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sun Apr 21 14:08:16 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 09:42:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -325,7 +325,7 @@
    (let ((acc '()))
       (js-for-in obj
 	 (lambda (k %this)
-	    (let ((val (js-get/name-cache obj k %this))
+	    (let ((val (js-get/cache obj k %this))
 		  (key (string->keyword (js-jsstring->string k))))
 	       (if (isa? val JsArray)
 		   (with-access::JsArray val (vec)
@@ -426,7 +426,7 @@
 		  (cons (symbol->keyword s) args))
 	       (set! args
 		  (cons (js-jsobject->obj
-			   (js-get/name-cache obj p %this) %this)
+			   (js-get/cache obj p %this) %this)
 		     args))))
 	 %this)
       (reverse! args)))
@@ -443,7 +443,7 @@
 		  (cons (symbol->keyword s) args))
 	       (set! args
 		  (cons (js-jsobject->obj
-			   (js-get/name-cache obj p %this) %this)
+			   (js-get/cache obj p %this) %this)
 		     args))))
 	 %this)
       (reverse! args)))
@@ -459,7 +459,7 @@
 		   (k (string->symbol n))
 		   (e (cons (string->keyword n)
 			 (js-jsobject->obj
-			    (js-get/name-cache obj k %this) %this))))
+			    (js-get/cache obj k %this) %this))))
 	       (set! args (cons e args))))
 	 %this)
       (reverse! args)))

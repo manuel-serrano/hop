@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Apr 24 14:42:29 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 09:37:06 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -223,7 +223,7 @@
 	    ((isa? set JsProxy)
 	     (check target v (js-call4 %this set handler target prop v obj)))
 	    ((eq? proxy obj)
-	     (js-put/name-cache! target prop v #f %this))
+	     (js-put/cache! target prop v #f %this))
 	    (else
 	     (js-absent))))))
 
@@ -234,9 +234,9 @@
    (js-proxy-property-value o o (js-toname prop %this) %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get/name-cache ::JsProxy ...                                  */
+;*    js-get/cache ::JsProxy ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get/name-cache o::JsProxy prop::obj %this::JsGlobalObject
+(define-method (js-get/cache o::JsProxy prop::obj %this::JsGlobalObject
 		  #!optional (point -1) (cspecs '()))
    (js-proxy-property-value o o (js-toname prop %this) %this))
 
@@ -267,9 +267,9 @@
 	     (js-put! target prop v throw %this)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-put/name-cache! ::JsProxy ...                                 */
+;*    js-put/cache! ::JsProxy ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put/name-cache! o::JsProxy prop v::obj throw::bool %this
+(define-method (js-put/cache! o::JsProxy prop v::obj throw::bool %this
 		  #!optional (point -1) (cspecs '()))
    (js-put! o prop v throw %this))
 
