@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Thu Apr 25 09:37:06 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 14:08:54 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -162,7 +162,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-property-value proxy::JsProxy obj::JsObject prop %this::JsGlobalObject)
+(define (js-proxy-property-value proxy obj prop %this)
 
    (define (check target v)
       (if (null? (js-object-properties target))
@@ -175,24 +175,28 @@
 	 (cond
 	    ((eq? get cachegetfun)
 	     (check target (cachegetproc handler target prop)))
-	    ((isa? get JsFunction)
+	    ((and (object? get) (eq? (object-class get) JsFunction3))
 	     (with-access::JsFunction get (procedure)
-		(if (correct-arity? procedure 3)
-		    (let ((v (procedure handler target prop)))
-		       (set! cachegetfun get)
-		       (set! cachegetproc procedure)
-		       (check target v))
-		    (check target 
-		       (js-call3% %this get procedure handler target prop obj)))))
+		(let ((v (procedure handler target prop)))
+		   (set! cachegetfun get)
+		   (set! cachegetproc procedure)
+		   (check target v))))
+	    ((isa? get JsFunction)
+	     (tprint "1")
+	     (with-access::JsFunction get (procedure)
+		(check target 
+		   (js-call3% %this get procedure handler target prop obj))))
 	    ((isa? get JsProxy)
+	     (tprint "2")
 	     (check target (js-call3 %this get handler target prop obj)))
 	    (else
+	     (tprint "3")
 	     (js-get-jsobject target obj prop %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value-set! ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-property-value-set! proxy::JsProxy obj::JsObject prop v %this::JsGlobalObject)
+(define (js-proxy-property-value-set! proxy obj prop v %this)
    
    (define (check target v r)
       (cond
@@ -211,15 +215,16 @@
 	 (cond
 	    ((eq? set cachesetfun)
 	     (check target v (cachesetproc handler target prop v)))
+	    ((and (object? set) (eq? (object-class set) JsFunction4))
+	     (with-access::JsFunction set (procedure)
+		(let ((r (procedure handler target prop v)))
+		   (set! cachesetfun set)
+		   (set! cachesetproc procedure)
+		   (check target v r))))
 	    ((isa? set JsFunction)
 	     (with-access::JsFunction set (procedure)
-		(if (=fx (procedure-arity procedure) 4)
-		    (let ((r (procedure handler target prop v)))
-		       (set! cachesetfun set)
-		       (set! cachesetproc procedure)
-		       (check target v r))
-		    (check target v
-		       (js-call4% %this set procedure handler target prop v obj)))))
+		(check target v
+		   (js-call4% %this set procedure handler target prop v obj))))
 	    ((isa? set JsProxy)
 	     (check target v (js-call4 %this set handler target prop v obj)))
 	    ((eq? proxy obj)

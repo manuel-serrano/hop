@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Apr 24 19:38:07 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 11:09:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -406,6 +406,7 @@
 
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
+	   (inline js-jsstring-default-mode::uint32)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
@@ -447,6 +448,7 @@
 	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
 	   (inline JS-OBJECT-MODE-HASNUMERALPROP::uint32)
 	   (inline JS-OBJECT-MODE-ARRAY-PLAIN::uint32)
+	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
 
@@ -488,8 +490,8 @@
 	   (inline js-not-a-cmap::JsConstructMap)
 	   (inline js-not-a-index::long)
 	   
-	   (inline js-jsstring?::bool ::obj)
 	   (inline js-number?::bool ::obj)
+	   (inline js-jsstring?::bool ::obj)
 	   (inline js-object?::bool ::obj)
 	   (inline js-array?::bool ::obj)
 	   (inline js-function?::bool ::obj)
@@ -555,6 +557,9 @@
 	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
 		  (JS-OBJECT-MODE-HASNUMERALPROP)))))))
 
+(define-inline (js-jsstring-default-mode)
+   (JS-OBJECT-MODE-JSSTRINGTAG))
+
 (define-inline (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-inline (JS-OBJECT-MODE-SEALED) #u32:2)
 (define-inline (JS-OBJECT-MODE-FROZEN) #u32:4)
@@ -565,9 +570,10 @@
 (define-inline (JS-OBJECT-MODE-ENUMERABLE) #u32:128)
 (define-inline (JS-OBJECT-MODE-ARRAY-PLAIN) #u32:256)
 (define-inline (JS-OBJECT-MODE-HASNUMERALPROP) #u32:512)
+(define-inline (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1024)
 ;; WARNING: music be the two last constants (see js-array?)
-(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:1024)
-(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:2048)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:2048)
+(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:4096)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-macro (JS-OBJECT-MODE-SEALED) #u32:2)
@@ -579,9 +585,10 @@
 (define-macro (JS-OBJECT-MODE-ENUMERABLE) #u32:128)
 (define-macro (JS-OBJECT-MODE-ARRAY-PLAIN) #u32:256)
 (define-macro (JS-OBJECT-MODE-HASNUMERALPROP) #u32:512)
+(define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1024)
 ;; WARNING: music be the two last constants (see js-array?)
-(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:1024)
-(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:2048)
+(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:2048)
+(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:4096)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -1013,16 +1020,18 @@
    (bit-lsh 1 28))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring? ...                                                 */
-;*---------------------------------------------------------------------*/
-(define-inline (js-jsstring? obj)
-   (isa? obj JsStringLiteral))
-
-;*---------------------------------------------------------------------*/
 ;*    js-number? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-number? o)
    (or (fixnum? o) (flonum? o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring? o)
+   (and (%object? o)
+	(=u32 (JS-OBJECT-MODE-JSSTRINGTAG)
+	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object? ...                                                   */
@@ -1032,7 +1041,9 @@
       ((config nan-tagging #t)
        ($nanobject? o))
       (else
-       (and (%object? o) (>u32 (js-object-mode o) #u32:0)))))
+       (and (%object? o)
+	    (=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array? ...                                                    */

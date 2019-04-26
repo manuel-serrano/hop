@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Apr 25 09:07:38 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 12:52:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -500,8 +500,8 @@
    
    (define (invalidate-pcache-pmap! pcache)
       (with-access::JsPropertyCache pcache (pmap emap amap)
-	 (when (isa? pmap JsConstructMap) (reset-cmap-vtable! pmap))
-	 (when (isa? amap JsConstructMap) (reset-cmap-vtable! amap))
+	 (when (object? pmap) (reset-cmap-vtable! pmap))
+	 (when (object? amap) (reset-cmap-vtable! amap))
 	 (set! pmap #t)
 	 (set! emap #t)
 	 (set! amap #t)))
@@ -1174,23 +1174,24 @@
 ;*    Get the value of a property.                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-property-value obj propowner propname desc %this)
-   (cond
-      ((isa? desc JsWrapperDescriptor)
-       (with-access::JsWrapperDescriptor desc (%get)
-	  ;; JsWrapperDescriptor are used by JsFunction and JsProxy. 
-	  ;; Each proxy object, uses exactly one JsWrapperDescriptor for
-	  ;; all its attributes. Hence, the NAME property of the descriptor
-	  ;; is meaningless and this is why the %GET and %SET functions of
-	  ;; JsWrapperDescriptor take an explicit name as argument
-	  (%get propowner obj propname %this)))
-      ((isa? desc JsAccessorDescriptor)
-       (with-access::JsAccessorDescriptor desc (%get)
-	  (%get obj)))
-      ((isa? desc JsValueDescriptor)
-       (with-access::JsValueDescriptor desc (value)
-	  value))
-      (else
-       (js-undefined))))
+   (let ((cn (object-class desc)))
+      (cond
+	 ((eq? cn JsWrapperDescriptor)
+	  (with-access::JsWrapperDescriptor desc (%get)
+	     ;; JsWrapperDescriptor are used by JsFunction and JsProxy. 
+	     ;; Each proxy object, uses exactly one JsWrapperDescriptor for
+	     ;; all its attributes. Hence, the NAME property of the descriptor
+	     ;; is meaningless and this is why the %GET and %SET functions of
+	     ;; JsWrapperDescriptor take an explicit name as argument
+	     (%get propowner obj propname %this)))
+	 ((eq? cn JsAccessorDescriptor)
+	  (with-access::JsAccessorDescriptor desc (%get)
+	     (%get obj)))
+	 ((eq? cn JsValueDescriptor)
+	  (with-access::JsValueDescriptor desc (value)
+	     value))
+	 (else
+	  (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-property-value-set! ...                                       */
@@ -1198,20 +1199,21 @@
 ;*    Set the value of a property.                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-property-value-set! obj propowner propname desc v %this)
-   (cond
-      ((isa? desc JsAccessorDescriptor)
-       (with-access::JsAccessorDescriptor desc (%set)
-	  (%set obj v)))
-      ((isa? desc JsValueDescriptor)
-       (with-access::JsValueDescriptor desc (value)
-	  (set! value v)
-	  v))
-      ((isa? desc JsWrapperDescriptor)
-       (with-access::JsWrapperDescriptor desc (%set)
-	  ;; see JS-PROPERTY-VALUE for name
-	  (%set propowner obj propname v %this)))
-      (else
-       (js-undefined))))
+   (let ((cn (object-class desc)))
+      (cond
+	 ((eq? cn JsAccessorDescriptor)
+	  (with-access::JsAccessorDescriptor desc (%set)
+	     (%set obj v)))
+	 ((eq? cn JsValueDescriptor)
+	  (with-access::JsValueDescriptor desc (value)
+	     (set! value v)
+	     v))
+	 ((eq? cn JsWrapperDescriptor)
+	  (with-access::JsWrapperDescriptor desc (%set)
+	     ;; see JS-PROPERTY-VALUE for name
+	     (%set propowner obj propname v %this)))
+	 (else
+	  (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-names ...                                          */

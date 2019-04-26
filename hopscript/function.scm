@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Apr 24 12:13:22 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 14:03:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -369,16 +369,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    INSTANTIATE-JSFUNCTION ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-macro (INSTANTIATE-JSFUNCTION arity . rest)
-   `(case ,(cadr arity)
-       ,@(map (lambda (n)
-		 `((,n)
-		   (,(string->symbol (format "instantiateJsFunction~a" n))
-		    ,arity ,@rest)))
-	  (iota 5 1))
-       (else
-	(instantiateJsFunction
-	   ,arity ,@rest))))
+(define-macro (INSTANTIATE-JSFUNCTION . attrs)
+   (let ((arity (assq 'arity attrs)))
+      `(case ,(cadr arity)
+	  ,@(map (lambda (n)
+		    `((,n)
+		      (,(string->symbol (format "instantiateJsFunction~a" n))
+		       ,@attrs)))
+	     (iota 5 1))
+	  (else
+	   (instantiateJsFunction
+	      ,@attrs)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-function ...                                             */

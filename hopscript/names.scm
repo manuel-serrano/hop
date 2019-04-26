@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Thu Apr 25 09:24:05 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 11:16:22 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -72,7 +72,8 @@
    (synchronize js-name-mutex
       (unless js-names
 	 (set! js-names
-	    (create-hashtable :eqtest string=? :hash string-hash-number))
+	    (create-hashtable :eqtest string=? :hash string-hash-number
+	       :max-bucket-length 50))
 	 (set! js-integer-names
 	    (list->vector
 	       (append
@@ -214,13 +215,14 @@
    (synchronize-name
       (let ((n (hashtable-get js-names str)))
 	 (or n
-	     (let ((n (instantiate::JsStringLiteralASCII
+	     (let ((o (instantiate::JsStringLiteralASCII
 			 (weight (fixnum->uint32 (string-length str)))
 			 (left str)
 			 (right #f))))
-		(hashtable-put! js-names str n)
-		(js-jsstring-name-set! n n)
-		n)))))
+		(js-object-mode-set! o (js-jsstring-default-mode))
+		(hashtable-put! js-names str o)
+		(js-jsstring-name-set! o o)
+		o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-index-name->jsstring ...                                      */
@@ -230,14 +232,15 @@
       (synchronize-name
 	 (let ((n (hashtable-get js-names str)))
 	    (or n
-		(let ((n (instantiate::JsStringLiteralIndex
+		(let ((o (instantiate::JsStringLiteralIndex
 			    (weight (string-length str))
 			    (left str)
 			    (right #f)
 			    (index num))))
-		   (hashtable-put! js-names str n)
-		   (js-jsstring-name-set! n n)
-		   n))))))
+		   (js-object-mode-set! o (js-jsstring-default-mode))
+		   (hashtable-put! js-names str o)
+		   (js-jsstring-name-set! o o)
+		   o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-name->jsstring ...                                       */
@@ -246,13 +249,14 @@
    (synchronize-name
       (let ((n (hashtable-get js-names str)))
 	 (or n
-	     (let ((n (instantiate::JsStringLiteralUTF8
+	     (let ((o (instantiate::JsStringLiteralUTF8
 			 (weight (fixnum->uint32 (string-length str)))
 			 (left str)
 			 (right #f))))
-		(hashtable-put! js-names str n)
-		(js-jsstring-name-set! n n)
-		n)))))
+		(js-object-mode-set! o (js-jsstring-default-mode))
+		(hashtable-put! js-names str o)
+		(js-jsstring-name-set! o o)
+		o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name->jsstring ...                                            */

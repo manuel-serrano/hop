@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Apr 22 07:40:22 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 11:15:09 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -291,12 +291,13 @@
 	 (if (=fx i 356)
 	     v
 	     (let* ((str (fixnum->string (-fx i 100)))
-		    (idx (instantiate::JsStringLiteralIndex
-			    (weight (fixnum->uint32 (string-length str)))
-			    (left str)
-			    (index (fixnum->uint32 (-fx i 100))))))
-		(object-widening-set! idx #f)
-		(vector-set! v i idx)
+		    (o (instantiate::JsStringLiteralIndex
+			  (weight (fixnum->uint32 (string-length str)))
+			  (left str)
+			  (index (fixnum->uint32 (-fx i 100))))))
+		(js-object-mode-set! o (js-jsstring-default-mode))
+		(object-widening-set! o #f)
+		(vector-set! v i o)
 		(loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -372,6 +373,7 @@
    (let ((o (instantiate::JsStringLiteralASCII
 	       (weight (fixnum->uint32 (string-length val)))
 	       (left val))))
+      (js-object-mode-set! o (js-jsstring-default-mode))
       (object-widening-set! o #f)
       o))
 
@@ -383,6 +385,7 @@
 	       (weight (fixnum->uint32 (string-length val)))
 	       (left val)
 	       (right #f))))
+      (js-object-mode-set! o (js-jsstring-default-mode))
       (object-widening-set! o #f)
       o))
 
@@ -433,6 +436,7 @@
 		      (left str)
 		      (right #f)
 		      (index num))))
+	     (js-object-mode-set! o (js-jsstring-default-mode))
 	     (object-widening-set! o #f)
 	     o)))
       (else
@@ -962,6 +966,7 @@
 		   (weight (js-jsstring-length left))
 		   (left left)
 		   (right right)))))
+      (js-object-mode-set! s (js-jsstring-default-mode))
       (object-widening-set! s #f)
       s))
 

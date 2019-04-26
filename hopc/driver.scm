@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Apr 26 10:14:15 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 12:43:36 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -337,7 +337,6 @@
 	     (compile-pipe opts comp file))))
       
       (define (compile-hop in opts file temp)
-	 (tprint "COMPILE-HOP file=" file " temp=" temp)
 	 (compiler
 	    (append `("-fread-internal-src"
 			"--force-cc-o"
