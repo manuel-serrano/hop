@@ -11,7 +11,6 @@ var addSvc = service( n ) {
    counter += n;
 }
 
-
 server.register = service( clientServer ) {
    console.log( 'server: new registration' );
    server.addSvc = addSvc;
