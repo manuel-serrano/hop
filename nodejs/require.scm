@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 25 18:55:03 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 09:43:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -644,12 +644,8 @@
 		       (symbol->string (car sym)))
 		   %module))))))
 
-   (define (worker-suffix worker)
-      (with-access::WorkerHopThread worker (parent)
-	 (if parent "_w" "")))
-
    (let ((mod (nodejs-import-module worker %this %module path checksum loc))
-	 (sopath (hop-sofile-path path :suffix (worker-suffix worker))))
+	 (sopath (hop-sofile-path path)))
       (with-access::JsModule mod (evars)
 	 (set! evars
 	    (vector-map! (lambda (s) (import-var mod s sopath)) symbols)))
@@ -1465,7 +1461,7 @@
 	 (when (file-exists? sopath) (delete-file sopath))
 	 (when (file-exists? sopathtmp) (delete-file sopathtmp))
 	 (when (and misctmp (file-exists? misctmp)) (delete-file misctmp))))
-   
+
    (with-trace 'sorequire (format "nodejs-socompile ~a" filename)
       (let loop ()
 	 (let ((tmp (synchronize/debug socompile-mutex
@@ -1603,7 +1599,7 @@
    (define (loadso-or-compile filename lang worker-slave)
       (let loop ((sopath (find-new-sofile filename worker-slave)))
 	 (cond
-	    ((string? sopath)
+	    ((and (string? sopath) (hop-sofile-enable))
 	     (multiple-value-bind (p _)
 		(hop-dynamic-load sopath)
 		(if (and (procedure? p) (=fx (procedure-arity p) 4))
@@ -1713,7 +1709,7 @@
    (define (hop-load/cache filename worker-slave)
       (let loop ((sopath (find-new-sofile filename worker-slave)))
 	 (cond
-	    ((string? sopath)
+	    ((and (string? sopath) (hop-sofile-enable))
 	     (hop-dynamic-load sopath))
 	    ((or (not (pair? sopath)) (not (eq? (car sopath) 'error)))
 	     (case (hop-sofile-compile-policy)

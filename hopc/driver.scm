@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sun Apr 21 15:56:00 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 10:14:15 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -337,14 +337,13 @@
 	     (compile-pipe opts comp file))))
       
       (define (compile-hop in opts file temp)
+	 (tprint "COMPILE-HOP file=" file " temp=" temp)
 	 (compiler
-	    (append `("--force-cc-o"
-;* 			"-library" "hop"                               */
-;* 			"-library" "hopscheme"                         */
-;* 			"-library" "js2scheme"                         */
-;* 			"-library" "hopwidget"                         */
+	    (append `("-fread-internal-src"
+			"--force-cc-o"
 			"-rpath" ,(make-file-path (hop-lib-directory)
-				     "hop" (hop-version)))
+				     "hop" (hop-version))
+			"-I" ,(dirname file))
 	       opts)
 	    (lambda (out)
 	       (let loop ()
