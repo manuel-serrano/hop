@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Apr 18 08:12:59 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 19:22:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -145,7 +145,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-primitive-value o::JsHopFrame ctx)
    (with-access::JsHopFrame o (path)
-      (hopframe->string o '())))
+      (hopframe->string o ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsService ...                                        */
@@ -483,7 +483,7 @@
 (define (hopframe->string::bstring frame::JsHopFrame %this)
    (with-access::JsHopFrame frame (srv path args)
       (let ((sans-srv (if (pair? args)
-			  (hop-apply-url path args)
+			  (hop-apply-url path args %this)
 			  path)))
 	 (if (isa? srv JsServer)
 	     (with-access::JsServer srv (obj)
@@ -512,7 +512,7 @@
 	 ((keyword? val)
 	  `("keyword" ,(keyword->string val) "hop-encoding: keyword"))
 	 (else
-	  `("hop" ,(obj->string val 'hop-to-hop) "hop-encoding: hop"))))
+	  `("hop" ,(obj->string val %this) "hop-encoding: hop"))))
    
    (define (scheme->js val)
       (js-obj->jsobject val %this))
@@ -587,7 +587,7 @@
 		  (body (lambda ()
 			   (with-handler
 			      (lambda (e)
-				 (or fail exception-notify))
+				 ((or fail exception-notify) e))
 			      (post-request
 				 callback fail
 				 scheme host port

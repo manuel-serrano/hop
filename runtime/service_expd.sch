@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/service_expd.sch          */
+;*    serrano/prgm/project/hop/hop/runtime/service_expd.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Jan  8 17:47:58 2017 (serrano)                */
-;*    Copyright   :  2006-17 Manuel Serrano                            */
+;*    Last change :  Thu Apr 25 18:55:40 2019 (serrano)                */
+;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */

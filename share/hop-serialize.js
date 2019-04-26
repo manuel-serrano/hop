@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/hop/share/hop-serialize.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Thu Aug  9 09:40:51 2018 (serrano)                */
-/*    Copyright   :  2007-18 Manuel Serrano                            */
+/*    Last change :  Fri Apr 26 05:44:46 2019 (serrano)                */
+/*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -1371,6 +1371,8 @@ function hop_find_class_unserializer( hash ) {
 #if HOP_SCHEME
       return function( o ) {
 	 if( typeof( o ) === "string" ) {
+	    /* MS 2019-04-26: SHOULD NOT BE HERE */
+	    alert( "hop-serialize.js: should not be here!" );
 	    var m = o.match( hop_custom_object_regexp );
 
 	    if( m ) {

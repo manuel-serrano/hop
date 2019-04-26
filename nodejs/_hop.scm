@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Apr 17 07:59:20 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 20:29:03 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -452,7 +452,7 @@
 ;*---------------------------------------------------------------------*/
 (define (urlframe->string::bstring frame::JsUrlFrame %this)
    (with-access::JsUrlFrame frame (url args)
-      (hop-apply-nice-url (js-jsstring->string url) args)))
+      (hop-apply-nice-url (js-jsstring->string url) args %this)))
    
 ;*---------------------------------------------------------------------*/
 ;*    post-url ...                                                     */
@@ -540,7 +540,7 @@
       (define (post callback fail)
 	 (with-access::JsUrlFrame frame (url args)
 	    (with-url (hop-apply-nice-url
-			 (url-base (js-tostring url %this)) args)
+			 (url-base (js-tostring url %this)) args %this)
 	       callback
 	       :fail fail
 	       :method method

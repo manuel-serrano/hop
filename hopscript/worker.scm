@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue Apr 23 11:43:56 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 05:15:35 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -194,7 +194,7 @@
 		     (apply-listeners exitlisteners e)))))))
    
    (lambda (_ src)
-      (with-access::JsGlobalObject %this (js-worker-prototype js-object worker)
+      (with-access::JsGlobalObject %this (js-worker-prototype js-object)
 	 (letrec* ((parent (js-current-worker))
 		   (source (js-tostring src %this))
 		   (this (%global-constructor :name (string-append source "_w")))
@@ -224,7 +224,8 @@
 					  (when (isa? parent WorkerHopThread)
 					     (remove-subworker! parent thread)))))))
 	    ;; store the worker in global object
-	    (set! worker thread)
+	    (with-access::JsGlobalObject this (worker)
+	       (set! worker thread))
 
 	    ;; prepare the worker loop
 	    (js-worker-init! thread)

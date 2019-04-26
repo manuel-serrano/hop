@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Fri Apr 19 13:32:15 2019 (serrano)                */
+;*    Last change :  Thu Apr 25 18:34:21 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -223,7 +223,7 @@
 
 (define (js-int32->string v expr conf)
    (if (int32? v)
-       (fixnum->string (int32->fixnum v))
+       `(& ,(fixnum->string (int32->fixnum v)))
        `(js-ascii->jssstring (int32->string ,v))))
 
 ;; uint32
@@ -260,7 +260,7 @@
 (define (js-uint32->string v expr conf)
    (cond
       ((uint32? v)
-       (llong->string (uint32->llong v)))
+       `(& ,(llong->string (uint32->llong v))))
       ((inrange-int32? expr)
        `(js-ascii->jssstring (uint32->fixnum ,v)))
       ((m64? conf)
@@ -277,7 +277,7 @@
 
 (define (js-fixnum->string v expr conf)
    (if (fixnum? v)
-       (integer->string v)
+       `(& ,(integer->string v))
        `(js-ascii->jssstring (fixnum->string ,v))))
 
 ;; integer
@@ -289,18 +289,18 @@
 
 (define (js-integer->string v expr conf)
    (if (integer? v)
-       (integer->string v)
+       `(& ,(integer->string v))
        `(js-ascii->jssstring (integer->string ,v))))
 
 ;; number
 (define (js-number->string v expr conf)
    (cond
       ((fixnum? v)
-       `(js-ascii->jsstring ,(integer->string v)))
+       `(& ,(integer->string v)))
       ((int32? v)
-       `(js-ascii->jsstring ,(integer->string (int32->fixnum v))))
+       `(& ,(integer->string (int32->fixnum v))))
       ((uint32? v)
-       `(js-ascii->jsstring ,(llong->string (uint32->llong v))))
+       `(& ,(llong->string (uint32->llong v))))
       (else
        `(js-ascii->jsstring (js-tonumber ,v %this)))))
 
