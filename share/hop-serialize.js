@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Fri Apr 26 05:44:46 2019 (serrano)                */
+/*    Last change :  Fri Apr 26 19:22:31 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1129,8 +1129,14 @@ function hop_bytearray_to_obj( s, extension ) {
 
 	 // consume the hash number
 	 read_item();
-
-	 return res;
+	 
+	 if( sc_symbol2jsstring( key ) === "xml-element" ) {
+	    return hop_dom_unserialize( res );
+	 } else if( sc_symbol2jsstring( key ) === "xml-tilde" ) {
+	    return hop_tilde_unserialize( res );
+	 } else {
+	    return res;
+	 }
       }
    }
 
@@ -1298,6 +1304,57 @@ function hop_bytearray_to_obj( s, extension ) {
    return read_item();
 }
 
+/*---------------------------------------------------------------------*/
+/*    hop_dom_unserialize ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_dom_unserialize( obj ) {
+   var el = document.createElement( sc_symbol2jsstring( obj.tag ) );
+   var attrs = obj.attributes;
+   
+   while( sc_isPair( attrs ) ) {
+      var k = sc_symbol2jsstring( sc_car( attrs ) );
+      var v = sc_cadr( attrs );
+      attrs = sc_cddr( attrs );
+      
+      switch( k ) {
+	 case "class": 
+	    el.className = v;
+	    break;
+	 case "style": 
+	    hop_style_attribute_set( el, v );
+	    break;
+	    
+	 default:
+	    if( k[ 0 ] !== "%" ) {
+	       var m = k.match( "^on(.*)" );
+	       if(  m ) {
+		  try {
+		     hop_add_event_listener( el, m[ 1 ], v, true );
+		  } catch( e ) {
+		     console.log( "e=", e, v );
+		     alert( "hop_dom_unserialize error!" );
+		  }
+	       } else {
+		  el.setAttribute( k, v );
+	       }
+	    }
+      };
+   }
+   
+   if( "id" in obj ) el.id = obj.id;
+   obj.body.forEach( n => dom_add_child( el, n ) );
+   
+   return el;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_tilde_unserialize ...                                        */
+/*---------------------------------------------------------------------*/
+function hop_tilde_unserialize( obj ) {
+   console.log( "hop_tilde_unserialize...", obj[ "%js-attribute" ] );
+   return new Function( 'event', obj[ "%js-attribute" ] );
+}
+   
 /*---------------------------------------------------------------------*/
 /*    hop_custom_object_regexp ...                                     */
 /*    -------------------------------------------------------------    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Apr 26 05:36:00 2019 (serrano)                */
+;*    Last change :  Fri Apr 26 18:40:40 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -89,14 +89,19 @@
 ;*    WARNING: Module initialization prevents this declaration to be   */
 ;*    moved to xml_types!                                              */
 ;*---------------------------------------------------------------------*/
-;* (register-class-serialization! xml-markup                           */
-;*    (lambda (o ctx)                                                  */
-;*       (let ((p (open-output-string)))                               */
-;* 	 (obj->javascript-expr o p ctx)                                */
-;* 	 (close-output-port p)))                                       */
-;*    (lambda (o)                                                      */
-;*       (tprint "UNSE o=" o)                                          */
-;*       o))                                                           */
+(register-class-serialization! xml-markup
+   ;; use a fake ad-hoc serializer to simplify client-side
+   ;; unserializer implementation
+   (lambda (o ctx) o)
+   (lambda (o ctx) o))
+
+(register-class-serialization! xml-tilde
+   (lambda (o ctx)
+      ;; force the compilation of the attributes
+      (xml-tilde->attribute o)
+      o)
+   (lambda (o ctx)
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-xhtml-xmlns ...                                              */
@@ -1062,7 +1067,8 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
    (with-access::xml-tilde obj (%js-attribute)
       (if (string? %js-attribute)
 	  %js-attribute
-	  (let ((js-attr (xml-attribute-encode (xml-tilde->statement obj))))
+;* 	  (let ((js-attr (xml-attribute-encode (xml-tilde->statement obj)))) */
+	  (let ((js-attr (xml-tilde->statement obj)))
 	     (set! %js-attribute js-attr)
 	     js-attr))))
 
