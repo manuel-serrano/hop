@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Fri Apr 26 19:22:31 2019 (serrano)                */
+/*    Last change :  Sat Apr 27 20:39:47 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1130,7 +1130,8 @@ function hop_bytearray_to_obj( s, extension ) {
 	 // consume the hash number
 	 read_item();
 	 
-	 if( sc_symbol2jsstring( key ) === "xml-element" ) {
+	 if( sc_symbol2jsstring( key ) === "xml-element" 
+	     || sc_symbol2jsstring( key ) === "xml-empty-element" ) {
 	    return hop_dom_unserialize( res );
 	 } else if( sc_symbol2jsstring( key ) === "xml-tilde" ) {
 	    return hop_tilde_unserialize( res );
@@ -1329,9 +1330,12 @@ function hop_dom_unserialize( obj ) {
 	       var m = k.match( "^on(.*)" );
 	       if(  m ) {
 		  try {
-		     hop_add_event_listener( el, m[ 1 ], v, true );
+		     var fun = (typeof v === "string") 
+			? new Function( "event", v ) 
+			: v;
+		     hop_add_event_listener( el, m[ 1 ], fun, true );
 		  } catch( e ) {
-		     console.log( "e=", e, v );
+		     console.log( "e=", e, " v=", v, " m=", m[ 1 ] );
 		     alert( "hop_dom_unserialize error!" );
 		  }
 	       } else {
@@ -1342,7 +1346,7 @@ function hop_dom_unserialize( obj ) {
    }
    
    if( "id" in obj ) el.id = obj.id;
-   obj.body.forEach( n => dom_add_child( el, n ) );
+   if( obj.body ) obj.body.forEach( n => { console.log( "n=", n ); if( n ) dom_add_child( el, n ); } );
    
    return el;
 }
