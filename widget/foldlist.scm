@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/foldlist.scm               */
+;*    serrano/prgm/project/hop/hop/widget/foldlist.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Sat Nov 12 07:24:35 2011 (serrano)                */
+;*    Last change :  Sun Apr 28 07:04:40 2019 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -31,6 +31,28 @@
    (export  (<FL> . ::obj)
 	    (<FLITEM> . ::obj)
 	    (<FLHEAD> . ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::html-foldlist ...                            */
+;*    -------------------------------------------------------------    */
+;*    WARNING: Module initialization prevents this declaration to be   */
+;*    moved to xml_types!                                              */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! html-foldlist
+   (lambda (o ctx)
+      (let ((p (open-output-string)))
+	 (obj->javascript-expr o p ctx)
+	 (close-output-port p)))
+   (lambda (o)
+      o))
+
+(register-class-serialization! html-flitem
+   (lambda (o ctx)
+      (let ((p (open-output-string)))
+	 (obj->javascript-expr o p ctx)
+	 (close-output-port p)))
+   (lambda (o)
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FL> ...                                                         */

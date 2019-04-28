@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Apr 27 20:39:47 2019 (serrano)                */
+/*    Last change :  Sun Apr 28 06:55:41 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1130,13 +1130,10 @@ function hop_bytearray_to_obj( s, extension ) {
 	 // consume the hash number
 	 read_item();
 	 
-	 if( sc_symbol2jsstring( key ) === "xml-element" 
-	     || sc_symbol2jsstring( key ) === "xml-empty-element" ) {
-	    return hop_dom_unserialize( res );
-	 } else if( sc_symbol2jsstring( key ) === "xml-tilde" ) {
-	    return hop_tilde_unserialize( res );
+	 if( key in hop_builtin_class_unserializer ) {
+	    return hop_builtin_class_unserializer[ key ]( res );
 	 } else {
-	    return res;
+	    res;
 	 }
       }
    }
@@ -1346,7 +1343,7 @@ function hop_dom_unserialize( obj ) {
    }
    
    if( "id" in obj ) el.id = obj.id;
-   if( obj.body ) obj.body.forEach( n => { console.log( "n=", n ); if( n ) dom_add_child( el, n ); } );
+   if( obj.body ) obj.body.forEach( n => { if( n ) dom_add_child( el, n ); } );
    
    return el;
 }
@@ -1355,10 +1352,25 @@ function hop_dom_unserialize( obj ) {
 /*    hop_tilde_unserialize ...                                        */
 /*---------------------------------------------------------------------*/
 function hop_tilde_unserialize( obj ) {
-   console.log( "hop_tilde_unserialize...", obj[ "%js-attribute" ] );
    return new Function( 'event', obj[ "%js-attribute" ] );
 }
    
+/*---------------------------------------------------------------------*/
+/*    hop_builtin_class_unserializer ...                               */
+/*---------------------------------------------------------------------*/
+var hop_builtin_class_unserializer = {};
+
+function hop_builtin_class_register_unserializer( key, unserializer ) {
+   hop_builtin_class_unserializer[ key ] = unserializer;
+}
+
+hop_builtin_class_register_unserializer( 
+   sc_jsstring2symbol( "xml-element" ), hop_dom_unserialize );
+hop_builtin_class_register_unserializer( 
+   sc_jsstring2symbol( "xml-empty-element" ), hop_dom_unserialize );
+hop_builtin_class_register_unserializer( 
+   sc_jsstring2symbol( "xml-tilde" ), hop_tilde_unserialize );
+
 /*---------------------------------------------------------------------*/
 /*    hop_custom_object_regexp ...                                     */
 /*    -------------------------------------------------------------    */

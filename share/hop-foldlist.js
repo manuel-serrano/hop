@@ -1,12 +1,22 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-foldlist.js             */
+/*    serrano/prgm/project/hop/hop/share/hop-foldlist.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Mon Mar 14 16:46:48 2011 (serrano)                */
+/*    Last change :  Sun Apr 28 07:09:07 2019 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implementation                                     */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    unserializer ...                                                 */
+/*---------------------------------------------------------------------*/
+hop_builtin_class_register_unserializer( 
+   sc_jsstring2symbol( "html-flhead" ), 
+   function( obj ) {
+      obj.tag = span;
+      return hop_dom_unserialize( obj );
+   } );
 
 /*---------------------------------------------------------------------*/
 /*    hop_fold_item_close ...                                          */
