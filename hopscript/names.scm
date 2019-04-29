@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sun Apr 28 11:19:56 2019 (serrano)                */
+;*    Last change :  Mon Apr 29 13:11:04 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -26,6 +26,8 @@
 	   __hopscript_private)
    
    (export (js-init-names!)
+	   (js-get-js-string-names)
+	   (js-get-js-integer-names)
 	   (inline js-name-pcacher::obj ::JsStringLiteral)
 	   (inline js-name-pcacher-set! ::JsStringLiteral ::JsPropertyCache)
 	   (inline js-name-pcachew::obj ::JsStringLiteral)
@@ -59,6 +61,10 @@
 (define js-names #f)
 (define js-integer-names #f)
 (define js-string-names #f)
+
+;; cannot inline these two functions because of thread-local variables
+(define (js-get-js-string-names) js-string-names)
+(define (js-get-js-integer-names) js-integer-names)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-lock                                                     */

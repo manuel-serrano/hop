@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Sun Apr 21 16:18:23 2019 (serrano)                */
+;*    Last change :  Mon Apr 29 13:32:04 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -67,7 +67,9 @@
 	  (unwind-protect
 	     (let* ((nbody (map (lambda (x) (e x e)) body))
 		    (cnsts (map cadr (reverse! (thread-parameter '&cnsts)))))
-		(e `(let ((__js_strings (&jsstring-init ,(obj->string (apply vector cnsts)))))
+		(e `(let* ((__js_strings (&jsstring-init ,(obj->string (apply vector cnsts))))
+			   (js-string-names (js-get-js-string-names))
+			   (js-integer-names (js-get-js-integer-names)))
 		       ,@nbody)
 		   e))
 	     (thread-parameter-set! '&cnsts o))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Apr 28 15:56:57 2019 (serrano)                */
+;*    Last change :  Mon Apr 29 12:55:08 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -51,6 +51,8 @@
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
 		   (define __js_strings (&init!))
+		   (define js-string-names (js-get-js-string-names))
+		   (define js-integer-names (js-get-js-integer-names))
 		   (define %worker (js-current-worker))
 		   (define %cnst-table ,cnsttable)
 		   ,@esimports
@@ -72,6 +74,8 @@
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
 		   (define __js_strings (&init!))
+		   (define js-string-names (js-get-js-string-names))
+		   (define js-integer-names (js-get-js-integer-names))
 		   (define %pcache
 		      (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
 		   ,@(if (config-get conf :profile-call #f)
