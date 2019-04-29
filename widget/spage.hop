@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Thu Apr 18 08:02:16 2019 (serrano)                */
+;*    Last change :  Sun Apr 28 10:59:48 2019 (serrano)                */
 ;*    Copyright   :  2009-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -22,6 +22,19 @@
 	   (<SPHEAD> . obj)
 	   (<SPTAB> . obj)
 	   (<SPTABHEAD> . obj)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::html-foldlist ...                            */
+;*---------------------------------------------------------------------*/
+(define (serialize o ctx)
+   (let ((p (open-output-string)))
+      (obj->javascript-expr o p ctx)
+      (close-output-port p)))
+
+(define (unserialize o ctx)
+   o)
+      
+(register-class-serialization! xml-sphead-element serialize unserialize)
 
 ;*---------------------------------------------------------------------*/
 ;*    SPAGE ...                                                        */

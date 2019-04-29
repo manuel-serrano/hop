@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr 18 07:53:56 2019 (serrano)                */
+;*    Last change :  Sun Apr 28 11:01:21 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -46,6 +46,21 @@
 	    (<TRHEAD> . ::obj)
 	    (<TRBODY> . ::obj)
 	    (<TRLEAF> . ::obj)))
+   
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::html-foldlist ...                            */
+;*---------------------------------------------------------------------*/
+(define (serialize o ctx)
+   (let ((p (open-output-string)))
+      (obj->javascript-expr o p ctx)
+      (close-output-port p)))
+
+(define (unserialize o ctx)
+   o)
+      
+(register-class-serialization! html-tree serialize unserialize)
+(register-class-serialization! html-trbody serialize unserialize)
+(register-class-serialization! html-tree-leaf serialize unserialize)
    
 ;*---------------------------------------------------------------------*/
 ;*    <TREE> ...                                                       */

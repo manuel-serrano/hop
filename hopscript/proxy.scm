@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Apr 26 14:08:54 2019 (serrano)                */
+;*    Last change :  Sun Apr 28 11:19:02 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -21,7 +21,7 @@
    
    (library hop)
    
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -162,7 +162,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-property-value proxy obj prop %this)
+(define-inline (js-proxy-property-value proxy obj prop %this)
 
    (define (check target v)
       (if (null? (js-object-properties target))
@@ -182,15 +182,12 @@
 		   (set! cachegetproc procedure)
 		   (check target v))))
 	    ((isa? get JsFunction)
-	     (tprint "1")
 	     (with-access::JsFunction get (procedure)
 		(check target 
 		   (js-call3% %this get procedure handler target prop obj))))
 	    ((isa? get JsProxy)
-	     (tprint "2")
 	     (check target (js-call3 %this get handler target prop obj)))
 	    (else
-	     (tprint "3")
 	     (js-get-jsobject target obj prop %this))))))
 
 ;*---------------------------------------------------------------------*/

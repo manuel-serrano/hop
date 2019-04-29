@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Apr 21 07:39:18 2019 (serrano)                */
+;*    Last change :  Sun Apr 28 15:56:57 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -99,6 +99,7 @@
 	 (let ((jsmod (js-module/main loc name))
 	       (thunk `(lambda ()
 			  (define _ (set! __js_strings (&init!)))
+			  (define %cnst-table ,cnsttable)
 			  ,@esimports
 			  ,esexports
 			  ,@globals
@@ -132,7 +133,6 @@
 		     (js-main-worker! ,name ,path #f
 			nodejs-new-global-object nodejs-new-module)
 		     (let ((%scope (nodejs-new-scope-object %this))
-			   (%cnst-table ,cnsttable)
 			   (this ,jsthis))
 			(js-worker-push-thunk! %worker "nodejs-toplevel"
 			   ,(if (config-get conf :function-nice-name #f)

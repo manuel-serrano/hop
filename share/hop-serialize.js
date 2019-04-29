@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sun Apr 28 06:55:41 2019 (serrano)                */
+/*    Last change :  Sun Apr 28 09:53:17 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1133,7 +1133,7 @@ function hop_bytearray_to_obj( s, extension ) {
 	 if( key in hop_builtin_class_unserializer ) {
 	    return hop_builtin_class_unserializer[ key ]( res );
 	 } else {
-	    res;
+	    return res;
 	 }
       }
    }
@@ -1444,8 +1444,6 @@ function hop_find_class_unserializer( hash ) {
 #if HOP_SCHEME
       return function( o ) {
 	 if( typeof( o ) === "string" ) {
-	    /* MS 2019-04-26: SHOULD NOT BE HERE */
-	    alert( "hop-serialize.js: should not be here!" );
 	    var m = o.match( hop_custom_object_regexp );
 
 	    if( m ) {

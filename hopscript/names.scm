@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri Apr 26 11:16:22 2019 (serrano)                */
+;*    Last change :  Sun Apr 28 11:19:56 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -44,7 +44,14 @@
    (export js-name-lock
 	   (macro synchronize-name))
    
-   (export js-names js-integer-names js-string-names))
+   (static js-names)
+   (export js-integer-names js-string-names)
+
+   (cond-expand
+      ((config thread-local-storage #t)
+       (pragma (js-names thread-local)
+	  (js-integer-names thread-local)
+	  (js-string-names thread-local)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    name tables                                                      */
@@ -63,17 +70,44 @@
 ;*    synchronize-name ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-macro (synchronize-name . body)
-   `(synchronize js-name-lock ,@body))
+   (cond-expand
+      ((config thread-local-storage #t)
+       `(begin ,@body))
+      (else
+       `(synchronize js-name-lock ,@body))))
+
+;*---------------------------------------------------------------------*/
+;*    gcroots                                                          */
+;*---------------------------------------------------------------------*/
+(define gcroots '())
+
+;*---------------------------------------------------------------------*/
+;*    string-compare? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (string-compare? x y)
+   (cond-expand
+      (bigloo-c
+       (when (pragma::bool "BSTRING_TO_STRING( $1 )[ 0 ] == BSTRING_TO_STRING( $2 )[ 0 ]" x y)
+	  (let ((l1 (string-length x)))
+	     (when (=fx l1 (string-length y))
+		(if (>fx l1 0)
+		    (pragma::bool "!memcmp( (void *)BSTRING_TO_STRING( $1 ), (void *)BSTRING_TO_STRING( $2 ), $3 )" x y l1)
+		    #t)))))
+      (else
+       (string=? x y))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-names! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-names!)
    (synchronize js-name-mutex
-      (unless js-names
+      (unless (hashtable? js-names)
 	 (set! js-names
-	    (create-hashtable :eqtest string=? :hash string-hash-number
-	       :max-bucket-length 50))
+	    (create-hashtable
+	       :eqtest string-compare?
+	       :hash string-hash-number
+	       :max-length 65536
+	       :max-bucket-length 20))
 	 (set! js-integer-names
 	    (list->vector
 	       (append
@@ -86,7 +120,9 @@
 	 (set! js-string-names
 	    (vector-map (lambda (val)
 			   (js-ascii-name->jsstring val))
-	       (& strings))))))
+	       (& strings)))
+	 (set! gcroots
+	    (cons* js-names js-integer-names js-string-names gcroots)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcacher ...                                              */
@@ -275,7 +311,7 @@
    (cond
       ((and (>fx num -10) (<fx num 100))
        (vector-ref js-integer-names (+fx num 10)))
-      ((and (>fx num 0) (<fx num 65535))
+      ((and (>fx num 0) (<fx num 16384))
        (js-index-name->jsstring (fixnum->uint32 num)))
       (else
        (js-ascii-name->jsstring (fixnum->string num)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Sun Apr 28 07:04:40 2019 (serrano)                */
+;*    Last change :  Sun Apr 28 09:51:09 2019 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -18,7 +18,7 @@
    (static  (class html-foldlist::xml-element
 	       (cname::bstring read-only)
 	       (stop::bool (default #t))
-	       (spacing (default 0))
+	       (cellspacing (default 0))
 	       (icono (default #f))
 	       (iconc (default #f))
 	       (history read-only (default #t)))
@@ -34,25 +34,17 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::html-foldlist ...                            */
-;*    -------------------------------------------------------------    */
-;*    WARNING: Module initialization prevents this declaration to be   */
-;*    moved to xml_types!                                              */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! html-foldlist
-   (lambda (o ctx)
-      (let ((p (open-output-string)))
-	 (obj->javascript-expr o p ctx)
-	 (close-output-port p)))
-   (lambda (o)
-      o))
+(define (serialize o ctx)
+   (let ((p (open-output-string)))
+      (obj->javascript-expr o p ctx)
+      (close-output-port p)))
 
-(register-class-serialization! html-flitem
-   (lambda (o ctx)
-      (let ((p (open-output-string)))
-	 (obj->javascript-expr o p ctx)
-	 (close-output-port p)))
-   (lambda (o)
-      o))
+(define (unserialize o ctx)
+   o)
+      
+(register-class-serialization! html-flitem serialize unserialize)
+(register-class-serialization! html-foldlist serialize unserialize)
 
 ;*---------------------------------------------------------------------*/
 ;*    <FL> ...                                                         */
@@ -70,7 +62,7 @@
 			    (string-append "hop-fl " class)
 			    "hop-fl"))
 		 (id (xml-make-id id 'FL))
-		 (spacing spacing)
+		 (cellspacing spacing)
 		 (icono icono)
 		 (iconc iconc)
 		 (history (if (boolean? history)
@@ -92,9 +84,9 @@
 ;*    xml-write ::html-foldlist ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-foldlist p backend)
-   (with-access::html-foldlist obj (cname id spacing body)
+   (with-access::html-foldlist obj (cname id cellspacing body)
       (fprintf p "<table class='~a' id='~a' cellpadding='0' cellspacing='~a'>"
-	 cname id spacing)
+	 cname id cellspacing)
       (xml-write body p backend)
       (display "</table>" p)))
 

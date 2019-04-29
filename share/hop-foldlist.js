@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Sun Apr 28 07:09:07 2019 (serrano)                */
+/*    Last change :  Sun Apr 28 09:42:22 2019 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implementation                                     */
 /*=====================================================================*/
@@ -14,7 +14,7 @@
 hop_builtin_class_register_unserializer( 
    sc_jsstring2symbol( "html-flhead" ), 
    function( obj ) {
-      obj.tag = span;
+      obj.tag = sc_jsstring2symbol( "span" );
       return hop_dom_unserialize( obj );
    } );
 

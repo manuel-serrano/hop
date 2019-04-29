@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr 18 07:54:21 2019 (serrano)                */
+;*    Last change :  Sun Apr 28 10:57:42 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -28,7 +28,22 @@
 	    (<NPHEAD> . ::obj)
 	    (<NPTAB> . ::obj)
 	    (<NPTABHEAD> . ::obj)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::html-foldlist ...                            */
+;*---------------------------------------------------------------------*/
+(define (serialize o ctx)
+   (let ((p (open-output-string)))
+      (obj->javascript-expr o p ctx)
+      (close-output-port p)))
+
+(define (unserialize o ctx)
+   o)
+      
+(register-class-serialization! xml-nphead-element serialize unserialize)
+(register-class-serialization! xml-nptabhead-element serialize unserialize)
+(register-class-serialization! xml-nptab-element serialize unserialize)
+
 ;*---------------------------------------------------------------------*/
 ;*    <NOTEPAD> ...                                                    */
 ;*    -------------------------------------------------------------    */
