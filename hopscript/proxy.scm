@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Apr 28 11:19:02 2019 (serrano)                */
+;*    Last change :  Tue Apr 30 13:51:11 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -39,6 +39,9 @@
    
    (export (js-init-proxy! ::JsGlobalObject)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
+	   (js-proxy-property-value proxy obj prop %this)
+	   (inline js-jsproxy-get/name-cache ::JsProxy ::obj ::JsGlobalObject
+	      #!optional (point -1) (cspecs '()))
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -162,7 +165,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-proxy-property-value proxy obj prop %this)
+(define (js-proxy-property-value proxy obj prop %this)
 
    (define (check target v)
       (if (null? (js-object-properties target))
@@ -236,11 +239,18 @@
    (js-proxy-property-value o o (js-toname prop %this) %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get/cache ::JsProxy ...                                       */
+;*    js-jsproxy-get/name-cache ::JsProxy ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get/cache o::JsProxy prop::obj %this::JsGlobalObject
+(define-inline (js-jsproxy-get/name-cache o::JsProxy prop::obj %this::JsGlobalObject
 		  #!optional (point -1) (cspecs '()))
    (js-proxy-property-value o o (js-toname prop %this) %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-get/cache ::JsProxy ...                                       */
+;*---------------------------------------------------------------------*/
+;* (define-method (js-get/cache o::JsProxy prop::obj %this::JsGlobalObject */
+;* 		  #!optional (point -1) (cspecs '()))                  */
+;*    (js-jsproxy-get-name/cache o prop %this point cspecs))           */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ::JsProxy ...                      */

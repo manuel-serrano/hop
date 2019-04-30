@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Apr 26 11:09:06 2019 (serrano)                */
+;*    Last change :  Tue Apr 30 13:56:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -287,7 +287,7 @@
 	   (class JsGenerator::JsObject
 	      %next)
 
-	   (class JsProxy::JsObject
+	   (final-class JsProxy::JsObject
 	      (target::JsObject (default (class-nil JsObject)))
 	      (handler::JsObject (default (class-nil JsObject)))
 	      (revoked::bool (default #f))
