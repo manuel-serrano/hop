@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Apr 26 12:52:15 2019 (serrano)                */
+;*    Last change :  Tue Apr 30 13:13:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2263,15 +2263,18 @@
        (let ((pname (js-jsstring-toname prop)))
 	  (synchronize-name
 	     (cond
-		((js-isindex? (js-toindex prop))
-		 (js-put! o prop v throw %this))
 		((eq? pname (& "length"))
 		 (js-put-length! o v throw #f %this))
+		((js-name-pcachew pname)
+		 =>
+		 (lambda (cache)
+		    (js-object-put-name/cache! o pname v throw
+		       %this cache point cspecs)))
+		((js-isindex? (js-toindex prop))
+		 (js-put! o prop v throw %this))
 		(else
-		 (let ((cache (js-name-pcachew pname)))
-		    (unless cache
-		       (set! cache (instantiate::JsPropertyCache))
-		       (js-name-pcachew-set! pname cache))
+		 (let ((cache (instantiate::JsPropertyCache)))
+		    (js-name-pcachew-set! pname cache)
 		    (js-object-put-name/cache! o pname v throw
 		       %this cache point cspecs))))))))
 
