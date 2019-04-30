@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Fri Apr 12 18:06:20 2019 (serrano)                */
+;*    Last change :  Tue Apr 30 19:28:56 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -255,6 +255,11 @@
 	 position
 	 callback))
    
+   (define (writeString this fd buffer offset length position callback)
+      (nodejs-write-string %worker %this process fd buffer offset length
+	 position
+	 callback))
+   
    (define (read this fd buffer offset length position callback)
       (nodejs-read %worker %this process fd buffer
 	 (int32->fixnum (js-toint32 offset %this))
@@ -346,6 +351,7 @@
 	(futimes . ,(js-make-function %this futimes 4 "futimes"))
 	(fsync . ,(js-make-function %this fsync 1 "fsync"))
 	(write . ,(js-make-function %this write 5 "write"))
+	(writeString . ,(js-make-function %this writeString 5 "writeString"))
 	
 	(open . ,(js-make-function %this open 4 "open"))
 	(read . ,(js-make-function %this read 6 "read"))

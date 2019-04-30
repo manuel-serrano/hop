@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Wed Apr 17 08:00:12 2019 (serrano)                */
+;*    Last change :  Tue Apr 30 18:58:14 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -246,6 +246,13 @@
 (define-method (js-arraybuffer-set! o::JsSlowBuffer index val)
    (with-access::JsSlowBuffer o (data)
       (string-in-set-ur! data index val)))
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-put-length! ::JsFastBuffer ...                                *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-put-length! o::JsFastBuffer v::obj throw::bool cache %this::JsGlobalObject) */
+;*    (tprint "ici " v " " (js-get o (& "length") %this))              */
+;*    (js-put! o (& "length") v throw %this))                          */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-buffer-constr ...                                             */
