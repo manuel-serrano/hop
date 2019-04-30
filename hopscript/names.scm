@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Apr 29 13:11:04 2019 (serrano)                */
+;*    Last change :  Mon Apr 29 14:44:23 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -46,12 +46,13 @@
    (export js-name-lock
 	   (macro synchronize-name))
    
-   (static js-names)
+   (static js-names js-integer-length)
    (export js-integer-names js-string-names)
 
    (cond-expand
       ((config thread-local-storage #t)
        (pragma (js-names thread-local)
+	  (js-integer-length thread-local)
 	  (js-integer-names thread-local)
 	  (js-string-names thread-local)))))
 
@@ -62,9 +63,16 @@
 (define js-integer-names #f)
 (define js-string-names #f)
 
+(define js-integer-length 100)
+
 ;; cannot inline these two functions because of thread-local variables
 (define (js-get-js-string-names) js-string-names)
 (define (js-get-js-integer-names) js-integer-names)
+
+;*---------------------------------------------------------------------*/
+;*    thresholds                                                       */
+;*---------------------------------------------------------------------*/
+(define js-index-threshold #u32:1000000)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-lock                                                     */
@@ -88,6 +96,21 @@
 (define gcroots '())
 
 ;*---------------------------------------------------------------------*/
+;*    integer-string? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (integer-string? str)
+   (let ((len (string-length str)))
+      (let loop ((i 0))
+	 (cond
+	    ((=fx i len)
+	     (and (>fx len 0) (not (char=? (string-ref str 0) #\0))))
+	    ((and (char>=? (string-ref str i) #\0)
+		  (char<=? (string-ref str i) #\9))
+	     (loop (+fx i 1)))
+	    (else
+	     #f)))))
+
+;*---------------------------------------------------------------------*/
 ;*    string-compare? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (string-compare? x y)
@@ -108,20 +131,21 @@
 (define (js-init-names!)
    (synchronize js-name-mutex
       (unless (hashtable? js-names)
+	 (set! js-integer-length 100)
 	 (set! js-names
 	    (create-hashtable
 	       :eqtest string-compare?
 	       :hash string-hash-number
 	       :max-length 65536
 	       :max-bucket-length 20))
-	 (set! js-integer-names
-	    (list->vector
+         (set! js-integer-names
+            (list->vector
 	       (append
 		  (map (lambda (i)
-			  (js-ascii-name->jsstring (fixnum->string i)))
+			  (js-integer->name i))
 		     (iota 10 -10))
 		  (map (lambda (i)
-			  (js-index-name->jsstring (fixnum->uint32 i)))
+			  (js-index->name (fixnum->uint32 i)))
 		     (iota 100)))))
 	 (set! js-string-names
 	    (vector-map (lambda (val)
@@ -197,12 +221,12 @@
        (cond-expand
 	  (bint30
 	   (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
-	       (js-integer-name->jsstring (uint32->fixnum p))
-	       (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
+	       (js-integer-name->jsstring (uint32->fixnum p)))
+	   (js-ascii-name->jsstring (llong->string (uint32->llong p))))
 	  (bint32
 	   (if (<u32 p (bit-lshu32 (fixnum->uint32 1) 31))
-	       (js-integer-name->jsstring (uint32->fixnum p))
-	       (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
+	       (js-integer-name->jsstring (uint32->fixnum p)))
+	   (js-ascii-name->jsstring (llong->string (uint32->llong p))))
 	  (else
 	   (js-integer-name->jsstring (uint32->fixnum p)))))
       ((int32? p)
@@ -242,19 +266,30 @@
 (define (js-jsstring->name!::JsStringLiteral o::JsStringLiteral)
    ;; call js-jsstring->string as the string must be normalized
    ;; before being potentially added in the name hashtable
-   (let ((str (js-jsstring->string o)))
+   
+   (define (string-name str)
       (let ((n (hashtable-get js-names str)))
 	 (unless n
 	    (set! n o)
 	    (hashtable-put! js-names str n))
 	 (js-jsstring-name-set! o n)
-	 n)))
+	 n))
+   
+   (let ((str (js-jsstring->string o)))
+      (if (integer-string? str)
+	  (let ((num (string->integer str)))
+	     (if (or (<=fx num -10)
+		     (>=fx num (uint32->fixnum js-index-threshold)))
+		 (string-name str)
+		 (js-integer->name num)))
+	  (string-name str))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring)
-   (synchronize-name
+   
+   (define (string-name str)
       (let ((n (hashtable-get js-names str)))
 	 (or n
 	     (let ((o (instantiate::JsStringLiteralASCII
@@ -264,25 +299,43 @@
 		(js-object-mode-set! o (js-jsstring-default-mode))
 		(hashtable-put! js-names str o)
 		(js-jsstring-name-set! o o)
-		o)))))
+		o))))
+   
+   (synchronize-name
+      (if (integer-string? str)
+	  (let ((num (string->integer str)))
+	     (if (or (<=fx num -10)
+		     (>=fx num (uint32->fixnum js-index-threshold)))
+		 (string-name str)
+		 (js-integer->name num)))
+	  (string-name str))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-index-name->jsstring ...                                      */
+;*    js-index->name ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-index-name->jsstring::JsStringLiteralASCII num::uint32)
-   (let ((str (fixnum->string (uint32->fixnum num))))
-      (synchronize-name
-	 (let ((n (hashtable-get js-names str)))
-	    (or n
-		(let ((o (instantiate::JsStringLiteralIndex
-			    (weight (string-length str))
-			    (left str)
-			    (right #f)
-			    (index num))))
-		   (js-object-mode-set! o (js-jsstring-default-mode))
-		   (hashtable-put! js-names str o)
-		   (js-jsstring-name-set! o o)
-		   o))))))
+(define (js-index->name::JsStringLiteralIndex num::uint32)
+   (let* ((str (fixnum->string (uint32->fixnum num)))
+	  (o (instantiate::JsStringLiteralIndex
+		(weight (string-length str))
+		(left str)
+		(right #f)
+		(index num))))
+      (js-object-mode-set! o (js-jsstring-default-mode))
+      (js-jsstring-name-set! o o)
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    js-integer->name ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-integer->name::JsStringLiteralASCII num::long)
+   (let* ((str (fixnum->string num))
+	  (o (instantiate::JsStringLiteralASCII
+		(weight (string-length str))
+		(left str)
+		(right #f))))
+      (js-object-mode-set! o (js-jsstring-default-mode))
+      (js-jsstring-name-set! o o)
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-name->jsstring ...                                       */
@@ -314,10 +367,36 @@
 ;*    js-integer-name->jsstring ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-integer-name->jsstring num::long)
-   (cond
-      ((and (>fx num -10) (<fx num 100))
-       (vector-ref js-integer-names (+fx num 10)))
-      ((and (>fx num 0) (<fx num 16384))
-       (js-index-name->jsstring (fixnum->uint32 num)))
-      (else
-       (js-ascii-name->jsstring (fixnum->string num)))))
+   
+   (define (number-name num)
+      (if (>=fx num 0)
+	  (js-index->name (fixnum->uint32 num))
+	  (js-integer->name num)))
+
+   (define (enlarge-vec! len)
+      (let* ((nlen (minfx
+		      (*fx 2 len)
+		      (+fx 10 (uint32->fixnum js-index-threshold))))
+	     (nvec (copy-vector js-integer-names nlen)))
+	 (vector-fill! nvec #f len)
+	 ;; replace js-integer-names in the gc roots
+	 (let ((l (memq js-integer-names gcroots)))
+	    (set-car! l nvec))
+	 (set! js-integer-names nvec)))
+
+   (synchronize-name
+      (cond
+	 ((or (<=fx num -10) (>=fx num (uint32->fixnum js-index-threshold)))
+	  (js-ascii-name->jsstring (fixnum->string num)))
+	 ((<fx num js-integer-length)
+	  (vector-ref js-integer-names (+fx num 10)))
+	 (else
+	  (let ((len (vector-length js-integer-names)))
+	     (when (<=fx len (+fx 10 num))
+		(enlarge-vec! len))
+	     (when (=fx num js-integer-length)
+		(set! js-integer-length (+fx num 1)))
+	     (or (vector-ref js-integer-names (+fx num 10))
+		 (let ((name (number-name num)))
+		    (vector-set! js-integer-names (+fx num 10) name)
+		    name)))))))

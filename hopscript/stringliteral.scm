@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Apr 26 11:15:09 2019 (serrano)                */
+;*    Last change :  Mon Apr 29 14:37:53 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -412,15 +412,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-keyword->jsstring::JsStringLiteral val::keyword)
    (js-string->jsstring (keyword->string! val)))
-
-;*---------------------------------------------------------------------*/
-;*    integers                                                         */
-;*---------------------------------------------------------------------*/
-(define &integers
-   (list->vector
-      (map (lambda (i)
-	      (js-ascii->jsstring (fixnum->string i)))
-	 (iota 110 -10))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-integer->jsstring ...                                         */
