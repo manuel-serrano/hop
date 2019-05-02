@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Thu May  2 13:50:54 2019 (serrano)                */
+;*    Last change :  Thu May  2 22:19:59 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -118,7 +118,7 @@
 		 (set-cdr! xbeg (cdr newx))
 		 (thread-parameter-set! '&cnsts #f)
 		 #unspecified) 
-	      (error "&end!" "Cannot expand find &init! format" x))))
+	      (error "&end!" "Cannot find &init! form" x))))
       (else
        (error "&end!" "Illegal form" x))))
 
