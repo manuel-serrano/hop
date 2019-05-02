@@ -38,7 +38,7 @@ var assert = module.exports = ok;
 //                             expected: expected })
 
 assert.AssertionError = function AssertionError(options) {
-   this.name = 'AssertionError';
+  this.name = 'AssertionError';
   this.actual = options.actual;
   this.expected = options.expected;
   this.operator = options.operator;
@@ -89,6 +89,7 @@ function getMessage(self) {
 // display purposes.
 
 function fail(actual, expected, message, operator, stackStartFunction) {
+   #:tprint("fail.a=", actual, " ex=", expected, " m=", #:typeof( message ) );
   throw new assert.AssertionError({
     message: message,
     actual: actual,

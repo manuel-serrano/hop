@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Apr 30 19:29:21 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:41:06 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_uv
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hop hopscript)
 
    (cond-expand
@@ -21,6 +23,7 @@
        (library libuv)))
 
    (include "nodejs_debug.sch" "nodejs_async.sch" "uv.sch" "nodejs_types.sch")
+   (include "../hopscript/stringthread.sch")
 
    (cond-expand
       (enable-libuv

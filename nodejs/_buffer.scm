@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Apr 30 18:58:14 2019 (serrano)                */
+;*    Last change :  Thu May  2 03:59:13 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -15,6 +15,7 @@
 (module __nodejs__buffer
 
    (include "nodejs_debug.sch" "nodejs_types.sch")
+   (include "../hopscript/stringthread.sch")
 
    (library hopscript hop)
 
@@ -59,7 +60,7 @@
 ;*    js-init-buffer! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-buffer! %this)
-   (when (=fx (vector-length __js_strings) 0)
+   (unless (vector? __js_strings)
       (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/

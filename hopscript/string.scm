@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Apr 18 08:05:17 2019 (serrano)                */
+;*    Last change :  Wed May  1 16:16:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -726,7 +726,7 @@
 	     (call-next-method)
 	     (instantiate::JsValueDescriptor
 		(name (js-toname p %this))
-		(value (js-utf8-ref str val index))
+		(value (js-utf8-ref str val index %this))
 		(enumerable #t)
 		(writable #f)
 		(configurable #f)))))
@@ -764,7 +764,7 @@
 	     (len (utf8-string-length val)))
 	 (if (<=fx len index)
 	     (call-next-method)
-	     (js-utf8-ref str val index))))
+	     (js-utf8-ref str val index %this))))
    
    (let ((index (js-toindex p)))
       (if (not (js-isindex? index))
@@ -787,7 +787,7 @@
       (if (not (js-isindex? index))
 	  (call-next-method)
 	  (with-access::JsString o (val)
-	     (js-jsstring-ref val index)))))
+	     (js-jsstring-ref val index %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsString ...                                         */

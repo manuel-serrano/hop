@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Fri Apr 12 18:07:14 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:44:04 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__tcp-wrap
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (import  __nodejs_uv

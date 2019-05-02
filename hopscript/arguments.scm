@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Thu Apr 18 08:10:38 2019 (serrano)                */
+;*    Last change :  Wed May  1 12:22:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -108,12 +108,39 @@
       (js-raise-type-error %this "[[DonationTypeError]] ~a" o)))
 
 ;*---------------------------------------------------------------------*/
+;*    properties                                                       */
+;*---------------------------------------------------------------------*/
+(define strict-caller-property #f)
+(define strict-callee-property #f)
+
+;*---------------------------------------------------------------------*/
 ;*    js-init-arguments! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-init-arguments! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (js-arguments-cmap)
+   (with-access::JsGlobalObject %this (js-arguments-cmap js-strict-arguments-cmap)
       ;; local constant strings
       (set! __js_strings (&init!))
+      ;; properties
+      (let ((throw (lambda (o)
+		      (js-raise-type-error %this "[[ThrowTypeError]] ~a" o))))
+	 (set! strict-caller-property
+	    (instantiate::JsAccessorDescriptor
+	       (name (& "caller"))
+	       (get thrower-get)
+	       (set thrower-set)
+	       (%get throw)
+	       (%set (lambda (this v) (throw this)))
+	       (enumerable #f)
+	       (configurable #f)))
+	 (set! strict-callee-property
+	    (instantiate::JsAccessorDescriptor
+	       (name (& "callee"))
+	       (get thrower-get)
+	       (set thrower-set)
+	       (%get throw)
+	       (%set (lambda (this v) (throw this)))
+	       (enumerable #f)
+	       (configurable #f))))
       ;; arguments cmap
       (let ((arguments-cmap-props
 	       `#(,(prop (& "length") (property-flags #t #f #t #f))
@@ -121,7 +148,16 @@
 	 (set! js-arguments-cmap
 	    (instantiate::JsConstructMap
 	       (methods (make-vector (vector-length arguments-cmap-props)))
-	       (props arguments-cmap-props))))))
+	       (props arguments-cmap-props))))
+      ;; strict arguments cmap
+      (let ((strict-arguments-cmap-props
+	       `#(,(prop (& "length") (property-flags #t #f #t #f))
+		  ,(prop (& "callee") (property-flags #t #f #f #t))
+		  ,(prop (& "caller") (property-flags #t #f #f #t)))))
+	 (set! js-strict-arguments-cmap
+	    (instantiate::JsConstructMap
+	       (methods (make-vector (vector-length strict-arguments-cmap-props)))
+	       (props strict-arguments-cmap-props))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarguments-fields ...                                           */
@@ -164,7 +200,11 @@
    (with-access::JsArguments arr (vec)
       (if (and (js-object-mode-inline? arr)
 	       (and (fixnum? idx) (>=fx idx 0) (<fx idx (vector-length vec))))
-	  (vector-ref vec idx)
+	  (let ((v (vector-ref vec idx)))
+	     (if (and (object? v) (eq? (object-class v) JsValueDescriptor))
+		 (with-access::JsValueDescriptor v (value)
+		    value)
+		 v))
 	  (js-get arr idx %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -174,7 +214,11 @@
    (with-access::JsArguments arr (vec)
       (if (and (js-object-mode-inline? arr)
 	       (<u32 idx (fixnum->uint32 (vector-length vec))))
-	  (u32vref vec idx)
+	  (let ((v (u32vref vec idx)))
+	     (if (and (object? v) (eq? (object-class v) JsValueDescriptor))
+		 (with-access::JsValueDescriptor v (value)
+		    value)
+		 v))
 	  (js-get arr idx %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -446,33 +490,38 @@
    
    (let* ((len (length lst))
 	  (vec (make-vector len)))
-      ;; initialize the vector of descriptor
+      ;; initialize the vector of descriptors
       (let loop ((i 0)
 		 (lst lst))
 	 (when (pair? lst)
 	    (vector-set! vec i (value->descriptor (car lst) i))
 	    (loop (+fx i 1) (cdr lst))))
       ;; build the arguments object
-      (with-access::JsObject %this (__proto__)
-	 (let ((obj (instantiateJsArguments
-		       (vec vec)
-		       (elements ($create-vector 3))
-		       (__proto__ __proto__))))
-	    (js-bind! %this obj (& "length")
-	       :value len
-	       :enumerable #f :configurable #t :writable #t
-	       :hidden-class #t)
-	    (js-bind! %this obj (& "caller")
-	       :get thrower-get
-	       :set thrower-set
-	       :enumerable #f :configurable #f
-	       :hidden-class #t)
-	    (js-bind! %this obj (& "callee")
-	       :get thrower-get
-	       :set thrower-set
-	       :enumerable #f :configurable #f
-	       :hidden-class #t)
-	    obj))))
+      (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
+	 (with-access::JsObject %this (__proto__)
+	    (let ((obj (instantiateJsArguments
+			  (vec vec)
+			  (cmap js-strict-arguments-cmap)
+			  (elements (vector (vector-length vec)
+				       strict-callee-property
+				       strict-caller-property))
+;* 			  (elements ($create-vector 3))                */
+			  (__proto__ __proto__))))
+;* 	       (js-bind! %this obj (& "length")                        */
+;* 		  :value len                                           */
+;* 		  :enumerable #f :configurable #t :writable #t         */
+;* 		  :hidden-class #t)                                    */
+;* 	       (js-bind! %this obj (& "caller")                        */
+;* 		  :get thrower-get                                     */
+;* 		  :set thrower-set                                     */
+;* 		  :enumerable #f :configurable #f                      */
+;* 		  :hidden-class #t)                                    */
+;* 	       (js-bind! %this obj (& "callee")                        */
+;* 		  :get thrower-get                                     */
+;* 		  :set thrower-set                                     */
+;* 		  :enumerable #f :configurable #f                      */
+;* 		  :hidden-class #t)                                    */
+	       obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments->vector..                                           */

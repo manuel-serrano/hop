@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Apr 29 14:44:23 2019 (serrano)                */
+;*    Last change :  Wed May  1 14:15:41 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -100,15 +100,18 @@
 ;*---------------------------------------------------------------------*/
 (define (integer-string? str)
    (let ((len (string-length str)))
-      (let loop ((i 0))
-	 (cond
-	    ((=fx i len)
-	     (and (>fx len 0) (not (char=? (string-ref str 0) #\0))))
-	    ((and (char>=? (string-ref str i) #\0)
-		  (char<=? (string-ref str i) #\9))
-	     (loop (+fx i 1)))
-	    (else
-	     #f)))))
+      (case len
+	 ((0)
+	  #f)
+	 ((1)
+	  (char-numeric? (string-ref str 0)))
+	 (else
+	  (unless (char=? (string-ref str 0) #\0)
+	     (let loop ((i (if (char=? (string-ref str 0) #\-) 1 0)))
+		(cond
+		   ((=fx i len) #t)
+		   ((char-numeric? (string-ref str i)) (loop (+fx i 1)))
+		   (else #f))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-compare? ...                                              */
@@ -221,12 +224,12 @@
        (cond-expand
 	  (bint30
 	   (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
-	       (js-integer-name->jsstring (uint32->fixnum p)))
-	   (js-ascii-name->jsstring (llong->string (uint32->llong p))))
+	       (js-integer-name->jsstring (uint32->fixnum p))
+	       (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
 	  (bint32
 	   (if (<u32 p (bit-lshu32 (fixnum->uint32 1) 31))
-	       (js-integer-name->jsstring (uint32->fixnum p)))
-	   (js-ascii-name->jsstring (llong->string (uint32->llong p))))
+	       (js-integer-name->jsstring (uint32->fixnum p))
+	       (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
 	  (else
 	   (js-integer-name->jsstring (uint32->fixnum p)))))
       ((int32? p)
@@ -281,7 +284,7 @@
 	     (if (or (<=fx num -10)
 		     (>=fx num (uint32->fixnum js-index-threshold)))
 		 (string-name str)
-		 (js-integer->name num)))
+		 (js-integer-name->jsstring num)))
 	  (string-name str))))
 
 ;*---------------------------------------------------------------------*/
@@ -307,7 +310,7 @@
 	     (if (or (<=fx num -10)
 		     (>=fx num (uint32->fixnum js-index-threshold)))
 		 (string-name str)
-		 (js-integer->name num)))
+		 (js-integer-name->jsstring num)))
 	  (string-name str))))
 
 ;*---------------------------------------------------------------------*/
@@ -375,8 +378,8 @@
 
    (define (enlarge-vec! len)
       (let* ((nlen (minfx
-		      (*fx 2 len)
-		      (+fx 10 (uint32->fixnum js-index-threshold))))
+		      (if (>fx (*fx 2 len) num) (*fx 2 len) (+fx 16 num))
+		      (+fx (uint32->fixnum js-index-threshold) 10)))
 	     (nvec (copy-vector js-integer-names nlen)))
 	 (vector-fill! nvec #f len)
 	 ;; replace js-integer-names in the gc roots

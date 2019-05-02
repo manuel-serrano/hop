@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Apr 25 20:29:03 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:42:15 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__hop
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript hop)
 
    (import  __nodejs_uv

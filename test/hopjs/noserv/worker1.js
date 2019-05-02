@@ -1,14 +1,13 @@
 /*=====================================================================*/
-/*    .../project/hop/3.0.x/test/hopjs/noserv/worker1.js               */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/worker1.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  28 18:43:00 2015                         */
-/*    Last change :  Tue Sep  8 18:10:37 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Thu May  2 03:46:59 2019 (serrano)                */
+/*    Copyright   :  2015-19 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing workers                                                  */
 /*=====================================================================*/
-
 
 var w = new Worker( './aux/worker1.js' );
 

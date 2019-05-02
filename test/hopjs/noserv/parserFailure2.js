@@ -8,5 +8,11 @@ try {
 };
 
 setTimeout( function() {
-   assert.ok( err, 1 );
+   console.log( "error=", err );
+   try {
+      assert.ok( err, 1, "parseFailure2" );
+   } catch( e ) {
+      console.log( "e=", e.name );
+      #:js-debug-object( e, "e=" );
+   }
 }, 1000 );

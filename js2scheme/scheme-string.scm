@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon Apr 15 11:41:02 2019 (serrano)                */
+;*    Last change :  Wed May  1 16:25:41 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -51,8 +51,8 @@
    (define (jsstring-ref type obj index mode return conf)
       (let ((str (j2s-scheme obj mode return conf)))
 	 (if (literal-ascii? obj)
-	     `(js-ascii-ref ,str ,index)
-	     `(js-jsstring-ref ,str ,index))))
+	     `(js-ascii-ref ,str ,index %this)
+	     `(js-jsstring-ref ,str ,index %this))))
    
    (with-access::J2SAccess this (obj field type)
       (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Apr 25 09:42:55 2019 (serrano)                */
+;*    Last change :  Wed May  1 16:17:23 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -342,7 +342,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-socket->jsobject obj %this)
    (with-access::JsGlobalObject %this (__proto__)
-      (when (=fx (vector-length __js_strings) 0)
+      (unless (vector? __js_strings)
 	 (set! __js_strings (&init!)))
       (let ((sock (instantiateJsWrapper
 		     (__proto__ __proto__)
@@ -386,7 +386,7 @@
       ((js-array? obj)
        (jsarray->list obj %this))
       ((js-jsstring? obj)
-       (js-jsstring->list obj))
+       (js-jsstring->list obj %this))
       (else
        (error "js-iterable->list"
 	  (format "not implemented yet \"~a\"" (typeof obj)) obj))))

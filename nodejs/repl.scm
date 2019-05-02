@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/repl.scm                   */
+;*    serrano/prgm/project/hop/hop/nodejs/repl.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Wed Sep  5 08:29:29 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Thu May  2 13:43:33 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
 ;*=====================================================================*/
@@ -14,11 +14,18 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_repl
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript js2scheme)
 
    (import __nodejs_require)
    
    (export (repljs ::JsGlobalObject ::WorkerHopThread)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    prompt ...                                                       */
@@ -31,6 +38,7 @@
 ;*    repljs ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (repljs %this %worker)
+   (set! __js_strings (&init!))
    ;; start executing the nodejs header
    (let ((old-intrhdl (get-signal-handler sigint))
 	 (mod (eval-module))
@@ -100,8 +108,8 @@
 ;*    jsprint ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (jsprint exp %this)
-   (let* ((console (js-get %this 'console %this))
-	  (log (js-get console 'log %this)))
+   (let* ((console (js-get %this (& "console") %this))
+	  (log (js-get console (& "log") %this)))
       (js-call1 %this log console exp)))
 
 ;*---------------------------------------------------------------------*/
@@ -113,3 +121,8 @@
       :driver (j2s-eval-driver)
       :driver-name "j2s-eval-driver"
       :filename "repl.js"))   
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

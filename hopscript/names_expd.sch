@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Tue Apr 23 08:34:46 2019 (serrano)                */
+;*    Last change :  Wed May  1 14:11:56 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -55,6 +55,8 @@
 		  (vector 0 val))
 		 ((char=? (string-ref val 0) #\+)
 		  (vector 0 val))
+		 ((=fx (string-length val) 1)
+		  (vector 2 n))
 		 ((and (char=? (string-ref val 0) #\0) (not (=fx n 0)))
 		  (vector 0 val))
 		 (else

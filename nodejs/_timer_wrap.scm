@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Sat Apr 20 14:08:04 2019 (serrano)                */
+;*    Last change :  Thu May  2 04:03:55 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__timer-wrap
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (import __nodejs_uv)
@@ -24,9 +26,7 @@
 	      (proc (default #f))
 	      (marked (default #f))))
 
-   (export (hopjs-process-timer ::WorkerHopThread ::JsGlobalObject ::JsObject))
-
-   (static __js_strings::vector))
+   (export (hopjs-process-timer ::WorkerHopThread ::JsGlobalObject ::JsObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -45,7 +45,6 @@
    
    (define js-timer-prototype
       (instantiateJsObject))
-
 
    (set! __js_strings (&init!))
    (init-timer-prototype! %this js-timer-prototype)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Fri Apr 12 18:09:47 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:43:08 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__pipe-wrap
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (import  __nodejs_uv

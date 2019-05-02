@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Fri Apr 12 18:03:27 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:44:16 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__tty-wrap
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (include "nodejs_types.sch")

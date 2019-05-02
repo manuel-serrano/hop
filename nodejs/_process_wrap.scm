@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 17 17:07:03 2014                          */
-;*    Last change :  Fri Apr 12 18:05:46 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:43:23 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs child processes bindings                                  */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__process-wrap
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (include "nodejs_types.sch")

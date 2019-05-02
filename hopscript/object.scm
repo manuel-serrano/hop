@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Apr 25 09:42:39 2019 (serrano)                */
+;*    Last change :  Thu May  2 03:31:23 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -738,6 +738,7 @@
 						(set! keys (cons name keys))))
 				  names)
 			       (for-each (lambda (k)
+					    (tprint "k=" k " " (typeof k))
 					    (let ((val (js-get fro k %this)))
 					       (js-put! to k val #t %this)))
 				  (sort idx-cmp idx))

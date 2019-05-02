@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Fri Apr 12 18:10:20 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:43:45 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__stream-wrap
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (include "nodejs_async.sch")
@@ -43,7 +45,7 @@
 ;*    js-init-stream-wrap! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-init-stream-wrap! %this)
-   (when (=fx (vector-length __js_strings) 0)
+   (unless (vector? __js_strings)
       (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/

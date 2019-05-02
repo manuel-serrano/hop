@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 27 19:12:38 2015                          */
-;*    Last change :  Mon Apr 15 13:55:14 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:44:44 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Zlib bindings                                                    */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__zlib
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (include "nodejs_async.sch")

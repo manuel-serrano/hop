@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Apr 29 12:55:08 2019 (serrano)                */
+;*    Last change :  Thu May  2 12:08:53 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -459,24 +459,6 @@
 	  (library hop hopscript nodejs)
 	  (cond-expand (enable-libuv (library libuv)))
 	  (main main))))
-
-;*---------------------------------------------------------------------*/
-;*    js-module-thread-local-clauses ...                               */
-;*---------------------------------------------------------------------*/
-(define (js-module-thread-local-clauses loc)
-   (epairify-deep loc
-      `((static __js_strings::vector
-	   %pcache
-	   %scope::JsGlobalObject
-	   this::JsObject
-	   %worker
-	   %cnst-table)
-	(pragma (__js_strings thread-local)
-	   (%pcache thread-local)
-	   (%scope thread-local)
-	   (this thread-local)
-	   (%worker thread-local)
-	   (%cnst-table thread-local)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-module ...                                                    */

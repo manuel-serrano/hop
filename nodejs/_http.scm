@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Sat Apr 13 09:57:23 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:42:50 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -15,6 +15,7 @@
 (module __nodejs__http
 
    (include "nodejs_debug.sch")
+   (include "../hopscript/stringthread.sch")
    
    (library hopscript)
 

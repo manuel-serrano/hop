@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Tue Apr 30 19:28:56 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:42:06 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -17,6 +17,7 @@
    (library hopscript)
 
    (include "nodejs_async.sch" "nodejs_types.sch")
+   (include "../hopscript/stringthread.sch")
    
    (import  __nodejs_uv
 	    __nodejs_process)

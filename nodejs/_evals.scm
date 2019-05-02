@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Fri Apr 12 18:04:30 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:41:48 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__evals
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (import __nodejs_require)

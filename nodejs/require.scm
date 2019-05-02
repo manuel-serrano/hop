@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Apr 26 09:43:17 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:13:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_require
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hop hopscript js2scheme web)
 
    (import __nodejs
@@ -60,11 +62,11 @@
 ;*    js-init-require! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-require! %this)
-   (when (=fx (vector-length __js_strings) 0)
+   (unless (vector? __js_strings)
       (set! __js_strings (&init!))
       (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
 	 (nodejs-compile-workers-inits!))
-      (unless (<=fx (hop-port) -1)
+      (unless (or (<=fx (hop-port) -1) *resolve-service*)
 	 (set! *resolve-service* (nodejs-make-resolve-service %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -2083,10 +2085,11 @@
 		   nodejs-env-path)))
 	    (else
 	     nodejs-env-path))))
-   
+
    (with-trace 'require "nodejs-resolve"
       (trace-item "name=" name)
       (trace-item "%module=" (typeof %module))
+      (trace-item "thread=" (current-thread))
       (let* ((mod %module)
 	     (filename (js-jsstring->string (js-get mod (& "filename") %this)))
 	     (dir (dirname filename)))
@@ -2284,12 +2287,16 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-worker %this::JsGlobalObject scope::JsObject %module::JsObject)
 
+   (define parentfile
+      (js-tostring (js-get %module (& "filename") %this) %this))
+   
    (define (loader filename worker this)
-      (if (string? filename)
-	  (nodejs-require-module filename worker this %module)
-	  (js-raise-error %this
-	     (format "Cannot load worker module ~a" filename)
-	     filename)))
+      (let ((mod (nodejs-new-module (basename filename) parentfile worker this)))
+	 (if (string? filename)
+	     (nodejs-require-module filename worker this mod)
+	     (js-raise-error %this
+		(format "Cannot load worker module ~a" filename)
+		filename))))
 
    (define (%js-worker %this)
       (with-access::JsGlobalObject %this (js-worker)
@@ -2347,8 +2354,8 @@
 ;*---------------------------------------------------------------------*/
 (js-worker-load-set!
    (lambda (filename worker this)
-      (nodejs-require-module filename worker this
-	 (nodejs-new-module (basename filename) filename worker this))))
+      (let ((mod (nodejs-new-module (basename filename) filename worker this)))
+	 (nodejs-require-module filename worker this mod))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Apr 26 05:15:35 2019 (serrano)                */
+;*    Last change :  Thu May  2 12:25:49 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -192,16 +192,30 @@
 			      (target (js-undefined))
 			      (data (js-undefined)))))
 		     (apply-listeners exitlisteners e)))))))
-   
+
    (lambda (_ src)
       (with-access::JsGlobalObject %this (js-worker-prototype js-object)
 	 (letrec* ((parent (js-current-worker))
 		   (source (js-tostring src %this))
-		   (this (%global-constructor :name (string-append source "_w")))
+		   (setup (lambda ()
+			     (let ((this (%global-constructor
+					    :name (string-append source "_w"))))
+				;; store the worker in global object
+				(with-access::JsGlobalObject this (worker)
+				   (set! worker thread))
+				(with-access::WorkerHopThread thread (%this module-cache)
+				   (set! %this this)
+				   (set! module-cache (js-new0 %this js-object)))
+				(let ((mod (js-get %this (& "module") %this)))
+				   (js-put! this (& "module") mod #f this)))))
 		   (thunk (lambda ()
-			     (js-put! this (& "module")
-				(js-get %this (& "module") %this) #f this)
-			     (loader source thread this)))
+			     (with-access::WorkerHopThread thread (%this)
+				(with-handler
+				   (lambda (e)
+				      (exception-notify e))
+				   (loader source thread %this)))))
+		   (mutex (make-mutex))
+		   (condv (make-condition-variable))
 		   (thread (instantiate::WorkerHopThread
 			      (name (gensym (string-append "WebWorker@"
 					       (js-jsstring->string src))))
@@ -215,20 +229,16 @@
 					 (lambda (this process retval)
 					    (onexit thread))
 					 2 "onexit"))
-			      (%this this)
 			      (keep-alive #f)
-			      (module-cache (js-new0 %this js-object))
 			      (body (lambda ()
+				       (setup)
+				       (synchronize mutex
+					  (condition-variable-broadcast! condv))
+				       (js-worker-init! thread)
 				       (js-worker-loop thread)))
 			      (cleanup (lambda (thread)
 					  (when (isa? parent WorkerHopThread)
 					     (remove-subworker! parent thread)))))))
-	    ;; store the worker in global object
-	    (with-access::JsGlobalObject this (worker)
-	       (set! worker thread))
-
-	    ;; prepare the worker loop
-	    (js-worker-init! thread)
 
 	    ;; add the worker to the parent list
 	    (when (isa? parent WorkerHopThread)
@@ -236,6 +246,7 @@
 	    
 	    ;; start the worker thread
 	    (thread-start! thread)
+	    (condition-variable-wait! condv mutex)
 	       
 	    ;; create the worker object
 	    (let ((worker (instantiateJsWorker
@@ -245,7 +256,7 @@
 		  (set! prehook
 		     (lambda (%this this scope mod)
 			(bind-worker-methods! %this scope worker))))
-	       
+
 	       ;; master onmessage and onexit
 	       (let ((onmessage (js-undefined))
 		     (onerror (js-undefined))
@@ -500,6 +511,18 @@
 ;*    Start the initial WorkerHopThread                                */
 ;*---------------------------------------------------------------------*/
 (define (js-main-worker! name path keep-alive ctor ctormod)
+
+   (define (setup-worker! %worker)
+      (set! %global (ctor :name name))
+      (with-access::JsGlobalObject %global (js-object worker)
+	 (set! worker %worker)
+	 (set! %module (ctormod (basename path) path %worker %global))
+	 (with-access::WorkerHopThread %worker (%this module-cache)
+	    ;; module-cache is used in src/main to check
+	    ;; where the worker is running or not
+	    (set! module-cache (js-new0 %this js-object))
+	    (set! %this %global))))
+      
    (unless %worker
       (set! %global-constructor ctor)
       (let ((mutex (make-mutex))
@@ -511,20 +534,11 @@
 		  (onexit #f)
 		  (keep-alive keep-alive)
 		  (body (lambda ()
-			   (set! %global (ctor :name name))
-			   (with-access::JsGlobalObject %global (js-object worker)
-			      (set! worker %worker)
-			      (set! %module (ctormod (basename path) path %worker %global))
-			      (with-access::WorkerHopThread %worker (%this module-cache)
-				 ;; module-cache is used in src/main to check
-				 ;; where the worker is running or not
-				 (set! module-cache (js-new0 %this js-object))
-				 
-				 (set! %this %global))
-			      (synchronize mutex
-				 (condition-variable-broadcast! condv))
-			      (js-worker-init! %worker)
-			      (js-worker-loop %worker))))))
+			   (setup-worker! %worker)
+			   (synchronize mutex
+			      (condition-variable-broadcast! condv))
+			   (js-worker-init! %worker)
+			   (js-worker-loop %worker)))))
 	    (thread-start-joinable! %worker)
 	    (condition-variable-wait! condv mutex))))
    (values %worker %global %module))

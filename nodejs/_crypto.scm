@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Mon Apr 15 13:52:21 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:41:37 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -18,6 +18,7 @@
       (enable-ssl (library ssl)))
 
    (include "nodejs_debug.sch" "_crypto.sch")
+   (include "../hopscript/stringthread.sch")
    
    (library hopscript)
 

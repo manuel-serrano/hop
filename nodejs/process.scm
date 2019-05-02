@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon Apr 15 08:04:46 2019 (serrano)                */
+;*    Last change :  Thu May  2 13:43:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -15,6 +15,8 @@
 (module __nodejs_process
    
    (option (set! *warning-overriden-variables* #f))
+   
+   (include "../hopscript/stringthread.sch")
    
    (library hopscript hop js2scheme)
 
