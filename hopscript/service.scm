@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat May  4 16:46:39 2019 (serrano)                */
+;*    Last change :  Sat May  4 18:32:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -515,7 +515,6 @@
 	  `("hop" ,(obj->string val %this) "hop-encoding: hop"))))
    
    (define (scheme->js val)
-      (tprint "scheme->js...")
       (js-obj->jsobject val %this))
    
    (define (ms-scheme->js val)
@@ -595,17 +594,21 @@
    
    (define (post-server-sync this %this host port auth scheme)
       (with-access::JsHopFrame this (path args header options)
-	 (with-hop-remote path ms-scheme->js #f
-	    :scheme scheme
-	    :host host :port port 
-	    :user (js-get-string options (& "user"))
-	    :password (js-get-string options (& "password"))
-	    :authorization auth
-	    :header (when header (js-jsobject->alist header %this))
-	    :ctx %this
-	    :json-parser json-parser
-	    :x-javascript-parser x-javascript-parser
-	    :args (map multipart-form-arg args))))
+	 (let ((receiver (lambda (ctx thunk)
+			    (with-access::JsGlobalObject ctx (worker)
+			       (js-worker-exec worker path #t thunk)))))
+	    (with-hop-remote path ms-scheme->js #f
+	       :scheme scheme
+	       :host host :port port 
+	       :user (js-get-string options (& "user"))
+	       :password (js-get-string options (& "password"))
+	       :authorization auth
+	       :header (when header (js-jsobject->alist header %this))
+	       :ctx %this
+	       :receiver receiver
+	       :json-parser json-parser
+	       :x-javascript-parser x-javascript-parser
+	       :args (map multipart-form-arg args)))))
    
    (define (post-server this success failure %this async host port auth scheme)
       (cond
@@ -776,15 +779,19 @@
 	 (js-obj->jsobject val %this))
       
       (define (post-request callback)
-	 (with-hop-remote svc callback fail
-	    :scheme scheme
-	    :host host :port port 
-	    :user user :password password :authorization authorization
-	    :header header
-	    :ctx %this
-	    :json-parser json-parser
-	    :x-javascript-parser x-javascript-parser
-	    :args args))
+	 (let ((receiver (lambda (ctx thunk)
+			    (with-access::JsGlobalObject ctx (worker)
+			       (js-worker-exec worker svc #t thunk)))))
+	    (with-hop-remote svc callback fail
+	       :scheme scheme
+	       :host host :port port 
+	       :user user :password password :authorization authorization
+	       :header header
+	       :ctx %this
+	       :receiver receiver
+	       :json-parser json-parser
+	       :x-javascript-parser x-javascript-parser
+	       :args args)))
 
       (define (spawn-thread)
 	 (thread-start!
@@ -793,6 +800,8 @@
 	       (body (lambda ()
 			(with-handler
 			   (lambda (e)
+			      (tprint "*** SPANW PAS BON e=" e)
+			      (exception-notify e)
 			      (if failjs
 				  (js-worker-push-thunk! worker svc
 				     (lambda ()

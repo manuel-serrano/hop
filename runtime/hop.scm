@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat May  4 17:04:27 2019 (serrano)                */
+;*    Last change :  Sat May  4 17:22:55 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -345,7 +345,6 @@
 	     (trace-item "ctype=" (header-content-type header))
 	     (trace-item "header=" header)
 	     ;; see hop-json-mime-type and hop-bigloo-mime-type
-	     (tprint "200... ")
 	     (let ((obj (with-handler
 			   (lambda (e)
 			      (if (procedure? fail)

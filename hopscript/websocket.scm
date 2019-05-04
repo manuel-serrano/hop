@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Apr 17 07:33:38 2019 (serrano)                */
+;*    Last change :  Sat May  4 19:01:26 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -266,22 +266,22 @@
 				   (socket socket)
 				   (wss wss)
 				   (__proto__ js-websocket-client-prototype))))
-			;; listeners
-			(for-each (lambda (act)
-				     (bind-websocket-client-listener! %this
-					ws act))
-			   (list (cons "onmessage" #f)
-			      (cons "onclose" #f)
-			      (cons "onerror" #f)))
-			(let ((evt (instantiate::server-event
-				      (name "connection")
-				      (target wss)
-				      (value ws)))
-			      (id (gensym)))
-			   ;; trigger an onconnect event
-			   (with-access::JsWebSocketServer wss (conns worker)
-			      (js-worker-push-thunk! worker "wss-onconnect"
-				 (lambda ()
+			;; trigger an onconnect event
+			(with-access::JsWebSocketServer wss (conns worker)
+			   (js-worker-push-thunk! worker "wss-onconnect"
+			      (lambda ()
+				 ;; listeners
+				 (for-each (lambda (act)
+					      (bind-websocket-client-listener! %this
+						 ws act))
+				    (list (cons "onmessage" #f)
+				       (cons "onclose" #f)
+				       (cons "onerror" #f)))
+				 (let ((evt (instantiate::server-event
+					       (name "connection")
+					       (target wss)
+					       (value ws)))
+				       (id (gensym)))
 				    (apply-listeners conns evt)
 				    ;; start the client-server-loop
 				    ;; on JavaScript completion

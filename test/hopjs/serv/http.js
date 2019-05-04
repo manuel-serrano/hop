@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/serv/http.js           */
+/*    serrano/prgm/project/hop/hop/test/hopjs/serv/http.js             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Wed Feb  7 10:47:44 2018 (serrano)                */
-/*    Copyright   :  2015-18 Inria                                     */
+/*    Last change :  Sat May  4 17:23:50 2019 (serrano)                */
+/*    Copyright   :  2015-19 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing services, webSockets and Broadcast over http and https   */
 /*=====================================================================*/
@@ -49,7 +49,7 @@ if (config.HTTPSPort) {
 
 
 service foo( arg ) {
-   return arg ;
+   return arg;
 }
 
 function goToService() {
@@ -63,7 +63,8 @@ function goToService() {
 	    assert.ok( objectEqual( result, payload[i] ) );
 	    testService( i + 1 );
 	 }, { fail: function( error ) {
-	    process.exit( 1 );
+		 console.log( error );
+	    	 process.exit( 1 );
 	 },
 	      ssl: ssl
 	    });
