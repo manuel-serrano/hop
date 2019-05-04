@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri May  3 12:46:37 2019 (serrano)                */
+;*    Last change :  Sat May  4 16:46:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -225,7 +225,7 @@
 (define-method (post-multipart->obj %this::JsGlobalObject val enc)
    (cond
       ((string=? enc "string") (js-string->jsstring val))
-      ((string=? enc "integer") (js-number->jsnumber val))
+      ((string=? enc "integer") (js-string->number val %this))
       ((string=? enc "keyword") (js-string->jsstring val))
       ((string=? enc "file") val)
       (else (string->obj val #f %this))))

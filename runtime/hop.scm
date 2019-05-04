@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri May  3 13:30:03 2019 (serrano)                */
+;*    Last change :  Sat May  4 17:04:27 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -313,7 +313,7 @@
 		    (car (last-pair (parse-html p (string-length obj))))))
 	      (car (last-pair (parse-html obj (elong->fixnum content-length))))))
 	 (else
-	  (get-chars)))))
+	  (post-multipart->obj ctx (get-chars) "string")))))
    
 ;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
@@ -345,6 +345,7 @@
 	     (trace-item "ctype=" (header-content-type header))
 	     (trace-item "header=" header)
 	     ;; see hop-json-mime-type and hop-bigloo-mime-type
+	     (tprint "200... ")
 	     (let ((obj (with-handler
 			   (lambda (e)
 			      (if (procedure? fail)
