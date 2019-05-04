@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Apr 25 19:44:10 2019 (serrano)                */
+;*    Last change :  Sat May  4 13:40:13 2019 (serrano)                */
 ;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -59,6 +59,7 @@
 	    (hop-apply-url::bstring ::bstring ::pair-nil #!optional (ctx 'hop-to-hop))
 	    (hop-request-service-name::bstring ::http-request)
 	    (service-invoke ::hop-service ::http-request ::obj)
+	    (service-parse-request ::hop-service ::http-request)
 	    (procedure->service::procedure ::procedure)
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)
@@ -666,7 +667,10 @@
 ;*    service-handler ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-handler svc req)
-   (service-invoke svc req (service-parse-request svc req)))
+   (with-access::hop-service svc (handler path)
+      (if handler
+	  (handler svc req)
+	  (service-invoke svc req (service-parse-request svc req)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */

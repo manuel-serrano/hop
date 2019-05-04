@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Thu May  2 12:25:49 2019 (serrano)                */
+;*    Last change :  Sat May  4 15:00:57 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -47,7 +47,7 @@
 	   (generic js-worker-loop ::object)
 	   (generic js-worker-tick ::object)
 	   (generic js-worker-exception-handler ::object ::obj ::int)
-	   (generic js-worker-exec ::object ::bstring ::procedure)
+	   (generic js-worker-exec ::object ::bstring ::bool ::procedure)
 	   (generic js-worker-push-thunk! ::object ::bstring ::procedure)
 	   (generic js-worker-alive? ::object)
 	   
@@ -636,11 +636,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-exec th::object name::bstring thunk::procedure)
-   (if (and (eq? (current-thread) th)
+(define-generic (js-worker-exec th::object name::bstring
+		   handleerror::bool thunk::procedure)
+   (cond
+      ((and (eq? (current-thread) th)
 	    (with-access::WorkerHopThread th (tqueue)
 	       (null? tqueue)))
-       (thunk)
+       (thunk))
+      (handleerror
+       (let ((response #f)
+	     (mutex (make-mutex))
+	     (condv (make-condition-variable)))
+	  (synchronize mutex
+	     (js-worker-push-thunk! th name
+		(lambda ()
+		   (set! response (thunk))
+		   (synchronize mutex
+		      (condition-variable-signal! condv))))
+	     (condition-variable-wait! condv mutex)
+	     response)))
+      (else
        (let ((response #f)
 	     (mutex (make-mutex))
 	     (condv (make-condition-variable)))
@@ -659,7 +674,7 @@
 	     (if (isa? response WorkerException)
 		 (with-access::WorkerException response (exn)
 		    (raise exn))
-		 response)))))
+		 response))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push-thunk! ::object ...                               */

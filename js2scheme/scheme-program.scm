@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu May  2 12:08:53 2019 (serrano)                */
+;*    Last change :  Sat May  4 02:22:25 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -100,53 +100,53 @@
    (define (j2s-main-module/workers name cnsttable esexports esimports body)
       (with-access::J2SProgram this (mode pcache-size call-size path
 				       globals cnsts loc)
-	 (let ((jsmod (js-module/main loc name))
-	       (thunk `(lambda ()
-			  (define _ (set! __js_strings (&init!)))
-			  (define %cnst-table ,cnsttable)
-			  ,@esimports
-			  ,esexports
-			  ,@globals
-			  ,@(exit-body body conf)))
-	       (jsthis `(with-access::JsGlobalObject %this (js-object)
-			   (js-new0 %this js-object))))
+	 (let* ((jsmod (js-module/main loc name))
+		(jsthis `(with-access::JsGlobalObject %this (js-object)
+			    (js-new0 %this js-object)))
+		(thunk `(lambda ()
+			   (define _ (set! __js_strings (&init!)))
+			   (define %cnst-table ,cnsttable)
+			   (define %scope (nodejs-new-scope-object %this))
+			   (define this ,jsthis)
+			   ,@esimports
+			   ,esexports
+			   ,@globals
+			   ,@(exit-body body conf))))
 	    `(,jsmod
-	       ;; (&begin!) must not be a constant! (_do not_ use quote)
-	       ,`(define __js_strings (&begin!))
-	       (%define-cnst-table ,(length cnsts))
-	       (%define-pcache ,pcache-size)
-	       (hop-sofile-compile-policy-set! 'static)
-	       (define %pcache
+		;; (&begin!) must not be a constant! (_do not_ use quote)
+		,`(define __js_strings (&begin!))
+		(%define-cnst-table ,(length cnsts))
+		(%define-pcache ,pcache-size)
+		(hop-sofile-compile-policy-set! 'static)
+		(define %pcache
 		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
-	       ,@(if (config-get conf :profile-call #f)
-		     `((define %call-log (make-vector ,call-size #l0)))
-		     '())
-	       ,@(if (config-get conf :profile-call #f)
-		     `((define %call-locations ',(call-locations this)))
-		     '())
-	       (hopjs-standalone-set! #t)
-	       (define %source ,path)
-	       (define %resource (dirname %source))
-	       ,@(if (config-get conf :libs-dir #f)
-		   `((hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
-		   '())
-	       (define (main args)
-		  (bigloo-library-path-set! ',(bigloo-library-path))
-		  (hopscript-install-expanders!)
-		  (multiple-value-bind (%worker %this %module)
-		     (js-main-worker! ,name ,path #f
-			nodejs-new-global-object nodejs-new-module)
-		     (let ((%scope (nodejs-new-scope-object %this))
-			   (this ,jsthis))
-			(js-worker-push-thunk! %worker "nodejs-toplevel"
-			   ,(if (config-get conf :function-nice-name #f)
-				(let ((id (string->symbol "#")))
-				   `(let ((,id ,thunk))
-				       ,id))
-				thunk))
-			,(profilers conf)
-			,(js-wait-worker '%worker))))
-	       (&end!)))))
+		,@(if (config-get conf :profile-call #f)
+		      `((define %call-log (make-vector ,call-size #l0)))
+		      '())
+		,@(if (config-get conf :profile-call #f)
+		      `((define %call-locations ',(call-locations this)))
+		      '())
+		(hopjs-standalone-set! #t)
+		(define %source ,path)
+		(define %resource (dirname %source))
+		,@(if (config-get conf :libs-dir #f)
+		      `((hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
+		      '())
+		(define (main args)
+		   (bigloo-library-path-set! ',(bigloo-library-path))
+		   (hopscript-install-expanders!)
+		   (multiple-value-bind (%worker %this %module)
+		      (js-main-worker! ,name ,path #f
+			 nodejs-new-global-object nodejs-new-module)
+		      (js-worker-push-thunk! %worker "nodejs-toplevel"
+			 ,(if (config-get conf :function-nice-name #f)
+			      (let ((id (string->symbol "#")))
+				 `(let ((,id ,thunk))
+				     ,id))
+			      thunk))
+		      ,(profilers conf)
+		      ,(js-wait-worker '%worker)))
+		(&end!)))))
 
    (with-access::J2SProgram this (module main nodes headers decls
 					 mode name pcache-size call-size

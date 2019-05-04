@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Thu Apr 18 08:14:10 2019 (serrano)                */
+;*    Last change :  Sat May  4 02:49:22 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -53,7 +53,7 @@
 		 (let ((abuf (instantiateJsArrayBuffer
 				(__proto__ (js-get js-arraybuffer (& "prototype") this))
 				(data o))))
-		    (,(symbol-append 'instantiate:: type)
+		    (,(symbol-append 'instantiate type)
 		     (__proto__ (js-get js-int8array (& "prototype") this))
 		     (%data o)
 		     (bpe 1)
@@ -740,6 +740,8 @@
 ;*    js-properties-names ::JsTypedArray ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-names::vector obj::JsTypedArray enump %this)
+   (tprint "js-properties-names=" (typeof obj) " enump=" enump
+      " " (typeof (js-object-properties obj)))
    (with-access::JsTypedArray obj (length)
       (let ((len (uint32->fixnum length)))
 	 (append! (map js-integer->jsstring (iota len))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed May  1 16:17:23 2019 (serrano)                */
+;*    Last change :  Sat May  4 15:06:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -139,7 +139,7 @@
 (define (js-with-context ctx::obj ctxname::bstring thunk::procedure)
    (if (isa? ctx JsGlobalObject)
        (with-access::JsGlobalObject ctx (worker name)
-	  (js-worker-exec worker name thunk))
+	  (js-worker-exec worker name #t thunk))
        (error ctxname "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/

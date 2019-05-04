@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Apr 25 21:13:44 2019 (serrano)                */
+;*    Last change :  Fri May  3 18:13:01 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -87,6 +87,15 @@
 	    (flush-output-port p)
 	    connection))))
 
+;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-responder ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-responder request socket)
+   (with-access::http-response-responder r (ctx responder response)
+      (responder ctx
+	 (lambda ()
+	    (http-response response request socket)))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-hop ...                            */
 ;*---------------------------------------------------------------------*/
@@ -797,6 +806,7 @@
 		     (input-timeout-set! in timeout))
 		  (with-handler
 		     (lambda (e)
+			(exception-notify e)
 			(if (isa? e &http-redirection)
 			    (multiple-value-bind (rhost rport ruser rpath)
 			       (redirect e)

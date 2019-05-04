@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu May  2 03:31:23 2019 (serrano)                */
+;*    Last change :  Fri May  3 18:16:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -180,6 +180,10 @@
 ;*    scheme->response ::JsObject ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::JsObject req ctx)
+   
+   (define (responder ctx thunk)
+      (js-with-context ctx "response" thunk))
+   
    (js-with-context ctx "scheme->response"
       (lambda ()
 	 (let ((%this ctx))
@@ -189,10 +193,14 @@
 		  (if (isa? proc JsFunction)
 		      (scheme->response (js-call1 %this proc obj req) req ctx)
 		      (let ((rep (call-next-method)))
-			 (when (isa? rep http-response-hop)
-			    (with-access::http-response-hop rep ((rctx ctx))
-			       (set! rctx ctx)))
-			 rep))))))))
+			 (if (isa? rep http-response-hop)
+			     (with-access::http-response-hop rep ((rctx ctx))
+				(set! rctx ctx)
+				(instantiate::http-response-responder
+				   (ctx ctx)
+				   (response rep)
+				   (responder responder)))
+			     rep)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-fields ...                                              */

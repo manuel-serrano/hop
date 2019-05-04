@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Apr 17 07:50:19 2019 (serrano)                */
+;*    Last change :  Fri May  3 18:14:10 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -121,6 +121,11 @@
 	      (padding::obj (default #f))
 	      (value::obj read-only)
 	      (ctx::obj (default 'hop)))
+
+	   (class http-response-responder::%http-response-server
+	      (ctx read-only)
+	      (responder::procedure read-only)
+	      (response::%http-response-server read-only))
 	   
 	   (class http-response-procedure::%http-response-server
 	      (proc::procedure read-only))
@@ -175,6 +180,8 @@
 	      wid::symbol
 	      ;; the path associated with the service
 	      path::bstring
+	      ;; an optional service handler that is in charge of invoking proc
+	      (handler read-only (default #f))
 	      ;; the service formals
 	      (args::obj read-only)
 	      ;; the user procedure associated

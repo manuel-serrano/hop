@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Apr 25 19:22:16 2019 (serrano)                */
+;*    Last change :  Fri May  3 12:46:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -16,7 +16,7 @@
 
    (library hop js2scheme)
 
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "stringthread.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -225,9 +225,9 @@
 (define-method (post-multipart->obj %this::JsGlobalObject val enc)
    (cond
       ((string=? enc "string") (js-string->jsstring val))
-      ((string=? enc "file") (js-string->jsstring val))
-      ((string=? enc "integer") (string->integer val))
-      ((string=? enc "keyword") (string->keyword val))
+      ((string=? enc "integer") (js-number->jsnumber val))
+      ((string=? enc "keyword") (js-string->jsstring val))
+      ((string=? enc "file") val)
       (else (string->obj val #f %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -515,88 +515,87 @@
 	  `("hop" ,(obj->string val %this) "hop-encoding: hop"))))
    
    (define (scheme->js val)
+      (tprint "scheme->js...")
       (js-obj->jsobject val %this))
+   
+   (define (ms-scheme->js val)
+      val)
    
    (define (js-get-string opt key)
       (let ((v (js-get opt key %this)))
 	 (unless (eq? v (js-undefined))
 	    (js-tostring v %this))))
    
-   (define (post-request callback fail scheme host port user password auth)
+   (define (post-request-thread name %this callback fail scheme host port auth)
       (with-access::JsHopFrame this (path args header options)
-	 (with-hop-remote path callback fail
-	    :scheme scheme
-	    :host host :port port 
-	    :user (js-get-string options (& "user"))
-	    :password (js-get-string options (& "password"))
-	    :authorization auth
-	    :header (when header (js-jsobject->alist header %this))
-	    :ctx %this
-	    :json-parser json-parser
-	    :x-javascript-parser x-javascript-parser
-	    :connection-timeout (hop-connection-timeout)
-	    :args (map multipart-form-arg args))))
+	 (let ((user (js-get-string options (& "user")))
+	       (password (js-get-string options (& "password")))
+	       (header (when header (js-jsobject->alist header %this)))
+	       (args (map multipart-form-arg args))
+	       (receiver (lambda (ctx thunk)
+			    (with-access::JsGlobalObject ctx (worker)
+			       (js-worker-exec worker path #t thunk)))))
+	    (thread-start!
+	       (instantiate::hopthread
+		  (name name)
+		  (body (lambda ()
+			   (with-handler
+			      (lambda (e)
+				 (with-access::JsGlobalObject %this (worker)
+				    (js-worker-exec worker path #t
+				       (lambda ()
+					  (fail e)))))
+			      (with-hop-remote path callback fail
+				 :scheme scheme
+				 :host host :port port 
+				 :user user :password password
+				 :authorization auth
+				 :header header
+				 :ctx %this
+				 :receiver receiver
+				 :json-parser json-parser
+				 :x-javascript-parser x-javascript-parser
+				 :connection-timeout (hop-connection-timeout)
+				 :args args))))))
+	    (js-undefined))))
    
    (define (post-server-promise this %this host port auth scheme)
       (with-access::JsGlobalObject %this (js-promise)
-	 (letrec ((p (js-new %this js-promise
-			(js-make-function %this
-			   (lambda (_ resolve reject)
-			      (thread-start!
-				 (instantiate::hopthread
-				    (name "post-server-promise")
-				    (body (lambda ()
-					     (with-handler
-						(lambda (e)
-						   (js-promise-async p
-						      (lambda ()
-							 (js-promise-reject p
-							    (scheme->js e)))))
-						(post-request
-						   (lambda (x)
-						      (js-promise-async p
-							 (lambda ()
-							    (js-promise-resolve p
-							       (scheme->js x)))))
-						   (lambda (x)
-						      (js-promise-async p
-							 (lambda ()
-							    (js-promise-reject p
-							       (scheme->js x)))))
-						   scheme host port
-						   user password auth)))))))
-			   2 "executor"))))
+	 (letrec* ((callback (lambda (x)
+				(js-promise-async p
+				   (lambda ()
+				      (js-promise-resolve p
+					 (ms-scheme->js x))))))
+		   (fail (lambda (x)
+			    (js-promise-async p
+			       (lambda ()
+				  (js-promise-reject p
+				     (ms-scheme->js x))))))
+		   (p (js-new %this js-promise
+			 (js-make-function %this
+			    (lambda (_ resolve reject)
+			       (post-request-thread "post-server-promise"
+				  %this callback fail scheme host port auth))
+			    2 "executor"))))
 	    p)))
    
    (define (post-server-async this success failure %this host port auth scheme)
       (with-access::JsHopFrame this (path)
-	 (let ((callback (when (isa? success JsFunction)
-			    (lambda (x)
-			       (js-worker-push-thunk! (js-current-worker) path
-				  (lambda ()
-				     (js-call1 %this success %this
-					(scheme->js x)))))))
-	       (fail (when (isa? failure JsFunction)
-			(lambda (obj)
-			   (js-worker-push-thunk! (js-current-worker) path
-			      (lambda ()
-				 (js-call1 %this failure %this obj)))))))
-	    (thread-start!
-	       (instantiate::hopthread
-		  (name "post-async")
-		  (body (lambda ()
-			   (with-handler
-			      (lambda (e)
-				 ((or fail exception-notify) e))
-			      (post-request
-				 callback fail
-				 scheme host port
-				 user password auth))))))
-	    (js-undefined))))
+	 (with-access::JsGlobalObject %this (worker)
+	    (let ((callback (when (isa? success JsFunction)
+			       (lambda (x)
+				  (js-call1 %this success %this
+				     (ms-scheme->js x)))))
+		  (fail (if (isa? failure JsFunction)
+			    (lambda (obj)
+			       (js-call1 %this failure %this obj))
+			    exception-notify)))
+	       (post-request-thread "post-async"
+		  %this callback fail scheme host port auth)))))
    
    (define (post-server-sync this %this host port auth scheme)
       (with-access::JsHopFrame this (path args header options)
-	 (with-hop-remote path scheme->js #f
+	 (with-hop-remote path ms-scheme->js #f
 	    :scheme scheme
 	    :host host :port port 
 	    :user (js-get-string options (& "user"))
@@ -638,7 +637,7 @@
 			       (js-worker-push-thunk! (js-current-worker) path
 				  (lambda ()
 				     (js-call1 %this success %this
-					(scheme->js x)))))))
+					(ms-scheme->js x)))))))
 	       (fail (when (isa? failure JsFunction)
 			(lambda (obj)
 			   (js-worker-push-thunk! (js-current-worker) path
@@ -885,18 +884,30 @@
 			     -1 worker
 			     (instantiate::hop-service
 				(ctx %this)
+;* 				(proc (if (isa? proc JsFunction)       */
+;* 					  (lambda (this . args)        */
+;* 					     (js-worker-exec worker    */
+;* 						(symbol->string! id)   */
+;* 						(service-debug id      */
+;* 						   (lambda ()          */
+;* {* 						      (map! (lambda (a) *} */
+;* {* 							       (js-obj->jsobject a %this)) *} */
+;* {* 							 args)         *} */
+;* 						      (js-apply %this proc this args))))) */
+;* 					  (lambda (this . args)        */
+;* 					     (js-undefined))))         */
 				(proc (if (isa? proc JsFunction)
 					  (lambda (this . args)
-					     (map! (lambda (a)
-						      (js-obj->jsobject a %this))
-						args)
-					     (js-worker-exec worker
-						(symbol->string! id)
-						(service-debug id
-						   (lambda ()
-						      (js-apply %this proc this args)))))
+					     (js-apply %this proc this args))
 					  (lambda (this . args)
 					     (js-undefined))))
+				(handler (lambda (svc req)
+					    (js-worker-exec worker
+					       (symbol->string! id) #t
+					       (service-debug id
+						  (lambda ()
+						     (service-invoke svc req
+							(service-parse-request svc req)))))))
 				(javascript "HopService( ~s, ~s )")
 				(path hoppath)
 				(id id)
@@ -919,7 +930,7 @@
 ;*    service-pack-cgi-arguments ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (service-pack-cgi-arguments ctx::JsGlobalObject svc vals)
-   (with-access::JsGlobalObject ctx (js-object)
+   (with-access::JsGlobalObject ctx (js-object worker)
       (with-access::hop-service svc (args id)
 	 (cond
 	    ((null? vals)

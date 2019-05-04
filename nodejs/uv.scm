@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu May  2 13:41:06 2019 (serrano)                */
+;*    Last change :  Sat May  4 15:00:38 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -541,9 +541,27 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-method (js-worker-exec th::WorkerHopThread name::bstring thunk::procedure)
-   (if (eq? (current-thread) th)
-       (thunk)
+(define-method (js-worker-exec th::WorkerHopThread
+		  name::bstring
+		  handleerror::bool
+		  thunk::procedure)
+   (cond
+      ((eq? (current-thread) th)
+       (thunk))
+      (handleerror
+       (let ((response #f)
+	     (mutex (make-mutex))
+	     (condv (make-condition-variable))
+	     (exn (make-cell #f)))
+	  (synchronize mutex
+	     (js-worker-push-thunk! th name
+		(lambda ()
+		   (set! response (thunk))
+		   (synchronize mutex
+		      (condition-variable-signal! condv))))
+	     (condition-variable-wait! condv mutex)
+	     response)))
+      (else
        (let ((response #f)
 	     (mutex (make-mutex))
 	     (condv (make-condition-variable))
@@ -562,7 +580,7 @@
 	     (condition-variable-wait! condv mutex)
 	     (if (eq? response exn)
 		 (raise (cell-ref exn))
-		 response)))))
+		 response))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-now ...                                                   */

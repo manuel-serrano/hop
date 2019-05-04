@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 24 13:06:33 2019 (serrano)                */
+;*    Last change :  Fri May  3 14:42:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -19,7 +19,8 @@
    (include "../nodejs/nodejs_debug.sch"
 	    "types.sch"
 	    "stringliteral.sch"
-	    "property.sch")
+	    "property.sch"
+	    "stringthread.sch")
    
    (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::obj ::uint32)
 	      "bgl_make_jsarray")
