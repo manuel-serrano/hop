@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sat May  4 15:00:57 2019 (serrano)                */
+;*    Last change :  Sat May  4 16:12:03 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -366,12 +366,12 @@
    (with-access::JsWorker worker (thread)
       (with-access::WorkerHopThread thread (parent listeners %this)
 	 (when (isa? parent WorkerHopThread)
-	    (let ((e (instantiate::MessageEvent
-			(name "message")
-			(target worker)
-			(data (js-donate data parent %this)))))
-	       (js-worker-push-thunk! parent "post-slave-message"
-		  (lambda ()
+	    (js-worker-push-thunk! parent "post-slave-message"
+	       (lambda ()
+		  (let ((e (instantiate::MessageEvent
+			      (name "message")
+			      (target worker)
+			      (data (js-donate data parent %this)))))
 		     (apply-listeners listeners e))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -381,12 +381,12 @@
    (with-handler
       exception-notify 
       (with-access::WorkerHopThread thread (parent errorlisteners %this mutex)
-	 (let ((e (instantiate::MessageEvent
-		     (name "error")
-		     (target parent)
-		     (data (js-donate data parent %this)))))
-	    (js-worker-push-thunk! parent "post-slave-message"
-	       (lambda ()
+	 (js-worker-push-thunk! parent "post-slave-message"
+	    (lambda ()
+	       (let ((e (instantiate::MessageEvent
+			   (name "error")
+			   (target parent)
+			   (data (js-donate data parent %this)))))
 		  (synchronize mutex
 		     (if (pair? errorlisteners)
 			 (apply-listeners errorlisteners e)
@@ -398,13 +398,13 @@
 (define-generic (js-worker-post-master-message this::JsWorker data)
    (with-access::JsWorker this (thread)
       (with-access::WorkerHopThread thread (onmessage %this)
-	 (let ((e (instantiate::MessageEvent
-		     (name "message")
-		     (target this)
-		     (data (js-donate data thread %this)))))
-	    (js-worker-push-thunk! thread "post-master-message"
-	       (lambda ()
-		  (when (isa? onmessage JsFunction)
+	 (js-worker-push-thunk! thread "post-master-message"
+	    (lambda ()
+	       (when (isa? onmessage JsFunction)
+		  (let ((e (instantiate::MessageEvent
+			      (name "message")
+			      (target this)
+			      (data (js-donate data thread %this)))))
 		     (js-call1 %this onmessage this e))))))))
 
 ;*---------------------------------------------------------------------*/
