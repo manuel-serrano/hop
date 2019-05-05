@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat May  4 16:35:22 2019 (serrano)                */
+;*    Last change :  Sun May  5 14:50:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -239,7 +239,7 @@
 	       ;; donate the value of the array
 	       (js-for-in obj
 		  (lambda (k %this)
-		     (js-put! nobj (js-string->jsstring (js-jsstring->string k))
+		     (js-put! nobj (js-donate k worker %_this)
 			(js-donate (js-get obj k %_this) worker %_this)
 			#f %this))
 		  %this)

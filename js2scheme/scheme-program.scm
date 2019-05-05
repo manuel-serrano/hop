@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat May  4 02:22:25 2019 (serrano)                */
+;*    Last change :  Sun May  5 13:56:17 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -70,7 +70,6 @@
 	    `(define __js_strings (&begin!))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
-	    `(%define-cnst-table ,(length cnsts))
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
 		   (define __js_strings (&init!))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed May  1 14:13:44 2019 (serrano)                */
+;*    Last change :  Sun May  5 14:48:45 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -296,7 +296,7 @@
 ;*    js-donate ::JsStringLiteral ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsStringLiteral worker %this)
-   (js-jsstring-normalize! obj))
+   (js-string->jsstring (js-jsstring->string obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsStringLiteral ...                           */

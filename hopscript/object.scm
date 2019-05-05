@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat May  4 17:17:34 2019 (serrano)                */
+;*    Last change :  Sun May  5 14:50:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -134,7 +134,7 @@
 	    (js-object-mode-set! nobj (js-object-mode obj))
 	    (js-for-in obj
 	       (lambda (k %this)
-		  (js-put! nobj (js-string->jsstring (js-jsstring->string k))
+		  (js-put! nobj (js-donate k worker %_this)
 		     (js-donate (js-get/cache obj k %_this) worker %_this)
 		     #f %this))
 	       %this)

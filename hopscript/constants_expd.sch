@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Thu May  2 22:19:59 2019 (serrano)                */
+;*    Last change :  Sun May  5 13:45:02 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -18,9 +18,11 @@
    (match-case x
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
+	      ((and bigloo-c hopjs-worker-slave)
+	       #unspecified)
 	      (bigloo-c
 	       ;; see bigloo_vector.h for details
-	      (static-pragma ,(format "static struct { struct bgl_vector vec; obj_t objs[ ~a ]; } __js_cnst_table = \n#if( !defined( TAG_VECTOR ) )\n { { MAKE_HEADER( VECTOR_TYPE, 0 ), ~a } }; \n#else\n { {~a } };\n#endif" num (+fx 1 num) (+fx 1 num)))))
+	       (static-pragma ,(format "static struct { struct bgl_vector vec; obj_t objs[ ~a ]; } __js_cnst_table = \n#if( !defined( TAG_VECTOR ) )\n { { MAKE_HEADER( VECTOR_TYPE, 0 ), ~a } }; \n#else\n { {~a } };\n#endif" num (+fx 1 num) (+fx 1 num)))))
 	  e))
       (else
        (error "%define-cnst" "bad syntax" x))))
@@ -32,6 +34,8 @@
    (match-case x
       ((?-)
        (e `(cond-expand
+	      ((and bigloo-c hopjs-worker-slave)
+	       #f)
 	      (bigloo-c
 	       (pragma::obj "BVECTOR( &__js_cnst_table )"))
 	      (else
@@ -47,6 +51,8 @@
    (match-case x
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
+	      ((and bigloo-c hopjs-worker-slave)
+	       (vector-ref %cnst-table ,num))
 	      (bigloo-c
 	       (free-pragma::obj ,(format "(__js_cnst_table.objs[ ~a ])" num)))
 	      (else

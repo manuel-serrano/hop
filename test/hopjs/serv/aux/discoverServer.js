@@ -12,6 +12,7 @@ var addSvc = service( n ) {
 }
 
 server.register = service( clientServer ) {
+#:tprint( "in register..." );
    console.log( 'server: new registration' );
    server.addSvc = addSvc;
    server.count = service() {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat May  4 18:32:13 2019 (serrano)                */
+;*    Last change :  Sun May  5 14:41:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -151,22 +151,33 @@
 ;*    js-donate ::JsService ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsService worker::WorkerHopThread %_this)
+
+   (define (relative-path path)
+      (substring path (string-length (hop-service-base))))
+   
    (with-access::WorkerHopThread worker (%this)
-      (let* ((proc (lambda (this . args)
-		      (with-access::JsService obj (svc)
-			 (with-access::hop-service svc (path)
-			    (js-make-hopframe %this this path args)))))
-	     (nobj (duplicate::JsService obj
-		      (procedure proc))))
-	 (js-object-properties-set! nobj '())
-	 (js-object-mode-set! nobj (js-object-mode obj))
-	 (js-for-in obj
-	    (lambda (k %this)
-	       (js-put! nobj k
-		  (js-donate (js-get obj k %_this) worker %this)
-		  #f %this))
-	    %this)
-	 nobj)))
+      (with-access::JsService obj (svc)
+	 (with-access::hop-service svc (path)
+	    (let* ((path (relative-path path))
+		   (proc (js-make-function %this
+			    (lambda (this) (js-undefined))
+			    0 (relative-path path)
+			    :rest #f
+			    :arity 1 :prototype #f
+			    :__proto__ #f
+			    :strict 'strict
+			    :minlen -1
+			    :alloc js-not-a-constructor-alloc
+			    :constrsize 3
+			    :method #f))
+		   (nobj (js-create-service %this proc path #f #f #t worker)))
+	       (js-for-in obj
+		  (lambda (k %this)
+		     (js-put! nobj (js-donate k worker %_this)
+			(js-donate (js-get obj k %_this) worker %_this)
+			#f %this))
+		  %this)
+	       nobj)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsService ...                                       */
@@ -800,7 +811,6 @@
 	       (body (lambda ()
 			(with-handler
 			   (lambda (e)
-			      (tprint "*** SPANW PAS BON e=" e)
 			      (exception-notify e)
 			      (if failjs
 				  (js-worker-push-thunk! worker svc
@@ -893,18 +903,6 @@
 			     -1 worker
 			     (instantiate::hop-service
 				(ctx %this)
-;* 				(proc (if (isa? proc JsFunction)       */
-;* 					  (lambda (this . args)        */
-;* 					     (js-worker-exec worker    */
-;* 						(symbol->string! id)   */
-;* 						(service-debug id      */
-;* 						   (lambda ()          */
-;* {* 						      (map! (lambda (a) *} */
-;* {* 							       (js-obj->jsobject a %this)) *} */
-;* {* 							 args)         *} */
-;* 						      (js-apply %this proc this args))))) */
-;* 					  (lambda (this . args)        */
-;* 					     (js-undefined))))         */
 				(proc (if (isa? proc JsFunction)
 					  (lambda (this . args)
 					     (js-apply %this proc this args))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sat May  4 19:01:26 2019 (serrano)                */
+;*    Last change :  Sat May  4 23:18:34 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -523,8 +523,12 @@
       (let ((g (gensym)))
 	 (js-worker-push-thunk! worker "ws-listener"
 	    (lambda ()
+	       ;;(with-access::WorkerHopThread worker (%this)
 	       (when (isa? (cdr action) JsFunction)
-		  (js-call1 %this (cdr action) this evt)))))))
+		  (with-handler
+		     (lambda (e)
+			(exception-notify e))
+		     (js-call1 %this (cdr action) this evt))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-websocket-listener! ...                                     */

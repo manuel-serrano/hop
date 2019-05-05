@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sat May  4 16:12:03 2019 (serrano)                */
+;*    Last change :  Sun May  5 14:44:20 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -368,6 +368,7 @@
 	 (when (isa? parent WorkerHopThread)
 	    (js-worker-push-thunk! parent "post-slave-message"
 	       (lambda ()
+		  (tprint "post-slave-message..." (current-thread))
 		  (let ((e (instantiate::MessageEvent
 			      (name "message")
 			      (target worker)
