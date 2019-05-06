@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/tyflow.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/tyflow.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Apr 11 08:01:28 2019 (serrano)                */
+;*    Last change :  Mon May  6 13:55:32 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -92,7 +92,7 @@
 		   (flush-output-port (current-error-port)))
 		(let ((ofix (cell-ref fix)))
 		   ;; type all the nodes
-		   (node-type-seq (append headers decls nodes) '() fix)
+		   (node-type-seq (append headers decls nodes) '() fix 'void)
 		   (cond
 		      ((not (=fx (cell-ref fix) ofix))
 		       (loop (+fx i 1)))
@@ -410,29 +410,11 @@
 	     (loop (cdr args) enva (append bk bks))))))
 
 ;*---------------------------------------------------------------------*/
-;*    node-type* ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (node-type* nodes::pair-nil env::pair-nil fix::cell)
-   (let loop ((nodes nodes)
-	      (ty 'undefined)
-	      (env env)
-	      (bks '()))
-      (if (null? nodes)
-	  (return ty env bks)
-	  (multiple-value-bind (tyn envn bk)
-	     (node-type (car nodes) env fix)
-	     (if (pair? bk)
-		 (multiple-value-bind (tyr envr bkr)
-		    (node-type-seq (cdr nodes) envn fix)
-		    (return tyr (env-merge envn envr) (append bk bk bks)))
-		 (loop (cdr nodes) tyn envn (append bk bks)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    node-type-seq ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (node-type-seq nodes::pair-nil env::pair-nil fix::cell)
+(define (node-type-seq nodes::pair-nil env::pair-nil fix::cell initty)
    (let loop ((nodes nodes)
-	      (ty 'void)
+	      (ty initty)
 	      (env env)
 	      (bks '()))
       (if (null? nodes)
@@ -441,7 +423,7 @@
 	     (node-type (car nodes) env fix)
 	     (if (pair? bk)
 		 (multiple-value-bind (tyr envr bkr)
-		    (node-type-seq (cdr nodes) envn fix)
+		    (node-type-seq (cdr nodes) envn fix initty)
 		    (return tyr (env-merge envn envr) (append bk bk bks)))
 		 (loop (cdr nodes) tyn envn (append bk bks)))))))
 
@@ -631,6 +613,22 @@
 ;*    node-type ::J2SSequence ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SSequence env::pair-nil fix::cell)
+   
+   (define (node-type* nodes::pair-nil env::pair-nil fix::cell)
+      (let loop ((nodes nodes)
+		 (ty 'undefined)
+		 (env env)
+		 (bks '()))
+	 (if (null? nodes)
+	     (return ty env bks)
+	     (multiple-value-bind (tyn envn bk)
+		(node-type (car nodes) env fix)
+		(if (pair? bk)
+		    (multiple-value-bind (tyr envr bkr)
+		       (node-type-seq (cdr nodes) envn fix 'undefined)
+		       (return tyr (env-merge envn envr) (append bk bk bks)))
+		    (loop (cdr nodes) tyn envn (append bk bks)))))))
+
    (with-access::J2SSequence this (exprs)
       (multiple-value-bind (tye env bk)
 	 (node-type* exprs env fix)
@@ -1521,7 +1519,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SSeq env::pair-nil fix::cell)
    (with-access::J2SSeq this (nodes)
-      (node-type-seq nodes env fix)))
+      (node-type-seq nodes env fix 'void)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SLabel ...                                         */
@@ -1541,9 +1539,9 @@
 				 (cons d utype))))
 		     decls)))
 	 (multiple-value-bind (_ denv bk)
-	    (node-type-seq decls (append ienv env) fix)
+	    (node-type-seq decls (append ienv env) fix 'void)
 	    (multiple-value-bind (typ benv bks)
-	       (node-type-seq nodes denv fix)
+	       (node-type-seq nodes denv fix 'void)
 	       (let ((nenv (filter (lambda (d)
 				      (not (memq (car d) decls)))
 			      benv)))
@@ -1703,7 +1701,7 @@
 		 (i 0))
 	 (let ((ofix (cell-ref fix)))
 	    (multiple-value-bind (typ envb bk)
-	       (node-type-seq (list test body) env fix)
+	       (node-type-seq (list test body) env fix 'void)
 	       (if (=fx ofix (cell-ref fix))
 		   (return typ envb (filter-breaks bk this))
 		   (loop (env-merge env envb) (+fx i 1))))))))
@@ -1716,7 +1714,7 @@
       (let loop ((env env))
 	 (let ((ofix (cell-ref fix)))
 	    (multiple-value-bind (typ envb bk)
-	       (node-type-seq (list body test) env fix)
+	       (node-type-seq (list body test) env fix 'void)
 	       (if (=fx ofix (cell-ref fix))
 		   (return typ (env-merge env envb) (filter-breaks bk this))
 		   (loop (env-merge env envb))))))))
@@ -1729,7 +1727,7 @@
       (let loop ((env env))
 	 (let ((ofix (cell-ref fix)))
 	    (multiple-value-bind (typ envb bk)
-	       (node-type-seq (list init test body incr) env fix)
+	       (node-type-seq (list init test body incr) env fix 'void)
 	       (if (=fx ofix (cell-ref fix))
 		   (return typ (env-merge env envb) (filter-breaks bk this))
 		   (loop (env-merge env envb))))))))
@@ -1748,7 +1746,7 @@
 	 (let loop ((env (extend-env env decl ty)))
 	    (let ((ofix (cell-ref fix)))
 	       (multiple-value-bind (typ envb bk)
-		  (node-type-seq (list obj body) env fix)
+		  (node-type-seq (list obj body) env fix 'void)
 		  (if (=fx ofix (cell-ref fix))
 		      (return typ envb (filter-breaks bk this))
 		      (loop (env-merge env envb)))))))))
