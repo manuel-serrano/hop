@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat May  4 15:05:00 2019 (serrano)                */
+;*    Last change :  Mon May  6 13:00:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -875,22 +875,32 @@
 	 (if (not (isa? o JsObject))
 	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
 	     (let loop ((v v))
-		(with-access::JsObject v ((v __proto__))
+		(with-access::JsObject v ((nv __proto__))
 		   (cond
-		      ((eq? o v) #t)
-		      ((eq? v (js-null)) #f)
-		      (else (loop v)))))))))
+		      ((eq? o nv)
+		       #t)
+		      ((eq? nv (js-null))
+		       (when(isa? v JsProxy)
+			  (with-access::JsProxy v (target)
+			     (loop target))))
+		      (else
+		       (loop nv)))))))))
 
 (define (js-ordinary-instanceof/debug %this loc v f)
    (let ((o (js-get f (& "prototype") %this)))
       (if (not (isa? o JsObject))
           (js-raise-type-error/loc %this loc "instanceof: no prototype ~s" v)
           (let loop ((v v))
-             (with-access::JsObject v ((v __proto__))
+             (with-access::JsObject v ((nv __proto__))
                 (cond
-                   ((eq? o v) #t)
-                   ((eq? v (js-null)) #f)
-                   (else (loop v))))))))
+                   ((eq? o nv)
+		    #t)
+                   ((eq? nv (js-null))
+		    (when (isa? v JsProxy)
+		       (with-access::JsProxy v (target)
+			  (loop target))))
+		   (else
+		    (loop nv))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-instanceof? ...                                               */

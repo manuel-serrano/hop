@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Apr 30 13:49:24 2019 (serrano)                */
+;*    Last change :  Sun May  5 17:13:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -304,7 +304,8 @@
 	      (when (isa? amap JsConstructMap)
 		 (with-access::JsConstructMap amap ((%aid %id) (aprops props))
 		    (fprint (current-error-port) "  amap.%id=" %aid
-		       " amap.props=" aprops))))
+		       " amap.props=" aprops
+		       " owner=" (typeof (js-pcache-owner pcache))))))
 	     ((isa? pmap JsConstructMap)
 	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
 		 (fprint (current-error-port) msg (typeof pcache)
@@ -316,7 +317,8 @@
 		 (fprint (current-error-port) msg (typeof pcache)
 		    " index=" index
 		    "\n  amap.%id=" %aid
-		    " amap.props=" aprops)))
+		    " amap.props=" aprops
+		    " owner=" (typeof (js-pcache-owner pcache)))))
 	     (else
 	      (fprint (current-error-port) msg (typeof pcache)
 		 " no map"))))
@@ -608,7 +610,6 @@
 	 (when (and (js-object-inline-next-element? o i) inlp)
 	    (set! iindex i)
 	    (set! imap omap))
-;* 	     (set! imap #t))                                           */
 	 (set! cmap omap)
 	 (set! pmap #t)
 	 (set! emap #t)
@@ -631,7 +632,7 @@
 	    (set! pmap omap)
 	    (set! emap #t)
 	    (set! amap #t)
-	    (set! owner obj)
+	    (unless (isa? obj JsProxy) (set! owner obj))
 	    (set! index i)))))
 
 ;*---------------------------------------------------------------------*/
@@ -2037,7 +2038,9 @@
 				 (reject "Illegal object"))
 			     (begin
 				(when cache
-				   (js-pcache-update-descriptor! cache i o o))
+				   (if (isa? obj JsProxy)
+				       (js-pcache-update-descriptor! cache i obj obj)
+				       (js-pcache-update-descriptor! cache i o o)))
 				v))))
 		      ;; hopjs extension
 		     ((js-object-mode-frozen? obj)
@@ -2267,13 +2270,13 @@
        (let ((pname (js-jsstring-toname prop)))
 	  (synchronize-name
 	     (cond
-		((eq? pname (& "length"))
-		 (js-put-length! o v throw #f %this))
 		((js-name-pcachew pname)
 		 =>
 		 (lambda (cache)
 		    (js-object-put-name/cache! o pname v throw
 		       %this cache point cspecs)))
+		((eq? pname (& "length"))
+		 (js-put-length! o v throw #f %this))
 		((js-isindex? (js-toindex prop))
 		 (js-put! o prop v throw %this))
 		(else

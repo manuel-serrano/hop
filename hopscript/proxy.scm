@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Tue Apr 30 13:51:11 2019 (serrano)                */
+;*    Last change :  Mon May  6 03:18:08 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -73,7 +73,7 @@
 	    (writable #t)
 	    (configurable #t)
 	    (enumerable #t)
-	    (name (& ""))
+	    (name (& "%%proxy"))
 	    (%get js-proxy-property-value)
 	    (%set js-proxy-property-value-set!))))
    

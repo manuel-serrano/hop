@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed May  1 16:16:29 2019 (serrano)                */
+;*    Last change :  Sun May  5 16:52:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -372,7 +372,6 @@
    ;; charAt
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.4
    (define (charat this index)
-      (tprint "chart this=" (typeof this) " " this " index=" index)
       (js-jsstring-charat (js-cast-string-normalize! %this this) index %this))
    
    (js-bind! %this obj (& "charAt")

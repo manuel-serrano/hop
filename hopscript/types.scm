@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed May  1 12:29:42 2019 (serrano)                */
+;*    Last change :  Mon May  6 13:38:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -33,7 +33,7 @@
 
    (extern (include "bglhopscript_malloc.h"))
 
-   (extern ($js-register-property-cache::obj (::obj ::obj)
+   (extern ($js-register-property-cache::JsPropertyCache (::obj ::obj)
 	      "bgl_register_dpcache")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
@@ -403,7 +403,7 @@
 	      (%this::JsGlobalObject read-only)
 	      (obj::JsObject read-only))
 
-	   (js-property-cache-init!::JsPropertyCache ::JsPropertyCache)
+	   (js-property-cache-init!::JsPropertyCache ::obj)
 	   
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 

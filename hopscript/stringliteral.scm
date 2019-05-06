@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun May  5 14:48:45 2019 (serrano)                */
+;*    Last change :  Sun May  5 16:52:51 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1585,7 +1585,7 @@
 	     (js-jsstring-charat this index %this))
 	    ((isa? this JsObject)
 	     (js-call1 %this
-		(js-get-name/cache this (& "charAt") #f %this
+		(js-object-get-name/cache this (& "charAt") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 4)))
 		this index))
 	    (else
