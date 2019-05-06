@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Mar 18 15:17:08 2019 (serrano)                */
+/*    Last change :  Mon May  6 12:57:03 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -120,7 +120,26 @@ function miscf() {
 
    return test.apply( null, arr ) === 3004;
 }
-	 
+
+function miscg() {   
+   function CTOR( a ) {
+      this.a = a;
+   }
+
+   const handler = { 
+      get: function( target, prop ) { 
+	 return target[ prop ] },
+      set: function( target, prop, v ) { 
+	 target[ prop ] = v; return true; }
+   }
+
+   var o = new CTOR( 1 );
+   var p = new Proxy( o, handler );
+
+   return (o instanceof CTOR) && (p instanceof CTOR);
+}
+
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
@@ -128,6 +147,7 @@ console.log( "   miscc()"); assert.ok( miscc(), "miscc" );
 console.log( "   miscd()"); assert.ok( miscd(), "miscd" );
 console.log( "   misce()"); assert.ok( misce(), "misce" );
 console.log( "   miscf()"); assert.ok( miscf(), "miscf" );
+console.log( "   miscg()"); assert.ok( miscg(), "miscg" );
       
 /*---------------------------------------------------------------------*/
 /*    mdn ...                                                          */

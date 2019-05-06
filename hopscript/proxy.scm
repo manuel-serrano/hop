@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Tue Mar 19 14:06:29 2019 (serrano)                */
+;*    Last change :  Mon May  6 17:27:20 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -72,7 +72,7 @@
       (define (js-proxy-alloc %this constructor::JsFunction)
 	 (instantiateJsProxy
 	    (cmap proxy-cmap)
-	    (__proto__ (js-get constructor 'prototype %this))
+	    (__proto__ (js-null))
 	    (elements (vector proxy-property-descriptor))))
 
       (define (js-proxy-construct this::JsProxy t h)
