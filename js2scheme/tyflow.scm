@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon May  6 13:55:32 2019 (serrano)                */
+;*    Last change :  Tue May  7 08:33:16 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -625,7 +625,7 @@
 		(node-type (car nodes) env fix)
 		(if (pair? bk)
 		    (multiple-value-bind (tyr envr bkr)
-		       (node-type-seq (cdr nodes) envn fix 'undefined)
+		       (node-type-seq (cdr nodes) envn fix 'unknown)
 		       (return tyr (env-merge envn envr) (append bk bk bks)))
 		    (loop (cdr nodes) tyn envn (append bk bks)))))))
 

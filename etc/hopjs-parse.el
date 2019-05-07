@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Wed Feb 27 07:35:14 2019 (serrano)                */
+;*    Last change :  Wed Apr 24 11:17:56 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -80,8 +80,8 @@
      ;; strings
      (cons (rxor "\"\\([^\"\\]\\|\\\\.\\)*\"" "'[^']*'" "`[^`]*`") 'string)
      ;; regexp
-     (cons "/[^*].*[^<]/[gimuy]?" 'regexp)
-     (cons "/[^*]/[gimuy]?" 'regexp)
+     (cons "/[^*/].*[^<]/[gimuy]?" 'regexp)
+     (cons "/[^*/]/[gimuy]?" 'regexp)
      ;; tilde escape
      (cons "~{" 'tilde)
      ;; dollar escape
@@ -246,7 +246,7 @@
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-line (pos &optional rev)
   (interactive "d")
-  (hopjs-no-debug 1 "hopjs-parse-line pos=%s" pos)
+  (hopjs-debug 1 "hopjs-parse-line pos=%s" pos)
   (save-excursion
     (let ((tokens '()))
       (goto-char pos)
@@ -255,7 +255,7 @@
 	(let ((tok (looking-at-token)))
 	  (cond
 	   (tok
-	    (hopjs-no-debug 0 "hopjs-parse-line pos=%s point=%s tok=%s"
+	    (hopjs-debug 0 "hopjs-parse-line pos=%s point=%s tok=%s"
 			    pos (point) tok)
 	    (if (eq (hopjs-parse-token-type tok) 'ohtml)
 		;; ohtml must be split in two parts: the tag and the attr
@@ -280,7 +280,7 @@
 		((nullp tokens) (list (hopjs-parse-token 'blank pos pos)))
 		(rev (reverse tokens))
 		(t tokens))))
-	(hopjs-no-debug -1 "hopjs-parse-line pos=%s -> %s" pos r)
+	(hopjs-debug -1 "hopjs-parse-line pos=%s -> %s" pos r)
 	r))))
 
 ;*---------------------------------------------------------------------*/

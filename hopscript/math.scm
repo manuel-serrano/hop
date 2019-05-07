@@ -123,6 +123,7 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.1
       (define (js-math-abs this x)
 	 (cond
+	    ((not (number? x)) (js-math-abs this (js-tonumber x %this)))
 	    ((not (= x x)) x)
 	    ((< x 0) (- x))
 	    (else x)))

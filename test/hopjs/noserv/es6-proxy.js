@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Wed Apr 24 10:29:03 2019 (serrano)                */
+/*    Last change :  Mon May  6 17:37:19 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -120,15 +120,23 @@ function miscf() {
 
    return test.apply( null, arr ) === 3004;
 }
-	 
-function miscg() {
-   var o = { a:1 };
-   var getp = { apply: function( target, self, alist ) { return 24; }
-   }
-   var h = { get: new Proxy( function() {}, getp ) };
-   var p = new Proxy( o, h );
 
-   return p.a === 24;
+function miscg() {   
+   function CTOR( a ) {
+      this.a = a;
+   }
+
+   const handler = { 
+      get: function( target, prop ) { 
+	 return target[ prop ] },
+      set: function( target, prop, v ) { 
+	 target[ prop ] = v; return true; }
+   }
+
+   var o = new CTOR( 1 );
+   var p = new Proxy( o, handler );
+
+   return (o instanceof CTOR) && (p instanceof CTOR);
 }
 
 function misch() {
@@ -157,6 +165,16 @@ function misci() {
    return d.hasOwnProperty( "a" ) && !d.hasOwnProperty( "aa" );
 }
 
+function miscj() {
+   var o = { a:1 };
+   var getp = { apply: function( target, self, alist ) { return 24; }
+   }
+   var h = { get: new Proxy( function() {}, getp ) };
+   var p = new Proxy( o, h );
+
+   return p.a === 24;
+}
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
@@ -167,6 +185,7 @@ console.log( "   miscf()"); assert.ok( miscf(), "miscf" );
 console.log( "   miscg()"); assert.ok( miscg(), "miscg" );
 console.log( "   misch()"); assert.ok( misch(), "misch" );
 console.log( "   misci()"); assert.ok( misci(), "misci" );
+console.log( "   miscj()"); assert.ok( miscj(), "miscj" );
       
 /*---------------------------------------------------------------------*/
 /*    mdn ...                                                          */

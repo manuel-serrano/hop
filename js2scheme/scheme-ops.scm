@@ -336,19 +336,25 @@
        (if (=fx (config-get conf :optim 0) 0)
 	   (with-tmp lhs rhs mode return conf 'any
 	      (lambda (left right)
-		 (js-binop-arithmetic loc op left lhs right rhs conf)))
+		 (j2s-cast
+		    (js-binop-arithmetic loc op left lhs right rhs conf)
+		    #f 'any type conf)))
 	   (js-arithmetic-addsub loc op type lhs rhs mode return conf)))
       ((*)
        (if (=fx (config-get conf :optim 0) 0)
 	   (with-tmp lhs rhs mode return conf 'any
 	      (lambda (left right)
-		 (js-binop-arithmetic loc op left lhs right rhs conf)))
+		 (j2s-cast
+		    (js-binop-arithmetic loc op left lhs right rhs conf)
+		    #f 'any type conf)))
 	   (js-arithmetic-mul loc type lhs rhs mode return conf)))
       ((**)
        (if (=fx (config-get conf :optim 0) 0)
 	   (with-tmp lhs rhs mode return conf 'any
 	      (lambda (left right)
-		 (js-binop-arithmetic loc '** left lhs right rhs conf)))
+		 (j2s-cast
+		    (js-binop-arithmetic loc '** left lhs right rhs conf)
+		    #f 'any type conf)))
 	   (js-arithmetic-expt loc type lhs rhs mode return conf)))
       ((/)
        (js-arithmetic-div loc type lhs rhs mode return conf))

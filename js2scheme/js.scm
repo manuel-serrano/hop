@@ -949,7 +949,24 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SString tildec dollarc mode evalp conf)
    (with-access::J2SString this (val)
-      (list this (string-append "\"" (string-for-read val) "\""))))
+      (if (ascii-string? val)
+	  (list this (string-append "\"" (string-for-read val) "\""))
+	  (let ((u (apply string-append
+		      (map (lambda (uc)
+			      (let ((n (ucs2->integer uc)))
+				 (cond
+				    ((<fx n 32)
+				     (string-for-read (string (integer->char n))))
+				    ((=fx n 34)
+				     "\\\"")
+				    ((=fx n 92)
+				     "\\\\")
+				    ((<=fx n 127)
+				     (string (integer->char n)))
+				    (else
+				     (format "\\u~4,0x" n)))))
+			 (ucs2-string->list (utf8-string->ucs2-string val))))))
+	     (list this (string-append "\"" u "\""))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2STemplate ...                                         */

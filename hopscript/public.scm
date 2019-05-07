@@ -880,7 +880,7 @@
 		      ((eq? o nv)
 		       #t)
 		      ((eq? nv (js-null))
-		       (when(isa? v JsProxy)
+		       (when (isa? v JsProxy)
 			  (with-access::JsProxy v (target)
 			     (loop target))))
 		      (else
