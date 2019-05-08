@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Jan  4 10:43:28 2019 (serrano)                */
+/*    Last change :  Wed May  8 10:45:27 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
@@ -189,3 +189,8 @@ assert.equal( str1.replace( re2, function( s ) { return "!" + s + "!" } ), "foo!
 assert.equal( re2.lastIndex, 0 );
 
 assert.equal( "foo".indexOf( "" ), 0, "indexOf with empty string" );
+
+/*---------------------------------------------------------------------*/
+/*    keys                                                             */
+/*---------------------------------------------------------------------*/
+assert.ok( Object.keys( "foobar" ).length === 6, "Object.keys" );
