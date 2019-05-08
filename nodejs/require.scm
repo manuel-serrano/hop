@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue May  7 10:21:02 2019 (serrano)                */
+;*    Last change :  Wed May  8 12:31:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1607,7 +1607,6 @@
 
    (define (loadso-or-compile filename lang worker-slave)
       (let loop ((sopath (find-new-sofile filename worker-slave)))
-	 (tprint "loadso-or-compile filename=" filename " sopath=" sopath)
 	 (cond
 	    ((and (string? sopath) (hop-sofile-enable))
 	     (multiple-value-bind (p _)
@@ -1617,7 +1616,7 @@
 		    (js-raise-error %ctxthis
 		       (format "Wrong compiled file format ~s" sopath)
 		       sopath))))
-	    ((or (not (pair? sopath)) (not (eq? (car sopath) 'error)))
+	    ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
 	     (case (hop-sofile-compile-policy)
 		((aot)
 		 (if (hop-sofile-enable)
@@ -1721,7 +1720,7 @@
 	 (cond
 	    ((and (string? sopath) (hop-sofile-enable))
 	     (hop-dynamic-load sopath))
-	    ((or (not (pair? sopath)) (not (eq? (car sopath) 'error)))
+	    ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
 	     (case (hop-sofile-compile-policy)
 		((aot)
 		 (if (hop-sofile-enable)
