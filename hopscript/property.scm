@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed May  8 09:35:32 2019 (serrano)                */
+;*    Last change :  Wed May  8 12:12:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1627,7 +1627,7 @@
 				(js-pcache-update-direct! cache i o #t))
 			       ((<u32 cntmiss (vtable-threshold))
 				(js-pcache-update-direct! cache i o #f))
-			       (else
+			       ((not (eq? name '__proto__))
 				(js-pcache-vtable! omap cache i)))
 			    el-or-desc)
 			   (else
@@ -2328,7 +2328,8 @@
 	    (set! cpoint point)
 	    (set! usage 'put))
 
-	 (unless (eq? %omap (js-not-a-cmap))
+	 (unless (or (eq? %omap (js-not-a-cmap))
+		     (eq? prop '__proto__))
 	    (with-access::JsPropertyCache cache (index vindex cntmiss)
 	       (when (>=u32 cntmiss (vtable-threshold))
 		  (when (>=fx index 0)
