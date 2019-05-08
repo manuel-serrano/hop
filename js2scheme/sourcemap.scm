@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/sourcemap.scm           */
+;*    serrano/prgm/project/hop/hop/js2scheme/sourcemap.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Wed Jan  9 11:19:31 2019 (serrano)                */
+;*    Last change :  Tue May  7 12:21:28 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -333,6 +333,7 @@
 	 ;; feed the source file lines table
 	 (hashtable-for-each sourcetable
 	    (lambda (k v)
+	       (tprint "k=" k " " (typeof k))
 	       (vector-set! src-linetables v (load-file-line-table k))))
 	 (call-with-output-file (make-file-name "/tmp" (string-append (basename src-file) ".seg.txt"))
 	    (lambda (dbg)
@@ -348,7 +349,8 @@
 			(let* ((seg (car segs))
 			       (pos (car seg))
 			       (loc (cadr seg))
-			       (file (hashtable-get sourcetable (cadr loc)))
+			       (name (cadr loc))
+			       (file (hashtable-get sourcetable name))
 			       (src-linetable (vector-ref src-linetables file)))
 			   (multiple-value-bind (dstline dstbeg)
 			      (linetable-find dst-linetable pdstline pos dst-file)
@@ -455,7 +457,7 @@
 		   (let ((segment (list offset loc)))
 		      (set-cdr! res (cons segment (cdr res))))
 		   (let* ((file (cadr loc))
-			  (f (hashtable-get sourcetable (cadr loc))))
+			  (f (hashtable-get sourcetable file)))
 		      (unless f
 			 (let ((n (hashtable-size sourcetable)))
 			    (hashtable-put! sourcetable file n))))
@@ -502,4 +504,3 @@
 		       (let ((j (input-port-position p)))
 			  (loop (cons (cons i j) lines) j)))))))
        '()))
-		   

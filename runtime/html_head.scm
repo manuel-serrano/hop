@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Apr 19 12:57:43 2019 (serrano)                */
+;*    Last change :  Tue May  7 11:47:57 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -107,20 +107,10 @@
 	       (else
 		(loop (cdr body) #t))))))
 	     
-   (let* ((nbody (let loop ((body body))
-		    (cond
-		       ((not (pair? body))
-			body)
-		       ((xml-unpack (car body) %context)
-			=>
-			(lambda (v) (loop (append v (cdr body)))))
-		       ((let ((v (xml-primitive-value (car body) %context)))
-			   (and (string? v) (not (string-skip v "\n\t "))))
-			(loop (cdr body)))
-		       (else
-			(append-map (lambda (n)
-				       (or (xml-unpack n %context) (list n)))
-			   body)))))
+   (let* ((nbody (filter (lambda (n)
+			    (let ((v (xml-primitive-value n %context)))
+			       (or (not (string? v)) (string-skip v "\n\t "))))
+		    (xml-body body %context)))
 	  (hbody (cond
 		    ((null? nbody)
 		     (list (<HEAD> :idiom idiom :%context %context

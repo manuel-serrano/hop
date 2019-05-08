@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Apr 19 07:47:55 2019 (serrano)                */
+;*    Last change :  Tue May  7 09:15:42 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -510,7 +510,7 @@
 	 :precompiled-declared-variables hopscheme-declared
 	 :precompiled-free-variables hopscheme-free
 	 :filename-resolver hop-clientc-filename-resolver
-	 :jsc nodejs-compile-file
+	 :jsc nodejs-compile-client-file
 	 :jsonc nodejs-compile-json
 	 :htmlc nodejs-compile-html)
 
@@ -739,12 +739,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-clientc-filename-resolver ...                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-clientc-filename-resolver name context-or-path module)
+(define (hop-clientc-filename-resolver name ctx module)
    (cond
-      ((or (string-suffix? ".js" name) (not (string? context-or-path)))
-       (let ((scope context-or-path))
-	  (when module
-	     (nodejs-resolve name scope module 'head))))
+      ((or (string-suffix? ".js" name) (not (string? ctx)))
+       (when module
+	  (nodejs-resolve name ctx module 'head)))
       (else
-       (let ((path context-or-path))
-	  (find-file/path name path)))))
+       (find-file/path name ctx))))

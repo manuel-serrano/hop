@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Apr 23 11:41:26 2019 (serrano)                */
+;*    Last change :  Tue May  7 08:55:09 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -214,7 +214,9 @@
       ;; js loader
       (hop-loader-add! "js"
 	 (lambda (path . test)
-	    (nodejs-load path path %global %module %worker)))
+	    (js-worker-exec %worker "hop-loader" #t
+	       (lambda ()
+		  (nodejs-load path path %global %module %worker)))))
       ;; profiling
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f))
@@ -224,10 +226,6 @@
       ;; hss extension
       (when (hop-javascript)
 	 (javascript-init-hss %worker %global))
-      ;; create the repl JS module
-;*       (let ((path (file-name-canonicalize!                          */
-;* 		     (make-file-name (pwd) (car args)))))              */
-;* 	 (nodejs-new-module "<repl>" path %worker %global))            */
       ;; push user expressions
       (when (pair? exprs)
 	 (js-worker-push-thunk! %worker "cmdline"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Apr 21 14:25:28 2019 (serrano)                */
+;*    Last change :  Tue May  7 18:26:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -255,7 +255,7 @@
 		     ((eq? (car frame) 'hopscript)
 		      (make-frame "hopscript" "" "" 0 0))
 		     (else
-		      (js-undefined)))))
+		      #f))))
 	    
 	    (define (hop-stack->jsstring err stack)
 	       (js-string->jsstring
@@ -350,7 +350,7 @@
 			     2 "set"
 			     :src "error.scm")
 		     :enumerable #f
-		     :configurable #f
+		     :configurable #t
 		     :hidden-class #t))))
 	 
 	 ;; bind the properties of the prototype
