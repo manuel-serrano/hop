@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/trashcan/cache.js                                        */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/cache.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sun Jun 10 16:01:26 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Wed May  8 09:34:36 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hiddent class and caches testing.                                */
 /*=====================================================================*/
@@ -133,3 +133,41 @@ function test4() {
 console.log( "prototype override" );
 assert.ok( test4() === 23 + 32, "prototype override" );
 
+/*---------------------------------------------------------------------*/
+/*    method caching                                                   */
+/*---------------------------------------------------------------------*/
+function method() {
+   function ctor( firstChecker ) {
+      this.a = 10;
+      this.firstChecker = firstChecker;
+   }
+
+   function f1( a, b, c, d ) {
+      return "f1";
+   }
+
+   function f2( a, b, c, d ) {
+      return "f2";
+   }
+
+   function call( o, a, b, c, d ) {
+      return o.firstChecker( a, b, c, d );
+   }
+
+   function test() {
+      var o1 = new ctor( f1 );
+      var o2 = new ctor( f2 );
+
+      for( let i = 0; i < 20000; i++ ) {
+      	 call( o1, 100, 30, 0, 0 );
+      	 call( o2, 100, 30, 0, 0 );
+      }
+
+      return call( o1, 100, 30, 0, 0 ) + call( o2, 100, 30, 0, 0 ) === "f1f2";
+   }
+   
+   return test();
+}
+
+console.log( "method caching" );
+assert.ok( method(), "method caching" );

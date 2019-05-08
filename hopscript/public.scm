@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon May  6 13:09:34 2019 (serrano)                */
+;*    Last change :  Wed May  8 10:51:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1804,6 +1804,9 @@
        obj)
       ((pair? obj)
        obj)
+      ((string? obj)
+       (with-access::JsGlobalObject %this (js-string)
+	  (js-new1 %this js-string obj)))
       (else
        (js-raise-type-error %this
 	  (format "[[~a]]: not an object \"~~a\"" name)

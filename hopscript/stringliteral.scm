@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Apr 25 18:48:36 2019 (serrano)                */
+;*    Last change :  Wed May  8 10:49:18 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -197,6 +197,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::JsStringLiteral req)
    (scheme->response (js-jsstring->string obj) req))
+
+;*---------------------------------------------------------------------*/
+;*    js-cast-object ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-cast-object obj::JsStringLiteral %this name)
+   (with-access::JsGlobalObject %this (js-string)
+      (js-new1 %this js-string obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    prealloc-strings ...                                             */

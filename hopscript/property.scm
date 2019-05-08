@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Mar 19 13:24:41 2019 (serrano)                */
+;*    Last change :  Wed May  8 09:35:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2124,7 +2124,7 @@
 					      (with-access::JsConstructMap detachedmap (methods ctor)
 						 ;; validate cache method and don't cache
 						 (vector-set! methods index v))
-					      (set! cmap detachedmap)
+					      (set! nextmap detachedmap)
 					      v))))
 				(begin
 				   (when (isa? (vector-ref methods index) JsFunction)
