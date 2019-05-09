@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon May  6 13:33:04 2019 (serrano)                */
+;*    Last change :  Thu May  9 09:25:09 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -106,12 +106,22 @@
 	 ((1)
 	  (char-numeric? (string-ref str 0)))
 	 (else
-	  (unless (char=? (string-ref str 0) #\0)
-	     (let loop ((i (if (char=? (string-ref str 0) #\-) 1 0)))
-		(cond
-		   ((=fx i len) #t)
-		   ((char-numeric? (string-ref str i)) (loop (+fx i 1)))
-		   (else #f))))))))
+	  (case (string-ref str 0)
+	     ((#\0)
+	      #f)
+	     ((#\-)
+	      (when (and (>fx len 1) (not (char=? (string-ref str 1) #\0)))
+		 (let loop ((i 1))
+		    (cond
+		       ((=fx i len) #t)
+		       ((char-numeric? (string-ref str i)) (loop (+fx i 1)))
+		       (else #f)))))
+	     (else
+	      (let loop ((i 0))
+		 (cond
+		    ((=fx i len) #t)
+		    ((char-numeric? (string-ref str i)) (loop (+fx i 1)))
+		    (else #f)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-compare? ...                                              */
