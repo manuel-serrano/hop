@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun May  5 14:50:54 2019 (serrano)                */
+;*    Last change :  Thu May  9 13:30:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1144,9 +1144,13 @@
 		#t))))
    
    (define (define-own-property obj name prop properties)
-      (let* ((descobj (if (isa? prop JsPropertyDescriptor)
-			  (js-property-value properties properties name prop %this)
-			  prop))
+      (let* ((descobj (cond
+			 ((isa? prop JsPropertyDescriptor)
+			  (js-property-value properties properties name prop %this))
+			 ((not (js-object? prop))
+			  (js-raise-type-error %this "Property description must be an object: ~s" prop))
+			 (else
+			  prop)))
 	     (desc (js-to-property-descriptor %this descobj name)))
 	 (js-define-own-property obj name desc #t %this)))
    
