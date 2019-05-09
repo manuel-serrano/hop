@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Apr 23 11:41:26 2019 (serrano)                */
+;*    Last change :  Wed May  8 11:03:03 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -214,7 +214,9 @@
       ;; js loader
       (hop-loader-add! "js"
 	 (lambda (path . test)
-	    (nodejs-load path path %global %module %worker)))
+	    (js-worker-exec %worker "hop-loader" #t
+	       (lambda ()
+		  (nodejs-load path path %global %module %worker)))))
       ;; profiling
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f))
@@ -224,10 +226,6 @@
       ;; hss extension
       (when (hop-javascript)
 	 (javascript-init-hss %worker %global))
-      ;; create the repl JS module
-;*       (let ((path (file-name-canonicalize!                          */
-;* 		     (make-file-name (pwd) (car args)))))              */
-;* 	 (nodejs-new-module "<repl>" path %worker %global))            */
       ;; push user expressions
       (when (pair? exprs)
 	 (js-worker-push-thunk! %worker "cmdline"
@@ -457,9 +455,12 @@
 		  (error "hop-repl"
 		     "HOP REPL cannot be spawned without multi-threading"
 		     scd)
-		  (spawn0 scd
-		     (stage-repl
-			(lambda () (repljs %global %worker))))))
+		  (multiple-value-bind (%worker %global %module)
+		     (js-main-worker! "repl" (pwd) #f
+			nodejs-new-global-object nodejs-new-module)
+		     (js-worker-exec %worker "repl" #t
+			(lambda ()
+			   (repljs %global %worker))))))
 	   (repljs %global %worker))
        (error "hop-repl"
 	  "not enough threads to start a REPL (see --threads-max option)"

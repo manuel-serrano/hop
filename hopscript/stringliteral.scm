@@ -305,6 +305,13 @@
    (scheme->response (js-jsstring->string obj) req ctx))
 
 ;*---------------------------------------------------------------------*/
+;*    js-cast-object ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-cast-object obj::JsStringLiteral %this name)
+   (with-access::JsGlobalObject %this (js-string)
+      (js-new1 %this js-string obj)))
+
+;*---------------------------------------------------------------------*/
 ;*    indexes ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define indexes

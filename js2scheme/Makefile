@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/js2scheme/Makefile                */
+#*    serrano/prgm/project/hop/hop/js2scheme/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Mar  8 11:35:59 2019 (serrano)                */
+#*    Last change :  Tue May  7 12:40:04 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -27,7 +27,7 @@ HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -lhop_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
   -lhop_u-$(HOPRELEASE)
-HOPCLOSELIBS_ES = -ljs2scheme_s-$(HOPRELEASE) 
+HOPCLOSELIBS_ES = -ljs2scheme_s-$(HOPRELEASE)
 HOPCLOSELIBS_EU = -ljs2scheme_u-$(HOPRELEASE)
 
 BLIBFLAGS = $(BCFLAGSRTS)

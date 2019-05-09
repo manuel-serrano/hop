@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sun Apr 28 11:01:21 2019 (serrano)                */
+;*    Last change :  Tue May  7 12:04:11 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -83,7 +83,7 @@
 		    (%location #f)
 		    body)
    (let ((head "")
-	 (body (xml-unpack body %context)))
+	 (body (xml-body body %context)))
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
 	 (set! head (car body))
 	 (set! body (cdr body)))
@@ -373,7 +373,7 @@
 				(loop (thunk))))
 			    ((service? b)
 			     (with-access::hop-service (service->hop-service b) (proc)
-				(loop (xml-unpack (proc #f) ctx))))
+				(loop (xml-body (proc #f) ctx))))
 			    ((isa? b html-tree)
 			     (html-write-tree level b parent p be)
 			     (display ";\n" p))
@@ -386,17 +386,17 @@
 			     (return b))
 			    ((isa? b xml-tilde)
 			     (return
-			      (instantiate::http-response-hop
-				 (backend (hop-xml-backend))
-				 (start-line "HTTP/1.0 501 Internal Server Error")
-				 (content-type (hop-mime-type))
-				 (value b))))
-			    ((xml-unpack b ctx)
-			     =>
-			     loop)
+				(instantiate::http-response-hop
+				   (backend (hop-xml-backend))
+				   (start-line "HTTP/1.0 501 Internal Server Error")
+				   (content-type (hop-mime-type))
+				   (value b))))
 			    (else
-			     (error "<TREE>" "Illegal tree body" b)))))
-		   body)
+			     (let ((b (xml-body b ctx)))
+				(if (pair? b)
+				    (loop b)
+				    (error "<TREE>" "Illegal tree body" b)))))))
+	    body)
 	 #f)))
 
 ;*---------------------------------------------------------------------*/

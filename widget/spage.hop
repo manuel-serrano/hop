@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Sun Apr 28 10:59:48 2019 (serrano)                */
+;*    Last change :  Tue May  7 12:03:47 2019 (serrano)                */
 ;*    Copyright   :  2009-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -151,7 +151,7 @@
 					   (let ((obj (proc (current-request))))
 					      (if (isa? obj xml-element)
 						  obj
-						  (xml-unpack obj %context)))))))))
+						  (xml-body obj %context)))))))))
 		   (when (=fx ttl 0) (unregister-service! svc))
 		   (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
 		      :onclick ~(begin

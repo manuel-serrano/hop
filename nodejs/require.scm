@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat May  4 15:07:47 2019 (serrano)                */
+;*    Last change :  Wed May  8 12:31:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -38,7 +38,7 @@
 	      #!key lang srcalias commonjs-export)
 	   (nodejs-bind-export!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-abort-all!)
-	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
+	   (nodejs-compile-client-file ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-json ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-html ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-pending::int)
@@ -93,6 +93,7 @@
 (define compile-listeners-start '())
 (define compile-listeners-end '())
 
+(define command-line-worker #f)
 (define command-line-this #f)
 (define command-line-module #f)
 
@@ -103,41 +104,41 @@
 (define-struct soentry filename lang mtime wslave key)
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-compile-file ...                                          */
+;*    nodejs-compile-client-file ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    This function implements the clientc jsc compiler                */
 ;*    (see src/parserargs.scm). It is used when a client, i.e., a      */
 ;*    browser requests a JavaScript module.                            */
 ;*    See alao runtime/clientc.scm                                     */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-file ifile::bstring name::bstring ofile::bstring query)
+(define (nodejs-compile-client-file ifile::bstring name::bstring ofile::bstring query)
    (let ((i (string-contains query "&lang=")))
-      (multiple-value-bind (%ctxthis %ctxmodule)
+      (multiple-value-bind (%ctxworker %ctxthis %ctxmodule)
 	 (nodejs-command-line-dummy-module)
 	 (if i
 	     (let ((lang (substring query (+fx i 6))))
 		(if (string=? lang "hopscript")
-		    (nodejs-compile-file-hopscript ifile ifile
-		       name ofile query #f %ctxthis %ctxmodule lang)
-		    (nodejs-compile-file-lang ifile name ofile query
-		       %ctxthis %ctxmodule lang)))
-	     (nodejs-compile-file-hopscript ifile ifile name ofile query #f
-		%ctxthis %ctxmodule "hopscript")))))
+		    (nodejs-compile-file-client-hopscript ifile ifile
+		       name ofile query #f %ctxworker %ctxthis %ctxmodule lang)
+		    (nodejs-compile-client-file-lang ifile name ofile query
+		       %ctxworker %ctxthis %ctxmodule lang)))
+	     (nodejs-compile-file-client-hopscript ifile ifile name ofile query #f
+		%ctxworker %ctxthis %ctxmodule "hopscript")))))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-compile-file-lang ...                                     */
+;*    nodejs-compile-client-file-lang ...                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-file-lang ifile name ofile query
-	   %ctxthis %ctxmodule lang::bstring)
+(define (nodejs-compile-client-file-lang ifile name ofile query
+	   %ctxworker %ctxthis %ctxmodule lang::bstring)
 
    (define (filename->file val lang %this)
       (let ((ifile (js-tostring val %this)))
-	 (nodejs-compile-file-hopscript ifile ifile
-	    name ofile query ifile %ctxthis %ctxmodule lang)))
+	 (nodejs-compile-file-client-hopscript ifile ifile
+	    name ofile query ifile %ctxworker %ctxthis %ctxmodule lang)))
 
    (define (ast->file val lang %this)
-      (nodejs-compile-file-hopscript val ifile
-	 name ofile query ifile %ctxthis %ctxmodule lang))
+      (nodejs-compile-file-client-hopscript val ifile
+	 name ofile query ifile %ctxworker %ctxthis %ctxmodule lang))
 
    (define (json->file val lang %this)
       (nodejs-compile-json
@@ -186,10 +187,10 @@
 			 lang))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-compile-file-hopscript ...                                */
+;*    nodejs-compile-file-client-hopscript ...                         */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-file-hopscript obj ifile name ofile query srcalias
-	   %ctxthis %ctxmodule lang::bstring)
+(define (nodejs-compile-file-client-hopscript obj ifile name ofile
+	   query srcalias %ctxworker %ctxthis %ctxmodule lang::bstring)
    (let* ((srcmap (when (>fx (bigloo-debug) 0)
 		     (string-append ofile ".map")))
 	  (op (if (string=? ofile "-")
@@ -203,7 +204,7 @@
 	  (tree (unwind-protect
 		   (module->javascript obj ifile
 		      name op #f #f srcmap qr srcalias
-		      %ctxthis %ctxmodule lang)
+		      %ctxworker %ctxthis %ctxmodule lang)
 		   (unless (eq? op (current-output-port))
 		      (close-output-port op)))))
       (when (>fx (bigloo-debug) 0)
@@ -241,7 +242,7 @@
    (define (compile-html filename)
       (call-with-input-file filename
 	 (lambda (in)
-	    (debug-compile-trace filename)
+	    (debug-compile-trace "nodejs-compile-html" filename)
 	    (let ((tree (j2s-compile in
 			   :filename filename
 			   :parser 'client-program
@@ -319,8 +320,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (module->javascript obj filename id op compile isexpr srcmap query
-	   srcalias %ctxthis::JsGlobalObject %ctxmodule::JsObject lang::bstring)
+(define (module->javascript obj filename id op compile isexpr
+	   srcmap query srcalias
+	   %ctxworker %ctxthis::JsGlobalObject %ctxmodule::JsObject
+	   lang::bstring)
    
    (define (init-dummy-module! this worker)
       (with-access::JsGlobalObject this (js-object)
@@ -344,7 +347,7 @@
 	       (nodejs-require-core "console" worker this) #f this))))
 
    (define (hopscript->javascript obj filename header lang::bstring esplainp this worker)
-      (debug-compile-trace filename)
+      (debug-compile-trace "hopscript->javascript" filename)
       (j2s-compile obj
 	 :%this this
 	 :source filename
@@ -384,27 +387,29 @@
 	 ;; first element of the tree is a position offset
 	 ;; see sourcemap generation
 	 (cons offset tree)))
-   
-   (let ((this (nodejs-new-global-object :name filename))
-	 (worker (js-current-worker))
-	 (esplainp (memq query '(mjs es))))
-      (init-dummy-module! this worker)
-      (let ((header (unless esplainp
-		       (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
-			  id filename
-			  (js-paths (nodejs-filename->paths filename))
-			  filename))))
-	 (when header
-	    (fprintf op (hop-boot))
-	    (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n"
-	       (or srcalias filename))
-	    (flush-output-port op))
-	 (let ((offset (output-port-position op)))
-	    (if (string? obj)
-		(call-with-input-file filename
-		   (lambda (in)
-		      (compile in header offset esplainp worker this)))
-		(compile obj header offset esplainp worker this))))))
+
+   (js-worker-exec %ctxworker "module->javascript" #t
+      (lambda ()
+	 (let ((esplainp (memq query '(mjs es))))
+	    (init-dummy-module! %ctxthis %ctxworker)
+	    (let ((header (unless esplainp
+			     (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
+				id filename
+				(js-paths (nodejs-filename->paths filename))
+				filename))))
+	       (when header
+		  (fprintf op (hop-boot))
+		  (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n"
+		     (or srcalias filename))
+		  (flush-output-port op))
+	       (let ((offset (output-port-position op)))
+		  (if (string? obj)
+		      (call-with-input-file filename
+			 (lambda (in)
+			    (compile in header offset esplainp
+			       %ctxworker %ctxthis)))
+		      (compile obj header offset esplainp
+			 %ctxworker %ctxthis))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-command-line-dummy-module ...                             */
@@ -416,13 +421,14 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-command-line-dummy-module)
    (synchronize compile-mutex
-      (unless command-line-this
-	 (set! command-line-this (nodejs-new-global-object :name "dummy"))
-	 (let ((worker (js-current-worker))
-	       (filename (make-file-name (pwd) "")))
-	    (set! command-line-module
-	       (nodejs-new-module "." filename worker command-line-this))))
-      (values command-line-this command-line-module)))
+      (unless command-line-worker
+	 (multiple-value-bind (%worker %global %module)
+	    (js-main-worker! "compile" (pwd)
+	       #t nodejs-new-global-object nodejs-new-module)
+	    (set! command-line-worker %worker)
+	    (set! command-line-this %global)
+	    (set! command-line-module %module)))
+      (values command-line-worker command-line-this command-line-module)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-paths ...                                                     */
@@ -751,7 +757,7 @@
 ;*    (see hopscript/public.scm).                                      */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-head worker::WorkerHopThread %this::JsGlobalObject %scope::JsObject %module)
-
+   
    ;; head
    (define head
       (js-make-function %this
@@ -773,7 +779,6 @@
 				 (isa? n xml-cdata)))
 		     (xml-body nodes %this)))))
 	 -1 "HEAD"))
-
    head)
 
 ;*---------------------------------------------------------------------*/
@@ -977,10 +982,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    debug-compile-trace ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (debug-compile-trace filename)
+(define (debug-compile-trace tag filename)
    (when (or (>=fx (bigloo-debug) 2)
 	     (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile"))
-      (display "compiling: " (current-error-port))
+      (display "compiling (" (current-error-port))
+      (display tag (current-error-port))
+      (display "): " (current-error-port))
       (display filename (current-error-port))
       (newline (current-error-port))))
 
@@ -996,7 +1003,7 @@
 	 (trace-item "filename=" filename)
 	 (call-with-input-file filename
 	    (lambda (in)
-	       (debug-compile-trace filename)
+	       (debug-compile-trace "compile-file" filename)
 	       (let ((m (open-mmap filename read: #t :write #f)))
 		  (unwind-protect
 		     (j2s-compile in
@@ -1021,7 +1028,7 @@
 	 (trace-item "filename=" filename)
 	 (call-with-input-file url
 	    (lambda (in)
-	       (debug-compile-trace filename)
+	       (debug-compile-trace "compile-url" filename)
 	       (input-port-name-set! in url)
 	       (j2s-compile in
 		  :driver (nodejs-driver)
@@ -1041,7 +1048,7 @@
       (with-trace 'require "compile-ast"
 	 (with-access::J2SProgram ast (path)
 	    (trace-item "ast=" path)
-	    (debug-compile-trace path)
+	    (debug-compile-trace "compile-ast" path)
 	    (let ((m (when (file-exists? path)
 			(open-mmap filename read: #t :write #f))))
 	       (unwind-protect
@@ -1229,9 +1236,9 @@
 			  (socompile-cmd p) "\n")
 		       (socompile-abortp-set! p #t)
 		       (process-kill (socompile-proc p))
+		       ((socompile-kfail p))
 		       (when debug-abort
 			  (tprint "waiting/abort " (socompile-proc p)))
-		       (socompile-wait p #f)
 		       (when debug-abort
 			  (tprint "killed " (socompile-proc p))))))
 	 socompile-processes)
@@ -1545,7 +1552,7 @@
 		      (trace-item "sopath=" sopath)
 		      (trace-item "sopathtmp=" sopathtmp)
 		      (trace-item "cmd=" cmd)
-		      (debug-compile-trace filename)
+		      (debug-compile-trace "nodejs-socompile:" filename)
 		      (hop-verb 3 (hop-color -2 -2 " COMPILE") " "
 			 (format "~( )\n"
 			    (map (lambda (s)
@@ -1609,7 +1616,7 @@
 		    (js-raise-error %ctxthis
 		       (format "Wrong compiled file format ~s" sopath)
 		       sopath))))
-	    ((and (or (not (pair? sopath)) (not (eq? (car sopath) 'error))))
+	    ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
 	     (case (hop-sofile-compile-policy)
 		((aot)
 		 (if (hop-sofile-enable)
@@ -1713,7 +1720,7 @@
 	 (cond
 	    ((and (string? sopath) (hop-sofile-enable))
 	     (hop-dynamic-load sopath))
-	    ((or (not (pair? sopath)) (not (eq? (car sopath) 'error)))
+	    ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
 	     (case (hop-sofile-compile-policy)
 		((aot)
 		 (if (hop-sofile-enable)
@@ -2323,19 +2330,21 @@
 (define (make-plugins-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang conf)
-	 (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
-	    (let* ((langmode (nodejs-require-module lang worker
-				%ctxthis %ctxmodule))
-		   (key (js-get js-symbol (& "compiler") %ctxthis))
-		   (parser (let ((o (js-get langmode key %ctxthis)))
-			      (when (isa? o JsObject)
-				 (js-get o (& "parser") %ctxthis)))))
-	       (if (isa? parser JsObject)
-		   (let ((ps (js-get parser (& "plugins") %ctxthis)))
-		      (if (pair? ps)
-			  ps
-			  '()))
-		   '()))))))
+	 (js-worker-exec worker "plugins-loader" #f
+	    (lambda ()
+	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
+		  (let* ((langmode (nodejs-require-module lang worker
+				      %ctxthis %ctxmodule))
+			 (key (js-get js-symbol (& "compiler") %ctxthis))
+			 (parser (let ((o (js-get langmode key %ctxthis)))
+				    (when (isa? o JsObject)
+				       (js-get o (& "parser") %ctxthis)))))
+		     (if (isa? parser JsObject)
+			 (let ((ps (js-get parser (& "plugins") %ctxthis)))
+			    (if (pair? ps)
+				ps
+				'()))
+			 '()))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-plugins-toplevel-loader ...                               */

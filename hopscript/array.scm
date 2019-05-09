@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun May  5 14:50:41 2019 (serrano)                */
+;*    Last change :  Tue May  7 11:45:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -280,8 +280,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::JsArray p backend)
    (error "xml-write ::JsArray" "Should not be here" (typeof obj)))
-;*    (for-each (lambda (el) (xml-write el p backend))                 */
-;*       (xml-unpack obj)))                                            */
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */
@@ -317,17 +315,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute o::JsArray id op backend)
    (error "xml-write-attribute ::JsArray" "should not be here" o))
-;*    (let ((v (xml-unpack o)))                                        */
-;*       (when (pair? v)                                               */
-;* 	 (display (keyword->string! id) op)                            */
-;* 	 (display "='" op)                                             */
-;* 	 (display (xml-attribute-encode (car v)) op)                   */
-;* 	 (let loop ((v (cdr v)))                                       */
-;* 	    (when (pair? v)                                            */
-;* 	       (display " " op)                                        */
-;* 	       (display (xml-attribute-encode (car v)) op)             */
-;* 	       (loop (cdr v))))                                        */
-;* 	 (display "'" op))))                                           */
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarray->list ...                                                */

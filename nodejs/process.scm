@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu May  2 13:43:16 2019 (serrano)                */
+;*    Last change :  Tue May  7 15:37:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -440,14 +440,17 @@
 	 (js-put! proc (& "exit")
 	    (js-make-function %this
 	       (lambda (this status)
+		  (tprint "EXIT...1")
 		  (let ((r (if (eq? status (js-undefined))
 			       0
 			       (js-tointeger status %this))))
+		  (tprint "EXIT...2")
 		     (unless (js-totest (js-get proc (& "_exiting") %this))
+		  (tprint "EXIT...3")
 			(js-put! proc (& "_exiting") #t #f %this)
 			(let ((emit (js-get proc (& "emit") %this)))
 			   (js-call2 %this emit proc "exit" r))
-			(tprint "exit...")
+			(tprint "EXIT...4")
 			(nodejs-compile-abort-all!)
 			(exit r))))
 	       1 "exit")

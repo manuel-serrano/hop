@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Apr 26 18:40:40 2019 (serrano)                */
+;*    Last change :  Tue May  7 11:49:27 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -364,7 +364,7 @@
 ;*    xml-unpack ::obj ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-unpack obj::obj ctx)
-   (when (list? obj) obj))
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
