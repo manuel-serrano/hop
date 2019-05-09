@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed May  1 12:22:25 2019 (serrano)                */
+;*    Last change :  Thu May  9 11:03:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -275,6 +275,7 @@
 	     (with-access::JsPropertyDescriptor (u32vref vec i) (configurable)
 		(if configurable
 		    (begin
+		       (js-object-mode-inline-set! o #f)
 		       (u32vset! vec i (js-absent))
 		       #t)
 		    #f)))
