@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu May  9 13:30:15 2019 (serrano)                */
+;*    Last change :  Thu May  9 14:01:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -706,12 +706,13 @@
 
       ;; defineProperty
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.6
-      (define (defineproperty this obj p attributes)
-	 (let* ((o (js-cast-object obj %this "defineProperty"))
-		(name (js-toname p %this))
-		(desc (js-to-property-descriptor %this attributes name)))
-	    (js-define-own-property o name desc #t %this)
-	    obj))
+      (define (defineproperty this o p attributes)
+	 (if (not (js-object? o))
+	     (js-raise-type-error %this "Object.defineProperty called on non-object ~s" o)
+	     (let* ((name (js-toname p %this))
+		    (desc (js-to-property-descriptor %this attributes name)))
+		(js-define-own-property o name desc #t %this)
+		o)))
       
       (js-bind! %this js-object (& "defineProperty")
 	 :value (js-make-function %this defineproperty 3 "defineProperty"
