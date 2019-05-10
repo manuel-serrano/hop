@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu May  9 14:11:47 2019 (serrano)                */
+;*    Last change :  Thu May  9 14:33:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -224,6 +224,8 @@
 	   (js-call/cache ::JsGlobalObject ::JsPropertyCache obj this . args)
 	   
 	   (js-get-vindex::long ::JsGlobalObject)))
+
+(define-macro (mtprint . l ) #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -510,6 +512,7 @@
 
    (with-access::JsGlobalObject %this (js-pmap-valid cmap)
       (when js-pmap-valid
+	 (mtprint "invalidate reason=" reason)
 	 (let ((curth (current-thread)))
 	    (set! js-pmap-valid #f)
 	    (log-pmap-invalidation! reason)
@@ -866,7 +869,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-literal-init! o::JsObject)
    (with-access::JsObject o ((%elements elements) cmap)
-      (with-access::JsConstructMap cmap ((%methods methods) props %id)
+      (with-access::JsConstructMap cmap ((%methods methods) props)
 	 (let ((elements %elements)
 	       (methods %methods))
 	    (let loop ((i (-fx (vector-length elements) 1)))
@@ -1966,6 +1969,7 @@
 		   (else
 		    ;; invalidate cache method and cache
 		    (js-invalidate-cache-method! cmap i)
+		    (mtprint "invalidate update")
 		    (js-invalidate-pcaches-pmap! %this name)
 		    (reset-cmap-vtable! cmap)
 		    (when cache (js-pcache-update-direct! cache i o #t))
@@ -1974,6 +1978,7 @@
 	       ((isa? (vector-ref methods i) JsFunction)
 		;; invalidate cache method and cache
 		(js-invalidate-cache-method! cmap i)
+		(mtprint "invalidate update")
 		(js-invalidate-pcaches-pmap! %this name)
 		(reset-cmap-vtable! cmap)
 		(when cache (js-pcache-update-direct! cache i o #t))
@@ -2089,9 +2094,6 @@
 				    (when cache
 				       (js-pcache-next-direct! cache o nextmap index))
 				    (begin
-;* 				       (when (eq? name (& "firstChecker")) */
-;* 					  (tprint "TRUC COMPLIQUE QU'IL FAUT REGARDER name=" */
-;* 					     (vector-length props) " " (method-invalidation-threshold))) */
 				       ;; MS 2019-01-19
 				       ;; on a method conflict, if the number of
 				       ;; properties in cache is small enough,
@@ -2103,12 +2105,16 @@
 					   (begin
 					      ;; invalidate cache method and cache
 					      (js-invalidate-cache-method! nextmap index)
+					      (mtprint "invalidate extend")
+					      ;; MS 9may2019 CARE INVALIDATE
 					      (js-invalidate-pcaches-pmap! %this name)
 					      (reset-cmap-vtable! nextmap)
 					      (when cache
+						 ;; MS 9may2019 CARE INVALIDATE
 						 (js-validate-pcaches-pmap! %this)
 						 (js-pcache-next-direct! cache o nextmap index)))
 					   (let ((detachedmap (extend-cmap cmap name flags)))
+					      (mtprint "invalidate extend")
 					      (js-invalidate-pcaches-pmap! %this name)
 					      (with-access::JsConstructMap detachedmap (methods ctor)
 						 ;; validate cache method and don't cache
@@ -2122,6 +2128,7 @@
 				   (when (isa? (vector-ref methods index) JsFunction)
 				      ;; invalidate cache method and cache
 				      (js-invalidate-cache-method! nextmap index)
+				      (mtprint "invalidate extend")
 				      (js-invalidate-pcaches-pmap! %this name)
 				      (reset-cmap-vtable! nextmap))
 				   (when cache
@@ -2131,6 +2138,7 @@
 			    (set! cmap nextmap)
 			    v)))
 		     (single
+		      (mtprint "invalidate extend")
 		      (js-invalidate-pcaches-pmap! %this name)
 		      (extend-cmap! cmap name flags)
 		      (with-access::JsConstructMap cmap (ctor methods)
@@ -2147,6 +2155,10 @@
 		     (else
 		      ;; create a new map
 		      (let ((nextmap (extend-cmap cmap name flags)))
+;* 			 (when (or (eq? name (& "firstChecker"))       */
+;* 				   (eq? name (& "contractName")))      */
+;* 			    (mtprint ">>> invalidate create new name=" name) */
+;* 			    (js-debug-cmap cmap))                      */
 			 (js-invalidate-pcaches-pmap! %this name)
 			 (with-access::JsConstructMap nextmap (methods ctor)
 			    (if (isa? v JsFunction)
@@ -2160,6 +2172,10 @@
 				      (js-pcache-next-direct! cache o nextmap index))))
 			    (link-cmap! cmap nextmap name v flags %this)
 			    (js-object-push/ctor! o index v ctor))
+;* 			 (when (or (eq? name (& "firstChecker"))       */
+;* 				   (eq? name (& "contractName")))      */
+;* 			    (mtprint "<<< invalidate create new name=" name) */
+;* 			    (js-debug-cmap cmap))                      */
 			 (set! cmap nextmap)
 			 v))))))))
    
@@ -2218,6 +2234,7 @@
 			   (writable #t)
 			   (enumerable #t)
 			   (configurable #t))))
+		    (mtprint "invalidate extend")
 	    (js-invalidate-pcaches-pmap! %this name)
 	    (js-define-own-property o name newdesc throw %this)
 	    v)))
@@ -2240,8 +2257,6 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
 
-;*    (when (eq? name (& "firstChecker"))                              */
-;*       (tprint "js-put-jsobject prop=" prop " v=" (typeof v)))       */
    (let loop ((obj o))
       (jsobject-find obj name
 	 update-mapped-object!

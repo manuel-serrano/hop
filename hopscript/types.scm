@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon May  6 13:38:41 2019 (serrano)                */
+;*    Last change :  Fri May 10 07:24:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -93,6 +93,7 @@
 	      (emap::obj (default #f))
 	      (cmap::obj (default #f))
 	      (pmap::obj (default #t))
+	      (fmap::obj (default #t))
 	      (amap::obj (default #t))
 	      (iindex::long (default -1))
 	      (index::long (default -1))
@@ -104,11 +105,13 @@
 	      (function::obj (default #f))
 	      (pctable::obj (default #f))
 	      (usage::symbol (default '-))
+	      (registered::bool (default #f))
 	      (cntmiss::uint32 (default #u32:0))
 	      (cntimap::uint32 (default #u32:0))
 	      (cntemap::uint32 (default #u32:0))
 	      (cntcmap::uint32 (default #u32:0))
 	      (cntpmap::uint32 (default #u32:0))
+	      (cntfmap::uint32 (default #u32:0))
 	      (cntamap::uint32 (default #u32:0))
 	      (cntvtable::uint32 (default #u32:0)))
 	   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu May  9 14:01:25 2019 (serrano)                */
+;*    Last change :  Thu May  9 17:52:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1136,7 +1136,7 @@
 	    (when (<fx i len)
 	       (proc (vector-ref vec i) i)
 	       (loop (+fx i 1))))))
-
+   
    (define (enumerable-mapped-property? obj i)
       (with-access::JsObject obj (elements)
 	 (let ((el (vector-ref elements i)))
@@ -1172,15 +1172,17 @@
 			 (define-own-property obj name prop properties))))
 	 oprops))
    
-   (let* ((obj (js-cast-object _obj %this "defineProperties"))
-	  (properties (js-cast-object (js-toobject %this _properties) %this
-		    "defineProperties")))
-      (with-access::JsObject properties (cmap)
-	 (if (eq? cmap (js-not-a-cmap))
-	     (let ((oprops (js-object-properties properties)))
-		(defineproperties/properties oprops obj properties))
-	     (defineproperties/cmap cmap obj properties)))
-      obj))
+   (if (not (js-object? _obj))
+       (js-raise-type-error %this
+	  "Object.defineProperties called on non-object: ~s" _obj)
+       (let ((properties (js-cast-object (js-toobject %this _properties) %this
+			    "defineProperties")))
+	  (with-access::JsObject properties (cmap)
+	     (if (eq? cmap (js-not-a-cmap))
+		 (let ((oprops (js-object-properties properties)))
+		    (defineproperties/properties oprops _obj properties))
+		 (defineproperties/cmap cmap _obj properties)))
+	  _obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-seal ::JsObject ...                                           */
