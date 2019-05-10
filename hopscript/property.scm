@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri May 10 13:25:57 2019 (serrano)                */
+;*    Last change :  Fri May 10 14:49:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -527,24 +527,30 @@
 	 (set! pmap #t)
 	 (set! emap #t)
 	 (set! amap #t)))
-
+   
    (with-access::JsGlobalObject %this (js-pmap-valid cmap)
       (when js-pmap-valid
-	 (let ((curth (current-thread)))
-	    (tprint "invalidate " reason " " who " " js-cache-index)
-	    (set! js-pmap-valid #f)
-	    (log-pmap-invalidation! reason)
-	    ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap! curth)
-	    (for-each (lambda (pcache-entry)
-			 (let ((vec (vector-ref pcache-entry 0))
-			       (th (vector-ref pcache-entry 3)))
-			    (when (eq? th curth)
-			       (let loop ((i (-fx (vector-ref pcache-entry 1) 1)))
-				  (when (>=fx i 0)
-				     (let ((pcache (vector-ref vec i)))
-					(invalidate-pcache-pmap! pcache))
-				     (loop (-fx i 1)))))))
-	       *pctables*)))))
+;* 	    (tprint "invalidate " reason " " who " " js-cache-index)   */
+	 (synchronize js-cache-table-lock
+	    (let loop ((i (-fx js-cache-index 1)))
+	       (when (>=fx i 0)
+		  (invalidate-pcache-pmap! (vector-ref js-cache-table i))
+		  (loop (-fx i 1)))))
+	 (set! js-pmap-valid #f)
+	 (log-pmap-invalidation! reason)
+	 )))
+;* 	 (let ((curth (current-thread)))                               */
+;* 	    ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap! curth) */
+;* 	    (for-each (lambda (pcache-entry)                           */
+;* 			 (let ((vec (vector-ref pcache-entry 0))       */
+;* 			       (th (vector-ref pcache-entry 3)))       */
+;* 			    (when (eq? th curth)                       */
+;* 			       (let loop ((i (-fx (vector-ref pcache-entry 1) 1))) */
+;* 				  (when (>=fx i 0)                     */
+;* 				     (let ((pcache (vector-ref vec i))) */
+;* 					(invalidate-pcache-pmap! pcache)) */
+;* 				     (loop (-fx i 1)))))))             */
+;* 	       *pctables*)))))                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-invalidate-cache-method! ...                                  */
