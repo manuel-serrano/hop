@@ -242,4 +242,6 @@
  "S15.12.2_A1.js" 
  ;; Bigloo forbids setting library functions
  "12.2.1-9-s.js"
+ ;; ES6 incompatibilities
+ "15.2.3.8-1-4.js"
 )
