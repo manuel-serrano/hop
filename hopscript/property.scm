@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri May 10 08:51:05 2019 (serrano)                */
+;*    Last change :  Fri May 10 13:25:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -224,8 +224,6 @@
 	   
 	   (js-get-vindex::long ::JsGlobalObject)))
 
-(define-macro (mtprint . l ) #unspecified)
-
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
@@ -237,7 +235,29 @@
 (define (inline-threshold) #u32:100)
 (define (vtable-threshold) #u32:200)
 (define (method-invalidation-threshold) 10)
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-cache-table ...                                               */
+;*---------------------------------------------------------------------*/
+(define js-cache-table-lock (make-spinlock "js-cache-table"))
+(define js-cache-table (make-vector 256))
+(define js-cache-index 0)
+
+;*---------------------------------------------------------------------*/
+;*    js-register-pcache! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-register-pcache! pcache)
+   (with-access::JsPropertyCache pcache (registered)
+      (unless registered
+	 (synchronize js-cache-table-lock
+	    (set! registered #t)
+	    (let ((len (vector-length js-cache-table)))
+	       (when (=fx js-cache-index len)
+		  (let ((nvec (copy-vector js-cache-table (*fx 2 len))))
+		     (set! js-cache-table nvec)))
+	       (vector-set! js-cache-table js-cache-index pcache)
+	       (set! js-cache-index (+fx js-cache-index 1)))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-init-property! ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -510,8 +530,8 @@
 
    (with-access::JsGlobalObject %this (js-pmap-valid cmap)
       (when js-pmap-valid
-	 (mtprint "invalidate reason=" reason)
 	 (let ((curth (current-thread)))
+	    (tprint "invalidate " reason " " who " " js-cache-index)
 	    (set! js-pmap-valid #f)
 	    (log-pmap-invalidation! reason)
 	    ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap! curth)
@@ -630,6 +650,7 @@
 	 (with-access::JsPropertyCache pcache (imap cmap pmap emap amap index owner)
 	    (set! imap #t)
 	    (set! cmap #t)
+	    (js-register-pcache! pcache)
 	    (set! pmap omap)
 	    (set! emap #t)
 	    (set! amap #t)
@@ -655,6 +676,7 @@
 		   (set! imap #t)
 		   (set! cmap nextmap)
 		   (set! emap #t)))
+	    (js-register-pcache! pcache)
 	    (set! pmap omap)
 	    (set! amap #t)
 	    (set! owner #f)
@@ -1970,7 +1992,6 @@
 	       ((isa? (vector-ref methods i) JsFunction)
 		;; invalidate cache method and cache
 		(js-invalidate-cache-method! cmap i)
-		(mtprint "invalidate update")
 		(js-invalidate-pcaches-pmap! %this "update-mapped.2" name)
 		(reset-cmap-vtable! cmap)
 		(when cache (js-pcache-update-direct! cache i o #t))
@@ -2208,7 +2229,6 @@
 			   (writable #t)
 			   (enumerable #t)
 			   (configurable #t))))
-		    (mtprint "invalidate extend")
 	    (js-invalidate-pcaches-pmap! %this "extend-property" name)
 	    (js-define-own-property o name newdesc throw %this)
 	    v)))
@@ -3383,6 +3403,7 @@
 				      (with-access::JsPropertyCache ccache (pmap emap cmap index method function)
 					 ;; correct arity, put in cache
 					 (js-validate-pcaches-pmap! %this)
+					 (js-register-pcache! ccache)
 					 (set! pmap omap)
 					 (set! emap #t)
 					 (set! cmap #f)
@@ -3402,6 +3423,7 @@
 					     (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
 						;; correct arity, put in cache
 						(js-validate-pcaches-pmap! %this)
+						(js-register-pcache! ccache)
 						(set! pmap omap)
 						(set! emap #t)
 						(set! cmap #f)
@@ -3415,6 +3437,7 @@
 						(with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
 						   ;; correct arity, put in cache
 						   (js-validate-pcaches-pmap! %this)
+						   (js-register-pcache! ccache)
 						   (set! pmap omap)
 						   (set! emap #t)
 						   (set! cmap #f)

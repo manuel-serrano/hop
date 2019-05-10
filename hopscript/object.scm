@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri May 10 10:49:42 2019 (serrano)                */
+;*    Last change :  Fri May 10 12:07:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -781,9 +781,9 @@
       ;; seal
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.8
       (define (seal this obj)
-	 (if (not (js-object? this))
-	     this
-	     (js-seal this obj)))
+	 (if (not (js-object? obj))
+	     obj
+	     (js-seal obj obj)))
       
       (js-bind! %this js-object (& "seal")
 	 :value (js-make-function %this seal 1 "seal"
@@ -796,9 +796,9 @@
       ;; freeze
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.9
       (define (freeze this obj)
-	 (if (not (js-object? this))
-	     this
-	     (js-freeze this obj)))
+	 (if (not (js-object? obj))
+	     obj
+	     (js-freeze obj obj)))
       
       (js-bind! %this js-object (& "freeze")
 	 :value (js-make-function %this freeze 1 "freeze"

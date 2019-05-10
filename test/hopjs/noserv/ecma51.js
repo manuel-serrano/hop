@@ -1,5 +1,5 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/ecma51.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/ecma51.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */

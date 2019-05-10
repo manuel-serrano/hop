@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Thu May  9 09:25:09 2019 (serrano)                */
+;*    Last change :  Fri May 10 13:21:28 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -50,7 +50,7 @@
    (export js-integer-names js-string-names)
 
    (cond-expand
-      ((config thread-local-storage #t)
+      (enable-tls
        (pragma (js-names thread-local)
 	  (js-integer-length thread-local)
 	  (js-integer-names thread-local)
@@ -85,10 +85,8 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (synchronize-name . body)
    (cond-expand
-      ((config thread-local-storage #t)
-       `(begin ,@body))
-      (else
-       `(synchronize js-name-lock ,@body))))
+      (enable-tls `(begin ,@body))
+      (else `(synchronize js-name-lock ,@body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gcroots                                                          */
@@ -208,6 +206,16 @@
    (object-widening-set! o name))
 
 ;*---------------------------------------------------------------------*/
+;*    js-name->jsstring ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-name->jsstring::JsStringLiteral str::bstring)
+   (let ((enc (string-minimal-charset str)))
+      (case enc
+	 ((ascii) (js-ascii-name->jsstring str))
+	 ((latin1 utf8) (js-utf8-name->jsstring str))
+	 (else (error "js-name->jsstring" "unsupported encoding" enc)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-toname ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-toname::JsStringLiteral p::JsStringLiteral)
@@ -237,11 +245,11 @@
 	  (bint30
 	   (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
 	       (js-integer-name->jsstring (uint32->fixnum p))
-	       (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
+	       (js-ascii-toname (llong->string (uint32->llong p)))))
 	  (bint32
 	   (if (<u32 p (bit-lshu32 (fixnum->uint32 1) 31))
 	       (js-integer-name->jsstring (uint32->fixnum p))
-	       (js-ascii-name->jsstring (llong->string (uint32->llong p)))))
+	       (js-ascii-toname (llong->string (uint32->llong p)))))
 	  (else
 	   (js-integer-name->jsstring (uint32->fixnum p)))))
       ((int32? p)
@@ -249,7 +257,7 @@
 	  (bint30
 	   (if (and (>s32 p 0) (<s32 p (fixnum->int32 (bit-lsh 1 29))))
 	       (js-integer-name->jsstring (int32->fixnum p))
-	       (js-ascii-name->jsstring (llong->string (int32->llong p)))))
+	       (js-ascii-toname (llong->string (int32->llong p)))))
 	  (bint32
 	   (js-ascii-name->jsstring (fixnum->string (int32->fixnum p))))
 	  (else
@@ -260,7 +268,7 @@
        (with-access::JsSymbol p (val)
 	  val))
       ((number? p)
-       (js-ascii-name->jsstring (js-number->string p)))
+       (js-ascii-toname (js-number->string p)))
       ((symbol? p)
        (error "js-toname" "Illegal `symbol'" p))
       ((string? p)
@@ -296,34 +304,43 @@
 	     (if (or (<=fx num -10)
 		     (>=fx num (uint32->fixnum js-index-threshold)))
 		 (string-name str)
-		 (js-integer-name->jsstring num)))
+		 (js-integer-toname-unsafe num)))
 	  (string-name str))))
+
+;*---------------------------------------------------------------------*/
+;*    js-ascii-toname-unsafe ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-ascii-toname-unsafe::JsStringLiteralASCII str::bstring)
+   (let ((n (hashtable-get js-names str)))
+      (or n
+	  (let ((o (instantiate::JsStringLiteralASCII
+		      (weight (fixnum->uint32 (string-length str)))
+		      (left str)
+		      (right #f))))
+	     (js-object-mode-set! o (js-jsstring-default-mode))
+	     (hashtable-put! js-names str o)
+	     (js-jsstring-name-set! o o)
+	     o))))
+
+;*---------------------------------------------------------------------*/
+;*    js-ascii-toname ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-ascii-toname::JsStringLiteralASCII str::bstring)
+   (synchronize-name
+      (js-ascii-toname-unsafe str)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring)
-   
-   (define (string-name str)
-      (let ((n (hashtable-get js-names str)))
-	 (or n
-	     (let ((o (instantiate::JsStringLiteralASCII
-			 (weight (fixnum->uint32 (string-length str)))
-			 (left str)
-			 (right #f))))
-		(js-object-mode-set! o (js-jsstring-default-mode))
-		(hashtable-put! js-names str o)
-		(js-jsstring-name-set! o o)
-		o))))
-   
    (synchronize-name
       (if (integer-string? str)
 	  (let ((num (string->integer str)))
 	     (if (or (<=fx num -10)
 		     (>=fx num (uint32->fixnum js-index-threshold)))
-		 (string-name str)
-		 (js-integer-name->jsstring num)))
-	  (string-name str))))
+		 (js-ascii-toname-unsafe str)
+		 (js-integer-toname-unsafe num)))
+	  (js-ascii-toname-unsafe str))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-index->name ...                                               */
@@ -369,25 +386,15 @@
 		o)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-name->jsstring ...                                            */
+;*    js-integer-toname-unsafe ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-name->jsstring::JsStringLiteral str::bstring)
-   (let ((enc (string-minimal-charset str)))
-      (case enc
-	 ((ascii) (js-ascii-name->jsstring str))
-	 ((latin1 utf8) (js-utf8-name->jsstring str))
-	 (else (error "js-name->jsstring" "unsupported encoding" enc)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-integer-name->jsstring ...                                    */
-;*---------------------------------------------------------------------*/
-(define (js-integer-name->jsstring num::long)
+(define (js-integer-toname-unsafe num::long)
    
    (define (number-name num)
       (if (>=fx num 0)
 	  (js-index->name (fixnum->uint32 num))
 	  (js-integer->name num)))
-
+   
    (define (enlarge-vec! len)
       (let* ((nlen (minfx
 		      (if (>fx (*fx 2 len) num) (*fx 2 len) (+fx 16 num))
@@ -398,20 +405,26 @@
 	 (let ((l (memq js-integer-names gcroots)))
 	    (set-car! l nvec))
 	 (set! js-integer-names nvec)))
+   
+   (cond
+      ((or (<=fx num -10) (>=fx num (uint32->fixnum js-index-threshold)))
+       (js-ascii-toname-unsafe (fixnum->string num)))
+      ((<fx num js-integer-length)
+       (vector-ref js-integer-names (+fx num 10)))
+      (else
+       (let ((len (vector-length js-integer-names)))
+	  (when (<=fx len (+fx 10 num))
+	     (enlarge-vec! len))
+	  (when (=fx num js-integer-length)
+	     (set! js-integer-length (+fx num 1)))
+	  (or (vector-ref js-integer-names (+fx num 10))
+	      (let ((name (number-name num)))
+		 (vector-set! js-integer-names (+fx num 10) name)
+		 name))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-integer-name->jsstring ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-integer-name->jsstring num::long)
    (synchronize-name
-      (cond
-	 ((or (<=fx num -10) (>=fx num (uint32->fixnum js-index-threshold)))
-	  (js-ascii-name->jsstring (fixnum->string num)))
-	 ((<fx num js-integer-length)
-	  (vector-ref js-integer-names (+fx num 10)))
-	 (else
-	  (let ((len (vector-length js-integer-names)))
-	     (when (<=fx len (+fx 10 num))
-		(enlarge-vec! len))
-	     (when (=fx num js-integer-length)
-		(set! js-integer-length (+fx num 1)))
-	     (or (vector-ref js-integer-names (+fx num 10))
-		 (let ((name (number-name num)))
-		    (vector-set! js-integer-names (+fx num 10) name)
-		    name)))))))
+      (js-integer-toname-unsafe num)))

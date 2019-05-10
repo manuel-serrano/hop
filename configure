@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Apr  8 13:16:05 2019 (serrano)                */
+#*    Last change :  Fri May 10 13:16:45 2019 (serrano)                */
 #*    Copyright   :  2004-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -129,6 +129,7 @@ ssl=""
 locevent="true"
 threads=""
 nodoc=
+tls=no
 
 zeroconf="#f"
 zeroconfbe="no"
@@ -380,6 +381,12 @@ while : ; do
     --disable-threads)
       threads=no;;
 
+    --enable-tls)
+      tls=yes;;
+
+    --disable-tls)
+      tls=no;;
+
     --disable-doc)
       nodoc=yes;;
 
@@ -454,6 +461,7 @@ while : ; do
       echo "   --[enable|disable]-avahi.... enables AVAHI support" >&2;
       echo "   --[enable|disable]-upnp..... enables UPNP support" >&2;
       echo "   --[enable|disable]-libuv.... disables LIBUV support" >&2;
+      echo "   --[enable|disable]-tls...... disables thread local storage support" >&2;
       echo "   --srfi=sym.................. activates this srfi (comptime and runtime)" >&2;
       echo "" >&2;
       echo "Cross compilation and OS dependencies:" >&2;
@@ -914,6 +922,16 @@ if [ "$pcre " != "pcre " -a "$bglpcre " != "no " ]; then
     echo "  Otherwise, install pcre and re-configure and re-compile Bigloo first." >&2
     echo "" >&2
     bglfail=true;
+fi
+
+#*---------------------------------------------------------------------*/
+#*    tls                                                              */
+#*---------------------------------------------------------------------*/
+if [ "$tls " != "no " ]; then
+  tls=`bigloo -q -eval "(exit (display (bigloo-config 'thread-local-storage))))"`
+  if [ "$tls " = "#t " ]; then
+    hopsrfis="enable-tls $hopsrfis";
+  fi
 fi
 
 #*---------------------------------------------------------------------*/
