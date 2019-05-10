@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu May  9 14:33:18 2019 (serrano)                */
+;*    Last change :  Fri May 10 08:00:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -54,7 +54,6 @@
 	   (js-debug-cmap ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
 	   (js-make-pcache-table ::int ::obj)
-	   (js-invalidate-pcaches-pmap! ::JsGlobalObject ::obj)
 	   (js-pcache-update-descriptor! ::JsPropertyCache ::long ::JsObject ::obj)
 	   (cmap-next-proto-cmap::JsConstructMap ::JsGlobalObject ::JsConstructMap ::obj ::obj)
 	   (inline js-pcache-ref ::obj ::int)
@@ -340,10 +339,9 @@
 	 "\nprops=" props
 	 "\ntransitions="
 	 (map (lambda (tr)
-		 (format "~a[~a]->~a"
-		    (if (isa? (transition-name-or-value tr) JsStringLiteral)
-			(transition-name-or-value tr)
-			(typeof (transition-name-or-value tr)))
+		 (format "~a:~a[~a]->~a"
+		    (transition-name tr)
+		    (typeof (transition-value tr))
 		    (transition-flags tr)
 		    (with-access::JsConstructMap (transition-nextmap tr) (%id)
 		       %id)))
@@ -500,7 +498,7 @@
 ;*       3) a property is deleted, or                                  */
 ;*       4) a property hidding a prototype property is added.          */
 ;*---------------------------------------------------------------------*/
-(define (js-invalidate-pcaches-pmap! %this::JsGlobalObject reason)
+(define (js-invalidate-pcaches-pmap! %this::JsGlobalObject reason who)
    
    (define (invalidate-pcache-pmap! pcache)
       (with-access::JsPropertyCache pcache (pmap emap amap)
@@ -678,70 +676,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    transition ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-struct transition name-or-value flags nextmap)
-
-;*---------------------------------------------------------------------*/
-;*    cmap-transition ...                                              */
-;*---------------------------------------------------------------------*/
-(define (cmap-transition name value flags nextmap %this)
-   (if (eq? name (& "__proto__"))
-       (transition value flags nextmap)
-       (transition name flags nextmap)))
-
-;*---------------------------------------------------------------------*/
-;*    cmap-next-proto-cmap ...                                         */
-;*---------------------------------------------------------------------*/
-(define (cmap-next-proto-cmap %this::JsGlobalObject cmap::JsConstructMap old new)
-   (with-access::JsConstructMap cmap (parent (%cid %id))
-      (let ((flags (property-flags #t #t #t #f)))
-	 ;; 1- try to find a transition from the current cmap
-	 (let ((nextmap (cmap-find-transition cmap (& "__proto__") new flags)))
-	    (or nextmap
-		;; 2- create a new plain cmap connected to its parent
-		;; via a regular link
-		(let ((newmap (duplicate::JsConstructMap cmap
-				 (%id (gencmapid)))))
-		   (link-cmap! cmap newmap (& "__proto__") new flags %this)
-		   newmap))))))
-
-;*---------------------------------------------------------------------*/
-;*    cmap-find-transition ...                                         */
-;*---------------------------------------------------------------------*/
-(define (cmap-find-transition omap::JsConstructMap name val flags::int)
-   
-   (define (is-transition? t)
-      (and (=fx (transition-flags t) flags)
-	   (if (eq? name (& "__proto__"))
-	       (eq? (transition-name-or-value t) val)
-	       (eq? (transition-name-or-value t) name))))
-   
-   (with-access::JsConstructMap omap (transitions)
-      (cond
-	 ((null? transitions)
-	  #f)
-	 ((is-transition? (car transitions))
-	  (transition-nextmap (car transitions)))
-	 (else
-	  (let loop ((trs (cdr transitions))
-		     (prev transitions))
-	     (when (pair? trs)
-		(let ((t (car trs)))
-		   (if (is-transition? t)
-		       (begin
-			  ;; move the transition in the front of the list
-			  (set-cdr! prev (cdr trs))
-			  (set-cdr! trs transitions)
-			  (set! transitions trs)
-			  (transition-nextmap t))
-		       (loop (cdr trs) trs)))))))))
+(define-struct transition name value flags nextmap)
 
 ;*---------------------------------------------------------------------*/
 ;*    link-cmap! ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (link-cmap! omap::JsConstructMap nmap::JsConstructMap name value flags::int %this)
+(define (link-cmap! omap::JsConstructMap nmap::JsConstructMap
+	   name value flags::int %this)
    (with-access::JsConstructMap omap (transitions)
-      (set! transitions
-	 (cons (cmap-transition name value flags nmap %this) transitions))
+;*       (let ((val (when (or (eq? name (& "__proto__")) (isa? value JsFunction)) */
+      (let ((val (when (eq? name (& "__proto__"))
+		    value)))
+	 (set! transitions (cons (transition name val flags nmap) transitions)))
       nmap))
 
 ;*---------------------------------------------------------------------*/
@@ -794,6 +740,53 @@
 	    (%id (gencmapid))
 	    (props newprops)
 	    (methods newmethods)))))
+
+;*---------------------------------------------------------------------*/
+;*    cmap-find-transition ...                                         */
+;*---------------------------------------------------------------------*/
+(define (cmap-find-transition omap::JsConstructMap name val flags::int)
+   
+   (define (is-transition? t)
+      (and (eq? (transition-name t) name)
+	   (=fx (transition-flags t) flags)
+	   (or (not (transition-value t))
+	       (eq? (transition-value t) val))))
+   
+   (with-access::JsConstructMap omap (transitions)
+      (cond
+	 ((null? transitions)
+	  #f)
+	 ((is-transition? (car transitions))
+	  (transition-nextmap (car transitions)))
+	 (else
+	  (let loop ((trs (cdr transitions))
+		     (prev transitions))
+	     (when (pair? trs)
+		(let ((t (car trs)))
+		   (if (is-transition? t)
+		       (begin
+			  ;; move the transition in the front of the list
+			  (set-cdr! prev (cdr trs))
+			  (set-cdr! trs transitions)
+			  (set! transitions trs)
+			  (transition-nextmap t))
+		       (loop (cdr trs) trs)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    cmap-next-proto-cmap ...                                         */
+;*---------------------------------------------------------------------*/
+(define (cmap-next-proto-cmap %this::JsGlobalObject cmap::JsConstructMap old new)
+   (with-access::JsConstructMap cmap (parent (%cid %id))
+      (let ((flags (property-flags #t #t #t #f)))
+	 ;; 1- try to find a transition from the current cmap
+	 (let ((nextmap (cmap-find-transition cmap (& "__proto__") new flags)))
+	    (or nextmap
+		;; 2- create a new plain cmap connected to its parent
+		;; via a regular link
+		(let ((newmap (duplicate::JsConstructMap cmap
+				 (%id (gencmapid)))))
+		   (link-cmap! cmap newmap (& "__proto__") new flags %this)
+		   newmap))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-cmap-vtable! ...                                           */
@@ -1969,8 +1962,7 @@
 		   (else
 		    ;; invalidate cache method and cache
 		    (js-invalidate-cache-method! cmap i)
-		    (mtprint "invalidate update")
-		    (js-invalidate-pcaches-pmap! %this name)
+		    (js-invalidate-pcaches-pmap! %this "update-mapped.1" name)
 		    (reset-cmap-vtable! cmap)
 		    (when cache (js-pcache-update-direct! cache i o #t))
 		    (vector-set! elements i v)
@@ -1979,7 +1971,7 @@
 		;; invalidate cache method and cache
 		(js-invalidate-cache-method! cmap i)
 		(mtprint "invalidate update")
-		(js-invalidate-pcaches-pmap! %this name)
+		(js-invalidate-pcaches-pmap! %this "update-mapped.2" name)
 		(reset-cmap-vtable! cmap)
 		(when cache (js-pcache-update-direct! cache i o #t))
 		(vector-set! elements i v)
@@ -2072,8 +2064,6 @@
    
    (define (extend-mapped-object!)
       (js-object-mode-enumerable-set! o #t)
-;*       (when (eq? name (& "firstChecker"))                           */
-;* 	 (tprint "extend-mapped name=" name))                          */
       (when (and (isa? name JsStringLiteral) (js-jsstring->number name))
 	 (js-object-mode-hasnumeralprop-set! o #t))
       ;; 8.12.5, step 6
@@ -2105,31 +2095,24 @@
 					   (begin
 					      ;; invalidate cache method and cache
 					      (js-invalidate-cache-method! nextmap index)
-					      (mtprint "invalidate extend")
-					      ;; MS 9may2019 CARE INVALIDATE
-					      (js-invalidate-pcaches-pmap! %this name)
+					      (js-invalidate-pcaches-pmap! %this "extend-mapped.1" name)
 					      (reset-cmap-vtable! nextmap)
 					      (when cache
 						 ;; MS 9may2019 CARE INVALIDATE
 						 (js-validate-pcaches-pmap! %this)
 						 (js-pcache-next-direct! cache o nextmap index)))
 					   (let ((detachedmap (extend-cmap cmap name flags)))
-					      (mtprint "invalidate extend")
-					      (js-invalidate-pcaches-pmap! %this name)
+					      (js-invalidate-pcaches-pmap! %this "extend-mapped.2" name)
 					      (with-access::JsConstructMap detachedmap (methods ctor)
 						 ;; validate cache method and don't cache
 						 (vector-set! methods index v))
 					      (set! nextmap detachedmap)
-;* 					      (when (eq? name (& "firstChecker")) */
-;* 						 (tprint "CREATING NEW MAP") */
-;* 						 (js-debug-object o "NEW CMAP O=")) */
 					      v))))
 				(begin
 				   (when (isa? (vector-ref methods index) JsFunction)
 				      ;; invalidate cache method and cache
 				      (js-invalidate-cache-method! nextmap index)
-				      (mtprint "invalidate extend")
-				      (js-invalidate-pcaches-pmap! %this name)
+				      (js-invalidate-pcaches-pmap! %this "extend-mapped.3" name)
 				      (reset-cmap-vtable! nextmap))
 				   (when cache
 				      (js-validate-pcaches-pmap! %this)
@@ -2138,8 +2121,7 @@
 			    (set! cmap nextmap)
 			    v)))
 		     (single
-		      (mtprint "invalidate extend")
-		      (js-invalidate-pcaches-pmap! %this name)
+		      (js-invalidate-pcaches-pmap! %this "extend-mapped.4" name)
 		      (extend-cmap! cmap name flags)
 		      (with-access::JsConstructMap cmap (ctor methods)
 			 (if (isa? v JsFunction)
@@ -2155,11 +2137,7 @@
 		     (else
 		      ;; create a new map
 		      (let ((nextmap (extend-cmap cmap name flags)))
-;* 			 (when (or (eq? name (& "firstChecker"))       */
-;* 				   (eq? name (& "contractName")))      */
-;* 			    (mtprint ">>> invalidate create new name=" name) */
-;* 			    (js-debug-cmap cmap))                      */
-			 (js-invalidate-pcaches-pmap! %this name)
+			 (js-invalidate-pcaches-pmap! %this "extend-mapped.5" name)
 			 (with-access::JsConstructMap nextmap (methods ctor)
 			    (if (isa? v JsFunction)
 				;; validate cache method and don't cache
@@ -2172,10 +2150,6 @@
 				      (js-pcache-next-direct! cache o nextmap index))))
 			    (link-cmap! cmap nextmap name v flags %this)
 			    (js-object-push/ctor! o index v ctor))
-;* 			 (when (or (eq? name (& "firstChecker"))       */
-;* 				   (eq? name (& "contractName")))      */
-;* 			    (mtprint "<<< invalidate create new name=" name) */
-;* 			    (js-debug-cmap cmap))                      */
 			 (set! cmap nextmap)
 			 v))))))))
    
@@ -2235,7 +2209,7 @@
 			   (enumerable #t)
 			   (configurable #t))))
 		    (mtprint "invalidate extend")
-	    (js-invalidate-pcaches-pmap! %this name)
+	    (js-invalidate-pcaches-pmap! %this "extend-property" name)
 	    (js-define-own-property o name newdesc throw %this)
 	    v)))
    
@@ -2660,7 +2634,7 @@
 		       (delete-configurable o
 			  (configurable-mapped-property? o i)
 			  (lambda (o)
-			     (js-invalidate-pcaches-pmap! %this "js-delete")
+			     (js-invalidate-pcaches-pmap! %this "js-delete" p)
 			     ;; create a new cmap for the object
 			     (let ((nextmap (clone-cmap cmap)))
 				(link-cmap! cmap nextmap n #f -1 %this)
@@ -3023,7 +2997,7 @@
 	     "Prototype of non-extensible object mutated" v)
 	  (with-access::JsObject o (__proto__ cmap)
 	     (unless (eq? __proto__ v)
-		(js-invalidate-pcaches-pmap! %this "js-setprototypeof")
+		(js-invalidate-pcaches-pmap! %this "js-setprototypeof" "__proto__")
 		(unless (eq? cmap (js-not-a-cmap))
 		   (with-access::JsConstructMap cmap (parent single)
 		      (if single
