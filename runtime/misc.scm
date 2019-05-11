@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/misc.scm                  */
+;*    serrano/prgm/project/hop/hop/runtime/misc.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sat Jun 23 06:52:37 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Sat May 11 07:08:48 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
 ;*=====================================================================*/
@@ -324,6 +324,16 @@
       (let loop ((ttl (hop-connection-ttl)))
 	 (let ((res (with-handler
 		       (lambda (e)
+			  (tprint "make-client-socket/timeout error..."
+			     (typeof e) " host=" (typeof host) " port="
+			     (typeof port) " tmt=" (typeof tmt)
+			     " ssl=" ssl)
+			  (with-access::&error e (proc msg obj)
+			     (tprint "proc=" proc)
+			     (tprint "msg=" msg)
+			     (tprint "obj=" (typeof obj)))
+			  (exception-notify e)
+			  (tprint "-------------------------")
 			  (if (and (>fx ttl 0) (isa? e &io-timeout-error))
 			      (begin
 				 (hop-verb 1

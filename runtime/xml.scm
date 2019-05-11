@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue May  7 11:49:27 2019 (serrano)                */
+;*    Last change :  Sat May 11 18:22:53 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -98,7 +98,7 @@
 (register-class-serialization! xml-tilde
    (lambda (o ctx)
       ;; force the compilation of the attributes
-      (xml-tilde->attribute o)
+      (xml-tilde->statement o)
       o)
    (lambda (o ctx)
       o))
@@ -1067,8 +1067,7 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
    (with-access::xml-tilde obj (%js-attribute)
       (if (string? %js-attribute)
 	  %js-attribute
-;* 	  (let ((js-attr (xml-attribute-encode (xml-tilde->statement obj)))) */
-	  (let ((js-attr (xml-tilde->statement obj)))
+	  (let ((js-attr (xml-attribute-encode (xml-tilde->statement obj))))
 	     (set! %js-attribute js-attr)
 	     js-attr))))
 

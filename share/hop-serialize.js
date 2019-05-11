@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sun Apr 28 09:53:17 2019 (serrano)                */
+/*    Last change :  Sat May 11 18:38:47 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1332,7 +1332,6 @@ function hop_dom_unserialize( obj ) {
 			: v;
 		     hop_add_event_listener( el, m[ 1 ], fun, true );
 		  } catch( e ) {
-		     console.log( "e=", e, " v=", v, " m=", m[ 1 ] );
 		     alert( "hop_dom_unserialize error!" );
 		  }
 	       } else {
@@ -1352,7 +1351,7 @@ function hop_dom_unserialize( obj ) {
 /*    hop_tilde_unserialize ...                                        */
 /*---------------------------------------------------------------------*/
 function hop_tilde_unserialize( obj ) {
-   return new Function( 'event', obj[ "%js-attribute" ] );
+   return new Function( 'event', obj[ "%js-statement" ] );
 }
    
 /*---------------------------------------------------------------------*/

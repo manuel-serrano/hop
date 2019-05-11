@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue May  7 18:26:36 2019 (serrano)                */
+;*    Last change :  Sat May 11 06:42:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -110,29 +110,41 @@
    (with-access::JsError exc (name msg stack fname location %this)
       (if (isa? msg &exception)
 	  (exception-notify msg)
-	  (let* ((name (js-jsstring->string name))
-		 (stk (js-get exc (& "stack") %this))
-		 (port (current-error-port)))
-	     (cond
-		((js-jsstring? fname)
-		 (display-trace-stack-source
-		    (list `(,name (at ,(js-jsstring->string fname) ,location)))
-		    port))
-		((string? fname)
-		 (display-trace-stack-source
-		    (list `(,name (at ,fname ,location)))
-		    port)))
-	     (if (js-jsstring? stk)
-		 (display (js-jsstring->string stk) port)
-		 (let ((stack (cond
-				 ((string=? name "ReferenceError")
-				  stack)
-				 ((string=? name "TypeError")
-				  stack)
-				 (else
-				  stack))))
-		    (fprint port name ": " msg "\n")
-		    (display-trace-stack stack port)))))))
+	  (with-handler
+	     (lambda (e)
+		(let ((port (current-error-port)))
+		   (display "*** ERROR: " port)
+		   (display (js-jsstring->string name) port)
+		   (display " -- " port)
+		   (display (js-tostring msg %this) port)
+		   (newline port)
+		   (display (js-tostring fname %this) port)
+		   (display " " port)
+		   (display location port)
+		   (newline port)))
+	     (let* ((name (js-jsstring->string name))
+		    (stk (js-get exc (& "stack") %this))
+		    (port (current-error-port)))
+		(cond
+		   ((js-jsstring? fname)
+		    (display-trace-stack-source
+		       (list `(,name (at ,(js-jsstring->string fname) ,location)))
+		       port))
+		   ((string? fname)
+		    (display-trace-stack-source
+		       (list `(,name (at ,fname ,location)))
+		       port)))
+		(if (js-jsstring? stk)
+		    (display (js-jsstring->string stk) port)
+		    (let ((stack (cond
+				    ((string=? name "ReferenceError")
+				     stack)
+				    ((string=? name "TypeError")
+				     stack)
+				    (else
+				     stack))))
+		       (fprint port name ": " msg "\n")
+		       (display-trace-stack stack port))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exception-notify ::obj ...                                       */
@@ -154,6 +166,7 @@
 (define (js-init-error! %this::JsGlobalObject)
    ;; local constant strings
    (set! __js_strings (&init!))
+   
    ;; bind the errors into the global object
    (with-access::JsGlobalObject %this (__proto__ js-error js-function
 					 js-syntax-error js-type-error
@@ -170,6 +183,8 @@
 	       (msg (& ""))))
 	 
 	 (define (js-error-alloc %this constructor::JsFunction)
+	    (tprint "ERROR ALLOC..." (current-thread))
+	    (tprint (/fx 1 (flonum->fixnum (sin 0))))
 	    (instantiateJsError
 	       (%this %this)
 	       (name (js-get constructor (& "name") %this))

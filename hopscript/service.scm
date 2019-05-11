@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri May 10 21:36:37 2019 (serrano)                */
+;*    Last change :  Sat May 11 06:54:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -552,6 +552,8 @@
 		  (body (lambda ()
 			   (with-handler
 			      (lambda (e)
+				 (tprint "EXN TOBEMOVED")
+				 (exception-notify e)
 				 (with-access::JsGlobalObject %this (worker)
 				    (js-worker-exec worker path #t
 				       (lambda ()
@@ -740,11 +742,11 @@
 	  (set! fail
 	     (if asynchronous
 		 (lambda (obj)
-		    (js-call1 %this opt %this obj))
-		 (lambda (obj)
 		    (js-worker-push-thunk! worker svc
 		       (lambda ()
-			  (js-call1 %this opt %this obj)))))))
+			  (js-call1 %this opt %this obj))))
+		 (lambda (obj)
+		    (js-call1 %this opt %this obj)))))
 	 ((not (eq? opt (js-undefined)))
 	  (let* ((v (js-get opt (& "server") %this))
 		 (o (if (eq? v (js-undefined)) opt v))
@@ -812,12 +814,16 @@
 	       (body (lambda ()
 			(with-handler
 			   (lambda (e)
+			      (tprint "EXN TOBEMOVED")
 			      (exception-notify e)
 			      (if failjs
 				  (js-worker-push-thunk! worker svc
 				     (lambda ()
 					(js-call1 %this failjs %this e)))
-				  (exception-notify e)))
+				  (begin
+				     (exception-notify e)
+				     (display "This error has been notified because no error\n" (current-error-port))
+				     (display "handler was provided for the post invocation.\n" (current-error-port)))))
 			   (post-request
 			      (lambda (x)
 				 (js-worker-push-thunk! worker svc
