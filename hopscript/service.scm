@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun May  5 14:41:28 2019 (serrano)                */
+;*    Last change :  Fri May 10 21:36:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -16,7 +16,8 @@
 
    (library hop js2scheme)
 
-   (include "types.sch" "stringliteral.sch" "stringthread.sch")
+   (include "types.sch"
+	    "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic

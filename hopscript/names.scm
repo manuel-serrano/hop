@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri May 10 13:21:28 2019 (serrano)                */
+;*    Last change :  Sat May 11 05:45:30 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -78,7 +78,6 @@
 ;*    js-name-lock                                                     */
 ;*---------------------------------------------------------------------*/
 (define js-name-lock (make-spinlock "js-names"))
-(define js-name-mutex (make-mutex))
 
 ;*---------------------------------------------------------------------*/
 ;*    synchronize-name ...                                             */
@@ -140,30 +139,35 @@
 ;*    js-init-names! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-names!)
-   (synchronize js-name-mutex
+   (synchronize js-name-lock
       (unless (hashtable? js-names)
-	 (set! js-integer-length 100)
+	 (set! js-integer-length
+	    100)
 	 (set! js-names
-	    (create-hashtable
-	       :eqtest string-compare?
-	       :hash string-hash-number
-	       :max-length 65536
-	       :max-bucket-length 20))
+	    (let ((table (create-hashtable
+			    :eqtest string-compare?
+			    :hash string-hash-number
+			    :max-length 65536
+			    :max-bucket-length 20)))
+	       (set! gcroots (cons table gcroots))
+	       table))
          (set! js-integer-names
-            (list->vector
-	       (append
-		  (map (lambda (i)
-			  (js-integer->name i))
-		     (iota 10 -10))
-		  (map (lambda (i)
-			  (js-index->name (fixnum->uint32 i)))
-		     (iota 100)))))
+	    (let ((names (list->vector
+			    (append
+			       (map (lambda (i)
+				       (js-integer->name i))
+				  (iota 10 -10))
+			       (map (lambda (i)
+				       (js-index->name (fixnum->uint32 i)))
+				  (iota 100))))))
+	       (set! gcroots (cons names gcroots))
+	       names))
 	 (set! js-string-names
-	    (vector-map (lambda (val)
-			   (js-ascii-name->jsstring val))
-	       (& strings)))
-	 (set! gcroots
-	    (cons* js-names js-integer-names js-string-names gcroots)))))
+	    (let ((names (vector-map (lambda (val)
+					(js-ascii-toname-unsafe val))
+			    (& strings))))
+	       (set! gcroots (cons names gcroots))
+	       names)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcacher ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun May  5 13:56:17 2019 (serrano)                */
+;*    Last change :  Sat May 11 05:49:32 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -37,7 +37,7 @@
       (with-access::J2SProgram this (mode pcache-size call-size globals cnsts loc)
 	 (list module
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
-	    `(define __js_strings (&begin!))
+	    (list '&begin!)
 	    `(%define-cnst-table ,(length cnsts))
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
@@ -67,7 +67,7 @@
       (with-access::J2SProgram this (mode pcache-size call-size globals cnsts loc)
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
-	    `(define __js_strings (&begin!))
+	    (list '&begin!)
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    (epairify-deep loc
@@ -113,7 +113,7 @@
 			   ,@(exit-body body conf))))
 	    `(,jsmod
 		;; (&begin!) must not be a constant! (_do not_ use quote)
-		,`(define __js_strings (&begin!))
+		,(list '&begin!)
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
 		(hop-sofile-compile-policy-set! 'static)
@@ -218,7 +218,7 @@
 	 (epairify-deep loc
 	    `(,module (%define-cnst-table ,(length cnsts))
 		;; (&begin!) must not be a constant! (_do not_ use quote)
-		(define __js_strings (&begin!))
+		,(list '&begin!)
 		(%define-pcache ,pcache-size)
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))

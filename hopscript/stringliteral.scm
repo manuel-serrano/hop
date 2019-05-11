@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun May  5 16:52:51 2019 (serrano)                */
+;*    Last change :  Sat May 11 05:31:52 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -155,6 +155,12 @@
 	 (set! char-table vec))))
 
 ;*---------------------------------------------------------------------*/
+;*    jsstring-init-lock ...                                           */
+;*---------------------------------------------------------------------*/
+(define jsstring-init-lock
+   (make-mutex "jsjstring-init-lock"))
+
+;*---------------------------------------------------------------------*/
 ;*    &jsstring-init ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (&jsstring-init str::bstring)
@@ -180,7 +186,8 @@
 		      (let ((num (vector-ref el 1)))
 			 (js-integer-name->jsstring num))))))
 	    (loop (-fx i 1))))
-      (set! gcroots (cons gcroots cnsts))
+      (synchronize jsstring-init-lock
+	 (set! gcroots (cons cnsts gcroots)))
       cnsts))
 
 ;*---------------------------------------------------------------------*/
