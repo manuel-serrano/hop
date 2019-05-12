@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun May 12 06:55:24 2019 (serrano)                */
+;*    Last change :  Sun May 12 19:31:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -254,7 +254,6 @@
 	    (let ((len (vector-length js-cache-table)))
 	       (when (=fx js-cache-index len)
 		  (let ((nvec (copy-vector js-cache-table (*fx 2 len))))
-		     (tprint "JS-REGISTER nvec=" (vector-length nvec))
 		     (set! js-cache-table nvec)))
 	       (vector-set! js-cache-table js-cache-index pcache)
 	       (set! js-cache-index (+fx js-cache-index 1)))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sun May 12 18:36:08 2019 (serrano)                */
+;*    Last change :  Sun May 12 19:31:01 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -410,8 +410,10 @@
 	     (nvec (copy-vector js-integer-names nlen)))
 	 (vector-fill! nvec #f len)
 	 ;; replace js-integer-names in the gc roots
-	 (let ((l (memq js-integer-names gcroots)))
-	    (set-car! l nvec))
+	 (cond-expand
+	    (enable-tls
+	     (let ((l (memq js-integer-names gcroots)))
+		(set-car! l nvec))))
 	 (set! js-integer-names nvec)))
    
    (cond
