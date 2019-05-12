@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed May  8 12:31:32 2019 (serrano)                */
+;*    Last change :  Sun May 12 07:46:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1960,11 +1960,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-core name::bstring worker %this)
    (with-trace 'require (format "nodejs-require-core ~a" name)
-      (let ((e (js-get (nodejs-core-module name worker %this) (& "exports") %this)))
-	 (with-access::JsObject e (cmap)
-	    (with-access::JsConstructMap cmap (%id props)
-	       (trace-item name " cmap.id=" %id " cmap.props=" props)
-	       e)))))
+      (js-get (nodejs-core-module name worker %this) (& "exports") %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve ...                                               */

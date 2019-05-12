@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri May 10 14:49:00 2019 (serrano)                */
+;*    Last change :  Sun May 12 06:55:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -254,6 +254,7 @@
 	    (let ((len (vector-length js-cache-table)))
 	       (when (=fx js-cache-index len)
 		  (let ((nvec (copy-vector js-cache-table (*fx 2 len))))
+		     (tprint "JS-REGISTER nvec=" (vector-length nvec))
 		     (set! js-cache-table nvec)))
 	       (vector-set! js-cache-table js-cache-index pcache)
 	       (set! js-cache-index (+fx js-cache-index 1)))))))
@@ -474,6 +475,7 @@
 ;*    *pctables* ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define *pctables* *pctables*)
+(define pcache-lock (make-spinlock "pcache-lock"))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-pcachet-table! ...                                      */
@@ -482,8 +484,10 @@
    ;; bootstrap initialization
    ;;(tprint "regsiter-pcache-table len=" len " src=" src " " (current-thread))
    (when (eq? *pctables* #unspecified) (set! *pctables* '()))
-   (set! *pctables* (cons (vector pctable len src (current-thread)) *pctables*))
-   pctable)
+   (let ((pc (vector pctable len src (current-thread))))
+      (synchronize pcache-lock
+	 (set! *pctables* (cons pc *pctables*))
+	 pctable)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-pcache-table ...                                         */
@@ -563,8 +567,8 @@
       (when (vector-ref methods idx)
 	 (vector-set! methods idx #f)
 	 (for-each (lambda (tr)
-		      (let ((cmap (transition-nextmap tr)))
-			 (js-invalidate-cache-method! cmap idx)))
+		      (let ((ncmap (transition-nextmap tr)))
+			 (js-invalidate-cache-method! ncmap idx)))
 	    transitions))))
    
 ;*---------------------------------------------------------------------*/
@@ -711,10 +715,12 @@
 ;*---------------------------------------------------------------------*/
 (define (link-cmap! omap::JsConstructMap nmap::JsConstructMap
 	   name value flags::int %this)
-   (with-access::JsConstructMap omap (transitions)
-;*       (let ((val (when (or (eq? name (& "__proto__")) (isa? value JsFunction)) */
+   (with-access::JsConstructMap omap (transitions lock)
       (let ((val (when (eq? name (& "__proto__"))
 		    value)))
+;* 	 (unless (eq? (mutex-state lock) 'locked)                      */
+;* 	    (tprint "LINK-CMAP transition name=" name)                 */
+;* 	    (tprint (/fx 1 (flonum->fixnum (sin 0)))))                 */
 	 (set! transitions (cons (transition name val flags nmap) transitions)))
       nmap))
 
@@ -780,7 +786,7 @@
 	   (or (not (transition-value t))
 	       (eq? (transition-value t) val))))
    
-   (with-access::JsConstructMap omap (transitions)
+   (with-access::JsConstructMap omap (transitions lock)
       (cond
 	 ((null? transitions)
 	  #f)
@@ -796,6 +802,9 @@
 			  ;; move the transition in the front of the list
 			  (set-cdr! prev (cdr trs))
 			  (set-cdr! trs transitions)
+;* 			  (unless (eq? (mutex-state lock) 'locked)     */
+;* 			     (tprint "CMAP-FIND-transision transition name=" name) */
+;* 			     (tprint (/fx 1 (flonum->fixnum (sin 0))))) */
 			  (set! transitions trs)
 			  (transition-nextmap t))
 		       (loop (cdr trs) trs)))))))))
@@ -804,17 +813,18 @@
 ;*    cmap-next-proto-cmap ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (cmap-next-proto-cmap %this::JsGlobalObject cmap::JsConstructMap old new)
-   (with-access::JsConstructMap cmap (parent (%cid %id))
+   (with-access::JsConstructMap cmap (parent lock (%cid %id))
       (let ((flags (property-flags #t #t #t #f)))
 	 ;; 1- try to find a transition from the current cmap
-	 (let ((nextmap (cmap-find-transition cmap (& "__proto__") new flags)))
-	    (or nextmap
-		;; 2- create a new plain cmap connected to its parent
-		;; via a regular link
-		(let ((newmap (duplicate::JsConstructMap cmap
-				 (%id (gencmapid)))))
-		   (link-cmap! cmap newmap (& "__proto__") new flags %this)
-		   newmap))))))
+	 (synchronize lock
+	    (let ((nextmap (cmap-find-transition cmap (& "__proto__") new flags)))
+	       (or nextmap
+		   ;; 2- create a new plain cmap connected to its parent
+		   ;; via a regular link
+		   (let ((newmap (duplicate::JsConstructMap cmap
+				    (%id (gencmapid)))))
+		      (link-cmap! cmap newmap (& "__proto__") new flags %this)
+		      newmap)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-cmap-vtable! ...                                           */
@@ -2015,8 +2025,6 @@
    (define (update-mapped-object! obj i)
       (with-trace 'prop "update-mapped-object"
 	 (trace-item "name=" name)
-;* 	 (when (eq? name (& "firstChecker"))                           */
-;* 	    (tprint "update-mapped name=" name))                       */
 	 (with-access::JsObject obj (cmap elements)
 	    (with-access::JsConstructMap cmap (nextmap methods props)
 	       (let ((el-or-desc (vector-ref elements i)))
@@ -2095,90 +2103,91 @@
 	 (js-object-mode-hasnumeralprop-set! o #t))
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
-	 (with-access::JsConstructMap cmap (props single)
+	 (with-access::JsConstructMap cmap (props single lock)
 	    (let* ((index (vector-length props))
 		   (flags (property-flags #t #t #t #f)))
-	       (let loop ()
-		  (cond
-		     ((cmap-find-transition cmap name v flags)
-		      =>
-		      (lambda (nextmap)
-			 ;; follow the next map
-			 (with-access::JsConstructMap nextmap (ctor methods props)
-			    (if (isa? v JsFunction)
-				;; validate cache method and don't cache
-				(if (eq? v (vector-ref methods index))
-				    (when cache
-				       (js-pcache-next-direct! cache o nextmap index))
-				    (begin
-				       ;; MS 2019-01-19
-				       ;; on a method conflict, if the number of
-				       ;; properties in cache is small enough,
-				       ;; instead of invalidating all methods,
-				       ;; a new cmap is created. see
-				       ;; see the prototype initialization
-				       ;; in js-make-function@function.scm
-				       (if (>fx (vector-length props) (method-invalidation-threshold))
-					   (begin
-					      ;; invalidate cache method and cache
-					      (js-invalidate-cache-method! nextmap index)
-					      (js-invalidate-pcaches-pmap! %this "extend-mapped.1" name)
-					      (reset-cmap-vtable! nextmap)
-					      (when cache
-						 ;; MS 9may2019 CARE INVALIDATE
-						 (js-validate-pcaches-pmap! %this)
-						 (js-pcache-next-direct! cache o nextmap index)))
-					   (let ((detachedmap (extend-cmap cmap name flags)))
-					      ;;(js-invalidate-pcaches-pmap! %this "extend-mapped.2" name)
-					      (with-access::JsConstructMap detachedmap (methods ctor)
-						 ;; validate cache method and don't cache
-						 (vector-set! methods index v))
-					      (set! nextmap detachedmap)
-					      v))))
-				(begin
-				   (when (isa? (vector-ref methods index) JsFunction)
-				      ;; invalidate cache method and cache
-				      (js-invalidate-cache-method! nextmap index)
-				      (js-invalidate-pcaches-pmap! %this "extend-mapped.3" name)
-				      (reset-cmap-vtable! nextmap))
-				   (when cache
-				      (js-validate-pcaches-pmap! %this)
-				      (js-pcache-next-direct! cache o nextmap index))))
-			    (js-object-push/ctor! o index v ctor)
-			    (set! cmap nextmap)
-			    v)))
-		     (single
-		      (js-invalidate-pcaches-pmap! %this "extend-mapped.4" name)
-		      (extend-cmap! cmap name flags)
-		      (with-access::JsConstructMap cmap (ctor methods)
-			 (if (isa? v JsFunction)
-			     ;; validate cache method and don't cache
-			     (vector-set! methods index v)
-			     (begin
-				(js-invalidate-cache-method! cmap index)
-				(when cache
-				   (js-validate-pcaches-pmap! %this)
-				   (js-pcache-next-direct! cache o cmap index))))
-			 (js-object-push/ctor! o index v ctor))
-		      v)
-		     (else
-		      ;; create a new map
-		      (let ((nextmap (extend-cmap cmap name flags)))
-			 (js-invalidate-pcaches-pmap! %this "extend-mapped.5" name)
-			 (with-access::JsConstructMap nextmap (methods ctor)
+	       (synchronize lock
+		  (let loop ()
+		     (cond
+			((cmap-find-transition cmap name v flags)
+			 =>
+			 (lambda (nextmap)
+			    ;; follow the next map
+			    (with-access::JsConstructMap nextmap (ctor methods props)
+			       (if (isa? v JsFunction)
+				   ;; validate cache method and don't cache
+				   (if (eq? v (vector-ref methods index))
+				       (when cache
+					  (js-pcache-next-direct! cache o nextmap index))
+				       (begin
+					  ;; MS 2019-01-19
+					  ;; on a method conflict, if the number of
+					  ;; properties in cache is small enough,
+					  ;; instead of invalidating all methods,
+					  ;; a new cmap is created. see
+					  ;; see the prototype initialization
+					  ;; in js-make-function@function.scm
+					  (if (>fx (vector-length props) (method-invalidation-threshold))
+					      (begin
+						 ;; invalidate cache method and cache
+						 (js-invalidate-cache-method! nextmap index)
+						 (js-invalidate-pcaches-pmap! %this "extend-mapped.1" name)
+						 (reset-cmap-vtable! nextmap)
+						 (when cache
+						    ;; MS 9may2019 CARE INVALIDATE
+						    (js-validate-pcaches-pmap! %this)
+						    (js-pcache-next-direct! cache o nextmap index)))
+					      (let ((detachedmap (extend-cmap cmap name flags)))
+						 ;;(js-invalidate-pcaches-pmap! %this "extend-mapped.2" name)
+						 (with-access::JsConstructMap detachedmap (methods ctor)
+						    ;; validate cache method and don't cache
+						    (vector-set! methods index v))
+						 (set! nextmap detachedmap)
+						 v))))
+				   (begin
+				      (when (isa? (vector-ref methods index) JsFunction)
+					 ;; invalidate cache method and cache
+					 (js-invalidate-cache-method! nextmap index)
+					 (js-invalidate-pcaches-pmap! %this "extend-mapped.3" name)
+					 (reset-cmap-vtable! nextmap))
+				      (when cache
+					 (js-validate-pcaches-pmap! %this)
+					 (js-pcache-next-direct! cache o nextmap index))))
+			       (js-object-push/ctor! o index v ctor)
+			       (set! cmap nextmap)
+			       v)))
+			(single
+			 (js-invalidate-pcaches-pmap! %this "extend-mapped.4" name)
+			 (extend-cmap! cmap name flags)
+			 (with-access::JsConstructMap cmap (ctor methods)
 			    (if (isa? v JsFunction)
 				;; validate cache method and don't cache
 				(vector-set! methods index v)
-				;; invalidate cache method and cache
 				(begin
-				   (js-invalidate-cache-method! nextmap index)
+				   (js-invalidate-cache-method! cmap index)
 				   (when cache
 				      (js-validate-pcaches-pmap! %this)
-				      (js-pcache-next-direct! cache o nextmap index))))
-			    (link-cmap! cmap nextmap name v flags %this)
+				      (js-pcache-next-direct! cache o cmap index))))
 			    (js-object-push/ctor! o index v ctor))
-			 (set! cmap nextmap)
-			 v))))))))
+			 v)
+			(else
+			 ;; create a new map
+			 (let ((nextmap (extend-cmap cmap name flags)))
+			    (js-invalidate-pcaches-pmap! %this "extend-mapped.5" name)
+			    (with-access::JsConstructMap nextmap (methods ctor)
+			       (if (isa? v JsFunction)
+				   ;; validate cache method and don't cache
+				   (vector-set! methods index v)
+				   ;; invalidate cache method and cache
+				   (begin
+				      (js-invalidate-cache-method! nextmap index)
+				      (when cache
+					 (js-validate-pcaches-pmap! %this)
+					 (js-pcache-next-direct! cache o nextmap index))))
+			       (link-cmap! cmap nextmap name v flags %this)
+			       (js-object-push/ctor! o index v ctor))
+			    (set! cmap nextmap)
+			    v)))))))))
    
    (define (update-properties-object! obj desc)
       (with-trace 'prop "update-properties-object!"
@@ -2494,65 +2503,52 @@
 	 (js-object-mode-hasnumeralprop-set! o #t))
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
-	 (with-access::JsConstructMap cmap (props)
-	    (let* ((axs (accessor-property? get set))
-		   (index (vector-length props))
-		   (inl (js-object-inline-next-element? o index))
-		   (flags (property-flags writable enumerable configurable axs)))
-	       (cond
-		  ((cmap-find-transition cmap name value flags)
-		   =>
-		   (lambda (nextmap)
-		      (let ((val-or-desc (if (accessor-property? get set)
-					     (instantiate::JsAccessorDescriptor
-						(name name)
-						(get get)
-						(set set)
-						(%get (function0->proc get %this))
-						(%set (function1->proc set %this))
-						(enumerable enumerable)
-						(configurable configurable))
-					     value)))
-			 ;; follow the next map 
-			 (with-access::JsConstructMap nextmap (props)
-			    (set! cmap nextmap)
-			    (js-object-push! o index val-or-desc)
-			    value))))
-		  (axs
-		   ;; create a new map with a JsAccessorDescriptor
-		   (let* ((newdesc (instantiate::JsAccessorDescriptor
-				      (name name)
-				      (get get)
-				      (set set)
-				      (%get (function0->proc get %this))
-				      (%set (function1->proc set %this))
-				      (enumerable enumerable)
-				      (configurable configurable)))
-			  (nextmap (next-cmap o name #f flags)))
-		      (check-accessor-property! get set)
-		      ;; extending the elements vector is mandatory
-		      (js-object-push! o index newdesc)
-		      (js-undefined)))
-		  (else
-		   (let ((nextmap (next-cmap o name value flags)))
-		      (with-access::JsConstructMap nextmap (methods)
-			 (validate-cache-method! value methods index))
-		      (js-object-push! o index value)
-		      value))
-;* 		  (else                                                */
-;* 		   ;; create a new map with a JsValueDescriptor        */
-;* 		   (let* ((newdesc (instantiate::JsValueDescriptor     */
-;* 				      (name name)                      */
-;* 				      (value value)                    */
-;* 				      (writable writable)              */
-;* 				      (enumerable enumerable)          */
-;* 				      (configurable configurable)))    */
-;* 			  (nextmap (next-cmap o name value flags)))    */
-;* 		      (with-access::JsConstructMap nextmap (methods)   */
-;* 			 (validate-cache-method! value methods index)) */
-;* 		      (js-object-push! o index newdesc)                */
-;* 		      value))                                          */
-		  )))))
+	 (with-access::JsConstructMap cmap (props lock)
+	    (synchronize lock
+	       (let* ((axs (accessor-property? get set))
+		      (index (vector-length props))
+		      (inl (js-object-inline-next-element? o index))
+		      (flags (property-flags writable enumerable configurable axs)))
+		  (cond
+		     ((cmap-find-transition cmap name value flags)
+		      =>
+		      (lambda (nextmap)
+			 (let ((val-or-desc (if (accessor-property? get set)
+						(instantiate::JsAccessorDescriptor
+						   (name name)
+						   (get get)
+						   (set set)
+						   (%get (function0->proc get %this))
+						   (%set (function1->proc set %this))
+						   (enumerable enumerable)
+						   (configurable configurable))
+						value)))
+			    ;; follow the next map 
+			    (with-access::JsConstructMap nextmap (props)
+			       (set! cmap nextmap)
+			       (js-object-push! o index val-or-desc)
+			       value))))
+		     (axs
+		      ;; create a new map with a JsAccessorDescriptor
+		      (let* ((newdesc (instantiate::JsAccessorDescriptor
+					 (name name)
+					 (get get)
+					 (set set)
+					 (%get (function0->proc get %this))
+					 (%set (function1->proc set %this))
+					 (enumerable enumerable)
+					 (configurable configurable)))
+			     (nextmap (next-cmap o name #f flags)))
+			 (check-accessor-property! get set)
+			 ;; extending the elements vector is mandatory
+			 (js-object-push! o index newdesc)
+			 (js-undefined)))
+		     (else
+		      (let ((nextmap (next-cmap o name value flags)))
+			 (with-access::JsConstructMap nextmap (methods)
+			    (validate-cache-method! value methods index))
+			 (js-object-push! o index value)
+			 value))))))))
    
    (define (update-properties-object! obj owndesc)
       (if (or (isa? owndesc JsAccessorDescriptor) get)
@@ -3381,11 +3377,6 @@
    (js-profile-log-method name point)
 
    (let ((n (js-toname name %this)))
-;*       (when (eq? n (& "firstChecker"))                              */
-;* 	 (tprint ">>> js-object-method-call/cache-fill")               */
-;* 	 (js-debug-object o)                                           */
-;* 	 (js-debug-pcache ccache)                                      */
-;* 	 (tprint "<<< js-object-method-call/cache-fill"))              */
       (let loop ((obj o))
 	 (jsobject-find obj n
 	    ;; map search

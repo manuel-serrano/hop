@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat May  4 17:22:55 2019 (serrano)                */
+;*    Last change :  Sun May 12 08:47:17 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -551,7 +551,10 @@
 		    (lambda (p status header clength tenc)
 		       (receiver ctx
 			  (lambda ()
-			     (hdl p status header clength tenc))))
+			     (with-handler
+				(lambda (e)
+				   (tprint "RECEIVER HANDLER TBR " (typeof e)))
+				(hdl p status header clength tenc)))))
 		    hdl)
 		:args args))))))
 

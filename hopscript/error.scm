@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat May 11 06:42:56 2019 (serrano)                */
+;*    Last change :  Sun May 12 07:02:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -183,8 +183,6 @@
 	       (msg (& ""))))
 	 
 	 (define (js-error-alloc %this constructor::JsFunction)
-	    (tprint "ERROR ALLOC..." (current-thread))
-	    (tprint (/fx 1 (flonum->fixnum (sin 0))))
 	    (instantiateJsError
 	       (%this %this)
 	       (name (js-get constructor (& "name") %this))

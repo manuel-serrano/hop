@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sat May 11 07:08:48 2019 (serrano)                */
+;*    Last change :  Sun May 12 07:15:33 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -324,16 +324,19 @@
       (let loop ((ttl (hop-connection-ttl)))
 	 (let ((res (with-handler
 		       (lambda (e)
+			  (tprint ">>> -------------------------")
+			  (tprint "loop ttl=" ttl " " (current-thread))
 			  (tprint "make-client-socket/timeout error..."
 			     (typeof e) " host=" (typeof host) " port="
 			     (typeof port) " tmt=" (typeof tmt)
 			     " ssl=" ssl)
-			  (with-access::&error e (proc msg obj)
-			     (tprint "proc=" proc)
-			     (tprint "msg=" msg)
-			     (tprint "obj=" (typeof obj)))
+			  (when (isa? e &error)
+			     (with-access::&error e (proc msg obj)
+				(tprint "proc=" proc)
+				(tprint "msg=" msg)
+				(tprint "obj=" (typeof obj))))
 			  (exception-notify e)
-			  (tprint "-------------------------")
+			  (tprint "<<< -------------------------")
 			  (if (and (>fx ttl 0) (isa? e &io-timeout-error))
 			      (begin
 				 (hop-verb 1
@@ -350,9 +353,9 @@
 		       (if ssl
 			   (cond-expand
 			      (enable-ssl
-				 (make-ssl-client-socket host port
-				    :protocol (hop-https-protocol)
-				    :timeout tmt))
+			       (make-ssl-client-socket host port
+				  :protocol (hop-https-protocol)
+				  :timeout tmt))
 			      (else
 			       (error "make-client-socket/timeout"
 				  "SSL not supported"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri May 10 07:24:15 2019 (serrano)                */
+;*    Last change :  Sun May 12 06:37:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -117,6 +117,8 @@
 	   
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))
+	      (lock read-only (default (make-spinlock "JsConstructMap")))
+;* 	      (lock read-only (default (make-mutex "JsConstructMap"))) */
 	      (size::long (default 0))
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))

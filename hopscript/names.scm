@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sat May 11 05:45:30 2019 (serrano)                */
+;*    Last change :  Sun May 12 18:36:08 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -49,6 +49,10 @@
    (static js-names js-integer-length)
    (export js-integer-names js-string-names)
 
+   (cond-expand
+      (enable-tls
+       (export gcroots)))
+   
    (cond-expand
       (enable-tls
        (pragma (js-names thread-local)
@@ -149,7 +153,7 @@
 			    :hash string-hash-number
 			    :max-length 65536
 			    :max-bucket-length 20)))
-	       (set! gcroots (cons table gcroots))
+	       (cond-expand (enable-tls (set! gcroots (cons table gcroots))))
 	       table))
          (set! js-integer-names
 	    (let ((names (list->vector
@@ -160,13 +164,13 @@
 			       (map (lambda (i)
 				       (js-index->name (fixnum->uint32 i)))
 				  (iota 100))))))
-	       (set! gcroots (cons names gcroots))
+	       (cond-expand (enable-tls (set! gcroots (cons names gcroots))))
 	       names))
 	 (set! js-string-names
 	    (let ((names (vector-map (lambda (val)
 					(js-ascii-toname-unsafe val))
 			    (& strings))))
-	       (set! gcroots (cons names gcroots))
+	       (cond-expand (enable-tls (set! gcroots (cons names gcroots))))
 	       names)))))
 
 ;*---------------------------------------------------------------------*/

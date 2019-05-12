@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat May 11 06:54:03 2019 (serrano)                */
+;*    Last change :  Sun May 12 07:17:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -781,6 +781,7 @@
 		(set! failjs f)
 		(set! fail
 		   (lambda (obj)
+		      (tprint "FAIL obj=" (typeof obj))
 		      (if asynchronous
 			  (js-worker-push-thunk! worker svc
 			     (lambda ()
@@ -810,11 +811,12 @@
       (define (spawn-thread)
 	 (thread-start!
 	    (instantiate::hopthread
-	       (name "spawn-thread")
+	       (name "spawn-thread-deprecated")
 	       (body (lambda ()
 			(with-handler
 			   (lambda (e)
-			      (tprint "EXN TOBEMOVED")
+			      (tprint "EXN TOBEMOVED " (typeof failjs) " e="
+				 (typeof e))
 			      (exception-notify e)
 			      (if failjs
 				  (js-worker-push-thunk! worker svc
@@ -826,10 +828,8 @@
 				     (display "handler was provided for the post invocation.\n" (current-error-port)))))
 			   (post-request
 			      (lambda (x)
-				 (js-worker-push-thunk! worker svc
-				    (lambda ()
-				       (js-call1 %this success %this
-					  (scheme->js x)))))))))))
+				 (js-call1 %this success %this
+				    (scheme->js x)))))))))
 	 (js-undefined))
 
       (define (spawn-promise)
@@ -842,7 +842,7 @@
 			   (js-call1 %this reject %this obj)))
 		     (thread-start!
 			(instantiate::hopthread
-			   (name "spawn-promise")
+			   (name "spawn-promise-deprecated")
 			   (body (lambda ()
 				    (with-handler
 				       (lambda (e)
