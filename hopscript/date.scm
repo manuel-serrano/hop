@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Apr 18 08:11:26 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:37:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -112,7 +112,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-date! %this)
    ;; local constant strings
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    
    ;; first, bind the builtin date prototype
    (with-access::JsGlobalObject %this (__proto__ js-date js-function)

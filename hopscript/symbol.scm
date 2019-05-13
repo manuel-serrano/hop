@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Apr 18 08:15:32 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:40:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -169,7 +169,7 @@
 ;*    js-init-symbol! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-symbol! %this::JsGlobalObject)
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    (with-access::JsGlobalObject %this (__proto__
 					 js-function
 					 js-symbol

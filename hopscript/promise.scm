@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Apr 17 07:51:20 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:39:34 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -252,7 +252,7 @@
 		  it)))
 	 promise))
 
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    
    (js-bind! %this js-promise (& "all")
       :configurable #f :enumerable #f

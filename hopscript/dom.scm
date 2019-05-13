@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Fri Apr 12 20:50:04 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:37:56 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -52,7 +52,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-dom! %this)
    (with-access::JsGlobalObject %this (js-xml-markups)
-      (set! __js_strings (&init!))
+      (unless (vector? __js_strings) (set! __js_strings (&init!)))
       (set! js-xml-markups
 	 (list
 	    (& "classname") (& "id") (& "nodeType") (& "attributes")

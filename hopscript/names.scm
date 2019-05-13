@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sun May 12 19:31:01 2019 (serrano)                */
+;*    Last change :  Mon May 13 09:52:14 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -156,22 +156,22 @@
 	       (cond-expand (enable-tls (set! gcroots (cons table gcroots))))
 	       table))
          (set! js-integer-names
-	    (let ((names (list->vector
-			    (append
-			       (map (lambda (i)
-				       (js-integer->name i))
-				  (iota 10 -10))
-			       (map (lambda (i)
-				       (js-index->name (fixnum->uint32 i)))
-				  (iota 100))))))
-	       (cond-expand (enable-tls (set! gcroots (cons names gcroots))))
-	       names))
+	    (let ((inames (list->vector
+			     (append
+				(map (lambda (i)
+					(js-integer->name i))
+				   (iota 10 -10))
+				(map (lambda (i)
+					(js-index->name (fixnum->uint32 i)))
+				   (iota 100))))))
+	       (cond-expand (enable-tls (set! gcroots (cons inames gcroots))))
+	       inames))
 	 (set! js-string-names
-	    (let ((names (vector-map (lambda (val)
-					(js-ascii-toname-unsafe val))
-			    (& strings))))
-	       (cond-expand (enable-tls (set! gcroots (cons names gcroots))))
-	       names)))))
+	    (let ((snames (vector-map (lambda (val)
+					 (js-ascii-toname-unsafe val))
+			     (& strings))))
+	       (cond-expand (enable-tls (set! gcroots (cons snames gcroots))))
+	       snames)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcacher ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Thu May  9 11:03:53 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:34:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -119,7 +119,7 @@
 (define (js-init-arguments! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-arguments-cmap js-strict-arguments-cmap)
       ;; local constant strings
-      (set! __js_strings (&init!))
+      (unless (vector? __js_strings) (set! __js_strings (&init!)))
       ;; properties
       (let ((throw (lambda (o)
 		      (js-raise-type-error %this "[[ThrowTypeError]] ~a" o))))

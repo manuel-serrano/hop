@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri May 10 12:07:47 2019 (serrano)                */
+;*    Last change :  Mon May 13 09:25:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -264,7 +264,7 @@
 		    (elements (make-vector size)))))
       ;; local constant strings
       (js-init-names!)
-      (set! __js_strings (&init!))
+      (unless (vector? __js_strings) (set! __js_strings (&init!)))
       (js-init-property! %this)
       ;; mark the top proto has holding no numeral properties
       (js-object-mode-hasnumeralprop-set! %proto #f)
@@ -1204,10 +1204,7 @@
 	       #f
 	       (flags-accessor? flags)))))
    
-   (for-each (lambda (desc::JsPropertyDescriptor)
-		(with-access::JsPropertyDescriptor desc (configurable)
-		   (set! configurable #f)))
-      (js-object-properties o))
+   (for-each js-seal-property! (js-object-properties o))
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-sealed-set! o #t)
    (with-access::JsObject o (cmap)

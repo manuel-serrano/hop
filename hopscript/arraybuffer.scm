@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Wed Apr 17 07:56:57 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:36:33 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -149,7 +149,7 @@
 ;*    js-init-arraybuffer! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-init-arraybuffer! %this)
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    (with-access::JsGlobalObject %this (__proto__ js-function js-object
 					 js-arraybuffer)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))

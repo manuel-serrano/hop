@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 12 07:02:32 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:38:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -165,7 +165,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-error! %this::JsGlobalObject)
    ;; local constant strings
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    
    ;; bind the errors into the global object
    (with-access::JsGlobalObject %this (__proto__ js-error js-function

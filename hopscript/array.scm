@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue May  7 11:45:58 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:37:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -19,8 +19,7 @@
    (include "../nodejs/nodejs_debug.sch"
 	    "types.sch"
 	    "stringliteral.sch"
-	    "property.sch"
-	    "stringthread.sch")
+	    "property.sch")
    
    (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::obj ::uint32)
 	      "bgl_make_jsarray")
@@ -383,7 +382,7 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 ;; local constant strings
-	 (set! __js_strings (&init!))
+	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
 	 
 	 ;; array pcache
 	 (set! js-array-pcache

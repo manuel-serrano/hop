@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun May 12 07:46:52 2019 (serrano)                */
+;*    Last change :  Mon May 13 08:28:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -818,21 +818,17 @@
    (let ((%this (js-new-global-object :size 256 :name name)))
       (js-init-require! %this)
       (with-access::JsGlobalObject %this (js-object __proto__ js-nodejs-pcache)
-	 (let ((proto (instantiateJsObject
-			 (cmap (instantiate::JsConstructMap))
-			 (__proto__ (js-get js-object (& "prototype") %this))
-			 (elements (make-vector 190)))))
-	    ;; allocate the pcache for the nodejs modules
-	    (set! js-nodejs-pcache
-	       ((@ js-make-pcache-table __hopscript_property) 11 "nodejs"))
-	    ;; mark object non-enumerable (i.e., it contains no enumerable
-	    ;; property) in order to optimize for..in
-	    (js-object-mode-enumerable-set! proto #f)
-	    ;; bind the builtin hop functions
-	    (js-init-hop-builtin! %this %this)
-	    ;; bind the v8 builtin
-	    (nodejs-init-v8-global-object! %this __proto__)
-	    (nodejs-init-v8-global-object-prototype! %this %this)))
+	 ;; allocate the pcache for the nodejs modules
+	 (set! js-nodejs-pcache
+	    ((@ js-make-pcache-table __hopscript_property) 11 "nodejs"))
+	 ;; mark object non-enumerable (i.e., it contains no enumerable
+	 ;; property) in order to optimize for..in
+	 (js-object-mode-enumerable-set! __proto__ #f)
+	 ;; bind the builtin hop functions
+	 (js-init-hop-builtin! %this %this)
+	 ;; bind the v8 builtin
+	 (nodejs-init-v8-global-object! %this __proto__)
+	 (nodejs-init-v8-global-object-prototype! %this %this))
       %this))
 
 ;*---------------------------------------------------------------------*/
@@ -1043,7 +1039,7 @@
 		  :commonjs-export commonjs-export
 		  :es6-module-client #t
 		  :debug (bigloo-debug))))))
-
+   
    (define (compile-ast ast::J2SProgram mod)
       (with-trace 'require "compile-ast"
 	 (with-access::J2SProgram ast (path)
@@ -1079,41 +1075,44 @@
 	  (compile-file filename mod))
 	 (else
 	  (compile-url filename mod))))
-
+   
    (unless nodejs-debug-compile
       (set! nodejs-debug-compile
 	 (if (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile")
 	     'yes
 	     'no)))
-
+   
    (synchronize compile-mutex
       (with-trace 'require "nodejs-compile"
 	 (trace-item "filename=" filename)
-	 (or (hashtable-get compile-table filename)
-	     (let* ((mod (gensym (string->symbol (basename filename))))
-		    (expr (compile src mod))
-		    (evmod (eval-module)))
-		(when (eq? nodejs-debug-compile 'yes)
-		   (unless (directory? "/tmp/HOP")
-		      (make-directory "/tmp/HOP"))
-		   (let ((tgt (make-file-name "/tmp/HOP"
-				 (string-append
-				    (string-replace (prefix filename) #\/ #\_)
-				    ".scm"))))
-		      (call-with-output-file tgt
-			 (lambda (op)
-			    (for-each (lambda (e) (pp e op)) expr)))))
-		(trace-item "thread=" (current-thread))
-		(trace-item "expr=" (format "~s" expr))
-		(unwind-protect
-		   (let ((nexpr (map (lambda (x) (eval `(expand ',x))) expr)))
-		      ;; the forms to be evaluated have to be expanded first
-		      ;; in order to resolve the &begin! ... &end! construct
-		      (for-each eval nexpr)
-		      (let ((hopscript (eval! 'hopscript)))
-			 (hashtable-put! compile-table filename hopscript)
-			 hopscript))
-		   (eval-module-set! evmod)))))))
+	 (let ((key (if worker-slave
+			(string-append filename "_w")
+			filename)))
+	    (or (hashtable-get compile-table key)
+		(let* ((mod (gensym (string->symbol (basename filename))))
+		       (expr (compile src mod))
+		       (evmod (eval-module)))
+		   (when (eq? nodejs-debug-compile 'yes)
+		      (unless (directory? "/tmp/HOP")
+			 (make-directory "/tmp/HOP"))
+		      (let ((tgt (make-file-name "/tmp/HOP"
+				    (string-append
+				       (string-replace (prefix filename) #\/ #\_)
+				       ".scm"))))
+			 (call-with-output-file tgt
+			    (lambda (op)
+			       (for-each (lambda (e) (pp e op)) expr)))))
+		   (trace-item "thread=" (current-thread))
+		   (trace-item "expr=" (format "~s" expr))
+		   (unwind-protect
+		      (let ((nexpr (map (lambda (x) (eval `(expand ',x))) expr)))
+			 ;; the forms to be evaluated have to be expanded first
+			 ;; in order to resolve the &begin! ... &end! construct
+			 (for-each eval nexpr)
+			 (let ((hopscript (eval! 'hopscript)))
+			    (hashtable-put! compile-table key hopscript)
+			    hopscript))
+		      (eval-module-set! evmod))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-debug-compile ...                                         */
@@ -1659,7 +1658,8 @@
 			   (js-delete! module-cache
 			      (js-string->jsstring filename) #f %this))
 			(raise e))
-		     (hopscript %this this scope mod))
+		     (begin
+			(hopscript %this this scope mod)))
 		  ;; set the loaded property
 		  (js-put! mod (& "loaded") #t #f %this)
 		  ;; return the newly created module
@@ -1889,7 +1889,7 @@
 	     mod))))
 
    (with-trace 'require (format "nodejs-load-module ~a" path)
-      (with-access::WorkerHopThread worker (module-cache parent)
+      (with-access::WorkerHopThread worker (module-cache)
 	 (let ((mod (js-get-property-value module-cache module-cache
 		       (js-string->jsstring path) %this)))
 	    (trace-item "path=" path)
@@ -2294,9 +2294,10 @@
       (js-tostring (js-get %module (& "filename") %this) %this))
    
    (define (loader filename worker this)
-      (let ((mod (nodejs-new-module (basename filename) parentfile worker this)))
+      (let ((parent (nodejs-new-module (basename filename)
+		       parentfile worker this)))
 	 (if (string? filename)
-	     (nodejs-require-module filename worker this mod)
+	     (nodejs-require-module filename worker this parent)
 	     (js-raise-error %this
 		(format "Cannot load worker module ~a" filename)
 		filename))))

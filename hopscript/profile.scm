@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sun Mar 31 10:01:50 2019 (serrano)                */
+;*    Last change :  Mon May 13 14:30:48 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -25,6 +25,9 @@
 
    (import __hopscript_types
 	   __hopscript_property)
+
+   (extern ($js-get-pcaches::pair-nil ()
+	      "bgl_get_pcaches"))
 
    (export (js-profile-init conf calltable)
 	   *profile-cache*

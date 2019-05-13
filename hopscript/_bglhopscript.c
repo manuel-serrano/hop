@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu May  2 22:07:25 2019 (serrano)                */
+/*    Last change :  Mon May 13 14:02:31 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -105,7 +105,7 @@ bgl_register_dpcache( obj_t pcache, obj_t thread ) {
 	 dpcaches =
 	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( struct dpcache_entry ) * 10 );
 	 dpcaches_len = 10;
-      } else { 
+      } else {
 	 struct dpcache_entry *new =
 	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( struct dpcache_entry ) * dpcaches_len * 2 );
 	 memcpy( new, dpcaches, sizeof( obj_t ) * dpcaches_len );
@@ -114,7 +114,7 @@ bgl_register_dpcache( obj_t pcache, obj_t thread ) {
 	 dpcaches_len *= 2;
       }
    }
-   
+
    dpcaches[ dpcaches_index ].pcache = pcache;
    dpcaches[ dpcaches_index++ ].thread = thread;
 
@@ -146,28 +146,6 @@ bgl_get_pcaches() {
    return res;
 }
    
-/*---------------------------------------------------------------------*/
-/*    void                                                             */
-/*    bgl_invalidate_pcaches_pmap ...                                  */
-/*---------------------------------------------------------------------*/
-void
-bgl_invalidate_pcaches_pmap( obj_t proc, obj_t thread ) {
-   int i;
-   for( i = 0; i < pcaches_index; i++ ) {
-      int j;
-      if( pcaches[ i ].thread == thread ) {
-	 for( j = 0; j < pcaches[ i ].length; j++ ) {
-	    PROCEDURE_ENTRY( proc )( proc, BOBJECT( &(pcaches[ i ].pcache[ j ]) ), BEOA );
-	 }
-      }
-   }
-   for( i = 0; i < dpcaches_index; i++ ) {
-      if( dpcaches[ i ].thread == thread ) {
-	 PROCEDURE_ENTRY( proc )( proc, dpcaches[ i ].pcache, BEOA );
-      }
-   }
-}
-
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
 /*    bgl_make_pcache_table ...                                        */

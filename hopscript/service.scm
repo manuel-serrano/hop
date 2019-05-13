@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun May 12 07:17:10 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:40:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -261,7 +261,7 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 ;; local constant strings initialization
-	 (set! __js_strings (&init!))
+	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
 
 	 ;; service pcache
 	 (set! js-service-pcache

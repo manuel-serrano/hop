@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri Apr 12 16:15:30 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:38:18 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -82,7 +82,7 @@
 ;*    https://www.ecma-international.org/ecma-262/6.0/#sec-25.2        */
 ;*---------------------------------------------------------------------*/
 (define (js-init-generator! %this::JsGlobalObject)
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    (js-init-generator-yield-cmap! %this)
    (with-access::JsGlobalObject %this (__proto__
 					 js-function-prototype

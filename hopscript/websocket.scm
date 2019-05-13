@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sat May  4 23:18:34 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:40:57 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -174,7 +174,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-websocket! %this::JsGlobalObject)
 
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    
    (with-access::JsGlobalObject %this (__proto__ js-object js-function)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sat May  4 15:06:30 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:38:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -342,8 +342,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-socket->jsobject obj %this)
    (with-access::JsGlobalObject %this (__proto__)
-      (unless (vector? __js_strings)
-	 (set! __js_strings (&init!)))
+      (unless (vector? __js_strings) (set! __js_strings (&init!)))
       (let ((sock (instantiateJsWrapper
 		     (__proto__ __proto__)
 		     (data #unspecified)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  5 22:00:24 2018                          */
-;*    Last change :  Fri Apr 12 16:16:14 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:40:07 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript REFLECT object.              */
@@ -48,7 +48,7 @@
 ;*    js-init-reflect! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-reflect! %this::JsGlobalObject)
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    (with-access::JsGlobalObject %this (__proto__)
       
       (define js-reflect

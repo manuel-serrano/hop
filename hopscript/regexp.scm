@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 17 07:23:04 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:40:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -104,7 +104,7 @@
 					 js-regexp-exec-cmap
 					 js-regexp-pcache)
       ;; local constant strings
-      (set! __js_strings (&init!))
+      (unless (vector? __js_strings) (set! __js_strings (&init!)))
 
       ;; regexp pcache
       (set! js-regexp-pcache

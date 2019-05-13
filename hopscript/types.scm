@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun May 12 06:37:50 2019 (serrano)                */
+;*    Last change :  Mon May 13 14:28:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -526,10 +526,16 @@
        (pragma (gencmapid default-inline)))))
 
 ;*---------------------------------------------------------------------*/
+;*    cache-mutex ...                                                  */
+;*---------------------------------------------------------------------*/
+(define cache-mutex (make-spinlock "cache-mutex"))
+
+;*---------------------------------------------------------------------*/
 ;*    js-property-cache-init! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-property-cache-init! o)
-   ($js-register-property-cache o (current-thread)))
+   (synchronize cache-mutex
+      ($js-register-property-cache o (current-thread))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-jsobject ...                                             */

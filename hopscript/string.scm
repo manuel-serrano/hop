@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May  5 16:52:48 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:40:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -120,7 +120,7 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 ;; local constant strings
-	 (set! __js_strings (&init!))
+	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
 	 
 	 ;; string pcache
 	 (set! js-string-pcache

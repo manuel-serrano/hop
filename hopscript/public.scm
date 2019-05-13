@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon May  6 13:00:52 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:40:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -198,7 +198,7 @@
 ;*    js-init-public! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-public! %this::JsGlobalObject)
-   (set! __js_strings (&init!)))
+   (unless (vector? __js_strings) (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */

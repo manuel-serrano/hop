@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon May  6 03:18:08 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:39:51 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -65,7 +65,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-proxy! %this::JsGlobalObject)
    
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
 
    (set! proxy-elements
       (vector

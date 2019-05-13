@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun May 12 19:31:58 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:39:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -42,11 +42,7 @@
 	   __hopscript_arraybufferview)
    
    (extern ($js-make-pcache-table::obj (::obj ::int ::obj ::obj ::JsPropertyCache)
-	      "bgl_make_pcache_table")
-	   ($js-invalidate-pcaches-pmap!::void (::obj ::obj)
-	      "bgl_invalidate_pcaches_pmap")
-	   ($js-get-pcaches::pair-nil ()
-	      "bgl_get_pcaches"))
+	      "bgl_make_pcache_table"))
 
    (export (js-init-property! ::JsGlobalObject)
 	   (generic js-debug-object ::obj #!optional (msg ""))
@@ -262,7 +258,7 @@
 ;*    js-init-property! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-init-property! %this)
-   (set! __js_strings (&init!)))
+   (unless (vector? __js_strings) (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -482,10 +478,11 @@
 (define (register-pcache-table! pctable len src)
    ;; bootstrap initialization
    ;;(tprint "regsiter-pcache-table len=" len " src=" src " " (current-thread))
-   (when (eq? *pctables* #unspecified) (set! *pctables* '()))
    (let ((pc (vector pctable len src (current-thread))))
       (synchronize pcache-lock
-	 (set! *pctables* (cons pc *pctables*))
+	 (if (eq? *pctables* #unspecified)
+	     (set! *pctables* (list pc))
+	     (set! *pctables* (cons pc *pctables*)))
 	 pctable)))
 
 ;*---------------------------------------------------------------------*/
@@ -533,7 +530,7 @@
    
    (with-access::JsGlobalObject %this (js-pmap-valid cmap)
       (when js-pmap-valid
-;* 	    (tprint "invalidate " reason " " who " " js-cache-index)   */
+;* 	 (tprint "invalidate " reason " " who " " js-cache-index)      */
 	 (synchronize js-cache-table-lock
 	    (let loop ((i (-fx js-cache-index 1)))
 	       (when (>=fx i 0)

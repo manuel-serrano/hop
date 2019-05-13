@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 18 08:05:33 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:39:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -99,7 +99,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-number! %this)
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    (with-access::JsGlobalObject %this (__proto__ js-number js-function)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 

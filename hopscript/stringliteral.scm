@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat May 11 05:31:52 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:40:39 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -136,7 +136,7 @@
 ;*    js-init-stringliteral! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-stringliteral! %this)
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    (with-access::JsGlobalObject %this (char-table)
       (let ((vec (make-vector 256)))
 	 (let loop ((i 0))

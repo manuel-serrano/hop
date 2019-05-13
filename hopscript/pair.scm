@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Fri Apr 12 15:25:23 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:39:27 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -46,7 +46,7 @@
 ;*    js-init-pair! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-init-pair! %this)
-   (set! __js_strings (&init!)))
+   (unless (vector? __js_strings) (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-name-pair ...                                      */

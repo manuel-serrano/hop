@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Apr 26 14:03:46 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:38:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -160,7 +160,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-function! %this::JsGlobalObject)
    ;; local constant strings
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    ;; create function cmap
    (js-init-function-cmap! %this)
    ;; pre-allocated prototype property descriptors

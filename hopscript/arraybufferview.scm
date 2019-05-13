@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sat May  4 02:49:22 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:37:08 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -340,7 +340,7 @@
 ;*    js-init-arraybufferview! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-init-arraybufferview! %this)
-   (set! __js_strings (&init!))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    (with-access::JsGlobalObject %this (__proto__ js-function js-object)
       (let ((proto (instantiateJsObject
 		      (__proto__ __proto__))))

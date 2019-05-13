@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Sat Apr 13 07:48:47 2019 (serrano)                */
+;*    Last change :  Mon May 13 10:40:31 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -113,7 +113,7 @@
 (define (js-spawn genF self %this)
    (with-access::JsGlobalObject %this (js-promise js-spawn-pcache)
       (when (=fx (vector-length js-spawn-pcache) 0)
-	 (set! __js_strings (&init!))
+	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
 	 (set! js-spawn-pcache
 	    ((@ js-make-pcache-table __hopscript_property) 8 "spawn")))
       (js-new1 %this js-promise

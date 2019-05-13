@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sat May 11 06:48:07 2019 (serrano)                */
+;*    Last change :  Mon May 13 08:19:01 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -100,7 +100,7 @@
 		  (js-new %this js-worker proc))))
 
 	 ;; local constant strings
-	 (set! __js_strings (&init!))
+	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
 	 
 	 ;; create the builtin prototype
 	 (set! js-worker-prototype
@@ -201,13 +201,11 @@
 			     (let ((this (%global-constructor
 					    :name (string-append source "_w"))))
 				;; store the worker in global object
-				(with-access::JsGlobalObject this (worker)
-				   (set! worker thread))
-				(with-access::WorkerHopThread thread (%this module-cache)
-				   (set! %this this)
-				   (set! module-cache (js-new0 %this js-object)))
-				(let ((mod (js-get %this (& "module") %this)))
-				   (js-put! this (& "module") mod #f this)))))
+				(with-access::JsGlobalObject this (worker js-object)
+				   (set! worker thread)
+				   (with-access::WorkerHopThread thread (%this module-cache)
+				      (set! %this this)
+				      (set! module-cache (js-new0 this js-object)))))))
 		   (thunk (lambda ()
 			     (with-access::WorkerHopThread thread (%this)
 				(with-handler

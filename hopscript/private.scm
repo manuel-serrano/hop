@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Mar 31 11:16:54 2019 (serrano)                */
+;*    Last change :  Mon May 13 16:17:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -50,7 +50,8 @@
 	   (inline u32vset! ::vector ::uint32 ::obj)
 	   (inline u32vlen::uint32 ::vector)
 	   
-	   (js-freeze-property! desc::JsPropertyDescriptor)
+	   (js-seal-property! ::JsPropertyDescriptor)
+	   (js-freeze-property! ::JsPropertyDescriptor)
 
 	   (js-properties-clone ::pair-nil)
 	   
@@ -149,6 +150,13 @@
 			 (js-toprimitive ,tmp 'any ,this)))))
 	    (else
 	     (error "js-toprimitive" "illegal call" x))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-seal-property! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-seal-property! desc::JsPropertyDescriptor)
+   (with-access::JsPropertyDescriptor desc (name configurable)
+      (when (eq? configurable #t) (set! configurable #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-freeze-property! ...                                          */
