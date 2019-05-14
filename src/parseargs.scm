@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon May 13 19:19:23 2019 (serrano)                */
+;*    Last change :  Tue May 14 08:23:23 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -305,7 +305,7 @@
 	    (("--no-server" (help "Exit after loading command line files"))
 	     (hop-port-set! -1)
 	     (hop-run-server-set! #f)
-	     (unless p (set! p 0)))
+	     (set! p #f))
 	    (("--exepath" ?name (help "Set JavaScript executable path"))
 	     (if (string=? name "*")
 		 (hop-exepath-set! (executable-name))
@@ -421,7 +421,9 @@
 	    (exit 0)))
 
       ;; open the server socket before switching to a different process owner
-      (init-server-socket!)
+      (when (>=fx (hop-port) 0)
+	 (init-server-socket!)
+	 (hop-port-set! (socket-port-number (hop-server-socket))))
       
       ;; set the hop process owner
       (when setuser
@@ -446,16 +448,22 @@
 	     (lambda (p)
 		(load-mime-types (make-file-name p ".mime.types"))))))
       
+      ;; clear sofiles
+      (when clear-libs
+	 (let ((dir (dirname (hop-sofile-path "dummy.so"))))
+	    (delete-path dir)))
+      
       ;; clear all caches
       (when clear-cache
 	 (let ((cache (make-cache-name)))
 	    (when (directory? cache)
 	       (delete-path cache))))
-      
-      ;; clear sofiles
-      (when clear-libs
-	 (let ((dir (dirname (hop-sofile-path "dummy.so"))))
-	    (delete-path dir)))
+
+      ;; create cache directory
+      (when (hop-cache-enable)
+	 (let ((cache (make-cache-name)))
+	    (unless (directory? cache)
+	       (make-directories cache))))
       
       ;; weblets path
       (hop-autoload-directory-add!
@@ -556,9 +564,9 @@
 				  (hop-process-key-delete (hop-port))
 				  ret))
 
-      ;; check if a new server socket must be opened
-      (when (and (integer? p) (not (=fx p (hop-port))))
-	 (init-server-socket!))
+;*       ;; check if a new server socket must be opened                */
+;*       (when (and (integer? p) (not (=fx p (hop-port))))             */
+;* 	 (init-server-socket!))                                        */
       
       (values (reverse files) (reverse! exprs) (reverse! exprsjs))))
 

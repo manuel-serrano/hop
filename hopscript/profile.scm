@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Mon May 13 14:30:48 2019 (serrano)                */
+;*    Last change :  Tue May 14 07:48:00 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -26,12 +26,11 @@
    (import __hopscript_types
 	   __hopscript_property)
 
-   (extern ($js-get-pcaches::pair-nil ()
-	      "bgl_get_pcaches"))
-
    (export (js-profile-init conf calltable)
 	   *profile-cache*
 
+	   (js-profile-register-pcache ::JsPropertyCache)
+	   
 	   (js-profile-log-cache ::JsPropertyCache
 	      #!key imap emap cmap pmap amap vtable)
 	   (js-profile-log-index ::long)
@@ -130,6 +129,20 @@
       (set! *profile-caches*
 	 (append-map (lambda (k) (cons k '()))
 	    *profile-cache-hit* *profile-cache-miss*))))
+
+;*---------------------------------------------------------------------*/
+;*    js-cache-table ...                                               */
+;*---------------------------------------------------------------------*/
+(define js-profile-pcaches-lock (make-spinlock "js-profile-pcaches"))
+(define js-profile-pcaches '())
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-register-pcache ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-profile-register-pcache pcache::JsPropertyCache)
+   (when *profile-cache*
+      (synchronize js-profile-pcaches-lock
+	 (set! js-profile-pcaches (cons pcache js-profile-pcaches)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-cache ...                                         */
@@ -748,8 +761,8 @@
 	 (if m
 	     (let ((filename (cadr m)))
 		(filter (lambda (fc) (string=? (filecache-name fc) filename))
-		   ($js-get-pcaches)))
-	     ($js-get-pcaches))))
+		   js-profile-pcaches))
+	     js-profile-pcaches)))
 
    (define threshold
       (let ((m (pregexp-match "hopscript:cache=([0-9]+)" trc)))

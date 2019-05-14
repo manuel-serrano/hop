@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon Jan 21 17:49:06 2019 (serrano)                */
+;*    Last change :  Tue May 14 09:16:35 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -59,7 +59,7 @@
 			    (or (number? x) (string? x) (boolean? x)))
 		     sexprs)
 		  (unique? conf sexprs))
-	     (let ((vec `',(list->vector sexprs)))
+	     (let ((vec `(copy-vector ',(list->vector sexprs) ,(length sexprs))))
 		(epairify loc
 		   (if (eq? type 'vector)
 		       vec

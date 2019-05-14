@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon May 13 10:39:41 2019 (serrano)                */
+;*    Last change :  Tue May 14 08:56:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -467,25 +467,6 @@
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
-;*    *pctables* ...                                                   */
-;*---------------------------------------------------------------------*/
-(define *pctables* *pctables*)
-(define pcache-lock (make-spinlock "pcache-lock"))
-
-;*---------------------------------------------------------------------*/
-;*    register-pcachet-table! ...                                      */
-;*---------------------------------------------------------------------*/
-(define (register-pcache-table! pctable len src)
-   ;; bootstrap initialization
-   ;;(tprint "regsiter-pcache-table len=" len " src=" src " " (current-thread))
-   (let ((pc (vector pctable len src (current-thread))))
-      (synchronize pcache-lock
-	 (if (eq? *pctables* #unspecified)
-	     (set! *pctables* (list pc))
-	     (set! *pctables* (cons pc *pctables*)))
-	 pctable)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-make-pcache-table ...                                         */
 ;*    -------------------------------------------------------------    */
 ;*    This function is used by a macro of property_expd.sch.           */
@@ -494,7 +475,7 @@
    (let ((pctable ($make-vector-uncollectable len #unspecified)))
       (let loop ((i 0))
 	 (if (=fx i len)
-	     (register-pcache-table! pctable len src)
+	     pctable
 	     (begin
 		(vector-set! pctable i
 		   (instantiate::JsPropertyCache
@@ -530,27 +511,14 @@
    
    (with-access::JsGlobalObject %this (js-pmap-valid cmap)
       (when js-pmap-valid
-;* 	 (tprint "invalidate " reason " " who " " js-cache-index)      */
 	 (synchronize js-cache-table-lock
+;* 	    (tprint "invalidate " reason " " who " " js-cache-index)   */
 	    (let loop ((i (-fx js-cache-index 1)))
 	       (when (>=fx i 0)
 		  (invalidate-pcache-pmap! (vector-ref js-cache-table i))
 		  (loop (-fx i 1)))))
 	 (set! js-pmap-valid #f)
-	 (log-pmap-invalidation! reason)
-	 )))
-;* 	 (let ((curth (current-thread)))                               */
-;* 	    ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap! curth) */
-;* 	    (for-each (lambda (pcache-entry)                           */
-;* 			 (let ((vec (vector-ref pcache-entry 0))       */
-;* 			       (th (vector-ref pcache-entry 3)))       */
-;* 			    (when (eq? th curth)                       */
-;* 			       (let loop ((i (-fx (vector-ref pcache-entry 1) 1))) */
-;* 				  (when (>=fx i 0)                     */
-;* 				     (let ((pcache (vector-ref vec i))) */
-;* 					(invalidate-pcache-pmap! pcache)) */
-;* 				     (loop (-fx i 1)))))))             */
-;* 	       *pctables*)))))                                         */
+	 (log-pmap-invalidation! reason))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-invalidate-cache-method! ...                                  */
@@ -621,6 +589,7 @@
 	    (set! cmap #t)
 	    (set! pmap #t)
 	    (set! emap #t)
+	    (js-register-pcache! pcache)
 	    (set! amap omap)
 	    (unless (isa? obj JsProxy) (set! owner obj))
 	    (set! index i)))))

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/array.js        */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/array.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Jan 28 19:52:47 2019 (serrano)                */
+/*    Last change :  Tue May 14 09:13:04 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -474,3 +474,16 @@ function protoChainPush() {
 assert.ok( protoChain(), "protoChain" );
 assert.ok( protoChainPush(), "protoChainPush" );
 
+function testConstant() {
+   
+   function funvec( v ) {
+      v[ 2 ] = 3.6;
+   }
+   for( let i = 0; i < 10; i++ ) {
+      const o = [1, 2, 34];
+      if( i == 3 ) return o[ 2 ] === 34;
+      funvec( o );
+   }
+}
+
+assert.ok( testConstant(), "testConstant" );

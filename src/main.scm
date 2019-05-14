@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May  8 11:03:03 2019 (serrano)                */
+;*    Last change :  Tue May 14 08:03:28 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -95,7 +95,7 @@
 	 (hop-filter-add! service-filter)
 	 (hop-init args files exprs)
 	 ;; adjust the actual hop-port before executing client code
-	 (hop-port-set! (socket-port-number (hop-server-socket)))
+;* 	 (hop-port-set! (socket-port-number (hop-server-socket)))      */
 	 ;; js rc load
 	 (if (hop-javascript)
 	     (set! jsworker (javascript-init args files exprsjs))
@@ -126,21 +126,18 @@
 		  "An error has occurred in the Hop main loop, exiting...")
 	       (exit 1))
 	    (let ((serv (hop-server-socket)))
-	       ;; fast server event socket
-	       (hop-fast-server-event-port-set! (socket-port-number serv))
 	       ;; ready to now say hello
 	       (hello-world)
-	       ;; tune the server socket
-	       (socket-option-set! serv :TCP_NODELAY #t)
-	       ;; start the job (a la cron background tasks) scheduler
-	       (when (hop-enable-jobs)
-		  (job-start-scheduler!))
 	       ;; when needed, start the HOP repl
 	       (when (eq? (hop-enable-repl) 'scm)
 		  (hop-repl (hop-scheduler)))
 	       ;; when needed, start a loop for server events
 	       (hop-event-server (hop-scheduler))
 	       (when (hop-run-server)
+		  ;; tune the server socket
+		  (socket-option-set! serv :TCP_NODELAY #t)
+		  ;; fast server event socket
+		  (hop-fast-server-event-port-set! (socket-port-number serv))
 		  ;; preload all the forced services
 		  (for-each (lambda (svc)
 			       (let* ((path (string-append (hop-service-base)

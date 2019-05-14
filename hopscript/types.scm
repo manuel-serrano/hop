@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon May 13 14:28:29 2019 (serrano)                */
+;*    Last change :  Tue May 14 07:43:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -28,14 +28,13 @@
 	__hopscript_private
 	__hopscript_function
 	__hopscript_property
+	__hopscript_profile
 	;;__hopscript_public
 	__hopscript_lib)
 
    (extern (include "bglhopscript_malloc.h"))
 
-   (extern ($js-register-property-cache::JsPropertyCache (::obj ::obj)
-	      "bgl_register_dpcache")
-	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
+   (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
@@ -118,7 +117,6 @@
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))
 	      (lock read-only (default (make-spinlock "JsConstructMap")))
-;* 	      (lock read-only (default (make-mutex "JsConstructMap"))) */
 	      (size::long (default 0))
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
@@ -534,8 +532,8 @@
 ;*    js-property-cache-init! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-property-cache-init! o)
-   (synchronize cache-mutex
-      ($js-register-property-cache o (current-thread))))
+   (js-profile-register-pcache o)
+   o)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-jsobject ...                                             */

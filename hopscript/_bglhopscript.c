@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Mon May 13 14:02:31 2019 (serrano)                */
+/*    Last change :  Tue May 14 07:45:42 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -48,105 +48,6 @@ extern obj_t bgl_js_profile_allocs;
 typedef struct BgL_jspropertycachez00_bgl pcache_t;
 
 /*---------------------------------------------------------------------*/
-/*    pcache_entry ...                                                 */
-/*---------------------------------------------------------------------*/
-struct pcache_entry {
-   pcache_t *pcache;
-   int length;
-   obj_t src;
-   obj_t thread;
-} *pcaches;
-
-static struct dpcache_entry {
-   obj_t pcache;
-   obj_t thread;
-} *dpcaches;
-
-static int pcaches_len = 0;
-static int pcaches_index = 0;
-static int dpcaches_len = 0;
-static int dpcaches_index = 0;
-
-/*---------------------------------------------------------------------*/
-/*    static void                                                      */
-/*    bgl_register_pcaches ...                                         */
-/*---------------------------------------------------------------------*/
-static void
-bgl_register_pcaches( pcache_t *pcache, int len, obj_t src, obj_t thread ) {
-   if( pcaches_index == pcaches_len ) {
-      if( !pcaches_len ) {
-	 pcaches =
-	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( struct pcache_entry ) * 10 );
-	 pcaches_len = 10;
-      } else { 
-	 struct pcache_entry *new =
-	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( struct pcache_entry ) * pcaches_len * 2 );
-	 memcpy( new, pcaches, sizeof( struct pcache_entry ) * pcaches_len );
-	 GC_free( (void *)pcaches );
-	 pcaches = new;
-	 pcaches_len *= 2;
-      }
-   }
-   
-   pcaches[ pcaches_index ].pcache = pcache;
-   pcaches[ pcaches_index ].length = len;
-   pcaches[ pcaches_index ].src = src;
-   pcaches[ pcaches_index++ ].thread = thread;
-}
-
-/*---------------------------------------------------------------------*/
-/*    obj_t                                                            */
-/*    bgl_register_dpcache ...                                         */
-/*---------------------------------------------------------------------*/
-obj_t
-bgl_register_dpcache( obj_t pcache, obj_t thread ) {
-   if( dpcaches_index == dpcaches_len ) {
-      if( !dpcaches_len ) {
-	 dpcaches =
-	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( struct dpcache_entry ) * 10 );
-	 dpcaches_len = 10;
-      } else {
-	 struct dpcache_entry *new =
-	    (void *)GC_MALLOC_UNCOLLECTABLE( sizeof( struct dpcache_entry ) * dpcaches_len * 2 );
-	 memcpy( new, dpcaches, sizeof( obj_t ) * dpcaches_len );
-	 GC_free( (void *)dpcaches );
-	 dpcaches = new;
-	 dpcaches_len *= 2;
-      }
-   }
-
-   dpcaches[ dpcaches_index ].pcache = pcache;
-   dpcaches[ dpcaches_index++ ].thread = thread;
-
-   return pcache;
-}
-   
-/*---------------------------------------------------------------------*/
-/*    obj_t                                                            */
-/*    bgl_get_pcaches ...                                              */
-/*---------------------------------------------------------------------*/
-obj_t
-bgl_get_pcaches() {
-   obj_t res = BNIL;
-   int i;
-
-   for( i = 0; i < pcaches_index; i++ ) {
-      int j;
-      obj_t vec = create_vector( pcaches[ i ].length );
-      obj_t o;
-      
-      for( j = 0; j < pcaches[ i ].length; j++ ) {
-	 VECTOR_SET( vec, j, BOBJECT( &(pcaches[ i ].pcache[ j ]) ) );
-      }
-
-      o = MAKE_PAIR( pcaches[ i ].src, vec );
-      res = MAKE_PAIR( o, res );
-   }
-
-   return res;
-}
-   
-/*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
 /*    bgl_make_pcache_table ...                                        */
 /*    -------------------------------------------------------------    */
@@ -161,8 +62,6 @@ bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t thread, obj_t templa
    for( i = 0; i < len; i++ ) {
       memcpy( &(pcache[ i ]), COBJECT( template ), sizeof( pcache_t ) );
    }
-
-   bgl_register_pcaches( pcache, len, src, thread );
 
    return BUNSPEC;
 }

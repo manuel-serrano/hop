@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon May 13 08:28:12 2019 (serrano)                */
+;*    Last change :  Tue May 14 08:15:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -993,30 +993,53 @@
 (define (nodejs-compile src filename::bstring
 	   %ctxthis %ctxmodule
 	   #!key lang worker-slave commonjs-export)
+
+   (define (cache-path filename)
+      (make-cache-name 
+	 (string-append (string-replace (prefix filename) #\/ #\_) ".scm")))
+   
+   (define (load-cache filename)
+      (when (hop-cache-enable)
+	 (let ((path (cache-path filename)))
+	    (when (and (file-exists? path)
+		       (<elong (file-modification-time filename)
+			  (file-modification-time path)))
+	       (call-with-input-file path
+		  port->sexp-list)))))
+
+   (define (store-cache filename expr)
+      (when (hop-cache-enable)
+	 (let ((path (cache-path filename)))
+	    (call-with-output-file path
+	       (lambda (op)
+		  (for-each (lambda (e) (pp e op)) expr)))))
+      expr)
    
    (define (compile-file filename::bstring mod)
       (with-trace 'require "compile-file"
 	 (trace-item "filename=" filename)
-	 (call-with-input-file filename
-	    (lambda (in)
-	       (debug-compile-trace "compile-file" filename)
-	       (let ((m (open-mmap filename read: #t :write #f)))
-		  (unwind-protect
-		     (j2s-compile in
-			:driver (nodejs-driver)
-			:driver-name "nodejs-driver"
-			:filename filename
-			:language (or lang "hopscript")
-			:mmap-src m
-			:module-main #f
-			:module-name (symbol->string mod)
-			:worker-slave worker-slave
-			:verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
-			:plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
-			:commonjs-export commonjs-export
-			:es6-module-client #t
-			:debug (bigloo-debug))
-		     (close-mmap m)))))))
+	 (or (load-cache filename)
+	     (store-cache filename
+		(call-with-input-file filename
+		   (lambda (in)
+		      (debug-compile-trace "compile-file" filename)
+		      (let ((m (open-mmap filename read: #t :write #f)))
+			 (unwind-protect
+			    (j2s-compile in
+			       :driver (nodejs-driver)
+			       :driver-name "nodejs-driver"
+			       :filename filename
+			       :language (or lang "hopscript")
+			       :mmap-src m
+			       :module-main #f
+			       :module-name (symbol->string mod)
+			       :worker-slave worker-slave
+			       :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+			       :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+			       :commonjs-export commonjs-export
+			       :es6-module-client #t
+			       :debug (bigloo-debug))
+			    (close-mmap m)))))))))
    
    (define (compile-url url::bstring mod)
       (with-trace 'require "compile-url"
