@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/etc/configure.scm.in              */
+;*    serrano/prgm/project/hop/hop/etc/configure.scm.in                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Fri Sep 14 08:40:29 2018 (serrano)                */
+;*    Last change :  Mon May 13 19:16:29 2019 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -37,7 +37,6 @@
 	    (inline hop-runtime-system-files::pair)
 	    (inline hop-service-base::bstring)
 	    (hop-configure-rc-directory)
-	    (hop-configure-var-directory)
 	    (hop-configure-cache-directory)
 	    (hop-srfis::pair-nil)
 	    (hop-zeroconf-default)
@@ -65,7 +64,6 @@
 	    (export hop-runtime-system-files)
 	    (export hop-service-base)
 	    (export hop-configure-rc-directory)
-	    (export hop-configure-var-directory)
 	    (export hop-configure-cache-directory)
 	    (export hop-srfis)
 	    (export hop-zeroconf-default)

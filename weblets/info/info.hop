@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/weblets/info/info.hop             */
+;*    serrano/prgm/project/hop/hop/weblets/info/info.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jan 16 13:38:05 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Mon May 13 19:19:52 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
 ;*=====================================================================*/
@@ -293,9 +293,6 @@
 		  " (" (socket-hostname socket) ")")))
 	 (<H1> "Server configuration")
 	 (<TABLE> :class "hop-info"
-	    (<TR>
-	       (<TH> :align 'right "Var directory")
-	       (<TD> :align 'left (hop-var-directory)))
 	    (<TR>
 	       (<TH> :align 'right "Cache directory")
 	       (<TD> :align 'left (hop-cache-directory)))

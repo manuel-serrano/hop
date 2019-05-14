@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue May  7 09:15:42 2019 (serrano)                */
+;*    Last change :  Mon May 13 19:19:23 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -106,9 +106,6 @@
 		(hop-cache-directory-set! (make-file-name dir "cache")))
 	     (unless libs-dir
 		(hop-sofile-directory-set! (make-file-path dir "libs"))))
-	    (("--var-dir" ?dir (help "Set var directory"))
-	     (hop-var-directory-set! dir)
-	     (hop-upload-directory-set! (make-file-name dir "upload")))
 	    (("--cache-dir" ?dir (help "Set cache directory"))
 	     (set! cache-dir #t)
 	     (hop-cache-directory-set! dir))

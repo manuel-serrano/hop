@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue May  7 11:47:57 2019 (serrano)                */
+;*    Last change :  Tue May 14 06:17:55 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -139,7 +139,6 @@ function hop_etc_directory() {return \"" (hop-etc-directory) "\";}
 function hop_bin_directory() {return \"" (hop-bin-directory) "\";}
 function hop_lib_directory() {return \"" (hop-lib-directory) "\";}
 function hop_share_directory() {return \"" (hop-share-directory) "\";}
-function hop_var_directory() {return \"" (hop-var-directory) "\";}
 function hop_contribs_directory() {return \"" (hop-contribs-directory) "\";}
 function hop_weblets_directory() {return \"" (hop-weblets-directory) "\";}
 function hop_session() {return " (integer->string (hop-session)) ";}
