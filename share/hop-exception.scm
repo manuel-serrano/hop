@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Aug  2 12:41:20 2018 (serrano)                */
-;*    Copyright   :  2009-18 Manuel Serrano                            */
+;*    Last change :  Tue May 14 14:06:23 2019 (serrano)                */
+;*    Copyright   :  2009-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (included when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -334,7 +334,10 @@
 	 (<SPAN> :data-hss-class "hop-exception-img")
 	 (<DIV> :data-hss-class "hop-exception-body"
 	    ;; error title
-	    (<DIV> :data-hss-class "hop-exception-title" "Client Error")
+	    (<DIV> :data-hss-class "hop-exception-title"
+	       "Client Error")
+	    (<DIV> :data-hss-class "hop-exception-legend"
+	       "This error message is displayed because of Hop \"-g\" option.")
 	    ;; error message
 	    (<TABLE> :data-hss-class "hop-exception-msg"
 	       (<TR> (<TH> (if (and (js-instanceof? exc (@ Object js))
