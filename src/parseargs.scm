@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue May 14 08:23:23 2019 (serrano)                */
+;*    Last change :  Tue May 14 14:12:01 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -149,7 +149,7 @@
 	     (if (string=? level "")
 		 (hop-verbose-set! (+fx 1 (hop-verbose)))
 		 (hop-verbose-set! (string->integer level))))
-	    (("-g?level" (help "Increase/set debug level"))
+	    (("-g?level" (help "Set debug level (do not use in production)"))
 	     (cond
 		((string=? level "")
 		 (hop-sofile-enable-set! #f)
