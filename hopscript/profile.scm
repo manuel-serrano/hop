@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue May 14 07:48:00 2019 (serrano)                */
+;*    Last change :  Wed May 15 11:01:50 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -124,11 +124,13 @@
 ;*    profile-cache-start! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (profile-cache-start! trc)
+   (when (string-contains trc "hopscript:cache")
+      (set! *profile-cache* #t))
    (when (string-contains trc "hopscript:access")
       (set! *profile-cache* #t)
       (set! *profile-caches*
-	 (append-map (lambda (k) (cons k '()))
-	    *profile-cache-hit* *profile-cache-miss*))))
+	 (map (lambda (k) (cons k '()))
+	    (append *profile-cache-hit* *profile-cache-miss*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-cache-table ...                                               */
@@ -137,7 +139,7 @@
 (define js-profile-pcaches '())
 
 ;*---------------------------------------------------------------------*/
-;*    js-profile-register-pcache ...                                    */
+;*    js-profile-register-pcache ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-register-pcache pcache::JsPropertyCache)
    (when *profile-cache*
@@ -751,10 +753,10 @@
 		(loop (-fx i 1))))))
 
    (define (filecache-name fc)
-      (car fc))
+      "*")
 
    (define (filecache-caches fc)
-      (cdr fc))
+      fc)
    
    (define filecaches
       (let ((m (pregexp-match "srcfile=([^ ]+)" trc)))
@@ -794,9 +796,8 @@
          (if field
              (let ((proc (class-field-accessor field)))
                 (apply +llong-va
-                   (append-map (lambda (fc)
-				  (vmap (lambda (n) (->llong (proc n)))
-				     (filecache-caches fc)))
+                   (map (lambda (fc)
+			   (->llong (proc fc)))
                       filecaches)))
              (error "filecache-sum-field" "cannot find field" fieldname))))
 
@@ -815,8 +816,7 @@
    
    (define (filecaches-hits::llong filecaches)
       (apply +llong-va
-	 (append-map (lambda (fc) (vmap pcache-hits (filecache-caches fc)))
-	    filecaches)))
+	 (map pcache-hits filecaches)))
 
    (define (filecaches-misses filecaches)
       (filecache-sum-field filecaches 'cntmiss))
@@ -840,9 +840,8 @@
       (filecache-sum-field filecaches 'cntvtable))
 
    (define (filecaches-multis filecaches)
-      (append-map (lambda (fc)
-		     (filter (lambda (x) x)
-			(vmap pcache-multi (filecache-caches fc))))
+      (filter-map (lambda (fc)
+		     (pcache-multi fc))
 	 filecaches))
 
    (define (filecaches-usage-filter filecaches u)
@@ -1036,7 +1035,7 @@
 		(print "},")))))
       (else
        (fprint *profile-port* "\nCACHES:\n" "=======")
-       (fprintf *profile-port* "~(, )\n\n" (map car filecaches))
+       (fprintf *profile-port* "~(, )\n\n" trc)
        (for-each (lambda (what)
 		    (let ((c 0))
 		       (fprint *profile-port* (car what) ": "

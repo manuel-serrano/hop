@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon May 13 10:40:39 2019 (serrano)                */
+;*    Last change :  Wed May 15 13:56:57 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2872,12 +2872,17 @@
 ;*    js-jsstring-maybe-slice ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-slice this start end %this cache)
-   (if (js-jsstring? this)
-       (js-jsstring-slice this start end %this)
+   (cond
+      ((js-jsstring? this)
+       (js-jsstring-slice this start end %this))
+      ((js-array? this)
+       (js-array-prototype-slice this start end %this))
+      (else
        (with-access::JsGlobalObject %this (js-string-pcache)
 	  (let ((slice (js-get-name/cache this (& "slice") #f %this
-			  (or cache (js-pcache-ref js-string-pcache 22)))))
-	     (js-call2 %this slice this start end)))))
+			  (or cache (js-pcache-ref js-string-pcache 22))
+			  :cspecs '(imap+))))
+	     (js-call2 %this slice this start end))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->jsarray ...                                         */

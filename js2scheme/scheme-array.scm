@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue May 14 09:16:35 2019 (serrano)                */
+;*    Last change :  Wed May 15 08:06:22 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -30,12 +30,30 @@
 	   __js2scheme_scheme-fun
 	   __js2scheme_scheme-spread)
 
-   (export (j2s-new-array ::J2SNew mode return conf)
+   (export (j2s-array-builtin-method fun::J2SAccess args
+	      expr mode return::procedure conf)
+	   (j2s-new-array ::J2SNew mode return conf)
 	   (j2s-array-ref ::J2SAccess mode return conf)
 	   (j2s-array-set! ::J2SAssig mode return conf)
 	   (j2s-vector-ref ::J2SAccess mode return conf)
 	   (j2s-vector-set! ::J2SAssig mode return conf)
 	   (j2s-array-foreach obj args mode return conf)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-builtin-method ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-builtin-method fun::J2SAccess args expr mode return conf)
+   (with-access::J2SAccess fun (loc obj field)
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val)
+	    (cond
+	       ((string=? val "isArray")
+		(when (=fx (length args) 1)
+		   (let ((tmp (gensym 'tmp)))
+		      `(let ((,tmp ,(j2s-scheme (car args) mode return conf)))
+			  (or (js-array? ,tmp) (js-proxy-array? ,tmp))))))
+	       (else
+		#f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SArray ...                                        */

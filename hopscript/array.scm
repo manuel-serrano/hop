@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon May 13 10:37:17 2019 (serrano)                */
+;*    Last change :  Wed May 15 11:54:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -101,6 +101,8 @@
 	   (js-array-construct/length::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
+	   (js-array-concat1 ::JsArray ::JsArray ::JsGlobalObject ::obj)
+	   (js-array-maybe-concat1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-fill ::JsArray ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-foreach ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
@@ -113,6 +115,8 @@
 	   (js-array-pop ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-maybe-pop ::obj ::JsGlobalObject ::obj)
 	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-prototype-slice ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-array-maybe-slice0 ::obj ::JsGlobalObject ::obj)
 	   (js-iterator-to-array ::obj ::long ::JsGlobalObject))
    
    (cond-expand
@@ -386,7 +390,7 @@
 	 
 	 ;; array pcache
 	 (set! js-array-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 15 "array"))
+	    ((@ js-make-pcache-table __hopscript_property) 18 "array"))
 	 
 	 ;; default arrays cmap
 	 (set! js-array-cmap
@@ -1403,122 +1407,9 @@
 
    ;; slice
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.10
-   (define (array-prototype-slice this::obj start end)
+   (define (array-prototype-slice this start end)
+      (js-array-prototype-slice this start end %this))
 
-      (define (vector-slice/vec! o val k::long final::long vec::vector)
-	 (let ((arr (js-species->jsarray this vec %this))
-	       (len (vector-length vec)))
-	    (let ((i (-fx len 1)))
-	       (cond
-		  ((=fx i -1)
-		   arr)
-		  ((=fx i (-fx len 1))
-		   arr)
-		  (else
-		   (js-put-length! arr i #f #f %this)
-		   arr)))))
-
-      (define (vector-slice! o val::vector k::long final::long)
-	 (let ((vec (vector-copy val k final)))
-	    (vector-slice/vec! o val k final vec)))
-
-      (define (u8vector-slice! o val::u8vector k::long final::long)
-	 (let ((vec (js-create-vector (-fx final k))))
-	    (let loop ((i k)
-		       (j 0))
-	       (if (=fx i final)
-		   (vector-slice/vec! o val k final vec)
-		   (begin
-		      (vector-set! vec j
-			 (uint8->fixnum (u8vector-ref val i)))
-		      (loop (+fx i 1) (+fx j 1)))))))
-
-      (define (string-slice! o val::bstring k::long final::long)
-	 (let ((vec ($create-vector (-fx final k))))
-	    (let loop ((i k)
-		       (j 0))
-	       (if (=fx i final)
-		   (vector-slice/vec! o val k final vec)
-		   (begin
-		      (vector-set! vec j
-			 (char->integer (string-ref-ur val i)))
-		      (loop (+fx i 1) (+fx j 1)))))))
-
-      (define (array-copy! o len::long arr k::obj final::obj)
-	 (let loop ((i len))
-	    (cond
-	       ((= k final)
-		(js-put-length! arr i #f #f %this)
-		arr)
-	       ((eq? (js-get-property o (js-toname k %this) %this) (js-undefined))
-		(set! k (+ 1 k))
-		(loop (+fx i 1)))
-	       (else
-		(js-put! arr i (js-get o k %this) #f %this)
-		(set! k (+ 1 k))
-		(loop (+fx i 1))))))
-
-      (define (array-slice! o k::obj final::obj)
-	 (let ((arr (js-array-construct/length %this (js-array-alloc  %this)
-		       (- final k))))
-	    (array-copy! o 0 arr k final)))
-      
-      (let* ((o (js-toobject %this this))
-	     (len (js-uint32-tointeger (js-get-lengthu32 o %this)))
-	     (relstart (js-tointeger start %this))
-	     (k (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
-	     (relend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
-	     (final (if (< relend 0) (max (+ len relend) 0) (min relend len))))
-	 (cond
-	    ((<= final k)
-	     (js-empty-vector->jsarray %this))
-	    ((isa? o JsTypedArray)
-	     (with-access::JsTypedArray o (%data byteoffset)
-		(cond
-		   ((string? %data)
-		    (let* ((offset (uint32->fixnum byteoffset))
-			   (start (+fx offset (->fixnum k)))
-			   (end (+fx offset final))
-			   (vlen (string-length %data)))
-		       (cond
-			  ((<= end vlen)
-			   (string-slice! o %data start end))
-			  ((>fx vlen 0)
-			   (let* ((arr (string-slice! o %data start vlen))
-				  (vlen (->fixnum (js-get-length arr %this))))
-			      (array-copy! o vlen arr (- len vlen) end)))
-			  (else
-			   (array-slice! o start end)))))
-		   ((u8vector? %data)
-		    (let* ((offset (uint32->fixnum byteoffset))
-			   (start (+fx offset (->fixnum k)))
-			   (end (+fx offset final))
-			   (vlen (u8vector-length %data)))
-		       (cond
-			  ((<= end vlen)
-			   (u8vector-slice! o %data start end))
-			  ((>fx vlen 0)
-			   (let* ((arr (u8vector-slice! o %data start vlen))
-				  (vlen (->fixnum (js-get-length arr %this))))
-			      (array-copy! o vlen arr (- len vlen) end)))
-			  (else
-			   (array-slice! o start end)))))
-		   (else
-		    (array-slice! o k final)))))
-	    ((not (js-array? o))
-	     (array-slice! o k final))
-	    (else
-	     (with-access::JsArray o (vec ilen)
-		(let ((vlen (uint32->fixnum ilen)))
-		   (cond
-		      ((<= final vlen)
-		       (vector-slice! o vec (->fixnum k) (->fixnum final)))
-		      ((>fx vlen 0)
-		       (let* ((arr (vector-slice! o vec (->fixnum k) vlen))
-			      (vlen (->fixnum (js-get-length arr %this))))
-			  (array-copy! o vlen arr (- len vlen) final)))
-		      (else
-		       (array-slice! o k final)))))))))
       
    (js-bind! %this js-array-prototype (& "slice")
       :value (js-make-function %this array-prototype-slice 2 "slice"
@@ -3627,6 +3518,50 @@
 		    (array-forof o length proc #u32:0)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-prototype-concat1 ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-concat1 this arg %this)
+   (with-access::JsArray this ((tvec vec) (tilen ilen))
+      (with-access::JsArray arg ((avec vec) (ailen ilen))
+	 (let* ((new-len (+fx/overflow (uint32->fixnum tilen)
+			    (uint32->fixnum ailen)))
+		(arr (js-array-species-create %this this new-len)))
+	    (with-access::JsArray arr ((vdst vec) ilen)
+	       (vector-copy! vdst 0
+		  tvec 0 (uint32->fixnum tilen))
+	       (vector-copy! vdst (uint32->fixnum tilen)
+		  avec 0 (uint32->fixnum ailen))
+	       (set! ilen (uint32->fixnum (+u32 tilen ailen))))
+	    arr))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-concat1 ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat1 this::JsArray arg %this cache)
+   (if (and (js-object-mode-array-plain? this)
+	    (js-object-mode-inline? this)
+	    (js-object-mode-array-plain? arg)
+	    (js-object-mode-inline? arg))
+       (js-array-prototype-concat1 this arg %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "concat") #f %this
+		(or cache (js-pcache-ref js-array-pcache 15)))
+	     this arg))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-concat1 ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-concat1 this::obj arg %this cache)
+   (if (and (js-array? this) (js-array? arg))
+       (js-array-concat1 this arg %this cache)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "concat") #f %this
+		(or cache (js-pcache-ref js-array-pcache 16)))
+	     this arg))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-join ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-join o::JsArray separator %this)
@@ -3958,6 +3893,145 @@
 	  (js-call0 %this
 	     (js-get-name/cache this (& "pop") #f %this
 		(or cache (js-pcache-ref js-array-pcache 9)))
+	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-slice ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-slice this::obj start end %this::JsGlobalObject)
+   
+   (define (vector-slice/vec! o val k::long final::long vec::vector)
+      (let ((arr (js-species->jsarray this vec %this))
+	    (len (vector-length vec)))
+	 (let ((i (-fx len 1)))
+	    (cond
+	       ((=fx i -1)
+		arr)
+	       ((=fx i (-fx len 1))
+		arr)
+	       (else
+		(js-put-length! arr i #f #f %this)
+		arr)))))
+   
+   (define (vector-slice! o val::vector k::long final::long)
+      (let ((vec (vector-copy val k final)))
+	 (vector-slice/vec! o val k final vec)))
+   
+   (define (u8vector-slice! o val::u8vector k::long final::long)
+      (let ((vec (js-create-vector (-fx final k))))
+	 (let loop ((i k)
+		    (j 0))
+	    (if (=fx i final)
+		(vector-slice/vec! o val k final vec)
+		(begin
+		   (vector-set! vec j
+		      (uint8->fixnum (u8vector-ref val i)))
+		   (loop (+fx i 1) (+fx j 1)))))))
+   
+   (define (string-slice! o val::bstring k::long final::long)
+      (let ((vec ($create-vector (-fx final k))))
+	 (let loop ((i k)
+		    (j 0))
+	    (if (=fx i final)
+		(vector-slice/vec! o val k final vec)
+		(begin
+		   (vector-set! vec j
+		      (char->integer (string-ref-ur val i)))
+		   (loop (+fx i 1) (+fx j 1)))))))
+   
+   (define (array-copy! o len::long arr k::obj final::obj)
+      (let loop ((i len))
+	 (cond
+	    ((= k final)
+	     (js-put-length! arr i #f #f %this)
+	     arr)
+	    ((eq? (js-get-property o (js-toname k %this) %this) (js-undefined))
+	     (set! k (+ 1 k))
+	     (loop (+fx i 1)))
+	    (else
+	     (js-put! arr i (js-get o k %this) #f %this)
+	     (set! k (+ 1 k))
+	     (loop (+fx i 1))))))
+   
+   (define (array-slice! o k::obj final::obj)
+      (let ((arr (js-array-construct/length %this (js-array-alloc  %this)
+		    (- final k))))
+	 (array-copy! o 0 arr k final)))
+   
+   (let* ((o (js-toobject %this this))
+	  (len (js-uint32-tointeger (js-get-lengthu32 o %this)))
+	  (relstart (js-tointeger start %this))
+	  (k (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
+	  (relend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
+	  (final (if (< relend 0) (max (+ len relend) 0) (min relend len))))
+      (cond
+	 ((<= final k)
+	  (js-empty-vector->jsarray %this))
+	 ((isa? o JsTypedArray)
+	  (with-access::JsTypedArray o (%data byteoffset)
+	     (cond
+		((string? %data)
+		 (let* ((offset (uint32->fixnum byteoffset))
+			(start (+fx offset (->fixnum k)))
+			(end (+fx offset final))
+			(vlen (string-length %data)))
+		    (cond
+		       ((<= end vlen)
+			(string-slice! o %data start end))
+		       ((>fx vlen 0)
+			(let* ((arr (string-slice! o %data start vlen))
+			       (vlen (->fixnum (js-get-length arr %this))))
+			   (array-copy! o vlen arr (- len vlen) end)))
+		       (else
+			(array-slice! o start end)))))
+		((u8vector? %data)
+		 (let* ((offset (uint32->fixnum byteoffset))
+			(start (+fx offset (->fixnum k)))
+			(end (+fx offset final))
+			(vlen (u8vector-length %data)))
+		    (cond
+		       ((<= end vlen)
+			(u8vector-slice! o %data start end))
+		       ((>fx vlen 0)
+			(let* ((arr (u8vector-slice! o %data start vlen))
+			       (vlen (->fixnum (js-get-length arr %this))))
+			   (array-copy! o vlen arr (- len vlen) end)))
+		       (else
+			(array-slice! o start end)))))
+		(else
+		 (array-slice! o k final)))))
+	 ((not (js-array? o))
+	  (array-slice! o k final))
+	 (else
+	  (with-access::JsArray o (vec ilen)
+	     (let ((vlen (uint32->fixnum ilen)))
+		(cond
+		   ((<= final vlen)
+		    (vector-slice! o vec (->fixnum k) (->fixnum final)))
+		   ((>fx vlen 0)
+		    (let* ((arr (vector-slice! o vec (->fixnum k) vlen))
+			   (vlen (->fixnum (js-get-length arr %this))))
+		       (array-copy! o vlen arr (- len vlen) final)))
+		   (else
+		    (array-slice! o k final)))))))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-slice0 ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-slice0 this %this cache)
+   (if (and (js-array? this)
+	    (js-object-mode-array-plain? this)
+	    (js-object-mode-inline? this))
+       (with-access::JsArray this (ilen vec)
+	  (let ((o (js-array-species-create %this this (uint32->fixnum ilen))))
+	     (with-access::JsArray o ((vdst vec) (idst ilen))
+		(vector-copy! vdst 0 vec 0 (uint32->fixnum ilen))
+		(set! idst ilen))
+	     o))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call0 %this
+	     (js-get-name/cache this (& "slice") #f %this
+		(or cache (js-pcache-ref js-array-pcache 17)))
 	     this))))
 
 ;*---------------------------------------------------------------------*/

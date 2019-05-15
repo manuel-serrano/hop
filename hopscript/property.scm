@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed May 15 07:01:25 2019 (serrano)                */
+;*    Last change :  Wed May 15 07:48:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -266,6 +266,7 @@
 ;*          added to an object, or                                     */
 ;*       3) a property is deleted, or                                  */
 ;*       4) a property hidding a prototype property is added.          */
+;*       5) ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-invalidate-pmap-pcaches! %this::JsGlobalObject reason who)
    
@@ -279,7 +280,7 @@
    
    (when js-pmap-valid
       (synchronize js-cache-table-lock
-;* 	 (tprint "invalidate " reason " " who " len=" js-cache-index)  */
+;* 	 (tprint "--- invalidate " reason " " who " len=" js-cache-index " ---------------------------") */
 ;* 	 (set! invcount (+fx 1 invcount))                              */
 ;* 	 (tprint "invcount=" invcount)                                 */
 	 (let loop ((i (-fx js-cache-index 1)))
@@ -290,7 +291,6 @@
 	 (log-pmap-invalidation! reason))))
 
 (define invcount 0)
-(define detached 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-invalidate-cache-method! ...                                  */
@@ -2063,44 +2063,44 @@
 			 (lambda (nextmap)
 			    ;; follow the next map
 			    (with-access::JsConstructMap nextmap (ctor methods props detachcnt)
-			       (if (isa? v JsFunction)
-				   ;; validate cache method and don't cache
-				   (if (eq? v (vector-ref methods index))
-				       (when cache
-					  (js-pcache-next-direct! cache o nextmap index))
-				       ;; MS 2019-01-19
-				       ;; on a method conflict, if the number of
-				       ;; properties in cache is small enough,
-				       ;; instead of invalidating all methods,
-				       ;; a new cmap is created. see
-				       ;; see the prototype initialization
-				       ;; in js-make-function@function.scm
-				       (if (>fx detachcnt (method-invalidation-threshold))
-					   (begin
-					      ;; invalidate cache method and cache
-					      (js-invalidate-cache-method! nextmap index)
-					      (js-invalidate-pmap-pcaches! %this "extend-mapped.1" name)
-					      (reset-cmap-vtable! nextmap)
-					      (when cache
-						 ;; MS 9may2019 CARE INVALIDATE
-						 (js-pcache-next-direct! cache o nextmap index)))
-					   (let ((detachedmap (extend-cmap cmap name flags)))
-					      (set! detachcnt (+fx 1 detachcnt))
-					      (set! detached (+fx 1 detached))
-					      (tprint "detached cmap=" detachcnt "/" detached)
-					      (with-access::JsConstructMap detachedmap (methods ctor)
-						 ;; validate cache method and don't cache
-						 (vector-set! methods index v))
-					      (set! nextmap detachedmap)
-					      v)))
-				   (begin
-				      (when (isa? (vector-ref methods index) JsFunction)
-					 ;; invalidate cache method and cache
-					 (js-invalidate-cache-method! nextmap index)
-					 (js-invalidate-pmap-pcaches! %this "extend-mapped.3" name)
-					 (reset-cmap-vtable! nextmap))
-				      (when cache
-					 (js-pcache-next-direct! cache o nextmap index))))
+			       (cond
+				  ((not (isa? v JsFunction))
+				   (when (isa? (vector-ref methods index) JsFunction)
+				      ;; invalidate cache method and cache
+				      (js-invalidate-cache-method! nextmap index)
+				      (js-invalidate-pmap-pcaches! %this "extend-mapped.3" name)
+				      (reset-cmap-vtable! nextmap))
+				   (when cache
+				      (js-pcache-next-direct! cache o nextmap index)))
+				  ((eq? v (vector-ref methods index))
+				   (when cache
+				      (js-pcache-next-direct! cache o nextmap index)))
+				  ((eq? (vector-ref methods index) #f)
+				   (when cache
+				      (js-pcache-next-direct! cache o nextmap index)))
+				  ((>fx detachcnt (method-invalidation-threshold))
+				   ;; MS 2019-01-19
+				   ;; on a method conflict, if the number of
+				   ;; properties in cache is small enough,
+				   ;; instead of invalidating all methods,
+				   ;; a new cmap is created. see
+				   ;; see the prototype initialization
+				   ;; in js-make-function@function.scm
+				   ;; invalidate cache method and cache
+				   (js-invalidate-cache-method! nextmap index)
+				   (js-invalidate-pmap-pcaches! %this "extend-mapped.1" name)
+				   (reset-cmap-vtable! nextmap)
+				   (when cache
+				      ;; MS 9may2019 CARE INVALIDATE
+				      (js-pcache-next-direct! cache o nextmap index)))
+				  (else
+				   (let ((detachedmap (extend-cmap cmap name flags)))
+				      (set! detachcnt (+fx 1 detachcnt))
+				      (with-access::JsConstructMap detachedmap (methods ctor)
+					 ;; validate cache method and don't cache
+					 (vector-set! methods index v))
+				      (set! nextmap detachedmap)
+				      v)))
 			       (js-object-push/ctor! o index v ctor)
 			       (set! cmap nextmap)
 			       v)))
@@ -3327,6 +3327,7 @@
 	 (jsobject-find obj n
 	    ;; map search
 	    (lambda (obj i)
+	       
 	       (with-access::JsObject o ((omap cmap) __proto__)
 		  (with-access::JsObject obj ((wmap cmap) elements)
 		     (with-access::JsConstructMap wmap (methods %id)

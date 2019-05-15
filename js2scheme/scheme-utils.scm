@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Thu Apr 25 09:36:41 2019 (serrano)                */
+;*    Last change :  Wed May 15 11:30:10 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -531,6 +531,8 @@
 	  (if (string? propstr)
 	      `(js-get/debug ,obj ,prop %this ',loc)
 	      `(js-get/debug ,obj ,(box prop typrop conf) %this ',loc)))
+	 ((equal? propstr "__proto__")
+	  `(js-getprototypeof ,obj %this "j2scheme"))
 	 ((eq? tyobj 'array)
 	  (case typrop
 	     ((uint32)
@@ -644,6 +646,8 @@
 		  ,(box val tyval conf) ,mode %this ',loc)
 	      `(js-put/debug! ,obj ,(box prop typrop conf)
 		  ,(box val tyval conf) ,mode %this ',loc)))
+	 ((equal? propstr "__proto__")
+	  `(js-setprototypeof ,obj ,(box val tyval conf) %this "js2scheme"))
 	 ((eq? tyobj 'array)
 	  (case typrop
 	     ((uint32)

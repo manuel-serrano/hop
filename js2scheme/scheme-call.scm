@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Apr 23 10:47:10 2019 (serrano)                */
+;*    Last change :  Wed May 15 08:05:36 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -101,8 +101,8 @@
 	;; regexp
 	("test" ,j2s-regexp-test regexp (any) %this)
 	;; array methods
-;* 	("concat" js-array-concat array (any) %this)                   */
-;* 	("concat" js-array-maybe-concat any (any) %this)               */
+	("concat" js-array-concat1 array (array) %this #t ,j2s-array-plain?)
+	("concat" js-array-maybe-concat1 any (any) %this #t ,j2s-array-plain?)
 ;* 	("slice" js-array-slice array () %this)                        */
 ;* 	("slice" js-array-maybe-slice any () %this)                    */
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
@@ -115,6 +115,7 @@
 	("push" js-array-maybe-push any (any) %this #t ,j2s-array-plain?)
 	("pop" js-array-pop array () %this #t ,j2s-array-plain?)
 	("pop" js-array-maybe-pop any () %this #t ,j2s-array-plain?)
+	("slice" js-array-maybe-slice0 any () %this #t)
 	;; functions
 	("call" ,j2s-call function (any) #f)
 	("call" ,j2s-call function (any any) #f))))
@@ -363,11 +364,24 @@
    (define (call-super-method fun args)
       (call-unknown-function fun '(this) args))
 
+   (define (Array? self)
+      (when (isa? self J2SRef)
+	 (with-access::J2SRef self (decl)
+	    (with-access::J2SDecl decl (id usage scope)
+	       (and (eq? id 'Array)
+		    (eq? scope '%scope)
+		    (not (memq 'assig usage)))))))
+   
    (define (call-ref-method self ccache ocache ccspecs fun::J2SAccess obj::J2SExpr args)
+
       (with-access::J2SAccess fun (loc field (ocspecs cspecs))
 	 (cond
 	    ((isa? self J2SSuper)
 	     (call-super-method fun args))
+	    ((and (Array? self)
+		  (j2s-array-builtin-method fun args this mode return conf))
+	     =>
+	     (lambda (expr) expr))
 	    ((and ccache (= (bigloo-debug) 0) ccspecs)
 	     (cond
 		((isa? field J2SString)
@@ -411,6 +425,14 @@
 	       (case id
 		  ((Math)
 		   (j2s-math-builtin-method fun args
+		      this mode return conf))
+		  ((Array)
+		   ;; This branch is currently never used
+		   ;; because Array is defined as an external
+		   ;; %scoped object (see header.scm).
+		   ;; Array builtin methods are then
+		   ;; handled in the call-ref-method above
+		   (j2s-array-builtin-method fun args
 		      this mode return conf))
 		  (else
 		   #f))))))
