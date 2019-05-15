@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue May 14 07:43:21 2019 (serrano)                */
+;*    Last change :  Wed May 15 07:14:11 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -121,6 +121,7 @@
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
 	      (transitions::pair-nil (default '()))
+	      (detachcnt::long (default 0))
 	      (ctor::obj (default #f))
 	      (single::bool read-only (default #f))
 	      (vlen::long (default 0))
@@ -366,7 +367,6 @@
 	      (js-call (default #f))
 	      (js-apply (default #f))
 	      (js-vindex (default 0))
-	      (js-pmap-valid::bool (default #f))
 	      (js-input-port (default #f))
 	      (js-new-target (default (js-undefined)))
 	      ;; functions property
