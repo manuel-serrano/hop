@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed May 15 13:56:57 2019 (serrano)                */
+;*    Last change :  Thu May 16 07:43:58 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2881,7 +2881,7 @@
        (with-access::JsGlobalObject %this (js-string-pcache)
 	  (let ((slice (js-get-name/cache this (& "slice") #f %this
 			  (or cache (js-pcache-ref js-string-pcache 22))
-			  :cspecs '(imap+))))
+			  -1 '(imap+))))
 	     (js-call2 %this slice this start end))))))
 
 ;*---------------------------------------------------------------------*/
