@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon May 13 09:52:14 2019 (serrano)                */
+;*    Last change :  Thu May 16 09:59:51 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -276,7 +276,7 @@
        (with-access::JsSymbol p (val)
 	  val))
       ((number? p)
-       (js-ascii-toname (js-number->string p)))
+       (js-ascii-name->jsstring (js-number->string p)))
       ((symbol? p)
        (error "js-toname" "Illegal `symbol'" p))
       ((string? p)
