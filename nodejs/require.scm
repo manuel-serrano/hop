@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue May 14 08:15:30 2019 (serrano)                */
+;*    Last change :  Thu May 16 15:54:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2362,7 +2362,16 @@
 		     (if (isa? parser JsObject)
 			 (let ((ps (js-get parser (& "plugins") %ctxthis)))
 			    (if (pair? ps)
-				ps
+				(map (lambda (p)
+					(if (procedure? (cdr p))
+					    (cons (car p)
+					       (lambda (tok decl ctrl)
+						  (js-worker-exec worker
+						     "plugins" #f
+						     (lambda ()
+							((cdr p) tok decl ctrl)))))
+					    p))
+				   ps)
 				'()))
 			 '()))))))))
 
@@ -2374,7 +2383,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-plugins-toplevel-loader)
    (multiple-value-bind (worker this module)
-      (js-main-worker! "plugin" "plugin" #f
+      (js-main-worker! "plugin" "plugin" #t
 	 nodejs-new-global-object nodejs-new-module)
       (make-plugins-loader this module worker)))
 
