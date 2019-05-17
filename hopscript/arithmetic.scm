@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Thu May 16 19:05:15 2019 (serrano)                */
+;*    Last change :  Fri May 17 11:48:40 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -203,7 +203,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%$$NZ lnum rnum)
    (cond
-      ((and (fixnums? lnum rnum) (not (=fx rnum 0)))
+      ((and (fixnums? lnum rnum) (>=fx lnum 0) (not (=fx rnum 0)))
        (remainderfx lnum rnum))
       ((and (flonum? lnum) (or (=fl lnum +inf.0) (=fl lnum -inf.0)))
        +nan.0)
