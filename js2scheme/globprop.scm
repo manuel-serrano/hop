@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/globprop.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/globprop.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Mon Feb 25 07:41:14 2019 (serrano)                */
+;*    Last change :  Fri May 17 13:42:45 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -97,10 +97,9 @@
 					       (with-access::J2SDecl d (id %info)
 						  (if (and (propinfo? %info)
 							   (pair? (propinfo-props %info)))
-						      (append-map (lambda (i)
-								     (if (isa? (cadr i) J2SDecl)
-									 (cdr i)
-									 '()))
+						      (filter-map (lambda (i)
+								     (when (isa? (cdr i) J2SDecl)
+									(car i)))
 							 (propinfo-props %info))
 						      '())))
 				   gcnsts)))

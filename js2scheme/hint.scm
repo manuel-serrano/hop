@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/hint.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/hint.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Mar 15 10:50:29 2019 (serrano)                */
+;*    Last change :  Fri May 17 13:44:16 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -531,20 +531,22 @@
 	  expr))
    
    (define (typeof? expr::J2SExpr)
-      (when (isa? (unparen expr) J2SUnary)
-	 (with-access::J2SUnary expr (op)
-	    (eq? op 'typeof))))
+      (let ((ue (unparen expr)))
+	 (when (isa? ue J2SUnary)
+	    (with-access::J2SUnary ue (op)
+	       (eq? op 'typeof)))))
    
    (define (type-checker? fun::J2SFun)
       
       (define (check-node? node)
 	 (when (isa? node J2SReturn)
 	    (with-access::J2SReturn node (expr)
-	       (when (isa? (unparen expr) J2SBinary)
-		  (with-access::J2SBinary (unparen expr) (op lhs rhs)
-		     (or (eq? op 'instanceof)
-			 (when (memq op '(== != === !== eq?))
-			    (or (typeof? lhs) (typeof? rhs)))))))))
+	       (let ((ue (unparen expr)))
+		  (when (isa? ue J2SBinary)
+		     (with-access::J2SBinary ue (op lhs rhs)
+			(or (eq? op 'instanceof)
+			    (when (memq op '(== != === !== eq?))
+			       (or (typeof? lhs) (typeof? rhs))))))))))
       
       (define (block-check-node? node)
 	 (when (isa? node J2SBlock)
