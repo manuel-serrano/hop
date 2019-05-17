@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed May 15 07:48:57 2019 (serrano)                */
+;*    Last change :  Thu May 16 16:19:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3130,6 +3130,8 @@
 			 
 ;*---------------------------------------------------------------------*/
 ;*    js-call/cache ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Overriden by a property_expd.sch macro.                          */
 ;*---------------------------------------------------------------------*/
 (define (js-call/cache %this cache obj this . args)
    (let ((largs (length args)))
@@ -3138,8 +3140,8 @@
 	    ((eq? owner obj)
 	     (apply method this args))
 	    ((and (isa? obj JsFunction)
-		  (with-access::JsFunction obj (len)
-		     (=fx len largs)))
+		  (with-access::JsFunction obj (len arity)
+		     (and (>=fx arity 0) (=fx len largs))))
 	     (with-access::JsFunction obj (procedure)
 		(set! cmap obj)
 		(set! method procedure)
