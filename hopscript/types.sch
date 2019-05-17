@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/types.sch               */
+;*    serrano/prgm/project/hop/hop/hopscript/types.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Mon Feb 25 14:14:00 2019 (serrano)                */
+;*    Last change :  Fri May 17 07:47:31 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
@@ -72,3 +72,23 @@
 (define-instantiate-sans JsWebSocketClient)
 (define-instantiate-sans JsWebSocketServer)
 (define-instantiate-sans JsWebSocketEvent)
+
+;*---------------------------------------------------------------------*/
+;*    isa?                                                             */
+;*---------------------------------------------------------------------*/
+(define-expander isa?
+   (lambda (x e)
+      
+      (define (epairify nx x)
+	 (if (epair? x)
+	     (econs (car nx) (cdr nx) (cer x))
+	     nx))
+
+      (match-case x
+	 ((isa? ?obj JsObject)
+	  (e (epairify `(js-object? ,obj) x) e))
+	 ((isa? ?obj JsStringLiteral)
+	  (e (epairify `(js-jsstring? ,obj) x) e))
+	 (else
+	  (set-car! x '(@ isa? __object))
+	  (e x e)))))

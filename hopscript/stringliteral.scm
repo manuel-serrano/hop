@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu May 16 18:59:46 2019 (serrano)                */
+;*    Last change :  Fri May 17 08:08:51 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -50,6 +50,7 @@
 	   (inline js-jsstring-lengthfx::long ::obj)
 	   (js-jsstring-character-length::uint32 ::obj)
 	   (js-jsstring-codeunit-length::uint32 ::obj)
+	   (inline js-jsstring-toboolean::bool ::JsStringLiteral)
 	   (inline js-jsstring-null? ::obj)
 	   (inline js-jsstring=?::bool ::obj ::obj)
 	   (inline js-jsstring<?::bool ::obj ::obj)
@@ -142,7 +143,7 @@
 	 (let loop ((i 0))
 	    (when (<=fx i 127)
 	       (vector-set! vec i
-		  (js-string->jsstring
+		  (js-name->jsstring
 		     (make-string 1 (integer->char i))))
 	       (loop (+fx i 1))))
 	 (let loop ((i 128))
@@ -369,20 +370,20 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (string-dispatch fun this . args)
    `(cond
-       ((isa? ,this JsStringLiteralASCII)
-	(,(symbol-append 'ascii- fun) (js-jsstring-normalize-ASCII! ,this) ,@args))
+       ((eq? (object-class ,this) JsStringLiteralUTF8)
+	(,(symbol-append 'utf8- fun) (js-jsstring-normalize-UTF8! ,this) ,@args))
        (else
-	(,(symbol-append 'utf8- fun) (js-jsstring-normalize-UTF8! ,this) ,@args))))
+	(,(symbol-append 'ascii- fun) (js-jsstring-normalize-ASCII! ,this) ,@args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-dispatch ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-macro (string-dispatch* fun this . args)
    `(cond
-       ((isa? ,this JsStringLiteralASCII)
-	(,(symbol-append 'ascii- fun '*) ,this ,@args))
+       ((eq? (object-class ,this) JsStringLiteralUTF8)
+	(,(symbol-append 'utf8- fun) (js-jsstring-normalize-UTF8! ,this) ,@args))
        (else
-	(,(symbol-append 'utf8- fun) (js-jsstring-normalize-UTF8! ,this) ,@args))))
+	(,(symbol-append 'ascii- fun '*) ,this ,@args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii->jsstring ...                                           */
@@ -714,6 +715,13 @@
 (define-method (hop-register-value s::JsStringLiteral register)
    #t)
 
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-toboolean ...                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-toboolean s::JsStringLiteral)
+   (with-access::JsStringLiteral s (weight right)
+      (or (>u32 weight #u32:0) (>u32 (js-jsstring-length s) #u32:0))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-null? ...                                            */
 ;*---------------------------------------------------------------------*/

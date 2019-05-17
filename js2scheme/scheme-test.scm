@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-test.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-test.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Wed Aug 29 08:21:30 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Fri May 17 08:22:42 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
 ;*=====================================================================*/
@@ -47,6 +47,8 @@
 	  `(not (=fx ,(j2s-scheme test mode return conf) 0)))
 	 ((type-number? ty)
 	  `(not (= ,(j2s-scheme test mode return conf) 0)))
+	 ((eq? ty 'string)
+	  `(js-jsstring-toboolean ,(j2s-scheme test mode return conf)))
 	 ((notbool-expr? test)
 	  `(js-toboolean ,(j2s-scheme test mode return conf)))
 	 (else

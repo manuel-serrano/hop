@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu May 16 16:19:04 2019 (serrano)                */
+;*    Last change :  Fri May 17 07:52:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -20,7 +20,8 @@
    (option  (bigloo-compiler-debug-set! 0))
    
    (include "stringliteral.sch"
-	    "property.sch")
+	    "property.sch"
+	    "types.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -1104,7 +1105,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.5       */
 ;*---------------------------------------------------------------------*/
 (define (js-to-property-descriptor %this::JsGlobalObject obj name::obj)
-   (if (not (js-object? obj))
+   (if (not (isa? obj JsObject))
        (js-raise-type-error %this "Property description must be an object: ~s" obj)
        (let* ((enumerable (if (js-has-property obj (& "enumerable") %this)
 			      (js-toboolean (js-get obj (& "enumerable") %this))
@@ -1625,7 +1626,7 @@
 (define (js-get/cache o prop::obj %this::JsGlobalObject
 		   #!optional (point -1) (cspecs '()))
    (cond
-      ((js-object? o)
+      ((isa? o JsObject)
        (js-jsobject-get/name-cache o prop %this point cspecs))
       ((and (object? o) (eq? (object-class o) JsProxy))
        (js-jsproxy-get/name-cache o prop %this point cspecs))
@@ -1688,7 +1689,7 @@
 (define (js-get-name/cache obj name::JsStringLiteral throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (if (js-object? obj)
+   (if (isa? obj JsObject)
        (js-object-get-name/cache obj name throw %this cache point cspecs)
        (js-get obj name %this)))
 
@@ -3067,7 +3068,7 @@
 	     (with-access::JsConstructMap cmap (props)
 		(vfor-in props))
 	     (for-each in-property (js-object-properties obj))))
-      (when (js-object? __proto__)
+      (when (isa? __proto__ JsObject)
 	 (js-for-in-prototype __proto__ owner proc %this))))
    
 ;*---------------------------------------------------------------------*/

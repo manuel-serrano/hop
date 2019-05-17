@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu May 16 15:54:10 2019 (serrano)                */
+;*    Last change :  Fri May 17 07:59:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -503,8 +503,9 @@
 	       #f %this))))
 
    (with-trace 'require (format "nodejs-module ~a ~a" id filename)
-      (with-access::JsGlobalObject %this (js-object __proto__ js-symbol-tostringtag)
+      (with-access::JsGlobalObject %this (js-object __proto__ js-symbol-tostringtag js-initial-cmap)
 	 (let ((m (instantiateJsModule
+		     (cmap js-initial-cmap)
 		     (__proto__ __proto__))))
 	    (js-bind! %this m js-symbol-tostringtag
 	       :value (js-string->jsstring "Module")

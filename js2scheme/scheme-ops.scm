@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Apr 21 19:18:37 2019 (serrano)                */
+;*    Last change :  Fri May 17 08:39:41 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -940,9 +940,12 @@
 	 (lambda (left right)
 	    (if (or (type-cannot? tl '(string)) (type-cannot? tr '(string)))
 		(eq? op '!==)
-		(if (eq? op '!==)
-		    `(not (js-eqstring? ,left ,right))
-		    `(js-eqstring? ,left ,right))))))
+		(let ((cmp (if (and (eq? tl 'string) (eq? tr 'string))
+			       'js-jsstring=?
+			       'js-eqstring?)))
+		   (if (eq? op '!==)
+		       `(not (,cmp ,left ,right))
+		       `(,cmp ,left ,right)))))))
 		
    (define (typeof-expr expr mode return conf)
       (cond
