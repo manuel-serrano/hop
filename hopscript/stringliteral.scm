@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu May 16 07:43:58 2019 (serrano)                */
+;*    Last change :  Thu May 16 18:59:46 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1585,7 +1585,7 @@
 	     (if (or (< pos 0) (>= pos (js-jsstring-codeunit-length this)))
 		 (& "")
 		 (js-utf8-ref this val (->fixnum pos) %this)))))
-
+   
    (string-dispatch charat this))
 
 ;*---------------------------------------------------------------------*/
@@ -1631,7 +1631,7 @@
 	     (from (minfx finalstart finalend))
 	     (to (maxfx finalstart finalend)))
 	 (js-string->jsstring (utf8-substring s from to))))
-   
+
    (string-dispatch substr this))
 
 ;*---------------------------------------------------------------------*/
