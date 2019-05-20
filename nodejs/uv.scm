@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun May 12 08:55:02 2019 (serrano)                */
+;*    Last change :  Mon May 20 08:29:25 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -426,10 +426,6 @@
 	       (with-access::WorkerHopThread th (%this)
 		  (signal sigsegv
 		     (lambda (x)
-			(tprint "STACK OVERFLOW..." (current-thread))
-			(for-each (lambda (f)
-				     (tprint "  " f))
-			   (get-trace-stack 100))
 			(js-raise-range-error %this
 			   "Maximum call stack size exceeded" #f)))))
 	    (when (pair? tqueue)

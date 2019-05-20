@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri May 17 07:52:45 2019 (serrano)                */
+;*    Last change :  Mon May 20 08:48:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -128,7 +128,7 @@
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
-	   (js-global-object-get-name ::JsObject ::JsStringLiteral ::bool
+	   (js-global-object-get-name ::JsObject ::JsStringLiteral ::obj
 	      ::JsGlobalObject)
 	   (js-global-object-get-name/cache ::JsObject ::JsStringLiteral ::bool
 	      ::JsGlobalObject
@@ -1709,10 +1709,10 @@
 ;*    This is an inlined version of js-get-own-property.               */
 ;*---------------------------------------------------------------------*/
 (define (js-global-object-get-name o::JsObject name::JsStringLiteral
-	   throw::bool %this::JsGlobalObject)
+	   throw-or-loc %this::JsGlobalObject)
    (let ((pval (js-get-property-value o o name %this)))
       (if (eq? pval (js-absent))
-	  (js-get-notfound name throw %this)
+	  (js-get-notfound name throw-or-loc %this)
 	  pval)))
 
 ;*---------------------------------------------------------------------*/
