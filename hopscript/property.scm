@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed May  8 12:12:09 2019 (serrano)                */
+;*    Last change :  Thu May 16 16:23:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3204,8 +3204,8 @@
 	    ((eq? owner obj)
 	     (apply method this args))
 	    ((and (isa? obj JsFunction)
-		  (with-access::JsFunction obj (len)
-		     (=fx len largs)))
+		  (with-access::JsFunction obj (len arity)
+		     (and (>=fx arity 0) (=fx len largs))))
 	     (with-access::JsFunction obj (procedure)
 		(set! cmap obj)
 		(set! method procedure)
