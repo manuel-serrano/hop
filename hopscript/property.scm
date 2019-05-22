@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon May 20 08:48:36 2019 (serrano)                */
+;*    Last change :  Tue May 21 09:22:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -218,6 +218,15 @@
 	      ::JsPropertyCache ::JsPropertyCache ::long ::pair-nil ::pair-nil)
 	   
 	   (js-call/cache ::JsGlobalObject ::JsPropertyCache obj this . args)
+	   (js-call/cache-miss0 ::JsGlobalObject ::JsPropertyCache obj this)
+	   (js-call/cache-miss1 ::JsGlobalObject ::JsPropertyCache obj this a0)
+	   (js-call/cache-miss2 ::JsGlobalObject ::JsPropertyCache obj this a0 a1)
+	   (js-call/cache-miss3 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2)
+	   (js-call/cache-miss4 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3)
+	   (js-call/cache-miss5 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3 a4)
+	   (js-call/cache-miss6 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3 a4 a5)
+	   (js-call/cache-miss7 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call/cache-miss8 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   
 	   (js-get-vindex::long ::JsGlobalObject)))
 
@@ -3140,7 +3149,7 @@
 	 (cond
 	    ((eq? owner obj)
 	     (apply method this args))
-	    ((and (isa? obj JsFunction)
+	    ((and (js-function? obj)
 		  (with-access::JsFunction obj (len arity)
 		     (and (>=fx arity 0) (=fx len largs))))
 	     (with-access::JsFunction obj (procedure)
@@ -3149,7 +3158,58 @@
 		(apply procedure this args)))
 	    (else
 	     (js-apply %this obj this args))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-call/cache-miss ...                                           */
+;*---------------------------------------------------------------------*/
+(define-macro (gen-call/cache-miss %this cache obj this . args)
+   (let ((largs (length args)))
+      `(with-access::JsPropertyCache ,cache (owner method cmap)
+	  (cond
+	     ((and (js-function? ,obj)
+		   (with-access::JsFunction ,obj (procedure arity)
+		      (and (>=fx arity 0)
+			   (correct-arity? procedure ,(+fx largs 1)))))
+	      (with-access::JsFunction ,obj (procedure)
+		 (set! cmap ,obj)
+		 (set! method procedure)
+		 (procedure ,this ,@args)))
+	     ((js-proxy? ,obj)
+	      ,(let ((call (symbol-append 'js-call-proxy/cache-miss
+			      (string->symbol (integer->string largs)))))
+		  `(,call ,%this ,cache ,obj ,this ,@args)))
+	     (else
+	      ,(let ((call (symbol-append 'js-call
+			      (string->symbol (integer->string largs)))))
+		  `(,call ,%this ,obj ,this ,@args)))))))
+
+(define (js-call/cache-miss0 %this cache obj this)
+   (gen-call/cache-miss %this cache obj this))
+
+(define (js-call/cache-miss1 %this cache obj this a0)
+   (gen-call/cache-miss %this cache obj this a0))
+
+(define (js-call/cache-miss2 %this cache obj this a0 a1)
+   (gen-call/cache-miss %this cache obj this a0 a1))
+
+(define (js-call/cache-miss3 %this cache obj this a0 a1 a2)
+   (gen-call/cache-miss %this cache obj this a0 a1 a2))
+
+(define (js-call/cache-miss4 %this cache obj this a0 a1 a2 a3)
+   (gen-call/cache-miss %this cache obj this a0 a1 a2 a3))
+
+(define (js-call/cache-miss5 %this cache obj this a0 a1 a2 a3 a4)
+   (gen-call/cache-miss %this cache obj this a0 a1 a2 a3 a4))
+
+(define (js-call/cache-miss6 %this cache obj this a0 a1 a2 a3 a4 a5)
+   (gen-call/cache-miss %this cache obj this a0 a1 a2 a3 a4 a5))
+
+(define (js-call/cache-miss7 %this cache obj this a0 a1 a2 a3 a4 a5 a6)
+   (gen-call/cache-miss %this cache obj this a0 a1 a2 a3 a4 a5 a6))
+
+(define (js-call/cache-miss8 %this cache obj this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-call/cache-miss %this cache obj this a0 a1 a2 a3 a4 a5 a6 a7))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-method-call-name/cache ...                                    */
 ;*---------------------------------------------------------------------*/

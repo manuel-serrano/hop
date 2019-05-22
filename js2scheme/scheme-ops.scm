@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri May 17 08:39:41 2019 (serrano)                */
+;*    Last change :  Wed May 22 07:17:51 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -828,7 +828,7 @@
 			((string=? val "number")
 			 (j2s-case-type unary 'js-number? :number 'true))
 			((string=? val "function")
-			 (j2s-case-type unary 'js-function? :function 'true))
+			 (j2s-case-type unary 'js-function-proxy? :function 'true))
 			((string=? val "string")
 			 (j2s-case-type unary 'js-jsstring? :string 'true))
 			((string=? val "undefined")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed May 15 07:14:11 2019 (serrano)                */
+;*    Last change :  Tue May 21 07:43:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -300,9 +300,10 @@
 	      (cachegetproc (default #f))
 	      (cacheset read-only (default (instantiate::JsPropertyCache)))
 	      (cachesetfun (default 'nocache))
-	      (cachesetproc (default #f)))
-	   
-;* 	      (cacheapply read-only (default (instantiate::JsPropertyCache)))) */
+	      (cachesetproc (default #f))
+	      (cacheapply read-only (default (instantiate::JsPropertyCache)))
+	      (cacheapplyfun (default 'nocache))
+	      (cacheapplyproc (default #f)))
 
 	   (class JsMap::JsObject
 	      (mapdata read-only)
@@ -501,8 +502,11 @@
 	   (inline js-object?::bool ::obj)
 	   (inline js-array?::bool ::obj)
 	   (inline js-function?::bool ::obj)
+	   (inline js-function-proxy?::bool ::obj)
 	   (inline js-symbol?::bool ::obj)
+	   (inline js-proxy?::bool ::obj)
 	   (js-proxy-array?::bool ::obj)
+	   (js-proxy-function?::bool ::obj)
 
 	   (inline js-object-cmap ::JsObject)
 	   
@@ -1070,18 +1074,41 @@
    (isa? o JsFunction))
 
 ;*---------------------------------------------------------------------*/
+;*    js-function-proxy? ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-function-proxy? o)
+   (or (isa? o JsFunction) (js-proxy-function? o)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-symbol? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-symbol? o)
    (isa? o JsSymbolLiteral))
 
 ;*---------------------------------------------------------------------*/
+;*    js-proxy? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-proxy? o)
+   (when (js-object? o)
+      (eq? (object-class o) JsProxy)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-proxy-array? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-array? obj)
-   (when (isa? obj JsProxy)
+   (when (js-proxy? obj)
       (with-access::JsProxy obj (target)
-	 (js-array? target))))
+	 (or (js-array? target)
+	     (js-proxy-array? target)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-proxy-function? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-proxy-function? obj)
+   (when (js-proxy? obj)
+      (with-access::JsProxy obj (target)
+	 (or (js-function? target)
+	     (js-proxy-function? target)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-cmap ...                                               */

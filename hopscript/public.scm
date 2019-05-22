@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon May 13 10:40:00 2019 (serrano)                */
+;*    Last change :  Tue May 21 07:44:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -75,6 +75,10 @@
 	   (js-call2% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1)
 	   (js-call3% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2)
 	   (js-call4% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3)
+	   (js-call5% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3 a4)
+	   (js-call6% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3 a4 a5)
+	   (js-call7% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call8% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
 	   
 	   (js-call0 ::JsGlobalObject fun::obj this)
 	   (js-call1 ::JsGlobalObject fun::obj this a0)
@@ -406,10 +410,14 @@
 ;*    js-apply ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-apply %this fun obj args::pair-nil)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "apply: argument not a function ~s" fun)
+   (cond
+      ((js-function? fun)
        (with-access::JsFunction fun (procedure rest)
-	  (js-apply% %this fun procedure obj args))))
+	  (js-apply% %this fun procedure obj args)))
+      ((and (js-proxy? fun) (js-proxy-function? fun))
+       (js-apply-proxy %this fun obj args))
+      (else
+       (js-raise-type-error %this "apply: argument not a function ~s" fun))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply% ...                                                    */
@@ -585,11 +593,11 @@
 
 (define-macro (gen-call %this fun this . args)
    `(cond
-       ((isa? ,fun JsFunction)
+       ((js-function? ,fun)
 	(with-access::JsFunction ,fun (procedure)
 	   (,(string->symbol (format "js-call~a%" (length args)))
 	    ,%this ,fun procedure ,this ,@args)))
-       ((isa? ,fun JsProxy)
+       ((js-proxy? ,fun)
 	(,(string->symbol (format "js-call-proxy~a" (length args)))
 	 ,%this ,fun ,this ,@args))
        ((procedure? fun)
@@ -795,21 +803,39 @@
 ;*    These functions are used to invoked trapped proxy functions.     */
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-proxy-call %this fun this . args)
-   `(with-access::JsProxy ,fun (target handler cacheapply)
-       (if (not (isa? target JsFunction))
+   `(with-access::JsProxy ,fun (target handler
+				  cacheapply cacheapplyfun cacheapplyproc)
+       (if (not (js-object? target))
+	   ;; first test js-object? as it is much faster than
+	   ;; testing js-function?
 	   (js-raise-type-error ,%this
 	      ,(format "call~a: not a function ~~s" (length args))
 	      ,fun)
-;* 	   (let ((xfun (js-object-get-name/cache handler (& "apply")   */
-;* 			  #f ,%this cacheapply)))                      */
-	   (let ((xfun (js-get handler (& "apply") ,%this)))
-	      (if (isa? xfun JsFunction)
+	   (let ((xfun (js-object-get-name/cache handler (& "apply")
+			  #f ,%this cacheapply)))
+	      (cond
+		 ((eq? xfun cacheapplyfun)
+		  (cacheapplyproc handler target
+		     ,this (js-vector->jsarray (vector ,@args) ,%this)))
+		 ((and (object? xfun) (eq? (object-class xfun) JsFunction4))
 		  (with-access::JsFunction xfun (procedure)
-		     (js-call3% %this xfun procedure ,fun target
-			,this (js-vector->jsarray (vector ,@args) ,%this)))
+		     (let ((v (procedure handler target ,this
+				 (js-vector->jsarray (vector ,@args) ,%this))))
+			(set! cacheapplyfun xfun)
+			(set! cacheapplyproc procedure)
+			v)))
+		 ((not (js-function? target))
+		  (js-raise-type-error ,%this
+		     ,(format "call~a: not a function ~~s" (length args))
+		     ,fun))  
+		 ((isa? xfun JsFunction)
+		  (with-access::JsFunction xfun (procedure)
+                     (js-call3% %this xfun procedure handler target
+                        ,this (js-vector->jsarray (vector ,@args) ,%this))))
+		 (else
 		  (with-access::JsFunction target (procedure)
 		     (,(string->symbol (format "js-call~a%" (length args)))
-		      ,%this target procedure ,this ,@args)))))))
+		      ,%this target procedure ,this ,@args))))))))
 
 (define (js-call-proxy0 %this fun this)
    (gen-proxy-call %this fun this))
@@ -846,15 +872,37 @@
 
 (define (js-call-proxyn %this fun this args)
    (with-access::JsProxy fun (target handler)
-      (if (not (isa? target JsFunction))
-	  (js-raise-type-error %this "calln: not a function ~s" fun)
+      (cond
+	 ((js-function? target)
 	  (let ((xfun (js-get handler (& "apply") %this)))
 	     (if (isa? xfun JsFunction)
 		 (with-access::JsFunction xfun (procedure)
 		    (js-call3% %this xfun procedure fun target
 		       this (js-vector->jsarray (list->vector args) %this)))
 		 (with-access::JsFunction target (procedure)
-		    (js-calln% %this target this args)))))))
+		    (js-calln% %this target this args)))))
+	 ((and (js-proxy? target) (js-proxy-function? target))
+	  (with-access::JsProxy fun (target)
+	     (js-call-proxyn %this target this args)))
+	 (else
+	  (js-raise-type-error %this "calln: not a function ~s" fun)))))
+
+(define (js-apply-proxy %this fun this args)
+   (with-access::JsProxy fun (target handler)
+      (cond
+	 ((js-function? target)
+	  (let ((xfun (js-get handler (& "apply") %this)))
+	     (if (isa? xfun JsFunction)
+		 (with-access::JsFunction xfun (procedure)
+		    (js-call3% %this xfun procedure fun target
+		       this (js-vector->jsarray (list->vector args) %this))
+		    (with-access::JsFunction target (procedure)
+		       (js-calln% %this target this args))))))
+	 ((js-proxy? target)
+	  (with-access::JsProxy fun (target)
+	     (js-apply-proxy %this target this args)))
+	 (else
+	  (js-raise-type-error %this "apply: not a function ~s" fun)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-service/debug ...                                             */

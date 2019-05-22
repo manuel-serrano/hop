@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/types_expd.sch          */
+;*    serrano/prgm/project/hop/hop/hopscript/types_expd.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Mon Feb 25 14:13:01 2019 (serrano)                */
+;*    Last change :  Fri May 17 18:45:31 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -167,7 +167,6 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-instantiate-JsObjectLiteral-expander ...                      */
-;*    -------------------------------------------------------------    */
 ;*---------------------------------------------------------------------*/
 (define (js-instantiate-JsObjectLiteral-expander x e)
    (match-case x

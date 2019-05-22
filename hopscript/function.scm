@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon May 13 10:38:09 2019 (serrano)                */
+;*    Last change :  Wed May 22 07:24:11 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -563,7 +563,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.2
    (define (tostring this)
       (cond
-	 ((isa? this JsFunction)
+	 ((js-function? this)
 	  (with-access::JsFunction this (src)
 	     (if (pair? src)
 		 (if (string? (cdr src))
@@ -579,6 +579,9 @@
 			      name
 			      (js-ascii->jsstring "]")))
 			(js-ascii->jsstring "[Function]"))))))
+	 ((js-function-proxy? this)
+	  (with-access::JsProxy this (target)
+	     (tostring target)))
 	 (else
 	  (js-raise-type-error %this "toString: not a function ~s"
 	     (js-typeof this %this)))))
@@ -695,7 +698,7 @@
 		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
    
    (cond
-      ((not (isa? this JsFunction))
+      ((not (js-function-proxy? this))
        (js-raise-type-error %this
 	  "apply: argument not a function ~s" this))
       ((or (eq? argarray (js-null)) (eq? argarray (js-undefined)))
