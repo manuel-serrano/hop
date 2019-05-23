@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu May 23 08:58:28 2019 (serrano)                */
+;*    Last change :  Thu May 23 10:09:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -71,6 +71,7 @@
 ;*    js-toindex ::JsString ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-toindex obj::JsString)
+   (tprint "js-toindex ::JsString")
    (with-access::JsString obj (val)
       (js-toindex (js-jsstring->string val))))
 

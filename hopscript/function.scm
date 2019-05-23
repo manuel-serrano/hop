@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu May 23 08:47:54 2019 (serrano)                */
+;*    Last change :  Thu May 23 10:38:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -708,12 +708,31 @@
 	  "apply: argument not an object ~s" argarray))
       ((js-array? argarray)
        (let ((len (js-get argarray (& "length") %this)))
-	  (with-access::JsArray argarray (vec)
+	  (with-access::JsArray argarray (vec ilen)
 	     (cond
 		((js-object-mode-inline? argarray)
 		 ;; fast path
-		 (js-apply %this this thisarg
-		    (vector->sublist vec len)))
+		 (if (js-function? this)
+		     (with-access::JsFunction this (arity procedure)
+			(let ((n (uint32->fixnum ilen)))
+			   (if (=fx arity (+fx 1 n))
+			       (case arity
+				  ((2)
+				   (procedure thisarg (vector-ref vec 0)))
+				  ((3)
+				   (procedure thisarg (vector-ref vec 0)
+				      (vector-ref vec 1)))
+				  ((4)
+				   (procedure thisarg (vector-ref vec 0)
+				      (vector-ref vec 1)
+				      (vector-ref vec 2)))
+				  (else
+				   (js-apply %this this thisarg
+				      (vector->sublist vec len))))
+			       (js-apply %this this thisarg
+				  (vector->sublist vec len)))))
+		     (js-apply %this this thisarg
+			(vector->sublist vec len))))
 		((js-object-mode-holey? argarray)
 		 ;; fast path
 		 (js-apply %this this thisarg

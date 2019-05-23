@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu May 23 08:55:48 2019 (serrano)                */
+;*    Last change :  Thu May 23 10:09:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -425,9 +425,18 @@
 (define (js-apply% %this fun::JsFunction proc::procedure obj args::pair-nil)
    (with-access::JsFunction fun (arity rest len minlen name)
       (let ((n (+fx 1 (length args))))
+	 ;;(tprint "js-apply arity=" arity " n=" n)
 	 (cond
 	    ((=fx arity n)
-	     (apply proc obj args))
+	     (case arity
+		((2)
+		 (proc obj (car args)))
+		((3)
+		 (proc obj (car args) (cadr args)))
+		((4)
+		 (proc obj (car args) (cadr args) (caddr args)))
+		(else
+		 (apply proc obj args))))
 	    ((>fx arity n)
 	     (if (and (>=fx minlen 0) (>fx minlen (-fx n 1)))
 		 (js-raise-arity-error %this fun (-fx n 1))
@@ -1149,7 +1158,8 @@
 (define-generic (js-toindex p)
    
    (define false (-u32 #u32:0 #u32:1))
-   
+
+   (tprint "js-toindex p=" (typeof p))
    (cond
       ((fixnum? p)
        (cond-expand

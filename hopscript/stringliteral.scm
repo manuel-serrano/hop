@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu May 23 08:58:10 2019 (serrano)                */
+;*    Last change :  Thu May 23 10:10:14 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -249,14 +249,24 @@
 (define-method (js-toindex obj::JsStringLiteral)
 
    (define false (-u32 #u32:0 #u32:1))
+
+   (define (integer-string? str)
+      (let ((len (string-length str)))
+	 (let loop ((i 0))
+	    (cond
+	       ((=fx i len) #t)
+	       ((char-numeric? (string-ref str i)) (loop (+fx i 1)))
+	       (else #f)))))
    
    (define (string->index p::bstring)
-      (let ((num (string->number p)))
-	 (if (bignum? num)
-	     (if (and (>=bx num #z0) (<bx num (exptbx #z2 #z32)))
-		 (llong->uint32 (bignum->llong num))
-		 false)
-	     (js-toindex num))))
+      (if (integer-string? p)
+	  (let ((num (string->number p)))
+	    (if (bignum? num)
+		(if (and (>=bx num #z0) (<bx num (exptbx #z2 #z32)))
+		    (llong->uint32 (bignum->llong num))
+		    false)
+		(js-toindex num)))
+	  false))
 
    (string->index (js-jsstring->string obj)))
 

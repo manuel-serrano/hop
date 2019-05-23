@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu May 23 08:35:58 2019 (serrano)                */
+;*    Last change :  Thu May 23 10:00:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1084,7 +1084,7 @@
 ;*    js-function? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function? o)
-   (isa? o JsFunction))
+   (and (%object? o) (>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSFUNCTIONTAG))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-proxy? ...                                           */
