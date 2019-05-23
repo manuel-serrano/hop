@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon May 13 10:38:03 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:47:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -274,7 +274,7 @@
 	       (js-string->jsstring
 		  (call-with-output-string
 		     (lambda (op)
-			(when (isa? err JsObject)
+			(when (js-object? err)
 			   ;; needed for nodejs compatibility
 			   (let ((head (js-get err (& "name") %this)))
 			      (unless (eq? head (js-undefined))
@@ -346,7 +346,7 @@
 			     (lambda (o)
 				(let ((prepare (js-get js-error
 						  (& "prepareStackTrace") %this)))
-				   (if (isa? prepare JsFunction)
+				   (if (js-function? prepare)
 				       (let ((frames (js-vector->jsarray
 							(list->vector
 							   (filter-map hop-frame->js-frame
@@ -608,13 +608,13 @@
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.11.4.4
    (define (error-prototype-tostring this)
-      (if (not (isa? this JsObject))
+      (if (not (js-object? this))
           (bigloo-type-error "toString" "JsObject" this)
           (let* ((name3 (js-get this (& "name") %this))
                  (name4 (if (eq? name3 (js-undefined))
                             (js-ascii->jsstring "Error")
                             (js-tojsstring name3 %this)))
-                 (msg5 (if (isa? this JsObject)
+                 (msg5 (if (js-object? this)
                            (js-get this (& "message") %this)
                            (js-undefined)))
                  (msg6 (if (eq? msg5 (js-undefined))

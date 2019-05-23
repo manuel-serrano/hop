@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Mon May 13 08:19:01 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:59:28 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -398,7 +398,7 @@
       (with-access::WorkerHopThread thread (onmessage %this)
 	 (js-worker-push-thunk! thread "post-master-message"
 	    (lambda ()
-	       (when (isa? onmessage JsFunction)
+	       (when (js-function? onmessage)
 		  (let ((e (instantiate::MessageEvent
 			      (name "message")
 			      (target this)

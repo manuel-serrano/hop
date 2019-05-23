@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue May 21 07:44:33 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:55:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -223,7 +223,7 @@
 	 (else
 	  (let* ((o (alloc %this f))
 		 (r (js-apply% %this f construct o args)))
-	     (if (isa? r JsObject) r o))))))
+	     (if (js-object? r) r o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/proxy ...                                                 */
@@ -231,15 +231,15 @@
 (define (js-new/proxy %this::JsGlobalObject p::JsProxy args::pair-nil)
    (with-access::JsProxy p (target handler)
       (let ((ctor (js-get handler (& "construct") %this)))
-	 (if (isa? ctor JsFunction)
+	 (if (js-function? ctor)
 	     (let ((obj (js-call2 %this ctor p target
 			   (js-vector->jsarray (list->vector args) %this))))
 		(cond
-		   ((not (isa? target JsFunction))
+		   ((not (js-function? target))
 		    (js-raise-type-error %this
 		       "Proxy \"construct\" inconsistency"
 		       p))
-		   ((not (isa? obj JsObject))
+		   ((not (js-object? obj))
 		    (js-raise-type-error %this
 		       "Proxy \"construct\" result not an object"
 		       obj))
@@ -254,9 +254,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new %this f . args)
    (cond
-      ((isa? f JsFunction)
+      ((js-function? f)
        (js-new/function %this f args))
-      ((isa? f JsProxy)
+      ((js-proxy? f)
        (js-new/proxy %this f args))
       (else
        (js-raise-type-error %this "new: object is not a function ~s" f))))
@@ -268,9 +268,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new/debug %this loc f . args)
    (cond
-      ((isa? f JsFunction)
+      ((js-function? f)
        (js-new/function %this f args))
-      ((isa? f JsProxy)
+      ((js-proxy? f)
        (js-new/proxy %this f args))
       (else
        (js-raise-type-error/loc %this loc "new: object is not a function ~s" f))))
@@ -332,9 +332,9 @@
 ;*    js-new-return ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-new-return f r o)
-   [assert (r o) (or (isa? r JsObject) (isa? o JsObject))]
+   [assert (r o) (or (js-object? r) (js-object? o))]
    (with-access::JsFunction f (constrsize)
-      (if (isa? r JsObject)
+      (if (js-object? r)
 	  (with-access::JsObject r (elements)
 	     (when (vector? elements)
 		(set! constrsize (vector-length elements)))
@@ -360,13 +360,13 @@
 (define (js-new-sans-construct %this ctor)
    ;; used to initialize classes
    (cond
-      ((isa? ctor JsFunction)
+      ((js-function? ctor)
        (with-access::JsFunction ctor (name alloc)
 	  (let ((o (alloc %this ctor)))
 	     (with-access::JsGlobalObject %this (js-new-target)
 		(set! js-new-target (js-undefined)))
 	     (js-new-return ctor o o))))
-      ((isa? ctor JsProxy)
+      ((js-proxy? ctor)
        (js-new/proxy %this ctor '()))
       (else
        (js-raise-type-error %this "new: object is not a function ~s" ctor))))
@@ -376,13 +376,13 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-new %this ctor . args)
    `(cond
-       ((isa? ,ctor JsFunction)
+       ((js-function? ,ctor)
 	(with-access::JsFunction ,ctor (src construct alloc)
 	   (let ((o (alloc %this ,ctor)))
 	      (let ((r (,(string->symbol (format "js-call~a%" (length args)))
 			,%this ,ctor construct o ,@args)))
 		 (js-new-return ,ctor r o)))))
-       ((isa? ,ctor JsProxy)
+       ((js-proxy? ,ctor)
 	(js-new/proxy ,%this ,ctor (list ,@args)))
        (else
 	(js-raise-type-error ,%this "new: object is not a function ~s" ,ctor))))
@@ -681,16 +681,16 @@
 
 (define (js-calln %this fun this . args)
    (cond
-      ((isa? fun JsFunction)
+      ((js-function? fun)
        (js-calln% %this fun this args))
-      ((isa? fun JsProxy)
+      ((js-proxy? fun)
        (js-call-proxyn %this fun this args))
       (else
        (js-raise-type-error %this "call: not a function ~s" fun))))
 
 (define-macro (gen-call/debug %this loc fun this . args)
    `(cond
-       ((isa? ,fun JsFunction)
+       ((js-function? ,fun)
 	(with-access::JsFunction ,fun (procedure)
 	   (let ((env (current-dynamic-env))
 		 (name (js-function-debug-name ,fun %this)))
@@ -699,7 +699,7 @@
 			  ,%this ,fun procedure ,this ,@args)))
 		 ($env-pop-trace env)
 		 aux))))
-       ((isa? ,fun JsProxy)
+       ((js-proxy? ,fun)
 	(with-access::JsProxy ,fun (target)
 	   (let ((env (current-dynamic-env))
 		 (name (js-proxy-debug-name ,fun %this)))
@@ -747,7 +747,7 @@
 
 (define (js-calln/debug %this loc fun this . args)
    (cond
-      ((isa? fun JsFunction)
+      ((js-function? fun)
        (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun %this)))
@@ -755,7 +755,7 @@
 	     (let ((aux (js-calln% %this fun this args)))
 		($env-pop-trace env)
 		aux))))
-      ((isa? fun JsProxy)
+      ((js-proxy? fun)
        (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-proxy-debug-name fun %this)))
@@ -828,7 +828,7 @@
 		  (js-raise-type-error ,%this
 		     ,(format "call~a: not a function ~~s" (length args))
 		     ,fun))  
-		 ((isa? xfun JsFunction)
+		 ((js-function? xfun)
 		  (with-access::JsFunction xfun (procedure)
                      (js-call3% %this xfun procedure handler target
                         ,this (js-vector->jsarray (vector ,@args) ,%this))))
@@ -875,7 +875,7 @@
       (cond
 	 ((js-function? target)
 	  (let ((xfun (js-get handler (& "apply") %this)))
-	     (if (isa? xfun JsFunction)
+	     (if (js-function? xfun)
 		 (with-access::JsFunction xfun (procedure)
 		    (js-call3% %this xfun procedure fun target
 		       this (js-vector->jsarray (list->vector args) %this)))
@@ -892,7 +892,7 @@
       (cond
 	 ((js-function? target)
 	  (let ((xfun (js-get handler (& "apply") %this)))
-	     (if (isa? xfun JsFunction)
+	     (if (js-function? xfun)
 		 (with-access::JsFunction xfun (procedure)
 		    (js-call3% %this xfun procedure fun target
 		       this (js-vector->jsarray (list->vector args) %this))
@@ -920,7 +920,7 @@
 (define (js-ordinary-instanceof? %this v f)
    (with-access::JsFunction f (cmap elements prototype)
       (let ((o prototype))
-	 (if (not (isa? o JsObject))
+	 (if (not (js-object? o))
 	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
 	     (let loop ((v v))
 		(with-access::JsObject v ((nv __proto__))
@@ -928,7 +928,7 @@
 		      ((eq? o nv)
 		       #t)
 		      ((eq? nv (js-null))
-		       (when (isa? v JsProxy)
+		       (when (js-proxy? v)
 			  (with-access::JsProxy v (target)
 			     (loop target))))
 		      (else
@@ -936,7 +936,7 @@
 
 (define (js-ordinary-instanceof/debug %this loc v f)
    (let ((o (js-get f (& "prototype") %this)))
-      (if (not (isa? o JsObject))
+      (if (not (js-object? o))
           (js-raise-type-error/loc %this loc "instanceof: no prototype ~s" v)
           (let loop ((v v))
              (with-access::JsObject v ((nv __proto__))
@@ -944,7 +944,7 @@
                    ((eq? o nv)
 		    #t)
                    ((eq? nv (js-null))
-		    (when (isa? v JsProxy)
+		    (when (js-proxy? v)
 		       (with-access::JsProxy v (target)
 			  (loop target))))
 		   (else
@@ -958,35 +958,35 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.5.3     */
 ;*---------------------------------------------------------------------*/
 (define (js-instanceof? %this v f)
-   (if (not (isa? f JsFunction))
+   (if (not (js-function? f))
        (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 	  (let ((h (js-get f js-symbol-hasinstance %this)))
-	     (if (isa? h JsFunction)
+	     (if (js-function? h)
 		 (js-call1 %this h f v)
 		 (js-raise-type-error %this
 		    "instanceof: not a function ~s" f))))
-       (when (isa? v JsObject)
+       (when (js-object? v)
 	  (if (js-object-mode-hasinstance? f)
 	      (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 		 (let ((h (js-get f js-symbol-hasinstance %this)))
-		    (if (isa? h JsFunction)
+		    (if (js-function? h)
 			(js-call1 %this h f v)
 			(js-ordinary-instanceof? %this v f))))
 	      (js-ordinary-instanceof? %this v f)))))
 
 (define (js-instanceof?/debug %this loc v f)
-   (if (not (isa? f JsFunction))
+   (if (not (js-function? f))
        (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 	  (let ((h (js-get f js-symbol-hasinstance %this)))
-	     (if (isa? h JsFunction)
+	     (if (js-function? h)
 		 (js-call1 %this h f v)
 		 (js-raise-type-error/loc %this loc
 		    "instanceof: not a function ~s" f))))
-       (when (isa? v JsObject)
+       (when (js-object? v)
 	  (if (js-object-mode-hasinstance? f)
 	      (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 		 (let ((h (js-get f js-symbol-hasinstance %this)))
-		    (if (isa? h JsFunction)
+		    (if (js-function? h)
 			(js-call1 %this h f v)
 			(js-ordinary-instanceof/debug %this loc v f))))
 	      (js-ordinary-instanceof/debug %this loc v f)))))
@@ -997,12 +997,12 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.7       */
 ;*---------------------------------------------------------------------*/
 (define (js-in? %this field obj)
-   (if (not (isa? obj JsObject))
+   (if (not (js-object? obj))
        (js-raise-type-error %this "in: not an object ~s" obj)
        (js-has-property obj field %this)))
 
 (define (js-in?/debug %this loc field obj)
-   (if (not (isa? obj JsObject))
+   (if (not (js-object? obj))
        (js-raise-type-error/loc %this loc "in: not an object ~s" obj)
        (js-has-property obj field %this)))
 
@@ -1261,9 +1261,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toobject-failsafe %this::JsGlobalObject o)
    (cond
-      ((string? o)
-       (with-access::JsGlobalObject %this (js-string)
-	  (js-new1 %this js-string o)))
       ((js-jsstring? o)
        (with-access::JsGlobalObject %this (js-string)
 	  (js-new1 %this js-string o)))
@@ -1276,12 +1273,15 @@
       ((isa? o JsSymbolLiteral)
        (with-access::JsGlobalObject %this (js-symbol-ctor)
 	  (js-symbol-ctor (js-undefined) o)))
-      ((isa? o JsObject)
-       o)
-      ((pair? o)
+      ((js-object? o)
        o)
       ((isa? o object)
        o)
+      ((pair? o)
+       o)
+      ((string? o)
+       (with-access::JsGlobalObject %this (js-string)
+	  (js-new1 %this js-string o)))
       (else
        #f)))
    
@@ -1357,7 +1357,7 @@
 	      (if (= x 0)
 		  (or (js-jsstring-null? y) (equality? x (js-tonumber y %this)))
 		  (equality? x (js-tonumber y %this))))
-	     ((isa? y JsObject)
+	     ((js-object? y)
 	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this)))
 	     ((boolean? y)
 	      (equality? x (js-tonumber y %this)))
@@ -1370,7 +1370,7 @@
 	      (if (= y 0)
 		  (or (js-jsstring-null? x) (equality? (js-tonumber x %this) y))
 		  (equality? (js-tonumber x %this) y)))
-	     ((isa? y JsObject)
+	     ((js-object? y)
 	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this)))
 	     ((eq? y #f)
 	      (js-jsstring-null? x))
@@ -1385,7 +1385,7 @@
 	      (equality? (js-tonumber x %this) y))))
 	 ((boolean? y)
 	  (equality? x (js-tonumber y %this)))
-	 ((isa? x JsObject)
+	 ((js-object? x)
 	  (cond
 	     ((js-jsstring? y)
 	      (equality? ((@ js-toprimitive __hopscript_public) x 'any %this) y))
@@ -1395,7 +1395,7 @@
 	      (equality? ((@ js-toprimitive __hopscript_public) x 'any %this) y))
 	     (else #f)))
 	 ((isa? x JsSymbolLiteral)
-	  (if (isa? y JsObject)
+	  (if (js-object? y)
 	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this))
 	      #f))
 	 (else
@@ -1489,9 +1489,9 @@
 ;*    js-super ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-super obj loc %this)
-   (if (isa? obj JsObject)
+   (if (js-object? obj)
        (with-access::JsObject obj (__proto__)
-	  (if (isa? __proto__ JsObject)
+	  (if (js-object? __proto__)
 	      __proto__
 	      (js-raise-type-error/loc %this loc
 		 "Prototype of prototype not an object" obj)))
@@ -1504,7 +1504,7 @@
    (js-worker-exec %worker "eval-hss" #t
       (lambda ()
 	 (let ((v (%js-eval ip 'repl %this (js-get scope (& "this") %this) scope)))
-	    (if (isa? v JsStringLiteral)
+	    (if (js-jsstring? v)
 		(js-jsstring->string v)
 		v)))))
 
@@ -1719,7 +1719,7 @@
 ;*---------------------------------------------------------------------*/
 (define (error-obj->string::bstring %this obj)
    (cond
-      ((isa? obj JsObject)
+      ((js-object? obj)
        (with-handler
 	  (lambda (e)
 	     (js-jsstring->string (js-typeof obj %this)))
@@ -1839,7 +1839,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-cast-object obj %this::JsGlobalObject name)
    (cond
-      ((isa? obj JsObject)
+      ((js-object? obj)
        obj)
       ((pair? obj)
        obj)
@@ -1870,11 +1870,11 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-typeof obj %this)
    (cond
-      ((isa? obj JsFunction)
+      ((js-function? obj)
        (& "function"))
       ((isa? obj JsSymbolLiteral)
        (& "symbol"))
-      ((isa? obj JsObject)
+      ((js-object? obj)
        (& "object"))
       ((or (real? obj) (integer? obj))
        (& "number"))
@@ -1899,7 +1899,7 @@
    (js-make-function %this
       (lambda (this attrs . nodes)
 	 (apply <HEAD> :idiom "javascript" :%context %this
-	    (when (isa? attrs JsObject)
+	    (when (js-object? attrs)
 	       (js-object->keyword-arguments* attrs %this))
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
@@ -1916,7 +1916,7 @@
    (js-make-function %this
       (lambda (this attrs . nodes)
 	 (apply <SCRIPT> :idiom "javascript" :%context %this
-	    (when (isa? attrs JsObject)
+	    (when (js-object? attrs)
 	       (js-object->keyword-arguments* attrs %this))
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))

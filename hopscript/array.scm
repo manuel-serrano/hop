@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed May 15 11:54:22 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:47:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -469,7 +469,7 @@
 	       ;; 4. If mapfn is undefined, then let mapping be false.
 	       ;; 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
 	       (when (and (not (eq? mapfn (js-undefined)))
-			  (not (isa? mapfn JsFunction)))
+			  (not (js-function? mapfn)))
 		  (js-raise-type-error %this
 		     "Array.from: when provided, the second argument must be a function"
 		     mapfn))
@@ -483,7 +483,7 @@
 		  ;;     internal method of C with an argument list containing
 		  ;;     the single item len.
 		  ;; 14. a. Else, Let A be ArrayCreate(len).
-		  (let ((A (if (isa? C JsFunction)
+		  (let ((A (if (js-function? C)
 			       (js-toobject %this (js-new1 %this C len))
 			       (js-species->jsarray this (js-create-vector len) %this))))
 		     ;; 16. Let k be 0.
@@ -510,7 +510,7 @@
 	 ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.of
 	 (define (array-of this::obj . items)
 	    (with-access::JsGlobalObject %this (js-array)
-	       (if (and (not (eq? this js-array)) (isa? this JsFunction))
+	       (if (and (not (eq? this js-array)) (js-function? this))
 		   (let ((arr (js-new1 %this this 0)))
 		      (let loop ((i 0)
 				 (is items))
@@ -996,7 +996,7 @@
    (define (array-prototype-tostring this::obj)
       (let* ((o (js-toobject %this this))
 	     (func (js-get this (& "join") %this)))
-	 (if (isa? func JsFunction)
+	 (if (js-function? func)
 	     (js-call1 %this func this (js-undefined))
 	     (js-tojsstring this %this))))
    
@@ -1447,7 +1447,7 @@
 	 (cond
 	    ((eq? comparefn (js-undefined))
 	     default-compare)
-	    ((not (isa? comparefn JsFunction))
+	    ((not (js-function? comparefn))
 	     (js-raise-type-error %this
 		"sort: argument not a function ~s" comparefn))
 	    (else
@@ -2210,7 +2210,7 @@
       
       (let* ((o (js-toobject %this this))
 	     (len::uint32 (js-get-lengthu32 o %this)))
-	 (if (not (isa? proc JsFunction))
+	 (if (not (js-function? proc))
 	     (js-raise-type-error %this "Not a procedure ~s" proc)
 	     ;; find the accumulator init value
 	     (if (null? init)
@@ -2250,7 +2250,7 @@
       
       (let* ((o (js-toobject %this this))
 	     (len::uint32 (js-get-lengthu32 o %this)))
-	 (if (not (isa? proc JsFunction))
+	 (if (not (js-function? proc))
 	     (js-raise-type-error %this "Not a procedure ~s" proc)
 	     ;; find the accumulator init value
 	     (if (null? init)
@@ -2307,7 +2307,7 @@
 (define (js-array-species-create %this origin new-len)
    (with-access::JsGlobalObject %this (js-symbol-species js-array js-array-prototype js-array-pcache)
       (define (check-array val)
-	 (if (isa? val JsArray)
+	 (if (js-array? val)
 	     val
 	     (js-vector->jsarray (vector val) %this))) 
 
@@ -2318,13 +2318,13 @@
 		(fixnum->uint32 new-len))
 	     (let ((ctor (js-get-name/cache origin (& "constructor") #f %this
 			    (js-pcache-ref js-array-pcache 13))))
-		(if (and (isa? ctor JsFunction) (not (eq? js-array ctor)))
+		(if (and (js-function? ctor) (not (eq? js-array ctor)))
 		    (let ((species (js-get ctor js-symbol-species %this)))
 		       (check-array
 			  (cond
-			     ((isa? species JsFunction)
+			     ((js-function? species)
 			      (js-new1 %this species 0))
-			     ((isa? ctor JsFunction)
+			     ((js-function? ctor)
 			      (js-new1 %this ctor 0))
 			     (else
 			      (js-raise-type-error %this
@@ -2874,7 +2874,7 @@
 (define (js-array-put! o::JsArray p v throw %this)
    
    (define (aput! o::JsArray q::obj v)
-      (when (isa? p JsStringLiteral) (js-profile-log-put p #f))
+      (when (js-jsstring? p) (js-profile-log-put p #f))
       (if (not (js-can-put o q %this))
 	  ;; 1
 	  (if throw
@@ -3121,7 +3121,7 @@
 				(with-access::JsPropertyDescriptor d (name)
 				   name))
 			   (js-object-properties o)))
-	       (if (isa? __proto__ JsObject)
+	       (if (js-object? __proto__)
 		   (loop __proto__)
 		   '())))))
    
@@ -3277,8 +3277,8 @@
    (define (js-default-array-accessor-property! desc)
       (js-default-array-property! desc)
       (with-access::JsAccessorDescriptor desc (get set)
-	 (unless (isa? get JsFunction) (set! get (js-undefined)))
-	 (unless (isa? set JsFunction) (set! set (js-undefined)))))
+	 (unless (js-function? get) (set! get (js-undefined)))
+	 (unless (js-function? set) (set! set (js-undefined)))))
    
    (define (js-default-array-generic-property! desc)
       (cond
@@ -3424,12 +3424,12 @@
       (cond
 	 ((not (js-array? o))
 	  (let ((len (js-get-lengthu32 o %this)))
-	     (if (not (isa? proc JsFunction))
+	     (if (not (js-function? proc))
 		 (js-raise-type-error %this "Not a procedure ~s" proc)
 		 (array-iterator o len proc t #u32:0))))
 	 (else
 	  [%assert-array! o "array-prototype-iterator"]
-	  (if (not (isa? proc JsFunction))
+	  (if (not (js-function? proc))
 	      (js-raise-type-error %this "Not a procedure ~s" proc)
 	      (with-access::JsArray o (length vec ilen)
 		 (if (js-array-inlined? o)
@@ -3510,7 +3510,7 @@
 
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (let ((fun (js-get o js-symbol-iterator %this)))
-	 (if (isa? fun JsFunction)
+	 (if (js-function? fun)
 	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
 	     (with-access::JsArray o (length vec ilen)
 		(if (js-array-inlined? o)
@@ -4125,7 +4125,7 @@
 
    (define (return it res)
       (let ((ret (js-get it (& "return") %this)))
-	 (if (isa? ret JsFunction)
+	 (if (js-function? ret)
 	     (js-call0 %this ret it)
 	     (js-undefined)))
       res)
@@ -4134,7 +4134,7 @@
        value
        (with-access::JsGlobalObject %this (js-symbol-iterator)
 	  (let ((proc (js-get value js-symbol-iterator %this)))
-	     (if (isa? proc JsFunction)
+	     (if (js-function? proc)
 		 (let* ((vec (make-vector size (js-absent)))
 			(res (js-vector->jsarray vec %this))
 			(it (js-call0 %this proc value)))

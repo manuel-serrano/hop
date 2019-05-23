@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon May 13 10:40:52 2019 (serrano)                */
+;*    Last change :  Thu May 23 09:07:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -204,7 +204,7 @@
 		     (val (cond
 			     ((null? args)
 			      (js-ascii->jsstring ""))
-			     ((isa? (car args) JsStringLiteral)
+			     ((js-jsstring? (car args))
 			      (car args))
 			     (else
 			      (js-string->jsstring (js-tostring (car args) %this)))))))
@@ -327,7 +327,7 @@
 	 ((isa? this JsSymbol)
 	  (with-access::JsSymbol this (val)
 	     (js-tojsstring val %this)))
-	 ((isa? this JsObject)
+	 ((js-object? this)
 	  (js-raise-type-error %this "no internal slot ~a" this))
 	 (else
 	  (js-raise-type-error %this "not a symbol ~a" this))))
@@ -344,7 +344,7 @@
 	 ((isa? this JsSymbol)
 	  (with-access::JsSymbol this (val)
 	     val))
-	 ((isa? this JsObject)
+	 ((js-object? this)
 	  (js-raise-type-error %this "no internal slot ~a" this))
 	 (else
 	  (js-raise-type-error %this "not a symbol ~a" this))))

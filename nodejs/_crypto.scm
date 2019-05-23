@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Thu May  2 22:33:50 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:59:55 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -679,7 +679,7 @@
 	  (let ((buf (js-string->jsslowbuffer
 			(ssl-rand-bytes (js-tointeger size %this))
 			%this)))
-	     (if (isa? cb JsFunction)
+	     (if (js-function? cb)
 		 (!js-callback2 "randomBytes" %worker %this
 		    cb this (js-undefined) buf)
 		 buf)))))
@@ -695,7 +695,7 @@
 	  (let ((buf (js-string->jsslowbuffer
 			(ssl-rand-pseudo-bytes size)
 			%this)))
-	     (if (isa? cb JsFunction)
+	     (if (js-function? cb)
 		 (!js-callback2 "pseudoRandomBytes" %worker %this
 		    cb this (js-undefined) buf)
 		 buf)))))
@@ -1160,7 +1160,7 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (with-handler
 	    (lambda (err)
-	       (if (isa? callback JsFunction)
+	       (if (js-function? callback)
 		   (let ((obj (js-new %this js-object)))
 		      (js-put! obj (& "ondone") callback #f %this)
 		      (js-call2 %this callback obj err (js-undefined)))
@@ -1172,7 +1172,7 @@
 			   iterations
 			   keylen)
 			(js-undefined))))
-	       (if (isa? callback JsFunction)
+	       (if (js-function? callback)
 		   (let ((obj (js-new %this js-object)))
 		      (js-put! obj (& "ondone") callback #f %this)
 		      (js-call2 %this callback obj (js-undefined) r))

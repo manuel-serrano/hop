@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Mon May 13 10:39:34 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:50:36 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -129,7 +129,7 @@
       
       (with-access::JsGlobalObject %this (js-symbol-iterator)
 	 (cond
-	    ((isa? iterable JsArray)
+	    ((js-array? iterable)
 	     (iterable-vector this (jsarray->vector iterable %this)))
 	    ((isa? iterable JsGenerator)
 	     (let loop ((acc '()))
@@ -144,12 +144,12 @@
 	    ((js-get iterable js-symbol-iterator %this)
 	     =>
 	     (lambda (iterator)
-		(if (not (isa? iterator JsFunction))
+		(if (not (js-function? iterator))
 		    (err "Promise.all is not a function")
 		    (let ((it (js-call0 %this iterator iterable)))
 		       (let loop ((acc '()))
 			  (let ((next (js-get it (& "next") %this)))
-			     (if (isa? next JsFunction)
+			     (if (js-function? next)
 				 (let* ((v (js-call0 %this next it))
 					(done (js-get v (& "done") %this))
 					(val (js-get v (& "value") %this)))
@@ -174,7 +174,7 @@
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise-constructor
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.3.1
    (define (js-promise-construct o::JsPromise executor)
-      (if (not (isa? executor JsFunction))
+      (if (not (js-function? executor))
 	  (js-raise-type-error %this "argument not a procedure ~a"
 	     (typeof executor))
 	  (with-access::JsPromise o (state resolver rejecter thens catches)
@@ -290,7 +290,7 @@
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.4.4.4
    (define (promise-reject this val)
       (cond
-	 ((not (isa? this JsObject))
+	 ((not (js-object? this))
 	  ;; .2
 	  (js-raise-type-error %this "This not an object ~a" (typeof this)))
 	 (else
@@ -310,7 +310,7 @@
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.4.4.5
    (define (promise-resolve this val)
       (cond
-	 ((not (isa? this JsObject))
+	 ((not (js-object? this))
 	  ;; .2
 	  (js-raise-type-error %this "This not an object ~a" (typeof this)))
 	 ((and (isa? val JsPromise) (eq? (js-get val (& "constructor") %this) this))
@@ -357,8 +357,8 @@
 (define (js-promise-then-catch %this::JsGlobalObject this::JsPromise proc fail np)
    (with-access::JsPromise this (thens catches state val worker %name)
       ;; .5 & .6
-      (let ((fullfill (cons np (if (isa? proc JsFunction) proc 'identity)))
-	    (reject (cons np (if (isa? fail JsFunction) fail 'thrower))))
+      (let ((fullfill (cons np (if (js-function? proc) proc 'identity)))
+	    (reject (cons np (if (js-function? fail) fail 'thrower))))
 	 (case state
 	    ((pending)
 	     ;; .7
@@ -512,7 +512,7 @@
 	 (cond
 	    ((eq? handler 'identity)
 	     ;; .4
-	     (if (isa? resolver JsFunction)
+	     (if (js-function? resolver)
 		 (js-call1 %this resolver (js-undefined) argument)
 		 argument))
 	    ((eq? handler 'thrower)
@@ -561,7 +561,7 @@
 	     (js-reject o
 		(js-new %this js-type-error
 		   (js-string->jsstring "selfResolutionError")))))
-	 ((not (isa? resolution JsObject))
+	 ((not (js-object? resolution))
 	  ;; resolve .7
 	  (js-fullfill o resolution))
 	 (else
@@ -571,7 +571,7 @@
 		;; resolve .9.a
 		(js-reject o e))
 	     (let ((then (js-get resolution (& "then") %this)))
-		(if (not (isa? then JsFunction))
+		(if (not (js-function? then))
 		    ;; resolve .11
 		    (js-fullfill o resolution)
 		    ;; resolve .12

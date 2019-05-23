@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon May 13 10:38:34 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:48:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -263,7 +263,7 @@
 			 (vector-set! props i
 			    (prop name (property-flags-default)))
 			 (vector-set! vec i val)
-			 (when (isa? val JsFunction)
+			 (when (js-function? val)
 			    (vector-set! methods i #t))
 			 (loop (+fx i 1) (cdr alist))))))))))
 
@@ -290,7 +290,7 @@
 		       (val (js-obj->jsobject (cadr plist) %this)))
 		   (vector-set! props i (prop name (property-flags-default)))
 		   (vector-set! elements i val)
-		   (when (isa? val JsFunction) (vector-set! methods i #t))
+		   (when (js-function? val) (vector-set! methods i #t))
 		   (loop (+fx i 1) (cddr plist))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -317,7 +317,7 @@
 	 (cond
 	    ((null? lst)
 	     (reverse! res))
-	    ((isa? (car lst) JsArray)
+	    ((js-array? (car lst))
 	     (flatten (append (xml-unpack (car lst) %this) (cdr lst)) res))
 	    (else
 	     (flatten (cdr lst) (cons (car lst) res))))))
@@ -327,7 +327,7 @@
 	 (lambda (k %this)
 	    (let ((val (js-get/cache obj k %this))
 		  (key (string->keyword (js-jsstring->string k))))
-	       (if (isa? val JsArray)
+	       (if (js-array? val)
 		   (with-access::JsArray val (vec)
 		      (let ((l (flatten (vector->list vec))))
 			 (if (pair? l)
@@ -405,7 +405,7 @@
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (let ((fun (js-get o js-symbol-iterator %this))
 	    (acc '()))
-	 (if (isa? fun JsFunction)
+	 (if (js-function? fun)
 	     (begin
 		(js-for-of-iterator (js-call0 %this fun o) o
 		   (lambda (e %this) (set! acc (cons e acc))) #f %this)

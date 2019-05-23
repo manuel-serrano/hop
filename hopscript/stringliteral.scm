@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri May 17 08:08:51 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:58:10 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1351,7 +1351,7 @@
 	    ((js-array? this)
 	     (js-array-indexof this search position %this
 		(or cache (js-pcache-ref js-string-pcache 23))))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call2 %this
 		(js-get-name/cache this (& "indexOf") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 23)))
@@ -1423,7 +1423,7 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (js-jsstring-lastindexof this search position %this))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call2 %this
 		(js-get-name/cache this (& "lastIndexOf") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 2)))
@@ -1545,7 +1545,7 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (js-jsstring-charcodeat this index %this))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call1 %this
 		(js-get-name/cache this (& "charCodeAt") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 3)))
@@ -1605,7 +1605,7 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (js-jsstring-charat this index %this))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call1 %this
 		(js-object-get-name/cache this (& "charAt") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 4)))
@@ -1651,7 +1651,7 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (js-jsstring-substring this start end %this))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call2 %this
 		(js-get-name/cache this (& "substring") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 5)))
@@ -1701,7 +1701,7 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (js-jsstring-substr this start length %this))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call2 %this
 		(js-get-name/cache this (& "substr") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 6)))
@@ -1735,7 +1735,7 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (js-jsstring-tolowercase this))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call0 %this
 		(js-get-name/cache this (& "toLowerCase") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 7)))
@@ -1767,7 +1767,7 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (js-jsstring-tolocalelowercase this))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call0 %this
 		(js-get-name/cache this (& "toLocaleLowerCase") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 8)))
@@ -1801,7 +1801,7 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (js-jsstring-touppercase this))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call0 %this
 		(js-get-name/cache this (& "toUpperCase") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 9)))
@@ -1833,7 +1833,7 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (js-jsstring-tolocaleuppercase this))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call0 %this
 		(js-get-name/cache this (& "toLocaleUpperCase") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 10)))
@@ -1980,7 +1980,7 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (js-jsstring-split this separator limit %this))
-	    ((isa? this JsObject)
+	    ((js-object? this)
 	     (js-call2 %this
 		(js-get-name/cache this (& "split") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 11)))
@@ -2072,7 +2072,7 @@
 (define (js-jsstring-replace-regexp this::obj rx::regexp
 	   lastindex::long global::bool replacevalue %this)
    (cond
-      ((isa? replacevalue JsFunction)
+      ((js-function? replacevalue)
        (with-access::JsFunction replacevalue (procedure)
 	  (if (=fx ($procedure-arity procedure) 2)
 	      (js-jsstring-replace-regexp-fun1 this rx
@@ -2388,7 +2388,7 @@
 		 (js-jsstring-append
 		    (js-substring/enc string 0 i enc %this) tail)
 		 tail)))
-	 ((isa? replacevalue JsFunction)
+	 ((js-function? replacevalue)
 	  (let ((j (+fx i (js-jsstring-lengthfx searchstr))))
 	     (js-jsstring-append
 		(js-substring/enc string 0 i enc %this)
@@ -2418,7 +2418,7 @@
 (define (js-jsstring-replace this::obj searchvalue replacevalue %this)
    
    (define (fun1? v)
-      (when (isa? v JsFunction)
+      (when (js-function? v)
 	 (with-access::JsFunction v (procedure)
 	    (correct-arity? procedure 2))))
    
@@ -2470,7 +2470,7 @@
 	 ((isa? this JsString)
 	  (with-access::JsString this (val)
 	     (loop val)))
-	 ((isa? this JsObject)
+	 ((js-object? this)
 	  (loop (js-tojsstring this %this)))
 	 (else
 	  (loop (js-tojsstring (js-toobject %this this) %this))))))
@@ -2558,7 +2558,7 @@
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-match this regexp %this))
-	 ((isa? this JsObject)
+	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-string-pcache)
 	     (js-call1 %this
 		(js-get-name/cache this (& "match") #f %this
@@ -2583,7 +2583,7 @@
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-naturalcompare this that %this))
-	 ((isa? this JsObject)
+	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-string-pcache)
 	     (js-call1 %this
 		(js-get-name/cache this (& "naturalCompare") #f %this
@@ -2610,7 +2610,7 @@
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-localecompare this that %this))
-	 ((isa? this JsObject)
+	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-string-pcache)
 	     (js-call1 %this
 		(js-get-name/cache this (& "localCompare") #f %this
@@ -2636,7 +2636,7 @@
       (cond
 	 ((js-jsstring? this)
 	  (js-jsstring-trim this))
-	 ((isa? this JsObject)
+	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-string-pcache)
 	     (js-call0 %this
 		(js-get-name/cache this (& "trim") #f %this

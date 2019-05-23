@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon May 13 10:34:59 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:45:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -313,7 +313,7 @@
 ;*    function1->proc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (function1->proc fun %this::JsGlobalObject)
-   (if (isa? fun JsFunction)
+   (if (js-function? fun)
        (with-access::JsFunction fun (procedure)
 	  (if (correct-arity? procedure 2)
 	      procedure
@@ -346,7 +346,7 @@
 	      (with-access::JsAccessorDescriptor desc ((dset set))
 		 (when (isa? ismapped JsAccessorDescriptor)
 		    (with-access::JsAccessorDescriptor ismapped (set %set)
-		       (if (isa? dset JsFunction)
+		       (if (js-function? dset)
 			   (begin
 			      (set! set dset)
 			      (set! %set (function1->proc dset %this)))
@@ -360,7 +360,7 @@
 			  ((isa? ismapped JsAccessorDescriptor)
 			   (with-access::JsAccessorDescriptor ismapped
 				 (set)
-			      (when (isa? set JsFunction)
+			      (when (js-function? set)
 				 (js-call1 %this set o value))))
 			  ((isa? ismapped JsValueDescriptor)
 			   (with-access::JsValueDescriptor ismapped
@@ -598,7 +598,7 @@
 (define-method (js-for-of o::JsArguments proc close %this)
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (let ((fun (js-get o js-symbol-iterator %this)))
-	 (if (isa? fun JsFunction)
+	 (if (js-function? fun)
 	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
 	     (with-access::JsArguments o (vec)
 		(let ((len (minfx (vector-length vec)

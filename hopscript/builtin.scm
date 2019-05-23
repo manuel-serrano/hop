@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jan 26 08:54:32 2019                          */
-;*    Last change :  Mon May 13 10:37:35 2019 (serrano)                */
+;*    Last change :  Thu May 23 09:15:15 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop builtin JavaScript objects                                   */
@@ -46,7 +46,7 @@
        (js-bind! ,%this ,obj (& ,(symbol->string! (if (pair? tagjs) (car tagjs) tag)))
           :value (js-make-function ,%this
                     (lambda (this attrs . nodes)
-                       (if (isa? attrs JsObject)
+                       (if (js-object? attrs)
 			   (if (null? nodes)
 			       (apply ,(symbol-append '< tag '>)
 				  :%context ,%this

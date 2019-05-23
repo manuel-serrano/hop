@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Thu May  2 13:42:50 2019 (serrano)                */
+;*    Last change :  Thu May 23 09:00:58 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -1031,7 +1031,7 @@
 	    (tprint "http-on-body offset=" offset
 	       " off=" off " (" (+fx offset (-fx off shift))
 	       ") length=" length " shift=" shift))
-	 (when (isa? cb JsFunction)
+	 (when (js-function? cb)
 	    (js-call3 %this cb parser buffer (+fx offset (-fx off shift))
 	       length)))))
 
@@ -1042,7 +1042,7 @@
    (when (>fx debug-parser 0)
       (tprint "http-on-message-complete"))
    (let ((cb (js-get parser (& "onMessageComplete") %this)))
-      (when (isa? cb JsFunction)
+      (when (js-function? cb)
 	 (js-call0 %this cb parser))))
 
 ;*---------------------------------------------------------------------*/
@@ -1094,11 +1094,11 @@
       (let ((cb (js-get parser (& "onHeaders") %this))
 	    (jsheaders (headers->jsheaders %this parser))
 	    (jsurl (js-string->jsstring url)))
-	 (when (and (pair? headers) (isa? cb JsFunction))
+	 (when (and (pair? headers) (js-function? cb))
 	    (js-call2 %this cb parser jsheaders jsurl))
 	 (unless (memq 'trailer flags)
 	    (let ((cb (js-get parser (& "onHeadersComplete") %this)))
-	       (when (isa? cb JsFunction)
+	       (when (js-function? cb)
 		  (with-access::JsGlobalObject %this (js-object)
 		     (let ((info (js-new0 %this js-object)))
 			;; upgrade

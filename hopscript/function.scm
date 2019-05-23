@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed May 22 07:24:11 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:47:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -595,7 +595,7 @@
    ;; source
    ;; Hop extension
    (define (source this)
-      (if (isa? this JsFunction)
+      (if (js-function? this)
 	  (with-access::JsFunction this (src)
 	     (when (pair? src)
 		(js-string->jsstring
@@ -655,7 +655,7 @@
    ;; bind
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.5
    (define (bind this::obj thisarg . args)
-      (if (not (isa? this JsFunction))
+      (if (not (js-function? this))
 	  (js-raise-type-error %this "bind: this not a function ~s" this)
 	  (with-access::JsFunction this (len construct alloc procedure)
 	     (let* ((proc (lambda (_ . actuals)
@@ -706,7 +706,7 @@
       ((not (js-object? argarray))
        (js-raise-type-error %this
 	  "apply: argument not an object ~s" argarray))
-      ((isa? argarray JsArray)
+      ((js-array? argarray)
        (let ((len (js-get argarray (& "length") %this)))
 	  (with-access::JsArray argarray (vec)
 	     (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon May 13 10:40:57 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:59:09 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -165,7 +165,7 @@
 ;*---------------------------------------------------------------------*/
 (define (ws-json-parser ip ctx %this)
    (let ((j (json-parser ip ctx)))
-      (if (isa? j JsArray)
+      (if (js-array? j)
 	  (jsarray->list j %this)
 	  j)))
 
@@ -199,12 +199,12 @@
 				    options)
 				   ((js-jsstring? options)
 				    (js-jsstring->string options))
-				   ((isa? options JsArray)
+				   ((js-array? options)
 				    (let ((join (js-get options (& "join") %this)))
 				       (js-jsstring->string 
 					  (js-call1 %this join options
 					     (js-ascii->jsstring ", ")))))
-				   ((isa? options JsObject)
+				   ((js-object? options)
 				    (js-jsstring->string
 				       (js-get options (& "protocol") %this)))))
 		      (url (js-tostring url %this))
@@ -355,18 +355,18 @@
 				opt)
 			       ((js-jsstring? opt)
 				(js-jsstring->string opt))
-			       ((isa? opt JsObject)
+			       ((js-object? opt)
 				(js->hop (js-get opt (& "path") %this)))
 			       (else
  				(js->hop opt))))
-		      (proto (if (isa? opt JsObject)
+		      (proto (if (js-object? opt)
 				 (let ((proto (js-get opt (& "protocol") %this)))
 				    (cond
 				       ((string? proto)
 					(list proto))
 				       ((js-jsstring? proto)
 					(list (js-jsstring->string proto)))
-				       ((isa? proto JsArray)
+				       ((js-array? proto)
 					(map js-jsstring->string
 					   (jsarray->list proto %this)))))))
 		      (svc (service :name path ()
@@ -524,7 +524,7 @@
 	 (js-worker-push-thunk! worker "ws-listener"
 	    (lambda ()
 	       ;;(with-access::WorkerHopThread worker (%this)
-	       (when (isa? (cdr action) JsFunction)
+	       (when (js-function? (cdr action))
 		  (with-handler
 		     (lambda (e)
 			(exception-notify e))
@@ -693,7 +693,7 @@
 	 (cond
 	    ((isa? val JsHopFrame)
 	     val)
-	    ((isa? val JsObject)
+	    ((js-object? val)
 	     (instantiateJsHopFrame
 		(%this %this)
 		(args (map! cdr
@@ -713,7 +713,7 @@
 	     (bigloo-type-error "websocket" "JsHopFrame or JsObject" val)))))
 
    (define (jsheader->header hd header)
-      (if (isa? hd JsObject)
+      (if (js-object? hd)
 	  (append (js-jsobject->alist hd %this) header)
 	  header))
 

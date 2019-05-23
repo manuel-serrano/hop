@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue May  7 15:37:44 2019 (serrano)                */
+;*    Last change :  Thu May 23 09:01:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -107,7 +107,7 @@
 	    (js-make-function %this
 	       (lambda (this exn)
 		  (let ((fatal (js-get %process (& "_fatalException") %this)))
-		     (if (isa? fatal JsFunction)
+		     (if (js-function? fatal)
 			 (js-call1 %this fatal %process exn)
 			 (raise exn))))
 	       1 "fatalException"))
@@ -625,11 +625,11 @@
 			   (set! call (domain-call this)))
 			(let ((tdc (js-get this (& "_tickDomainCallback") %this))
 			      (ndt (js-get this (& "_nextDomainTick") %this)))
-			   (unless (isa? tdc JsFunction)
+			   (unless (js-function? tdc)
 			      (error "_usingDomains"
 				 "process._tickDomainCallback assigned to non-function"
 				 tdc))
-			   (unless (isa? ndt JsFunction)
+			   (unless (js-function? ndt)
 			      (error "_usingDomains"
 				 "process._nextDomainTick assigned to non-function"
 				 ndt))

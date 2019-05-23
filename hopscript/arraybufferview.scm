@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Mon May 13 10:37:08 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:46:13 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -601,7 +601,7 @@
 				    (car items)
 				    (fixnum->uint32 off)
 				    (fixnum->uint32 l))))))))))
-	       ((or (isa? (car items) JsArray) (isa? (car items) JsTypedArray))
+	       ((or (js-array? (car items)) (isa? (car items) JsTypedArray))
 		(let ((len (js-get (car items) (& "length") %this)))
 		   (let* ((arr (js-typedarray-construct this (list len)))
 			  (vset (js-typedarray-set! arr)))
@@ -675,7 +675,7 @@
 					 (uint32->fixnum soff)
 					 (uint32->fixnum
 					    (-u32 (+u32 soff slength) 1)))))))))))
-		  ((isa? array JsArray)
+		  ((js-array? array)
 		   (with-access::JsTypedArray this ((toff byteoffset)
 						    (tlength length)
 						    (tbpe bp)
@@ -814,7 +814,7 @@
 ;*    the programs behaviors. It merely optimizes access to arrays.    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property-value o::JsTypedArray base p %this)
-   (if (isa? p JsStringLiteral)
+   (if (js-jsstring? p)
        (if (and *optimize-length* (eq? p (& "length")))
 	   (with-access::JsTypedArray o (length)
 	      (if (=u32 length #u32:0)
@@ -827,7 +827,7 @@
 ;*    js-get ::JsTypedArray ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsTypedArray p %this)
-   (if (isa? p JsStringLiteral)
+   (if (js-jsstring? p)
        (if (and *optimize-length* (eq? p (& "length")))
 	   (with-access::JsTypedArray o (length)
 	      (if (=u32 length #u32:0)
@@ -907,7 +907,7 @@
 		    (if (js-is-accessor-descriptor? desc)
 			;; 5
 			(with-access::JsAccessorDescriptor desc ((setter set))
-			   (if (isa? setter JsFunction)
+			   (if (js-function? setter)
 			       (js-call1 %this setter o v)
 			       (js-undefined)))
 			(let ((newdesc (instantiate::JsValueDescriptor
@@ -1405,7 +1405,7 @@
 (define-method (js-for-of o::JsTypedArray proc close %this)
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (let ((fun (js-get o js-symbol-iterator %this)))
-	 (if (isa? fun JsFunction)
+	 (if (js-function? fun)
 	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
 	     (with-access::JsTypedArray o (length %data)
 		(let ((vref (js-typedarray-ref o)))

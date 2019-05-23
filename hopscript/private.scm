@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon May 13 16:17:06 2019 (serrano)                */
+;*    Last change :  Thu May 23 09:27:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -573,7 +573,7 @@
 ;*    js-get-hashnumber ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-get-hashnumber key)
-   (if (isa? key JsStringLiteral)
+   (if (js-jsstring? key)
        (get-hashnumber (js-jsstring->string key))
        (get-hashnumber key)))
 

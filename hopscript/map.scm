@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Mon May 13 10:38:43 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:49:18 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -135,7 +135,7 @@
 
    (define (close-iterator iter)
       (let ((return (js-get iter (& "return") %this)))
-	 (when (isa? return JsFunction)
+	 (when (js-function? return)
 	    (js-call0 %this return iter))))
    
    (define (js-map-construct-iterator this::JsMap iter next)
@@ -164,11 +164,11 @@
    (define (js-map-construct-iterable this::JsMap iterable)
       (with-access::JsGlobalObject %this (js-symbol-iterator)
 	 (let ((i (js-get iterable js-symbol-iterator %this)))
-	    (if (isa? i JsFunction)
+	    (if (js-function? i)
 		(let ((iter (js-call0 %this i iterable)))
 		   (if (js-object? iter)
 		       (let ((next (js-get iter (& "next") %this)))
-			  (if (not (isa? next JsFunction))
+			  (if (not (js-function? next))
 			      (js-raise-type-error %this
 				 "Illegal IteratorValue" next)
 			      (with-handler
@@ -199,7 +199,7 @@
    (cond
       ((or (eq? iterable (js-undefined)) (eq? iterable '()))
        this)
-      ((isa? iterable JsArray)
+      ((js-array? iterable)
        (js-map-construct-array this iterable))
       (else
        (js-map-construct-iterable this iterable))))
@@ -260,7 +260,7 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.foreach
    (define (js-map-for-each this fn . thisarg)
       (if (isa? this JsMap)
-	  (if (isa? fn JsFunction)
+	  (if (js-function? fn)
 	      (let ((t (if (pair? thisarg) (car thisarg) (js-undefined))))
 		 (with-access::JsMap this (mapdata vec)
 		    (let loop ((i 0))

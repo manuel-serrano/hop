@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon May 13 10:40:46 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:58:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -155,9 +155,9 @@
 		   (cond
 		      ((string? value)
 		       (set-ascii-string! value))
-		      ((isa? value JsStringLiteral)
+		      ((js-jsstring? value)
 		       (js-set-string! %this o value))
-		      ((isa? value JsObject)
+		      ((js-object? value)
 		       (js-set-string! %this o (js-cast-string %this value)))
 		      (else
 		       (let ((str (js-tostring value %this)))
@@ -207,9 +207,9 @@
 	 (define (js-string-raw this . a)
 	    (let ((template (car a))
 		  (substitutions (cdr a)))
-	       (if (isa? template JsObject)
+	       (if (js-object? template)
 		   (let ((raw (js-get template (& "raw") %this)))
-		      (if (isa? raw JsObject)
+		      (if (js-object? raw)
 			  ;; step 9
 			  (let ((literalsegments (js-get raw (& "length") %this)))
 			     (let loop ((strs '())
@@ -269,7 +269,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-cast-string-normalize!::obj %this::JsGlobalObject obj)
    (cond
-      ((isa? obj JsStringLiteral)
+      ((js-jsstring? obj)
        (js-jsstring-normalize! obj))
       ((isa? obj JsString)
        (with-access::JsString obj (val)
@@ -809,7 +809,7 @@
 (define-method (js-for-of o::JsString proc close %this)
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (let ((fun (js-get o js-symbol-iterator %this)))
-	 (if (isa? fun JsFunction)
+	 (if (js-function? fun)
 	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
 	     (with-access::JsString o (val)
 		(js-for-of val proc close %this))))))

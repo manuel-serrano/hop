@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon May 13 10:38:25 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:48:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -118,7 +118,7 @@
       :object-return (lambda (o) o)
       :parse-error (lambda (msg fname loc)
 		      (js-raise-syntax-error %this msg #f ip loc))
-      :reviver (when (isa? reviver JsFunction)
+      :reviver (when (js-function? reviver)
 		  (lambda (this key val)
 		     (let ((res (js-call2 %this reviver this key val)))
 			(unless (eq? res (js-undefined))
@@ -142,9 +142,9 @@
 	     value))
       
       (define (toJSON value key)
-	 (if (isa? value JsObject)
+	 (if (js-object? value)
 	     (let ((tojson (js-get value (& "toJSON") %this)))
-		(if (isa? tojson JsFunction)
+		(if (js-function? tojson)
 		    (toVALUE (js-call1 %this tojson value key))
 		    (toVALUE value)))
 	     value))
@@ -246,8 +246,8 @@
       
       (define rep
 	 (cond
-	    ((isa? replacer JsFunction) replacer)
-	    ((isa? replacer JsArray) replacer)
+	    ((js-function? replacer) replacer)
+	    ((js-array? replacer) replacer)
 	    ((isa? replacer JsTypedArray) replacer)
 	    ((isa? replacer JsArrayBufferView) replacer)
 	    (else #f)))
@@ -317,7 +317,7 @@
 		     (proc name)))))
 	 
 	 (cond
-	    ((isa? obj JsObject)
+	    ((js-object? obj)
 	     (let loop ((o obj))
 		(with-access::JsObject o (elements cmap __proto__)
 		   (if (not (eq? cmap (js-not-a-cmap)))
@@ -333,7 +333,7 @@
       (define (str key holder stack #!optional (symbol (js-undefined)))
 	 (let* ((value (js-get holder key %this))
 		(value (toJSON value key))
-		(value (if (isa? rep JsFunction)
+		(value (if (js-function? rep)
 			   (toVALUE (js-call2 %this rep holder key value))
 			   value))
 		(mind gap))
@@ -367,7 +367,7 @@
 	       (else
 		(set! gap (string-append gap indent))
 		(cond
-		   ((isa? value JsFunction)
+		   ((js-function? value)
 		    (js-undefined))
 		   ((or (js-array? value) (js-proxy-array? value))
 		    (let ((res (lst holder value mind "[" "]"
@@ -376,7 +376,7 @@
 					(js-ascii->jsstring "null"))))))
 		       (set! gap mind)
 		       res))
-		   ((and (isa? rep JsObject) (not (isa? rep JsFunction)))
+		   ((and (js-object? rep) (not (js-function? rep)))
 		    (let ((res (lst holder value mind "{" "}"
 				  (lambda (i)
 				     (let ((k (js-get rep i %this)))

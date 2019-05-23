@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed May 15 11:01:50 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:50:03 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -212,7 +212,7 @@
 ;*    js-profile-log-funcall ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-funcall table idx fun source)
-   (when (isa? fun JsFunction)
+   (when (js-function? fun)
       (with-access::JsFunction fun (src)
 	 (when (and (pair? src) (string=? (cadr (car src)) source))
 	    (let* ((id (caddr (car src)))

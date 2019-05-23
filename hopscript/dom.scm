@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Mon May 13 10:37:56 2019 (serrano)                */
+;*    Last change :  Thu May 23 09:15:08 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -344,7 +344,7 @@
 			       (instantiate::xml-verbatim
 				  (parent o)
 				  (data o)))
-			      ((isa? o JsStringLiteral)
+			      ((js-jsstring? o)
 			       (instantiate::xml-verbatim
 				  (parent o)
 				  (data (js-jsstring->string o))))
@@ -362,7 +362,7 @@
 			(instantiate::xml-verbatim
 			   (parent o)
 			   (data o)))
-		       ((isa? o JsStringLiteral)
+		       ((js-jsstring? o)
 			(instantiate::xml-verbatim
 			   (parent o)
 			   (data (js-jsstring->string o))))
@@ -378,7 +378,7 @@
 			(instantiate::xml-verbatim
 			   (parent o)
 			   (data o)))
-		       ((isa? o JsStringLiteral)
+		       ((js-jsstring? o)
 			(instantiate::xml-verbatim
 			   (parent o)
 			   (data (js-jsstring->string o))))
@@ -411,12 +411,12 @@
 	 ((eq? pname (& "className"))
 	  (loop 'class))
 	 ((eq? pname (& "attributes"))
-	  (when (isa? v JsObject)
+	  (when (js-object? v)
 	     (with-access::xml-markup o (attributes)
 		(set! attributes (js-jsobject->keyword-plist v %this)))))
 	 ((eq? pname (& "children"))
 	  (with-access::xml-markup o (body)
-	     (if (isa? v JsArray)
+	     (if (js-array? v)
 		 (set! body (jsarray->list v %this))
 		 (js-raise-type-error %this
 		    (format "Bad children (~a)" (typeof v))
@@ -463,7 +463,7 @@
 	  (with-access::xml-element o (id)
 	     (set! id (js-tostring v %this))))
 	 ((eq? name (& "attributes"))
-	  (when (isa? v JsObject)
+	  (when (js-object? v)
 	     (let* ((attrs (js-jsobject->keyword-plist v %this))
 		    (lid (memq id: attrs)))
 		(with-access::xml-element o (attributes id)
@@ -487,7 +487,7 @@
 		      (cond
 			 ((isa? xml xml-element)
 			  (set! body (list xml)))
-			 ((isa? xml JsArray)
+			 ((js-array? xml)
 			  (set! body (jsarray->list xml %this)))
 			 (else
 			  (js-raise-type-error %this

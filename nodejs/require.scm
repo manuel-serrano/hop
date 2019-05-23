@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri May 17 07:59:26 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:44:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -158,10 +158,10 @@
 	       (let* ((exp (nodejs-require-module lang worker %ctxthis %ctxmodule))
 		      (key (js-get js-symbol (& "compiler") %ctxthis))
 		      (comp (js-get exp key %ctxthis)))
-		  (if (isa? comp JsFunction)
+		  (if (js-function? comp)
 		      (let ((obj (js-call1 %ctxthis comp (js-undefined)
 				    (js-string->jsstring ifile))))
-			 (when (isa? obj JsObject)
+			 (when (js-object? obj)
 			    (let* ((ty (js-tostring (js-get obj (& "type") %ctxthis) %ctxthis))
 				   (val (js-get obj (& "value") %ctxthis))
 				   (l (js-get obj (& "language") %ctxthis))
@@ -535,11 +535,11 @@
 		   (js-tostring lang this))
 	       (let loop ((lang lang))
 		  (cond
-		     ((isa? lang JsObject)
+		     ((js-object? lang)
 		      (with-access::JsGlobalObject this (js-symbol)
 			 (let* ((key (js-get js-symbol (& "compiler") this))
 				(comp (js-get lang key this)))
-			    (if (isa? comp JsFunction)
+			    (if (js-function? comp)
 				comp
 				(js-raise-error this
 				   "Wrong language object"
@@ -703,7 +703,7 @@
 (define (nodejs-exports-module::JsObject mod::JsModule worker::WorkerHopThread %this)
    
    (define (constant? n)
-      (or (number? n) (boolean? n) (string? n) (isa? n JsStringLiteral)))
+      (or (number? n) (boolean? n) (string? n) (js-jsstring? n)))
    
    (with-access::JsGlobalObject %this (__proto__ js-symbol-tostringtag)
       (with-access::JsModule mod (evars exports default imports redirects)
@@ -763,7 +763,7 @@
    (define head
       (js-make-function %this
 	 (lambda (this attrs . nodes)
-	    (let ((rts (if (isa? attrs JsObject)
+	    (let ((rts (if (js-object? attrs)
 			   (js-get attrs (& "rts") %scope)
 			   #t)))
 	       (apply <HEAD> :idiom "javascript" :%context %scope
@@ -772,7 +772,7 @@
 			(format "hop[ '%root' ] = ~s"
 			   (dirname
 			      (js-jsstring->string (js-get %module (& "filename") %scope))))))
-		  (when (isa? attrs JsObject)
+		  (when (js-object? attrs)
 		     (js-object->keyword-arguments* attrs %this))
 		  (filter (lambda (n)
 			     (or (isa? n xml-tilde)
@@ -796,7 +796,7 @@
 	 (lambda (this attrs . nodes)
 	    (let ((tmp (apply <SCRIPT> :idiom "javascript"
 			  :%context %scope :module %module
-			  (when (isa? attrs JsObject)
+			  (when (js-object? attrs)
 			     (js-object->keyword-arguments* attrs %this))
 			  nodes)))
 	       (if (pair? tmp)
@@ -1864,9 +1864,9 @@
       (cond
 	 ((core-module? path)
 	  (nodejs-core-module path worker %this))
-	 ((isa? compiler JsFunction)
+	 ((js-function? compiler)
 	  (let ((obj (js-call1 %this compiler (js-undefined) path)))
-	     (when (isa? obj JsObject)
+	     (when (js-object? obj)
 		(let ((ty (js-tostring (js-get obj (& "type") %this) %this))
 		      (val (js-get obj (& "value") %this))
 		      (langc (js-get obj (& "language") %this)))
@@ -2106,7 +2106,7 @@
 	 (cond
 	    ((pair? paths)
 	     (append (map js-jsstring->string paths) nodejs-env-path))
-	    ((isa? paths JsArray)
+	    ((js-array? paths)
 	     (with-access::JsArray paths (vec)
 		(append (map! js-jsstring->string (vector->list vec))
 		   nodejs-env-path)))
@@ -2122,7 +2122,7 @@
 	     (dir (dirname filename)))
 	 (trace-item "dir=" dir)
 	 (trace-item "paths=" (let ((paths (js-get mod (& "paths") %this)))
-				(if (isa? paths JsArray)
+				(if (js-array? paths)
 				    (jsarray->vector paths %this)
 				    paths)))
 	 (cond
@@ -2222,7 +2222,7 @@
              (for-each in-property (js-object-properties obj)))))
    
    ;; e start being undefined during the first steps of the rts boot
-   (when (isa? e JsObject)
+   (when (js-object? e)
       ;; bind all the exported functions in the global object
       (if (null? bindings)
           (for-in e
@@ -2358,9 +2358,9 @@
 				      %ctxthis %ctxmodule))
 			 (key (js-get js-symbol (& "compiler") %ctxthis))
 			 (parser (let ((o (js-get langmode key %ctxthis)))
-				    (when (isa? o JsObject)
+				    (when (js-object? o)
 				       (js-get o (& "parser") %ctxthis)))))
-		     (if (isa? parser JsObject)
+		     (if (js-object? parser)
 			 (let ((ps (js-get parser (& "plugins") %ctxthis)))
 			    (if (pair? ps)
 				(map (lambda (p)

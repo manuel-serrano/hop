@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon May 13 10:40:19 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:57:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -517,7 +517,7 @@
       (cond
 	 ((string? val)
 	  `("string" ,val "hop-encoding: string"))
-	 ((isa? val JsStringLiteral)
+	 ((js-jsstring? val)
 	  `("string" ,(js-jsstring->string val) "hop-encoding: string"))
 	 ((integer? val)
 	  `("integer" ,val "hop-encoding: integer"))
@@ -595,11 +595,11 @@
    (define (post-server-async this success failure %this host port auth scheme)
       (with-access::JsHopFrame this (path)
 	 (with-access::JsGlobalObject %this (worker)
-	    (let ((callback (when (isa? success JsFunction)
+	    (let ((callback (when (js-function? success)
 			       (lambda (x)
 				  (js-call1 %this success %this
 				     (ms-scheme->js x)))))
-		  (fail (if (isa? failure JsFunction)
+		  (fail (if (js-function? failure)
 			    (lambda (obj)
 			       (js-call1 %this failure %this obj))
 			    exception-notify)))
@@ -628,7 +628,7 @@
       (cond
 	 ((not async)
 	  (post-server-sync this %this host port auth scheme))
-	 ((or (isa? success JsFunction) (isa? failure JsFunction))
+	 ((or (js-function? success) (js-function? failure))
 	  (post-server-async this success failure %this host port auth scheme))
 	 (else
 	  (post-server-promise this %this host port auth scheme))))
@@ -649,13 +649,13 @@
    (define (post-websocket-async this::JsHopFrame srv::JsWebSocket
 	      success failure)
       (with-access::JsHopFrame this (path)
-	 (let ((callback (when (isa? success JsFunction)
+	 (let ((callback (when (js-function? success)
 			    (lambda (x)
 			       (js-worker-push-thunk! (js-current-worker) path
 				  (lambda ()
 				     (js-call1 %this success %this
 					(ms-scheme->js x)))))))
-	       (fail (when (isa? failure JsFunction)
+	       (fail (when (js-function? failure)
 			(lambda (obj)
 			   (js-worker-push-thunk! (js-current-worker) path
 			      (lambda ()
@@ -690,7 +690,7 @@
 	       (cond
 		  ((not async)
 		   (post-websocket-sync this srv))
-		  ((or (isa? success JsFunction) (isa? failure JsFunction))
+		  ((or (js-function? success) (js-function? failure))
 		   (post-websocket-async this srv success failure))
 		  (else
 		   (post-websocket-promise this srv)))))))
@@ -704,7 +704,7 @@
 		   host port authorization (if ssl 'https 'http)))))
 	 ((isa? srv JsWebSocket)
 	  (post-websocket this success fail-or-opt %this async srv))
-	 ((or (isa? fail-or-opt JsFunction) (not (isa? fail-or-opt JsObject)))
+	 ((or (js-function? fail-or-opt) (not (js-object? fail-or-opt)))
 	  (post-server this success fail-or-opt %this async
 	     "localhost" (hop-port) #f 'http))
 	 (else
@@ -738,7 +738,7 @@
 	 (scheme 'http)
 	 (worker (js-current-worker)))
       (cond
-	 ((isa? opt JsFunction)
+	 ((js-function? opt)
 	  (set! fail
 	     (if asynchronous
 		 (lambda (obj)
@@ -777,7 +777,7 @@
 		(set! scheme 'https))
 	     (unless (eq? s (js-undefined))
 		(set! scheme (string->symbol (js-tostring s %this))))
-	     (when (isa? f JsFunction)
+	     (when (js-function? f)
 		(set! failjs f)
 		(set! fail
 		   (lambda (obj)
@@ -787,7 +787,7 @@
 			     (lambda ()
 				(js-call1 %this f %this obj)))
 			  (js-call1 %this f %this obj)))))
-	     (when (isa? r JsObject)
+	     (when (js-object? r)
 		(set! header (js-jsobject->alist r %this))))))
 
       (define (scheme->js val)
@@ -854,11 +854,11 @@
 		  2 "executor"))))
 
       (if asynchronous
-	  (if (isa? success JsFunction)
+	  (if (js-function? success)
 	      (spawn-thread)
 	      (spawn-promise))
 	  (post-request
-	     (if (isa? success JsFunction)
+	     (if (js-function? success)
 		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
 		 scheme->js)))))      
 
@@ -876,7 +876,7 @@
 (define (js-create-service %this::JsGlobalObject proc path loc register import worker::WorkerHopThread)
    
    (define (source::bstring proc)
-      (if (isa? proc JsFunction)
+      (if (js-function? proc)
 	  (with-access::JsFunction proc (src)
 	     (match-case src
 		(((at ?path ?-) . ?-) path)
@@ -910,7 +910,7 @@
 			     -1 worker
 			     (instantiate::hop-service
 				(ctx %this)
-				(proc (if (isa? proc JsFunction)
+				(proc (if (js-function? proc)
 					  (lambda (this . args)
 					     (js-apply %this proc this args))
 					  (lambda (this . args)

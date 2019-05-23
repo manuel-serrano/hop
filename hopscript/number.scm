@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon May 13 10:39:02 2019 (serrano)                */
+;*    Last change :  Thu May 23 09:14:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -510,7 +510,7 @@
       (cond
 	 ((js-number? this)
 	  (js-jsnumber-tostring this radix %this))
-	 ((isa? this JsObject)
+	 ((js-object? this)
 	  (js-call1 %this (js-get this (& "toString") %this) this radix))
 	 (else
 	  (loop (js-toobject %this this))))))

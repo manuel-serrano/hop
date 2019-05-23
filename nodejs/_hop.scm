@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat May  4 15:08:30 2019 (serrano)                */
+;*    Last change :  Thu May 23 09:00:42 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -480,7 +480,7 @@
 	 (body #f)
 	 (scheme "http"))
       (cond
-	 ((isa? opt JsFunction)
+	 ((js-function? opt)
 	  (set! fail (fail->handler opt)))
 	 ((not (eq? opt (js-undefined)))
 	  (let ((h (js-get opt (& "hostname") %this))
@@ -512,9 +512,9 @@
 	     (unless (eq? m (js-undefined))
 		(set! method (string->symbol
 				(string-upcase (js-tostring m %this)))))
-	     (when (isa? f JsFunction)
+	     (when (js-function? f)
 		(set! fail (fail->handler f)))
-	     (when (isa? r JsObject)
+	     (when (js-object? r)
 		(set! header
 		   (map! (lambda (o)
 			    (set-cdr! o (js-tostring (cdr o) %this))
@@ -560,18 +560,18 @@
       (cond
 	 ((not asynchronous)
 	  (post 
-	     (if (isa? success JsFunction)
+	     (if (js-function? success)
 		 (lambda (x)
 		    (js-call1 %this success %this (scheme->js x)))
 		 scheme->js)
 	     fail))
-	 ((isa? success JsFunction)
+	 ((js-function? success)
 	  (thread-start!
 	     (instantiate::hopthread
 		(name "post-url")
 		(body (lambda ()
 			 (post
-			    (if (isa? success JsFunction)
+			    (if (js-function? success)
 				(lambda (x)
 				   (js-worker-exec (js-current-worker) "post" #t
 				      (lambda ()
@@ -610,7 +610,7 @@
       (cond
 	 ((eq? v (js-undefined)) def)
 	 ((js-jsstring? v) (js-jsstring->string v))
-	 ((isa? v JsObject) (js-jsobject->alist v this))
+	 ((js-object? v) (js-jsobject->alist v this))
 	 (else v))))
 
 ;*---------------------------------------------------------------------*/
@@ -620,14 +620,14 @@
    (let ((v::obj (js-get obj key this)))
       (cond
 	 ((eq? v (js-undefined)) def)
-	 ((isa? v JsObject) (js-jsobject->alist v this))
+	 ((js-object? v) (js-jsobject->alist v this))
 	 (else def))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-hop ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-hop this obj req %this)
-   (if (isa? req JsObject)
+   (if (js-object? req)
        (instantiate::http-response-hop
 	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
 	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
@@ -644,7 +644,7 @@
 ;*    hopjs-response-xml ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-xml this obj req %this)
-   (if (isa? req JsObject)
+   (if (js-object? req)
        (instantiate::http-response-xml
 	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
 	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
@@ -663,7 +663,7 @@
 ;*    hopjs-response-file ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-file this file req %this)
-   (if (isa? req JsObject)
+   (if (js-object? req)
        (instantiate::http-response-file
 	  (charset (get/default req (& "charset") %this (hop-charset)))
 	  (content-type (get/default req (& "contentType") %this #f))
@@ -676,7 +676,7 @@
 ;*    hopjs-response-string ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-string this string req %this)
-   (if (isa? req JsObject)
+   (if (js-object? req)
        (instantiate::http-response-string
 	  (charset (get/default req (& "charset") %this (hop-charset)))
 	  (content-type (get/default req (& "contentType") %this #f))
@@ -729,7 +729,7 @@
 			    1 "reply" :src 'builtin))))))
 	  (js-raise-type-error %this "not a request" req)))
    
-   (if (isa? req JsObject)
+   (if (js-object? req)
        (let ((req (get/default req (& "currentRequest") %this #f)))
 	  (instantiate::http-response-async
 	     (charset (get/default req (& "charset") %this (hop-charset)))

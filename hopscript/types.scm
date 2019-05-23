@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue May 21 07:43:35 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:35:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -414,6 +414,7 @@
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
 	   (inline js-jsstring-default-mode::uint32)
+	   (inline js-function-default-mode::uint32)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
@@ -456,6 +457,7 @@
 	   (inline JS-OBJECT-MODE-HASNUMERALPROP::uint32)
 	   (inline JS-OBJECT-MODE-ARRAY-PLAIN::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSFUNCTIONTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
 
@@ -576,6 +578,15 @@
 (define-inline (js-jsstring-default-mode)
    (JS-OBJECT-MODE-JSSTRINGTAG))
 
+(define-inline (js-function-default-mode)
+   (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
+      (bit-oru32 (JS-OBJECT-MODE-ARRAY-PLAIN)
+	 (bit-oru32 (JS-OBJECT-MODE-INLINE)
+	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	       (bit-oru32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
+		  (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
+		     (JS-OBJECT-MODE-HASNUMERALPROP))))))))
+
 (define-inline (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-inline (JS-OBJECT-MODE-SEALED) #u32:2)
 (define-inline (JS-OBJECT-MODE-FROZEN) #u32:4)
@@ -587,9 +598,10 @@
 (define-inline (JS-OBJECT-MODE-ARRAY-PLAIN) #u32:256)
 (define-inline (JS-OBJECT-MODE-HASNUMERALPROP) #u32:512)
 (define-inline (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1024)
+(define-inline (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2048)
 ;; WARNING: music be the two last constants (see js-array?)
-(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:2048)
-(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:4096)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:4096)
+(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:8192)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-macro (JS-OBJECT-MODE-SEALED) #u32:2)
@@ -602,9 +614,10 @@
 (define-macro (JS-OBJECT-MODE-ARRAY-PLAIN) #u32:256)
 (define-macro (JS-OBJECT-MODE-HASNUMERALPROP) #u32:512)
 (define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1024)
+(define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2048)
 ;; WARNING: music be the two last constants (see js-array?)
-(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:2048)
-(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:4096)
+(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:4096)
+(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:8192)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -840,7 +853,7 @@
 	 configurable
 	 enumerable
 	 writable
-	 (if (not (isa? value JsObject)) value (typeof value)))))
+	 (if (not (js-object? value)) value (typeof value)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    thread-specific ::WorkerHopThread ...                            */
@@ -1077,7 +1090,7 @@
 ;*    js-function-proxy? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-proxy? o)
-   (or (isa? o JsFunction) (js-proxy-function? o)))
+   (or (js-function? o) (js-proxy-function? o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-symbol? ...                                                   */

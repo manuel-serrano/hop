@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon May 13 09:25:37 2019 (serrano)                */
+;*    Last change :  Thu May 23 08:49:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -190,7 +190,7 @@
 	    (with-access::JsGlobalObject %this (js-service-pcache)
 	       (let ((proc (js-object-get-name/cache obj (& "toResponse") #f %this
 			      (js-pcache-ref js-service-pcache 0))))
-		  (if (isa? proc JsFunction)
+		  (if (js-function? proc)
 		      (scheme->response (js-call1 %this proc obj req) req ctx)
 		      (let ((rep (call-next-method)))
 			 (if (isa? rep http-response-hop)
@@ -477,7 +477,7 @@
 	    (define (js-html-html %this)
 	       (js-make-function %this
 		  (lambda (this attrs . nodes)
-		     (if (isa? attrs JsObject)
+		     (if (js-object? attrs)
 			 (apply <HTML> :idiom "javascript" :%context %this
 			    (append
 			       (js-jsobject->keyword-plist attrs %this)
@@ -550,7 +550,7 @@
 		;; 2
 		(with-access::JsFunction f (constrmap constrsize)
 		   (js-make-jsobject constrsize constrmap %proto)))
-	       ((isa? value JsObject)
+	       ((js-object? value)
 		;; 1.a
 		value)
 	       ((js-jsstring? value)
@@ -612,7 +612,7 @@
       ;; getOwnPropertyDescriptor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.3
       (define (getownpropertydescriptor this o p)
-	 (let* ((o (if (isa? o object)
+	 (let* ((o (if (js-object? o)
 		       o
 		       (js-cast-object o %this "getOwnPropertyDescriptor")))
 		(desc (js-get-own-property o p %this)))
@@ -630,7 +630,7 @@
       ;; getOwnPropertyDescriptors
       ;; https://www.ecma-international.org/ecma-262/8.0/#sec-object.getownpropertydescriptors
       (define (getownpropertydescriptors this o p)
-	 (let* ((o (if (isa? o object)
+	 (let* ((o (if (js-object? o)
 		       o
 		       (js-cast-object o %this "getOwnPropertyDescriptors")))
 		(keys (js-properties-names o #f %this))
@@ -687,7 +687,7 @@
       ;; create
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.5
       (define (create this o properties)
-	 (if (not (or (eq? o (js-null)) (isa? o JsObject)))
+	 (if (not (or (eq? o (js-null)) (js-object? o)))
 	     (js-raise-type-error %this "create: bad object ~s" o)
 	     (let ((obj (js-new0 %this js-object)))
 		(with-access::JsObject obj (__proto__ elements)
@@ -981,7 +981,7 @@
 		       (js-string->jsstring "[object")
 		       (js-jsstring-append tag
 			  (js-string->jsstring "]")))
-		    (let* ((clazz (if (isa? obj JsFunction)
+		    (let* ((clazz (if (js-function? obj)
 				      JsFunction
 				      (object-class obj)))
 			   (name (symbol->string! (class-name clazz))))
@@ -1042,7 +1042,7 @@
       ;; isPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.6
       (define (js-object-prototype-isprototypeof this v)
-	 (when (isa? v JsObject)
+	 (when (js-object? v)
 	    (let ((o (js-toobject %this this)))
 	       (let loop ((v v))
 		  (with-access::JsObject v ((v __proto__))
@@ -1260,9 +1260,9 @@
 	 (if (null? fields)
 	     (err)
 	     (let ((proc (js-get o (car fields) %this)))
-		(if (isa? proc JsFunction)
+		(if (js-function? proc)
 		    (let ((r (js-call0 %this proc o)))
-		       (if (not (isa? r JsObject))
+		       (if (not (js-object? r))
 			   r
 			   (loop (cdr fields))))
 		    (loop (cdr fields)))))))
@@ -1299,7 +1299,7 @@
    (define (in-mapped-property prop)
       (when prop
 	 (let ((name (prop-name prop)))
-	    (when (isa? name JsStringLiteral)
+	    (when (js-jsstring? name)
 	       (when (flags-enumerable? (prop-flags prop))
 		  (proc name %this))))))
    
@@ -1313,7 +1313,7 @@
    (define (in-property p)
       (when (isa? p JsPropertyDescriptor)
 	 (with-access::JsPropertyDescriptor p (name enumerable)
-	    (when (isa? name JsStringLiteral)
+	    (when (js-jsstring? name)
 	       (when (eq? enumerable #t)
 		  (proc name %this))))))
    

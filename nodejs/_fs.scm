@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Thu May  2 13:42:06 2019 (serrano)                */
+;*    Last change :  Thu May 23 09:00:09 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -182,13 +182,13 @@
 			      (js-put! obj (& "errno") 20 #f %this)
 			      (js-put! obj (& "code") (js-string->jsstring "ENOTDIR") #f %this)
 			      obj))))
-		(if (isa? cb JsFunction)
+		(if (js-function? cb)
 		    (js-worker-push-thunk! %worker "readdir"
 		       (lambda ()
 			  (js-call2 %this cb this exn (js-undefined))))
 		    (js-raise exn)))
 	     (let ((r (js-vector->jsarray (list->vector (map! js-string->jsstring l))  %this)))
-		(if (isa? cb JsFunction)
+		(if (js-function? cb)
 		    (js-worker-push-thunk! %worker "readdir"
 		       (lambda ()
 			  (js-call2 %this cb this #f r)))
@@ -228,7 +228,7 @@
    
    (define (mkdir this path mode callback)
       (if (eq? callback (js-undefined))
-	  (if (isa? mode JsFunction)
+	  (if (js-function? mode)
 	      (nodejs-mkdir %worker %this process path #o777 mode)
 	      (nodejs-mkdir %worker %this process path mode #f))
 	  (nodejs-mkdir %worker %this process path mode callback)))
@@ -299,7 +299,7 @@
 		  (js-make-function %this
 		     (lambda (this)
 			(let ((onstop (js-get this (& "onstop") %this)))
-			   (when (isa? onstop JsFunction)
+			   (when (js-function? onstop)
 			      (!js-callback0 'fs-watcher %worker %this
 				 onstop this)))
 			(with-access::JsHandle this (handle)
