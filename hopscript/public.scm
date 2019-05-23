@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu May 23 10:09:25 2019 (serrano)                */
+;*    Last change :  Thu May 23 10:53:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1159,7 +1159,7 @@
    
    (define false (-u32 #u32:0 #u32:1))
 
-   (tprint "js-toindex p=" (typeof p))
+   (tprint "js-toindex p=" (typeof p) " " p)
    (cond
       ((fixnum? p)
        (cond-expand

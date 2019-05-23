@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu May 23 08:47:18 2019 (serrano)                */
+;*    Last change :  Thu May 23 10:55:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2628,26 +2628,26 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsArray p %this)
    (with-access::JsArray o (vec ilen length)
-      (let ((i::uint32 (js-toindex p)))
-	 (cond
-	    ((<u32 i ilen)
-	     (u32vref vec i))
-	    ;; MS: 23 feb 2017
-	    ((not (js-isindex? i))
-	     (set! p (js-toname p %this))
-	     (if (eq? p (& "length"))
-		 (js-uint32-tointeger length)
-		 (call-next-method)))
-	    ((and (js-object-mode-holey? o)
-		  (<u32 i (fixnum->uint32 (vector-length vec))))
-	     (if (>=u32 i length)
-		 (call-next-method)
-		 (let ((v (u32vref vec i)))
-		    (if (js-absent? v)
-			(call-next-method)
-			v))))
-	    (else
-	     (call-next-method))))))
+      (if (eq? p (& "length"))
+	  (js-uint32-tointeger length)
+	  (let ((i::uint32 (js-toindex p)))
+	     (cond
+		((<u32 i ilen)
+		 (u32vref vec i))
+		;; MS: 23 feb 2017
+		((not (js-isindex? i))
+		 (set! p (js-toname p %this))
+		 (call-next-method))
+		((and (js-object-mode-holey? o)
+		      (<u32 i (fixnum->uint32 (vector-length vec))))
+		 (if (>=u32 i length)
+		     (call-next-method)
+		     (let ((v (u32vref vec i)))
+			(if (js-absent? v)
+			    (call-next-method)
+			    v))))
+		(else
+		 (call-next-method)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-fixnum ...                                                */
