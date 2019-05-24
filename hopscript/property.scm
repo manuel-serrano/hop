@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu May 23 08:53:09 2019 (serrano)                */
+;*    Last change :  Fri May 24 07:22:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3163,7 +3163,8 @@
 ;*    js-call/cache-miss ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-call/cache-miss %this cache obj this . args)
-   (let ((largs (length args)))
+   
+   (define (gen-call/cache-miss-generic largs)
       `(with-access::JsPropertyCache ,cache (owner method cmap)
 	  (cond
 	     ((and (js-function? ,obj)
@@ -3181,7 +3182,43 @@
 	     (else
 	      ,(let ((call (symbol-append 'js-call
 			      (string->symbol (integer->string largs)))))
-		  `(,call ,%this ,obj ,this ,@args)))))))
+		  `(,call ,%this ,obj ,this ,@args))))))
+   
+   (define (gen-call/cache-miss-fast largs)
+      `(with-access::JsPropertyCache ,cache (owner method cmap)
+	  (cond
+	     ((not (object? ,obj))
+	      ,(let ((call (symbol-append 'js-call
+			      (string->symbol (integer->string largs)))))
+		  `(,call ,%this ,obj ,this ,@args)))
+	     ((and (eq? (object-class ,obj)
+		      ,(symbol-append 'JsFunction
+			  (string->symbol (integer->string (+fx largs 1))))))
+	      (with-access::JsFunction ,obj (procedure)
+		 (set! cmap ,obj)
+		 (set! method procedure)
+		 (procedure ,this ,@args)))
+	     ((eq? (object-class ,obj) JsProxy)
+	      ,(let ((call (symbol-append 'js-call-proxy/cache-miss
+			      (string->symbol (integer->string largs)))))
+		  `(,call ,%this ,cache ,obj ,this ,@args)))
+	     ((and (js-function? ,obj)
+		   (with-access::JsFunction ,obj (procedure arity)
+		      (and (>=fx arity 0)
+			   (correct-arity? procedure ,(+fx largs 1)))))
+	      (with-access::JsFunction ,obj (procedure)
+		 (set! cmap ,obj)
+		 (set! method procedure)
+		 (procedure ,this ,@args)))
+	     (else
+	      ,(let ((call (symbol-append 'js-call
+			      (string->symbol (integer->string largs)))))
+		  `(,call ,%this ,obj ,this ,@args))))))
+   
+   (let ((largs (length args)))
+      (if (>=fx largs 4)
+	  (gen-call/cache-miss-generic largs)
+	  (gen-call/cache-miss-fast largs))))
 
 (define (js-call/cache-miss0 %this cache obj this)
    (gen-call/cache-miss %this cache obj this))
