@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Tue May 14 09:13:04 2019 (serrano)                */
+/*    Last change :  Sat May 25 06:30:14 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -16,8 +16,8 @@ var assert = require( "assert" );
 var s = [ 1, 2, 3, 4, 5 ];
 var s2 = s.splice( 1, 0, 256 );
 
-assert.deepEqual( s2, [] );
-assert.deepEqual( s, [ 1, 256, 2, 3, 4, 5 ] );
+assert.deepEqual( s2, [], "splice empty" );
+assert.deepEqual( s, [ 1, 256, 2, 3, 4, 5 ], "splice" );
 
 function fun( x ) {
    return x;

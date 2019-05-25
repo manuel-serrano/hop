@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu May 23 10:10:14 2019 (serrano)                */
+;*    Last change :  Sat May 25 06:27:30 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -254,7 +254,7 @@
       (let ((len (string-length str)))
 	 (let loop ((i 0))
 	    (cond
-	       ((=fx i len) #t)
+	       ((=fx i len) (>fx i 0))
 	       ((char-numeric? (string-ref str i)) (loop (+fx i 1)))
 	       (else #f)))))
    

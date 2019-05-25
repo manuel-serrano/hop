@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu May 23 10:00:31 2019 (serrano)                */
+;*    Last change :  Sat May 25 06:54:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -572,8 +572,9 @@
       (bit-oru32 (JS-OBJECT-MODE-ARRAY-PLAIN)
 	 (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
 	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
-	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
-		  (JS-OBJECT-MODE-HASNUMERALPROP)))))))
+	       (bit-oru32 (JS-OBJECT-MODE-JSARRAYTAG)
+		  (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
+		     (JS-OBJECT-MODE-HASNUMERALPROP))))))))
 
 (define-inline (js-jsstring-default-mode)
    (JS-OBJECT-MODE-JSSTRINGTAG))
@@ -1078,13 +1079,17 @@
 ;*    js-array? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array? o)
-   (and (%object? o) (>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYTAG))))
+   ;; assumes that all bits > JSARRAYTAG are about arrays
+   (and (%object? o)
+	(>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYTAG))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function? o)
-   (and (%object? o) (>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSFUNCTIONTAG))))
+   (and (%object? o)
+	(=u32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
+	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSFUNCTIONTAG)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-proxy? ...                                           */

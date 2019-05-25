@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu May 23 08:49:53 2019 (serrano)                */
+;*    Last change :  Sat May 25 06:22:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -612,7 +612,7 @@
       ;; getOwnPropertyDescriptor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.3
       (define (getownpropertydescriptor this o p)
-	 (let* ((o (if (js-object? o)
+	 (let* ((o (if (isa? o object)
 		       o
 		       (js-cast-object o %this "getOwnPropertyDescriptor")))
 		(desc (js-get-own-property o p %this)))
@@ -630,7 +630,7 @@
       ;; getOwnPropertyDescriptors
       ;; https://www.ecma-international.org/ecma-262/8.0/#sec-object.getownpropertydescriptors
       (define (getownpropertydescriptors this o p)
-	 (let* ((o (if (js-object? o)
+	 (let* ((o (if (isa? o object)
 		       o
 		       (js-cast-object o %this "getOwnPropertyDescriptors")))
 		(keys (js-properties-names o #f %this))
@@ -830,8 +830,8 @@
       ;; https://www.ecma-international.org/ecma-262/6.0/#sec-object.is
       (define (is this x y)
 	 ;; SameValue algorithm
-	 (or (eq? x y)
-	     (js-eqstring? x y)
+	 (or (js-eqstring? x y)
+	     ;; eqstring test eq first
 	     (and (flonum? x) (flonum? y)
 		  (or (and (=fl x y) (=fx (signbitfl x) (signbitfl y)))
 		      (and (nanfl? x) (nanfl? y))))))

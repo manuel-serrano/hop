@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri May 24 07:35:27 2019 (serrano)                */
+;*    Last change :  Fri May 24 21:52:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -425,10 +425,11 @@
 (define (js-apply% %this fun::JsFunction proc::procedure obj args::pair-nil)
    (with-access::JsFunction fun (arity rest len minlen name)
       (let ((n (+fx 1 (length args))))
-	 ;;(tprint "js-apply arity=" arity " n=" n)
 	 (cond
 	    ((=fx arity n)
 	     (case arity
+		((1)
+		 (proc obj))
 		((2)
 		 (proc obj (car args)))
 		((3)
@@ -1159,7 +1160,6 @@
    
    (define false (-u32 #u32:0 #u32:1))
 
-   (tprint "js-toindex p=" (typeof p) " " p)
    (cond
       ((fixnum? p)
        (cond-expand
@@ -1467,6 +1467,7 @@
 ;*    js-eqstring? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-eqstring?::bool x y)
+   ;; do not remove the eq? test or change is@object.scm
    (or (eq? x y)
        (and (js-jsstring? x) (js-jsstring? y)
 	    (string=? (js-jsstring->string x) (js-jsstring->string y)))))
