@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri May 24 07:15:37 2019 (serrano)                */
+;*    Last change :  Sat May 25 16:58:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -711,6 +711,8 @@
 		     (let ((n (uint32->fixnum ilen)))
 			(if (=fx arity (+fx 1 n))
 			    (case arity
+			       ((1)
+				(procedure thisarg))
 			       ((2)
 				(procedure thisarg (vector-ref vec 0)))
 			       ((3)

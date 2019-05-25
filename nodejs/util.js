@@ -24,8 +24,7 @@ exports.format = function(f) {
     var objects = [];
     for (var i = 0; i < arguments.length; i++) {
       objects.push(inspect(arguments[i]));
-    } 
-    #:tprint( "objects=", #:typeof( objects ) );
+    }
     return objects.join(' ');
   }
 
@@ -44,7 +43,6 @@ exports.format = function(f) {
     }
   });
    for (var x = args[i]; i < len; x = args[++i]) {
-    #:tprint( "x=", #:typeof( x ) );
 // MS: 2017-11-26, symbols support
 //    if (x === null || typeof x !== 'object') {
     if (x === null || (typeof x !== 'object' && typeof x !== 'symbol')) {
@@ -119,7 +117,6 @@ var error = exports.error = function(x) {
  */
 /* legacy: obj, showHidden, depth, colors*/
 function inspect(obj, opts) {
-   #:tprint( "inspect obj=", #:typeof( obj ) );
   // default options
   var ctx = {
     seen: [],
@@ -224,18 +221,14 @@ function formatValue(ctx, value, recurseTimes) {
 
   // Look up the keys of the object.
   var keys = Object.keys(value);
-    #:tprint( "keys.1=", #:typeof( keys ), " ", keys.length );
 // MS: 2017-11-26, symbols support
   keys = keys.concat(Object.getOwnPropertySymbols(value));
-    #:tprint( "keys.2=", #:typeof( keys ), " ", keys.length );
-    #:js-debug-object( keys );
   var visibleKeys = arrayToHash(keys);
    if (ctx.showHidden) {
     keys = Object.getOwnPropertyNames(value);
 // MS: 2017-11-26, symbols support
     keys = keys.concat(Object.getOwnPropertySymbols(value));
   }
-    #:tprint( "keys.3=", #:typeof( keys ), " ", keys.length );
 
   // Some type of object without properties can be shortcutted.
   if (keys.length === 0) {
@@ -355,11 +348,8 @@ function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
       output.push('');
     }
   }
-    #:tprint( "keys=", #:typeof( keys ), " ", keys.length );
-    #:js-debug-object( keys );
   keys.forEach(function(key) {
      // MS: 2018-04-06, symbols support
-    #:tprint( "key=", #:typeof( key ), " ", typeof key );
     if (typeof key === "symbol" || !key.match(/^\d+$/)) {
       output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
           key, true));
