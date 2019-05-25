@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Mon May 20 10:21:27 2019 (serrano)                */
+;*    Last change :  Sat May 25 16:32:34 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -103,7 +103,6 @@
 							 (propinfo-props %info))
 						      '())))
 				   gcnsts)))
-		     (for-each (lambda (d) (print (j2s->list d))) ndecls)
 		     (set! decls (append decls ndecls))
 		     (when (>=fx (config-get args :verbose 0) 3)
 			(globprop-verb gcnsts))))))))
