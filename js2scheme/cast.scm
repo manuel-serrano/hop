@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/cast.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/cast.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Feb 25 10:09:27 2019 (serrano)                */
+;*    Last change :  Mon May 27 10:49:51 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -80,7 +80,7 @@
 		(and (eq? totype 'any) (memq type *any-types*))))))
 
 (define *any-types*
-   '(undefined null bool integer number object function string real array))
+   '(undefined null bool integer number object function string real array regexp))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-expr ...                                                    */

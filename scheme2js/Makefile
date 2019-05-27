@@ -1,14 +1,15 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Thu Aug 16 15:38:28 2018 (serrano)                */
+#*    Last change :  Mon May 27 08:43:46 2019 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
 #*=====================================================================*/
-.PHONY: do
+.PHONY: do install
 
 do: exec runtime-build
+install: install-library
 
 #*---------------------------------------------------------------------*/
 #*    Standard Bigloo configuration                                    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Fri May 17 08:22:42 2019 (serrano)                */
+;*    Last change :  Mon May 27 11:01:02 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
@@ -27,7 +27,8 @@
 	   __js2scheme_scheme-utils)
 
    (export (j2s-test ::J2SExpr mode return conf)
-	   (j2s-test-not ::J2SExpr mode return conf)))
+	   (j2s-test-not ::J2SExpr mode return conf)
+	   (j2s-totest ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-test ...                                                     */
@@ -55,8 +56,20 @@
 	  (with-access::J2SExpr test (hint)
 	     (if (pair? (assq 'object hint))
 		 `(js-totest-likely-object ,(j2s-scheme test mode return conf))
-		 `(js-totest ,(j2s-scheme test mode return conf))))))))
-   
+		 (j2s-totest (j2s-scheme test mode return conf))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-totest ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-totest expr)
+   (match-case expr
+      ((js-regexp-prototype-exec ?%this ?rx ?arg)
+       `(js-regexp-prototype-exec-as-bool ,%this ,rx ,arg))
+      ((let ((?var ?-)) ((kwote or) (js-array? ?var) (js-proxy-array? ?var)))
+       expr)
+      (else
+       `(js-totest ,expr))))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SNode ...                                      */
 ;*---------------------------------------------------------------------*/

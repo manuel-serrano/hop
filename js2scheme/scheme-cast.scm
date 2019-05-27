@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed May  1 16:26:00 2019 (serrano)                */
+;*    Last change :  Mon May 27 11:02:17 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -17,6 +17,7 @@
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
+	   __js2scheme_scheme-test
 	   __js2scheme_scheme-utils)
    
    (export (j2s-cast expr::obj ::obj ::symbol ::symbol ::pair-nil)))
@@ -85,7 +86,7 @@
 	 (iterable error)
 	 (any nop)))
      (number
-	((bool js-totest)
+	((bool ,j2s-totest)
 	 (int32 ,js-number->int32)
 	 (uint32 ,js-number->uint32)
 	 (int53 nop)
@@ -321,7 +322,7 @@
        `(js-toobject %this ,v)))
 
 (define (js-any->bool v expr conf)
-   `(js-totest ,v))
+   (j2s-totest v))
 
 (define (js->number v expr conf)
    (if (memq (j2s-type expr) '(uint32 int32 integer bint number))
@@ -618,7 +619,7 @@
 		  (case to
 		     ((string) (tostring sexp))
 		     ((index uint32 length) (js-fixnum->uint32 sexp expr conf))
-		     ((bool) `(js-totest ,sexp))
+		     ((bool) (j2s-totest sexp))
 		     (else sexp))))))))
 
    (if (eq? from to)

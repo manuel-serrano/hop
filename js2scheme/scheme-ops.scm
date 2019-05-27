@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed May 22 07:17:51 2019 (serrano)                */
+;*    Last change :  Mon May 27 11:18:42 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -502,7 +502,7 @@
       ((instanceof)
        (if (> (bigloo-debug) 0)
 	   `(js-instanceof?/debug %this ',loc ,lhs ,rhs)
-	   `(js-instanceof? %this ,lhs ,rhs)))
+	   (j2s-instanceof? lhs rhs)))
       ((in)
        (j2s-in? loc lhs rhs))
       ((+)
@@ -521,6 +521,31 @@
        (error "js-binop" "should not be here" op))
       (else
        `(,op ,lhs ,rhs %this))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-instanceof? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-instanceof? lhs rhs)
+   (case rhs
+      ((!Object)
+       `(js-object? ,lhs))
+      ((!Array)
+       (if (symbol? lhs)
+	   `(or (js-array? ,lhs) (js-instanceof? %this ,lhs ,rhs))
+	   `(let ((%o ,lhs))
+	       (or (js-array? %o) (js-instanceof? %this %o ,rhs)))))
+      ((!Function)
+       (if (symbol? lhs)
+	   `(or (js-function? ,lhs) (js-instanceof? %this ,lhs ,rhs))
+	   `(let ((%o ,lhs))
+	       (or (js-function? %o) (js-instanceof? %this %o ,rhs)))))
+      ((!Proxy)
+       (if (symbol? lhs)
+	   `(or (js-proxy? ,lhs) (js-instanceof? %this ,lhs ,rhs))
+	   `(let ((%o ,lhs))
+	       (or (js-proxy? %o) (js-instanceof? %this %o ,rhs)))))
+      (else
+       `(js-instanceof? %this ,lhs ,rhs))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-binop-arithmetic ...                                          */

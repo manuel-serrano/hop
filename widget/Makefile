@@ -1,15 +1,16 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/widget/Makefile                   */
+#*    serrano/prgm/project/hop/hop/widget/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Apr 26 08:50:10 2017 (serrano)                */
+#*    Last change :  Mon May 27 08:43:28 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do install
 
 do: build
+install: install-library
 
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */

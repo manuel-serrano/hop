@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed May  1 16:25:41 2019 (serrano)                */
+;*    Last change :  Mon May 27 10:41:56 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -31,7 +31,8 @@
 	   (j2s-jsstring-replace-regexp obj args mode return conf)
 	   (j2s-jsstring-replace-string obj args mode return conf)
 	   (j2s-jsstring-replace obj args mode return conf)
-	   (j2s-jsstring-charcodeat obj args mode return conf)))
+	   (j2s-jsstring-charcodeat obj args mode return conf)
+	   (j2s-jsstring-match obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-ref ...                                               */
@@ -210,3 +211,20 @@
 		     (j2s-scheme arg mode return conf))
 		args)))))
        
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-match ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-match obj args mode return conf)
+   (let ((rx (if (isa? (car args) J2SLiteralCnst)
+		 (with-access::J2SLiteralCnst (car args) (val) val)
+		 (car args))))
+      (with-access::J2SRegExp rx (flags)
+	 (if (string-index flags #\g)
+	     `(js-jsstring-maybe-match
+		 ,(j2s-scheme obj mode return conf)
+		 ,(j2s-scheme (car args) mode return conf)
+		 %this
+		 #f)
+	     `(js-regexp-prototype-exec %this
+		 ,(j2s-scheme (car args) mode return conf)
+		 ,(j2s-scheme obj mode return conf))))))

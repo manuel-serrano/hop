@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Thu May 23 08:45:42 2019 (serrano)                */
+;*    Last change :  Mon May 27 17:44:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -506,22 +506,7 @@
 			  (elements (vector (vector-length vec)
 				       strict-callee-property
 				       strict-caller-property))
-;* 			  (elements ($create-vector 3))                */
 			  (__proto__ __proto__))))
-;* 	       (js-bind! %this obj (& "length")                        */
-;* 		  :value len                                           */
-;* 		  :enumerable #f :configurable #t :writable #t         */
-;* 		  :hidden-class #t)                                    */
-;* 	       (js-bind! %this obj (& "caller")                        */
-;* 		  :get thrower-get                                     */
-;* 		  :set thrower-set                                     */
-;* 		  :enumerable #f :configurable #f                      */
-;* 		  :hidden-class #t)                                    */
-;* 	       (js-bind! %this obj (& "callee")                        */
-;* 		  :get thrower-get                                     */
-;* 		  :set thrower-set                                     */
-;* 		  :enumerable #f :configurable #f                      */
-;* 		  :hidden-class #t)                                    */
 	       obj)))))
 
 ;*---------------------------------------------------------------------*/

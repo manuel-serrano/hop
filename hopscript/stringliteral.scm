@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat May 25 06:27:30 2019 (serrano)                */
+;*    Last change :  Mon May 27 10:29:48 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2520,45 +2520,44 @@
 	     (exec (js-get-name/cache proto (& "exec")
 		      #f %this (js-pcache-ref js-string-pcache 15))))
 	 (with-access::JsRegExp rx (flags)
-	    (let ((lastindex (js-object-get-name/cache rx (& "lastIndex")
-				#f %this (js-pcache-ref js-string-pcache 16)))
-		  (global (js-regexp-flags-global? flags)))
-	       ;; 7
-	       (if (not global)
-		   (js-call1 %this exec rx s)
-		   ;; 8
-		   (let ((previousLastIndex 0)
-			 (a (js-null)))
-		      (set! lastindex 0)
-		      (js-object-put-name/cache! rx (& "lastIndex") lastindex
-			 #f %this (js-pcache-ref js-string-pcache 17))
-		      (let loop ((n 0))
-			 (let ((result (js-call1 %this exec rx s)))
-			    (set! lastindex
-			       (js-object-get-name/cache rx (& "lastIndex")
-				  #f %this (js-pcache-ref js-string-pcache 17)))
-			    (if (eq? result (js-null))
-				a
-				(let ((thisIndex lastindex))
-				   (if (= thisIndex previousLastIndex)
-				       (begin
-					  (set! lastindex (+ thisIndex 1))
-					  (js-object-put-name/cache! rx (& "lastIndex") lastindex
-					     #f %this (js-pcache-ref js-string-pcache 17))
-					  (set! previousLastIndex (+ 1 thisIndex)))
-				       (set! previousLastIndex thisIndex))
-				   (when (eq? a (js-null))
-				      (set! a (js-new %this js-array 1)))
-				   (let ((matchStr (js-get result 0 %this)))
-				      (js-define-own-property a n
-					 (instantiate::JsValueDescriptor
-					    (name (js-toname n %this))
-					    (value matchStr)
-					    (writable #t)
-					    (enumerable #t)
-					    (configurable #t))
-					 #f %this))
-				   (loop (+fx 1 n)))))))))))))
+	    ;; 7
+	    (if (not (js-regexp-flags-global? flags))
+		(js-call1 %this exec rx s)
+		;; 8
+		(let ((lastindex (js-object-get-name/cache rx (& "lastIndex")
+				    #f %this (js-pcache-ref js-string-pcache 16)))
+		      (previousLastIndex 0)
+		      (a (js-null)))
+		   (set! lastindex 0)
+		   (js-object-put-name/cache! rx (& "lastIndex") lastindex
+		      #f %this (js-pcache-ref js-string-pcache 17))
+		   (let loop ((n 0))
+		      (let ((result (js-call1 %this exec rx s)))
+			 (set! lastindex
+			    (js-object-get-name/cache rx (& "lastIndex")
+			       #f %this (js-pcache-ref js-string-pcache 17)))
+			 (if (eq? result (js-null))
+			     a
+			     (let ((thisIndex lastindex))
+				(if (= thisIndex previousLastIndex)
+				    (begin
+				       (set! lastindex (+ thisIndex 1))
+				       (js-object-put-name/cache! rx (& "lastIndex") lastindex
+					  #f %this (js-pcache-ref js-string-pcache 17))
+				       (set! previousLastIndex (+ 1 thisIndex)))
+				    (set! previousLastIndex thisIndex))
+				(when (eq? a (js-null))
+				   (set! a (js-new %this js-array 1)))
+				(let ((matchStr (js-get result 0 %this)))
+				   (js-define-own-property a n
+				      (instantiate::JsValueDescriptor
+					 (name (js-toname n %this))
+					 (value matchStr)
+					 (writable #t)
+					 (enumerable #t)
+					 (configurable #t))
+				      #f %this))
+				(loop (+fx 1 n))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-match ...                                      */

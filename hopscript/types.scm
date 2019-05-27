@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat May 25 06:54:56 2019 (serrano)                */
+;*    Last change :  Mon May 27 11:26:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -352,6 +352,7 @@
 	      (js-reference-error::JsFunction (default (class-nil JsFunction)))
 	      (js-worker::JsFunction (default (class-nil JsFunction)))
 	      (js-promise (default (class-nil JsFunction)))
+	      (js-proxy (default (class-nil JsFunction)))
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))

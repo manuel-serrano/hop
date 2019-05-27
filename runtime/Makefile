@@ -3,13 +3,14 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue May 14 06:16:44 2019 (serrano)                */
+#*    Last change :  Mon May 27 08:43:03 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do install
 
 do: build
+install: install-library
 
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */

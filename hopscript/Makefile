@@ -7,9 +7,10 @@
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do install
 
 do: build
+install: install-library
 
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */

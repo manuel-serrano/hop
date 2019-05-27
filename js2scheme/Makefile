@@ -7,9 +7,10 @@
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do install
 
 do: build
+install: install-library
 
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun May  5 13:56:17 2019 (serrano)                */
+;*    Last change :  Mon May 27 10:40:33 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -154,6 +154,7 @@
 	     (esexports (j2s-module-exports this))
 	     (conf (cons* :array (j2s-find-extern-decl headers 'Array)
 		      :string (j2s-find-extern-decl headers 'String)
+		      :regexp (j2s-find-extern-decl headers 'RegExp)
 		      conf))
 	     (scmheaders (j2s-scheme headers mode return conf))
 	     (scmdecls (j2s-scheme decls mode return conf))

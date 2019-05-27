@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun May 26 08:49:28 2019 (serrano)                */
+;*    Last change :  Mon May 27 11:26:35 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -109,7 +109,7 @@
 	    (%get js-proxy-property-value)
 	    (%set js-proxy-property-value-set!))))
    
-   (with-access::JsGlobalObject %this (__proto__ js-function-prototype)
+   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-proxy)
 
       (define (js-proxy-alloc %this constructor::JsFunction)
 	 (instantiateJsProxy
@@ -144,7 +144,7 @@
 	    :prototype '()))
 
       ;; create a HopScript object
-      (define (%js-proxy this . args)
+      (define (%js-proxy this t h)
 	 (js-raise-type-error %this "Constructor Proxy requires 'new'" this))
 
       ;; create a revokable proxy
@@ -154,7 +154,7 @@
 		:revoke ,js-proxy-revoke)
 	    %this))
 
-      (define js-proxy
+      (set! js-proxy
 	 (js-make-function %this %js-proxy 2 "Proxy"
 	    :__proto__ js-function-prototype
 	    :prototype '()

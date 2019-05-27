@@ -7,9 +7,10 @@
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do install
 
 do: build
+install: install-library
 
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */

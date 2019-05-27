@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Apr 12 16:30:20 2019 (serrano)                */
+;*    Last change :  Mon May 27 10:13:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -567,25 +567,18 @@
 ;*    j2s-property-scheme ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (j2s-property-scheme this::J2SExpr mode return conf)
-   (cond
-;*       ((isa? this J2SLiteralCnst)                                   */
-;*        (with-access::J2SLiteralCnst this (val)                      */
-;* 	  (with-access::J2SLiteralValue val (val)                      */
-;* 	     val)))                                                    */
-;*       ((isa? this J2SString)                                        */
-;*        (with-access::J2SString this (val)                           */
-;* 	  (if (eq? (string-minimal-charset val) 'ascii)                */
-;* 	      val                                                      */
-;* 	      (j2s-scheme this mode return conf))))                    */
-      (else
-       (j2s-scheme this mode return conf))))
+   (j2s-scheme this mode return conf))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SLiteralCnst ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLiteralCnst mode return conf)
    (with-access::J2SLiteralCnst this (index val)
-      (if (isa? val J2SRegExp)
+      (if (and #f (isa? val J2SRegExp))
+	  ;; MS 27may2019: I think it is wrong to duplicate the
+	  ;; regular expression as the lastIndex has to be preserved
+	  ;; from one call to another...
+	  ;; 
 	  ;; regexp are hybrid, the rx part is precompiled but the
 	  ;; JS object is dynamically allocated
  	  `(let ((rx::JsRegExp (js-cnst-table-ref ,index)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed May 15 08:05:36 2019 (serrano)                */
+;*    Last change :  Mon May 27 10:32:52 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -89,6 +89,7 @@
 	("replace" ,j2s-jsstring-replace string (any any) %this)
 	("replace" js-jsstring-maybe-replace any (any any) %this #t)
 	("match" js-jsstring-match string (any) %this)
+	("match" ,j2s-jsstring-match any (regexp) %this ,j2s-regexp-plain?)
 	("match" js-jsstring-maybe-match any (any) %this #t)
 	("naturalCompare" js-jsstring-naturalcompare string (string) %this)
 	("naturalCompare" js-jsstring-maybe-naturalcompare any (any) %this #t)
@@ -205,6 +206,16 @@
    (let ((string (config-get conf :string)))
       (if (isa? string J2SDeclExtern)
 	  (with-access::J2SDeclExtern string (usage)
+	     (only-usage? '(new init call get) usage))
+	  #t)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-regexp-plain? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-regexp-plain? mode return conf)
+   (let ((regexp (config-get conf :regexp)))
+      (if (isa? regexp J2SDeclExtern)
+	  (with-access::J2SDeclExtern regexp (usage)
 	     (only-usage? '(new init call get) usage))
 	  #t)))
 
