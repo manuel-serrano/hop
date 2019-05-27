@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue May 14 07:45:42 2019 (serrano)                */
+/*    Last change :  Sun May 26 09:05:39 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -141,7 +141,7 @@ static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
    
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
-/*    bgl_make_jsarray ...                                             */
+/*    bgl_make_jsarray_sans_init ...                                   */
 /*    -------------------------------------------------------------    */
 /*    !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!!  */
 /*    -------------------------------------------------------------    */
@@ -153,7 +153,7 @@ static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 /*    GC has to be configured with INNER_POINTER activated.            */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj_t absent, uint32_t mode ) {
+bgl_make_jsarray_sans_init( long size, uint32_t len, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
    long bsize = JSARRAY_SIZE + VECTOR_SIZE + ( (size-1) * OBJ_SIZE );
    BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC( bsize );
    obj_t vector;
@@ -182,11 +182,25 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj
    
    o->BgL_vecz00 = vector;
 
+   return BNANOBJECT( o );
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsarray ...                                             */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj_t absent, uint32_t mode ) {
+   obj_t array = bgl_make_jsarray_sans_init( size, len, constrmap, __proto__, mode );
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)COBJECT( array );
+   obj_t vector = o->BgL_vecz00;
+   int i;
+
    for( i = 0; i < size; i++ ) {
       VECTOR_SET( vector, i, absent );
    }
 
-   return BNANOBJECT( o );
+   return array;
 }
 
 /*---------------------------------------------------------------------*/

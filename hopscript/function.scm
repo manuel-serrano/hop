@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat May 25 16:58:38 2019 (serrano)                */
+;*    Last change :  Sun May 26 07:15:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -698,15 +698,13 @@
 		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
    
    (cond
-      ((not (js-function-proxy? this))
-       (js-raise-type-error %this
-	  "apply: argument not a function ~s" this))
       ((js-array? argarray)
        (with-access::JsArray argarray (vec ilen)
 	  (cond
 	     ((js-object-mode-inline? argarray)
 	      ;; fast path
-	      (if (js-function? this)
+	      (cond
+		 ((js-function? this)
 		  (with-access::JsFunction this (arity procedure)
 		     (let ((n (uint32->fixnum ilen)))
 			(if (=fx arity (+fx 1 n))
@@ -728,10 +726,14 @@
 				      (vector->sublist vec len)))))
 			    (let ((len (js-get argarray (& "length") %this)))
 			       (js-apply %this this thisarg
-				  (vector->sublist vec len))))))
+				  (vector->sublist vec len)))))))
+		 ((js-function-proxy? this)
 		  (let ((len (js-get argarray (& "length") %this)))
 		     (js-apply %this this thisarg
-			(vector->sublist vec len)))))
+			(vector->sublist vec len))))
+		 (else
+		  (js-raise-type-error %this
+		     "apply: argument not a function ~s" this))))
 	     ((js-object-mode-holey? argarray)
 	      ;; fast path
 	      (let ((len (js-get argarray (& "length") %this)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Thu May 23 08:54:14 2019 (serrano)                */
+;*    Last change :  Sun May 26 08:49:28 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -66,6 +66,20 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    jsarray ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-macro (jsarray %this . args)
+   `(let ((a (js-array-construct-alloc-small-sans-init ,%this
+		 ,(fixnum->uint32 (length args)))))
+       (with-access::JsArray a (vec ilen length)
+	  (let ((v vec))
+	     ,@(map (lambda (i o)
+		       `(vector-set! v ,i ,o))
+		  (iota (length args)) args)
+	     (set! ilen ,(fixnum->uint32 (length args)))
+	     a))))
 
 ;*---------------------------------------------------------------------*/
 ;*    local caches                                                     */
@@ -681,21 +695,21 @@
 		      #f ,%this cacheapply)))
 	  (cond
 	     ((eq? xfun cacheapplyfun)
-	      (cacheapplyproc handler target
-		 ,this (js-vector->jsarray (vector ,@args) ,%this)))
+	      (cacheapplyproc handler target ,this
+		 (jsarray ,%this ,@args)))
 	     ((and (object? xfun) (eq? (object-class xfun) JsFunction4))
 ;* 	      (with-access::JsPropertyCache ,cache (method owner)      */
 ;* 		 (set! owner ,fun)                                     */
 ;* 		 (set! method (lambda (this a0)                        */
 ;* 				 (with-access::JsFunction xfun (procedure) */
 ;* 				    (procedure handler target ,this    */
-;* 				       (js-vector->jsarray (vector a0) ,%this)))))) */
+;* 				       (jsarray ,%this a0))))))        */
 	      (with-access::JsFunction xfun (procedure)
-		 (let ((v (procedure handler target ,this
-			     (js-vector->jsarray (vector ,@args) ,%this))))
+		 (let ((res (procedure handler target ,this
+			       (jsarray ,%this ,@args))))
 		    (set! cacheapplyfun xfun)
 		    (set! cacheapplyproc procedure)
-		    v)))
+		    res)))
 	     ((not (js-function? target))
 	      (js-raise-type-error ,%this
 		 ,(format "call~a: not a function ~~s" (length args))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu May 23 10:55:38 2019 (serrano)                */
+;*    Last change :  Sun May 26 09:04:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -23,6 +23,8 @@
    
    (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::obj ::uint32)
 	      "bgl_make_jsarray")
+	   ($js-make-jsarray-sans-init::JsArray (::long ::uint32 ::JsConstructMap ::obj ::uint32)
+	      "bgl_make_jsarray_sans_init")
 	   ($js-vector-bytesize::long (::long)
 	      "bgl_vector_bytesize")
 	   ($js-init-vector::vector (::void* ::long ::obj)
@@ -97,6 +99,7 @@
 	   (js-array-alloc::JsArray ::JsGlobalObject)
 	   (js-array-construct::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (inline js-array-construct-alloc-small::JsArray ::JsGlobalObject ::uint32)
+	   (inline js-array-construct-alloc-small-sans-init::JsArray ::JsGlobalObject ::uint32)
 	   (js-array-construct/lengthu32::JsArray ::JsGlobalObject ::JsArray ::uint32)
 	   (js-array-construct/length::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
@@ -2383,6 +2386,32 @@
 	     (js-not-a-cmap)
 	     js-array-prototype
 	     (js-absent) (js-array-default-mode))))
+      (else
+       (define (array-set! this v::vector iln::uint32 ulen::uint32)
+	  (with-access::JsArray this (vec ilen length)
+	     (set! length ulen)
+	     (set! ilen iln)
+	     (set! vec v))
+	  this)
+       
+       (let* ((this (js-array-alloc %this))
+	      (vec (js-create-vector (uint32->fixnum len))))
+	  (array-set! this vec #u32:0 len)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-construct-alloc-small-sans-init ...                     */
+;*    -------------------------------------------------------------    */
+;*    Specialised version of js-array-construct and js-array-alloc     */
+;*    for small arrays.                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-construct-alloc-small-sans-init %this::JsGlobalObject len::uint32)
+   (cond-expand
+      (bigloo-c
+       (with-access::JsGlobalObject %this (js-array-prototype)
+	  ($js-make-jsarray-sans-init (uint32->fixnum len) len
+	     (js-not-a-cmap)
+	     js-array-prototype
+	     (js-array-default-mode))))
       (else
        (define (array-set! this v::vector iln::uint32 ulen::uint32)
 	  (with-access::JsArray this (vec ilen length)

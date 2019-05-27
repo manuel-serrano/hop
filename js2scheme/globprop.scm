@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sat May 25 16:32:34 2019 (serrano)                */
+;*    Last change :  Sun May 26 09:13:05 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -98,7 +98,8 @@
 						  (if (and (propinfo? %info)
 							   (pair? (propinfo-props %info)))
 						      (filter-map (lambda (i)
-								     (when (isa? (cadr i) J2SDecl)
+								     (when (and (pair? (cdr i))
+										(isa? (cadr i) J2SDecl))
 									(cadr i)))
 							 (propinfo-props %info))
 						      '())))
@@ -117,7 +118,8 @@
 		     (with-access::J2SDecl g (%info id)
 			(if (pair? (propinfo-props %info))
 			    (filter-map (lambda (i)
-					   (when (isa? (cadr i) J2SDecl)
+					   (when (and (pair? (cdr i))
+						      (isa? (cadr i) J2SDecl))
 					      (format "~a.~a" id (car i))))
 			       (propinfo-props %info))
 			    '())))
