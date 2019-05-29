@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon May 27 17:13:25 2019 (serrano)                */
+;*    Last change :  Tue May 28 07:33:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -569,7 +569,7 @@
 		     (if (>fx min ,n)
 			 (apply proc this ,@args 
 			    (make-list (-fx min ,n) (js-undefined)))
-			 (apply proc this ,@args '()))))
+			 (proc this ,@args))))
 		 ((=fx arity ,n)
 		  (proc this ,@args))
 		 ((>=fx minlen 0)
