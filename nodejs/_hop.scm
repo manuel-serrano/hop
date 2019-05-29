@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat Jan 26 09:06:17 2019 (serrano)                */
+;*    Last change :  Wed May 29 07:33:11 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -562,7 +562,7 @@
 			 (post
 			    (if (isa? success JsFunction)
 				(lambda (x)
-				   (js-worker-exec (js-current-worker) "post"
+				   (js-worker-exec (js-current-worker) "post" #t
 				      (lambda ()
 					 (js-call1 %this success %this
 					    (scheme->js x)))))

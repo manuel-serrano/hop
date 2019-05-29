@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Thu Apr 11 10:36:26 2019 (serrano)                */
+;*    Last change :  Wed May 29 07:13:01 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -47,7 +47,7 @@
 	   (generic js-worker-loop ::object)
 	   (generic js-worker-tick ::object)
 	   (generic js-worker-exception-handler ::object ::obj ::int)
-	   (generic js-worker-exec ::object ::bstring ::procedure)
+	   (generic js-worker-exec ::object ::bstring ::bool ::procedure)
 	   (generic js-worker-push-thunk! ::object ::bstring ::procedure)
 	   (generic js-worker-alive? ::object)
 	   
@@ -215,6 +215,8 @@
 			      (keep-alive #f)
 			      (module-cache (js-new0 %this js-object))
 			      (body (lambda ()
+				       (with-access::JsGlobalObject this (worker)
+					  (set! worker thread))
 				       (js-worker-loop thread)))
 			      (cleanup (lambda (thread)
 					  (when (isa? parent WorkerHopThread)
@@ -493,7 +495,7 @@
 (define (js-init-main-worker! %this::JsGlobalObject keep-alive ctor)
    (unless %worker
       (set! %global-constructor ctor)
-      (with-access::JsGlobalObject %this (js-object)
+      (with-access::JsGlobalObject %this (js-object worker)
 	 (set! %worker
 	    (instantiate::WorkerHopThread
 	       (name "%worker@main")
@@ -501,7 +503,8 @@
 	       (onexit #f)
 	       (keep-alive keep-alive)
 	       (module-cache (js-new0 %this js-object))
-	       (body (lambda () (js-worker-loop %worker))))))
+	       (body (lambda () (js-worker-loop %worker)))))
+	 (set! worker %worker))
       (js-worker-init! %worker))
    %worker)
 
@@ -598,11 +601,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-exec th::object name::bstring thunk::procedure)
-   (if (and (eq? (current-thread) th)
+(define-generic (js-worker-exec th::object name::bstring
+		   handleerror::bool thunk::procedure)
+   (cond
+      ((and (eq? (current-thread) th)
 	    (with-access::WorkerHopThread th (tqueue)
 	       (null? tqueue)))
-       (thunk)
+       (thunk))
+      (handleerror
+       (let ((response #f)
+	     (mutex (make-mutex))
+	     (condv (make-condition-variable)))
+	  (synchronize mutex
+	     (js-worker-push-thunk! th name
+		(lambda ()
+		   (set! response (thunk))
+		   (synchronize mutex
+		      (condition-variable-signal! condv))))
+	     (condition-variable-wait! condv mutex)
+	     response)))
+      (else
        (let ((response #f)
 	     (mutex (make-mutex))
 	     (condv (make-condition-variable)))
@@ -621,7 +639,7 @@
 	     (if (isa? response WorkerException)
 		 (with-access::WorkerException response (exn)
 		    (raise exn))
-		 response)))))
+		 response))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push-thunk! ::object ...                               */

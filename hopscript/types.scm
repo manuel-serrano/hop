@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Mar 17 07:32:20 2019 (serrano)                */
+;*    Last change :  Wed May 29 07:09:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -293,6 +293,7 @@
 	      cursor::long)
 	   
 	   (class JsGlobalObject::JsObject
+	      (worker::obj (default #f))
 	      (js-hop-builtin::JsObject (default (class-nil JsObject)))
 	      (js-object::JsFunction (default (class-nil JsFunction)))
 	      (js-array::JsFunction (default (class-nil JsFunction)))

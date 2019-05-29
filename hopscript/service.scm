@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Apr 25 18:48:25 2019 (serrano)                */
+;*    Last change :  Wed May 29 07:32:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -878,7 +878,7 @@
 						      (js-obj->jsobject a %this))
 						args)
 					     (js-worker-exec worker
-						(symbol->string! id)
+						(symbol->string! id) #t
 						(service-debug id
 						   (lambda ()
 						      (js-apply %this proc this args)))))
