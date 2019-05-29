@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu May 23 08:57:00 2019 (serrano)                */
+;*    Last change :  Wed May 29 07:32:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -552,7 +552,6 @@
 		  (body (lambda ()
 			   (with-handler
 			      (lambda (e)
-				 (tprint "EXN TOBEMOVED")
 				 (exception-notify e)
 				 (with-access::JsGlobalObject %this (worker)
 				    (js-worker-exec worker path #t
