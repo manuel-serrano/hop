@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed May 15 11:30:10 2019 (serrano)                */
+;*    Last change :  Wed May 29 20:17:17 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -31,6 +31,7 @@
 	   j2s-unresolved-call-workspace
 
 	   (loc->point::long ::obj)
+	   (loc->src::bstring ::obj)
 	   
 	   (epairify loc expr)
 	   (epairify-deep loc expr)
@@ -117,6 +118,14 @@
    (match-case loc
       ((at ?- ?point) point)
       (else -1)))
+
+;*---------------------------------------------------------------------*/
+;*    loc->src ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (loc->src loc)
+   (match-case loc
+      ((at ?src ?-) src)
+      (else "")))
 
 ;*---------------------------------------------------------------------*/
 ;*    epairify ...                                                     */
@@ -587,7 +596,8 @@
 	     ((memq typrop '(int32 uint32))
 	      (js-get obj (box prop typrop conf) '%this))
 	     ((and (maybe-string? prop typrop) (symbol? obj))
-	      `(js-get/cache ,obj ,prop %this ,(loc->point loc) ',cspecs))
+	      `(js-get/cache ,obj ,prop %this ,(loc->point loc) ',cspecs
+		  ,(loc->src loc)))
 	     (else
 	      (js-get obj prop '%this))))
 	 ((string? propstr)
@@ -690,7 +700,8 @@
 	      (maybe-array-set! prop (box val tyval conf)))
 	     ((and (maybe-string? prop typrop) (symbol? obj))
 	      `(js-put/cache! ,obj ,prop
-		  ,(box val tyval conf) ,mode %this ,(loc->point loc) ',cspecs))
+		  ,(box val tyval conf) ,mode %this
+		  ,(loc->point loc) ',cspecs ,(loc->src loc)))
 	     (else
 	      `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))))
 	 ((and field optim-arrayp (mightbe-number? field))

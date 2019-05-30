@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/dump.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/dump.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Mar 15 11:29:53 2019 (serrano)                */
+;*    Last change :  Thu May 30 06:38:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -274,8 +274,8 @@
 	   (with-access::J2SCall this (cache cspecs)
 	      (if cache `(:cache ,cache :cspecs ,cspecs) '())))
 	  ((isa? this J2SNew)
-	   (with-access::J2SNew this (cache)
-	      (if cache `(:cache ,cache) '())))
+	   (with-access::J2SNew this (caches)
+	      (if (pair? caches) `(:caches ,@caches) '())))
 	  (else
 	   '()))
        '()))

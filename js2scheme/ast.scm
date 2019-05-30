@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Apr  7 19:23:34 2019 (serrano)                */
+;*    Last change :  Thu May 30 06:37:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -419,7 +419,7 @@
 	      (node::J2SNode (info '("ast"))))
 	   
 	   (final-class J2SNew::J2SExpr
-	      (cache (default #f))
+	      (caches (default '()))
 	      (clazz::J2SNode (info '("ast")))
 	      (protocol::symbol (default 'direct) (info '("nojson" "notraverse")))
 	      (args::pair-nil (info '("ast"))))

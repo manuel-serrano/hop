@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/property.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/property.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Sep 25 17:54:01 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Thu May 30 06:39:40 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
 ;*=====================================================================*/
@@ -233,7 +233,7 @@
 ;*    property* ::J2SNew ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (property* this::J2SNew count env ccall assig infunloop shared-pcache)
-
+   
    (define (ctor-function? clazz args)
       (when (read-only-function? clazz)
 	 (with-access::J2SRef clazz (decl)
@@ -241,13 +241,22 @@
 	       (with-access::J2SFun val (params vararg generator)
 		  (and (not vararg) (not generator)
 		       (=fx (length params) (length args))))))))
-
-   (with-access::J2SNew this (clazz args cache)
-      (if (and infunloop (ctor-function? clazz args))
-	  (begin
-	     (set! cache (inc! count))
-	     (cons cache (call-default-walker)))
-	  (call-default-walker))))
+   
+   
+   (with-access::J2SNew this (clazz args caches)
+      (cond
+	 ((is-builtin-ref? clazz 'Proxy)
+	  (let* ((gcache (inc! count))
+		 (scache (inc! count))
+		 (acache (inc! count)))
+	     (set! caches (list gcache scache acache))
+	     (append caches (call-default-walker))))
+	 ((and infunloop (ctor-function? clazz args))
+	  (let ((cache (inc! count)))
+	     (set! caches (list cache))
+	     (cons cache (call-default-walker))))
+	 (else
+	  (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    property* ::J2SFor ...                                           */

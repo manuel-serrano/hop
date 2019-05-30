@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon May 27 11:26:17 2019 (serrano)                */
+;*    Last change :  Wed May 29 16:20:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -98,6 +98,7 @@
 	      (index::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))
+	      (src::bstring read-only (default ""))
 	      (point::long (default -1))
 	      (name::JsStringLiteral (default (class-nil JsStringLiteralASCII)))
 	      (method::obj (default #f))
@@ -295,13 +296,13 @@
 	      (target::JsObject (default (class-nil JsObject)))
 	      (handler::JsObject (default (class-nil JsObject)))
 	      (revoked::bool (default #f))
-	      (cacheget read-only (default (instantiate::JsPropertyCache)))
+	      (cacheget read-only (default (instantiate::JsPropertyCache (src "proxy-get"))))
 	      (cachegetfun (default 'nocache))
 	      (cachegetproc (default #f))
-	      (cacheset read-only (default (instantiate::JsPropertyCache)))
+	      (cacheset read-only (default (instantiate::JsPropertyCache (src "proxy-set"))))
 	      (cachesetfun (default 'nocache))
 	      (cachesetproc (default #f))
-	      (cacheapply read-only (default (instantiate::JsPropertyCache)))
+	      (cacheapply read-only (default (instantiate::JsPropertyCache (src "proxy-apply"))))
 	      (cacheapplyfun (default 'nocache))
 	      (cacheapplyproc (default #f)))
 
@@ -402,7 +403,8 @@
 	      (js-function-prototype-cmap (default (class-nil JsConstructMap)))
 	      (js-yield-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-cmap (default (class-nil JsConstructMap)))
-	      (js-regexp-exec-cmap (default (class-nil JsConstructMap))))
+	      (js-regexp-exec-cmap (default (class-nil JsConstructMap)))
+	      (js-scope-cmap (default (class-nil JsConstructMap))))
 
 	   (class JsResponse
 	      (%this::JsGlobalObject read-only)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu May 23 08:44:57 2019 (serrano)                */
+;*    Last change :  Wed May 29 16:21:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -958,9 +958,11 @@
 ;*    nodejs-new-scope-object ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-scope-object global::JsGlobalObject)
-   (with-access::JsGlobalObject global (elements)
+   (with-access::JsGlobalObject global (elements js-scope-cmap)
+      (when (eq? js-scope-cmap (class-nil JsConstructMap))
+	 (set! js-scope-cmap (instantiate::JsConstructMap)))
       (let ((scope (duplicate::JsGlobalObject global
-		      (cmap (instantiate::JsConstructMap))
+		      (cmap js-scope-cmap)
 		      (__proto__ global)
 		      (elements ($create-vector (SCOPE-ELEMENTS-LENGTH))))))
 	 (js-object-properties-set! scope '())

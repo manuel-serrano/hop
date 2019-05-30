@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/utils.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/utils.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Jan 24 12:51:13 2019 (serrano)                */
+;*    Last change :  Thu May 30 06:58:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -836,6 +836,9 @@
 ;*---------------------------------------------------------------------*/
 (define (is-builtin-ref? expr clazz)
    (cond
+      ((isa? expr J2SUnresolvedRef)
+       (with-access::J2SUnresolvedRef expr (id)
+	  (eq? id clazz)))
       ((isa? expr J2SGlobalRef)
        (with-access::J2SGlobalRef expr (decl)
 	  (with-access::J2SDecl decl (id usage)

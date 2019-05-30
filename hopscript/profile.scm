@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu May 23 08:50:03 2019 (serrano)                */
+;*    Last change :  Wed May 29 16:53:31 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -107,18 +107,23 @@
 		     (cons calltable *profile-call-tables*))))
 	    (register-exit-function!
 	       (lambda (n)
-		  (profile-report-start trc)
-		  (when (string-contains trc "hopscript:cache")
-		     (profile-report-cache trc))
-		  (when (string-contains trc "hopscript:hint")
-		     (profile-hints trc))
-		  (when (string-contains trc "hopscript:alloc")
-		     (profile-allocs trc))
-		  (when (string-contains trc "hopscript:call")
-		     (profile-calls trc))
-		  (profile-report-end trc conf)
-		  (unless (eq? *profile-port* (current-error-port))
-		     (close-output-port *profile-port*))))))))
+		  (with-handler
+		     (lambda (e)
+			(exception-notify e)
+			(exit -1))
+		     (begin
+			(profile-report-start trc)
+			(when (string-contains trc "hopscript:cache")
+			   (profile-report-cache trc))
+			(when (string-contains trc "hopscript:hint")
+			   (profile-hints trc))
+			(when (string-contains trc "hopscript:alloc")
+			   (profile-allocs trc))
+			(when (string-contains trc "hopscript:call")
+			   (profile-calls trc))
+			(profile-report-end trc conf)
+			(unless (eq? *profile-port* (current-error-port))
+			   (close-output-port *profile-port*))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-cache-start! ...                                         */
@@ -347,14 +352,14 @@
 	     (string-append (number->string (/llong o #l1000000000)) ".10^9"))
 	    (else
 	     s))))
-   
+
    (let* ((s (cond
 		((string? o) o)
 		((uint32? o) (format-uint32 o))
 		((llong? o) (format-llong o))
 		((number? o) (format-number o))
 		((symbol? o) (symbol->string o))
-		(else (call-with-output-string (lambda () (display o))))))
+		(else (call-with-output-string (lambda (p) (display o p))))))
 	  (l (string-length s)))
       (if (> l sz)
           (substring s 0 sz)
@@ -752,17 +757,13 @@
 		(vector-ref vec i)
 		(loop (-fx i 1))))))
 
-   (define (filecache-name fc)
-      "*")
-
-   (define (filecache-caches fc)
-      fc)
-   
    (define filecaches
       (let ((m (pregexp-match "srcfile=([^ ]+)" trc)))
 	 (if m
 	     (let ((filename (cadr m)))
-		(filter (lambda (fc) (string=? (filecache-name fc) filename))
+		(filter (lambda (pc)
+			   (with-access::JsPropertyCache pc (src)
+			      (string=? src filename)))
 		   js-profile-pcaches))
 	     js-profile-pcaches)))
 
@@ -845,13 +846,9 @@
 	 filecaches))
 
    (define (filecaches-usage-filter filecaches u)
-      (map (lambda (fc)
-	      (cons (filecache-name fc)
-		 (list->vector
-		    (vfilter (lambda (pc)
-				(with-access::JsPropertyCache pc (usage cntmiss)
-				   (eq? u usage)))
-		       (filecache-caches fc)))))
+      (filter (lambda (pc)
+		 (with-access::JsPropertyCache pc (usage cntmiss)
+		    (eq? u usage)))
 	 filecaches))
 
    (define (total-uncaches::llong)
@@ -900,7 +897,7 @@
 						(if (not old)
 						    (set! table (cons (cons name (proc pc)) table))
 						    (set-cdr! old (+ (cdr old) (proc pc))))))))
-			    (filecache-caches fc)))
+			    fc))
 	       filecaches)
 	    (for-each (lambda (e)
 			 (when (> (cdr e) *log-miss-threshold*)
@@ -975,12 +972,11 @@
 		(print "\"format\": \"fprofile\",")
 		(print "\"sources\": [")
 		(for-each (lambda (fc)
-			     (when (and (vector? (filecache-caches fc))
-					(vany (lambda (pc)
-						 (with-access::JsPropertyCache pc (cntmiss)
-						    (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))))
-					   (filecache-caches fc)))
-				(print "  { \"filename\": \"" (filecache-name fc) "\",")
+			     (when (any (lambda (pc)
+					   (with-access::JsPropertyCache pc (cntmiss)
+					      (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))))
+				      fc)
+				(print "  { \"filename\": \"" (with-access::JsPropertyCache fc (src) src) "\",")
 				(print "    \"caches\": [")
 				(vfor-each (lambda (i pc)
 					      (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
@@ -1000,7 +996,7 @@
 					       (with-access::JsPropertyCache x ((xpoint point))
 						  (with-access::JsPropertyCache y ((ypoint point))
 						     (<= xpoint ypoint))))
-					 (filecache-caches fc))))
+					 fc)))
 				(print "      { \"point\": -1 } ]")
 				(print "  },")))
 		   filecaches)
@@ -1127,17 +1123,18 @@
 	     (fprint *profile-port*
 		"vtables conflicts        : "
 		(padding *vtables-conflicts* 12 'right)))
-	  (if (and (pair? filecaches) (pair? (cdr filecaches)))
-	      (for-each (lambda (fc)
-			   (when (and (vector? (filecache-caches fc))
-				      (vany (lambda (pc)
-					       (with-access::JsPropertyCache pc (cntmiss)
-						  (or (> (pcache-hits pc) 0)
-						      (> cntmiss *log-miss-threshold*))))
-					 (filecache-caches fc)))
-			      (profile-pcache fc)))
-		 filecaches)
-	      (profile-pcache (car filecaches))))
+	  (let ((srcs (delete-duplicates!
+			 (map (lambda (pc)
+				 (with-access::JsPropertyCache pc (src) src))
+			    filecaches))))
+	     (tprint "SRCS=" srcs " " (length filecaches))
+	     (for-each (lambda (s)
+			  (let ((pcs (filter (lambda (pc)
+						(with-access::JsPropertyCache pc (src)
+						   (string=? src s)))
+					filecaches)))
+			     (profile-pcache pcs)))
+		srcs)))
 
        (if (string-contains trc "hopscript:uncache")
 	   (let ((gets (sort (lambda (x y) (>= (cdr x) (cdr y)))
@@ -1182,12 +1179,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    profile-pcache ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (profile-pcache pcache)
+(define (profile-pcache pcaches)
+   
    (newline *profile-port*)
-   (fprint *profile-port*
-      (car pcache) ":")
-   (fprint *profile-port*
-      (make-string (string-length (car pcache)) #\=) "=")
+   (with-access::JsPropertyCache (car pcaches) (src)
+      (fprint *profile-port* src ": (" (length pcaches) ")")
+      (fprint *profile-port* (make-string (string-length src) #\=) "="))
 
    (let* ((pcache (sort (lambda (x y)
 			   (with-access::JsPropertyCache x
@@ -1195,8 +1192,8 @@
 			      (with-access::JsPropertyCache y
 				    ((p2 point))
 				 (< p1 p2))))
-		     (cdr pcache)))
-	  (maxpoint (let ((pc (vector-ref pcache (-fx (vector-length pcache) 1))))
+		     pcaches))
+	  (maxpoint (let ((pc (car (last-pair pcache))))
 		       (with-access::JsPropertyCache pc (point)
 			  (number->string point))))
 	  (ppading (max (string-length maxpoint) 5))
@@ -1254,7 +1251,7 @@
 			    (padding cntamap cwidth 'right)
 			    " " 
 			    (padding cntvtable cwidth 'right)))))
-	 (vector->list pcache))))
+	 pcaches)))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-calls ...                                                */

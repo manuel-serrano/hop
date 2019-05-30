@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun May 26 07:15:19 2019 (serrano)                */
+;*    Last change :  Wed May 29 16:40:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -431,7 +431,7 @@
 			(constrmap constrmap)
 			(maxconstrsize maxconstrsize)
 			(elements els)
-			(cmap (if (and shared-cmap #f)
+			(cmap (if shared-cmap
 				  ;; normal functions, i.e., user functions,
 				  ;; use shared-cmap
 				  cmap

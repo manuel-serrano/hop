@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu May 23 09:14:12 2019 (serrano)                */
+;*    Last change :  Wed May 29 19:39:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -104,7 +104,8 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 (define js-number-pcache
-	    (instantiate::JsPropertyCache))
+	    (instantiate::JsPropertyCache
+	       (src "number.scm")))
 	 
 	 (define js-number-prototype
 	    (instantiateJsNumber

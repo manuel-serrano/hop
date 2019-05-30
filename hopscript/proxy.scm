@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon May 27 11:26:35 2019 (serrano)                */
+;*    Last change :  Wed May 29 19:41:03 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -38,10 +38,12 @@
 	   __hopscript_spawn)
    
    (export (js-init-proxy! ::JsGlobalObject)
+	   (js-new-proxy ::JsGlobalObject ::obj ::obj)
+	   (js-new-proxy/caches ::JsGlobalObject ::obj ::obj
+	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
 	   (js-proxy-property-value proxy obj prop %this)
-	   (inline js-jsproxy-get/name-cache ::JsProxy ::obj ::JsGlobalObject
-	      #!optional (point -1) (cspecs '()))
+	   (inline js-jsproxy-get/name-cache ::JsProxy ::obj ::JsGlobalObject)
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (js-call-proxy/cache-miss0 ::JsGlobalObject ::JsPropertyCache
 	      ::JsProxy ::obj)
@@ -112,6 +114,8 @@
    (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-proxy)
 
       (define (js-proxy-alloc %this constructor::JsFunction)
+	 ;; not used in optimized code, see below
+	 ;; js-new-proxy and js-new-proxy/caches
 	 (instantiateJsProxy
 	    (cmap proxy-cmap)
 	    (__proto__ (js-null))
@@ -175,6 +179,35 @@
 	 :value js-proxy :hidden-class #t)
 	 
       js-proxy))
+
+;*---------------------------------------------------------------------*/
+;*    js-new-proxy ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-new-proxy %this t h)
+   (let ((proxy (instantiateJsProxy
+		   (cmap proxy-cmap)
+		   (__proto__ (js-null))
+		   (elements proxy-elements))))
+      (with-access::JsProxy proxy (target handler)
+	 (set! target t)
+	 (set! handler h)
+	 proxy)))
+
+;*---------------------------------------------------------------------*/
+;*    js-new-proxy/caches ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-new-proxy/caches %this t h gcache scache acache)
+   (let ((proxy (instantiateJsProxy
+		   (cmap proxy-cmap)
+		   (__proto__ (js-null))
+		   (elements proxy-elements)
+		   (cacheget gcache)
+		   (cacheset scache)
+		   (cacheapply acache))))
+      (with-access::JsProxy proxy (target handler)
+	 (set! target t)
+	 (set! handler h)
+	 proxy)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-debug-name ...                                          */
@@ -280,8 +313,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsproxy-get/name-cache ::JsProxy ...                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-jsproxy-get/name-cache o::JsProxy prop::obj %this::JsGlobalObject
-		  #!optional (point -1) (cspecs '()))
+(define-inline (js-jsproxy-get/name-cache o::JsProxy prop::obj %this::JsGlobalObject)
    (js-proxy-property-value o o (js-toname prop %this) %this))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Sun Mar 31 09:23:57 2019 (serrano)                */
+;*    Last change :  Thu May 30 06:55:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -45,6 +45,7 @@
 	   __hopscript_websocket
 	   __hopscript_promise
 	   __hopscript_generator
+	   __hopscript_proxy
 	   __hopscript_spawn
 	   __hopscript_expanders)
    
@@ -99,4 +100,6 @@
 	   (class WorkerHopThread)
 	   (class JsWebSocketEvent)
 
+	   (class JsProxy)
+	   
 	   (class JsWrapper)))

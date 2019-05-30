@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon May 27 10:13:34 2019 (serrano)                */
+;*    Last change :  Thu May 30 06:40:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2499,17 +2499,33 @@
 ;*    j2s-scheme ::J2SNew ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SNew mode return conf)
-   
-   (define (new-array? clazz)
+
+   (define (old-new-builtin? clazz builtin)
       (cond
 	 ((isa? clazz J2SUnresolvedRef)
 	  (with-access::J2SUnresolvedRef clazz (id)
-	     (eq? id 'Array)))
+	     (eq? id builtin)))
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
 	     (when (isa? decl J2SDeclExtern)
 		(with-access::J2SDeclExtern decl (id usage)
-		   (when (and (eq? id 'Array) (not (usage? usage '(assig)))))))))))
+		   (when (and (eq? id builtin)
+			      (not (usage? usage '(assig)))))))))))
+   
+   (define (new-builtin? clazz builtin)
+      (cond
+	 ((is-builtin-ref? clazz builtin)
+	  #t)
+	 ((old-new-builtin? clazz builtin)
+	  (error "new-builtin" "old says yes" builtin))
+	 (else
+	  #f)))
+
+   (define (new-array? clazz)
+      (new-builtin? clazz 'Array))
+
+   (define (new-proxy? clazz)
+      (new-builtin? clazz 'Proxy))
 
    (define (constructor-no-return? decl)
       ;; does this constructor ever return something else than UNDEF?
@@ -2579,8 +2595,19 @@
 		   (j2s-new-opt/args decl clazz
 		      (append args
 			 (make-list (-fx lparams largs) #unspecified)))))))))
+
+   (define (j2s-new-proxy this mode return conf)
+      (with-access::J2SNew this (caches args)
+	 `(,(if (pair? caches) 'js-new-proxy/caches 'js-new-proxy)
+	   %this
+	   ,@(map (lambda (a)
+		       (j2s-scheme a mode return conf))
+		  args)
+	     ,@(map (lambda (c)
+		       `(js-pcache-ref %pcache ,c))
+		  caches))))
 	     
-   (with-access::J2SNew this (loc cache clazz args type)
+   (with-access::J2SNew this (loc caches clazz args type)
       (cond
 	 ((any (lambda (n) (isa? n J2SSpread)) args)
 	  (epairify loc
@@ -2590,6 +2617,9 @@
 	       (or (=fx (bigloo-debug) 0) (eq? type 'vector)))
 	  (epairify loc
 	     (j2s-new-array this mode return conf)))
+	 ((and (new-proxy? clazz) (=fx (length args) 2))
+	  (epairify loc
+	     (j2s-new-proxy this mode return conf)))
 	 ((optimized-ctor clazz)
 	  =>
 	  (lambda (decl)
@@ -2598,9 +2628,9 @@
 		   (map (lambda (a)
 			   (box (j2s-scheme a mode return conf) (j2s-vtype a) conf))
 		      args)))))
-	 ((and (=fx (bigloo-debug) 0) cache)
+	 ((and (=fx (bigloo-debug) 0) (pair? caches))
 	  (epairify loc
-	     (j2s-new-fast cache clazz
+	     (j2s-new-fast (car caches) clazz
 		(map (lambda (a)
 			(box (j2s-scheme a mode return conf) (j2s-vtype a) conf))
 		   args))))
