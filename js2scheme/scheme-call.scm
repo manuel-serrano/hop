@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon May 27 10:32:52 2019 (serrano)                */
+;*    Last change :  Thu May 30 09:18:33 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -104,6 +104,8 @@
 	;; array methods
 	("concat" js-array-concat1 array (array) %this #t ,j2s-array-plain?)
 	("concat" js-array-maybe-concat1 any (any) %this #t ,j2s-array-plain?)
+	("sort" js-array-sort array (any) %this #t ,j2s-array-plain?)
+	("sort" js-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
 ;* 	("slice" js-array-slice array () %this)                        */
 ;* 	("slice" js-array-maybe-slice any () %this)                    */
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
@@ -196,6 +198,7 @@
    (let ((array (config-get conf :array)))
       (if (isa? array J2SDeclExtern)
 	  (with-access::J2SDeclExtern array (usage)
+	     (tprint "PLAIN ARRAY " usage)
 	     (only-usage? '(new init call get) usage))
 	  #t)))
 
@@ -281,15 +284,24 @@
 	 (with-access::J2SString field (val)
 	    (let ((tyobj (j2s-type obj)))
 	       (find (lambda (m)
+			(when (string=? val "sort")
+			   (tprint "m=" (builtin-method-jsname m) "/" val))
 			(when (string=? (builtin-method-jsname m) val)
 			   (let ((ty (builtin-method-ttype m)))
 			      (when (is-type-or-class? ty obj tyobj)
+				 (tprint "val=" val " ty=" ty " tyobj=" tyobj
+				    " p1=" (is-type-or-class? ty obj tyobj))
+				 (tprint "args=" (length args)
+				    " par=" (length (builtin-method-args m)))
 				 (let loop ((args args)
 					    (params (builtin-method-args m)))
 				    (cond
 				       ((null? args)
 					(when (or (null? params)
 						  (every pair? params))
+					   (when (string=? val "sort")
+					      (tprint "ALMOST="
+						 ((builtin-method-predicate m) mode return conf)))
 					   (let ((p (builtin-method-predicate m)))
 					      (or (not p) (p mode return conf)))))
 				       ((null? params)

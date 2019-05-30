@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sun May 26 09:05:39 2019 (serrano)                */
+/*    Last change :  Thu May 30 08:34:37 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -41,6 +41,7 @@ extern obj_t BGl_JsArrayz00zz__hopscript_typesz00;
    BGL_CLASS_INDEX( BGl_JsArrayz00zz__hopscript_typesz00 )
 
 extern obj_t bgl_js_profile_allocs;
+obj_t bgl_profile_pcache_tables = BNIL;
 
 /*---------------------------------------------------------------------*/
 /*    type alias                                                       */
@@ -63,9 +64,38 @@ bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t thread, obj_t templa
       memcpy( &(pcache[ i ]), COBJECT( template ), sizeof( pcache_t ) );
    }
 
+   bgl_profile_pcache_tables = MAKE_PAIR( MAKE_PAIR( (obj_t)pcache, BINT( len ) ), bgl_profile_pcache_tables );
+
    return BUNSPEC;
 }
 
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_profile_get_pcaches ...                                      */
+/*    -------------------------------------------------------------    */
+/*    This function is called by the cache profiler, after the         */
+/*    execution, in order to get the list of all used                  */
+/*    property caches.                                                 */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_profile_get_pcaches() {
+   obj_t res = BNIL;
+   obj_t tables = bgl_profile_pcache_tables;
+
+   while( PAIRP( tables ) ) {
+      obj_t table = CAR( tables );
+      long i = CINT( CDR( table ) );
+      pcache_t *pcache = (pcache_t *)CAR( table );
+
+      while( --i >= 0 ) {
+	 res = MAKE_PAIR( BNANOBJECT( &(pcache[ i ]) ), res );
+      }
+
+      tables = CDR( tables );
+   }
+   return res;
+}
+   
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
 /*    bgl_make_jsobject ...                                            */

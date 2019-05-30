@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue May 21 07:36:48 2019 (serrano)                */
+;*    Last change :  Thu May 30 07:20:17 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -40,7 +40,7 @@
 	   (e `(with-access::JsPropertyCache ,cache (cntimap cntemap
 						       cntcmap cntpmap 
 						       cntamap cntvtable
-						       cntmiss)
+						       cntmiss src)
 		  ,@(filter-map (lambda (c)
 				   (when (keyword? c)
 				      (let ((id (symbol-append 'cnt
@@ -88,7 +88,8 @@
 	      ($js-make-pcache-table (pragma::obj "(obj_t)(__bgl_pcache)")
 		 ,num ,src (current-thread)
 		 (instantiate::JsPropertyCache
-		    (pctable (pragma::obj "(obj_t)(__bgl_pcache)")))))
+		    (pctable (pragma::obj "(obj_t)(__bgl_pcache)"))
+		    (src ,src))))
 	     (else
 	      ((@ js-make-pcache-table __hopscript_property) ,num ,src)))
 	  e))

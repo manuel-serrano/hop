@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun May 26 09:04:46 2019 (serrano)                */
+;*    Last change :  Thu May 30 09:16:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -120,6 +120,8 @@
 	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-prototype-slice ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-maybe-slice0 ::obj ::JsGlobalObject ::obj)
+	   (js-array-sort ::JsArray ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-sort ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-iterator-to-array ::obj ::long ::JsGlobalObject))
    
    (cond-expand
@@ -393,7 +395,7 @@
 	 
 	 ;; array pcache
 	 (set! js-array-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 18 "array"))
+	    ((@ js-make-pcache-table __hopscript_property) 19 "array"))
 	 
 	 ;; default arrays cmap
 	 (set! js-array-cmap
@@ -1412,7 +1414,6 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.10
    (define (array-prototype-slice this start end)
       (js-array-prototype-slice this start end %this))
-
       
    (js-bind! %this js-array-prototype (& "slice")
       :value (js-make-function %this array-prototype-slice 2 "slice"
@@ -1423,93 +1424,7 @@
    ;; sort
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.11
    (define (array-prototype-sort this::obj comparefn)
-
-      (define (default-compare x y)
-	 (let ((nothasj (js-absent? x))
-	       (nothask (js-absent? y)))
-	    (cond
-	       (nothasj nothask)
-	       (nothask #t)
-	       ((eq? x (js-undefined)) (eq? y (js-undefined)))
-	       ((eq? y (js-undefined)) #t)
-	       ((and (integer? x) (integer? y)) (< x y))
-	       (else (string<? (js-tostring x %this) (js-tostring y %this))))))
-
-      (define (make-compare comparefn)
-	 (lambda (x y)
-	    (let ((nothasj (js-absent? x))
-		  (nothask (js-absent? y)))
-	       (cond
-		  (nothasj nothask)
-		  (nothask #t)
-		  ((eq? x (js-undefined)) (eq? y (js-undefined)))
-		  ((eq? y (js-undefined)) #t)
-		  (else (<= (js-tointeger (js-call2 %this comparefn (js-undefined) x y) %this) 0))))))
-
-      (define (get-compare comparefn)
-	 (cond
-	    ((eq? comparefn (js-undefined))
-	     default-compare)
-	    ((not (js-function? comparefn))
-	     (js-raise-type-error %this
-		"sort: argument not a function ~s" comparefn))
-	    (else
-	     (with-access::JsFunction comparefn (proc)
-		(make-compare comparefn)))))
-
-      (define (vector-sort this cmp)
-	 (with-access::JsArray this (vec)
-	    ($sort-vector vec cmp)
-	    this))
-
-      (define (partition arr cmp left right pivotindex)
-	 (let ((pivotvalue (js-get arr pivotindex %this)))
-	    (js-put! arr pivotindex (js-get arr right %this) #f %this)
-	    (js-put! arr right pivotvalue #f %this)
-	    (let loop ((i left)
-		       (s left))
-	       (if (< i right)
-		   (let ((vi (js-get arr i %this)))
-		      (if (cmp vi pivotvalue)
-			  (begin
-			     (unless (= i s)
-				(let ((vi (js-get arr i %this)))
-				   (js-put! arr i (js-get arr s %this) #f %this)
-				   (js-put! arr s vi #f %this)))
-			     (loop (+ i 1) (+ s 1)))
-			  (loop (+ i 1) s)))
-		   (let ((si (js-get arr s %this)))
-		      (js-put! arr s (js-get arr right %this) #f %this)
-		      (js-put! arr right si #f %this)
-		      s)))))
-
-
-      (define (quicksort arr cmp left right)
-	 ;; http://en.wikipedia.org/wiki/Quicksort
-	 (when (< left right)
-	    (let ((pivotindex (+ left
-				 (inexact->exact (round (/ (- right left) 2))))))
-	       (let ((pivotnewindex (partition arr cmp left right pivotindex)))
-		  (quicksort arr cmp left (- pivotnewindex 1))
-		  (quicksort arr cmp (+ pivotnewindex 1) right)))))
-
-      (define (array-sort arr cmp)
-	 (let ((len (js-uint32-tointeger (js-get-lengthu32 arr %this))))
-	    (unless (< len 2)
-	       (quicksort arr cmp 0 (- len 1)))
-	    arr))
-
-      (let ((o (js-toobject %this this)))
-	 (if (not (js-array? this))
-	     (array-sort this (get-compare comparefn))
-	     (with-access::JsArray this (vec)
-		(cond
-		   ((js-object-mode-inline? this)
-		    (vector-sort this (get-compare comparefn)))
-		   ((=u32 (js-get-lengthu32 o %this) #u32:0)
-		    this)
-		   (else
-		    (array-sort this (get-compare comparefn))))))))
+      (js-array-prototype-sort (js-toobject %this this) comparefn %this))
 
    (js-bind! %this js-array-prototype (& "sort")
       :value (js-make-function %this array-prototype-sort 1 "sort"
@@ -4062,6 +3977,122 @@
 	     (js-get-name/cache this (& "slice") #f %this
 		(or cache (js-pcache-ref js-array-pcache 17)))
 	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-sort ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-sort this::obj comparefn %this::JsGlobalObject)
+   
+   (define (default-compare x y)
+      (let ((nothasj (js-absent? x))
+	    (nothask (js-absent? y)))
+	 (cond
+	    (nothasj nothask)
+	    (nothask #t)
+	    ((eq? x (js-undefined)) (eq? y (js-undefined)))
+	    ((eq? y (js-undefined)) #t)
+	    ((and (integer? x) (integer? y)) (< x y))
+	    (else (string<? (js-tostring x %this) (js-tostring y %this))))))
+   
+   (define (make-compare comparefn)
+      (lambda (x y)
+	 (let ((nothasj (js-absent? x))
+	       (nothask (js-absent? y)))
+	    (cond
+	       (nothasj nothask)
+	       (nothask #t)
+	       ((eq? x (js-undefined)) (eq? y (js-undefined)))
+	       ((eq? y (js-undefined)) #t)
+	       (else (<= (js-tointeger (js-call2 %this comparefn (js-undefined) x y) %this) 0))))))
+   
+   (define (get-compare comparefn)
+      (cond
+	 ((eq? comparefn (js-undefined))
+	  default-compare)
+	 ((not (js-function? comparefn))
+	  (js-raise-type-error %this
+	     "sort: argument not a function ~s" comparefn))
+	 (else
+	  (with-access::JsFunction comparefn (proc)
+	     (make-compare comparefn)))))
+   
+   (define (vector-sort this cmp)
+      (with-access::JsArray this (vec)
+	 ($sort-vector vec cmp)
+	 this))
+   
+   (define (partition arr cmp left right pivotindex)
+      (let ((pivotvalue (js-get arr pivotindex %this)))
+	 (js-put! arr pivotindex (js-get arr right %this) #f %this)
+	 (js-put! arr right pivotvalue #f %this)
+	 (let loop ((i left)
+		    (s left))
+	    (if (< i right)
+		(let ((vi (js-get arr i %this)))
+		   (if (cmp vi pivotvalue)
+		       (begin
+			  (unless (= i s)
+			     (let ((vi (js-get arr i %this)))
+				(js-put! arr i (js-get arr s %this) #f %this)
+				(js-put! arr s vi #f %this)))
+			  (loop (+ i 1) (+ s 1)))
+		       (loop (+ i 1) s)))
+		(let ((si (js-get arr s %this)))
+		   (js-put! arr s (js-get arr right %this) #f %this)
+		   (js-put! arr right si #f %this)
+		   s)))))
+   
+   
+   (define (quicksort arr cmp left right)
+      ;; http://en.wikipedia.org/wiki/Quicksort
+      (when (< left right)
+	 (let ((pivotindex (+ left
+			      (inexact->exact (round (/ (- right left) 2))))))
+	    (let ((pivotnewindex (partition arr cmp left right pivotindex)))
+	       (quicksort arr cmp left (- pivotnewindex 1))
+	       (quicksort arr cmp (+ pivotnewindex 1) right)))))
+   
+   (define (array-sort arr cmp)
+      (let ((len (js-uint32-tointeger (js-get-lengthu32 arr %this))))
+	 (unless (< len 2)
+	    (quicksort arr cmp 0 (- len 1)))
+	 arr))
+   
+   (let ((o this))
+      (if (not (js-array? this))
+	  (array-sort this (get-compare comparefn))
+	  (with-access::JsArray this (vec)
+	     (cond
+		((js-object-mode-inline? this)
+		 (vector-sort this (get-compare comparefn)))
+		((=u32 (js-get-lengthu32 o %this) #u32:0)
+		 this)
+		(else
+		 (array-sort this (get-compare comparefn))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-sort ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-array-sort this::JsArray comparefn %this cache)
+   (if (js-object-mode-array-plain? this)
+       (js-array-prototype-sort this comparefn %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "sort") #f %this
+		(or cache (js-pcache-ref js-array-pcache 18)))
+	     this comparefn))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-sort ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-sort this::obj comparefn %this cache)
+   (if (js-array? this)
+       (js-array-sort this comparefn %this cache)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "sort") #f %this
+		(or cache (js-pcache-ref js-array-pcache 18)))
+	     this comparefn))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-indexof ...                                   */

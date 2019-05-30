@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed May 29 15:46:24 2019 (serrano)                */
+;*    Last change :  Thu May 30 09:10:27 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1651,6 +1651,7 @@
 		 (js-get o prop %this))
 		(else
 		 (let ((cache (instantiate::JsPropertyCache
+				 (usage 'dget)
 				 (src src))))
 		    (js-name-pcacher-set! pname cache)
 		    (js-object-get-name/cache o pname #f
@@ -2246,6 +2247,7 @@
 		 (js-put! o prop v throw %this))
 		(else
 		 (let ((cache (instantiate::JsPropertyCache
+				 (usage 'dput)
 				 (src src))))
 		    (js-name-pcachew-set! pname cache)
 		    (js-object-put-name/cache! o pname v throw

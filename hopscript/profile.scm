@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed May 29 16:53:31 2019 (serrano)                */
+;*    Last change :  Thu May 30 07:08:03 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -22,6 +22,8 @@
    (cond-expand
       (profile
        (export js-profile-allocs::obj)))
+   
+   (extern ($js-profile-get-pcaches::pair-nil () "bgl_profile_get_pcaches"))
 
    (import __hopscript_types
 	   __hopscript_property)
@@ -152,11 +154,17 @@
 	 (set! js-profile-pcaches (cons pcache js-profile-pcaches)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-profile-get-all-pcaches ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-profile-get-all-pcaches)
+   (append js-profile-pcaches ($js-profile-get-pcaches)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-profile-log-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-cache cache::JsPropertyCache
 	   #!key imap emap cmap pmap amap vtable)
-   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+   (with-access::JsPropertyCache cache (name cntimap cntemap cntcmap cntpmap cntamap cntvtable)
       (cond
 	 (imap (set! cntimap (+u32 #u32:1 cntimap)))
 	 (emap (set! cntemap (+u32 #u32:1 cntemap)))
@@ -359,6 +367,7 @@
 		((llong? o) (format-llong o))
 		((number? o) (format-number o))
 		((symbol? o) (symbol->string o))
+		((eq? o (class-nil JsStringLiteralASCII)) "")
 		(else (call-with-output-string (lambda (p) (display o p))))))
 	  (l (string-length s)))
       (if (> l sz)
@@ -764,8 +773,8 @@
 		(filter (lambda (pc)
 			   (with-access::JsPropertyCache pc (src)
 			      (string=? src filename)))
-		   js-profile-pcaches))
-	     js-profile-pcaches)))
+		   (js-profile-get-all-pcaches)))
+	     (js-profile-get-all-pcaches))))
 
    (define threshold
       (let ((m (pregexp-match "hopscript:cache=([0-9]+)" trc)))
@@ -1127,7 +1136,6 @@
 			 (map (lambda (pc)
 				 (with-access::JsPropertyCache pc (src) src))
 			    filecaches))))
-	     (tprint "SRCS=" srcs " " (length filecaches))
 	     (for-each (lambda (s)
 			  (let ((pcs (filter (lambda (pc)
 						(with-access::JsPropertyCache pc (src)
@@ -1180,78 +1188,89 @@
 ;*    profile-pcache ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (profile-pcache pcaches)
-   
-   (newline *profile-port*)
-   (with-access::JsPropertyCache (car pcaches) (src)
-      (fprint *profile-port* src ": (" (length pcaches) ")")
-      (fprint *profile-port* (make-string (string-length src) #\=) "="))
-
-   (let* ((pcache (sort (lambda (x y)
-			   (with-access::JsPropertyCache x
-				 ((p1 point))
-			      (with-access::JsPropertyCache y
-				    ((p2 point))
-				 (< p1 p2))))
-		     pcaches))
-	  (maxpoint (let ((pc (car (last-pair pcache))))
-		       (with-access::JsPropertyCache pc (point)
-			  (number->string point))))
-	  (ppading (max (string-length maxpoint) 5))
-	  (cwidth 8))
-      (fprint *profile-port* (padding "point" ppading 'center)
-	 " "
-	 (padding "property" cwidth 'center)
-	 " "
-	 (padding "use" 4 'center)
-	 " | "
-	 (padding "miss" cwidth 'right)
-	 " " 
-	 (padding "imap" cwidth 'right)
-	 " "
-	 (padding "emap" cwidth 'right)
-	 " "
-	 (padding "cmap" cwidth 'right)
-	 " "
-	 (padding "pmap" cwidth 'right)
-	 " " 
-	 (padding "amap" cwidth 'right)
-	 " " 
-	 (padding "vtable" cwidth 'right))
-      (fprint *profile-port* (make-string (+ ppading 1 cwidth 1 4) #\-)
-	 "-+-"
-	 (make-string (* 7 (+ cwidth 1)) #\-))
-      (for-each (lambda (pc)
-		   (with-access::JsPropertyCache pc (point name usage
-						       cntmiss
-						       cntimap
-						       cntemap
-						       cntcmap
-						       cntpmap
-						       cntamap
-						       cntvtable)
-		      (when (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
-			       *log-miss-threshold*)
-			 (fprint *profile-port*
-			    (padding (number->string point) ppading 'right)
-			    " " 
-			    (padding name cwidth 'right)
-			    " " 
-			    (padding usage 4)
-			    " | "
-			    (padding cntmiss cwidth 'right)
-			    " " 
-			    (padding cntimap cwidth 'right)
-			    " " 
-			    (padding cntemap cwidth 'right)
-			    " " 
-			    (padding cntcmap cwidth 'right)
-			    " " 
-			    (padding cntpmap cwidth 'right)
-			    " " 
-			    (padding cntamap cwidth 'right)
-			    " " 
-			    (padding cntvtable cwidth 'right)))))
-	 pcaches)))
+   (when (any (lambda (pc)
+		 (with-access::JsPropertyCache pc (point name usage
+						     cntmiss
+						     cntimap
+						     cntemap
+						     cntcmap
+						     cntpmap
+						     cntamap
+						     cntvtable)
+		    (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+		       *log-miss-threshold*)))
+	    pcaches)
+      (newline *profile-port*)
+      (with-access::JsPropertyCache (car pcaches) (src)
+	 (fprint *profile-port* src ": (" (length pcaches) ")")
+	 (fprint *profile-port* (make-string (string-length src) #\=) "="))
+      
+      (let* ((pcache (sort (lambda (x y)
+			      (with-access::JsPropertyCache x
+				    ((p1 point))
+				 (with-access::JsPropertyCache y
+				       ((p2 point))
+				    (< p1 p2))))
+			pcaches))
+	     (maxpoint (let ((pc (car (last-pair pcache))))
+			  (with-access::JsPropertyCache pc (point)
+			     (number->string point))))
+	     (ppading (max (string-length maxpoint) 5))
+	     (cwidth 8))
+	 (fprint *profile-port* (padding "point" ppading 'center)
+	    " "
+	    (padding "property" cwidth 'center)
+	    " "
+	    (padding "use" 4 'center)
+	    " | "
+	    (padding "miss" cwidth 'right)
+	    " " 
+	    (padding "imap" cwidth 'right)
+	    " "
+	    (padding "emap" cwidth 'right)
+	    " "
+	    (padding "cmap" cwidth 'right)
+	    " "
+	    (padding "pmap" cwidth 'right)
+	    " " 
+	    (padding "amap" cwidth 'right)
+	    " " 
+	    (padding "vtable" cwidth 'right))
+	 (fprint *profile-port* (make-string (+ ppading 1 cwidth 1 4) #\-)
+	    "-+-"
+	    (make-string (* 7 (+ cwidth 1)) #\-))
+	 (for-each (lambda (pc)
+		      (with-access::JsPropertyCache pc (point name usage
+							  cntmiss
+							  cntimap
+							  cntemap
+							  cntcmap
+							  cntpmap
+							  cntamap
+							  cntvtable)
+			 (when (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+				  *log-miss-threshold*)
+			    (fprint *profile-port*
+			       (padding (number->string point) ppading 'right)
+			       " " 
+			       (padding name cwidth 'right)
+			       " " 
+			       (padding usage 4)
+			       " | "
+			       (padding cntmiss cwidth 'right)
+			       " " 
+			       (padding cntimap cwidth 'right)
+			       " " 
+			       (padding cntemap cwidth 'right)
+			       " " 
+			       (padding cntcmap cwidth 'right)
+			       " " 
+			       (padding cntpmap cwidth 'right)
+			       " " 
+			       (padding cntamap cwidth 'right)
+			       " " 
+			       (padding cntvtable cwidth 'right)))))
+	    pcaches))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-calls ...                                                */
