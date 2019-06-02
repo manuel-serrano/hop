@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/callapply.scm           */
+;*    serrano/prgm/project/hop/hop/js2scheme/callapply.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Fri Dec  7 20:39:19 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Sun Jun  2 06:11:07 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Turns indirect CALL and APPLY method calls into direction        */
 ;*    function calls.                                                  */
@@ -82,20 +82,19 @@
 	  (with-access::J2SAccess fun (obj field)
 	     (if (and (isa? field J2SString) (isa? obj J2SRef))
 		 (with-access::J2SRef obj (decl)
-		    (with-access::J2SDecl decl (usage)
-		       (if (not (usage? '(ref set get) usage))
-			   (with-access::J2SString field (val)
-			      (cond
-				 ((string=? val "call")
-				  (opt-call this obj))
-				 ((and (string=? val "apply")
-				       (pair? args) (pair? (cdr args))
-				       (null? (cddr args))
-				       (isa? (cadr args) J2SArray))
-				  (opt-apply this obj))
-				 (else
-				  (call-default-walker))))
-			   (call-default-walker))))
+		    (if (not (decl-usage? decl '(ref set get)))
+			(with-access::J2SString field (val)
+			   (cond
+			      ((string=? val "call")
+			       (opt-call this obj))
+			      ((and (string=? val "apply")
+				    (pair? args) (pair? (cdr args))
+				    (null? (cddr args))
+				    (isa? (cadr args) J2SArray))
+			       (opt-apply this obj))
+			      (else
+			       (call-default-walker))))
+			(call-default-walker)))
 		 (call-default-walker)))
 	  (call-default-walker))))
    

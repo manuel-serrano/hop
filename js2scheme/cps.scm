@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/cps.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/cps.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Jan 23 11:57:12 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:13:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1171,8 +1171,7 @@
 					    fun)))
 				 k pack kbreaks kcontinues ktry fun)))
 		    (declc (J2SLetOpt '(call) cname catch)))
-		(with-access::J2SDecl param (usage)
-		   (set! usage (cons 'ref usage)))
+		(decl-usage-add! param 'ref)
 		(J2SLetBlock (list declf declc)
 		   (J2STry
 		      (cps-try-body (SeqTry loc body declf)

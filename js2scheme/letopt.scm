@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/letopt.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/letopt.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Mon Mar 18 18:12:54 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:21:07 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -643,13 +643,13 @@
 	     (and (liftable? test) (liftable? then) (liftable? else))))
 	 ((isa? expr J2SRef)
 	  (with-access::J2SRef expr (decl)
-	     (with-access::J2SDecl decl (binder writable usage)
+	     (with-access::J2SDecl decl (binder writable)
 		(when (eq? binder 'let-opt)
-		   (or (not writable) (not (usage? '(assig) usage)))))))
+		   (or (not writable) (not (decl-usage? decl '(assig))))))))
 	 ((isa? expr J2SGlobalRef)
 	  (with-access::J2SGlobalRef expr (decl)
-	     (with-access::J2SDecl decl (writable usage id)
-		(when (or (not writable) (not (usage? '(assig) usage)))
+	     (with-access::J2SDecl decl (writable id)
+		(when (or (not writable) (not (decl-usage? decl '(assig))))
 		   (memq id '(Array Function Number Boolean Promise))))))
 	 ((isa? expr J2SNew)
 	  (with-access::J2SNew expr (clazz args)

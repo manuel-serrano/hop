@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/newtarget.scm           */
+;*    serrano/prgm/project/hop/hop/js2scheme/newtarget.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Fri Apr 19 14:15:17 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:22:13 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
@@ -113,12 +113,12 @@
 ;*    newtarget! ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SDeclFun fun)
-   (with-access::J2SDeclFun this (usage ronly val)
+   (with-access::J2SDeclFun this (ronly val)
       (let ((fun (if (isa? val J2SFun)
 		     val
 		     (with-access::J2SMethod val (function)
 			function))))
-	 (if (and ronly (not (usage? '(new ref get set) usage)))
+	 (if (and ronly (not (decl-usage? this '(new ref get set))))
 	     (with-access::J2SFun fun (body)
 		(set! body (newtarget! body #f)))
 	     (newtarget! fun fun))))

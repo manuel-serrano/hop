@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed May 29 16:40:29 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 07:27:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -50,7 +50,8 @@
 
 	   (inline js-function-prototype-get ::JsFunction ::obj ::obj ::JsGlobalObject)
 
-	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)))
+	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
+	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -720,6 +721,32 @@
 				(procedure thisarg (vector-ref vec 0)
 				   (vector-ref vec 1)
 				   (vector-ref vec 2)))
+			       ((5)
+				(procedure thisarg (vector-ref vec 0)
+				   (vector-ref vec 1)
+				   (vector-ref vec 2)
+				   (vector-ref vec 3)))
+			       ((6)
+				(procedure thisarg (vector-ref vec 0)
+				   (vector-ref vec 1)
+				   (vector-ref vec 2)
+				   (vector-ref vec 3)
+				   (vector-ref vec 4)))
+			       ((7)
+				(procedure thisarg (vector-ref vec 0)
+				   (vector-ref vec 1)
+				   (vector-ref vec 2)
+				   (vector-ref vec 3)
+				   (vector-ref vec 4)
+				   (vector-ref vec 5)))
+			       ((8)
+				(procedure thisarg (vector-ref vec 0)
+				   (vector-ref vec 1)
+				   (vector-ref vec 2)
+				   (vector-ref vec 3)
+				   (vector-ref vec 4)
+				   (vector-ref vec 5)
+				   (vector-ref vec 6)))
 			       (else
 				(let ((len (js-get argarray (& "length") %this)))
 				   (js-apply %this this thisarg
@@ -766,6 +793,21 @@
 	     (map! (lambda (idx)
 		      (js-get argarray idx %this))
 		(iota len)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-apply ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-apply %this this thisarg argarray cache)
+   (let loop ((this this))
+      (cond
+	 ((js-function? this)
+	  (js-apply-array %this this thisarg argarray))
+	 ((js-object? this)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "apply") #f %this cache)
+	     this thisarg argarray))
+	 (else
+	  (loop (js-toobject %this this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

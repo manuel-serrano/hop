@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu May 30 06:39:40 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:27:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -190,7 +190,7 @@
 ;*---------------------------------------------------------------------*/
 (define (read-only-function? fun::J2SExpr)
    (when (isa? fun J2SRef)
-      (with-access::J2SRef fun (decl usage)
+      (with-access::J2SRef fun (decl)
 	 (cond
 	    ((isa? decl J2SDeclSvc)
 	     #f)
@@ -198,9 +198,9 @@
 	     (with-access::J2SDecl decl (ronly)
 		(when ronly decl)))
 	    ((j2s-let-opt? decl)
-	     (with-access::J2SDeclInit decl (usage id val)
+	     (with-access::J2SDeclInit decl (val)
 		(when (isa? val J2SFun)
-		   (unless (or (memq 'assig usage) (memq 'init usage)) decl))))
+		   (unless (decl-usage? decl '(assig init)) decl))))
 	    (else
 	     #f)))))
 

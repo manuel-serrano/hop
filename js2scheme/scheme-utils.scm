@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed May 29 20:17:17 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:35:43 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -197,7 +197,7 @@
 (define (js-need-global? decl::J2SDecl scope mode)
    (with-access::J2SDecl decl (usage)
       (or (not (j2s-let-opt? decl))
-	  (memq 'eval usage)
+	  (decl-usage? decl '(eval))
 	  (not (and (eq? scope '%scope) (eq? mode 'hopscript))))))
 
 ;*---------------------------------------------------------------------*/
@@ -253,11 +253,9 @@
 ;*    j2s-this-cache? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-this-cache? this::J2SDecl)
-   (with-access::J2SDecl this (usage usecnt)
+   (with-access::J2SDecl this (usecnt)
       (and (>=fx usecnt 3)
-	   (not (memq 'ref usage))
-	   (not (memq 'call usage))
-	   (not (memq 'new usage)))))
+	   (not (decl-usage? this '(ref call new instanceof))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-minlen ...                                                   */
@@ -1034,11 +1032,10 @@
 	  (with-access::J2SParen this (expr)
 	     (loop expr)))
 	 ((isa? this J2SDeclFun)
-	  (with-access::J2SDeclFun this (scope usage val)
+	  (with-access::J2SDeclFun this (scope val)
 	     (unless (memq scope '(none letblock))
-		(when (and (usage? '(new) usage)
-			   (not (usage? '(call) usage))
-			   (not (usage? '(assig) usage)))
+		(when (and (decl-usage? this '(new))
+			   (not (decl-usage? this '(call assig))))
 		   (with-access::J2SFun val (rtype vararg)
 		      (when (and (eq? rtype 'undefined) (not vararg))
 			 this))))))

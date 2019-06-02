@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Apr 21 16:27:38 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:21:49 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -96,17 +96,17 @@
 ;*    method! ::J2SDeclFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (method! this::J2SDeclFun conf log)
-   (with-access::J2SDeclFun this (usage val id)
+   (with-access::J2SDeclFun this (val id)
       (set! val (method! val conf log))
       (with-access::J2SFun val (thisp loc body generator)
 	 (with-access::J2SDecl thisp (usecnt)
 	    (cond
-	       ((and (only-usage? '(new init) usage)
+	       ((and (decl-only-usage? this '(new init))
 		     (not (isa? this J2SDeclSvc)))
 		(with-access::J2SDecl thisp (utype)
 		   (set! utype 'object)))
-	       ((and (usage? '(ref get) usage)
-		     (not (usage? '(new) usage))
+	       ((and (decl-usage? this '(ref get))
+		     (not (decl-usage? this '(new)))
 		     (>=fx usecnt this-occurrence-threshold)
 		     (<fx (node-size body) body-size-threshold)
 		     (not generator))

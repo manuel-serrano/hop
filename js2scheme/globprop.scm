@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun May 26 09:13:05 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:17:37 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -165,8 +165,8 @@
       ;; no need to scan rhs as we are only looking for variable decls/inits
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (usage %info)
-		(if (and (not (usage? '(assig uninit) usage))
+	     (with-access::J2SDecl decl (%info)
+		(if (and (not (decl-usage? decl '(assig uninit)))
 			 (constant-object? rhs))
 		    (begin
 		       (set! %info (propinfo rhs '() #t))
@@ -178,8 +178,8 @@
 ;*    collect-globconst* ::J2SDeclInit ...                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-globconst* this::J2SDeclInit)
-   (with-access::J2SDeclInit this (usage ronly val %info)
-      (if (and (not (usage? '(assig) usage)) (constant-object? val))
+   (with-access::J2SDeclInit this (ronly val %info)
+      (if (and (not (decl-usage? this '(assig))) (constant-object? val))
 	  (begin
 	     (set! %info (propinfo val '() #f))
 	     (list this))

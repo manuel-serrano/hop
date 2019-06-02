@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/range.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/range.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Jan 23 19:45:03 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:27:40 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1101,17 +1101,17 @@
 ;*    constructor.                                                     */
 ;*---------------------------------------------------------------------*/
 (define (constructor-only?::bool decl::J2SDeclFun)
-   (with-access::J2SDeclFun decl (usage)
-      (and #f
-	   (and (usage? '(new) usage)
-		(not (usage? '(ref call eval) usage))))))
+   (tprint "ICI REMOVE #F")
+   (and #f
+	(and (decl-usage? decl '(new))
+	     (not (decl-usage? decl '(ref call eval))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SRef ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SRef env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (id key utype usage)
+      (with-access::J2SDecl decl (id key utype)
 	 (let ((nenv env))
 	    (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
 	       (set! nenv (env-nocapture env))
@@ -1134,7 +1134,7 @@
 ;*    node-range ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SDeclInit env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SDeclInit this (val range vtype id usage)
+   (with-access::J2SDeclInit this (val range vtype id)
       (when *indebug*
 	 (tprint "\\\\\\ J2SDeclInit.1 " id " env=" (dump-env env)))
       (multiple-value-bind (intv env)
@@ -1142,7 +1142,7 @@
 	 (when *indebug*
 	    (tprint "\\\\\\ J2SDeclInit.2 " id " env=" (dump-env env)))
 	 (cond
-	    ((usage? '(eval) usage)
+	    ((decl-usage? this '(eval))
 	     (decl-vrange-add! this *infinity-intv* fix)
 	     (return #f (extend-env env this intv)))
 	    ((not intv)
@@ -1275,9 +1275,9 @@
       "env=" (dump-env env)
       (with-access::J2SFun this (body %info vararg argumentsp params thisp)
 	 (let ((envp (map (lambda (p::J2SDecl)
-			     (with-access::J2SDecl p (usage irange)
+			     (with-access::J2SDecl p (irange)
 				(cond
-				   ((eq? usage 'rest)
+				   ((decl-strict-usage? p '(rest))
 				    (decl-vrange-add! p *infinity-intv* fix)
 				    (cons p *infinity-intv*))
 				   (vararg
@@ -1308,8 +1308,7 @@
 		  (set! %info
 		     (env-filter
 			(lambda (d)
-			   (with-access::J2SDecl d (usage)
-			      (usage? '(assig) usage)))
+			   (decl-usage? d '(assig)))
 			(env-remove envf params)))
 		  (debug *debug-range-function* "%info=" (dump-env envf))))
 	    (expr-range-add! this env fix #f)))))
@@ -1408,11 +1407,11 @@
 	 (let loop ((params params)
 		    (iargs iargs))
 	    (when (pair? params)
-	       (with-access::J2SDecl (car params) (usage id)
+	       (with-access::J2SDecl (car params) (id)
 		  (cond
 		     (vararg
 		      (decl-irange-add! (car params) *infinity-intv* fix))
-		     ((and (null? (cdr params)) (memq 'rest usage))
+		     ((and (null? (cdr params)) (decl-usage? (car params) '(rest)))
 		      (decl-irange-add! (car params) *infinity-intv* fix))
 		     ((null? iargs)
 		      (decl-irange-add! (car params) *infinity-intv* fix)
@@ -1441,7 +1440,7 @@
       (with-access::J2SRef ref (decl)
 	 (expr-range-add! ref env fix *infinity-intv*)
 	 (range-known-call-args fun iargs env)
-	 (with-access::J2SDecl decl (scope usage)
+	 (with-access::J2SDecl decl (scope)
 	    (with-access::J2SFun fun (rrange %info)
 	       (let ((nenv (if (env? %info) (env-override env %info) env)))
 		  (debug *debug-range-call*
@@ -2247,7 +2246,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SDecl tymap)
    (call-default-walker)
-   (with-access::J2SDecl this (vrange vtype usage id scope usage useinfun)
+   (with-access::J2SDecl this (vrange vtype id scope useinfun)
       (when (range-type? vtype)
 	 (let ((ity (interval->type vrange tymap vtype)))
 	    (unless (eq? ity 'unknown)
@@ -2255,7 +2254,7 @@
 		  (unless (eq? rty vtype)
 		     (let ((aty (cond
 				   ((memq scope '(%scope global))
-				    (if (not (usage? '(assig) usage))
+				    (if (not (decl-usage? this '(assig)))
 					rty
 					(type->boxed-type rty)))
 				   (useinfun

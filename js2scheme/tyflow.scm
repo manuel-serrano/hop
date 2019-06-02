@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue May  7 08:33:16 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:37:04 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -671,7 +671,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SGlobalRef env::pair-nil fix::cell)
    (with-access::J2SGlobalRef this (decl id)
-      (with-access::J2SDecl decl (utype usage)
+      (with-access::J2SDecl decl (utype)
 	 (cond
 	    ((eq? id 'undefined)
 	     (decl-vtype-add! decl 'undefined fix)
@@ -682,7 +682,7 @@
 	    ((not (eq? utype 'unknown))
 	     (decl-vtype-add! decl utype fix)
 	     (expr-type-add! this env fix utype))
-	    ((usage? '(assig) usage)
+	    ((decl-usage? decl '(assig))
 	     (multiple-value-bind (tyv env bk)
 		(call-next-method)
 		(decl-vtype-add! decl tyv fix)
@@ -698,21 +698,21 @@
 ;*    constructor.                                                     */
 ;*---------------------------------------------------------------------*/
 (define (constructor-only?::bool decl::J2SDeclFun)
-   (with-access::J2SDeclFun decl (usage)
-      (and #f
-	   (usage? '(new) usage)
-	   (not (usage? '(ref call eval) usage)))))
+   (tprint "REMOVE #f")
+   (and #f
+	(decl-usage? decl '(new))
+	(not (decl-usage? decl '(ref call eval)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SRef env::pair-nil fix::cell)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (id key utype usage)
+      (with-access::J2SDecl decl (id key utype)
 	 (let ((nenv env))
 	    (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
 	       (set! nenv (env-nocapture env))
-	       (with-access::J2SDeclFun decl (val id usage)
+	       (with-access::J2SDeclFun decl (val id)
 		  (if (isa? val J2SMethod)
 		      (escape-method val fix)
 		      (escape-fun val fix #f))))
@@ -748,14 +748,14 @@
 ;*    node-type ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclInit env::pair-nil fix::cell)
-   (with-access::J2SDeclInit this (val utype usage id loc)
+   (with-access::J2SDeclInit this (val utype id loc)
       (multiple-value-bind (ty env bk)
 	 (node-type val env fix)
 	 (cond
 	    ((not (eq? utype 'unknown))
 	     (decl-vtype-set! this utype fix)
 	     (return 'void (extend-env env this utype) bk))
-	    ((usage? '(eval) usage)
+	    ((decl-usage? this '(eval))
 	     (decl-vtype-add! this 'any fix)
 	     (return 'void (extend-env env this ty) bk))
 	    ((or (eq? ty 'unknown) (not ty))
@@ -990,12 +990,12 @@
 (define (node-type-fun this::J2SFun env::pair-nil fix::cell)
    (with-access::J2SFun this (body thisp params %info vararg argumentsp type)
       (let ((envp (map (lambda (p::J2SDecl)
-			  (with-access::J2SDecl p (usage utype itype)
+			  (with-access::J2SDecl p (utype itype)
 			     (cond
 				((not (eq? utype 'unknown))
 				 (set! itype utype)
 				 (cond
-				    ((not (eq? usage 'rest))
+				    ((not (decl-usage? p '(rest)))
 				     (decl-vtype-add! p utype fix)
 				     (cons p utype))
 				    ((eq? utype 'array)
@@ -1005,7 +1005,7 @@
 				     (error "js2scheme"
 					"Illegal parameter type"
 					p))))
-				((eq? usage 'rest)
+				((decl-usage? p '(rest))
 				 (decl-vtype-add! p 'array fix)
 				 (cons p 'array))
 				(vararg
@@ -1143,11 +1143,11 @@
 	 (let loop ((params params)
 		    (args args))
 	    (when (pair? params)
-	       (with-access::J2SDecl (car params) (usage id)
+	       (with-access::J2SDecl (car params) (id)
 		  (cond
 		     (vararg
 		      (decl-itype-add! (car params) 'any fix))
-		     ((and (null? (cdr params)) (memq 'rest usage))
+		     ((and (null? (cdr params)) (decl-usage? (car params) '(rest)))
 		      (decl-itype-add! (car params) 'array fix))
 		     ((null? args)
 		      (decl-itype-add! (car params) 'undefined fix)
@@ -1174,7 +1174,7 @@
       (with-access::J2SRef ref (decl)
 	 (expr-type-add! ref env fix 'function)
 	 (type-known-call-args fun args env bk)
-	 (with-access::J2SDecl decl (scope usage)
+	 (with-access::J2SDecl decl (scope)
 	    (with-access::J2SFun fun (rtype %info)
 	       (let ((nenv (if (env? %info) (env-override env %info) env)))
 		  (return rtype nenv bk))))))
@@ -1218,9 +1218,9 @@
 	 ((isa? obj J2SRef)
 	  (with-access::J2SRef obj (decl)
 	     (when (isa? decl J2SDeclExtern)
-		(with-access::J2SDeclExtern decl (id usage)
+		(with-access::J2SDeclExtern decl (id)
 		   (when (eq? id ident)
-		      (not (usage? usage '(assig))))))))))
+		      (not (decl-usage? decl '(assig))))))))))
    
    (define (type-method-call callee args env bk)
       ;; type a method call: O.m( ... )
@@ -1305,8 +1305,8 @@
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
 	     (when (isa? decl J2SDeclExtern)
-		(with-access::J2SDeclExtern decl (id usage)
-		   (when (not (usage? usage '(assig)))
+		(with-access::J2SDeclExtern decl (id)
+		   (when (not (decl-usage? decl '(assig)))
 		      (case id
 			 ((Array) 'array)
 			 ((Date) 'date)

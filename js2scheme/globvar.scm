@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/globvar.scm             */
+;*    serrano/prgm/project/hop/hop/js2scheme/globvar.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Mon Feb 25 13:03:25 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:18:23 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (constant propagation).            */
@@ -72,8 +72,8 @@
        #t)
       ((isa? expr J2SRef)
        (with-access::J2SRef expr (decl)
-	  (with-access::J2SDecl decl (ronly writable usage)
-	     (or ronly (not writable) (not (usage? '(assig uninit) usage))))))
+	  (with-access::J2SDecl decl (ronly writable)
+	     (or ronly (not writable) (not (decl-usage? decl '(assig uninit)))))))
       ((isa? expr J2SUnary)
        (with-access::J2SUnary expr (expr)
 	  (constant? expr)))
@@ -106,8 +106,8 @@
       ;; no need to scan rhs as we are only looking for variable decls/inits
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (usage ronly val %info id)
-		(if (and (not (usage? '(assig uninit) usage)) (constant? rhs))
+	     (with-access::J2SDecl decl (ronly val %info id)
+		(if (and (not (decl-usage? decl '(assig uninit))) (constant? rhs))
 		    (begin
 		       (set! %info (cons 'init rhs))
 		       (list decl))
@@ -118,8 +118,8 @@
 ;*    collect-gloconst* ::J2SDeclInit ...                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-gloconst* this::J2SDeclInit)
-   (with-access::J2SDeclInit this (usage ronly val %info %%dump id)
-      (if (and (not (usage? '(assig) usage)) (constant? val))
+   (with-access::J2SDeclInit this (ronly val %info %%dump id)
+      (if (and (not (decl-usage? this '(assig))) (constant? val))
 	  (begin
 	     (set! %info (cons 'init this))
 	     (list this))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu May 30 07:08:03 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 07:05:29 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -52,7 +52,7 @@
 	   (log-vtable! ::int ::vector ::vector)
 	   (log-vtable-conflict!)
 	   
-	   (profile-hint ::obj ::JsStringLiteral)
+	   (profile-hint ::obj ::symbol)
 	   (profile-cache-index ::long)
 	   (profile-cache-extension ::long)
 	   (profile-vector-extension ::long ::long)))

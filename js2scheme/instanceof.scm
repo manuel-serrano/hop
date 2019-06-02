@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/instanceof.scm          */
+;*    serrano/prgm/project/hop/hop/js2scheme/instanceof.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Sun Feb  4 06:43:08 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Sun Jun  2 06:20:36 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
 ;*=====================================================================*/
@@ -62,10 +62,10 @@
    (define (immutable? expr)
       (when (isa? expr J2SRef)
 	 (with-access::J2SRef expr (decl)
-	    (with-access::J2SDecl decl (usage ronly)
+	    (with-access::J2SDecl decl (ronly)
 	       (or ronly
 		   (with-access::J2SProgram prgm (mode)
-		      (and (not (usage? '(assig) usage))
+		      (and (not (decl-usage? decl '(assig)))
 			   (memq mode '(strict hopscript)))))))))
    
    (define (object-instanceof/cache obj rhs be loc)

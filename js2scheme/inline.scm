@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Apr  9 17:21:31 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:20:19 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -271,10 +271,10 @@
 ;*    used-decl? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (used-decl? decl)
-   (with-access::J2SDecl decl (usecnt usage)
+   (with-access::J2SDecl decl (usecnt)
       (when (or (>fx usecnt 0)
 		(not (isa? decl J2SDeclFun))
-		(usage? '(eval) usage))
+		(decl-usage? decl '(eval)))
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val)
 	       (set! val (dead-inner-decl! val))))
@@ -350,11 +350,11 @@
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (decl)
-	  (with-access::J2SDecl decl (ronly usage)
-	     (or ronly (not (usage? '(assig) usage))))))
+	  (with-access::J2SDecl decl (ronly)
+	     (or ronly (not (decl-usage? decl '(assig)))))))
       ((isa? obj J2SDecl)
-       (with-access::J2SDecl obj (ronly usage)
-	  (or ronly (not (usage? '(assig) usage)))))
+       (with-access::J2SDecl obj (ronly)
+	  (or ronly (not (decl-usage? obj '(assig))))))
       (else
        #f)))
 
@@ -365,11 +365,11 @@
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (decl)
-	  (with-access::J2SDecl decl (ronly usage)
-	     (or ronly (only-usage? '(ref) usage)))))
+	  (with-access::J2SDecl decl (ronly)
+	     (or ronly (decl-only-usage? decl '(ref))))))
       ((isa? obj J2SDecl)
-       (with-access::J2SDecl obj (ronly usage)
-	  (or ronly (only-usage? '(ref) usage))))
+       (with-access::J2SDecl obj (ronly)
+	  (or ronly (decl-only-usage? obj '(ref)))))
       (else
        #f)))
 

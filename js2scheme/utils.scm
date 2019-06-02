@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu May 30 06:58:03 2019 (serrano)                */
+;*    Last change :  Thu May 30 09:51:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -54,6 +54,10 @@
 	   
 	   (class-of ::J2SExpr)
 
+	   (decl-usage-add! ::J2SDecl ::symbol)
+	   (decl-usage?::bool ::J2SDecl ::pair-nil)
+	   (decl-only-usage?::bool ::J2SDecl ::pair-nil)
+	   (decl-strict-usage?::bool ::J2SDecl ::pair-nil)
 	   (usage?::bool ::pair-nil ::pair-nil)
 	   (only-usage?::bool ::pair-nil ::pair-nil)
 	   (strict-usage?::bool ::pair-nil ::pair-nil)
@@ -567,11 +571,48 @@
 	    (else 'unknown)))))
 
 ;*---------------------------------------------------------------------*/
+;*    decl-usage-add! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (decl-usage-add! decl key)
+   [assert (key) (memq key '(uninit init new ref assig get set call eval delete instanceof rest))]
+   (with-access::J2SDecl decl (usage)
+      (unless (memq key usage)
+	 (set! usage (cons key usage)))))
+   
+;*---------------------------------------------------------------------*/
+;*    decl-usage? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (decl-usage? decl keys)
+   (with-access::J2SDecl decl (usage)
+      (any (lambda (k)
+	      [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest))]
+	      (memq k usage))
+	 keys)))
+
+;*---------------------------------------------------------------------*/
+;*    decl-only-usage? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (decl-only-usage? decl keys)
+   (with-access::J2SDecl decl (usage)
+      (every (lambda (u)
+		[assert (u) (memq u '(uninit init new ref assig get set call eval delete instanceof rest))]
+		(memq u keys))
+	 usage)))
+
+;*---------------------------------------------------------------------*/
+;*    decl-strict-usage? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (decl-strict-usage? decl keys)
+   (with-access::J2SDecl decl (usage)
+      (and (=fx (length keys) (length usage))
+	   (only-usage? keys usage))))
+	
+;*---------------------------------------------------------------------*/
 ;*    usage? ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (usage? keys usage)
    (any (lambda (k)
-	   [assert (k) (memq k '(uninit init new ref assig get set call eval delete))]
+	   [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest))]
 	   (memq k usage))
       keys))
 
@@ -580,7 +621,7 @@
 ;*---------------------------------------------------------------------*/
 (define (only-usage? keys usage)
    (every (lambda (u)
-	     [assert (u) (memq u '(uninit init new ref assig get set call eval delete))]
+	     [assert (u) (memq u '(uninit init new ref assig get set call eval delete instanceof rest))]
 	     (memq u keys))
       usage))
 

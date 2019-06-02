@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/use.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/use.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Mar 26 18:39:26 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:43:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -68,7 +68,7 @@
 	 (if (cell-ref deval)
 	     (for-each (lambda (d::J2SDecl)
 			  (with-access::J2SDecl d (usage)
-			     (set! usage (cons 'eval usage))))
+			     (decl-usage-add! d 'eval)))
 		decls)
 	     (begin
 		;; it might be valuable to count the number of direct
@@ -279,12 +279,11 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SRef ctx deval infun)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (usage %info useinfun id)
+      (with-access::J2SDecl decl (%info useinfun id)
 	 (unless (eq? infun %info)
 	    (set! useinfun #t))
 	 (when ctx
-	    (unless (memq ctx usage)
-	       (set! usage (cons ctx usage))))))
+	    (decl-usage-add! decl ctx))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -303,10 +302,8 @@
 (define-walk-method (usage this::J2SGlobalRef ctx deval infun)
    (call-next-method)
    (with-access::J2SGlobalRef this (decl)
-      (with-access::J2SDecl decl (usage)
-	 (when ctx
-	    (unless (memq ctx usage)
-	       (set! usage (cons ctx usage))))))
+      (when ctx
+	 (decl-usage-add! decl ctx)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -317,29 +314,35 @@
       (cond
 	 ((and (eq? op 'delete) (isa? expr J2SRef))
 	  (with-access::J2SRef expr (decl)
-	     (with-access::J2SDecl decl (usage)
-		(unless (memq 'delete usage)
-		   (set! usage (cons 'delete usage))))
+	     (decl-usage-add! decl 'delete)
 	     this))
 	 ((and (eq? op 'delete) (isa? expr J2SAccess))
 	  (with-access::J2SAccess expr (obj field)
 	     (if (isa? obj J2SRef)
 		 (with-access::J2SRef obj (decl)
-		    (with-access::J2SDecl decl (usage)
-		       (unless (memq 'delete usage)
-			  (set! usage (cons 'delete usage)))))
+		    (decl-usage-add! decl 'delete))
 		 (usage obj 'ref deval infun))
 	     (usage field 'ctx deval infun)
 	     this))
 	 ((and (eq? op 'delete) (isa? expr J2SGlobalRef))
 	  (with-access::J2SGlobalRef expr (decl)
-	     (with-access::J2SDecl decl (usage)
-		(unless (memq 'delete usage)
-		   (set! usage (cons 'delete usage))))
+	     (decl-usage-add! decl 'delete)
 	     this))
 	 (else
 	  (call-default-walker)))))
 
+;*---------------------------------------------------------------------*/
+;*    usage ::J2SBinary ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (usage this::J2SBinary ctx deval infun)
+   (with-access::J2SBinary this (op lhs rhs)
+      (if (and (eq? op 'instanceof) (isa? rhs J2SRef))
+	  (with-access::J2SRef rhs (decl)
+	     (decl-usage-add! decl 'instanceof)
+	     (usage lhs 'ref deval infun)
+	     this)
+	  (call-default-walker))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SCall ...                                              */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Apr 24 18:58:30 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:34:27 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -37,21 +37,21 @@
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
 
    (define (no-closure? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (usage ronly val)
+      (with-access::J2SDeclFun this (ronly val)
 	 (when ronly
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
-		     (not (usage? '(new ref get set) usage))))))))
+		     (not (decl-usage? this '(new ref get set instanceof)))))))))
 
    (define (constructor-only? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (usage ronly val)
+      (with-access::J2SDeclFun this (ronly val)
 	 (when ronly
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
-		     (and (usage? '(new) usage)
-			  (not (usage? '(ref get call) usage)))))))))
+		     (and (decl-usage? this '(new))
+			  (not (decl-usage? this '(ref get call instanceof))))))))))
 
    (define (lambda? id)
       (or (memq id '(lambda lambda::obj))
@@ -108,7 +108,7 @@
 		   `((define ,scmid 
 			,(j2s-make-function this mode return conf)))))))
    
-   (with-access::J2SDeclFun this (loc id scope val usage ronly exports)
+   (with-access::J2SDeclFun this (loc id scope val ronly exports)
       (let ((val (declfun-fun this)))
 	 (with-access::J2SFun val (params mode vararg body name generator)
 	    (let* ((scmid (j2s-decl-scheme-id this))
@@ -156,7 +156,7 @@
 (define (j2s-make-function this::J2SDeclFun mode return conf)
    
    (define (make-function-sans-alloc this::J2SDeclFun)
-      (with-access::J2SDeclFun this (loc id scope val ronly usage)
+      (with-access::J2SDeclFun this (loc id scope val ronly)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator
 					constrsize method new-target)
@@ -218,7 +218,7 @@
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
-		     ((or (usage? '(new ref) usage) new-target)
+		     ((or (decl-usage? this '(new ref)) new-target)
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
 			  :rest ,(eq? vararg 'rest)
@@ -235,9 +235,9 @@
 			  ',mode ,(eq? vararg 'rest)
 			  ,constrsize))))))))
 
-   (with-access::J2SDeclFun this (usage val)
+   (with-access::J2SDeclFun this (val)
       (let ((fun (make-function-sans-alloc this)))
-	 (if (usage? '(new ref) usage)
+	 (if (decl-usage? this '(new ref))
 	     (with-access::J2SFun (declfun-fun this) (body loc)
 		(if (cancall? this)
 		    fun
@@ -251,12 +251,12 @@
 (define (j2s-scheme-closure this::J2SDecl mode return conf)
 
    (define (no-closure? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (usage ronly val)
+      (with-access::J2SDeclFun this (ronly val)
 	 (when ronly
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
-		     (not (usage? '(new ref get set) usage))))))))
+		     (not (decl-usage? this '(new ref get set instanceof)))))))))
    
    (when (and (isa? this J2SDeclFun) (not (isa? this J2SDeclSvc)))
       (with-access::J2SDeclFun this (loc id scope val ronly)

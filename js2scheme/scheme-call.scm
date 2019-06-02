@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu May 30 09:18:33 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:33:46 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -120,6 +120,7 @@
 	("pop" js-array-maybe-pop any () %this #t ,j2s-array-plain?)
 	("slice" js-array-maybe-slice0 any () %this #t)
 	;; functions
+	("apply",j2s-apply any (any any) %this #t)
 	("call" ,j2s-call function (any) #f)
 	("call" ,j2s-call function (any any) #f))))
 
@@ -133,7 +134,17 @@
 	(parseInt js-parseint-string (string) #f)
 	(parseInt js-parseint-any (any) %this)
 	(parseInt js-parseint (any any) %this))))
-      
+
+;*---------------------------------------------------------------------*/
+;*    j2s-apply ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-apply obj args mode return conf)
+   `(js-function-maybe-apply ,(caddr args)
+       ,(j2s-scheme obj mode return conf)
+       ,(j2s-scheme (car args) mode return conf)
+       ,(j2s-scheme (cadr args) mode return conf)
+       ,(cadddr args)))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-call ...                                                     */
 ;*---------------------------------------------------------------------*/
@@ -144,15 +155,14 @@
 		   (and (isa? decl J2SDeclInit)
 			(with-access::J2SDeclInit decl (val ronly)
 			   (and (isa? val J2SFun) ronly))))
-	    (with-access::J2SDecl decl (usage)
-	       (when (and (only-usage? '(get call new init) usage)
-			  (and (pair? args) (<=fx (length args) 2)))
-		  (j2s-scheme (J2SMethodCall* obj
-				 (list (car args))
-				 (if (pair? (cdr args))
-				     (cdr args)
-				     (list (J2SUndefined))))
-		     mode return conf)))))))
+	    (when (and (decl-only-usage? decl '(get call new init instanceof))
+		       (and (pair? args) (<=fx (length args) 2)))
+	       (j2s-scheme (J2SMethodCall* obj
+			      (list (car args))
+			      (if (pair? (cdr args))
+				  (cdr args)
+				  (list (J2SUndefined))))
+		  mode return conf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-fromcharcode ...                                     */
@@ -177,7 +187,7 @@
 ;*    read-only-function ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (read-only-function ref::J2SRef)
-   (with-access::J2SRef ref (decl usage)
+   (with-access::J2SRef ref (decl)
       (cond
 	 ((isa? decl J2SDeclSvc)
 	  #f)
@@ -197,9 +207,7 @@
 (define (j2s-array-plain? mode return conf)
    (let ((array (config-get conf :array)))
       (if (isa? array J2SDeclExtern)
-	  (with-access::J2SDeclExtern array (usage)
-	     (tprint "PLAIN ARRAY " usage)
-	     (only-usage? '(new init call get) usage))
+	  (decl-only-usage? array '(new init call get instanceof))
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -208,8 +216,7 @@
 (define (j2s-string-plain? mode return conf)
    (let ((string (config-get conf :string)))
       (if (isa? string J2SDeclExtern)
-	  (with-access::J2SDeclExtern string (usage)
-	     (only-usage? '(new init call get) usage))
+	  (decl-only-usage? string '(new init call get instanceof))
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -218,8 +225,7 @@
 (define (j2s-regexp-plain? mode return conf)
    (let ((regexp (config-get conf :regexp)))
       (if (isa? regexp J2SDeclExtern)
-	  (with-access::J2SDeclExtern regexp (usage)
-	     (only-usage? '(new init call get) usage))
+	  (decl-only-usage? regexp '(new init call get instanceof))
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -276,32 +282,23 @@
 	    ((isa? obj J2SRef)
 	     (with-access::J2SRef obj (decl)
 		(when (isa? decl J2SDeclExtern)
-		   (with-access::J2SDeclExtern decl (id usage)
+		   (with-access::J2SDeclExtern decl (id)
 		      (when (eq? id ty)
-			 (not (usage? usage '(assig))))))))))
+			 (not (decl-usage? decl '(assig))))))))))
       
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
 	    (let ((tyobj (j2s-type obj)))
 	       (find (lambda (m)
-			(when (string=? val "sort")
-			   (tprint "m=" (builtin-method-jsname m) "/" val))
 			(when (string=? (builtin-method-jsname m) val)
 			   (let ((ty (builtin-method-ttype m)))
 			      (when (is-type-or-class? ty obj tyobj)
-				 (tprint "val=" val " ty=" ty " tyobj=" tyobj
-				    " p1=" (is-type-or-class? ty obj tyobj))
-				 (tprint "args=" (length args)
-				    " par=" (length (builtin-method-args m)))
 				 (let loop ((args args)
 					    (params (builtin-method-args m)))
 				    (cond
 				       ((null? args)
 					(when (or (null? params)
 						  (every pair? params))
-					   (when (string=? val "sort")
-					      (tprint "ALMOST="
-						 ((builtin-method-predicate m) mode return conf)))
 					   (let ((p (builtin-method-predicate m)))
 					      (or (not p) (p mode return conf)))))
 				       ((null? params)
@@ -390,10 +387,10 @@
    (define (Array? self)
       (when (isa? self J2SRef)
 	 (with-access::J2SRef self (decl)
-	    (with-access::J2SDecl decl (id usage scope)
+	    (with-access::J2SDecl decl (id scope)
 	       (and (eq? id 'Array)
 		    (eq? scope '%scope)
-		    (not (memq 'assig usage)))))))
+		    (not (decl-usage? decl '(assig))))))))
    
    (define (call-ref-method self ccache ocache ccspecs fun::J2SAccess obj::J2SExpr args)
 
@@ -443,35 +440,33 @@
 
    (define (call-globalref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
       (with-access::J2SGlobalRef self (id decl)
-	 (with-access::J2SDecl decl (usage)
-	    (unless (memq 'assig usage)
-	       (case id
-		  ((Math)
-		   (j2s-math-builtin-method fun args
-		      this mode return conf))
-		  ((Array)
-		   ;; This branch is currently never used
-		   ;; because Array is defined as an external
-		   ;; %scoped object (see header.scm).
-		   ;; Array builtin methods are then
-		   ;; handled in the call-ref-method above
-		   (j2s-array-builtin-method fun args
-		      this mode return conf))
-		  (else
-		   #f))))))
+	 (unless (decl-usage? decl '(assig))
+	    (case id
+	       ((Math)
+		(j2s-math-builtin-method fun args
+		   this mode return conf))
+	       ((Array)
+		;; This branch is currently never used
+		;; because Array is defined as an external
+		;; %scoped object (see header.scm).
+		;; Array builtin methods are then
+		;; handled in the call-ref-method above
+		(j2s-array-builtin-method fun args
+		   this mode return conf))
+	       (else
+		#f)))))
 
    (define (call-new-method obj::J2SNew field args mode return conf)
       (with-access::J2SNew obj (clazz)
 	 (when (isa? clazz J2SGlobalRef)
 	    (with-access::J2SGlobalRef clazz (id decl)
-	       (with-access::J2SDecl decl (usage)
-		  (unless (memq 'assig usage)
-		     (case id
-			((Date)
-			 (j2s-date-new-method obj field args mode return
-			    conf))
-			(else
-			 #f))))))))
+	       (unless (decl-usage? decl '(assig))
+		  (case id
+		     ((Date)
+		      (j2s-date-new-method obj field args mode return
+			 conf))
+		     (else
+		      #f)))))))
    
    (define (call-method this ccache ccspecs fun::J2SAccess args)
       (with-access::J2SCall this (profid)
@@ -652,7 +647,7 @@
    (define (call-known-function protocol profid fun::J2SDecl thisarg::pair-nil args)
       (cond
 	 ((isa? fun J2SDeclFun)
-	  (with-access::J2SDeclFun fun (id usage)
+	  (with-access::J2SDeclFun fun (id)
 	     (let ((val (j2sdeclinit-val-fun fun)))
 		(check-hopscript-fun-arity val id args)
 		(let ((%gen (if (typed-generator? fun) '(%gen) '())))
@@ -826,8 +821,7 @@
 	 (cond
 	    ((and (isa? fun J2SRef)
 		  (with-access::J2SRef fun (decl)
-		     (with-access::J2SDecl decl (usage)
-			(only-usage? '(call new init get) usage))))
+		     (decl-only-usage? decl '(call new init get instanceof))))
 	     (if (isa? expr J2SArray)
 		 ;; fun(...[x,y,z])
 		 (with-access::J2SArray expr (exprs)

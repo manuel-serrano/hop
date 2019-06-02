@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Mon Apr  1 17:04:23 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:16:47 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -136,7 +136,7 @@
 ;*    constrinit! ::J2SDeclInit ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constrinit! this::J2SDeclInit prog)
-   (with-access::J2SDeclInit this (id usage)
+   (with-access::J2SDeclInit this (id)
       (let ((val (j2sdeclinit-val-fun this)))
 	 (when (isa? val J2SFun)
 	    (with-access::J2SFun val (optimize)

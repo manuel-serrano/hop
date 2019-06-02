@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu May 16 15:22:48 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:24:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1060,8 +1060,8 @@
 
    (define (rest-params params)
       (when (pair? params)
-	 (with-access::J2SDecl (car (last-pair params)) (usage)
-	    (when (equal? usage '(rest)) 'rest))))
+	 (when (decl-strict-usage? (car (last-pair params)) '(rest))
+	    'rest)))
    
    (define (rest-params params)
       (when (pair? params)

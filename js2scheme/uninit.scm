@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/uninit.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/uninit.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Fri Jan 25 09:05:55 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:39:49 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -55,8 +55,7 @@
 	 (if direct-eval
 	     (for-each (lambda (decl)
 			  (unless (isa? decl J2SDeclFun)
-			     (with-access::J2SDecl decl (usage)
-				(set! usage (cons 'uninit usage)))))
+			     (decl-usage-add! decl 'uninit)))
 		decls)
 	     (begin
 		;; initialize all global variables
@@ -78,9 +77,9 @@
 		(for-each (lambda (n) (invalidate-early-decl n #t)) nodes)
 		;; mark all variables not initialized for sure
 		(for-each (lambda (decl)
-			     (with-access::J2SDecl decl (%info usage id)
+			     (with-access::J2SDecl decl (%info id)
 				(when (memq %info '(init0 unknown double))
-				   (set! usage (cons 'uninit usage)))))
+				   (decl-usage-add! decl 'uninit))))
 		   decls)))))
    this)
 
@@ -101,7 +100,7 @@
       (invalidate-double-decl rhs)
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (%info usage)
+	     (with-access::J2SDecl decl (%info)
 		(case %info
 		   ((unknown)
 		    (set! %info 'init0))
@@ -135,7 +134,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (invalidate-early-decl this::J2SRef initp)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (%info usage id key)
+      (with-access::J2SDecl decl (%info id key)
 	 (when (memq %info '(unknown init0 double))
 	    (if (isa? decl J2SDeclFun)
 		(begin
@@ -144,7 +143,7 @@
 		      (invalidate-early-decl val #f)))
 		(begin
 		   (set! %info 'uninit)
-		   (set! usage (cons 'uninit usage))))))))
+		   (decl-usage-add! decl 'uninit)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SFun ...                               */

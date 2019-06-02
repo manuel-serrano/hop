@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/vector.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/vector.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Mon Jan  7 11:29:57 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:41:20 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
@@ -218,10 +218,10 @@
 	    (with-access::J2SCast val (expr)
 	       (set-expr-type-vector! expr)))))
 
-   (with-access::J2SDeclInit this (vtype id %info val usage hint loc)
+   (with-access::J2SDeclInit this (vtype id %info val hint loc)
       
       (when (and (eq? vtype 'array)
-		 (only-usage? '(init get set) usage)
+		 (decl-only-usage? this '(init get set))
 		 (range? %info)
 		 (or (pair? (range-intervals %info))
 		     (null? (range-intervals %info))))
@@ -261,9 +261,9 @@
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
 	     (when (isa? decl J2SDeclExtern)
-		(with-access::J2SDeclExtern decl (id usage)
+		(with-access::J2SDeclExtern decl (id)
 		   (when (eq? id 'Array)
-		      (not (usage? usage '(assig))))))))))
+		      (not (decl-usage? decl '(assig))))))))))
       
    (with-access::J2SNew this (clazz args)
       (when (and (is-array? clazz) (pair? args) (null? (cdr args)))

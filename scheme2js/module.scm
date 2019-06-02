@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/scheme2js/module.scm              */
+;*    serrano/prgm/project/hop/hop/scheme2js/module.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Wed Dec  9 14:37:14 2015 (serrano)                */
-;*    Copyright   :  2007-15 Florian Loitsch, Manuel Serrano           */
+;*    Last change :  Sun Jun  2 19:47:19 2019 (serrano)                */
+;*    Copyright   :  2007-19 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -748,7 +748,7 @@
 			      :bigloo-modules? bigloo-modules?)))
 		   (if (not im)
 		       (scheme2js-error "scheme2js module"
-			  "cannot find imported module"
+			  "cannot find imported module declaration"
 			  mod
 			  name)
 		       ;; just reuse the cond-clause above.

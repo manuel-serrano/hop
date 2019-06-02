@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/sweep.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/sweep.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Mar 14 14:36:44 2019 (serrano)                */
+;*    Last change :  Sun Jun  2 06:36:19 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
@@ -191,9 +191,9 @@
    (with-access::J2SInit this (lhs rhs)
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
-	    (with-access::J2SDecl decl (usecnt usage)
+	    (with-access::J2SDecl decl (usecnt)
 	       (and (=fx usecnt 0)
-		    (not (usage? '(eval) usage))
+		    (not (decl-usage? decl '(eval)))
 		    (dead-expr? rhs)))))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu May 30 06:37:37 2019 (serrano)                */
+;*    Last change :  Thu May 30 09:50:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -68,7 +68,8 @@
 	      (useinloop::bool (default #f) (info '("notraverse")))
 	      (useinfun::bool (default #f) (info '("notraverse")))
 	      ;; usage: init, new, ref, assig, get (field), set (field), call,
-	      ;; delete, uninit (premature variable access)
+	      ;; delete, instanceof, uninit (premature variable access),
+	      ;; rest (rest argument)
 	      (usage::pair-nil (default '()) (info '("notraverse")))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))
