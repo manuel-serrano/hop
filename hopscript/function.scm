@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Jun  2 07:27:46 2019 (serrano)                */
+;*    Last change :  Mon Jun  3 07:51:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -581,7 +581,7 @@
 			      (js-ascii->jsstring "]")))
 			(js-ascii->jsstring "[Function]"))))))
 	 ((js-function-proxy? this)
-	  (with-access::JsProxy this (target)
+	  (with-access::JsProxy this ((target __proto__))
 	     (tostring target)))
 	 (else
 	  (js-raise-type-error %this "toString: not a function ~s"
@@ -801,7 +801,11 @@
    (let loop ((this this))
       (cond
 	 ((js-function? this)
-	  (js-apply-array %this this thisarg argarray))
+	  (if (js-object-mode-plain? this)
+	      (js-apply-array %this this thisarg argarray)
+	      (js-call2 %this
+		 (js-get-name/cache this (& "apply") #f %this cache)
+		 this thisarg argarray)))
 	 ((js-object? this)
 	  (js-call2 %this
 	     (js-get-name/cache this (& "apply") #f %this cache)

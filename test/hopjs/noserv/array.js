@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat May 25 06:30:14 2019 (serrano)                */
+/*    Last change :  Mon Jun  3 08:01:48 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -46,7 +46,7 @@ assert.ok( oo.x, -1 );
 
 Object.defineProperty( oo, "x", { value: 100 } );
 
-assert.ok( oo.x, 100 );
+assert.ok( oo.x, 100, "oo.x" );
 
 /*---------------------------------------------------------------------*/
 /*    preventExtensions                                                */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Thu May 23 08:40:04 2019 (serrano)                */
+;*    Last change :  Mon Jun  3 07:39:10 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -110,6 +110,29 @@
 		((instantiateJsObject
 		    (cmap ?cmap)
 		    (__proto__ ?__proto__)
+		    (elements (make-vector ?n ?init)))
+		 ;; The purpose of this special expansion is to force allocate
+		 ;; the object with the JS-MAKE-JSOBJECT that creates
+		 ;;; properties inline, in contrast to the regular
+		 ;; constructor that allocates properties in a separate vector.
+		 (let ((obj (gensym 'o))
+		       (vec (gensym 'v))
+		       (val (gensym 'i)))
+		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+				      ,n
+				      ,cmap
+				      ,__proto__))
+			       (,val ,init)
+			       (,vec (with-access::JsObject ,obj (elements)
+					elements)))
+			   ,@(map (lambda (idx)
+				     `(vector-set! ,vec ,idx ,val))
+				(iota n))
+			   ,obj)
+		       e)))
+		((instantiateJsObject
+		    (cmap ?cmap)
+		    (__proto__ ?__proto__)
 		    (elements ($create-vector ?n)))
 		 ;; The purpose of this special expansion is to force allocate
 		 ;; the object with the JS-MAKE-JSOBJECT that creates
@@ -128,13 +151,15 @@
 			(nx (list 'let
 			       (list (list nobj
 					(cons 'instantiate::JsObject
-					   (append (if (or #t (assq 'cmap (cdr x)))
+					   (append (if (assq 'cmap (cdr x))
 						       '()
 						       '((cmap (instantiate::JsConstructMap))))
 					      (filter (lambda (f)
 							 (not (builtin? f)))
 						 (cdr x))))))
-			       (cons 'begin
+			       (cons* 'begin
+				  `(js-object-mode-set! ,nobj (js-object-default-mode))
+				  `(%object-widening-set! ,nobj '())
 				  (map (lambda (f)
 					  (let ((c (assq (car f) (cdr x)))
 						(set (symbol-append

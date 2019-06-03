@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu May 30 09:16:22 2019 (serrano)                */
+;*    Last change :  Mon Jun  3 08:46:11 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2598,7 +2598,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-get-fixnum arr::JsArray idx::long %this)
    (cond
-      ((not (js-object-mode-array-plain? arr))
+      ((not (js-object-mode-plain? arr))
        (js-get arr idx %this))
       ((cond-expand
 	  ((or bint30 bint32) #f)
@@ -3238,7 +3238,7 @@
 	     (let ((r (js-define-own-property% a
 			 (js-toname p %this) desc #f %this)))
 		(unless (js-array-inline-value-descriptor? desc)
-		   (js-object-mode-array-plain-set! a #f)
+		   (js-object-mode-plain-set! a #f)
 		   (uninline-array! a %this)
 		   (unholey-array! a %this))
 		r))
@@ -3248,7 +3248,7 @@
 		   ((not (js-array-inline-value-descriptor? desc))
 		    (uninline-array! a %this)
 		    (unholey-array! a %this)
-		    (js-object-mode-array-plain-set! a #f)
+		    (js-object-mode-plain-set! a #f)
 		    (js-define-own-property% a (js-toname p %this) desc #f %this))
 		   ((<u32 p ilen)
 		    (u32vset! vec p value))
@@ -3268,17 +3268,17 @@
 			(uninline-array! a %this))
 		       ((js-object-mode-holey? a)
 			(unholey-array! a %this)))
-		    (js-object-mode-array-plain-set! a #f)
+		    (js-object-mode-plain-set! a #f)
 		    (js-define-own-property% a (js-toname p %this) desc #f %this)))))
 	    ((isa? desc JsAccessorDescriptor)
 	     (uninline-array! a %this)
 	     (unholey-array! a %this)
-	     (js-object-mode-array-plain-set! a #f)
+	     (js-object-mode-plain-set! a #f)
 	     (js-define-own-property% a (js-toname p %this) desc #f %this))
 	    (else
 	     (uninline-array! a %this)
 	     (unholey-array! a %this)
-	     (js-object-mode-array-plain-set! a #f)
+	     (js-object-mode-plain-set! a #f)
 	     (js-define-own-property% a (js-toname p %this) desc #f %this)))))
 
    (if (js-isname? p (& "length") %this)
@@ -3324,7 +3324,7 @@
 				     ;; slow access
 				     (uninline-array! a %this)
 				     (unholey-array! a %this)
-				     (js-object-mode-array-plain-set! a #f)
+				     (js-object-mode-plain-set! a #f)
 				     (js-define-own-property%
 					a (js-toname p %this) desc #f
 					%this)))))
@@ -3343,7 +3343,7 @@
 			       #t))))))
 	      ;; 5
 	      (begin
-		 (js-object-mode-array-plain-set! a #f)
+		 (js-object-mode-plain-set! a #f)
 		 (call-next-method))))))
    
 ;*---------------------------------------------------------------------*/
@@ -3482,9 +3482,9 @@
 ;*    js-array-concat1 ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-array-concat1 this::JsArray arg %this cache)
-   (if (and (js-object-mode-array-plain? this)
+   (if (and (js-object-mode-plain? this)
 	    (js-object-mode-inline? this)
-	    (js-object-mode-array-plain? arg)
+	    (js-object-mode-plain? arg)
 	    (js-object-mode-inline? arg))
        (js-array-prototype-concat1 this arg %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
@@ -3535,7 +3535,7 @@
 ;*    js-array-join ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-array-join this::JsArray separator %this cache)
-   (if (js-object-mode-array-plain? this)
+   (if (js-object-mode-plain? this)
        (js-array-prototype-join this separator %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
@@ -3604,7 +3604,7 @@
 ;*    js-array-fill ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-array-fill this::JsArray value start end %this cache)
-   (if (js-object-mode-array-plain? this)
+   (if (js-object-mode-plain? this)
        (js-array-prototype-fill this value start end %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call3 %this
@@ -3662,7 +3662,7 @@
 ;*    js-array-foreach ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-array-foreach this::JsArray proc thisarg %this cache)
-   (if (js-object-mode-array-plain? this)
+   (if (js-object-mode-plain? this)
        (js-array-prototype-foreach this proc thisarg %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call2 %this
@@ -3719,7 +3719,7 @@
 ;*    js-array-foreach-procedure ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (js-array-foreach-procedure this::JsArray proc thisarg %this cache)
-   (if (js-object-mode-array-plain? this)
+   (if (js-object-mode-plain? this)
        (js-array-prototype-foreach-procedure this proc thisarg %this)
        (let ((jsproc (js-make-function %this proc 3 "forEachProc"
 			:constrsize 0
@@ -3768,7 +3768,7 @@
 ;*    js-array-push ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-array-push o::JsArray item %this::JsGlobalObject cache)
-   (if (js-object-mode-array-plain? o)
+   (if (js-object-mode-plain? o)
        (js-array-prototype-push o item %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
@@ -3819,7 +3819,7 @@
 ;*    js-array-pop ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-array-pop o::JsArray %this cache)
-   (if (js-object-mode-array-plain? o)
+   (if (js-object-mode-plain? o)
        (js-array-prototype-pop o %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call0 %this
@@ -3964,7 +3964,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-slice0 this %this cache)
    (if (and (js-array? this)
-	    (js-object-mode-array-plain? this)
+	    (js-object-mode-plain? this)
 	    (js-object-mode-inline? this))
        (with-access::JsArray this (ilen vec)
 	  (let ((o (js-array-species-create %this this (uint32->fixnum ilen))))
@@ -4074,7 +4074,7 @@
 ;*    js-array-sort ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-array-sort this::JsArray comparefn %this cache)
-   (if (js-object-mode-array-plain? this)
+   (if (js-object-mode-plain? this)
        (js-array-prototype-sort this comparefn %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
@@ -4168,7 +4168,7 @@
 ;*    js-array-indexof ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-array-indexof o::JsArray el indx %this cache)
-   (if (js-object-mode-array-plain? o)
+   (if (js-object-mode-plain? o)
        (js-array-prototype-indexof o el indx %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call2 %this

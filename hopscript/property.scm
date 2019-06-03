@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu May 30 09:10:27 2019 (serrano)                */
+;*    Last change :  Mon Jun  3 07:55:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1995,7 +1995,7 @@
 			 (if (eq? v (js-absent))
 			     (if (js-proxy? obj)
 				 ;; see js-proxy-property-value-set!
-				 (with-access::JsProxy obj (target)
+				 (with-access::JsProxy obj ((target __proto__))
 				    (let loop ((obj target))
 				       (jsobject-find obj name
 					  update-mapped-object!
@@ -2139,7 +2139,7 @@
 		(cond
 		   ((eq? v (js-absent))
 		    (if (js-proxy? obj)
-			(with-access::JsProxy obj (target)
+			(with-access::JsProxy obj ((target __proto__))
 			   (let loop ((obj target))
 			      (jsobject-find obj name
 				 update-mapped-object!
@@ -2766,7 +2766,7 @@
 	     (and (same-property-descriptor? current desc)
 		  (with-access::JsValueDescriptor current (value writable)
 		     (and (eq? value (js-undefined)) #f)))))))
-   
+
    ;; MS CARE, to be improved
    (js-object-unmap! o)
    (when (and (js-jsstring? name) (js-jsstring->number name))

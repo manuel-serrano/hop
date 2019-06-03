@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue May 28 07:33:18 2019 (serrano)                */
+;*    Last change :  Mon Jun  3 07:52:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -229,7 +229,7 @@
 ;*    js-new/proxy ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-new/proxy %this::JsGlobalObject p::JsProxy args::pair-nil)
-   (with-access::JsProxy p (target handler)
+   (with-access::JsProxy p ((target __proto__) handler)
       (let ((ctor (js-get handler (& "construct") %this)))
 	 (if (js-function? ctor)
 	     (let ((obj (js-call2 %this ctor p target
@@ -713,7 +713,7 @@
 		 ($env-pop-trace env)
 		 aux))))
        ((js-proxy? ,fun)
-	(with-access::JsProxy ,fun (target)
+	(with-access::JsProxy ,fun ((target __proto__))
 	   (let ((env (current-dynamic-env))
 		 (name (js-proxy-debug-name ,fun %this)))
 	      ($env-push-trace env name loc)
@@ -816,7 +816,7 @@
 ;*    These functions are used to invoked trapped proxy functions.     */
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-proxy-call %this fun this . args)
-   `(with-access::JsProxy ,fun (target handler
+   `(with-access::JsProxy ,fun ((target __proto__) handler
 				  cacheapply cacheapplyfun cacheapplyproc)
        (if (not (js-object? target))
 	   ;; first test js-object? as it is much faster than
@@ -884,7 +884,7 @@
    (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
 (define (js-call-proxyn %this fun this args)
-   (with-access::JsProxy fun (target handler)
+   (with-access::JsProxy fun ((target __proto__) handler)
       (cond
 	 ((js-function? target)
 	  (let ((xfun (js-get handler (& "apply") %this)))
@@ -895,13 +895,13 @@
 		 (with-access::JsFunction target (procedure)
 		    (js-calln% %this target this args)))))
 	 ((and (js-proxy? target) (js-proxy-function? target))
-	  (with-access::JsProxy fun (target)
+	  (with-access::JsProxy fun ((target __proto__))
 	     (js-call-proxyn %this target this args)))
 	 (else
 	  (js-raise-type-error %this "calln: not a function ~s" fun)))))
 
 (define (js-apply-proxy %this fun this args)
-   (with-access::JsProxy fun (target handler)
+   (with-access::JsProxy fun ((target __proto__) handler)
       (cond
 	 ((js-function? target)
 	  (let ((xfun (js-get handler (& "apply") %this)))
@@ -912,7 +912,7 @@
 		    (with-access::JsFunction target (procedure)
 		       (js-calln% %this target this args))))))
 	 ((js-proxy? target)
-	  (with-access::JsProxy fun (target)
+	  (with-access::JsProxy fun ((target __proto__))
 	     (js-apply-proxy %this target this args)))
 	 (else
 	  (js-raise-type-error %this "apply: not a function ~s" fun)))))
@@ -942,7 +942,7 @@
 		       #t)
 		      ((eq? nv (js-null))
 		       (when (js-proxy? v)
-			  (with-access::JsProxy v (target)
+			  (with-access::JsProxy v ((target __proto__))
 			     (loop target))))
 		      (else
 		       (loop nv)))))))))
@@ -958,7 +958,7 @@
 		    #t)
                    ((eq? nv (js-null))
 		    (when (js-proxy? v)
-		       (with-access::JsProxy v (target)
+		       (with-access::JsProxy v ((target __proto__))
 			  (loop target))))
 		   (else
 		    (loop nv))))))))
