@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jun  4 07:34:40 2019 (serrano)                */
+;*    Last change :  Tue Jun  4 08:27:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -51,6 +51,7 @@
 	   (js-debug-cmap ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
 	   (js-make-pcache-table ::int ::obj)
+	   (js-validate-pmap-pcache! ::JsPropertyCache)
 	   (js-pcache-update-descriptor! ::JsPropertyCache ::long ::JsObject ::obj)
 	   (cmap-next-proto-cmap::JsConstructMap ::JsGlobalObject ::JsConstructMap ::obj ::obj)
 	   (inline js-pcache-ref ::obj ::int)

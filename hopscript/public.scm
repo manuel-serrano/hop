@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Jun  3 07:52:48 2019 (serrano)                */
+;*    Last change :  Tue Jun  4 16:11:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -16,7 +16,7 @@
 
    (option (set! *compiler-debug-trace* 0))
 
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch")
    
    (library hop js2scheme)
    
@@ -811,11 +811,68 @@
       (js-calln% %this (js-get o prop %this) o args)))
 
 ;*---------------------------------------------------------------------*/
+;*    jsarray ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-macro (jsarray %this . args)
+   `(let ((a (js-array-construct-alloc-small-sans-init ,%this
+		 ,(fixnum->uint32 (length args)))))
+       (with-access::JsArray a (vec ilen length)
+	  (let ((v vec))
+	     ,@(map (lambda (i o)
+		       `(vector-set! v ,i ,o))
+		  (iota (length args)) args)
+	     (set! ilen ,(fixnum->uint32 (length args)))
+	     a))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-call-proxy ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    These functions are used to invoked trapped proxy functions.     */
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-proxy-call %this fun this . args)
+   `(with-access::JsProxy ,fun ((target __proto__) handler cacheapply (%cmap cmap))
+       (cond
+	  ((not (js-object? target))
+	   (js-raise-type-error ,%this
+	      ,(format "call~a: not a function ~~s" (length args))
+	      ,fun))
+	  ((eq? (js-pcache-pmap cacheapply) %cmap)
+	   (js-profile-log-cache cacheapply :pmap #t)
+	   ((js-pcache-method cacheapply)
+	    handler target ,this (jsarray ,%this ,@args)))
+	  ((js-get-jsobject handler handler (& "apply") %this)
+	   =>
+	   (lambda (xfun)
+	      (cond
+		 ((and (object? xfun) (eq? (object-class xfun) JsFunction4))
+		  (with-access::JsFunction xfun ((met method))
+		     (with-access::JsPropertyCache cacheapply (pmap emap cmap index method function)
+			(js-validate-pmap-pcache! cacheapply)
+			(set! pmap %cmap)
+			(set! emap #t)
+			(set! cmap #f)
+			(set! index -1)
+			(set! function #f)
+			(set! method met)
+			(met handler target ,this (jsarray ,%this ,@args)))))
+		 ((not (js-function? target))
+		  (js-raise-type-error ,%this
+		     ,(format "call~a: not a function ~~s" (length args))
+		     ,fun))  
+		 ((js-function? xfun)
+		  (with-access::JsFunction xfun (procedure)
+                     (js-call3% %this xfun procedure handler target
+                        ,this (js-vector->jsarray (vector ,@args) ,%this))))
+		 (else
+		  (with-access::JsFunction target (procedure)
+		     (,(string->symbol (format "js-call~a%" (length args)))
+		      ,%this target procedure ,this ,@args))))))
+	  (else
+	   (with-access::JsFunction target (procedure)
+	      (,(string->symbol (format "js-call~a%" (length args)))
+	       ,%this target procedure ,this ,@args))))))
+
+(define-macro (gen-proxy-call-TBT-4jun19 %this fun this . args)
    `(with-access::JsProxy ,fun ((target __proto__) handler
 				  cacheapply cacheapplyfun cacheapplyproc)
        (if (not (js-object? target))

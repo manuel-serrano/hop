@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon Jun  3 07:45:28 2019 (serrano)                */
+;*    Last change :  Tue Jun  4 08:15:10 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -228,6 +228,46 @@
 ;*    js-proxy-property-value ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value proxy obj prop %this)
+   
+   (define (check target v)
+      (if (null? (js-object-properties target))
+	  v
+	  (proxy-check-property-value target obj prop %this v (& "get"))))
+   
+   (with-access::JsProxy proxy ((target __proto__) handler cacheget (%cmap cmap))
+      (proxy-check-revoked! proxy "get" %this)
+      (cond
+	 ((eq? (js-pcache-pmap cacheget) %cmap)
+	  (js-profile-log-cache cacheget :pmap #t)
+	  (check target
+	     ((js-pcache-method cacheget) handler target prop)))
+	 ((js-get-jsobject handler handler (& "get") %this)
+	  =>
+	  (lambda (get)
+	     (cond
+		((and (object? get) (eq? (object-class get) JsFunction3))
+		 (with-access::JsFunction get ((met method))
+		    (with-access::JsPropertyCache cacheget (pmap emap cmap index method function)
+		       (js-validate-pmap-pcache! cacheget)
+		       (set! pmap %cmap)
+		       (set! emap #t)
+		       (set! cmap #f)
+		       (set! index -1)
+		       (set! function #f)
+		       (set! method met)
+		       (check target (met handler target prop)))))
+		((js-function? get)
+		 (with-access::JsFunction get (procedure)
+		    (check target 
+		       (js-call3% %this get procedure handler target prop obj))))
+		((js-proxy? get)
+		 (check target (js-call3 %this get handler target prop obj)))
+		(else
+		 (js-get-jsobject target obj prop %this)))))
+	 (else
+	  (js-get-jsobject target obj prop %this)))))
+
+'(define (js-proxy-property-value-TBR-4jun19 proxy obj prop %this)
 
    (define (check target v)
       (if (null? (js-object-properties target))
@@ -718,7 +758,47 @@
 ;*    js-call-proxy/cache-miss ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-call-proxy/cache-miss %this cache fun this . args)
-   `(with-access::JsProxy ,fun ((target __proto__) handler
+   `(with-access::JsProxy ,fun ((target __proto__) handler cacheapply (%cmap cmap))
+       (proxy-check-revoked! ,fun "apply" %this)
+       (cond
+	  ((eq? (js-pcache-pmap cacheapply) %cmap)
+	   (js-profile-log-cache cacheapply :pmap #t)
+	   ((js-pcache-method cacheapply)
+	    handler target ,this (jsarray ,%this ,@args)))
+	  ((js-get-jsobject handler handler (& "apply") %this)
+	   =>
+	   (lambda (xfun)
+	      (cond
+		 ((and (object? xfun) (eq? (object-class xfun) JsFunction4))
+		  (with-access::JsFunction xfun ((met method))
+		     (with-access::JsPropertyCache cacheapply (pmap emap cmap index method function)
+			(js-validate-pmap-pcache! cacheapply)
+			(set! pmap %cmap)
+			(set! emap #t)
+			(set! cmap #f)
+			(set! index -1)
+			(set! function #f)
+			(set! method met)
+			(met handler target ,this (jsarray ,%this ,@args)))))
+		 ((not (js-function? target))
+		  (js-raise-type-error ,%this
+		     ,(format "call~a: not a function ~~s" (length args))
+		     ,fun))  
+		 ((js-function? xfun)
+		  (with-access::JsFunction xfun (procedure)
+		     (js-call3% %this xfun procedure handler target
+			,this (js-vector->jsarray (vector ,@args) ,%this))))
+		 (else
+		  (with-access::JsFunction target (procedure)
+		     (,(string->symbol (format "js-call~a%" (length args)))
+		      ,%this target procedure ,this ,@args))))))
+	  (else
+	   (with-access::JsFunction target (procedure)
+	      (,(string->symbol (format "js-call~a%" (length args)))
+	       ,%this target procedure ,this ,@args))))))
+
+'(define-macro (gen-call-proxy/cache-miss-TBR-4jun19 %this cache fun this . args)
+   (with-access::JsProxy ,fun ((target __proto__) handler
 				  cacheapply cacheapplyfun cacheapplyproc)
        (let ((xfun (js-object-get-name/cache handler (& "apply")
 		      #f ,%this cacheapply)))
@@ -727,12 +807,6 @@
 	      (cacheapplyproc handler target ,this
 		 (jsarray ,%this ,@args)))
 	     ((and (object? xfun) (eq? (object-class xfun) JsFunction4))
-;* 	      (with-access::JsPropertyCache ,cache (method owner)      */
-;* 		 (set! owner ,fun)                                     */
-;* 		 (set! method (lambda (this a0)                        */
-;* 				 (with-access::JsFunction xfun (procedure) */
-;* 				    (procedure handler target ,this    */
-;* 				       (jsarray ,%this a0))))))        */
 	      (with-access::JsFunction xfun (procedure)
 		 (let ((res (procedure handler target ,this
 			       (jsarray ,%this ,@args))))

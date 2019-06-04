@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jun  4 07:43:06 2019 (serrano)                */
+;*    Last change :  Tue Jun  4 16:22:05 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -121,8 +121,8 @@
 	("slice" js-array-maybe-slice0 any () %this #t)
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)
-	("call" ,j2s-call function (any) #f)
-	("call" ,j2s-call function (any any) #f))))
+	("call" ,j2s-call function (any) %this #t)
+	("call" ,j2s-call function (any any) %this #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-builtin-functions ...                                        */
@@ -180,7 +180,8 @@
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
-	  (if (and (or (isa? decl J2SDeclFun)
+	  (cond
+	     ((and (or (isa? decl J2SDeclFun)
 		       (and (isa? decl J2SDeclInit)
 			    (with-access::J2SDeclInit decl (val ronly)
 			       (and (isa? val J2SFun) ronly))))
@@ -191,10 +192,15 @@
 			     (if (pair? (cdr args))
 				 (cdr args)
 				 (list (J2SUndefined))))
-		 mode return conf)
-	      (def obj args mode return conf))))
+		 mode return conf))
+	     ((pair? (cdddr args))
+	      (def obj args mode return conf))
+	     (else
+	      #f))))
+      ((pair? (cdddr args))
+       (def obj args mode return conf))
       (else
-       (def obj args mode return conf))))
+       #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-fromcharcode ...                                     */
