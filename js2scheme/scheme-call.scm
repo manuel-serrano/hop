@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Jun  3 08:42:35 2019 (serrano)                */
+;*    Last change :  Tue Jun  4 07:43:06 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -139,38 +139,62 @@
 ;*    j2s-apply ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-apply obj args mode return conf)
-   (when (isa? obj J2SRef)
-      (with-access::J2SRef obj (loc decl)
-	 (when (or (isa? decl J2SDeclFun)
-		   (and (isa? decl J2SDeclInit)
-			(with-access::J2SDeclInit decl (val ronly)
-			   (and (isa? val J2SFun) ronly))))
-	    (when (and (decl-only-usage? decl '(get call new init instanceof))
-		       (and (pair? args) (=fx (length args) 2)))
-	       `(js-function-maybe-apply ,(caddr args)
-		   ,(j2s-scheme obj mode return conf)
-		   ,(j2s-scheme (car args) mode return conf)
-		   ,(j2s-scheme (cadr args) mode return conf)
-		   ,(cadddr args)))))))
+
+   (define (def obj args mode return conf)
+      `(js-function-maybe-apply ,(caddr args)
+	  ,(j2s-scheme obj mode return conf)
+	  ,(j2s-scheme (car args) mode return conf)
+	  ,(j2s-scheme (cadr args) mode return conf)
+	  ,(cadddr args)))
+   
+   (cond
+      ((isa? obj J2SRef)
+       (with-access::J2SRef obj (loc decl)
+	  (if (and (or (isa? decl J2SDeclFun)
+		       (and (isa? decl J2SDeclInit)
+			    (with-access::J2SDeclInit decl (val ronly)
+			       (and (isa? val J2SFun) ronly))))
+		   (decl-only-usage? decl '(get call new init instanceof))
+		   (and (pair? args) (=fx (length args) 2)))
+	      `(js-function-apply ,(caddr args)
+		  ,(j2s-scheme obj mode return conf)
+		  ,(j2s-scheme (car args) mode return conf)
+		  ,(j2s-scheme (cadr args) mode return conf)
+		  ,(cadddr args))
+	      (def obj args mode return conf))))
+      (else
+       (def obj args mode return conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-call ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-call obj args mode return conf)
-   (when (isa? obj J2SRef)
-      (with-access::J2SRef obj (loc decl)
-	 (when (or (isa? decl J2SDeclFun)
-		   (and (isa? decl J2SDeclInit)
-			(with-access::J2SDeclInit decl (val ronly)
-			   (and (isa? val J2SFun) ronly))))
-	    (when (and (decl-only-usage? decl '(get call new init instanceof))
-		       (and (pair? args) (<=fx (length args) 2)))
-	       (j2s-scheme (J2SMethodCall* obj
-			      (list (car args))
-			      (if (pair? (cdr args))
-				  (cdr args)
-				  (list (J2SUndefined))))
-		  mode return conf))))))
+
+   (define (def obj args mode return conf)
+      `(js-function-maybe-call ,(caddr args)
+	  ,(j2s-scheme obj mode return conf)
+	  ,(j2s-scheme (car args) mode return conf)
+	  ,(j2s-scheme (cadr args) mode return conf)
+	  ,(cadddr args)))
+      
+   (cond
+      ((isa? obj J2SRef)
+       (with-access::J2SRef obj (loc decl)
+	  (if (and (or (isa? decl J2SDeclFun)
+		       (and (isa? decl J2SDeclInit)
+			    (with-access::J2SDeclInit decl (val ronly)
+			       (and (isa? val J2SFun) ronly))))
+		   (decl-only-usage? decl '(get call new init instanceof))
+		   (and (pair? args) (<=fx (length args) 2)))
+	      (j2s-scheme (J2SMethodCall* obj
+			     (list (car args))
+			     (if (pair? (cdr args))
+				 (cdr args)
+				 (list (J2SUndefined))))
+		 mode return conf)
+	      (def obj args mode return conf))))
+      (else
+       (def obj args mode return conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-fromcharcode ...                                     */

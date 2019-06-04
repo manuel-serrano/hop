@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jun  3 07:55:52 2019 (serrano)                */
+;*    Last change :  Tue Jun  4 07:34:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -991,6 +991,7 @@
 ;; I don't understand why.
 (define (js-object-unmap! o::JsObject)
    (js-object-mode-enumerable-set! o #t)
+   (js-object-mode-plain-set! o #f)
    (with-access::JsObject o (cmap elements)
       (unless (eq? cmap (js-not-a-cmap))
 	 (with-access::JsConstructMap cmap (props)
@@ -1896,6 +1897,11 @@
 	  (js-raise-type-error/loc %this loc
 	     (format "[[PUT]], ~a ~~s" msg) name)
 	  v))
+
+   (define (check-unplain! obj prop)
+      (when (and (js-function? obj)
+		 (or (eq? prop (& "call")) (eq? prop (& "apply"))))
+	 (js-object-mode-plain-set! obj #f)))
    
    (define (update-from-descriptor! o propobj index::long v desc)
       ;; 8.12.5
@@ -1925,7 +1931,8 @@
 		    v)
 		   ((eq? (vector-ref methods i) #f)
 		    ;; normal cached
-		    (when cache (js-pcache-update-direct! cache i o #t))
+		    (when cache
+		       (js-pcache-update-direct! cache i o #t))
 		    (vector-set! elements i v)
 		    v)
 		   (else
@@ -1933,7 +1940,8 @@
 		    (js-invalidate-cache-method! cmap i)
 		    (js-invalidate-pmap-pcaches! %this "update-mapped.1" name)
 		    (reset-cmap-vtable! cmap)
-		    (when cache (js-pcache-update-direct! cache i o #t))
+		    (when cache
+		       (js-pcache-update-direct! cache i o #t))
 		    (vector-set! elements i v)
 		    v)))
 	       ((js-function? (vector-ref methods i))
@@ -1941,7 +1949,8 @@
 		(js-invalidate-cache-method! cmap i)
 		(js-invalidate-pmap-pcaches! %this "update-mapped.2" name)
 		(reset-cmap-vtable! cmap)
-		(when cache (js-pcache-update-direct! cache i o #t))
+		(when cache
+		   (js-pcache-update-direct! cache i o #t))
 		(vector-set! elements i v)
 		v)
 	       (else
@@ -2194,6 +2203,7 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
 
+   (check-unplain! o name)
    (let loop ((obj o))
       (jsobject-find obj name
 	 update-mapped-object!
