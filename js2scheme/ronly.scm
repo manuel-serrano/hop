@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Sun Jun  2 06:30:24 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 07:31:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -168,6 +168,17 @@
       (ronly! val mode deval))
    this)
 
+;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SBlock ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SBlock mode::symbol deval::bool)
+   (with-access::J2SBlock this (nodes)
+      (for-each (lambda (n::J2SNode)
+		   (when (isa? n J2SDecl)
+		      (ronly-decl! n mode deval)))
+	 nodes)
+      (call-default-walker)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SLetBlock ...                                         */
 ;*---------------------------------------------------------------------*/

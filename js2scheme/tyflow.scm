@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Jun  2 06:37:04 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 08:32:24 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -690,18 +690,6 @@
 	    (else
 	     (decl-vtype-add! decl 'any fix)
 	     (expr-type-add! this env fix 'any))))))
-
-;*---------------------------------------------------------------------*/
-;*    constructor-only? ...                                            */
-;*    -------------------------------------------------------------    */
-;*    This predicates is #t iff the function is only used as a         */
-;*    constructor.                                                     */
-;*---------------------------------------------------------------------*/
-(define (constructor-only?::bool decl::J2SDeclFun)
-   (tprint "REMOVE #f")
-   (and #f
-	(decl-usage? decl '(new))
-	(not (decl-usage? decl '(ref call eval)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SRef ...                                           */

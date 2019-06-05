@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Mon Jun  3 07:39:10 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 08:04:20 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -188,7 +188,7 @@
 	     (defe `(define-expander ,(symbol-append 'instantiate clazz)
 		       ,(symbol-append 'js-instantiate- clazz '-expander))))
 	 (eval `(define-instantiate-expander ,clazz))
-	 (e defe  e))))
+	 (e defe e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-instantiate-JsObjectLiteral-expander ...                      */

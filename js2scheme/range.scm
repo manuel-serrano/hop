@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Jun  2 06:27:40 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 08:31:37 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1093,18 +1093,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SUnresolvedRef env::pair-nil conf mode::symbol fix::cell)
    (return *infinity-intv* env))
-
-;*---------------------------------------------------------------------*/
-;*    constructor-only? ...                                            */
-;*    -------------------------------------------------------------    */
-;*    This predicates is #t iff the function is only used as a         */
-;*    constructor.                                                     */
-;*---------------------------------------------------------------------*/
-(define (constructor-only?::bool decl::J2SDeclFun)
-   (tprint "ICI REMOVE #F")
-   (and #f
-	(and (decl-usage? decl '(new))
-	     (not (decl-usage? decl '(ref call eval))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SRef ...                                          */

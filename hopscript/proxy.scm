@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Tue Jun  4 08:15:10 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 08:07:53 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -299,6 +299,57 @@
 ;*    js-proxy-property-value-set! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value-set! proxy obj prop v %this)
+   
+   (define (check target v r)
+      (cond
+	 ((not (js-totest r))
+	  (js-raise-type-error %this
+	     "Proxy \"set\" returns false on property \"~a\""
+	     prop))
+	 ((null? (js-object-properties target))
+	  r)
+	 (else
+	  (proxy-check-property-value target obj prop %this v (& "set")))))
+   
+   (with-access::JsProxy proxy ((target __proto__) handler cacheset (%cmap cmap))
+      (proxy-check-revoked! proxy "put" %this)
+      (cond
+	 ((eq? (js-pcache-pmap cacheset) %cmap)
+	  (js-profile-log-cache cacheset :pmap #t)
+	  (check target v
+	     ((js-pcache-method cacheset) handler target prop v)))
+	 ((js-get-jsobject handler handler (& "set") %this)
+	  =>
+	  (lambda (set)
+	     (cond
+		((and (object? set) (eq? (object-class set) JsFunction4))
+		 (with-access::JsFunction set ((met method))
+		    (with-access::JsPropertyCache cacheset (pmap emap cmap index method function)
+		       (js-validate-pmap-pcache! cacheset)
+		       (set! pmap %cmap)
+		       (set! emap #t)
+		       (set! cmap #f)
+		       (set! index -1)
+		       (set! function #f)
+		       (set! method met)
+		       (check target v
+			  (met handler target prop v)))))
+		((js-function? set)
+		 (with-access::JsFunction set (procedure)
+		    (check target v
+		       (js-call4% %this set procedure handler target prop v obj))))
+		((js-proxy? set)
+		 (check target v (js-call4 %this set handler target prop v obj)))
+		((eq? proxy obj)
+		 (js-put/cache! target prop v #f %this))
+		(else
+		 (js-absent)))))
+	 ((eq? proxy obj)
+	  (js-put/cache! target prop v #f %this))
+	 (else
+	  (js-absent)))))
+
+'(define (js-proxy-property-value-set!-TBR-4jun19 proxy obj prop v %this)
    
    (define (check target v r)
       (cond

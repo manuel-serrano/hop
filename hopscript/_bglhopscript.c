@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu May 30 08:34:37 2019 (serrano)                */
+/*    Last change :  Wed Jun  5 08:00:27 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -148,7 +148,7 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
       VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
    }
 #endif
-   
+
    return BNANOBJECT( o );
 }
 
