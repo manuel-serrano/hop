@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jun  5 18:05:43 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 18:16:02 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1399,7 +1399,7 @@
 			       -1))))))))
    
    (define (utf8-lastindexof s)
-      (let* ((search (js-jsstring->string search))
+      (let* ((search (js-tostring search %this))
 	     (searchlen (string-length search))
 	     (usearchlen (utf8-string-length search))
 	     (len (string-length s))
