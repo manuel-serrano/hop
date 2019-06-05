@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jun  5 18:54:33 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 19:07:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1324,7 +1324,7 @@
       ((eq? obj #f) (& "false"))
       ((eq? obj (js-null)) (& "null"))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
-      (else (js-toprimitive obj 'string %this))))
+      (else (js-tojsstring (js-toprimitive obj 'string %this) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject-failsafe ...                                         */
