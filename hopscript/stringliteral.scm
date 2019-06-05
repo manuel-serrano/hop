@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jun  5 18:26:46 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 18:49:36 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2462,7 +2462,7 @@
       ((js-jsstring? searchvalue)
        (js-jsstring-replace-string this #t searchvalue replacevalue %this))
       (else
-       (js-jsstring-replace-string this #t (js-tostring searchvalue %this) replacevalue %this)
+       (js-jsstring-replace-string this #t (js-tojsstring searchvalue %this) replacevalue %this)
        )))
 
 ;*---------------------------------------------------------------------*/
@@ -2509,8 +2509,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-match this regexp %this)
    (with-access::JsGlobalObject %this (js-regexp js-array js-string-pcache)
-      (let* ((s (js-jsstring->string this))
-	     (rx (if (isa? regexp JsRegExp)
+      (let* ((rx (if (isa? regexp JsRegExp)
 		     regexp
 		     (js-new %this js-regexp regexp)))
 	     (proto (js-object-get-name/cache js-regexp (& "prototype")
@@ -2520,7 +2519,7 @@
 	 (with-access::JsRegExp rx (flags)
 	    ;; 7
 	    (if (not (js-regexp-flags-global? flags))
-		(js-call1 %this exec rx s)
+		(js-call1 %this exec rx this)
 		;; 8
 		(let ((lastindex (js-object-get-name/cache rx (& "lastIndex")
 				    #f %this (js-pcache-ref js-string-pcache 16)))
@@ -2530,7 +2529,7 @@
 		   (js-object-put-name/cache! rx (& "lastIndex") lastindex
 		      #f %this (js-pcache-ref js-string-pcache 17))
 		   (let loop ((n 0))
-		      (let ((result (js-call1 %this exec rx s)))
+		      (let ((result (js-call1 %this exec rx this)))
 			 (set! lastindex
 			    (js-object-get-name/cache rx (& "lastIndex")
 			       #f %this (js-pcache-ref js-string-pcache 17)))
