@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jun  5 18:49:36 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 19:13:42 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2092,7 +2092,7 @@
 	  lastindex global replacevalue %this))
       (else
        (js-jsstring-replace-regexp-string this rx
-	  lastindex global (js-tostring replacevalue %this) %this))))
+	  lastindex global (js-tojsstring replacevalue %this) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-replace-regexp-funN ...                              */
