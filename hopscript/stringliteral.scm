@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jun  5 18:16:02 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 18:19:09 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1377,26 +1377,24 @@
 (define (js-jsstring-lastindexof this search position %this)
    
    (define (ascii-lastindexof s)
-      (if (not (isa? search JsStringLiteralASCII))
-	  -1
-	  (let* ((ulen (string-length s))
-		 (numpos (js-tonumber position %this))
-		 (pos (if (and (flonum? numpos) (nanfl? numpos))
+      (let* ((ulen (string-length s))
+	     (numpos (js-tonumber position %this))
+	     (pos (if (and (flonum? numpos) (nanfl? numpos))
 		      ulen
 		      (+ 1 (js-tointeger numpos %this))))
-		 (search (js-jsstring->string search))
-		 (start (inexact->exact (min (max pos 0) ulen))))
-	     (if (=fx (string-length search) 0)
-		 -1
-		 (let loop ((i start))
-		    (if (<fx i 0)
-			-1
-			(let ((j (string-index-right s (string-ref search 0) i)))
-			   (if j
-			       (if (substring-at? s search j)
-				   j
-				   (loop j))
-			       -1))))))))
+	     (search (js-tostring search %this))
+	     (start (inexact->exact (min (max pos 0) ulen))))
+	 (if (=fx (string-length search) 0)
+	     -1
+	     (let loop ((i start))
+		(if (<fx i 0)
+		    -1
+		    (let ((j (string-index-right s (string-ref search 0) i)))
+		       (if j
+			   (if (substring-at? s search j)
+			       j
+			       (loop j))
+			   -1)))))))
    
    (define (utf8-lastindexof s)
       (let* ((search (js-tostring search %this))
