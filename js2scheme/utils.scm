@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Jun  5 08:32:41 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 15:57:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -75,7 +75,8 @@
 	   (guess-builtin-method-type ::J2SExpr ::bstring)
 
 	   (is-builtin-ref?::bool ::J2SExpr ::symbol)
-	   (constructor-only?::bool ::J2SDeclFun)))
+	   (constructor-only?::bool ::J2SDeclFun)
+	   (constructor-no-return?::bool ::J2SDeclFun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -902,3 +903,14 @@
    (and (decl-usage? decl '(new))
 	(not (decl-usage? decl '(ref assig call eval instanceof)))))
 
+
+;*---------------------------------------------------------------------*/
+;*    constructor-no-return? ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Does a constructor return something else than UNDEF?             */
+;*---------------------------------------------------------------------*/
+(define (constructor-no-return? decl::J2SDeclFun)
+   (let ((fun (j2sdeclinit-val-fun decl)))
+      (when (isa? fun J2SFun)
+	 (with-access::J2SFun fun (rtype)
+	    (eq? rtype 'undefined)))))

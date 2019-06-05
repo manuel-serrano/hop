@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Jun  5 08:31:37 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 15:57:16 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1101,7 +1101,9 @@
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (id key utype)
 	 (let ((nenv env))
-	    (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
+	    (when (and (isa? decl J2SDeclFun)
+		       (or (not (constructor-only? decl))
+			   (not (constructor-no-return? decl))))
 	       (set! nenv (env-nocapture env))
 	       (with-access::J2SDeclFun decl (val)
 		  (if (isa? val J2SMethod)

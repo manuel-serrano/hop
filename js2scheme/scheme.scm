@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu May 30 06:40:04 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 15:58:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2526,13 +2526,6 @@
 
    (define (new-proxy? clazz)
       (new-builtin? clazz 'Proxy))
-
-   (define (constructor-no-return? decl)
-      ;; does this constructor ever return something else than UNDEF?
-      (let ((fun (j2sdeclinit-val-fun decl)))
-	 (when (isa? fun J2SFun)
-	    (with-access::J2SFun fun (rtype)
-	       (eq? rtype 'undefined)))))
 
    (define (constructor-no-call? decl)
       ;; does this constructor call another function?
