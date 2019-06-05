@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Wed May  1 14:11:56 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 19:57:02 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
@@ -36,6 +36,31 @@
 		i
 		(loop (-fx i 1))))))
 
+   (define (integer-string? str)
+      (let ((len (string-length str)))
+	 (case len
+	    ((0)
+	     #f)
+	    ((1)
+	     (char-numeric? (string-ref str 0)))
+	    (else
+	     (case (string-ref str 0)
+		((#\0)
+		 #f)
+		((#\-)
+		 (when (and (>fx len 1) (not (char=? (string-ref str 1) #\0)))
+		    (let loop ((i 1))
+		       (cond
+			  ((=fx i len) #t)
+			  ((char-numeric? (string-ref str i)) (loop (+fx i 1)))
+			  (else #f)))))
+		(else
+		 (let loop ((i 0))
+		    (cond
+		       ((=fx i len) #t)
+		       ((char-numeric? (string-ref str i)) (loop (+fx i 1)))
+		       (else #f)))))))))
+
    (match-case x
       ((?- strings)
        `',&strings)
@@ -45,9 +70,8 @@
 	   =>
 	   (lambda (i)
 	      `(vector-ref js-string-names ,i)))
-	  ((string->number val)
-	   =>
-	   (lambda (n)
+	  ((integer-string? val)
+	   (let ((n (string->number val)))
 	      (cond
 		 ((not (fixnum? n))
 		  (vector 0 val))

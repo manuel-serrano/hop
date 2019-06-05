@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jun  5 19:25:14 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 19:39:16 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1990,7 +1990,8 @@
 	     (js-jsstring-split this separator limit %this))
 	    ((js-object? this)
 	     (js-call2 %this
-		(js-object-get-name/cache this (& "split") #f %this
+		(js-get-name/cache (js-tojsstring this %this)
+		   (& "split") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 11)))
 		this separator limit))
 	    (else
