@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon May 27 10:41:56 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 18:44:11 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -218,13 +218,19 @@
    (let ((rx (if (isa? (car args) J2SLiteralCnst)
 		 (with-access::J2SLiteralCnst (car args) (val) val)
 		 (car args))))
-      (with-access::J2SRegExp rx (flags)
-	 (if (string-index flags #\g)
-	     `(js-jsstring-maybe-match
+      (if (not (isa? rx J2SRegExp))
+	  `(js-jsstring-maybe-match
 		 ,(j2s-scheme obj mode return conf)
 		 ,(j2s-scheme (car args) mode return conf)
 		 %this
 		 #f)
-	     `(js-regexp-prototype-exec %this
-		 ,(j2s-scheme (car args) mode return conf)
-		 ,(j2s-scheme obj mode return conf))))))
+	  (with-access::J2SRegExp rx (flags)
+	     (if (string-index flags #\g)
+		 `(js-jsstring-maybe-match
+		     ,(j2s-scheme obj mode return conf)
+		     ,(j2s-scheme (car args) mode return conf)
+		     %this
+		     #f)
+		 `(js-regexp-prototype-exec %this
+		     ,(j2s-scheme (car args) mode return conf)
+		     ,(j2s-scheme obj mode return conf)))))))
