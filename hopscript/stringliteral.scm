@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jun  5 19:13:42 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 19:25:14 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2403,7 +2403,7 @@
 		(js-jsstring-append
 		   (js-tojsstring
 		      (js-call3 %this replacevalue (js-undefined)
-			 searchstr i string) %this)
+			 searchstr i this) %this)
 		   (js-substring/enc string
 		      j (string-length string) enc %this)))))
 	 (else

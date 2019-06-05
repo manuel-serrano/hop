@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jun  5 19:07:46 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 19:20:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1316,6 +1316,8 @@
 ;*    js-tojsstring ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-tojsstring obj %this)
+   (if (string? obj)
+       (error 1 2 3))
    (cond
       ((js-jsstring? obj) obj)
       ((fixnum? obj) (js-integer->jsstring obj))
