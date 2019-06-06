@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu May 30 09:50:53 2019 (serrano)                */
+;*    Last change :  Thu Jun  6 10:12:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -991,7 +991,6 @@
 (gen-walks J2STry body catch finally)
 (gen-walks J2SCatch body)
 (gen-walks J2SStmtExpr expr)
-;* (gen-walks J2SExprStmt stmt)                                        */
 (gen-walks J2SSequence (exprs))
 (gen-walks J2SVarDecls (decls))
 (gen-walks J2SLetBlock (decls) (nodes))

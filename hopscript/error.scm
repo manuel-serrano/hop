@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu May 23 08:47:43 2019 (serrano)                */
+;*    Last change :  Thu Jun  6 12:58:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -179,7 +179,7 @@
 	    (instantiateJsError
 	       (%this %this)
 	       (__proto__ __proto__)
-	       (name (& "error"))
+	       (name (& "Error"))
 	       (msg (& ""))))
 	 
 	 (define (js-error-alloc %this constructor::JsFunction)
