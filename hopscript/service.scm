@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed May 29 07:32:06 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 17:58:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -527,9 +527,11 @@
 	  `("hop" ,(obj->string val %this) "hop-encoding: hop"))))
    
    (define (scheme->js val)
+      (tprint "SCHEME->JS.1 val=" (typeof val))
       (js-obj->jsobject val %this))
    
    (define (ms-scheme->js val)
+      (tprint "MS-SCHEME->JS val=" (typeof val))
       val)
    
    (define (js-get-string opt key)
@@ -780,7 +782,6 @@
 		(set! failjs f)
 		(set! fail
 		   (lambda (obj)
-		      (tprint "FAIL obj=" (typeof obj))
 		      (if asynchronous
 			  (js-worker-push-thunk! worker svc
 			     (lambda ()
@@ -790,6 +791,7 @@
 		(set! header (js-jsobject->alist r %this))))))
 
       (define (scheme->js val)
+	 (tprint "SCHEME->JS.2 val=" (typeof val))
 	 (js-obj->jsobject val %this))
       
       (define (post-request callback)
@@ -814,8 +816,6 @@
 	       (body (lambda ()
 			(with-handler
 			   (lambda (e)
-			      (tprint "EXN TOBEMOVED " (typeof failjs) " e="
-				 (typeof e))
 			      (exception-notify e)
 			      (if failjs
 				  (js-worker-push-thunk! worker svc
@@ -915,12 +915,15 @@
 					  (lambda (this . args)
 					     (js-undefined))))
 				(handler (lambda (svc req)
-					    (js-worker-exec worker
-					       (symbol->string! id) #t
-					       (service-debug id
-						  (lambda ()
-						     (service-invoke svc req
-							(service-parse-request svc req)))))))
+					    (let ((args (map! (lambda (a)
+								 (js-obj->jsobject a %this))
+							   (service-parse-request svc req))))
+					       (js-worker-exec worker
+						  (symbol->string! id) #t
+						  (service-debug id
+						     (lambda ()
+							(service-invoke svc req
+							   args)))))))
 				(javascript "HopService( ~s, ~s )")
 				(path hoppath)
 				(id id)
