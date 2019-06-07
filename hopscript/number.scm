@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed May 29 19:39:37 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 21:37:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -169,7 +169,7 @@
 	 ;; other properties of the Number constructor
 	 (js-bind! %this js-number (& "POSITIVE_INFINITY")
 	    :value +inf.0
-	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
+	    :writable #f :enumerable #f :configurable #f :hidden-class #t)
 	 (js-bind! %this js-number (& "NEGATIVE_INFINITY")
 	    :value -inf.0
 	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
@@ -251,7 +251,7 @@
       :writable #t
       :configurable #t
       :enumerable #f
-      :hidden-class #f)
+      :hidden-class #t)
 
    (define (js-cast-number this shape)
       (cond

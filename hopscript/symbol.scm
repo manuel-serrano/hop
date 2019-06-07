@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu May 23 09:07:48 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 21:38:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -252,7 +252,7 @@
 	    :writable #t
 	    :enumerable #f
 	    :configurable #t
-	    :hidden-class #f)
+	    :hidden-class #t)
 
 	 ;; keyFor
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-symbol.keyfor

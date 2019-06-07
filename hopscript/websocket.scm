@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Thu May 23 08:59:09 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 21:38:26 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -425,7 +425,7 @@
 	 (js-bind! %this js-websocket (& "CONNECTING")
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-connecting)
-	    :hidden-class #f)
+	    :hidden-class #t)
 	 (js-bind! %this js-websocket (& "OPEN")
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-open)

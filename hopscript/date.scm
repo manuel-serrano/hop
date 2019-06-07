@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu May 23 08:47:29 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 21:37:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -274,7 +274,7 @@
 	 
 	 (js-bind! %this js-date (& "parse")
 	    :value (js-make-function %this js-date-parse 1 "parse")
-	    :writable #t :configurable #t :enumerable #f :hidden-class #f)
+	    :writable #t :configurable #t :enumerable #f :hidden-class #t)
 
 	 ;; UTC
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.3
@@ -345,7 +345,7 @@
    ;; constructor
    (js-bind! %this obj (& "constructor")
       :value js-date
-      :writable #t :configurable #t :enumerable #f :hidden-class #f)
+      :writable #t :configurable #t :enumerable #f :hidden-class #t)
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2

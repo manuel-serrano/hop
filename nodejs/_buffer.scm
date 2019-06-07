@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Wed May 29 15:57:57 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 21:38:36 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -708,7 +708,7 @@
 		   (with-access::JsSlowBuffer this (data)
 		      (js-string->jsstring (8bits-encode-utf8 data start end))))
 		2 "binarySlice")
-      :writable #t :enumerable #t :configurable #t :hidden-class #f)
+      :writable #t :enumerable #t :configurable #t :hidden-class #t)
    
    ;; utf8Slice
    (js-bind! %this slowbuffer-proto (& "utf8Slice")

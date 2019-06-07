@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jun  7 12:01:23 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 21:37:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -76,7 +76,7 @@
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
-	 :hidden-class #f)
+	 :hidden-class #t)
       (js-bind! %this js-math (& "LN10")
 	 :value (log 10)
 	 :writable #f
