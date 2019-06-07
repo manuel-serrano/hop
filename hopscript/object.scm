@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat May 25 06:22:24 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 21:34:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -594,7 +594,7 @@
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
-	 :hidden-class #f)
+	 :hidden-class #t)
       
       ;; setPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/6.0/#sec-object.setprototypeof

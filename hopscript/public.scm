@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jun  7 16:31:18 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 19:24:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -145,6 +145,7 @@
 	   (js-toobject::obj ::JsGlobalObject ::obj)
 	   (js-toobject/debug::obj ::JsGlobalObject loc ::obj)
 	   
+	   (js-toprimitive-for-string::JsStringLiteral ::obj ::JsGlobalObject)
 	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
 	   
 	   (inline js-equal?::bool ::obj ::obj ::JsGlobalObject)
@@ -1318,6 +1319,17 @@
    (with-access::JsWrapper obj (obj)
       (js-tostring obj %this)))
 
+;*---------------------------------------------------------------------*/
+;*    js-toprimitive-for-string ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-toprimitive-for-string obj %this::JsGlobalObject)
+   (cond
+      ((js-jsstring? obj) obj)
+      ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
+      ((eq? obj #t) (& "true"))
+      ((eq? obj #f) (& "false"))
+      (else (js-tojsstring (js-toprimitive obj 'any %this) %this))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ::obj ...                                         */
 ;*    -------------------------------------------------------------    */

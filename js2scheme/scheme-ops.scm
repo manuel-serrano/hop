@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jun  7 18:29:16 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 19:26:39 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1308,9 +1308,10 @@
 		  (js-real->jsstring ,right))))
 	 (else
 	  ;; MS: 7jun2019
-	  (str-append flip
-	     left
-	     `(js-tojsstring (js-toprimitive ,right 'any %this) %this)))))
+;* 	  (str-append flip                                             */
+;* 	     left                                                      */
+;* 	     `(js-tojsstring (js-toprimitive ,right 'any %this) %this)) */
+	  (str-append flip left `(js-toprimitive-for-string ,right %this)))))
    
    (define (add loc type lhs rhs mode return conf)
       (with-tmp lhs rhs mode return conf type
