@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jun  7 21:34:20 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 21:35:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -594,6 +594,7 @@
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
+	 ;; all first properties must use a duplicated hidden class
 	 :hidden-class #t)
       
       ;; setPrototypeOf
