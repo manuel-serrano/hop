@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu May 30 07:20:17 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 09:39:07 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -815,8 +815,8 @@
        (e `(js-call-methodn ,@(cdr x)) e))
       (else
        (match-case x
-	  ((?- ?%this ?obj ((kwote quote) toString))
-	   (e `(js-tostring-safe ,obj ,%this) e))
+	  ((?- ?%this ?obj (& "toString"))
+	   (e `(js-tojsstring-safe ,obj ,%this) e))
 	  ((?- ?%this ?obj ?prop . ?args)
 	   (e `(js-call-methodn ,%this ,obj ,prop ,@args) e))
 	  (else

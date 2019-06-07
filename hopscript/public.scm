@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jun  5 19:20:25 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 08:51:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -130,6 +130,7 @@
 	   (inline js-totest-likely-object::bool ::obj)
 	   (js-toboolean::bool ::obj)
 	   (generic js-tonumber ::obj ::JsGlobalObject)
+	   (macro js-tointeger obj %this)
 	   (generic js-tointeger ::obj ::JsGlobalObject)
 	   (js-touint16::uint16 ::obj ::JsGlobalObject)
 	   
@@ -138,8 +139,8 @@
 	   (inline js-index?::bool ::obj)
 
 	   (generic js-tostring::bstring ::obj ::JsGlobalObject)
-	   (js-tostring-safe::bstring ::obj ::JsGlobalObject)
-	   (js-tojsstring::obj ::obj ::JsGlobalObject)
+	   (js-tojsstring-safe::JsStringLiteral ::obj ::JsGlobalObject)
+	   (js-tojsstring::JsStringLiteral ::obj ::JsGlobalObject)
 	   
 	   (js-toobject::obj ::JsGlobalObject ::obj)
 	   (js-toobject/debug::obj ::JsGlobalObject loc ::obj)
@@ -1149,6 +1150,18 @@
 	  (bigloo-type-error "toNumber" "JsObject" obj)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-tofixnum ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-macro (js-tointeger obj %this)
+   (if (symbol? obj)
+       `(if (fixnum? ,obj)
+	    ,obj
+	    ((@ js-tointeger __hopscript_public) ,obj ,%this))
+       (let ((tmp (gensym)))
+	  `(let ((,tmp ,obj))
+	      (js-tointeger ,tmp ,%this)))))
+	   
+;*---------------------------------------------------------------------*/
 ;*    js-tointeger ::obj ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.4          */
@@ -1167,7 +1180,7 @@
 	  (else
 	   (floor obj))))
       ((or (js-jsstring? obj) (symbol? obj))
-       (js-tointeger (js-tonumber obj %this) %this))
+       ((@ js-tointeger __hopscript_public) (js-tonumber obj %this) %this))
       ((eq? obj #t)
        1)
       ((int32? obj)
@@ -1284,19 +1297,19 @@
       ((eq? obj #f) "false")
       ((eq? obj (js-null)) "null")
       ((js-number? obj) (js-number->string obj))
-      ((symbol? obj) (js-string->jsstring (symbol->string! obj)))
       (else (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-tostring-safe ...                                             */
+;*    js-tojsstring-safe ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-tostring-safe::bstring obj %this::JsGlobalObject)
+(define (js-tojsstring-safe::JsStringLiteral obj %this::JsGlobalObject)
    (cond
-      ((string? obj) obj)
-      ((eq? obj #t) "true")
-      ((eq? obj #f) "false")
-      ((js-number? obj) (js-number->string obj))
-      (else (js-tostring (js-toobject %this obj) %this))))
+      ((js-jsstring? obj) obj)
+      ((eq? obj #t) (& "true"))
+      ((eq? obj #f) (& "false"))
+      ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
+      ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
+      (else (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsWrapper ...                                      */
@@ -1304,6 +1317,14 @@
 (define-method (js-tostring obj::JsWrapper %this::JsGlobalObject)
    (with-access::JsWrapper obj (obj)
       (js-tostring obj %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toprimitive ::obj ...                                         */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.1          */
+;*---------------------------------------------------------------------*/
+(define-generic (js-toprimitive obj preferredtype %this::JsGlobalObject)
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ::JsWrapper ...                                   */
@@ -1315,9 +1336,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-tojsstring ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (js-tojsstring obj %this)
-   (if (string? obj)
-       (error 1 2 3))
+(define (js-tojsstring::JsStringLiteral obj %this)
    (cond
       ((js-jsstring? obj) obj)
       ((fixnum? obj) (js-integer->jsstring obj))
@@ -1326,6 +1345,7 @@
       ((eq? obj #f) (& "false"))
       ((eq? obj (js-null)) (& "null"))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
+      ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
       (else (js-tojsstring (js-toprimitive obj 'string %this) %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -1372,14 +1392,6 @@
 (define (js-toobject/debug %this::JsGlobalObject loc o)
    (or (js-toobject-failsafe %this o)
        (js-raise-type-error/loc %this loc "toObject: cannot convert ~s" o)))
-
-;*---------------------------------------------------------------------*/
-;*    js-toprimitive ::obj ...                                         */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.1          */
-;*---------------------------------------------------------------------*/
-(define-generic (js-toprimitive obj preferredtype %this::JsGlobalObject)
-   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equal? ...                                                    */

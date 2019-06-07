@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jun  5 19:39:16 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 08:49:49 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1666,7 +1666,7 @@
 		this start end))
 	    (else
 	     (loop (js-toobject %this this)))))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-substr ...                                           */
 ;*    -------------------------------------------------------------    */
@@ -1697,7 +1697,7 @@
 	 (if (<=fx r6 0)
 	     (& "")
 	     (js-string->jsstring (utf8-substring r1 r5 (+fx r5 r6))))))
-   
+
    (string-dispatch substr this))
 
 ;*---------------------------------------------------------------------*/

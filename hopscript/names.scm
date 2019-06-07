@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Thu May 23 09:26:47 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 09:11:41 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -111,7 +111,7 @@
 	     ((#\0)
 	      #f)
 	     ((#\-)
-	      (when (and (>fx len 1) (not (char=? (string-ref str 1) #\0)))
+	      (when (not (char=? (string-ref str 1) #\0))
 		 (let loop ((i 1))
 		    (cond
 		       ((=fx i len) #t)
