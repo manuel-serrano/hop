@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jun  4 16:22:05 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 11:58:36 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -122,7 +122,9 @@
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)
 	("call" ,j2s-call function (any) %this #t)
-	("call" ,j2s-call function (any any) %this #t))))
+	("call" ,j2s-call function (any any) %this #t)
+	;; math
+	)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-builtin-functions ...                                        */
@@ -264,6 +266,15 @@
    (let ((regexp (config-get conf :regexp)))
       (if (isa? regexp J2SDeclExtern)
 	  (decl-only-usage? regexp '(new init call get instanceof))
+	  #t)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-plain? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-plain? mode return conf)
+   (let ((math (config-get conf :math)))
+      (if (isa? math J2SDeclExtern)
+	  (decl-only-usage? math '(new init call get instanceof))
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -429,6 +440,14 @@
 	       (and (eq? id 'Array)
 		    (eq? scope '%scope)
 		    (not (decl-usage? decl '(assig))))))))
+
+   (define (Math? self)
+      (when (isa? self J2SRef)
+	 (with-access::J2SRef self (decl)
+	    (with-access::J2SDecl decl (id scope)
+	       (and (eq? id 'Math)
+		    (eq? scope '%scope)
+		    (not (decl-usage? decl '(assig))))))))
    
    (define (call-ref-method self ccache ocache ccspecs fun::J2SAccess obj::J2SExpr args)
 
@@ -438,6 +457,10 @@
 	     (call-super-method fun args))
 	    ((and (Array? self)
 		  (j2s-array-builtin-method fun args this mode return conf))
+	     =>
+	     (lambda (expr) expr))
+	    ((and (Math? self)
+		  (j2s-math-builtin-method fun args this mode return conf))
 	     =>
 	     (lambda (expr) expr))
 	    ((and ccache (= (bigloo-debug) 0) ccspecs)

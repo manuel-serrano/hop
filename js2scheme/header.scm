@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Mon May 27 10:33:35 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 11:57:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -118,6 +118,8 @@
 	    `(with-access::JsGlobalObject %this (js-regexp) js-regexp))
 	 (js-def-extern 'Proxy #t #t
 	    `(with-access::JsGlobalObject %this (js-proxy) js-proxy))
+	 (js-def-extern 'Math #t #t
+	    `(with-access::JsGlobalObject %this (js-math) js-math))
 	 (if (or (string=? id "console.js") (string=? id "node_stdio.js"))
 	     (instantiate::J2SUndefined
 		(type 'undefined)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Jun  2 06:43:55 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 14:37:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -322,7 +322,7 @@
 		 (with-access::J2SRef obj (decl)
 		    (decl-usage-add! decl 'delete))
 		 (usage obj 'ref deval infun))
-	     (usage field 'ctx deval infun)
+	     (usage field ctx deval infun)
 	     this))
 	 ((and (eq? op 'delete) (isa? expr J2SGlobalRef))
 	  (with-access::J2SGlobalRef expr (decl)

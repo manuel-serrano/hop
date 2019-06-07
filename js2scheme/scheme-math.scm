@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/js2scheme/scheme-math.scm        */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-math.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Aug 31 15:21:13 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Fri Jun  7 12:02:27 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
 ;*=====================================================================*/
@@ -45,6 +45,12 @@
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
 	    (cond
+	       ((string=? val "abs")
+		(when (=fx (length args) 1)
+		   (cast-math
+		      `(js-math-abs
+			  ,(j2s-scheme (car args) mode return conf)
+			  %this))))
 	       ((string=? val "floor")
 		(when (=fx (length args) 1)
 		   (cast-math

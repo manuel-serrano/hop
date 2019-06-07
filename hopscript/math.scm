@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon May 13 10:38:51 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 12:01:23 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -36,6 +36,7 @@
 	   (inline js-math-sqrtfl ::double)
 	   (js-math-floor ::obj ::JsGlobalObject)
 	   (js-math-floorfl ::double)
+	   (js-math-abs ::obj ::JsGlobalObject)
 	   (js-math-round ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -121,15 +122,10 @@
       
       ;; abs
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.1
-      (define (js-math-abs this x)
-	 (cond
-	    ((not (number? x)) (js-math-abs this (js-tonumber x %this)))
-	    ((not (= x x)) x)
-	    ((< x 0) (- x))
-	    (else x)))
-      
       (js-bind! %this js-math (& "abs")
-	 :value (js-make-function %this js-math-abs 1 "abs")
+	 :value (js-make-function %this
+		   (lambda (this x) (js-math-abs x %this))
+		   1 "abs")
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -464,6 +460,18 @@
 	  (else
 	   (flonum->fixnum (floor x)))))))
       
+;*---------------------------------------------------------------------*/
+;*    js-math-abs ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.1     */
+;*---------------------------------------------------------------------*/
+(define (js-math-abs x %this)
+   (cond
+      ((not (number? x)) (js-math-abs (js-tonumber x %this) %this))
+      ((not (= x x)) x)
+      ((< x 0) (- x))
+      (else x)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-math-round ...                                                */
 ;*    -------------------------------------------------------------    */
