@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Jun  7 17:58:10 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 18:49:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -915,15 +915,14 @@
 					  (lambda (this . args)
 					     (js-undefined))))
 				(handler (lambda (svc req)
-					    (let ((args (map! (lambda (a)
-								 (js-obj->jsobject a %this))
-							   (service-parse-request svc req))))
-					       (js-worker-exec worker
-						  (symbol->string! id) #t
-						  (service-debug id
-						     (lambda ()
-							(service-invoke svc req
-							   args)))))))
+					    (js-worker-exec worker
+					       (symbol->string! id) #t
+					       (service-debug id
+						  (lambda ()
+						     (service-invoke svc req
+							(js-obj->jsobject
+							   (service-parse-request svc req)
+							   %this)))))))
 				(javascript "HopService( ~s, ~s )")
 				(path hoppath)
 				(id id)

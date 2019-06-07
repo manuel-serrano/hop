@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon May 27 11:18:42 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 18:29:16 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1307,6 +1307,7 @@
 		  (js-integer->jsstring ,right)
 		  (js-real->jsstring ,right))))
 	 (else
+	  ;; MS: 7jun2019
 	  (str-append flip
 	     left
 	     `(js-tojsstring (js-toprimitive ,right 'any %this) %this)))))

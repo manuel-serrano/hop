@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu May 23 08:48:47 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 19:02:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -164,6 +164,12 @@
       ((socket? obj) (js-socket->jsobject obj %this))
       ((procedure? obj) (js-procedure->jsobject obj %this))
       (else (js-undefined))))
+
+;*---------------------------------------------------------------------*/
+;*    js-obj->jsobject ::JsObject ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (js-obj->jsobject obj::JsObject %this)
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector->jsobject ...                                          */
