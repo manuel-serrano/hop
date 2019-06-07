@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Tue May  7 12:21:28 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 16:26:20 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -333,7 +333,6 @@
 	 ;; feed the source file lines table
 	 (hashtable-for-each sourcetable
 	    (lambda (k v)
-	       (tprint "k=" k " " (typeof k))
 	       (vector-set! src-linetables v (load-file-line-table k))))
 	 (call-with-output-file (make-file-name "/tmp" (string-append (basename src-file) ".seg.txt"))
 	    (lambda (dbg)

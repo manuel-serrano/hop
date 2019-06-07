@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat May 11 18:22:53 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 16:16:51 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -284,6 +284,8 @@
 		     (loop (cddr a) (cons* v (car a) attr) body id ctx))
 		    ((symbol? v)
 		     (loop (cddr a) (cons* (symbol->string! v) (car a) attr) body id ctx))
+		    ((isa? v xml-tilde)
+		     (loop (cddr a) (cons* (cadr a) (car a) attr) body id ctx))
 		    (else
 		     (bigloo-type-error el "string" (cadr a))))))
 	     ((eq? (car a) :%context)

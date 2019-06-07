@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jun  7 08:51:51 2019 (serrano)                */
+;*    Last change :  Fri Jun  7 16:31:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1346,6 +1346,7 @@
       ((eq? obj (js-null)) (& "null"))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
+      ((string? obj) (js-string->jsstring obj))
       (else (js-tojsstring (js-toprimitive obj 'string %this) %this))))
 
 ;*---------------------------------------------------------------------*/
