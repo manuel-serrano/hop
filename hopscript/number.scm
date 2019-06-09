@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jun  7 21:37:53 2019 (serrano)                */
+;*    Last change :  Sun Jun  9 07:41:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -43,7 +43,11 @@
 	   (js- ::obj ::obj ::JsGlobalObject)
 	   (js* ::obj ::obj ::JsGlobalObject)
 	   (js/ ::obj ::obj ::JsGlobalObject)
-	   (js/num left right)))
+	   (js/num left right))
+
+   ;; exports for bmem profiling
+   (export (js-number-alloc ::JsGlobalObject ::JsFunction)
+	   (js-number-tofixed ::obj ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -100,12 +104,13 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-number! %this)
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
-   (with-access::JsGlobalObject %this (__proto__ js-number js-function)
+   (with-access::JsGlobalObject %this (__proto__ js-number js-function js-number-pcache)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
-	 (define js-number-pcache
-	    (instantiate::JsPropertyCache
-	       (src "number.scm")))
+	 (set! js-number-pcache
+	    (vector
+	       (instantiate::JsPropertyCache
+		  (src "number.scm"))))
 	 
 	 (define js-number-prototype
 	    (instantiateJsNumber
@@ -120,21 +125,6 @@
 		  (set! val (js-tonumber (car args) %this))))
 	    this)
 		
-	 (define (js-number-alloc %this constructor::JsFunction)
-	    (with-access::JsGlobalObject %this (js-new-target)
-	       (set! js-new-target constructor))
-	    (with-access::JsFunction constructor (constrmap)
-	       (unless constrmap
-		  (set! constrmap
-		     (instantiate::JsConstructMap
-			(ctor constructor)
-			(size 1))))
-	       (instantiateJsNumber
-		  (cmap constrmap)
-		  (__proto__ (js-object-get-name/cache constructor
-				(& "prototype")
-				#f %this js-number-pcache)))))
-
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
 	 (define (%js-number this . arg)
 	    (let ((num (js-tonumber (if (pair? arg) (car arg) 0) %this)))
@@ -199,6 +189,24 @@
 	 js-number)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-number-alloc ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-number-alloc %this::JsGlobalObject constructor::JsFunction)
+   (with-access::JsGlobalObject %this (js-new-target js-number-pcache)
+      (set! js-new-target constructor)
+      (with-access::JsFunction constructor (constrmap)
+	 (unless constrmap
+	    (set! constrmap
+	       (instantiate::JsConstructMap
+		  (ctor constructor)
+		  (size 1))))
+	 (instantiateJsNumber
+	    (cmap constrmap)
+	    (__proto__ (js-object-get-name/cache constructor
+			  (& "prototype")
+			  #f %this (vector-ref js-number-pcache 0)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-valueof ::JsNumber ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-valueof this::JsNumber %this::JsGlobalObject)
@@ -253,16 +261,9 @@
       :enumerable #f
       :hidden-class #t)
 
-   (define (js-cast-number this shape)
-      (cond
-	 ((js-number? this) this)
-	 ((isa? this JsNumber) (with-access::JsNumber this (val) val))
-	 (else (js-raise-type-error %this "Not a number ~a"
-		  (if shape (shape this) this)))))
-   
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.2
    (define (js-number-tostring this #!optional (radix (js-undefined)))
-      (js-jsnumber-tostring (js-cast-number this typeof) radix %this))
+      (js-jsnumber-tostring (js-cast-number this typeof %this) radix %this))
 
    (js-bind! %this obj (& "toString")
       :value (js-make-function %this js-number-tostring 2 "toString")
@@ -286,7 +287,7 @@
    ;; valueOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.4
    (define (js-number-valueof this)
-      (js-cast-number this #f))
+      (js-cast-number this #f %this))
 
    (js-bind! %this obj (& "valueOf")
       :value (js-make-function %this js-number-valueof 0 "valueOf")
@@ -297,59 +298,11 @@
 
    ;; toFixed
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.5
-   (define (js-number-tofixed this fractiondigits)
-      
-      (define (signed val s)
-	 (if (>= val 0)
-	     (js-ascii->jsstring s)
-	     (js-ascii->jsstring (string-append "-" s))))
-      
-      (let ((val (js-cast-number this #f)))
-	 (let ((f (if (eq? fractiondigits (js-undefined))
-		      0
-		      (js-tointeger fractiondigits %this))))
-	    (if (or (< f 0) (> f 20))
-		(js-raise-range-error %this
-		   "Fraction digits out of range: ~a" f)
-		(if (and (flonum? val) (nanfl? val))
-		    (js-ascii->jsstring "NaN")
-		    (let ((x (abs val))
-			  (f (->fixnum f)))
-		       (if (>= x (exptfl 10. 21.))
-			   (signed val (js-tostring x %this))
-			   (let ((n (round x)))
-			      (cond
-				 ((= n 0)
-				  (signed val
-				     (if (= f 0)
-					 "0"
-					 (let* ((d (- x n))
-						(m (inexact->exact (round (* d (expt 10 f)))))
-						(s (integer->string m))
-						(l (string-length s)))
-					    (cond
-					       ((>fx l f)
-						(string-append "0." (substring s 0 f)))
-					       ((=fx l f)
-						(string-append "0." s))
-					       (else
-						(string-append "0." (make-string (-fx f l) #\0) s)))))))
-				 ((= f 0)
-				  (signed val (number->string n)))
-				 (else
-				  (let* ((m (inexact->exact
-					       (round (* x (expt 10 f)))))
-					 (s (integer->string m))
-					 (l (string-length s)))
-				     (signed val
-					(string-append (substring s 0 (-fx l f))
-					   (if (=fx (-fx l f) 0)
-					       "0."
-					       ".")
-					   (substring s (-fx l f)))))))))))))))
+   (define (number-tofixed this fractiondigits)
+      (js-number-tofixed this fractiondigits %this))
 
    (js-bind! %this obj (& "toFixed")
-      :value (js-make-function %this js-number-tofixed 1 "toFixed")
+      :value (js-make-function %this number-tofixed 1 "toFixed")
       :writable #t
       :configurable #t
       :enumerable #f
@@ -378,6 +331,70 @@
       :configurable #t
       :enumerable #f
       :hidden-class #f))
+
+;*---------------------------------------------------------------------*/
+;*    js-cast-number ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-cast-number this shape %this)
+   (cond
+      ((js-number? this) this)
+      ((isa? this JsNumber) (with-access::JsNumber this (val) val))
+      (else (js-raise-type-error %this "Not a number ~a"
+	       (if shape (shape this) this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-number-tofixed ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-number-tofixed this fractiondigits %this::JsGlobalObject)
+   
+   (define (signed val s)
+      (if (>= val 0)
+	  (js-ascii->jsstring s)
+	  (js-ascii->jsstring (string-append "-" s))))
+
+   (let ((val (js-cast-number this #f %this)))
+      (let ((f (if (eq? fractiondigits (js-undefined))
+		   0
+		   (js-tointeger fractiondigits %this))))
+	 (if (or (< f 0) (> f 20))
+	     (js-raise-range-error %this
+		"Fraction digits out of range: ~a" f)
+	     (if (and (flonum? val) (nanfl? val))
+		 (js-ascii->jsstring "NaN")
+		 (let ((x (abs val))
+		       (f (->fixnum f)))
+		    (if (>= x (exptfl 10. 21.))
+			(signed val (js-tostring x %this))
+			(let ((n (round x)))
+			   (cond
+			      ((= n 0)
+			       (signed val
+				  (if (= f 0)
+				      "0"
+				      (let* ((d (- x n))
+					     (m (inexact->exact (round (* d (expt 10 f)))))
+					     (s (integer->string m))
+					     (l (string-length s)))
+					 (cond
+					    ((>fx l f)
+					     (string-append "0." (substring s 0 f)))
+					    ((=fx l f)
+					     (string-append "0." s))
+					    (else
+					     (string-append "0." (make-string (-fx f l) #\0) s)))))))
+			      ((= f 0)
+			       (signed val (number->string n)))
+			      (else
+			       (let* ((m (inexact->exact
+					    (round (* x (expt 10 f)))))
+				      (s (integer->string m))
+				      (l (string-length s)))
+				  (signed val
+				     (string-append (substring s 0 (-fx l f))
+					(if (=fx (-fx l f) 0)
+					    "0."
+					    ".")
+					(substring s (-fx l f)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %real->string ...                                                */

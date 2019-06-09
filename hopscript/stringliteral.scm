@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Jun  7 08:49:49 2019 (serrano)                */
+;*    Last change :  Sun Jun  9 06:41:42 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -118,6 +118,9 @@
 	   (js-jsstring-maybe-slice ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring->jsarray ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring->list ::obj ::JsGlobalObject))
+
+   ;; the following functions are exported for bmem profiling
+   (export (table22 ::bstring ::pair ::bstring ::JsGlobalObject))
 
    (cond-expand
       ((not bigloo4.3a)
