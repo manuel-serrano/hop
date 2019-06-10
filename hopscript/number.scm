@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jun  9 07:41:10 2019 (serrano)                */
+;*    Last change :  Mon Jun 10 06:44:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -360,7 +360,7 @@
 	     (js-raise-range-error %this
 		"Fraction digits out of range: ~a" f)
 	     (if (and (flonum? val) (nanfl? val))
-		 (js-ascii->jsstring "NaN")
+		 (& "NaN")
 		 (let ((x (abs val))
 		       (f (->fixnum f)))
 		    (if (>= x (exptfl 10. 21.))

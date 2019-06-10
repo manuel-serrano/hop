@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu May 23 10:09:54 2019 (serrano)                */
+;*    Last change :  Sun Jun  9 09:32:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -38,7 +38,10 @@
 	   __hopscript_worker)
 
    (export (js-init-string! ::JsGlobalObject)
-	   (js-template-raw ::JsArray ::JsArray ::JsGlobalObject)))
+	   (js-template-raw ::JsArray ::JsArray ::JsGlobalObject))
+
+   ;; bmem profiling
+   (export (js-string-alloc::JsString ::JsGlobalObject ::JsFunction))) 
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -71,7 +74,6 @@
 ;*    js-toindex ::JsString ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-toindex obj::JsString)
-   (tprint "js-toindex ::JsString")
    (with-access::JsString obj (val)
       (js-toindex (js-jsstring->string val))))
 
@@ -164,15 +166,6 @@
 		       (let ((str (js-tostring value %this)))
 			  (js-set-string! %this o (js-string->jsstring str))))))))
 
-	 ;; string allocation
-	 (define (js-string-alloc::JsString %this constructor::JsFunction)
-	    (with-access::JsGlobalObject %this (js-new-target)
-	       (set! js-new-target constructor))
-	    (instantiateJsString
-	       (val (js-ascii->jsstring ""))
-	       (__proto__ (js-object-get-name/cache constructor (& "prototype") #f
-			     %this (js-pcache-ref js-string-pcache 34)))))
-
 	 ;; then, create a HopScript object
 	 (set! js-string
 	    (js-make-function %this
@@ -251,6 +244,17 @@
 	    :hidden-class #t)
 
 	 js-string)))
+
+;*---------------------------------------------------------------------*/
+;*    js-string-alloc ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-string-alloc::JsString %this::JsGlobalObject constructor::JsFunction)
+   (with-access::JsGlobalObject %this (js-new-target js-string-pcache)
+      (set! js-new-target constructor)
+      (instantiateJsString
+	 (val (js-ascii->jsstring ""))
+	 (__proto__ (js-object-get-name/cache constructor (& "prototype") #f
+		       %this (js-pcache-ref js-string-pcache 34))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-cast-string ...                                               */

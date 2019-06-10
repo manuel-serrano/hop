@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Jun  9 06:41:42 2019 (serrano)                */
+;*    Last change :  Sun Jun  9 19:58:02 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -118,9 +118,6 @@
 	   (js-jsstring-maybe-slice ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring->jsarray ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring->list ::obj ::JsGlobalObject))
-
-   ;; the following functions are exported for bmem profiling
-   (export (table22 ::bstring ::pair ::bstring ::JsGlobalObject))
 
    (cond-expand
       ((not bigloo4.3a)
@@ -878,13 +875,23 @@
 	  (or (string->number s r) +nan.0)
 	  (string->integer s r)))
 
+   (define (max-int-string)
+      (cond-expand
+	 ((or bint61 bint64) 19)
+	 (else 8)))
+
+   (define (max-hex-string)
+      (cond-expand
+	 ((or bint61 bint64) 12)
+	 (else 7)))
+
    (let ((l (string-length s)))
       (cond
 	 ((and (not (zeros32? r))
-	       (or (<s32 r (fixnum->int32 2))
-		   (>s32 r (fixnum->int32 36))))
+	       (or (<s32 r #s32:2)
+		   (>s32 r #s32:36)))
 	  +nan.0)
-	 ((and (or (zeros32? r) (=s32 r (fixnum->int32 16)))
+	 ((and (or (zeros32? r) (=s32 r #s32:16))
 	       (>=fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\0)
 	       (or (char=? (string-ref s 1) #\x)
@@ -899,7 +906,10 @@
 	      (integer (string->bignum-safe s 10) s 10)))
 	 (else
 	  (let ((r (int32->fixnum r)))
-	     (if (<=fx l (if (<=fx r 10) 8 (if (<=fx r 16) 7 5)))
+	     (if (<=fx l (cond
+			    ((<=fx r 10) (max-int-string))
+			    ((<=fx r 16) (max-hex-string))
+			    (else 5)))
 		 (integer (str->integer s r) s 10)
 		 (integer (string->bignum-safe s r) s r)))))))
 
@@ -1232,15 +1242,25 @@
 	      (js-jsstring-ref o i %this)
 	      (let ((p (js-toname prop %this)))
 		 (cond
-		    ((eq? prop (& "length"))
+		    ((eq? p (& "length"))
 		     (uint32->fixnum (js-jsstring-codeunit-length o)))
-		    ((memq prop '(indexOf lastIndexOf charCodeAt charAt
-				  substring substr
-				  toLowerCase toLocaleLowerCase
-				  toUpperCase toLocaleUpperCase
-				  split replace match
-				  compare naturalCompare localeCompare trim))
-		     ;; (tprint "JS_GET_PROTO: " prop " " (typeof prop))
+		    ((or (eq? p (& "indexOf"))
+			 (eq? p (& "lastIndexOf"))
+			 (eq? p (& "charCodeAt"))
+			 (eq? p (& "charAt"))
+			 (eq? p (& "substring"))
+			 (eq? p (& "substr"))
+			 (eq? p (& "toLowerCase"))
+			 (eq? p (& "toLocaleLowerCase"))
+			 (eq? p (& "toUpperCase"))
+			 (eq? p (& "toLocaleUpperCase"))
+			 (eq? p (& "split"))
+			 (eq? p (& "replace"))
+			 (eq? p (& "match"))
+			 (eq? p (& "compare"))
+			 (eq? p (& "naturalCompare"))
+			 (eq? p (& "localeCompare"))
+			 (eq? p (& "trim")))
 		     (with-access::JsGlobalObject %this (js-string js-string-pcache)
 			(let ((proto (js-object-get-name/cache js-string
 					(& "prototype")
@@ -1250,6 +1270,7 @@
 		    (else
 		     ;; see js-get-jsobject@property.scm
 		     ;; (tprint "JS_GET_STRING: " prop " " (typeof prop))
+		     (tprint "PROP=" prop)
 		     (let* ((obj (js-toobject %this o))
 			    (pval (js-get-property-value obj o prop %this)))
 			(if (eq? pval (js-absent))
