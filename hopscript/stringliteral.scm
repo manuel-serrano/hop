@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Jun  9 19:58:02 2019 (serrano)                */
+;*    Last change :  Mon Jun 10 09:11:53 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1255,6 +1255,7 @@
 			 (eq? p (& "toUpperCase"))
 			 (eq? p (& "toLocaleUpperCase"))
 			 (eq? p (& "split"))
+			 (eq? p (& "slice"))
 			 (eq? p (& "replace"))
 			 (eq? p (& "match"))
 			 (eq? p (& "compare"))
@@ -1270,7 +1271,6 @@
 		    (else
 		     ;; see js-get-jsobject@property.scm
 		     ;; (tprint "JS_GET_STRING: " prop " " (typeof prop))
-		     (tprint "PROP=" prop)
 		     (let* ((obj (js-toobject %this o))
 			    (pval (js-get-property-value obj o prop %this)))
 			(if (eq? pval (js-absent))
