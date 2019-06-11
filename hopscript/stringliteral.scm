@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed May  8 10:49:18 2019 (serrano)                */
+;*    Last change :  Wed Jun  5 18:06:10 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1341,7 +1341,7 @@
 				 (string-index->utf8-string-index str
 				    (bm-string t str j))))))))))))
 
-      (let* ((pat (js-jsstring->string search))
+      (let* ((pat (js-tostring search %this))
 	     (patlen (string-length pat)))
 	 (if (=fx patlen 0)
 	     0
@@ -1396,7 +1396,7 @@
 			       -1))))))))
    
    (define (utf8-lastindexof s)
-      (let* ((search (js-jsstring->string search))
+      (let* ((search (js-tostring search %this))
 	     (searchlen (string-length search))
 	     (usearchlen (utf8-string-length search))
 	     (len (string-length s))
