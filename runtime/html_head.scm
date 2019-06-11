@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Dec 21 09:31:48 2018 (serrano)                */
-;*    Copyright   :  2005-18 Manuel Serrano                            */
+;*    Last change :  Tue Jun 11 16:58:31 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -93,16 +93,20 @@
 		    (attr)
 		    body)
    
-   (define (find-head body)
-      (let loop ((body body)
+   (define (find-head b)
+      (let loop ((body b)
 		 (err #f))
 	 (when (pair? body)
 	    (cond
 	       ((xml-markup-is? (car body) 'head)
 		(if err
-		    (error "<HTML>" "wrong <HEAD>, not first child" (car body))
+		    (error "<HTML>"
+		       "wrong <HEAD>, not first child"
+		       (call-with-output-string
+			  (lambda (op)
+			     (xml-write b op (hop-xml-backend)))))
 		    (car body)))
-	       ((string? (car body))
+	       ((string? (xml-primitive-value (car body)))
 		(loop (cdr body) (or err (string-skip (car body) "\r\t\n "))))
 	       (else
 		(loop (cdr body) #t))))))

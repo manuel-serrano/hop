@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed May 29 07:32:29 2019 (serrano)                */
+;*    Last change :  Tue Jun 11 17:02:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -1069,7 +1069,7 @@
 ;*    add-service-allow-url! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (add-service-allow-url! url)
-   (set! *allow-urls* (cons url *allow-urls*)))
+   (set! *allow-urls* (cons (js-jsstring->string url) *allow-urls*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-add-url! ...                                             */
