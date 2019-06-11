@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Jun 11 16:29:20 2019 (serrano)                */
+;*    Last change :  Tue Jun 11 16:58:31 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -106,7 +106,7 @@
 			  (lambda (op)
 			     (xml-write b op (hop-xml-backend)))))
 		    (car body)))
-	       ((string? (car body))
+	       ((string? (xml-primitive-value (car body)))
 		(loop (cdr body) (or err (string-skip (car body) "\r\t\n "))))
 	       (else
 		(loop (cdr body) #t))))))
