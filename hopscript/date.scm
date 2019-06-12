@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jun  7 21:37:19 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 16:45:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -738,7 +738,7 @@
 		(if (nanfl? s)
 		    (begin
 		       (set! val s)
-		       time)
+		       s)
 		    (begin
 		       (set! val (seconds->date (flonum->fixnum s)))
 		       (date->milliseconds val))))))))
