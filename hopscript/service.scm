@@ -1108,7 +1108,7 @@
 ;*    add-service-allow-url! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (add-service-allow-url! url)
-   (set! *allow-urls* (cons url *allow-urls*)))
+   (set! *allow-urls* (cons (js-jsstring->string url) *allow-urls*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-add-url! ...                                             */
