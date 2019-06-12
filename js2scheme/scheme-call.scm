@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Jun  7 11:58:36 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 12:05:03 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -124,6 +124,7 @@
 	("call" ,j2s-call function (any) %this #t)
 	("call" ,j2s-call function (any any) %this #t)
 	;; math
+	("toFixed" js-maybe-tofixed any (any) %this #t)
 	)))
 
 ;*---------------------------------------------------------------------*/
@@ -135,7 +136,11 @@
       `((parseInt js-parseint-string-uint32 (string uint32) #f)
 	(parseInt js-parseint-string (string) #f)
 	(parseInt js-parseint-any (any) %this)
-	(parseInt js-parseint (any any) %this))))
+	(parseInt js-parseint (any any) %this)
+	(Number js-tonumber (any) %this)
+	(isNaN nanfl? (real) %this)
+	(isNaN js-number-isnan? (any) #f)
+	(isNaN js-isnan? (any) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-apply ...                                                    */
@@ -334,7 +339,7 @@
 		   (with-access::J2SDeclExtern decl (id)
 		      (when (eq? id ty)
 			 (not (decl-usage? decl '(assig))))))))))
-      
+
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
 	    (let ((tyobj (j2s-type obj)))
@@ -434,20 +439,10 @@
       (call-unknown-function fun '(this) args))
 
    (define (Array? self)
-      (when (isa? self J2SRef)
-	 (with-access::J2SRef self (decl)
-	    (with-access::J2SDecl decl (id scope)
-	       (and (eq? id 'Array)
-		    (eq? scope '%scope)
-		    (not (decl-usage? decl '(assig))))))))
+      (is-builtin-ref? self 'Array))
 
    (define (Math? self)
-      (when (isa? self J2SRef)
-	 (with-access::J2SRef self (decl)
-	    (with-access::J2SDecl decl (id scope)
-	       (and (eq? id 'Math)
-		    (eq? scope '%scope)
-		    (not (decl-usage? decl '(assig))))))))
+      (is-builtin-ref? self 'Math))
    
    (define (call-ref-method self ccache ocache ccspecs fun::J2SAccess obj::J2SExpr args)
 

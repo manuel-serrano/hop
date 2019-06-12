@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Jun  5 08:32:24 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 12:54:33 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1239,6 +1239,8 @@
 	  (return 'string (unknown-call-env env) bk))
 	 ((is-global? callee 'parseInt)
 	  (return 'number (unknown-call-env env) bk))
+	 ((is-global? callee 'isNaN)
+	  (return 'bool (unknown-call-env env) bk))
 	 (else
 	  (type-unknown-call callee env bk))))
    

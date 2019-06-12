@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue May 14 06:17:55 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 06:57:08 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -106,10 +106,11 @@
 			  (lambda (op)
 			     (xml-write b op (hop-xml-backend)))))
 		    (car body)))
-	       ((string? (xml-primitive-value (car body)))
-		(loop (cdr body) (or err (string-skip (car body) "\r\t\n "))))
 	       (else
-		(loop (cdr body) #t))))))
+		(let ((v (xml-primitive-value (car body) %context)))
+		   (if (string? v)
+		       (loop (cdr body)
+			  (or err (not (string? v)) (string-skip v "\r\t\n "))))))))))
 	     
    (let* ((nbody (filter (lambda (n)
 			    (let ((v (xml-primitive-value n %context)))

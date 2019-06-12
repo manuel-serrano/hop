@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jun  7 21:37:35 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 15:41:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -483,7 +483,12 @@
       ((nanfl? x) x)
       ((=fl x +inf.0) x)
       ((=fl x -inf.0) x)
-      (else (inexact->exact (floor (+ x 0.5))))))
+      (else
+       (cond-expand
+	  ((or bint61 bint63)
+	   (flonum->fixnum (floorfl (+fl x 0.5))))
+	  (else
+	   (inexact->exact (floorfl (+fl x 0.5))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed May 29 20:25:08 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 13:58:03 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -594,11 +594,6 @@
 	     ((eq? to 'uint32)
 	      (js->uint32 sexp expr conf))
 	     (else
-	      (tprint "CAST DEFAULT... " from " -> " to
-		 " loc=" (when (isa? expr J2SExpr)
-			(with-access::J2SExpr expr (loc) loc))
-		 " expr=" (j2s->list expr)
-		 " sexp=" sexp)
 	      (case from
 		 ((index uint32 length)
 		  (case to
@@ -621,7 +616,6 @@
 		     ((index uint32 length) (js-fixnum->uint32 sexp expr conf))
 		     ((bool) (j2s-totest sexp))
 		     (else sexp))))))))
-
    (if (eq? from to)
        sexp
        (let ((fen (assq from cast-table)))

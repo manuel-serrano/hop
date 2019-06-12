@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Jun 10 09:11:53 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 11:43:57 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2031,7 +2031,7 @@
    
    (define (digit10->number c1 c2)
       (+fx (*fx (digit->number c1) 10) (digit->number c2)))
-   
+
    (let ((stop (-fx (string-length fmt) 1)))
       (let loop ((i 0)
 		 (j 0)
@@ -2394,18 +2394,6 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-replace-string this::obj need22 searchstr replacevalue %this)
-   
-   (define (matches->string-list::pair-nil a)
-      (let ((len (js-get-length a %this)))
-	 (let loop ((i 1)
-		    (l '()))
-	    (if (=fx i len)
-		(reverse! l)
-		(let ((v (js-get a (js-toname i %this) %this)))
-		   (loop (+fx i 1)
-		      (cons (if (eq? v (js-undefined)) (& "") v)
-			 l)))))))
-
    (let* ((string (js-jsstring->string this))
 	  (enc (isa? this JsStringLiteralUTF8))
 	  (i (string-contains string (js-jsstring->string searchstr) 0)))
@@ -2431,6 +2419,16 @@
 			 searchstr i this) %this)
 		   (js-substring/enc string
 		      j (string-length string) enc %this)))))
+	 ((and (js-jsstring? replacevalue)
+	       (not (string-index (js-jsstring->string replacevalue) #\$)))
+	  (let* ((j (+fx i (js-jsstring-lengthfx searchstr)))
+		 (tail (js-jsstring-append replacevalue
+			  (js-substring/enc string
+			     j (string-length string) enc %this))))
+	     (if (>fx i 0)
+		 (js-jsstring-append
+		    (js-substring/enc string 0 i enc %this) tail)
+		 tail)))
 	 (else
 	  (let* ((newstring (js-tostring replacevalue %this))
 		 (j (+fx i (js-jsstring-lengthfx searchstr)))

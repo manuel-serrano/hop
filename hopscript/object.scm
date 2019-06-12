@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jun  7 21:35:17 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 12:11:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -362,9 +362,8 @@
 
 	    ;; isNaN
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.4
-	    (define (isnan this number)
-	       (let ((n (js-tonumber number %this)))
-		  (and (flonum? n) (not (=fl n n)))))
+	    (define (isnan this val)
+	       (js-isnan? val %this))
 
 	    (js-bind! %this %this (& "isNaN")
 	       :value (js-make-function %this isnan 1 "isNaN"

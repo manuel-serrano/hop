@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jun  3 08:46:11 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 11:31:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -130,7 +130,10 @@
 	  (inline js-empty-vector->jsarray::JsArray ::JsGlobalObject)
 	  (inline DEFAULT-EMPTY-ARRAY-SIZE::long)))
       (else
-       (export (js-empty-vector->jsarray::JsArray ::JsGlobalObject)))))
+       (export (js-empty-vector->jsarray::JsArray ::JsGlobalObject))))
+
+   ;; export for bmem profiling
+   (export (js-array-alloc-ctor::JsArray ::JsGlobalObject ::JsFunction)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Jun  7 12:02:27 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 15:33:26 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -63,9 +63,8 @@
 			  ,(j2s-scheme (car args) mode return conf)))))
 	       ((string=? val "round")
 		(when (=fx (length args) 1)
-		   (cast-math
-		      `(js-math-round
-			  ,(j2s-scheme (car args) mode return conf)))))
+		   `(js-math-round
+		       ,(j2s-scheme (car args) mode return conf))))
 	       ((string=? val "random")
 		(when (=fx (length args) 0)
 		   `(randomfl)))

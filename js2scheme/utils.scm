@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Jun  5 15:57:32 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 13:39:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -766,11 +766,12 @@
 (define (find-builtin-method-type obj fn)
 
    (define (is-global? obj ident)
-      (when (isa? obj J2SGlobalRef)
-	 (with-access::J2SGlobalRef obj (id decl)
-	    (when (eq? id ident)
-	       (with-access::J2SDecl decl (ronly)
-		  ronly)))))
+      (or (is-builtin-ref? obj ident)
+	  (when (isa? obj J2SGlobalRef)
+	     (with-access::J2SGlobalRef obj (id decl)
+		(when (eq? id ident)
+		   (with-access::J2SDecl decl (ronly)
+		      ronly))))))
    
    (define (String? obj)
       (is-global? obj 'String))
@@ -884,12 +885,14 @@
 	  (eq? id clazz)))
       ((isa? expr J2SGlobalRef)
        (with-access::J2SGlobalRef expr (decl)
-	  (with-access::J2SDecl decl (id usage)
-	     (and (eq? id clazz) (not (usage? '(assig) usage))))))
+	  (with-access::J2SDecl decl (id)
+	     (and (eq? id clazz) (not (decl-usage? decl '(assig)))))))
       ((isa? expr J2SRef)
        (with-access::J2SRef expr (decl)
-	  (with-access::J2SDecl decl (id usage)
-	     (and (eq? id clazz) (not (usage? '(assig) usage))))))
+	  (with-access::J2SDecl decl (id scope)
+	     (and (eq? id clazz)
+		  (eq? scope '%scope)
+		  (decl-only-usage? decl '(new init call get instanceof))))))
       (else
        #f)))
 

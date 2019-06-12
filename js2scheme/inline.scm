@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Jun  2 06:20:19 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 12:58:04 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -517,7 +517,7 @@
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (id)
 	       (let ((val (j2sdeclinit-val-fun decl)))
-		  (when (and (=fx (function-arity val) arity)
+		  (when (and (>=fx (function-arity val) arity)
 			     (function-fxarg? val)
 			     (not (function-generator? val))
 			     (or (not leaf) (function-leaf? val))
@@ -621,7 +621,7 @@
 		      (if (pair? thisarg)
 			  (append thisarg args)
 			  (cons (J2SUndefined) args))
-		      #f leaf limit stack pmethods prgm conf))
+		      #f leaf limit stack pmethods prgm conf loc))
 	     (nbody (j2s-alpha body (cons thisp params) vals)))
 	 (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
 	    (J2SMetaInl (cons val stack)
@@ -698,7 +698,7 @@
       (let ((val (protoinfo-method callee)))
 	 (with-access::J2SFun val (body thisp params (floc loc))
 	    (let ((vals (inline-args params args
-			   #f leaf limit stack pmethods prgm conf)))
+			   #f leaf limit stack pmethods prgm conf loc)))
 	       (with-access::J2SRef obj (decl)
 		  (cache-check cache loc obj field kont
 		     (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
@@ -877,21 +877,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-args ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (inline-args params args targets leaf limit stack pmethods prgm conf)
-   (map (lambda (p a)
-	   (cond
-	      ((and (ronly-variable? p) (isa? a J2SLiteral))
-	       a)
-	      (else
-	       (with-access::J2SDecl p (usage id writable)
-		  (with-access::J2SNode a (loc)
-		     (let ((d (J2SLetOptRo usage (gensym id)
-				 (inline! a
-				    targets leaf limit stack pmethods prgm conf))))
-			(with-access::J2SDecl d ((w writable))
-			   (set! w writable))
-			d))))))
-      params args))
+(define (inline-args params args targets leaf limit stack pmethods prgm conf loc)
+   (let ((lena (length args))
+	 (lenp (length params)))
+      (map (lambda (p a)
+	      (cond
+		 ((and (ronly-variable? p) (isa? a J2SLiteral))
+		  a)
+		 (else
+		  (with-access::J2SDecl p (usage id writable)
+		     (with-access::J2SNode a (loc)
+			(let ((d (J2SLetOptRo usage (gensym id)
+				    (inline! a
+				       targets leaf limit stack pmethods prgm conf))))
+			   (with-access::J2SDecl d ((w writable))
+			      (set! w writable))
+			   d))))))
+	 params
+	 (if (<fx lena lenp)
+	     (append args
+		;; complement with missing args
+		(map! (lambda (i) (J2SUndefined)) (iota (-fx lenp lena))))
+	     args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-stmt->expr::J2SExpr ...                                   */

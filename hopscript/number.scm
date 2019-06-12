@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jun 10 06:44:15 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 12:10:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -37,13 +37,18 @@
 	   (js-real->jsstring::JsStringLiteral ::double)
 	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
 	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject)
+
+	   (inline js-number-isnan?::bool ::obj)
+	   (inline js-isnan?::bool ::obj ::JsGlobalObject)
 	   
 	   (js+ ::obj ::obj ::JsGlobalObject)
 	   (js-slow+ ::obj ::obj ::JsGlobalObject)
 	   (js- ::obj ::obj ::JsGlobalObject)
 	   (js* ::obj ::obj ::JsGlobalObject)
 	   (js/ ::obj ::obj ::JsGlobalObject)
-	   (js/num left right))
+	   (js/num left right)
+
+	   (js-maybe-tofixed ::obj ::obj ::JsGlobalObject ::obj))
 
    ;; exports for bmem profiling
    (export (js-number-alloc ::JsGlobalObject ::JsFunction)
@@ -108,9 +113,7 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 (set! js-number-pcache
-	    (vector
-	       (instantiate::JsPropertyCache
-		  (src "number.scm"))))
+	    ((@ js-make-pcache-table __hopscript_property) 2 "number"))
 	 
 	 (define js-number-prototype
 	    (instantiateJsNumber
@@ -204,7 +207,7 @@
 	    (cmap constrmap)
 	    (__proto__ (js-object-get-name/cache constructor
 			  (& "prototype")
-			  #f %this (vector-ref js-number-pcache 0)))))))
+			  #f %this (js-pcache-ref js-number-pcache 0)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::JsNumber ...                                        */
@@ -299,7 +302,7 @@
    ;; toFixed
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.5
    (define (number-tofixed this fractiondigits)
-      (js-number-tofixed this fractiondigits %this))
+      (js-number-tofixed (js-cast-number this #f %this) fractiondigits %this))
 
    (js-bind! %this obj (& "toFixed")
       :value (js-make-function %this number-tofixed 1 "toFixed")
@@ -345,56 +348,66 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-number-tofixed ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-number-tofixed this fractiondigits %this::JsGlobalObject)
+(define (js-number-tofixed val fractiondigits %this::JsGlobalObject)
    
    (define (signed val s)
       (if (>= val 0)
 	  (js-ascii->jsstring s)
 	  (js-ascii->jsstring (string-append "-" s))))
 
-   (let ((val (js-cast-number this #f %this)))
-      (let ((f (if (eq? fractiondigits (js-undefined))
-		   0
-		   (js-tointeger fractiondigits %this))))
-	 (if (or (< f 0) (> f 20))
-	     (js-raise-range-error %this
-		"Fraction digits out of range: ~a" f)
-	     (if (and (flonum? val) (nanfl? val))
-		 (& "NaN")
-		 (let ((x (abs val))
-		       (f (->fixnum f)))
-		    (if (>= x (exptfl 10. 21.))
-			(signed val (js-tostring x %this))
-			(let ((n (round x)))
-			   (cond
-			      ((= n 0)
+   (let ((f (if (eq? fractiondigits (js-undefined))
+		0
+		(js-tointeger fractiondigits %this))))
+      (if (or (< f 0) (> f 20))
+	  (js-raise-range-error %this "Fraction digits out of range: ~a" f)
+	  (if (and (flonum? val) (nanfl? val))
+	      (& "NaN")
+	      (let ((x (abs val))
+		    (f (->fixnum f)))
+		 (if (>= x (exptfl 10. 21.))
+		     (signed val (js-tostring x %this))
+		     (let ((n (round x)))
+			(cond
+			   ((= n 0)
+			    (signed val
+			       (if (= f 0)
+				   "0"
+				   (let* ((d (- x n))
+					  (m (inexact->exact (round (* d (expt 10 f)))))
+					  (s (integer->string m))
+					  (l (string-length s)))
+				      (cond
+					 ((>fx l f)
+					  (string-append "0." (substring s 0 f)))
+					 ((=fx l f)
+					  (string-append "0." s))
+					 (else
+					  (string-append "0." (make-string (-fx f l) #\0) s)))))))
+			   ((= f 0)
+			    (signed val (number->string n)))
+			   (else
+			    (let* ((m (inexact->exact
+					 (round (* x (expt 10 f)))))
+				   (s (integer->string m))
+				   (l (string-length s)))
 			       (signed val
-				  (if (= f 0)
-				      "0"
-				      (let* ((d (- x n))
-					     (m (inexact->exact (round (* d (expt 10 f)))))
-					     (s (integer->string m))
-					     (l (string-length s)))
-					 (cond
-					    ((>fx l f)
-					     (string-append "0." (substring s 0 f)))
-					    ((=fx l f)
-					     (string-append "0." s))
-					    (else
-					     (string-append "0." (make-string (-fx f l) #\0) s)))))))
-			      ((= f 0)
-			       (signed val (number->string n)))
-			      (else
-			       (let* ((m (inexact->exact
-					    (round (* x (expt 10 f)))))
-				      (s (integer->string m))
-				      (l (string-length s)))
-				  (signed val
-				     (string-append (substring s 0 (-fx l f))
-					(if (=fx (-fx l f) 0)
-					    "0."
-					    ".")
-					(substring s (-fx l f)))))))))))))))
+				  (string-append (substring s 0 (-fx l f))
+				     (if (=fx (-fx l f) 0)
+					 "0."
+					 ".")
+				     (substring s (-fx l f))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-maybe-tofixed ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-maybe-tofixed this fractiondigits %this::JsGlobalObject cache)
+   (if (or (fixnum? this) (flonum? this))
+       (js-number-tofixed this fractiondigits %this)
+       (with-access::JsGlobalObject %this (js-number-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "toFixed") #f %this
+		(or cache (js-pcache-ref js-number-pcache 1)))
+	     this fractiondigits))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %real->string ...                                                */
@@ -532,6 +545,18 @@
 	  (js-call1 %this (js-get this (& "toString") %this) this radix))
 	 (else
 	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-number-isnan? ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-number-isnan? val)
+   (and (flonum? val) (nanfl? val)))
+
+;*---------------------------------------------------------------------*/
+;*    js-isnan? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-isnan? val %this::JsGlobalObject)
+   (js-number-isnan? (js-tonumber val %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js+ ...                                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Jun  9 07:42:59 2019 (serrano)                */
+;*    Last change :  Wed Jun 12 12:15:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -21,7 +21,7 @@
    (use __hopscript_object
 	__hopscript_string
 	__hopscript_symbol
-	__hopscript_number
+	;; __hopscript_number
 	__hopscript_date
 	__hopscript_error
 	__hopscript_boolean
@@ -29,7 +29,7 @@
 	__hopscript_function
 	__hopscript_property
 	__hopscript_profile
-	;;__hopscript_public
+	;; __hopscript_public
 	__hopscript_lib)
 
    (extern (include "bglhopscript_malloc.h"))
