@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Jun  9 09:32:56 2019 (serrano)                */
+;*    Last change :  Fri Jun 14 09:12:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -127,7 +127,7 @@
 	 
 	 ;; string pcache
 	 (set! js-string-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 35 "string"))
+	    ((@ js-make-pcache-table __hopscript_property) 37 "string"))
 	 
 	 ;; builtin prototype
 	 (define js-string-prototype

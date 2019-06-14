@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu May 30 06:38:05 2019 (serrano)                */
+;*    Last change :  Tue Jun 11 13:13:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -391,11 +391,7 @@
 ;*    j2s->list ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SNode)
-   `(,(string->symbol (typeof this))
-     ,@(if (or (string? this) (symbol? this) (struct? this) (boolean? this)
-	       (number? this) (char? this))
-	   (list (format "~a" this))
-	   '())))
+   `(,(string->symbol (typeof this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SMeta ...                                          */

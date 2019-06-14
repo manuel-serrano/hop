@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jun 12 11:43:57 2019 (serrano)                */
+;*    Last change :  Fri Jun 14 09:07:29 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -25,7 +25,8 @@
 	   __hopscript_lib
 	   __hopscript_private
 	   __hopscript_property
-	   __hopscript_array)
+	   __hopscript_array
+	   __hopscript_regexp)
 
    (export (js-init-stringliteral! ::JsGlobalObject)
 	   (&jsstring-init ::bstring)
@@ -104,6 +105,7 @@
 	   (js-jsstring-prototype-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-replace ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-match ::JsStringLiteral ::obj ::JsGlobalObject)
+	   (js-jsstring-match-string ::JsStringLiteral ::JsStringLiteral ::JsRegExp ::JsGlobalObject)
 	   (js-jsstring-maybe-match ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-naturalcompare ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-naturalcompare ::obj ::obj ::JsGlobalObject ::obj)
@@ -2579,6 +2581,19 @@
 				      #f %this))
 				(loop (+fx 1 n))))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-match-string ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-match-string this string rx %this)
+   (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype js-string-pcache)
+      (if (js-object-mode-plain? js-regexp-prototype)
+	  (js-regexp-prototype-exec %this rx this)
+	  (let* ((proto (js-object-get-name/cache js-regexp (& "prototype")
+			   #f %this (js-pcache-ref js-string-pcache 35)))
+		 (exec (js-object-get-name/cache proto (& "exec")
+			  #f %this (js-pcache-ref js-string-pcache 36))))
+	     (js-call1 %this exec rx this)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-match ...                                      */
 ;*---------------------------------------------------------------------*/

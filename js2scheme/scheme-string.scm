@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Jun  5 18:44:11 2019 (serrano)                */
+;*    Last change :  Fri Jun 14 08:33:52 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -32,7 +32,8 @@
 	   (j2s-jsstring-replace-string obj args mode return conf)
 	   (j2s-jsstring-replace obj args mode return conf)
 	   (j2s-jsstring-charcodeat obj args mode return conf)
-	   (j2s-jsstring-match obj args mode return conf)))
+	   (j2s-jsstring-match-string obj args mode return conf)
+	   (j2s-jsstring-match-regexp obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-ref ...                                               */
@@ -212,18 +213,52 @@
 		args)))))
        
 ;*---------------------------------------------------------------------*/
-;*    j2s-jsstring-match ...                                           */
+;*    j2s-jsstring-match-string ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-match obj args mode return conf)
+(define (j2s-jsstring-match-string obj args mode return conf)
+   (let ((str (if (isa? (car args) J2SLiteralCnst)
+		  (with-access::J2SLiteralCnst (car args) (val) val)
+		  (car args))))
+      (if (not (isa? str J2SString))
+	  `(js-jsstring-maybe-match
+	      ,(j2s-scheme obj mode return conf)
+	      ,(j2s-scheme (car args) mode return conf)
+	      %this
+	      #f)
+	  (with-access::J2SProgram (config-get conf :program) (cnsts)
+	     (with-access::J2SString str (loc val)
+		(let* ((len (length cnsts))
+		       (rx (instantiate::J2SRegExp
+			      (loc loc)
+			      (flags "")
+			      (inline #f)
+			      (val val)))
+		       (cnst (instantiate::J2SLiteralCnst
+				(loc loc)
+				(type 'regexp)
+				(index len)
+				(val rx))))
+		   (set-cdr! (last-pair cnsts)
+		      (list rx))
+		   `(js-jsstring-match-string
+		       ,(j2s-scheme obj mode return conf)
+		       ,(j2s-scheme (car args) mode return conf)
+		       ,(j2s-scheme cnst mode return conf)
+		       %this)))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-match-regexp ...                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-match-regexp obj args mode return conf)
    (let ((rx (if (isa? (car args) J2SLiteralCnst)
 		 (with-access::J2SLiteralCnst (car args) (val) val)
 		 (car args))))
       (if (not (isa? rx J2SRegExp))
 	  `(js-jsstring-maybe-match
-		 ,(j2s-scheme obj mode return conf)
-		 ,(j2s-scheme (car args) mode return conf)
-		 %this
-		 #f)
+	      ,(j2s-scheme obj mode return conf)
+	      ,(j2s-scheme (car args) mode return conf)
+	      %this
+	      #f)
 	  (with-access::J2SRegExp rx (flags)
 	     (if (string-index flags #\g)
 		 `(js-jsstring-maybe-match
