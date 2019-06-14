@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Apr 16 08:56:46 2019 (serrano)                */
+;*    Last change :  Fri Jun 14 14:57:28 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -831,7 +831,7 @@
 	  (let ((op (open-output-string)))
 	     (fprintf op "<j name='~a'><![CDATA[" n)
 	     ;; ICI utiliser ctx
-	     (display (url-path-encode (obj->string value 'hop-client)) op)
+	     (display (url-path-encode (obj->string value (or ctx 'hop-client))) op)
 	     (display "]]></j>" op)
 	     (close-output-port op))))))
 

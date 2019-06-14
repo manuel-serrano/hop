@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu May 23 09:00:42 2019 (serrano)                */
+;*    Last change :  Fri Jun 14 14:45:22 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -347,11 +347,11 @@
 	       ;; events
 	       (define-js signal 2
 		  (lambda (this name v)
-		     (hop-event-signal! (js-tostring name %this) v)))
+		     (hop-event-signal! (js-tostring name %this) v) %this))
 
 	       (define-js broadcast 2
 		  (lambda (this name v)
-		     (hop-event-broadcast! (js-tostring name %this) v)))
+		     (hop-event-broadcast! (js-tostring name %this) v %this)))
 
 	       (define-js addEventListener 3
 		  (lambda (this name proc capture)

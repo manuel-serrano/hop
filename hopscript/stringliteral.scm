@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Jun 14 09:07:29 2019 (serrano)                */
+;*    Last change :  Fri Jun 14 14:00:29 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -101,7 +101,7 @@
 	   (js-jsstring-replace-regexp-fun1 ::obj ::regexp ::long ::bool ::procedure ::JsGlobalObject)
 	   (js-jsstring-replace-regexp-string ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
 	   (js-jsstring-replace-string ::obj ::bool ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-replace ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-replace ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-replace ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-match ::JsStringLiteral ::obj ::JsGlobalObject)
@@ -929,7 +929,8 @@
 	  +nan.0)
 	 ((and (>=fx l 2)
 	       (char=? (string-ref s 0) #\0)
-	       (or (char=? (string-ref s 1) #\x) (char=? (string-ref s 1) #\X)))
+	       (or (char=? (string-ref s 1) #\x)
+		   (char=? (string-ref s 1) #\X)))
 	  0.)
 	 (else
 	  (let ((n (string->real s)))
@@ -2448,7 +2449,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-replace this::obj searchvalue replacevalue %this)
+(define (js-jsstring-replace this::obj need22 searchvalue replacevalue %this)
    
    (define (fun1? v)
       (when (js-function? v)
@@ -2485,9 +2486,9 @@
 		      #f %this (js-pcache-ref js-string-pcache 12)))
 		res))))
       ((js-jsstring? searchvalue)
-       (js-jsstring-replace-string this #t searchvalue replacevalue %this))
+       (js-jsstring-replace-string this need22 searchvalue replacevalue %this))
       (else
-       (js-jsstring-replace-string this #t (js-tojsstring searchvalue %this) replacevalue %this)
+       (js-jsstring-replace-string this need22 (js-tojsstring searchvalue %this) replacevalue %this)
        )))
 
 ;*---------------------------------------------------------------------*/
@@ -2499,7 +2500,7 @@
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
-	  (js-jsstring-replace this searchvalue replacevalue %this))
+	  (js-jsstring-replace this #t searchvalue replacevalue %this))
 	 ((isa? this JsString)
 	  (with-access::JsString this (val)
 	     (loop val)))
@@ -2516,10 +2517,10 @@
 (define (js-jsstring-maybe-replace this searchvalue replacevalue %this cache)
    (cond
       ((js-jsstring? this)
-       (js-jsstring-replace this searchvalue replacevalue %this))
+       (js-jsstring-replace this #t searchvalue replacevalue %this))
       ((isa? this JsString)
        (with-access::JsString this (val)
-	  (js-jsstring-replace val searchvalue replacevalue %this)))
+	  (js-jsstring-replace val #t searchvalue replacevalue %this)))
       (else
        (with-access::JsGlobalObject %this (js-string-pcache)
 	  (js-call2 %this

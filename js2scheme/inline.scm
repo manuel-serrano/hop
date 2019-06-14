@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Jun 12 12:58:04 2019 (serrano)                */
+;*    Last change :  Fri Jun 14 13:53:34 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -606,10 +606,13 @@
 	 ((isa? fun J2SAccess)
 	  (or (inline-access-call this fun args loc) this))
 	 ((isa? fun J2SRef)
-	  (or (inline-ref-call this fun thisarg args loc) this))
+	  (or (inline-ref-call this fun thisarg args loc)
+	      (call-default-walker)))
 	 ((pair? targets)
-	  (or (inline-expr-call this fun thisarg args loc) this))
-	 (else this))))
+	  (or (inline-expr-call this fun thisarg args loc)
+	      (call-default-walker)))
+	 (else
+	  (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-function-call ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Jun 14 08:33:52 2019 (serrano)                */
+;*    Last change :  Fri Jun 14 14:36:09 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -185,8 +185,21 @@
 ;*    j2s-string-replace ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-jsstring-replace obj args mode return conf)
+   
+   (define (string-without-dollar obj)
+      (cond
+	 ((isa? obj J2SLiteralCnst)
+	  (with-access::J2SLiteralCnst obj (val)
+	     (string-without-dollar val)))
+	 ((isa? obj J2SString)
+	  (with-access::J2SString obj (val)
+	     (not (string-index val #\$))))
+	 (else
+	  #f)))
+  
    `(js-jsstring-replace
        ,(j2s-scheme obj mode return conf)
+       ,(not (string-without-dollar (cadr args)))
        ,@(map (lambda (arg)
 		 (j2s-scheme arg mode return conf))
 	    args)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Jun 12 12:11:49 2019 (serrano)                */
+;*    Last change :  Fri Jun 14 14:05:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -986,17 +986,21 @@
 				      (object-class obj)))
 			   (name (symbol->string! (class-name clazz))))
 		       (js-string->jsstring
-			  (format "[object ~a]"
-			     (cond
-				((not (string-prefix? "Js" name))
-				 name)
-				((string=? name "JsGlobalObject")
-				 "Object")
-				((isa? obj JsArrayBufferView)
-				 (let ((ctor (js-get obj (& "constructor") %this)))
-				    (js-get ctor (& "name") %this)))
-				(else
-				 (substring name 2)))))))))))
+			  (cond
+			     ((not (string-prefix? "Js" name))
+			      (string-append "[object " name "]"))
+			     ((string=? name "JsGlobalObject")
+			      "[object Object]")
+			     ((isa? obj JsArrayBufferView)
+			      (let ((ctor (js-get obj (& "constructor") %this)))
+				 (string-append "[object "
+				    (js-get ctor (& "name") %this)
+				    "]")))
+			     
+			     (else
+			      (string-append "[object "
+				 (substring name 2)
+				 "]"))))))))))
       
       (js-bind! %this obj (& "toString")
 	 :value (js-make-function %this

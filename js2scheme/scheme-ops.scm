@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jun  7 19:26:39 2019 (serrano)                */
+;*    Last change :  Fri Jun 14 13:21:15 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -632,9 +632,21 @@
    
    (let* ((scmlhs (j2s-scheme lhs mode return conf))
 	  (scmrhs (j2s-scheme rhs mode return conf))
-	  (testl (or (atom? scmlhs) (and (symbol? scmlhs) (simple? rhs))))
-	  (testr (or (atom? scmrhs) (and (symbol? scmrhs) (simple? lhs)))))
+	  (simplelhs (simple? lhs))
+	  (simplerhs (simple? rhs))
+	  (testl (or (atom? scmlhs) (and (symbol? scmlhs) simplerhs)))
+	  (testr (or (atom? scmrhs) (and (symbol? scmrhs) simplelhs))))
       (cond
+	 ((and simplelhs simplerhs)
+	  (gen scmlhs scmrhs))
+	 (simplelhs
+	  (let ((right (gensym 'rhs)))
+	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+		 ,(gen scmlhs right))))
+	 (simplerhs
+	  (let ((left (gensym 'lhs)))
+	     `(let ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+		 ,(gen left scmrhs))))
 	 ((and testl testr)
 	  (gen scmlhs scmrhs))
 	 (testl
@@ -1269,9 +1281,11 @@
 	   mode return conf)
    
    (define (str-append flip left right)
-      (if flip
-	  `(js-jsstring-append ,right ,left)
-	  `(js-jsstring-append ,left ,right)))
+      (cond
+	 ((equal? left '(& "")) right)
+	 ((equal? right '(& "")) left)
+	 (flip `(js-jsstring-append ,right ,left))
+	 (else `(js-jsstring-append ,left ,right))))
    
    (define (add-string loc type left tl lhs right tr rhs
 	      mode return conf flip)
