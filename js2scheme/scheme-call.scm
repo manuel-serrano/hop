@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Jun 14 13:56:51 2019 (serrano)                */
+;*    Last change :  Mon Jun 17 08:04:19 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -141,7 +141,7 @@
 	(parseInt js-parseint (any any) %this)
 	(parseFloat js-parsefloat (any) %this)
 	(Number js-tonumber (any) %this)
-	(isNaN nanfl? (real) %this)
+	(isNaN nanfl? (real) #f)
 	(isNaN js-number-isnan? (number) #f)
 	(isNaN js-isnan? (any) %this))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jun 14 13:21:15 2019 (serrano)                */
+;*    Last change :  Mon Jun 17 07:35:59 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -593,14 +593,37 @@
 ;*    with-tmp-flip ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (with-tmp-flip flip lhs rhs mode return conf optype gen::procedure)
+
+   (define (ultrasimple? expr)
+      (cond
+	 ((isa? expr J2SRef)
+	  (with-access::J2SRef expr (decl)
+	     (not (decl-usage? decl '(assig)))))
+	 ((isa? expr J2SGlobalRef)
+	  (with-access::J2SGlobalRef expr (decl)
+	     (not (decl-usage? decl '(assig)))))
+	 ((isa? expr J2SLiteral)
+	  #t)
+	 ((isa? expr J2SBinary)
+	  (with-access::J2SBinary expr (lhs rhs)
+	     (and (ultrasimple? lhs) (ultrasimple? rhs))))
+	 ((isa? expr J2SUnary)
+	  (with-access::J2SUnary expr (expr)
+	     (ultrasimple? expr)))
+	 ((isa? expr J2SParen)
+	  (with-access::J2SParen expr (expr)
+	     (ultrasimple? expr)))
+	 ((isa? expr J2SCast)
+	  (with-access::J2SCast expr (expr)
+	     (ultrasimple? expr)))
+	 (else
+	  #f)))
    
    (define (simple? expr)
       (cond
 	 ((isa? expr J2SRef)
 	  #t)
 	 ((isa? expr J2SGlobalRef)
-	  #f)
-	 ((isa? expr J2SHopRef)
 	  #t)
 	 ((isa? expr J2SLiteral)
 	  #t)
@@ -632,18 +655,20 @@
    
    (let* ((scmlhs (j2s-scheme lhs mode return conf))
 	  (scmrhs (j2s-scheme rhs mode return conf))
+	  (ultrasimplelhs (ultrasimple? lhs))
+	  (ultrasimplerhs (ultrasimple? rhs))
 	  (simplelhs (simple? lhs))
 	  (simplerhs (simple? rhs))
 	  (testl (or (atom? scmlhs) (and (symbol? scmlhs) simplerhs)))
 	  (testr (or (atom? scmrhs) (and (symbol? scmrhs) simplelhs))))
       (cond
-	 ((and simplelhs simplerhs)
+	 ((and ultrasimplelhs ultrasimplerhs)
 	  (gen scmlhs scmrhs))
-	 (simplelhs
+	 ((ultrasimple? lhs)
 	  (let ((right (gensym 'rhs)))
 	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
 		 ,(gen scmlhs right))))
-	 (simplerhs
+	 ((ultrasimple? rhs)
 	  (let ((left (gensym 'lhs)))
 	     `(let ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
 		 ,(gen left scmrhs))))
