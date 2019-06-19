@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Jun 17 08:04:19 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 07:40:17 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -87,7 +87,7 @@
 	("replace" ,j2s-jsstring-replace-regexp string (regexp any) %this)
 	("replace" ,j2s-jsstring-replace-string string (string any) %this)
 	("replace" ,j2s-jsstring-replace string (any any) %this)
-	("replace" js-jsstring-maybe-replace any (any any) %this #t)
+	("replace" ,j2s-jsstring-maybe-replace any (any any) %this #t)
 	("match" js-jsstring-match string (any) %this)
 	("match" ,j2s-jsstring-match-string any (string) %this ,j2s-regexp-plain?)
 	("match" ,j2s-jsstring-match-string string (string) %this ,j2s-regexp-plain?)

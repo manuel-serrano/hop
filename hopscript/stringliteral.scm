@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Jun 14 14:00:29 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 07:36:01 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -103,9 +103,10 @@
 	   (js-jsstring-replace-string ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-replace ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-replace ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-replace ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-jsstring-maybe-replace ::obj ::bool ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-match ::JsStringLiteral ::obj ::JsGlobalObject)
-	   (js-jsstring-match-string ::JsStringLiteral ::JsStringLiteral ::JsRegExp ::JsGlobalObject)
+	   (js-jsstring-match-regexp-from-string ::JsStringLiteral ::JsStringLiteral ::JsRegExp ::JsGlobalObject)
+	   (js-jsstring-match-regexp-from-string-as-bool::bool ::JsStringLiteral ::JsStringLiteral ::JsRegExp ::JsGlobalObject)
 	   (js-jsstring-maybe-match ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-naturalcompare ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-naturalcompare ::obj ::obj ::JsGlobalObject ::obj)
@@ -531,7 +532,28 @@
 	     (set! left r)
 	     (set! right #f)
 	     r))
+	 ((<u32 (js-jsstring-length js) #u32:8192)
+	  ;; small strings, no need for tail recursion
+	  (let ((buffer (make-string
+			   (uint32->fixnum (js-jsstring-length js)))))
+	     (let loop ((i 0)
+			(s js))
+		(if (string? s)
+		    (begin
+		       (blit-buffer! s buffer i)
+		       (+fx i (string-length s)))
+		    (with-access::JsStringLiteral s (left right weight)
+		       (let ((ni (loop i left)))
+			  (if right
+			      (loop ni right)
+			      ni)))))
+	     (set! left buffer)
+	     (set! right #f)
+	     (set! weight (fixnum->uint32 (string-length buffer)))
+	     buffer))
 	 (else
+	  (tprint "ICI len=" (js-jsstring-length js))
+	  ;; tail recursive with heap allocated stack
 	  (let ((buffer (make-string
 			   (uint32->fixnum (js-jsstring-length js)))))
 	     (let loop ((i 0)
@@ -2514,13 +2536,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-replace this searchvalue replacevalue %this cache)
+(define (js-jsstring-maybe-replace this need22 searchvalue replacevalue %this cache)
    (cond
       ((js-jsstring? this)
-       (js-jsstring-replace this #t searchvalue replacevalue %this))
+       (js-jsstring-replace this need22 searchvalue replacevalue %this))
       ((isa? this JsString)
        (with-access::JsString this (val)
-	  (js-jsstring-replace val #t searchvalue replacevalue %this)))
+	  (js-jsstring-replace val need22 searchvalue replacevalue %this)))
       (else
        (with-access::JsGlobalObject %this (js-string-pcache)
 	  (js-call2 %this
@@ -2529,16 +2551,14 @@
 	     this searchvalue replacevalue)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-match ...                                            */
+;*    js-jsstring-match-regexp ...                                     */
 ;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.10    */
+;*    This function is used when the second argument is an existing    */
+;*    regular expression.                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-match this regexp %this)
-   (with-access::JsGlobalObject %this (js-regexp js-array js-string-pcache)
-      (let* ((rx (if (isa? regexp JsRegExp)
-		     regexp
-		     (js-new %this js-regexp regexp)))
-	     (proto (js-object-get-name/cache js-regexp (& "prototype")
+(define (js-jsstring-match-regexp this string rx %this)
+   (with-access::JsGlobalObject %this (js-regexp js-array js-regexp-prototype js-string-pcache)
+      (let* ((proto (js-object-get-name/cache js-regexp (& "prototype")
 		       #f %this (js-pcache-ref js-string-pcache 14)))
 	     (exec (js-object-get-name/cache proto (& "exec")
 		      #f %this (js-pcache-ref js-string-pcache 15))))
@@ -2583,18 +2603,43 @@
 				(loop (+fx 1 n))))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-match-string ...                                     */
+;*    js-jsstring-match-regexp-from-string ...                         */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-match-string this string rx %this)
+(define (js-jsstring-match-regexp-from-string this string rx %this)
    (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype js-string-pcache)
       (if (js-object-mode-plain? js-regexp-prototype)
-	  (js-regexp-prototype-exec %this rx this)
+	  (js-regexp-prototype-exec-for-match-string %this rx this)
 	  (let* ((proto (js-object-get-name/cache js-regexp (& "prototype")
 			   #f %this (js-pcache-ref js-string-pcache 35)))
 		 (exec (js-object-get-name/cache proto (& "exec")
 			  #f %this (js-pcache-ref js-string-pcache 36))))
 	     (js-call1 %this exec rx this)))))
    
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-match-regexp-from-string-as-bool ...                 */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-match-regexp-from-string-as-bool this string rx %this)
+   (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype js-string-pcache)
+      (if (js-object-mode-plain? js-regexp-prototype)
+	  (js-regexp-prototype-exec-as-bool %this rx this)
+	  (let* ((proto (js-object-get-name/cache js-regexp (& "prototype")
+			   #f %this (js-pcache-ref js-string-pcache 35)))
+		 (exec (js-object-get-name/cache proto (& "exec")
+			  #f %this (js-pcache-ref js-string-pcache 36))))
+	     (js-call1 %this exec rx this)))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-match ...                                            */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.10    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-match this regexp %this)
+   (with-access::JsGlobalObject %this (js-regexp)
+      (if (not (isa? regexp JsRegExp))
+	  (js-jsstring-match-regexp-from-string this regexp
+	     (js-new %this js-regexp regexp) %this)
+	  (js-jsstring-match-regexp this string regexp %this))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-match ...                                      */
 ;*---------------------------------------------------------------------*/

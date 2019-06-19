@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Jun 14 14:36:09 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 07:40:42 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -31,6 +31,7 @@
 	   (j2s-jsstring-replace-regexp obj args mode return conf)
 	   (j2s-jsstring-replace-string obj args mode return conf)
 	   (j2s-jsstring-replace obj args mode return conf)
+	   (j2s-jsstring-maybe-replace obj args mode return conf)
 	   (j2s-jsstring-charcodeat obj args mode return conf)
 	   (j2s-jsstring-match-string obj args mode return conf)
 	   (j2s-jsstring-match-regexp obj args mode return conf)))
@@ -154,29 +155,34 @@
 	     (lambda (tmp)
 		`(with-access::JsRegExp ,regexp (rx flags)
 		    ,(replace tmp 'rx (list 'js-regexp-flags-global? 'flags))))))))
-	   
+
+;*---------------------------------------------------------------------*/
+;*    string-replace-need22 ...                                        */
+;*---------------------------------------------------------------------*/
+(define (string-replace-need22 arg)
+   (cond
+      ((isa? arg J2SLiteralValue)
+       (with-access::J2SLiteralValue arg (val)
+	  (cond
+	     ((not (string? val)) #f)
+	     ((string-index val #\$) #t)
+	     (else #f))))
+      ((isa? arg J2SLiteralCnst)
+       (with-access::J2SLiteralCnst arg (val)
+	  (string-replace-need22 val)))
+      ((isa? arg J2SString)
+       (with-access::J2SString arg (val)
+	  (string-index val #\$)))
+      (else
+       #t)))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace-string ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-jsstring-replace-string obj args mode return conf)
-   
-   (define (need22::bool arg)
-      (cond
-	 ((isa? arg J2SLiteralValue)
-	  (with-access::J2SLiteralValue arg (val)
-	     (cond
-		((not (string? val)) #f)
-		((string-index val #\$) #t)
-		(else #f))))
-	 ((isa? arg J2SLiteralCnst)
-	  (with-access::J2SLiteralCnst (car args) (val)
-	     (need22 val)))
-	 (else
-	  #t)))
-   
    `(js-jsstring-replace-string
        ,(j2s-scheme obj mode return conf)
-       ,(need22 (cadr args))
+       ,(string-replace-need22 (cadr args))
        ,@(map (lambda (arg)
 		 (j2s-scheme arg mode return conf))
 	    args)))
@@ -185,21 +191,20 @@
 ;*    j2s-string-replace ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-jsstring-replace obj args mode return conf)
-   
-   (define (string-without-dollar obj)
-      (cond
-	 ((isa? obj J2SLiteralCnst)
-	  (with-access::J2SLiteralCnst obj (val)
-	     (string-without-dollar val)))
-	 ((isa? obj J2SString)
-	  (with-access::J2SString obj (val)
-	     (not (string-index val #\$))))
-	 (else
-	  #f)))
-  
    `(js-jsstring-replace
        ,(j2s-scheme obj mode return conf)
-       ,(not (string-without-dollar (cadr args)))
+       ,(string-replace-need22 (cadr args))
+       ,@(map (lambda (arg)
+		 (j2s-scheme arg mode return conf))
+	    args)))
+	   
+;*---------------------------------------------------------------------*/
+;*    j2s-string-maybe-replace ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-maybe-replace obj args mode return conf)
+   `(js-jsstring-maybe-replace
+       ,(j2s-scheme obj mode return conf)
+       ,(string-replace-need22 (cadr args))
        ,@(map (lambda (arg)
 		 (j2s-scheme arg mode return conf))
 	    args)))
@@ -253,7 +258,9 @@
 				(val rx))))
 		   (set-cdr! (last-pair cnsts)
 		      (list rx))
-		   `(js-jsstring-match-string
+		   ;; update j2s-totest if the name of the library function
+		   ;; JS-JSSTRING-MATCH-REGEXP-FROM-STRING changes
+		   `(js-jsstring-match-regexp-from-string
 		       ,(j2s-scheme obj mode return conf)
 		       ,(j2s-scheme (car args) mode return conf)
 		       ,(j2s-scheme cnst mode return conf)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jun 14 15:39:48 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 08:29:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -466,10 +466,17 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCond mode return conf)
    (with-access::J2SCond this (loc test then else)
-      (epairify loc
-	 `(if ,(j2s-test test mode return conf)
-	      ,(j2s-scheme then mode return conf)
-	      ,(j2s-scheme else mode return conf)))))
+      (let ((test (j2s-test test mode return conf)))
+	 (cond
+	    ((eq? test #t)
+	     (j2s-scheme then mode return conf))
+	    ((eq? test #f)
+	     (j2s-scheme else mode return conf))
+	    (else
+	     (epairify loc
+		`(if ,test
+		     ,(j2s-scheme then mode return conf)
+		     ,(j2s-scheme else mode return conf))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-put! ...                                          */

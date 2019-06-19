@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Jun 17 07:35:59 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 07:53:47 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -384,25 +384,41 @@
       ((& ^ BIT_OR >> >>> <<)
        (js-bitop loc op type lhs rhs mode return conf))
       ((OR)
-       (let ((lhsv (gensym 'lhs)))
+       (let* ((lhsv (gensym 'lhs))
+	      (test (if (eq? (j2s-vtype lhs) 'bool)
+			lhsv
+			(j2s-cast lhsv lhs (j2s-vtype lhs) 'bool conf))))
 	  `(let ((,(type-ident lhsv (j2s-vtype lhs) conf)
 		  ,(j2s-scheme lhs mode return conf)))
-	      (if ,(if (eq? (j2s-vtype lhs) 'bool)
-		       lhsv
-		       (j2s-cast lhsv lhs (j2s-vtype lhs) 'bool conf))
-		  ,(j2s-cast lhsv lhs (j2s-vtype lhs) type conf)
-		  ,(j2s-cast (j2s-scheme rhs mode return conf) rhs
-		      (j2s-vtype rhs) type conf)))))
+	      ,(cond
+		  ((eq? test #t)
+		   (j2s-cast lhsv lhs (j2s-vtype lhs) type conf))
+		  ((eq? test #f)
+		   (j2s-cast (j2s-scheme rhs mode return conf) rhs
+		      (j2s-vtype rhs) type conf))
+		  (else
+		   `(if ,test
+			,(j2s-cast lhsv lhs (j2s-vtype lhs) type conf)
+			,(j2s-cast (j2s-scheme rhs mode return conf) rhs
+			    (j2s-vtype rhs) type conf)))))))
       ((&&)
-       (let ((lhsv (gensym 'lhs)))
+       (let* ((lhsv (gensym 'lhs))
+	      (test (if (eq? (j2s-vtype lhs) 'bool)
+			lhsv
+			(j2s-cast lhsv lhs (j2s-vtype lhs) 'bool conf))))
 	  `(let ((,(type-ident lhsv (j2s-vtype lhs) conf)
 		  ,(j2s-scheme lhs mode return conf)))
-	      (if ,(if (eq? (j2s-vtype lhs) 'bool)
-		       lhsv
-		       (j2s-cast lhsv lhs (j2s-vtype lhs) 'bool conf))
-		  ,(j2s-cast (j2s-scheme rhs mode return conf) rhs
-		      (j2s-vtype rhs) type conf)
-		  ,(j2s-cast lhsv lhs (j2s-vtype lhs) type conf)))))
+	      ,(cond
+		  ((eq? test #t)
+		   (j2s-cast (j2s-scheme rhs mode return conf) rhs
+		      (j2s-vtype rhs) type conf))
+		  ((eq? test #f)
+		   (j2s-cast lhsv lhs (j2s-vtype lhs) type conf))
+		  (else
+		   `(if ,test
+			,(j2s-cast (j2s-scheme rhs mode return conf) rhs
+			    (j2s-vtype rhs) type conf)
+			,(j2s-cast lhsv lhs (j2s-vtype lhs) type conf)))))))
       ((MAX)
        (js-min-max loc '>>= lhs rhs mode return conf))
       ((MIN)
@@ -604,12 +620,6 @@
 	     (not (decl-usage? decl '(assig)))))
 	 ((isa? expr J2SLiteral)
 	  #t)
-	 ((isa? expr J2SBinary)
-	  (with-access::J2SBinary expr (lhs rhs)
-	     (and (ultrasimple? lhs) (ultrasimple? rhs))))
-	 ((isa? expr J2SUnary)
-	  (with-access::J2SUnary expr (expr)
-	     (ultrasimple? expr)))
 	 ((isa? expr J2SParen)
 	  (with-access::J2SParen expr (expr)
 	     (ultrasimple? expr)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Mon May 27 11:01:02 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 08:05:11 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
@@ -65,6 +65,8 @@
    (match-case expr
       ((js-regexp-prototype-exec ?%this ?rx ?arg)
        `(js-regexp-prototype-exec-as-bool ,%this ,rx ,arg))
+      ((js-jsstring-match-regexp-from-string ?obj ?arg ?rx ?%this)
+       `(js-jsstring-match-regexp-from-string-as-bool ,obj ,arg ,rx ,%this))
       ((let ((?var ?-)) ((kwote or) (js-array? ?var) (js-proxy-array? ?var)))
        expr)
       (else
@@ -86,19 +88,39 @@
 	  (j2s-test this mode return conf))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-bool-test ::J2SParen ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-bool-test this::J2SParen mode return conf)
+   (with-access::J2SParen this (expr)
+      (j2s-bool-test expr mode return conf)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SBinary ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-bool-test this::J2SBinary mode return conf)
    (with-access::J2SBinary this (op lhs rhs loc)
       (case op
 	 ((&&)
-	  (epairify loc
-	     `(and ,(j2s-test lhs mode return conf)
-		   ,(j2s-test rhs mode return conf))))
+	  (let ((t1 (j2s-test lhs mode return conf)))
+	     (cond
+		((eq? t1 #t)
+		 (j2s-test rhs mode return conf))
+		((eq? t1 #f)
+		 #f)
+		(else
+		 (epairify loc
+		    `(and ,t1 ,(j2s-test rhs mode return conf)))))))
 	 ((OR)
-	  (epairify loc
-	     `(or ,(j2s-test lhs mode return conf)
-		  ,(j2s-test rhs mode return conf))))
+	  (let ((t1 (j2s-test lhs mode return conf)))
+	     (cond
+		((eq? t1 #t)
+		 #t)
+		((eq? t1 #f)
+		 (j2s-test rhs mode return conf))
+		(else
+		 (epairify loc
+		    `(or ,(j2s-test lhs mode return conf)
+			 ,(j2s-test rhs mode return conf)))))))
 	 (else
 	  (call-next-method)))))
 

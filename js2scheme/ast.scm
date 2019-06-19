@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Jun  6 10:12:49 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 08:13:23 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -702,78 +702,78 @@
 ;*    generic walks ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-generic (walk0 n::J2SNode p::procedure)
-   (error "walk0" "Internal Error: forgot Node type"
+   (error "walk0" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk1 n::J2SNode p::procedure arg0)
-   (error "walk1" "Internal Error: forgot Node type"
+   (error "walk1" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk2 n::J2SNode p::procedure arg0 arg1)
-   (error "walk2" "Internal Error: forgot Node type"
+   (error "walk2" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk3 n::J2SNode p::procedure arg0 arg1 arg2)
-   (error "walk3" "Internal Error: forgot Node type"
+   (error "walk3" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk4 n::J2SNode p::procedure arg0 arg1 arg2 arg3)
-   (error "walk4" "Internal Error: forgot Node type"
+   (error "walk4" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk5 n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4)
-   (error "walk5" "Internal Error: forgot Node type"
+   (error "walk5" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk6 n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
-   (error "walk6" "Internal Error: forgot Node type"
+   (error "walk6" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk7 n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6)
-   (error "walk7" "Internal Error: forgot Node type"
+   (error "walk7" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0*::pair-nil n::J2SNode p::procedure)
-   (error "walk0*" "Internal Error: forgot Node type"
+   (error "walk0*" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk1*::pair-nil n::J2SNode p::procedure arg0)
-   (error "walk1*" "Internal Error: forgot Node type"
+   (error "walk1*" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk2*::pair-nil n::J2SNode p::procedure arg0 arg1)
-   (error "walk2*" "Internal Error: forgot Node type"
+   (error "walk2*" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk3*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2)
-   (error "walk3*" "Internal Error: forgot Node type"
+   (error "walk3*" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk4*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3)
-   (error "walk4!" "Internal Error: forgot Node type"
+   (error "walk4!" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk5*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4)
-   (error "walk5*" "Internal Error: forgot Node type"
+   (error "walk5*" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk6*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
-   (error "walk6*" "Internal Error: forgot Node type"
+   (error "walk6*" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk7*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6)
-   (error "walk7*" "Internal Error: forgot Node type"
+   (error "walk7*" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0!::J2SNode n::J2SNode p::procedure)
-   (error "walk0!" "Internal Error: forgot Node type"
+   (error "walk0!" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk1!::J2SNode n::J2SNode p::procedure arg0)
-   (error "walk1!" "Internal Error: forgot Node type"
+   (error "walk1!" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk2!::J2SNode n::J2SNode p::procedure arg0 arg1)
-   (error "walk2!" "Internal Error: forgot Node type"
+   (error "walk2!" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk3!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2)
-   (error "walk3!" "Internal Error: forgot Node type"
+   (error "walk3!" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk4!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2 arg3)
-   (error "walk4!" "Internal Error: forgot Node type"
+   (error "walk4!" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk5!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4)
-   (error "walk5!" "Internal Error: forgot Node type"
+   (error "walk5!" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk6!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
-   (error "walk6!" "Internal Error: forgot Node type"
+   (error "walk6!" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk7!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6)
-   (error "walk7!" "Internal Error: forgot Node type"
+   (error "walk7!" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 
 ;*---------------------------------------------------------------------*/

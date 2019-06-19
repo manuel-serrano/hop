@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jun 12 10:58:13 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 09:19:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -36,7 +36,8 @@
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
 	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-exec ::JsGlobalObject ::JsRegExp ::obj)
-	   (js-regexp-prototype-exec-as-bool ::JsGlobalObject ::JsRegExp ::obj))
+	   (js-regexp-prototype-exec-as-bool ::JsGlobalObject ::JsRegExp ::obj)
+	   (js-regexp-prototype-exec-for-match-string %this::JsGlobalObject this::JsRegExp string::obj))
 
    ;; export for memory profiling
    (export (js-regexp-construct ::JsGlobalObject pattern uflags loc)))
@@ -708,6 +709,74 @@
 		   (js-object-put-name/cache! this (& "lastIndex") lastindex
 		      #f %this (js-pcache-ref js-regexp-pcache 0))
 		   (js-null))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-prototype-exec-for-match-string ...                    */
+;*    -------------------------------------------------------------    */
+;*    This function is used when the regexp is executed on behalf of   */
+;*    string.match method and when regexp is built from a string.      */
+;*    In that particular case, the regexp is not global and there is   */
+;*    no need to manage the lastIndex property.                        */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-prototype-exec-for-match-string %this::JsGlobalObject this::JsRegExp string::obj)
+   
+   (define (js-substring s start end utf8)
+      (cond
+	 ((=fx end (+fx start 1))
+	  (js-jsstring-fromcharcode %this
+	     (char->integer (string-ref s start)) %this))
+	 (utf8
+	  (js-utf8->jsstring (substring s start end)))
+	 (else
+	  (js-ascii->jsstring (substring s start end)))))
+
+   (with-access::JsGlobalObject %this (js-regexp-pcache)
+      (with-access::JsRegExp this (rx)
+	 (let* ((jss (js-tojsstring string %this))
+		(s (js-jsstring->string jss))
+		(len (string-length s))
+		(enc (isa? s JsStringLiteralUTF8)))
+	    (cond
+	       ((pregexp-match-positions rx s 0)
+		=>
+		(lambda (r)
+		   ;; 10
+		   (let ((e (cdar r)))
+		      ;; 11
+		      (let* ((n (length r))
+			     (vec ($create-vector n))
+			     (a (js-vector->jsarray vec %this))
+			     (matchindex (caar r))
+			     (els ($create-vector 2)))
+			 ;; bind the result cmap and add the elements
+			 (with-access::JsArray a (elements cmap)
+			    (with-access::JsGlobalObject %this (js-regexp-exec-cmap)
+			       (set! cmap js-regexp-exec-cmap))
+			    (set! elements els))
+			 ;; 15
+			 (vector-set! els 0 matchindex)
+			 ;; (js-bind! %this a 'index :value matchindex)
+			 ;; 16
+			 (vector-set! els 1 jss)
+			 ;; (js-bind! %this a 'input :value jss)
+			 ;; 17
+			 ;; no need as already automatically set
+			 ;; 19
+			 (vector-set! vec 0
+			    (js-substring s (caar r) (cdar r) enc))
+			 ;; 20
+			 (let loop ((c (cdr r))
+				    (i 1))
+			    (when (pair? c)
+			       (let ((r (car c)))
+				  (vector-set! vec i
+				     (if (pair? r)
+					 (js-substring s (car r) (cdr r) enc)
+					 (js-undefined))))
+			       (loop (cdr c) (+fx i 1))))
+			 a))))
+	       (else
+		(js-null)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-prototype-exec-as-bool ...                             */
