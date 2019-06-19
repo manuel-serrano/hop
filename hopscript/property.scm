@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jun  7 21:19:45 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 11:15:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -107,6 +107,8 @@
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 
 	   (js-get/cache ::obj ::obj ::JsGlobalObject
+	      #!optional (point -1) (cspecs '()) (src ""))
+	   (js-jsobject-get/name-cache ::JsObject ::obj ::JsGlobalObject
 	      #!optional (point -1) (cspecs '()) (src ""))
 	   (js-get-name/cache ::obj ::JsStringLiteral ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
@@ -3081,7 +3083,7 @@
 		(when (<fx i (vector-length fields))
 		   (proc
 		      (js-string->jsstring
-			 (symbol->string
+			 (symbol->string!
 			    (class-field-name (vector-ref fields i))))
 		      %this)
 		   (loop (+fx i 1)))))

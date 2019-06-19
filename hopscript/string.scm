@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jun 14 09:12:47 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 11:38:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -119,6 +119,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-string! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (__proto__ js-string js-function
+					 js-string-prototype
 					 js-string-pcache)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
@@ -130,7 +131,7 @@
 	    ((@ js-make-pcache-table __hopscript_property) 37 "string"))
 	 
 	 ;; builtin prototype
-	 (define js-string-prototype
+	 (set! js-string-prototype
 	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
 	       (__proto__ __proto__)))

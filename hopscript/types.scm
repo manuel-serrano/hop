@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jun 12 12:15:40 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 11:37:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -325,6 +325,7 @@
 	      (js-dataview::JsFunction (default (class-nil JsFunction)))
 	      (js-boolean::JsFunction (default (class-nil JsFunction)))
 	      (js-string::JsFunction (default (class-nil JsFunction)))
+	      (js-string-prototype::JsString (default (class-nil JsString)))
 	      (js-symbol::JsFunction (default (class-nil JsFunction)))
 	      (js-number::JsFunction (default (class-nil JsFunction)))
 	      (js-function::JsFunction (default (class-nil JsFunction)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jun 19 07:36:01 2019 (serrano)                */
+;*    Last change :  Wed Jun 19 11:38:18 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -552,7 +552,6 @@
 	     (set! weight (fixnum->uint32 (string-length buffer)))
 	     buffer))
 	 (else
-	  (tprint "ICI len=" (js-jsstring-length js))
 	  ;; tail recursive with heap allocated stack
 	  (let ((buffer (make-string
 			   (uint32->fixnum (js-jsstring-length js)))))
@@ -1287,12 +1286,8 @@
 			 (eq? p (& "naturalCompare"))
 			 (eq? p (& "localeCompare"))
 			 (eq? p (& "trim")))
-		     (with-access::JsGlobalObject %this (js-string js-string-pcache)
-			(let ((proto (js-object-get-name/cache js-string
-					(& "prototype")
-					#f %this
-					(js-pcache-ref js-string-pcache 0))))
-			   (js-get proto prop %this))))
+		     (with-access::JsGlobalObject %this (js-string-prototype)
+			(js-jsobject-get/name-cache js-string-prototype prop %this -1 '(emap imap))))
 		    (else
 		     ;; see js-get-jsobject@property.scm
 		     ;; (tprint "JS_GET_STRING: " prop " " (typeof prop))

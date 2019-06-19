@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/nodejs/Makefile                   */
+#*    serrano/prgm/project/hop/hop/nodejs/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Nov  5 19:40:38 2017 (serrano)                */
+#*    Last change :  Wed Jun 19 11:58:32 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -24,6 +24,7 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = nodejs
+BCFLAGSRTS = -unsafe
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -ljs2scheme_s-$(HOPRELEASE) -lhopscript_s-$(HOPRELEASE) \
   -lhop_s-$(HOPRELEASE)
