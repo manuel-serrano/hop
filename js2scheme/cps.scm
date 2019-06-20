@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Jun 18 07:31:56 2019 (serrano)                */
+;*    Last change :  Thu Jun 20 09:18:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -585,13 +585,6 @@
 	     (let* ((y (cps (car wdecls)
 			  (KontStmt (lambda (ndecl::J2SStmt)
 				       (cond
-;* 					  ((null? (cdr decls))         */
-;* 					   (tprint "NULL CDR DECLS")   */
-;* 					   (set-car! decls ndecl)      */
-;* 					   (tprint ">>>> " (j2s->list this)) */
-;* 					   (let ((r (call-next-method))) */
-;* 					      (tprint "<<< R=" (j2s->list this)) */
-;* 					      r))                      */
 					  ((null? (cdr wdecls))
 					   (let ((block (instantiate::J2SBlock
 							   (loc loc)
