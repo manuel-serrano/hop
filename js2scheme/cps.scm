@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sun Jun  2 06:13:50 2019 (serrano)                */
+;*    Last change :  Tue Jun 18 07:31:56 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -281,7 +281,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SNode ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-generic (cps::J2SNode this::J2SNode k pack::procedure kbreaks kcontinues kbry fun::J2SFun)
+(define-generic (cps::J2SNode this::J2SNode k pack::procedure kbreaks kcontinues ktry fun::J2SFun)
    (warning "cps: should not be here " (typeof this))
    (kcall k this))
 
@@ -419,7 +419,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SStmtExpr ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-method (cps this::J2SStmt k pack kbreaks kcontinues ktry fun)
+(define-method (cps this::J2SStmtExpr k pack kbreaks kcontinues ktry fun)
    (assert-kont k KontStmt this)
    (with-access::J2SStmtExpr this (loc expr)
       (if (yield-expr? expr kbreaks kcontinues)
