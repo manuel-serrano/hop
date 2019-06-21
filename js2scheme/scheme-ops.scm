@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Jun 19 07:53:47 2019 (serrano)                */
+;*    Last change :  Fri Jun 21 08:58:15 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -634,7 +634,7 @@
 	 ((isa? expr J2SRef)
 	  #t)
 	 ((isa? expr J2SGlobalRef)
-	  #t)
+	  #f)
 	 ((isa? expr J2SLiteral)
 	  #t)
 	 ((isa? expr J2SBinary)
@@ -674,6 +674,8 @@
       (cond
 	 ((and ultrasimplelhs ultrasimplerhs)
 	  (gen scmlhs scmrhs))
+	 ((and testl testr)
+	  (gen scmlhs scmrhs))
 	 ((ultrasimple? lhs)
 	  (let ((right (gensym 'rhs)))
 	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
@@ -682,8 +684,6 @@
 	  (let ((left (gensym 'lhs)))
 	     `(let ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
 		 ,(gen left scmrhs))))
-	 ((and testl testr)
-	  (gen scmlhs scmrhs))
 	 (testl
 	  (let ((right (gensym 'rhs)))
 	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))

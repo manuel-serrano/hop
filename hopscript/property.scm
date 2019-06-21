@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jun 19 11:15:56 2019 (serrano)                */
+;*    Last change :  Fri Jun 21 10:49:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3187,7 +3187,7 @@
 		      ,(symbol-append 'JsFunction
 			  (string->symbol (integer->string (+fx largs 1))))))
 	      (with-access::JsFunction ,obj (procedure)
-		 (set! cmap ,obj)
+		 (set! owner ,obj)
 		 (set! method procedure)
 		 (procedure ,this ,@args)))
 	     ((eq? (object-class ,obj) JsProxy)
@@ -3199,7 +3199,7 @@
 		      (and (>=fx arity 0)
 			   (correct-arity? procedure ,(+fx largs 1)))))
 	      (with-access::JsFunction ,obj (procedure)
-		 (set! cmap ,obj)
+		 (set! owner ,obj)
 		 (set! method procedure)
 		 (procedure ,this ,@args)))
 	     (else
@@ -3415,6 +3415,8 @@
    (js-profile-log-method name point)
 
    (let ((n (js-toname name %this)))
+      (when (eq? n (& "incrementalAdd"))
+	 (tprint "GLOP,incrementalAdd"))
       (let loop ((obj o))
 	 (jsobject-find obj n
 	    ;; map search
@@ -3424,6 +3426,7 @@
 		  (with-access::JsObject obj ((wmap cmap) elements)
 		     (with-access::JsConstructMap wmap (methods %id)
 			(let ((el-or-desc (vector-ref elements i)))
+			   (tprint "GLOP,incrementalAdd.2 " (typeof el-or-desc))
 			   (cond
 			      ((or (isa? el-or-desc JsAccessorDescriptor)
 				   (isa? el-or-desc JsWrapperDescriptor))
@@ -3458,6 +3461,7 @@
 					     (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
 						;; correct arity, put in cache
 						(js-validate-pmap-pcache! ccache)
+						(tprint "GLOP.idi fun=" f)
 						(set! pmap omap)
 						(set! emap #t)
 						(set! cmap #f)

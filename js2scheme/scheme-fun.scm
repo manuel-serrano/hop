@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Jun  2 06:34:27 2019 (serrano)                */
+;*    Last change :  Fri Jun 21 12:22:53 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -456,7 +456,9 @@
 		`(js-object-alloc-fast %this ,f))))))
    
    (with-access::J2SFun this (loc body vararg mode params generator thisp)
-      (with-access::J2SDecl thisp (id)
+      (with-access::J2SDecl thisp (id vtype itype)
+	 (set! vtype 'object)
+	 (set! itype 'object)
 	 (let ((nfun (duplicate::J2SFun this
 			(rtype 'object)
 			(idthis #f)
