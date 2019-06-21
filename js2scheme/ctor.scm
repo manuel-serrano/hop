@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sun Jun  2 06:16:47 2019 (serrano)                */
+;*    Last change :  Fri Jun 21 12:50:58 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -41,7 +41,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    ctor-init-threshold ...                                          */
 ;*---------------------------------------------------------------------*/
-(define ctor-init-threshold 5)
+(define ctor-init-threshold 3)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ctor! ::obj ...                                              */
@@ -61,10 +61,8 @@
       (for-each (lambda (n) (constrsize! n)) nodes)
       ;; improve the init sequences this.a = x; this.b = y; ...
       (when (config-get args :optim-ctor #f)
-	 (when (>=fx (config-get args :verbose 0) 4)
-	    (fprintf (current-error-port) " [optim-ctor]"))
-	 (for-each (lambda (n) (constrinit! n this)) decls)
-	 (for-each (lambda (n) (constrinit! n this)) nodes))
+	 (for-each (lambda (n) (constrinit! n this args)) decls)
+	 (for-each (lambda (n) (constrinit! n this args)) nodes))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -129,38 +127,38 @@
 ;*---------------------------------------------------------------------*/
 ;*    constrinit! ::J2SNode ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constrinit! this::J2SNode prog::J2SProgram)
+(define-walk-method (constrinit! this::J2SNode prog::J2SProgram conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    constrinit! ::J2SDeclInit ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constrinit! this::J2SDeclInit prog)
+(define-walk-method (constrinit! this::J2SDeclInit prog conf)
    (with-access::J2SDeclInit this (id)
       (let ((val (j2sdeclinit-val-fun this)))
 	 (when (isa? val J2SFun)
 	    (with-access::J2SFun val (optimize)
 	       (when optimize
-		  (constrinit-ctor! val prog))))))
+		  (constrinit-ctor! val prog conf))))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    constrinit-ctor! ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (constrinit-ctor! fun::J2SFun prog::J2SProgram)
+(define (constrinit-ctor! fun::J2SFun prog::J2SProgram conf)
    (with-access::J2SFun fun (body)
-      (set! body (constrinit-seq! body prog))))
+      (set! body (constrinit-seq! body prog conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    constrinit-seq! ::J2SNode ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constrinit-seq! this::J2SNode prog::J2SProgram)
+(define-walk-method (constrinit-seq! this::J2SNode prog::J2SProgram conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    constrinit-seq! ::J2SBlock ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constrinit-seq! this::J2SBlock prog)
+(define-walk-method (constrinit-seq! this::J2SBlock prog conf)
 
    (define (simple-expr? expr obj)
       ;; is the expr simple enough so we are certain that there is no
@@ -274,6 +272,14 @@
 	  ;; too small to be optimized, not worth the bookkeeping
 	  (set-cdr! (last-pair init) rest)
 	  (call-default-walker))
+;* 	 ((with-access::J2SBlock this (loc)                            */
+;* 	     (memq (caddr loc) '(12570)))                              */
+;* 	  (set-cdr! (last-pair init) rest)                             */
+;* 	  (call-default-walker))                                       */
+	 ((with-access::J2SBlock this (loc)
+	     (memq (caddr loc) '(15014)))
+	  (set-cdr! (last-pair init) rest)
+	  (call-default-walker))
 	 (else
 	  ;; optimize the init sequence, first create two program globals
 	  (let ((cmap0 (gensym '%cmap0))
@@ -289,6 +295,9 @@
 		      globals)))
 	     ;; then split the init sequence
 	     (with-access::J2SBlock this (nodes loc)
+		(when (>=fx (config-get conf :verbose 0) 4)
+		   (fprintf (current-error-port)
+		      (format " [~a:~a]" (cadr loc) (caddr loc))))
 		(set! nodes
 		   (cons (instantiate::J2SOPTInitSeq
 			    (loc loc)
@@ -298,7 +307,7 @@
 			    (cmap1 cmap1)
 			    (cmap2 cmap2)
 			    (offset offset))
-		      (map! (lambda (n) (constrinit-seq! n prog)) rest))))
+		      (map! (lambda (n) (constrinit-seq! n prog conf)) rest))))
 	     this)))))
 
 ;*---------------------------------------------------------------------*/
