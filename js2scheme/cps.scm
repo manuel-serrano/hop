@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sun Jun  2 06:13:50 2019 (serrano)                */
+;*    Last change :  Thu Jun 20 09:18:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -281,7 +281,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SNode ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-generic (cps::J2SNode this::J2SNode k pack::procedure kbreaks kcontinues kbry fun::J2SFun)
+(define-generic (cps::J2SNode this::J2SNode k pack::procedure kbreaks kcontinues ktry fun::J2SFun)
    (warning "cps: should not be here " (typeof this))
    (kcall k this))
 
@@ -419,7 +419,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SStmtExpr ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-method (cps this::J2SStmt k pack kbreaks kcontinues ktry fun)
+(define-method (cps this::J2SStmtExpr k pack kbreaks kcontinues ktry fun)
    (assert-kont k KontStmt this)
    (with-access::J2SStmtExpr this (loc expr)
       (if (yield-expr? expr kbreaks kcontinues)
@@ -585,13 +585,6 @@
 	     (let* ((y (cps (car wdecls)
 			  (KontStmt (lambda (ndecl::J2SStmt)
 				       (cond
-;* 					  ((null? (cdr decls))         */
-;* 					   (tprint "NULL CDR DECLS")   */
-;* 					   (set-car! decls ndecl)      */
-;* 					   (tprint ">>>> " (j2s->list this)) */
-;* 					   (let ((r (call-next-method))) */
-;* 					      (tprint "<<< R=" (j2s->list this)) */
-;* 					      r))                      */
 					  ((null? (cdr wdecls))
 					   (let ((block (instantiate::J2SBlock
 							   (loc loc)
