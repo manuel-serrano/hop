@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Fri Apr 12 11:44:31 2019 (serrano)                */
+;*    Last change :  Fri Jun 21 20:28:59 2019 (serrano)                */
 ;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -34,8 +34,6 @@
 	     ,js-pcache-emap-expander))
    (eval `(define-expander js-pcache-amap
 	     ,js-pcache-amap-expander))
-   (eval `(define-expander js-pcache-iindex
-	     ,js-pcache-iindex-expander))
    (eval `(define-expander js-pcache-index
 	     ,js-pcache-index-expander))
    (eval `(define-expander js-pcache-vindex

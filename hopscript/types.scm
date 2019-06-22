@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jun 19 11:37:39 2019 (serrano)                */
+;*    Last change :  Fri Jun 21 20:13:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -94,7 +94,6 @@
 	      (pmap::obj (default #t))
 	      (fmap::obj (default #t))
 	      (amap::obj (default #t))
-	      (iindex::long (default -1))
 	      (index::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))
@@ -127,7 +126,8 @@
 	      (single::bool read-only (default #f))
 	      (vlen::long (default 0))
 	      (vtable::vector (default '#()))
-	      (vcache::obj (default #f)))
+	      (vcache::obj (default #f))
+	      (parent::JsConstructMap (default (class-nil JsConstructMap))))
 	   
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
