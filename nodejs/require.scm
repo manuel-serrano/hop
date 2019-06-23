@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed May 29 16:21:20 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 06:32:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -484,7 +484,9 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((expo (js-new0 %this js-object)))
 	    (with-access::JsObject expo (cmap)
-	       (set! cmap (instantiate::JsConstructMap (single #t))))
+	       (set! cmap (instantiate::JsConstructMap
+			     (single #t)
+			     (inline #t))))
 	    ;; id field
 	    (js-put! m (& "id") (js-string->jsstring id) #f %this)
 	    ;; exports
@@ -508,13 +510,14 @@
 		     (cmap js-initial-cmap)
 		     (__proto__ __proto__))))
 	    (js-bind! %this m js-symbol-tostringtag
-	       :value (js-string->jsstring "Module")
+	       :value (& "Module")
 	       :configurable #f :writable #f :enumerable #f)
 	    ;; module properties
 	    (module-init! m)
 	    ;; register the module in the current worker thread
 	    (with-access::WorkerHopThread worker (module-cache)
-	       (js-put! module-cache (js-string->jsstring filename) m #f %this))
+	       (when (js-object? module-cache)
+		  (js-put! module-cache (js-string->jsstring filename) m #f %this)))
 	    ;; return the newly allocated module
 	    (trace-item "module=" (typeof m))
 	    m))))
@@ -690,7 +693,8 @@
 (define (nodejs-import-meta::JsObject worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject url::bstring)
    (let ((obj (instantiateJsObject
-		 (__proto__ (js-null)))))
+		 (__proto__ (js-null))
+		 (elements ($create-vector 2)))))
       (js-bind! %this obj (& "url")
 	 :value (js-string->jsstring url))
       (js-bind! %this obj (& "vendor")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Jun 14 14:45:22 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 08:18:28 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -66,7 +66,8 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (define-js name arity proc . opt)
    `(cons ',name
-       (js-make-function %this ,proc ,arity ,(symbol->string name) ,@opt)))
+       (js-make-function %this ,proc ,arity ,(symbol->string name)
+	  ,@opt :src "_hop.scm")))
 		 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-process-hop ...                                            */
@@ -97,7 +98,8 @@
 
       (define server-prototype
 	 (instantiateJsObject
-	    (__proto__ __proto__)))
+	    (__proto__ __proto__)
+	    (elements ($create-vector 7))))
       
       (define js-server
 	 (js-make-function %this
@@ -142,7 +144,8 @@
 	 
       (define js-compiler-driver
 	 (let ((driver (instantiateJsObject
-			  (__proto__ __proto__))))
+			  (__proto__ __proto__)
+			  (elements ($create-vector 4)))))
 	    (js-bind! %this driver (& "pending")
 	       :get (js-make-function %this
 		       (lambda (this)

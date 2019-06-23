@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Thu May 23 08:46:13 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 06:21:19 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -343,7 +343,8 @@
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
    (with-access::JsGlobalObject %this (__proto__ js-function js-object)
       (let ((proto (instantiateJsObject
-		      (__proto__ __proto__))))
+		      (__proto__ __proto__)
+		      (elements ($create-vector 1)))))
 	 (js-init-typedarray-prototype! proto %this)
 	 
 	 (with-access::JsGlobalObject %this (js-int8array)
@@ -438,7 +439,8 @@
 	 ;; builtin ArrayBufferview prototype
 	 (define js-typedarray-prototype
 	    (instantiateJsObject
-	       (__proto__ proto)))
+	       (__proto__ proto)
+	       (elements ($create-vector 1))))
 
 	 (define (js-create-from-arraybuffer this::JsTypedArray
 		    buf::JsArrayBuffer off::uint32 len::uint32)
@@ -964,7 +966,8 @@
 	 ;; builtin DataView prototype
 	 (define js-dataview-prototype
 	    (instantiateJsObject
-	       (__proto__ __proto__)))
+	       (__proto__ __proto__)
+	       (elements ($create-vector 1))))
 	 
 	 (define (js-create-from-arraybuffer this::JsDataView
 		    buf::JsArrayBuffer off::uint32 len::uint32)

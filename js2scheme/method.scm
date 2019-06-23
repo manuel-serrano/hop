@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Jun  2 06:21:49 2019 (serrano)                */
+;*    Last change :  Sat Jun 22 05:54:08 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -130,7 +130,8 @@
 	       (J2SBlock
 		  (J2SStmtExpr
 		     (J2SPragma
-			`(js-profile-log-method-function ',name ',loc)))
+			`(js-profile-log-method-function
+			    (& ,(symbol->string name)) ',loc)))
 		  body))))
       val))
 
@@ -149,7 +150,8 @@
 	     (J2SBlock
 		(J2SStmtExpr
 		   (J2SPragma
-		      `(js-profile-log-method-method ',name ',loc)))
+		      `(js-profile-log-method-method
+			  (& ,(symbol->string name)) ',loc)))
 		body))
 	  body))
    

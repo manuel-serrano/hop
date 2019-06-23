@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Jun  7 21:38:36 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 06:55:05 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -579,7 +579,8 @@
 	 :size 10
 	 :construct slowbuffer-constr
 	 :prototype slowbuffer-proto
-	 :shared-cmap #f))
+	 :shared-cmap #f
+	 :src "_buffer.scm"))
 
    (define (check-offset data::bstring offset fxoffset sizeof action)
       ;; the error messages (case sensitive) are imposed by node_buffer.cc

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Thu May 23 08:49:18 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 06:28:35 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -94,7 +94,8 @@
       
       (define js-map-prototype
 	 (instantiateJsObject
-	    (__proto__ __proto__)))
+	    (__proto__ __proto__)
+	    (elements ($create-vector (if (eq? weak 'none) 13 5)))))
       
       (define js-map
 	 (js-make-function %this %js-map 0 name

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Jun  7 18:49:32 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 06:24:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -361,7 +361,8 @@
 	 ;; HopFrame prototype and constructor
 	 (set! js-hopframe-prototype
 	    (instantiateJsObject
-	       (__proto__ __proto__)))
+	       (__proto__ __proto__)
+	       (elements ($create-vector 8))))
 	 
 	 (js-bind! %this js-hopframe-prototype (& "post")
 	    :value (js-make-function %this

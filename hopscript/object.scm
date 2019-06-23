@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jun 14 14:05:25 2019 (serrano)                */
+;*    Last change :  Sat Jun 22 06:20:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -252,7 +252,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new-global-object #!key (size 64) name)
    (let* ((%proto (instantiateJsObject
-		     (cmap (instantiate::JsConstructMap))
+		     (cmap (instantiate::JsConstructMap
+			      (inline #t)))
 		     (__proto__ (js-null))
 		     (elements (make-vector 128))))
 	  (%this (instantiateJsGlobalObject
@@ -581,6 +582,10 @@
 		  :construct js-object-construct
 		  :src "object.scm"
 		  :shared-cmap #f))))
+
+      (with-access::JsFunction js-object (constrmap)
+	 (tprint "JS_OBJECT.constrmap")
+	 (js-debug-cmap constrmap))
 
       ;; getPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2

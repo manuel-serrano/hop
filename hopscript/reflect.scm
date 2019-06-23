@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  5 22:00:24 2018                          */
-;*    Last change :  Thu May 23 08:55:58 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 06:26:49 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript REFLECT object.              */
@@ -53,7 +53,8 @@
       
       (define js-reflect
 	 (instantiateJsObject
-	    (__proto__ __proto__)))
+	    (__proto__ __proto__)
+	    (elements ($create-vector 14))))
 
       (define (js-reflect-apply this target thisarg argarray)
 	 (js-apply-array %this target thisarg argarray))

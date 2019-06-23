@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu May 23 09:01:13 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 08:17:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -110,7 +110,7 @@
 		     (if (js-function? fatal)
 			 (js-call1 %this fatal %process exn)
 			 (raise exn))))
-	       1 "fatalException"))
+	       1 "fatalException" :src "process.scm"))
 	 ;; init tick machinery
 	 (let* ((m (nodejs-require-core "node_tick" %worker %this))
                 (tick (js-get m (& "initNodeTick") %this)))

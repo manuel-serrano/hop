@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Jun  4 07:44:05 2019 (serrano)                */
+;*    Last change :  Sat Jun 22 06:23:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -104,7 +104,15 @@
 		   (js-object-mode-set! nobj (js-object-mode obj))
 		   nobj)
 		(js-undefined))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-debug-object ::JsFunction ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (js-debug-object obj::JsFunction #!optional (msg ""))
+   (call-next-method)
+   (with-access::JsFunction obj (src)
+      (fprint (current-error-port) "   src=" src)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ...                                */
 ;*---------------------------------------------------------------------*/
@@ -128,8 +136,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-cmap ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (make-cmap props)
+(define (make-cmap inline props)
    (instantiate::JsConstructMap
+      (inline inline)
       (methods (make-vector (vector-length props)))
       (props props)))
 
@@ -195,7 +204,7 @@
 
       (set! js-function-strict-prototype
 	 (instantiateJsObject
-	    (cmap (instantiate::JsConstructMap))
+	    (cmap (instantiate::JsConstructMap (inline #t)))
 	    (__proto__ js-function-prototype)
 	    (elements (make-vector 10 (js-undefined)))))
       
@@ -296,19 +305,19 @@
 					 js-function-writable-strict-cmap
 					 js-function-prototype-cmap)
       (set! js-function-cmap
-	 (make-cmap
+	 (make-cmap #f
 	    `#(,(prop (& "prototype") (property-flags #f #f #f #f))
 	       ,(prop (& "length") (property-flags #f #f #f #f))
 	       ,(prop (& "name") (property-flags #f #f #t #f)))))
       
       (set! js-function-cmap-sans-prototype
-	 (make-cmap
+	 (make-cmap #f
 	    `#(,(prop (& "%null") (property-flags #f #f #f #f))
 	       ,(prop (& "length") (property-flags #f #f #f #f))
 	       ,(prop (& "name") (property-flags #f #f #t #f)))))
       
       (set! js-function-strict-cmap
-	 (make-cmap
+	 (make-cmap #f
 	    `#(,(prop (& "prototype") (property-flags #f #f #f #f))
 	       ,(prop (& "length") (property-flags #f #f #f #f))
 	       ,(prop (& "name") (property-flags #f #f #t #f))
@@ -316,13 +325,13 @@
 	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
       
       (set! js-function-writable-cmap
-	 (make-cmap
+	 (make-cmap #f
 	    `#(,(prop (& "prototype") (property-flags #t #f #f #f))
 	       ,(prop (& "length") (property-flags #f #f #f #f))
 	       ,(prop (& "name") (property-flags #f #f #t #f)))))
       
       (set! js-function-writable-strict-cmap
-	 (make-cmap
+	 (make-cmap #f
 	    `#(,(prop (& "prototype") (property-flags #t #f #f #f))
 	       ,(prop (& "length") (property-flags #f #f #f #f))
 	       ,(prop (& "name") (property-flags #f #f #t #f))
@@ -330,7 +339,7 @@
 	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
       
       (set! js-function-prototype-cmap
-	 (make-cmap
+	 (make-cmap #t
 	    `#(,(prop (& "constructor") (property-flags #t #f #t #f)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -460,8 +469,8 @@
 		      (let ((p (with-access::JsObject %this (__proto__)
 				  (instantiateJsObject
 				     (cmap js-function-prototype-cmap)
-				     (elements (vector fun))
-				     (__proto__ __proto__)))))
+				     (__proto__ __proto__)
+				     (elements (vector fun))))))
 			 (set! fprototype p)
 			 (set! %prototype p)
 			 js-function-prototype-property-rw))
@@ -569,12 +578,16 @@
       (cond
 	 ((js-function? this)
 	  (with-access::JsFunction this (src)
-	     (if (pair? src)
+	     (cond
+		((pair? src)
 		 (if (string? (cdr src))
 		     (js-string->jsstring (cdr src))
 		     (js-string->jsstring
 			(format "[Function ~a:~a]"
-			   (cadr (car src)) (caddr (car src)))))
+			   (cadr (car src)) (caddr (car src))))))
+		((string? src)
+		 (js-string->jsstring src))
+		(else
 		 (let ((name (js-get this (& "name") %this)))
 		    (if (js-jsstring? name)
 			(js-jsstring-append
@@ -582,7 +595,7 @@
 			   (js-jsstring-append
 			      name
 			      (js-ascii->jsstring "]")))
-			(js-ascii->jsstring "[Function]"))))))
+			(js-ascii->jsstring "[Function]")))))))
 	 ((js-function-proxy? this)
 	  (with-access::JsProxy this ((target __proto__))
 	     (tostring target)))

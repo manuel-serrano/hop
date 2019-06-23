@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Jun  5 08:04:20 2019 (serrano)                */
+;*    Last change :  Sat Jun 22 06:25:34 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -146,6 +146,21 @@
 				      ,__proto__)))
 			   ,obj)
 		       e)))
+		((instantiateJsObject
+		    (__proto__ ?__proto__)
+		    (elements ($create-vector ?n)))
+		 ;; The purpose of this special expansion is to force allocate
+		 ;; the object with the JS-MAKE-JSOBJECT that creates
+		 ;;; properties inline, in contrast to the regular
+		 ;; constructor that allocates properties in a separate vector.
+		 (let ((obj (gensym 'o))
+		       (vec (gensym 'v)))
+		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+				      ,n
+				      (instantiate::JsConstructMap (inline #t))
+				      ,__proto__)))
+			   ,obj)
+		       e)))
 		(else
 		 (let* ((nobj (gensym 'nobj))
 			(nx (list 'let
@@ -153,7 +168,8 @@
 					(cons 'instantiate::JsObject
 					   (append (if (assq 'cmap (cdr x))
 						       '()
-						       '((cmap (instantiate::JsConstructMap))))
+						       ;; MS WARNING: inline shold be #f, left #t just for debugging
+						       '((cmap (instantiate::JsConstructMap (inline #t)))))
 					      (filter (lambda (f)
 							 (not (builtin? f)))
 						 (cdr x))))))

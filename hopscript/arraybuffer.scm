@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Thu May 23 08:45:52 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 06:19:26 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -157,7 +157,8 @@
 	 ;; builtin ArrayBuffer prototype
 	 (define js-arraybuffer-prototype
 	    (instantiateJsObject
-	       (__proto__ __proto__)))
+	       (__proto__ __proto__)
+	       (elements ($create-vector 1))))
 
 	 (define (%js-arraybuffer this . items)
 	    (apply js-arraybuffer-construct 

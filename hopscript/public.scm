@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jun 21 18:52:25 2019 (serrano)                */
+;*    Last change :  Sat Jun 22 06:19:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -327,7 +327,8 @@
       (set! constrmap
 	 (instantiate::JsConstructMap
 	    (ctor ctor)
-	    (size constrsize)))
+	    (size constrsize)
+	    (inline #t)))
       ctor))
    
 ;*---------------------------------------------------------------------*/

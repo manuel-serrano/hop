@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Fri Jun 21 12:50:58 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 18:36:38 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -41,7 +41,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    ctor-init-threshold ...                                          */
 ;*---------------------------------------------------------------------*/
-(define ctor-init-threshold 3)
+(define ctor-init-threshold 2)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ctor! ::obj ...                                              */
@@ -276,10 +276,10 @@
 ;* 	     (memq (caddr loc) '(12570)))                              */
 ;* 	  (set-cdr! (last-pair init) rest)                             */
 ;* 	  (call-default-walker))                                       */
-	 ((with-access::J2SBlock this (loc)
-	     (memq (caddr loc) '(15014)))
-	  (set-cdr! (last-pair init) rest)
-	  (call-default-walker))
+;* 	 ((with-access::J2SBlock this (loc)                            */
+;* 	     (memq (caddr loc) '(15014)))                              */
+;* 	  (set-cdr! (last-pair init) rest)                             */
+;* 	  (call-default-walker))                                       */
 	 (else
 	  ;; optimize the init sequence, first create two program globals
 	  (let ((cmap0 (gensym '%cmap0))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jun 21 18:49:56 2019 (serrano)                */
+;*    Last change :  Sat Jun 22 06:06:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -53,7 +53,6 @@
 	   (js-make-pcache-table ::int ::obj)
 	   (js-validate-pmap-pcache! ::JsPropertyCache)
 	   (js-pcache-update-descriptor! ::JsPropertyCache ::long ::JsObject ::obj)
-	   (cmap-next-proto-cmap::JsConstructMap ::JsGlobalObject ::JsConstructMap ::obj ::obj)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-imap ::JsPropertyCache)
 	   (inline js-pcache-emap ::JsPropertyCache)
@@ -228,6 +227,11 @@
 	   (js-call/cache-miss8 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   
 	   (js-get-vindex::long ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    TBR debug                                                        */
+;*---------------------------------------------------------------------*/
+(define enable-sibling #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -411,10 +415,12 @@
 ;*    js-debug-cmap ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-debug-cmap cmap #!optional (msg ""))
-   (with-access::JsConstructMap cmap (%id props methods size transitions)
-      (fprint (current-error-port) msg
-	 "cmap.%id=" %id
+   (with-access::JsConstructMap cmap (%id props methods size transitions inline sibling)
+      (fprint (current-error-port) "~~~~ " msg (typeof cmap)
+	 " cmap.%id=" %id
 	 " size=" size
+	 " inline=" inline
+	 " sibling=" (typeof sibling)
 	 " plength=" (vector-length props)
 	 " mlength=" (vector-length methods)
 	 "\nprops.names=" (vector-map prop-name props)
@@ -441,12 +447,12 @@
 	 (let ((nels (copy-vector elements nlen)))
 	    (cond-expand (profile (profile-cache-extension nlen)))
 	    (vector-set! nels idx value)
-	    '(when ($jsobject-elements-inline? obj)
-	       ;; when switching from inlined to non-inlined the object
-	       ;; hclass must change
-	       (with-access::JsConstructMap cmap (parent)
-		  (set! cmap parent)
-		  (vector-fill! elements #unspecified)))
+	    (when ($jsobject-elements-inline? obj)
+	       ;; cleanup for the GC
+	       (vector-fill! elements #unspecified)
+	       ;; when switching from inlined properties to non-inlined
+	       ;; properties the object cmap must change
+	       (set! cmap (sibling-cmap! cmap #f)))
 	    (set! elements nels)
 	    obj))))
 
@@ -599,21 +605,74 @@
 	    (set! index i)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-pcache-get-direct! ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Used to get a direct object property.                            */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-get-direct! pcache::JsPropertyCache i o::JsObject inlp::bool)
+   
+   (define (update-inline! pcache omap)
+      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
+	 (with-access::JsConstructMap omap (sibling)
+	    (when sibling
+	       (set! cmap sibling)))
+	 (set! imap omap)
+	 (set! pmap #t)
+	 (set! emap #t)
+	 (set! amap #t)
+	 (set! index i)))
+
+   (define (update-noinline! pcache omap)
+      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
+	 (with-access::JsConstructMap omap (sibling)
+	    (if (and enable-sibling sibling)
+		(set! imap sibling)
+		(set! imap #t)))
+	 (set! cmap omap)
+	 (set! pmap #t)
+	 (set! emap #t)
+	 (set! amap #t)
+	 (set! index i)))
+   
+   (with-access::JsObject o (cmap)
+      (with-access::JsConstructMap cmap (inline)
+	 (if (and enable-sibling inline)
+	     (update-inline! pcache cmap)
+	     (update-noinline! pcache cmap)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-direct! ...                                     */
 ;*    -------------------------------------------------------------    */
 ;*    Used to access a direct object property.                         */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-update-direct! pcache::JsPropertyCache i o::JsObject inlp::bool)
-   [assert (i) (>=fx i 0)]
-   (with-access::JsObject o ((omap cmap))
+   
+   (define (update-inline! pcache omap)
       (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
-;* 	 (when (and (js-object-inline-next-element? o i) inlp)         */
-;* 	    (set! imap omap))                                          */
+	 (set! cmap omap)
+	 (set! imap omap)
+	 (set! pmap #t)
+	 (set! emap #t)
+	 (set! amap #t)
+	 (set! index i)))
+
+   (define (update-noinline! pcache omap)
+      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
+	 (with-access::JsConstructMap omap (sibling)
+	    (if (and enable-sibling sibling)
+		(set! imap sibling)
+		(set! imap #t)))
 	 (set! cmap omap)
 	 (set! pmap #t)
 	 (set! emap #t)
 	 (set! amap #t)
-	 (set! index i))))
+	 (set! index i)))
+   
+   (with-access::JsObject o (cmap)
+      (with-access::JsConstructMap cmap (inline)
+	 (if (and enable-sibling inline)
+	     (update-inline! pcache cmap)
+	     (update-noinline! pcache cmap)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-owner! ...                                      */
@@ -641,23 +700,43 @@
 ;*    Used when adding a direct property to an object.                 */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-next-direct! pcache::JsPropertyCache o::JsObject nextmap i)
-   (with-access::JsObject o ((omap cmap))
-      (unless (eq? omap (js-not-a-cmap))
-	 (with-access::JsPropertyCache pcache (imap pmap amap cmap emap index owner)
-	    (js-validate-pmap-pcache! pcache)
-	    (if (js-object-inline-next-element? o i)
+   
+   (define (next-inline! pcache omap)
+      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index owner)
+	 (with-access::JsConstructMap omap (sibling)
+	    (if sibling
+		(set! cmap (sibling-cmap! nextmap #f))
+		(set! cmap #t)))
+	 (set! imap nextmap)
+	 (set! emap omap)
+	 (set! pmap omap)
+	 (set! amap #t)
+	 (set! owner #f)
+	 (set! index i)))
+
+   (define (next-noinline! pcache omap)
+      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index owner)
+	 (with-access::JsConstructMap omap (sibling)
+	    (if (and #f enable-sibling sibling)
 		(begin
-;* 		   (set! imap nextmap)                                 */
-		   (set! cmap nextmap)
-		   (set! emap omap))
+		   (set! imap (sibling-cmap! nextmap #t))
+		   (set! emap sibling))
 		(begin
 		   (set! imap #t)
-		   (set! cmap nextmap)
-		   (set! emap #t)))
-	    (set! pmap omap)
-	    (set! amap #t)
-	    (set! owner #f)
-	    (set! index i)))))
+		   (set! emap #t))))
+	 (set! cmap nextmap)
+	 (set! pmap omap)
+	 (set! amap #t)
+	 (set! owner #f)
+	 (set! index i)))   
+   
+   (with-access::JsObject o (cmap)
+      (unless (eq? cmap (js-not-a-cmap))
+	 (js-validate-pmap-pcache! pcache)
+	 (with-access::JsConstructMap cmap (inline)
+	    (if (and #f enable-sibling inline)
+		(next-inline! pcache cmap)
+		(next-noinline! pcache cmap))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cmap-size ...                                                    */
@@ -672,6 +751,28 @@
    (with-access::JsObject o (elements)
       (and (js-object-inline-elements? o) (<fx idx (vector-length elements)))))
 
+(define (check-inline-elements! o::JsObject where prop)
+   (with-access::JsObject o (cmap)
+      (cond
+	 ((js-object-inline-elements? o)
+	  (with-access::JsConstructMap cmap (inline)
+	     (unless inline
+		(tprint "*** WARNING: " where " INCONSISTENT OBJECT " (typeof o) " " prop)
+		(js-debug-object o)
+		(js-debug-cmap cmap))))
+	 ((eq? cmap (js-not-a-cmap))
+	  #t)
+	 (else
+	  (with-access::JsConstructMap cmap (inline)
+	     (when inline
+		(tprint "*** ERROR: " where " INCONSISTENT OBJECT " (typeof o) " " prop)
+		(js-debug-object o)
+		(js-debug-cmap cmap)
+		(tprint "forcing fpe...(for gdb)")
+		(tprint (/fx 1 0))
+		(error where "inconsistent object/cmap"
+		   prop)))))))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    transition ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -686,8 +787,6 @@
       (let ((val (when (eq? name (& "__proto__"))
 		    value)))
 	 (set! transitions (cons (transition name val flags nmap) transitions)))
-      (with-access::JsConstructMap nmap (parent)
-	 (set! parent omap))
       nmap))
 
 ;*---------------------------------------------------------------------*/
@@ -702,10 +801,11 @@
 	 (vector-set! nvec len val)
 	 nvec))
    
-   (with-access::JsConstructMap omap (props methods ctor)
+   (with-access::JsConstructMap omap (props methods ctor inline)
       (let ((newprops (vector-extend props (prop name flags)))
 	    (newmethods (vector-extend methods #unspecified)))
 	 (instantiate::JsConstructMap
+	    (inline inline)
 	    (ctor ctor)
 	    (props newprops)
 	    (methods newmethods)))))
@@ -743,6 +843,37 @@
 	    (methods newmethods)))))
 
 ;*---------------------------------------------------------------------*/
+;*    sibling-cmap! ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Create a sibling on demand. Siblings are connecting cmap of      */
+;*    non-inlined and inlined objects (objects for which the elements  */
+;*    vector is inlined or not).                                       */
+;*---------------------------------------------------------------------*/
+(define (sibling-cmap! cmap::JsConstructMap inl)
+   (with-access::JsConstructMap cmap (sibling)
+      (if sibling
+	  (with-access::JsConstructMap sibling (inline)
+	     (let ((s sibling)
+		   (i inline))
+		(assert (cmap s) (eq? i inl)))
+	     sibling)
+	  (let ((ncmap (duplicate::JsConstructMap cmap
+			  (inline inl)
+			  (sibling cmap)
+			  (lock (make-spinlock "JsConstructMap")))))
+	     (set! sibling ncmap)
+	     ncmap))))
+
+;*---------------------------------------------------------------------*/
+;*    cmap-find-sibling ...                                            */
+;*---------------------------------------------------------------------*/
+(define (cmap-find-sibling cmap::JsConstructMap inl)
+   (with-access::JsConstructMap cmap (sibling inline)
+      (if (eq? inline inl)
+	  cmap
+	  (sibling-cmap! cmap inl))))
+   
+;*---------------------------------------------------------------------*/
 ;*    cmap-find-transition ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (cmap-find-transition omap::JsConstructMap name val flags::int)
@@ -772,24 +903,6 @@
 			  (set! transitions trs)
 			  (transition-nextmap t))
 		       (loop (cdr trs) trs)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    cmap-find-inline-map ...                                         */
-;*---------------------------------------------------------------------*/
-(define (cmap-find-inline-map omap::JsConstructMap)
-   (let ((flags (property-flags #t #t #t #f)))
-      (cmap-find-transition omap (& "") #f flags)))
-
-;*---------------------------------------------------------------------*/
-;*    cmap-next-inline-cmap ...                                        */
-;*---------------------------------------------------------------------*/
-(define (cmap-next-inline-cmap omap::JsConstructMap)
-   (let* ((flags (property-flags #t #t #t #f))
-	  (ncmap (duplicate::JsConstructMap omap
-		    (lock (make-spinlock "JsConstructMap"))
-		    (%id (gencmapid)))))
-      (link-cmap! omap ncmap (& "") #f flags)
-      ncmap))
 
 ;*---------------------------------------------------------------------*/
 ;*    cmap-next-proto-cmap ...                                         */
@@ -860,6 +973,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-names->cmap names)
    (instantiate::JsConstructMap
+      (inline #t)
       (props (vector-map (lambda (n) (prop n (property-flags #t #t #t #f)))
 		names))
       (methods (make-vector (vector-length names) #unspecified))))
@@ -871,6 +985,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-strings->cmap names %this)
    (instantiate::JsConstructMap
+      (inline #t)
       (props (vector-map (lambda (n)
 			    (prop (js-name->jsstring n)
 			       (property-flags #t #t #t #f)))
@@ -1592,9 +1707,9 @@
 			    [assert (i) (<=fx i (vector-length elements))]
 			    (cond
 			       ((<u32 cntmiss (inline-threshold))
-				(js-pcache-update-direct! cache i o #t))
+				(js-pcache-get-direct! cache i o #t))
 			       ((<u32 cntmiss (vtable-threshold))
-				(js-pcache-update-direct! cache i o #f))
+				(js-pcache-get-direct! cache i o #f))
 			       ((not (eq? prop (& "__proto__")))
 				(js-pcache-vtable! omap cache i)))
 			    el-or-desc)
@@ -2077,50 +2192,54 @@
 		     (cond
 			((cmap-find-transition cmap name v flags)
 			 =>
-			 (lambda (nextmap)
+			 (lambda (nmap)
 			    ;; follow the next map
-			    (with-access::JsConstructMap nextmap (ctor methods props detachcnt)
-			       (cond
-				  ((not (js-function? v))
-				   (when (js-function? (vector-ref methods index))
+			    (let ((nextmap (cmap-find-sibling nmap
+					      (js-object-inline-elements? o))))
+			       (with-access::JsConstructMap nextmap (ctor methods props detachcnt)
+				  (cond
+				     ((not (js-function? v))
+				      (when (js-function? (vector-ref methods index))
+					 ;; invalidate cache method and cache
+					 (js-invalidate-cache-method! nextmap index)
+					 (js-invalidate-pmap-pcaches! %this "extend-mapped.3" name)
+					 (reset-cmap-vtable! nextmap))
+				      (when cache
+					 (js-pcache-next-direct! cache o nextmap index)))
+				     ((eq? v (vector-ref methods index))
+				      (when cache
+					 (js-pcache-next-direct! cache o nextmap index)))
+				     ((eq? (vector-ref methods index) #f)
+				      (when cache
+					 (js-pcache-next-direct! cache o nextmap index)))
+				     ((>fx detachcnt (method-invalidation-threshold))
+				      ;; MS 2019-01-19
+				      ;; on a method conflict, if the number of
+				      ;; properties in cache is small enough,
+				      ;; instead of invalidating all methods,
+				      ;; a new cmap is created. see
+				      ;; see the prototype initialization
+				      ;; in js-make-function@function.scm
 				      ;; invalidate cache method and cache
 				      (js-invalidate-cache-method! nextmap index)
-				      (js-invalidate-pmap-pcaches! %this "extend-mapped.3" name)
-				      (reset-cmap-vtable! nextmap))
-				   (when cache
-				      (js-pcache-next-direct! cache o nextmap index)))
-				  ((eq? v (vector-ref methods index))
-				   (when cache
-				      (js-pcache-next-direct! cache o nextmap index)))
-				  ((eq? (vector-ref methods index) #f)
-				   (when cache
-				      (js-pcache-next-direct! cache o nextmap index)))
-				  ((>fx detachcnt (method-invalidation-threshold))
-				   ;; MS 2019-01-19
-				   ;; on a method conflict, if the number of
-				   ;; properties in cache is small enough,
-				   ;; instead of invalidating all methods,
-				   ;; a new cmap is created. see
-				   ;; see the prototype initialization
-				   ;; in js-make-function@function.scm
-				   ;; invalidate cache method and cache
-				   (js-invalidate-cache-method! nextmap index)
-				   (js-invalidate-pmap-pcaches! %this "extend-mapped.1" name)
-				   (reset-cmap-vtable! nextmap)
-				   (when cache
-				      ;; MS 9may2019 CARE INVALIDATE
-				      (js-pcache-next-direct! cache o nextmap index)))
-				  (else
-				   (let ((detachedmap (extend-cmap cmap name flags)))
-				      (set! detachcnt (+fx 1 detachcnt))
-				      (with-access::JsConstructMap detachedmap (methods ctor)
-					 ;; validate cache method and don't cache
-					 (vector-set! methods index v))
-				      (set! nextmap detachedmap)
-				      v)))
-			       (js-object-push/ctor! o index v ctor)
-			       (set! cmap nextmap)
-			       v)))
+				      (js-invalidate-pmap-pcaches! %this "extend-mapped.1" name)
+				      (reset-cmap-vtable! nextmap)
+				      (when cache
+					 ;; MS 9may2019 CARE INVALIDATE
+					 (js-pcache-next-direct! cache o nextmap index)))
+				     (else
+				      (let ((detachedmap (extend-cmap cmap name flags)))
+					 (set! detachcnt (+fx 1 detachcnt))
+					 (with-access::JsConstructMap detachedmap (methods ctor)
+					    ;; validate cache method and don't cache
+					    (vector-set! methods index v))
+					 (set! nextmap detachedmap)
+					 v)))
+				  (js-object-push/ctor! o index v ctor)
+				  (set! cmap
+				     (cmap-find-sibling nextmap
+					(js-object-inline-elements? o)))
+				  v))))
 			(single
 			 (js-invalidate-pmap-pcaches! %this "extend-mapped.4" name)
 			 (extend-cmap! cmap name flags)
@@ -2149,7 +2268,9 @@
 					 (js-pcache-next-direct! cache o nextmap index))))
 			       (link-cmap! cmap nextmap name v flags)
 			       (js-object-push/ctor! o index v ctor))
-			    (set! cmap nextmap)
+			    (set! cmap
+			       (cmap-find-sibling nextmap
+				  (js-object-inline-elements? o)))
 			    v)))))))))
    
    (define (update-properties-object! obj desc)
@@ -2230,12 +2351,14 @@
 		(extend-properties-object!))))))
 
    (check-unplain! o name)
-   (let loop ((obj o))
-      (jsobject-find obj name
-	 update-mapped-object!
-	 update-properties-object!
-	 extend-object!
-	 loop)))
+   (let ((v (let loop ((obj o))
+	       (jsobject-find obj name
+		  update-mapped-object!
+		  update-properties-object!
+		  extend-object!
+		  loop))))
+      (check-inline-elements! o "<<< js-put-jsobject" name)
+      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/debug! ...                                                */
@@ -2473,13 +2596,14 @@
 	    (synchronize lock
 	       (let* ((axs (accessor-property? get set))
 		      (index (vector-length props))
-		      (inl (js-object-inline-next-element? o index))
 		      (flags (property-flags writable enumerable configurable axs)))
 		  (cond
 		     ((cmap-find-transition cmap name value flags)
 		      =>
-		      (lambda (nextmap)
-			 (let ((val-or-desc (if (accessor-property? get set)
+		      (lambda (nmap)
+			 (let ((nextmap (cmap-find-sibling nmap
+					   (js-object-inline-elements? o)))
+			       (val-or-desc (if (accessor-property? get set)
 						(instantiate::JsAccessorDescriptor
 						   (name name)
 						   (get get)
@@ -2563,14 +2687,17 @@
 
    [assert (name) (not (symbol? name))]
    [assert (name) (eq? name (js-toname name %this))]
-   (with-access::JsObject o (cmap)
-      (if (not (eq? cmap (js-not-a-cmap)))
-	  (jsobject-map-find o name
-	     update-mapped-object!
-	     extend-mapped-object!)
-	  (jsobject-properties-find o name
-	     update-properties-object!
-	     extend-properties-object!))))
+
+   (let ((v (with-access::JsObject o (cmap)
+	       (if (not (eq? cmap (js-not-a-cmap)))
+		   (jsobject-map-find o name
+		      update-mapped-object!
+		      extend-mapped-object!)
+		   (jsobject-properties-find o name
+		      update-properties-object!
+		      extend-properties-object!)))))
+      (check-inline-elements! o "<<< js-bind!" name)
+      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-define ...                                                    */
@@ -2993,7 +3120,9 @@
 			     (duplicate::JsConstructMap cmap
 				(%id (gencmapid))))
 			  (set! cmap
-			     (cmap-next-proto-cmap %this cmap __proto__ v)))))
+			     (cmap-find-sibling 
+				(cmap-next-proto-cmap %this cmap __proto__ v)
+				(js-object-inline-elements? o))))))
 		(set! __proto__ v))
 	     o))))
 

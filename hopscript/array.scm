@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jun 12 11:31:06 2019 (serrano)                */
+;*    Last change :  Sat Jun 22 09:04:23 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2209,7 +2209,8 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-22.1.3.31
    (with-access::JsGlobalObject %this (__proto__ js-symbol-unscopables)
       (let ((unscopables (instantiateJsObject
-			    (__proto__ __proto__))))
+			    (__proto__ __proto__)
+			    (elements ($create-vector 7)))))
 	 (for-each (lambda (id)
 		      (js-bind! %this unscopables
 			 (js-ascii-name->jsstring id)

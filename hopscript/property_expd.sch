@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Jun 21 20:28:12 2019 (serrano)                */
+;*    Last change :  Sat Jun 22 06:05:19 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -321,12 +321,16 @@
 		`(,(cache-miss-fun prop)
 		  ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs))
 	       ((eq? cs 'imap)
-		(loop 'cmap))
-;* 	       ((eq? cs 'imap)                                         */
-;* 		`(let ((idx (js-pcache-index ,cache)))                 */
-;* 		    (js-profile-log-cache ,cache :imap #t)             */
-;* 		    (js-profile-log-index idx)                         */
-;* 		    (js-object-inline-ref ,obj idx)))                  */
+		`(let ((idx (js-pcache-index ,cache)))
+		    (js-profile-log-cache ,cache :imap #t)
+		    (js-profile-log-index idx)
+		    (unless (js-object-inline-elements? ,obj)
+		       (tprint "PAS BON get " ',loc)
+		       (js-debug-object ,obj)
+		       (with-access::JsObject ,obj (cmap)
+			  (js-debug-cmap cmap))
+		       (js-debug-pcache ,cache))
+		    (js-object-inline-ref ,obj idx)))
 	       ((eq? cs 'cmap)
 		`(let ((idx (js-pcache-index ,cache)))
 		    (js-profile-log-cache ,cache :cmap #t)
@@ -512,19 +516,25 @@
 		     `((@ js-object-put-name/cache-miss! __hopscript_property)
 		       ,obj ,prop ,tmp ,throw ,%this
 		       ,cache ,loc ',cspecs))
-;* 		    ((eq? cs 'imap)                                    */
-;* 		     `(let ((idx (js-pcache-index ,cache)))            */
-;* 			 (js-profile-log-cache ,cache :imap #t)        */
-;* 			 (js-profile-log-index idx)                    */
-;* 			 (js-object-inline-set! ,obj idx ,tmp)         */
-;* 			 ,tmp))                                        */
 		    ((eq? cs 'imap)
-		     (loop 'cmap))
+		     `(let ((idx (js-pcache-index ,cache)))
+			 (js-profile-log-cache ,cache :imap #t)
+			 (js-profile-log-index idx)
+			 (unless (js-object-inline-elements? ,obj)
+			    (tprint "PAS BON put " ',loc)
+			    (js-debug-object ,obj)
+			    (js-debug-pcache ,cache))
+			 (js-object-inline-set! ,obj idx ,tmp)
+			 ,tmp))
 		    ((eq? cs 'emap)
 		     `(let ((idx (js-pcache-index ,cache)))
 			 (js-profile-log-cache ,cache :emap #t)
 			 (js-profile-log-index idx)
 			 (js-object-inline-set! ,obj idx ,tmp)
+			 (unless (js-object-inline-elements? ,obj)
+			    (tprint "PAS BON eput " ',loc)
+			    (js-debug-object ,obj)
+			    (js-debug-pcache ,cache))
 			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'cmap)

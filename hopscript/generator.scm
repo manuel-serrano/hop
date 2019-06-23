@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Mon May 13 10:38:18 2019 (serrano)                */
+;*    Last change :  Sat Jun 22 08:51:49 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -94,7 +94,7 @@
       
       (define js-gen-proto-proto
 	 (let ((proto (instantiateJsObject
-			 (cmap (instantiate::JsConstructMap))
+			 (cmap (instantiate::JsConstructMap (inline #t)))
 			 (__proto__ __proto__)
 			 (elements ($create-vector 1)))))
 	    (js-bind! %this proto js-symbol-iterator
@@ -108,13 +108,13 @@
       
       (define js-gen-proto
 	 (instantiateJsObject
-	    (cmap (instantiate::JsConstructMap))
+	    (cmap (instantiate::JsConstructMap (inline #t)))
 	    (__proto__ js-gen-proto-proto)
 	    (elements ($create-vector 4))))
       
       (define js-genfun-proto
 	 (instantiateJsObject
-	    (cmap (instantiate::JsConstructMap))
+	    (cmap (instantiate::JsConstructMap (inline #t)))
 	    (__proto__ js-function-prototype)
 	    (elements ($create-vector 2))))
       
