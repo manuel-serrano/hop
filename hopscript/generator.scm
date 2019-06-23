@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Sat Jun 22 08:51:49 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 19:51:14 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -206,9 +206,6 @@
       
       (set! js-generator-prototype js-gen-proto)
       (set! js-generatorfunction-prototype js-genfun-proto)
-      
-      
-      
       ))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Jun 21 12:22:53 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 19:52:05 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -873,7 +873,8 @@
       (if generator
 	  `(with-access::JsGlobalObject %this (js-generator-prototype)
 	      (instantiateJsObject
-		 (__proto__ js-generator-prototype)))
+		 (__proto__ js-generator-prototype)
+		 (elements ($create-vector 1))))
 	  #f)))
    
 ;*---------------------------------------------------------------------*/
