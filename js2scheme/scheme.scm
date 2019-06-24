@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Jun 23 19:52:36 2019 (serrano)                */
+;*    Last change :  Mon Jun 24 20:06:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2822,6 +2822,12 @@
 		   (set! ,offset len0)
 		   (set! ,cmap0 ,cmap)
 		   (set! ,cmap1 cmap))))))
+
+   (define (elements-init-sans-cmap offset nodes)
+      `(begin
+	  ,@(map (lambda (n)
+		    (j2s-scheme n mode return conf))
+	       nodes)))
    
    (with-access::J2SOPTInitSeq this (loc ref nodes cmap0 cmap1 cmap2 offset)
       (let ((%ref (gensym '%ref))
@@ -2829,10 +2835,12 @@
 	    (i (gensym '%i))
 	    (elements (gensym '%elements)))
 	 `(let ((,%ref ,(j2s-scheme ref mode return conf)))
-	     (with-access::JsObject ,%ref (cmap elements)
+	     (with-access::JsObject ,%ref (cmap elements __proto__)
 		,(cond
 		    ((not cmap0)
-		     (vector-inits %ref elements i 0 nodes cmap2))
+		     `(if (js-object-mode-plain? __proto__)
+			  ,(vector-inits %ref elements i 0 nodes cmap2)
+			  ,(elements-init-sans-cmap offset nodes)))
 		    ((or (not cmap1) (not (eq? (j2s-type ref) 'object)))
 		     `(begin
 			 ,@(map (lambda (n)
