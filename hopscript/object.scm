@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Jun 22 06:20:50 2019 (serrano)                */
+;*    Last change :  Mon Jun 24 08:18:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -582,10 +582,6 @@
 		  :construct js-object-construct
 		  :src "object.scm"
 		  :shared-cmap #f))))
-
-      (with-access::JsFunction js-object (constrmap)
-	 (tprint "JS_OBJECT.constrmap")
-	 (js-debug-cmap constrmap))
 
       ;; getPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2
@@ -1212,7 +1208,7 @@
 	       (flags-enumerable? flags)
 	       #f
 	       (flags-accessor? flags)))))
-   
+
    (for-each js-seal-property! (js-object-properties o))
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-sealed-set! o #t)

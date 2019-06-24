@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sun Jun 23 18:36:38 2019 (serrano)                */
+;*    Last change :  Mon Jun 24 09:07:44 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -41,7 +41,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    ctor-init-threshold ...                                          */
 ;*---------------------------------------------------------------------*/
-(define ctor-init-threshold 2)
+(define ctor-init-threshold 5)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ctor! ::obj ...                                              */
@@ -290,7 +290,7 @@
 		(set! globals
 		   (cons* `(define ,cmap0 #f)
 		      `(define ,cmap1 #f)
-		      `(define ,cmap2 (js-names->cmap (vector ,@(init-names init))))
+		      `(define ,cmap2 (js-names->cmap (vector ,@(init-names init)) #t))
 		      `(define ,offset -1)
 		      globals)))
 	     ;; then split the init sequence

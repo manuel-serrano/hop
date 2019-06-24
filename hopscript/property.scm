@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jun 22 06:06:08 2019 (serrano)                */
+;*    Last change :  Mon Jun 24 07:29:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -61,7 +61,7 @@
 	   
 	   (inline property-name::JsStringLiteral ::struct)
 
-	   (js-names->cmap::JsConstructMap ::vector)
+	   (js-names->cmap::JsConstructMap ::vector ::bool)
 	   (js-strings->cmap::JsConstructMap ::vector ::JsGlobalObject)
 	   (js-object-literal-init! ::JsObject)
 	   (js-object-literal-spread-assign! ::JsObject ::obj ::JsGlobalObject)
@@ -971,9 +971,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    Used by j2sscheme to create literal objects.                     */
 ;*---------------------------------------------------------------------*/
-(define (js-names->cmap names)
+(define (js-names->cmap names inline)
    (instantiate::JsConstructMap
-      (inline #t)
+      (inline inline)
       (props (vector-map (lambda (n) (prop n (property-flags #t #t #t #f)))
 		names))
       (methods (make-vector (vector-length names) #unspecified))))
@@ -2579,7 +2579,9 @@
 	    (if (and hidden-class (not single))
 		(let ((nextmap (extend-cmap cmap name flags)))
 		   (link-cmap! cmap nextmap name value flags)
-		   (set! cmap nextmap)
+		   (set! cmap
+		      (cmap-find-sibling nextmap
+			 (js-object-inline-elements? o)))
 		   nextmap)
 		(begin
 		   (extend-cmap! cmap name flags)
@@ -2615,7 +2617,9 @@
 						value)))
 			    ;; follow the next map 
 			    (with-access::JsConstructMap nextmap (props)
-			       (set! cmap nextmap)
+			       (set! cmap
+				  (cmap-find-sibling nextmap
+				     (js-object-inline-elements? o)))
 			       (js-object-push! o index val-or-desc)
 			       value))))
 		     (axs
@@ -2754,7 +2758,9 @@
 			     (let ((nextmap (clone-cmap cmap)))
 				(link-cmap! cmap nextmap n #f -1)
 				[assert (o) (isa? nextmap JsConstructMap)]
-				(set! cmap nextmap)
+				(set! cmap
+				   (cmap-find-sibling nextmap
+				      (js-object-inline-elements? o)))
 				(with-access::JsConstructMap nextmap (props)
 				   ;; remove the prop from the cmap
 				   (vector-set! props i (prop #f 0))
@@ -3292,7 +3298,7 @@
 		  (with-access::JsFunction obj (len arity)
 		     (and (>=fx arity 0) (=fx len largs))))
 	     (with-access::JsFunction obj (procedure)
-		(set! cmap obj)
+		(set! owner obj)
 		(set! method procedure)
 		(apply procedure this args)))
 	    (else
@@ -3311,7 +3317,7 @@
 		      (and (>=fx arity 0)
 			   (correct-arity? procedure ,(+fx largs 1)))))
 	      (with-access::JsFunction ,obj (procedure)
-		 (set! cmap ,obj)
+		 (set! owner ,obj)
 		 (set! method procedure)
 		 (procedure ,this ,@args)))
 	     ((js-proxy? ,obj)

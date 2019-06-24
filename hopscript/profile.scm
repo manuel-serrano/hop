@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sun Jun  2 07:05:29 2019 (serrano)                */
+;*    Last change :  Mon Jun 24 08:04:55 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -186,6 +186,7 @@
 ;*    js-profile-log-get ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-get prop loc)
+   (tprint "js-profile-log-get prop=" prop)
    (set! *profile-gets* (+llong #l1 *profile-gets*))
    (when *profile-gets-props*
       (let ((c (assq prop *profile-gets-props*)))

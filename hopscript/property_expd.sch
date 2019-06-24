@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Jun 22 06:05:19 2019 (serrano)                */
+;*    Last change :  Mon Jun 24 08:13:54 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -324,12 +324,6 @@
 		`(let ((idx (js-pcache-index ,cache)))
 		    (js-profile-log-cache ,cache :imap #t)
 		    (js-profile-log-index idx)
-		    (unless (js-object-inline-elements? ,obj)
-		       (tprint "PAS BON get " ',loc)
-		       (js-debug-object ,obj)
-		       (with-access::JsObject ,obj (cmap)
-			  (js-debug-cmap cmap))
-		       (js-debug-pcache ,cache))
 		    (js-object-inline-ref ,obj idx)))
 	       ((eq? cs 'cmap)
 		`(let ((idx (js-pcache-index ,cache)))
@@ -520,10 +514,6 @@
 		     `(let ((idx (js-pcache-index ,cache)))
 			 (js-profile-log-cache ,cache :imap #t)
 			 (js-profile-log-index idx)
-			 (unless (js-object-inline-elements? ,obj)
-			    (tprint "PAS BON put " ',loc)
-			    (js-debug-object ,obj)
-			    (js-debug-pcache ,cache))
 			 (js-object-inline-set! ,obj idx ,tmp)
 			 ,tmp))
 		    ((eq? cs 'emap)
@@ -531,10 +521,6 @@
 			 (js-profile-log-cache ,cache :emap #t)
 			 (js-profile-log-index idx)
 			 (js-object-inline-set! ,obj idx ,tmp)
-			 (unless (js-object-inline-elements? ,obj)
-			    (tprint "PAS BON eput " ',loc)
-			    (js-debug-object ,obj)
-			    (js-debug-pcache ,cache))
 			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'cmap)

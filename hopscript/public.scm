@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Jun 22 06:19:40 2019 (serrano)                */
+;*    Last change :  Mon Jun 24 09:42:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1398,7 +1398,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toobject %this::JsGlobalObject o)
    (or (js-toobject-failsafe %this o)
-       (tprint (/fx 1 0))
        (js-raise-type-error %this "toObject: cannot convert ~s" o)))
 
 ;*---------------------------------------------------------------------*/

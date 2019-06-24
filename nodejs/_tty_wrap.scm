@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Jun 23 08:23:23 2019 (serrano)                */
+;*    Last change :  Mon Jun 24 08:19:24 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -41,11 +41,6 @@
    (define (create-tty-proto)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (js-new0 %this js-object)))
-
-	    (tprint "process-tty-wrap")
-	    (js-debug-object obj)
-	    (with-access::JsObject obj (cmap)
-	       (js-debug-cmap cmap))
 	    (js-put! obj (& "close")
 	       (js-make-function %this
 		  (lambda (this cb)
