@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/property.js     */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/property.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Thu Oct 11 08:14:21 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Tue Jun 25 07:40:22 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
 /*=====================================================================*/
@@ -273,6 +273,50 @@ Ctor.prototype = {
 };
 
 assert( new Ctor( 1, 2, 3, 4 ).d == 444, "prototype.__proto__ constructor bis" );
+
+function Ctor2( a, b, c, d, e, f ) {
+   this.a = a;
+   this.b = b;
+   this.c = c;
+   this.d = d;
+   this.e = e;
+   this.f = f;
+}
+
+Ctor2.prototype = {
+   __proto__: {
+      set e( v ) { },
+      get e() { return 34;}
+   }
+}
+
+assert( new Ctor2( 1, 2, 3, 4, 5, 6 ).e === 34, "ctor2 with proto setter" );
+   
+function Ctor3( a, b, c, d, e, f ) {
+   this.a = a;
+   this.b = b;
+   this.c = c;
+   this.d = d;
+   this.e = e;
+   this.f = f;
+}
+
+Ctor3__proto__ = {};
+
+Ctor3.prototype = {
+   __proto__ = Ctor3__proto__;
+}
+
+assert( new Ctor3( 1, 2, 3, 4, 5, 6 ).e === 5, "ctor3 with proto setter" );
+assert( new Ctor3( 1, 2, 3, 4, 50, 6 ).e === 50, "ctor3 with proto setter" );
+assert( new Ctor3( 1, 2, 3, 4, 500, 6 ).e === 500, "ctor3 with proto setter" );
+
+Object.defineProperty( Ctor3__proto__, "e", {
+   set e( v ) { },
+   get e() { return 34;}
+} );
+
+assert( new Ctor3( 1, 2, 3, 4, 5, 6 ).e === 34, "ctor3 with proto setter" );
 
 function SETX( o, v ) {
    o.xxx = v;

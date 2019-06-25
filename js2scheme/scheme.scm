@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Jun 24 20:06:02 2019 (serrano)                */
+;*    Last change :  Tue Jun 25 07:53:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2848,7 +2848,8 @@
 			      nodes)))
 		    (else
 		     `(let ((,cmap cmap))
-			 (if (or (eq? ,cmap ,cmap1) (eq? ,cmap ,cmap2))
+			 (if (and (js-object-mode-plain? __proto__)
+				  (or (eq? ,cmap ,cmap1) (eq? ,cmap ,cmap2)))
 			     ;; cache hit
 			     ,(vector-inits %ref elements i offset nodes cmap1)
 			     ;; cache miss

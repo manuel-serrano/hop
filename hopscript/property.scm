@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jun 24 07:29:26 2019 (serrano)                */
+;*    Last change :  Tue Jun 25 07:57:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2041,7 +2041,8 @@
 
    (define (check-unplain! obj prop)
       (when (and (js-function? obj)
-		 (or (eq? prop (& "call")) (eq? prop (& "apply"))))
+		 (or (eq? prop (& "call"))
+		     (eq? prop (& "apply"))))
 	 (js-object-mode-plain-set! obj #f)))
    
    (define (update-from-descriptor! o propobj index::long v desc)
