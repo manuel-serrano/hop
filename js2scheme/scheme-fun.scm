@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Jun 23 19:52:05 2019 (serrano)                */
+;*    Last change :  Fri Jun 28 11:20:43 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -927,8 +927,7 @@
 (define-walk-method (ctor-body! this::J2SOPTInitSeq)
    (with-access::J2SOPTInitSeq this (nodes)
       (duplicate::J2SOPTInitSeq this
-	 (cmap0 #f)
-	 (cmap1 #f)
+	 (cmap #f)
 	 (nodes (map ctor-body! nodes)))))
 
 ;*---------------------------------------------------------------------*/
@@ -949,5 +948,5 @@
 (define-walk-method (unctor-body! this::J2SOPTInitSeq)
    (with-access::J2SOPTInitSeq this (nodes)
       (duplicate::J2SOPTInitSeq this
-	 (cmap1 #f)
+	 (cmap #f)
 	 (nodes (map ctor-body! nodes)))))

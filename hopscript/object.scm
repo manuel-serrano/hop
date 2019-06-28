@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Jun 24 08:18:54 2019 (serrano)                */
+;*    Last change :  Fri Jun 28 11:08:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -58,7 +58,9 @@
 	   
 	   (generic js-extensible?::bool ::obj ::JsGlobalObject)
 	   (generic js-preventextensions ::obj ::JsGlobalObject)
-	   (generic js-ownkeys ::obj ::JsGlobalObject)))
+	   (generic js-ownkeys ::obj ::JsGlobalObject)
+
+	   (js-object-has-setter? ::JsObject ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -1330,6 +1332,22 @@
 	     (for-each in-property (js-object-properties obj))))
       (when (js-object? __proto__)
 	 (js-for-in-prototype __proto__ obj proc %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-has-setter? ...                                        */
+;*    -------------------------------------------------------------    */
+;*    THis function is an over-approximation of the HAS-A-SETTER       */
+;*    predicate. An object is said to have no setter if:               */
+;*      1) it does not own any setter.                                 */
+;*      2) it's __proto__ is Object.__proto__                          */
+;*      3) Object.__proto__ has no setter                              */
+;*---------------------------------------------------------------------*/
+(define (js-object-has-setter? obj %this)
+   (when (js-object-mode-plain? obj)
+      (with-access::JsObject obj (__proto__)
+	 (when (js-object-mode-plain? __proto__)
+	    (with-access::JsGlobalObject %this ((%proto __proto__))
+	       (eq? %proto __proto__))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

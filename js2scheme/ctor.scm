@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Mon Jun 24 20:00:55 2019 (serrano)                */
+;*    Last change :  Fri Jun 28 10:52:48 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -138,7 +138,7 @@
       (let ((val (j2sdeclinit-val-fun this)))
 	 (when (isa? val J2SFun)
 	    (with-access::J2SFun val (optimize)
-	       (when optimize
+	       (when (and optimize (decl-usage? this '(new)))
 		  (constrinit-ctor! val prog conf))))))
    this)
 
@@ -149,16 +149,17 @@
    (with-access::J2SFun fun (body)
       (set! body (constrinit-seq! body prog conf))))
 
-;*---------------------------------------------------------------------*/
-;*    constrinit-seq! ::J2SNode ...                                    */
-;*---------------------------------------------------------------------*/
-(define-walk-method (constrinit-seq! this::J2SNode prog::J2SProgram conf)
-   (call-default-walker))
-
+;* {*---------------------------------------------------------------------*} */
+;* {*    constrinit-seq! ::J2SNode ...                                    *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (constrinit-seq! this::J2SNode prog::J2SProgram conf) */
+;*    (call-default-walker))                                           */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    constrinit-seq! ::J2SBlock ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constrinit-seq! this::J2SBlock prog conf)
+;;(define-walk-method (constrinit-seq! this::J2SBlock prog conf)
+(define (constrinit-seq! this::J2SBlock prog conf)
 
    (define (simple-expr? expr obj)
       ;; is the expr simple enough so we are certain that there is no
@@ -267,11 +268,14 @@
       (cond
 	 ((null? init)
 	  ;; no init, just a regular block
-	  (call-default-walker))
+;* 	  (call-default-walker)                                        */
+	  this)
 	 ((<fx (length init) ctor-init-threshold)
 	  ;; too small to be optimized, not worth the bookkeeping
 	  (set-cdr! (last-pair init) rest)
-	  (call-default-walker))
+	  this)
+;* 	  (set-cdr! (last-pair init) rest)                             */
+;* 	  (call-default-walker))                                       */
 ;* 	 ((with-access::J2SBlock this (loc)                            */
 ;* 	     (memq (caddr loc) '(12570)))                              */
 ;* 	  (set-cdr! (last-pair init) rest)                             */
@@ -282,15 +286,12 @@
 ;* 	  (call-default-walker))                                       */
 	 (else
 	  ;; optimize the init sequence, first create two program globals
-	  (let ((cmap0 (gensym '%cmap0))
-		(cmap1 (gensym '%cmap1))
-		(cmap2 (gensym '%cmap2))
+	  (let ((cmap (gensym '%cmap))
 		(offset (gensym '%offset)))
 	     (with-access::J2SProgram prog (globals)
 		(set! globals
-		   (cons* `(define ,cmap0 #f)
-		      `(define ,cmap1 #f)
-		      `(define ,cmap2 (js-names->cmap (vector ,@(init-names init)) #t))
+		   (cons* 
+		      `(define ,cmap (js-names->cmap (vector ,@(init-names init)) #t))
 		      `(define ,offset -1)
 		      globals)))
 	     ;; then split the init sequence
@@ -303,11 +304,10 @@
 			    (loc loc)
 			    (ref ref)
 			    (nodes (map adjust-cspecs! init))
-			    (cmap0 cmap0)
-			    (cmap1 cmap1)
-			    (cmap2 cmap2)
+			    (cmap cmap)
 			    (offset offset))
-		      (map! (lambda (n) (constrinit-seq! n prog conf)) rest))))
+		      rest)))
+;* 		      (map! (lambda (n) (constrinit-seq! n prog conf)) rest)))) */
 	     this)))))
 
 ;*---------------------------------------------------------------------*/

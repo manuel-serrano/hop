@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jun 25 07:53:03 2019 (serrano)                */
+;*    Last change :  Fri Jun 28 10:56:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2796,7 +2796,7 @@
 		(error "j2s-scheme" "wrong init expr"
 		   (j2s->list node)))))))
    
-   (define (vector-inits %ref elements i offset nodes cmap1)
+   (define (vector-inits %ref elements i offset nodes cmap)
       `(let* ((,elements elements)
 	      (,i ,offset))
 	  ,@(map (lambda (init offset)
@@ -2808,52 +2808,25 @@
 		       mode return conf))
 	       nodes (iota (length nodes)))
 	  (with-access::JsObject ,%ref ((omap cmap))
-	     (set! omap ,cmap1))))
+	     (set! omap ,cmap))))
    
-   (define (elements-init offset nodes cmap cmap0 cmap1)
-      `(with-access::JsConstructMap ,cmap (props)
-	  (let ((len0 (vector-length props)))
-	     ,@(map (lambda (n)
-		       (j2s-scheme n mode return conf))
-		  nodes)
-	     (with-access::JsConstructMap cmap (props)
-		(when (=fx (+fx len0 ,(length nodes))
-			 (vector-length props))
-		   (set! ,offset len0)
-		   (set! ,cmap0 ,cmap)
-		   (set! ,cmap1 cmap))))))
-
    (define (elements-init-sans-cmap offset nodes)
       `(begin
 	  ,@(map (lambda (n)
 		    (j2s-scheme n mode return conf))
 	       nodes)))
    
-   (with-access::J2SOPTInitSeq this (loc ref nodes cmap0 cmap1 cmap2 offset)
+   (with-access::J2SOPTInitSeq this (loc ref nodes cmap offset)
       (let ((%ref (gensym '%ref))
-	    (cmap (gensym '%cmap0))
 	    (i (gensym '%i))
 	    (elements (gensym '%elements)))
-	 `(let ((,%ref ,(j2s-scheme ref mode return conf)))
-	     (with-access::JsObject ,%ref (cmap elements __proto__)
-		,(cond
-		    ((not cmap0)
-		     `(if (js-object-mode-plain? __proto__)
-			  ,(vector-inits %ref elements i 0 nodes cmap2)
-			  ,(elements-init-sans-cmap offset nodes)))
-		    ((or (not cmap1) (not (eq? (j2s-type ref) 'object)))
-		     `(begin
-			 ,@(map (lambda (n)
-				   (j2s-scheme n mode return conf))
-			      nodes)))
-		    (else
-		     `(let ((,cmap cmap))
-			 (if (and (js-object-mode-plain? __proto__)
-				  (or (eq? ,cmap ,cmap1) (eq? ,cmap ,cmap2)))
-			     ;; cache hit
-			     ,(vector-inits %ref elements i offset nodes cmap1)
-			     ;; cache miss
-			     ,(elements-init offset nodes cmap cmap0 cmap1))))))))))
+	 (if cmap
+	     `(let ((,%ref ,(j2s-scheme ref mode return conf)))
+		 (with-access::JsObject ,%ref (elements __proto__)
+		    (if (not (js-object-has-setter? ,%ref %this))
+			,(vector-inits %ref elements i 0 nodes cmap)
+			,(elements-init-sans-cmap offset nodes))))
+	     (elements-init-sans-cmap offset nodes)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDProducer ...                                    */

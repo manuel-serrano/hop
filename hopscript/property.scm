@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jun 25 07:57:29 2019 (serrano)                */
+;*    Last change :  Fri Jun 28 15:23:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -290,7 +290,7 @@
 	 (set! pmap #t)
 	 (set! emap #t)
 	 (set! amap #t)))
-   
+
    (when js-pmap-valid
       (synchronize js-cache-table-lock
 ;* 	 (tprint "--- invalidate " reason " " who " len=" js-cache-index " ---------------------------") */
@@ -2939,6 +2939,7 @@
 
    ;; MS CARE, to be improved
    (js-object-unmap! o)
+   (js-invalidate-pmap-pcaches! %this "defineProperty" name)
    (when (and (js-jsstring? name) (js-jsstring->number name))
       (js-object-mode-hasnumeralprop-set! o #t))
    (let ((current (js-get-own-property o name %this)))
