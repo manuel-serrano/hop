@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jun 28 15:23:12 2019 (serrano)                */
+;*    Last change :  Sat Jun 29 15:42:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -614,8 +614,8 @@
    (define (update-inline! pcache omap)
       (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
 	 (with-access::JsConstructMap omap (sibling)
-	    (when sibling
-	       (set! cmap sibling)))
+	    ;; set to either a sibling or #f
+	    (set! cmap sibling))
 	 (set! imap omap)
 	 (set! pmap #t)
 	 (set! emap #t)
@@ -625,7 +625,7 @@
    (define (update-noinline! pcache omap)
       (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
 	 (with-access::JsConstructMap omap (sibling)
-	    (if (and enable-sibling sibling)
+	    (if (and sibling enable-sibling)
 		(set! imap sibling)
 		(set! imap #t)))
 	 (set! cmap omap)
@@ -636,7 +636,7 @@
    
    (with-access::JsObject o (cmap)
       (with-access::JsConstructMap cmap (inline)
-	 (if (and enable-sibling inline)
+	 (if (and inline enable-sibling)
 	     (update-inline! pcache cmap)
 	     (update-noinline! pcache cmap)))))
 
@@ -659,7 +659,7 @@
    (define (update-noinline! pcache omap)
       (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
 	 (with-access::JsConstructMap omap (sibling)
-	    (if (and enable-sibling sibling)
+	    (if (and sibling enable-sibling)
 		(set! imap sibling)
 		(set! imap #t)))
 	 (set! cmap omap)
@@ -670,7 +670,7 @@
    
    (with-access::JsObject o (cmap)
       (with-access::JsConstructMap cmap (inline)
-	 (if (and enable-sibling inline)
+	 (if (and inline enable-sibling)
 	     (update-inline! pcache cmap)
 	     (update-noinline! pcache cmap)))))
 
@@ -703,12 +703,9 @@
    
    (define (next-inline! pcache omap)
       (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index owner)
-	 (with-access::JsConstructMap omap (sibling)
-	    (if sibling
-		(set! cmap (sibling-cmap! nextmap #f))
-		(set! cmap #t)))
 	 (set! imap nextmap)
 	 (set! emap omap)
+	 (set! cmap nextmap)
 	 (set! pmap omap)
 	 (set! amap #t)
 	 (set! owner #f)
@@ -717,10 +714,10 @@
    (define (next-noinline! pcache omap)
       (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index owner)
 	 (with-access::JsConstructMap omap (sibling)
-	    (if (and #f enable-sibling sibling)
+	    (if sibling
 		(begin
 		   (set! imap (sibling-cmap! nextmap #t))
-		   (set! emap sibling))
+		   (set! emap (sibling-cmap! omap #t)))
 		(begin
 		   (set! imap #t)
 		   (set! emap #t))))
@@ -734,7 +731,7 @@
       (unless (eq? cmap (js-not-a-cmap))
 	 (js-validate-pmap-pcache! pcache)
 	 (with-access::JsConstructMap cmap (inline)
-	    (if (and #f enable-sibling inline)
+	    (if (and inline enable-sibling)
 		(next-inline! pcache cmap)
 		(next-noinline! pcache cmap))))))
 

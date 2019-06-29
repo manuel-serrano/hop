@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jun 28 11:08:44 2019 (serrano)                */
+;*    Last change :  Sat Jun 29 18:50:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1182,7 +1182,7 @@
 		      (when (eq? enumerable #t)
 			 (define-own-property obj name prop properties))))
 	 oprops))
-   
+
    (if (not (js-object? _obj))
        (js-raise-type-error %this
 	  "Object.defineProperties called on non-object: ~s" _obj)
