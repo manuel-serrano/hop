@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Jun 30 07:51:47 2019 (serrano)                */
+;*    Last change :  Sun Jun 30 18:02:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2837,7 +2837,7 @@
 	    (if cmap
 		`(with-access::JsObject ,n (cmap elements)
 		    (if (eq? cmap (js-pcache-pmap (js-pcache-ref %pcache ,cache)))
-			,(vector-inits n elements i 0 nodes cmap)
+			,(vector-inits n elements i offset nodes cmap)
 			,(elements-init n offset nodes cmap cnt cache)))
 		(elements-init-sans-cmap nodes)))))
    

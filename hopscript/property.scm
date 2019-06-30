@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jun 29 15:42:54 2019 (serrano)                */
+;*    Last change :  Sun Jun 30 17:20:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1650,8 +1650,9 @@
 	 ((js-jsstring? prop)
 	  (js-profile-log-get prop loc))
 	 ((number? prop)
-	  (js-profile-log-get
-	     (js-ascii-name->jsstring (number->string prop)) loc))))
+	  (unless (isa? _o JsArray)
+	     (js-profile-log-get
+		(js-ascii-name->jsstring (number->string prop)) loc)))))
    (cond
       ((pair? _o)
        (js-get-pair _o (js-toname prop %this) %this))

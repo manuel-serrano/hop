@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sun Jun 30 07:38:47 2019 (serrano)                */
+;*    Last change :  Sun Jun 30 18:02:15 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -284,7 +284,7 @@
 		   (cons* 
 		      `(define ,cmap (js-names->cmap
 					(vector ,@(init-names init)) #t))
-		      `(define ,offset -1)
+		      `(define ,offset 0)
 		      `(define ,cnt 0)
 		      globals))
 		;; then split the init sequence
