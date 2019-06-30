@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jun 28 10:56:42 2019 (serrano)                */
+;*    Last change :  Sun Jun 30 07:51:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2796,7 +2796,7 @@
 		(error "j2s-scheme" "wrong init expr"
 		   (j2s->list node)))))))
    
-   (define (vector-inits %ref elements i offset nodes cmap)
+   (define (vector-inits n elements i offset nodes cmap)
       `(let* ((,elements elements)
 	      (,i ,offset))
 	  ,@(map (lambda (init offset)
@@ -2807,26 +2807,50 @@
 				`(vector-set! ,elements (+fx ,i ,offset) ,e))))	
 		       mode return conf))
 	       nodes (iota (length nodes)))
-	  (with-access::JsObject ,%ref ((omap cmap))
-	     (set! omap ,cmap))))
+	  (set! cmap ,cmap)))
    
-   (define (elements-init-sans-cmap offset nodes)
+   (define (elements-init-sans-cmap nodes)
       `(begin
 	  ,@(map (lambda (n)
 		    (j2s-scheme n mode return conf))
 	       nodes)))
    
-   (with-access::J2SOPTInitSeq this (loc ref nodes cmap offset)
-      (let ((%ref (gensym '%ref))
-	    (i (gensym '%i))
-	    (elements (gensym '%elements)))
-	 (if cmap
+   (define (elements-init n offset nodes %cmap cnt pcache)
+      `(with-access::JsConstructMap cmap (props)
+	  (let ((%len0 (vector-length props))
+		(%cmap0 cmap))
+	     ,(elements-init-sans-cmap nodes)
+	     (when (<fx ,cnt 1000)
+		(set! ,cnt (+fx ,cnt 1))
+		(with-access::JsConstructMap cmap (props)
+		   (when (js-object-no-setter? ,n)
+		      (set! ,offset %len0)
+		      (set! ,%cmap cmap)
+		      (js-validate-pmap-pcache! (js-pcache-ref %pcache ,pcache))
+		      (with-access::JsPropertyCache (js-pcache-ref %pcache ,pcache) (pmap)
+			 (set! pmap %cmap0))))))))
+   
+   (define (init-ref this n)
+      (with-access::J2SOPTInitSeq this (loc ref nodes cmap offset cnt cache)
+	 (let ((i (gensym '%i))
+	       (elements (gensym '%elements)))
+	    (if cmap
+		`(with-access::JsObject ,n (cmap elements)
+		    (if (eq? cmap (js-pcache-pmap (js-pcache-ref %pcache ,cache)))
+			,(vector-inits n elements i 0 nodes cmap)
+			,(elements-init n offset nodes cmap cnt cache)))
+		(elements-init-sans-cmap nodes)))))
+   
+   (with-access::J2SOPTInitSeq this (loc ref nodes cmap offset cnt cache)
+      (cond
+	 ((not (config-get conf :optim-initseq))
+	  (elements-init-sans-cmap nodes))
+	 ((isa? ref J2SRef)
+	  (init-ref this (j2s-scheme ref mode return conf)))
+	 (else
+	  (let ((%ref (gensym '%ref)))
 	     `(let ((,%ref ,(j2s-scheme ref mode return conf)))
-		 (with-access::JsObject ,%ref (elements __proto__)
-		    (if (not (js-object-has-setter? ,%ref %this))
-			,(vector-inits %ref elements i 0 nodes cmap)
-			,(elements-init-sans-cmap offset nodes))))
-	     (elements-init-sans-cmap offset nodes)))))
+		 ,(init-ref this ref)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDProducer ...                                    */

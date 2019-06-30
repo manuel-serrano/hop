@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jun 28 11:18:29 2019 (serrano)                */
+;*    Last change :  Sun Jun 30 07:39:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -443,7 +443,9 @@
 	   (final-class J2SOPTInitSeq::J2SSeq
 	      ref::J2SRef
 	      (cmap read-only)
-	      (offset::symbol read-only))
+	      (cache (default #f))
+	      (offset::symbol read-only)
+	      (cnt::symbol read-only))
 
 	   (final-class J2SDProducer::J2SExpr
 	      (decl::J2SDecl (info '("jsonref")))
