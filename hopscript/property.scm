@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jun 30 17:20:41 2019 (serrano)                */
+;*    Last change :  Mon Jul  1 08:02:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -748,27 +748,18 @@
    (with-access::JsObject o (elements)
       (and (js-object-inline-elements? o) (<fx idx (vector-length elements)))))
 
-(define (check-inline-elements! o::JsObject where prop)
+(define (check-inline-elementsDEBUG! o::JsObject where prop)
    (with-access::JsObject o (cmap)
-      (cond
-	 ((js-object-inline-elements? o)
-	  (with-access::JsConstructMap cmap (inline)
-	     (unless inline
-		(tprint "*** WARNING: " where " INCONSISTENT OBJECT " (typeof o) " " prop)
-		(js-debug-object o)
-		(js-debug-cmap cmap))))
-	 ((eq? cmap (js-not-a-cmap))
-	  #t)
-	 (else
-	  (with-access::JsConstructMap cmap (inline)
-	     (when inline
-		(tprint "*** ERROR: " where " INCONSISTENT OBJECT " (typeof o) " " prop)
-		(js-debug-object o)
-		(js-debug-cmap cmap)
-		(tprint "forcing fpe...(for gdb)")
-		(tprint (/fx 1 0))
-		(error where "inconsistent object/cmap"
-		   prop)))))))
+      (unless (js-object-inline-elements? o)
+	 (with-access::JsConstructMap cmap (inline)
+	    (when inline
+	       (tprint "*** ERROR: " where " INCONSISTENT OBJECT " (typeof o) " " prop)
+	       (js-debug-object o)
+	       (js-debug-cmap cmap)
+	       (tprint "forcing fpe...(for gdb)")
+	       (tprint (/fx 1 0))
+	       (error where "inconsistent object/cmap"
+		  prop))))))
 	  
 ;*---------------------------------------------------------------------*/
 ;*    transition ...                                                   */
@@ -2356,7 +2347,7 @@
 		  update-properties-object!
 		  extend-object!
 		  loop))))
-      (check-inline-elements! o "<<< js-put-jsobject" name)
+      (check-inline-elementsDEBUG! o "<<< js-put-jsobject" name)
       v))
 
 ;*---------------------------------------------------------------------*/
@@ -2699,7 +2690,7 @@
 		   (jsobject-properties-find o name
 		      update-properties-object!
 		      extend-properties-object!)))))
-      (check-inline-elements! o "<<< js-bind!" name)
+      (check-inline-elementsDEBUG! o "<<< js-bind!" name)
       v))
 
 ;*---------------------------------------------------------------------*/
