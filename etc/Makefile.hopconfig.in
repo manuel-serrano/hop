@@ -1,12 +1,12 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/hop/etc/Makefile.hopconfig.in           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sun Nov  5 19:26:39 2017 (serrano)                */
-#*    Copyright   :  2004-17 Manuel Serrano                            */
+#*    Last change :  Mon Jul  1 11:35:50 2019 (serrano)                */
+#*    Copyright   :  2004-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
-#*    The autconf Makefile skeleton for HOP.                           */
+#*    The autoconf Makefile skeleton for HOP.                          */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
