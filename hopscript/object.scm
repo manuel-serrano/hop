@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Jun 30 08:03:41 2019 (serrano)                */
+;*    Last change :  Wed Jul  3 09:55:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -994,6 +994,8 @@
 			      (string-append "[object " name "]"))
 			     ((string=? name "JsGlobalObject")
 			      "[object Object]")
+			     ((string=? name "JsProxy")
+			      "[object Object]")
 			     ((isa? obj JsArrayBufferView)
 			      (let ((ctor (js-get obj (& "constructor") %this)))
 				 (string-append "[object "
@@ -1009,7 +1011,7 @@
 	 :value (js-make-function %this
 		   js-object-prototype-tostring 0 "toString"
 		   :prototype (js-undefined)
-		   :src "object.scm")
+		   :src "function() { ... object.scm ... }")
 	 :enumerable #f
 	 :hidden-class #f)
       
