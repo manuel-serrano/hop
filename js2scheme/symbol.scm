@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Mar 28 11:32:44 2019 (serrano)                */
+;*    Last change :  Wed Jul  3 09:00:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -91,8 +91,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    commonjs-export ...                                              */
 ;*    -------------------------------------------------------------    */
-;*    For compatibility with common.js module, this function forces    */
-;*    a default module clause if non is explicitly given. The value    */
+;*    For compatibility with common.js modules, this function forces   */
+;*    a default module clause if none is explicitly given. The value   */
 ;*    of the forced default module clause is MODULE.EXPORTS.           */
 ;*---------------------------------------------------------------------*/
 (define (commonjs-export this::J2SProgram moddecl)
@@ -120,15 +120,17 @@
 		   (J2SAssig (J2SRef decl)
 		      (J2SAccess (J2SRef moddecl)
 			 (J2SString "exports"))))
-		(J2SNop)))))
+		(J2SNop))
+	    (and moddecl decl))))
    
-   (with-access::J2SProgram this (nodes loc exports)
+   (with-access::J2SProgram this (nodes loc exports decls)
       (unless (find (lambda (e)
 		       (with-access::J2SExport e (id) (eq? id 'default)))
 		 exports)
 	 ;; force a default export if non specified
-	 (multiple-value-bind (expo stmt)
+	 (multiple-value-bind (expo stmt decl)
 	    (export-default-stmt moddecl (length exports) loc)
+	    (when decl (set! decls (cons decl decls)))
 	    (set! exports (cons expo exports))
 	    (set! nodes (append nodes (list stmt)))))))
    
