@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Sun May  5 13:45:02 2019 (serrano)                */
+;*    Last change :  Thu Jul  4 15:27:38 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -89,7 +89,7 @@
    (match-case x
       ((&begin!)
        (thread-parameter-set! '&cnsts '())
-       '#f)
+       ''#())
       (else
        (error "&begin!" "Illegal form" x))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jun 22 09:04:23 2019 (serrano)                */
+;*    Last change :  Thu Jul  4 16:17:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2850,10 +2850,6 @@
 		    (if (js-is-accessor-descriptor? desc)
 			;; 5
 			(js-property-value-set! o o q desc v %this)
-;* 			(with-access::JsAccessorDescriptor desc ((setter set)) */
-;* 			   (if (isa? setter JsFunction)                */
-;* 			       (js-call1 %this setter o v)             */
-;* 			       (js-undefined)))                        */
 			(let ((newdesc (instantiate::JsValueDescriptor
 					  (name q)
 					  (value v)

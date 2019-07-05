@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Jun 30 15:28:28 2019 (serrano)                */
+;*    Last change :  Thu Jul  4 16:14:03 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -826,16 +826,22 @@
 	     (when (pair? ,rest)
 		,(init-argument `(car ,rest) 'i)
 		(loop (cdr ,rest) (+fx i 1))))
-	  (js-define-own-property arguments (& "callee")
-	     (instantiate::JsValueDescriptor
-		(name (& "callee"))
-		(value (js-make-function %this
-			  ,(j2s-fast-id id) 0 ,(symbol->string! id)))
-		(writable #t)
-		(configurable #t)
-		(enumerable #f))
-	     #f
-	     %this)
+	  ;; MS: 4jul19, replace JS-DEFINE-OWN-PROPERTY with JS-BIND!
+	  ;; mostly to avoid pcache invalidation
+	  (js-bind! %this arguments (& "callee")
+	     :value (js-make-function %this
+		       ,(j2s-fast-id id) 0 ,(symbol->string! id))
+	     :enumerable #f)
+;* 	  (js-define-own-property arguments (& "callee")               */
+;* 	     (instantiate::JsValueDescriptor                           */
+;* 		(name (& "callee"))                                    */
+;* 		(value (js-make-function %this                         */
+;* 			  ,(j2s-fast-id id) 0 ,(symbol->string! id)))  */
+;* 		(writable #t)                                          */
+;* 		(configurable #t)                                      */
+;* 		(enumerable #f))                                       */
+;* 	     #f                                                        */
+;* 	     %this)                                                    */
 	  ,body)))
 
 ;*---------------------------------------------------------------------*/

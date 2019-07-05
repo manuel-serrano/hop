@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Jun 14 08:58:11 2019 (serrano)                */
+;*    Last change :  Thu Jul  4 15:02:02 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -135,7 +135,7 @@
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (hopscript-install-expanders!)
 		   (multiple-value-bind (%worker %this %module)
-		      (js-main-worker! ,name ,path #f
+		      (js-main-worker! ,name ,(absolute path) #f
 			 nodejs-new-global-object nodejs-new-module)
 		      (js-worker-push-thunk! %worker "nodejs-toplevel"
 			 ,(if (config-get conf :function-nice-name #f)
@@ -216,12 +216,13 @@
 (define (j2s-main-sans-worker-module this name cnsttable toplevel
 	   esexports esimports body conf)
    (with-access::J2SProgram this (mode pcache-size call-size %this path globals
-				    cnsts loc)
+				    cnsts loc name)
       (let ((module (js-module/main loc name)))
 	 (epairify-deep loc
-	    `(,module (%define-cnst-table ,(length cnsts))
-		;; (&begin!) must not be a constant! (_do not_ use quote)
+	    `(,module 
+		;;; (&begin!) must not be a constant! (_do not_ use quote)
 		(define __js_strings (&begin!))
+		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
@@ -239,7 +240,7 @@
 		   (with-access::JsGlobalObject %this (js-object)
 		      (js-new0 %this js-object)))
 		(define %worker
-		   (js-main-worker! name #f
+		   (js-main-worker! ,name ,(absolute path) #f
 		      nodejs-new-global-object nodejs-new-module))
 		(define %module
 		   (nodejs-new-module ,(basename path) ,(absolute path)

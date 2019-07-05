@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Jun 23 06:32:06 2019 (serrano)                */
+;*    Last change :  Thu Jul  4 15:38:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1688,8 +1688,7 @@
 			   (js-delete! module-cache
 			      (js-string->jsstring filename) #f %this))
 			(raise e))
-		     (begin
-			(hopscript %this this scope mod)))
+		     (hopscript %this this scope mod))
 		  ;; set the loaded property
 		  (js-put! mod (& "loaded") #t #f %this)
 		  ;; return the newly created module
@@ -1721,7 +1720,8 @@
 			      (js-string->jsstring filename) #f %this))
 			(raise e))
 		     ;; exports the HTML value
-		     (js-put! mod (& "exports") (hopscript %this this scope mod)
+		     (js-put! mod (& "exports")
+			(hopscript %this this scope mod)
 			#f %this))
 		  ;; return the newly created module
 		  (trace-item "mod=" (typeof mod))

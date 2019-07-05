@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Thu May 23 08:59:28 2019 (serrano)                */
+;*    Last change :  Thu Jul  4 15:46:07 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -519,7 +519,8 @@
 	    ;; module-cache is used in src/main to check
 	    ;; where the worker is running or not
 	    (set! module-cache (js-new0 %this js-object))
-	    (set! %this %global))))
+	    (set! %this %global)
+	    (js-put! module-cache (js-string->jsstring path) %module #f %this))))
       
    (unless %worker
       (set! %global-constructor ctor)

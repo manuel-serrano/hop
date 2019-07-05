@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jul  1 08:02:46 2019 (serrano)                */
+;*    Last change :  Thu Jul  4 15:53:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2928,13 +2928,13 @@
 
    ;; MS CARE, to be improved
    (js-object-unmap! o)
-   (js-invalidate-pmap-pcaches! %this "defineProperty" name)
    (when (and (js-jsstring? name) (js-jsstring->number name))
       (js-object-mode-hasnumeralprop-set! o #t))
    (let ((current (js-get-own-property o name %this)))
       ;; 1 & 2
       (cond
 	 ((eq? current (js-undefined))
+	  (js-invalidate-pmap-pcaches! %this "js-define-own-property%, new prop" name)
 	  (cond
 	     ((not (js-object-mode-extensible? o))
 	      ;; 3
@@ -3039,6 +3039,8 @@
 		     (replace-property-descriptor! current desc))))
 		((and (isa? current JsDataDescriptor)
 		      (isa? desc JsDataDescriptor))
+		 (when (or (js-function? (value desc)) (js-function? (value current)))
+		    (js-invalidate-pmap-pcaches! %this "js-define-own-property%, function" name))
 		 ;; 10
 		 (if (eq? (configurable current) #f)
 		     (cond
@@ -3061,6 +3063,7 @@
 		     (propagate-data-descriptor! current desc)))
 		((and (isa? current JsAccessorDescriptor)
 		      (isa? desc JsAccessorDescriptor))
+		 (js-invalidate-pmap-pcaches! %this "js-define-own-property%, both accessor" name)
 		 ;; 11
 		 (if (eq? (configurable current) #f)
 		     (cond
@@ -3077,6 +3080,7 @@
 			 (propagate-accessor-descriptor! current desc)))
 		     (propagate-accessor-descriptor! current desc)))
 		(else
+		 (js-invalidate-pmap-pcaches! %this "js-define-own-property%, one accessor" name)
 		 ;; 12 & 13
 		 (propagate-property-descriptor! current desc))))))))
 
@@ -3563,7 +3567,6 @@
 	 (jsobject-find obj n
 	    ;; map search
 	    (lambda (obj i)
-	       
 	       (with-access::JsObject o ((omap cmap) __proto__)
 		  (with-access::JsObject obj ((wmap cmap) elements)
 		     (with-access::JsConstructMap wmap (methods %id)
