@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon May 20 08:55:55 2019 (serrano)                */
+;*    Last change :  Fri Jul  5 11:48:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2185,9 +2185,7 @@
 		       ;; 8.12.4, step 2.b
 		       (reject "Read-only property")
 		       ;; 8.12.5, step 3,b
-		       (begin
-			  (set! value v)
-			  v)))))
+		       (js-property-value-set! o o name owndesc v %this)))))
 	    ((isa? desc JsWrapperDescriptor)
 	     (or (update-from-wrapper-descriptor! o obj v desc)
 		 (if (js-object-mode-extensible? obj)
