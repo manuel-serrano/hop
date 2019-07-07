@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jul  1 08:02:46 2019 (serrano)                */
+;*    Last change :  Sun Jul  7 07:41:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -311,9 +311,10 @@
 ;*    Method invalidation must be proppagated to all the sub hidden    */
 ;*    classes (see bug nodejs/simple/test-stream2-readable-wrap.js).   */
 ;*---------------------------------------------------------------------*/
-(define (js-invalidate-cache-method! cmap::JsConstructMap idx::long)
+(define (js-invalidate-cache-method! cmap::JsConstructMap idx::long reason who)
    (with-access::JsConstructMap cmap (methods transitions)
       (when (vector-ref methods idx)
+;* 	 (tprint "js-invalidate-cache-method: " reason " -- " who)     */
 	 (vector-set! methods idx #f)
 	 (for-each (lambda (tr)
 		      (let ((ncmap (transition-nextmap tr)))
@@ -321,7 +322,7 @@
 			    (when (<=fx (vector-length methods) idx)
 			       (js-debug-cmap cmap)
 			       (js-debug-cmap ncmap)))
-			 (js-invalidate-cache-method! ncmap idx)))
+			 (js-invalidate-cache-method! ncmap idx reason who)))
 	    transitions))))
    
 ;*---------------------------------------------------------------------*/
@@ -994,11 +995,15 @@
 		   (let ((v (vector-ref elements i)))
 		      (cond
 			 ((not (js-function? v))
-			  (js-invalidate-cache-method! cmap i))
+			  (js-invalidate-cache-method! cmap i
+			     "non function in literal"
+			     (vector-ref props i)))
 			 ((eq? (vector-ref methods i) #unspecified)
 			  (vector-set! methods i v))
 			 (else
-			  (js-invalidate-cache-method! cmap i)))
+			  (js-invalidate-cache-method! cmap i
+			     "new function in literal"
+			     (vector-ref props i))))
 		      (loop (-fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2068,7 +2073,7 @@
 		    v)
 		   (else
 		    ;; invalidate cache method and cache
-		    (js-invalidate-cache-method! cmap i)
+		    (js-invalidate-cache-method! cmap i "update-mapped with new function" name)
 		    (js-invalidate-pmap-pcaches! %this "update-mapped.1" name)
 		    (reset-cmap-vtable! cmap)
 		    (when cache
@@ -2077,7 +2082,7 @@
 		    v)))
 	       ((js-function? (vector-ref methods i))
 		;; invalidate cache method and cache
-		(js-invalidate-cache-method! cmap i)
+		(js-invalidate-cache-method! cmap i "update-mapped with non function" name)
 		(js-invalidate-pmap-pcaches! %this "update-mapped.2" name)
 		(reset-cmap-vtable! cmap)
 		(when cache
@@ -2191,7 +2196,8 @@
 				     ((not (js-function? v))
 				      (when (js-function? (vector-ref methods index))
 					 ;; invalidate cache method and cache
-					 (js-invalidate-cache-method! nextmap index)
+					 (js-invalidate-cache-method! nextmap index
+					    "extend-mapped with non-function" v)
 					 (js-invalidate-pmap-pcaches! %this "extend-mapped.3" name)
 					 (reset-cmap-vtable! nextmap))
 				      (when cache
@@ -2204,14 +2210,14 @@
 					 (js-pcache-next-direct! cache o nextmap index)))
 				     ((>fx detachcnt (method-invalidation-threshold))
 				      ;; MS 2019-01-19
-				      ;; on a method conflict, if the number of
-				      ;; properties in cache is small enough,
-				      ;; instead of invalidating all methods,
+				      ;; on method conflicts, instead of
+				      ;; invalidating all methods,
 				      ;; a new cmap is created. see
 				      ;; see the prototype initialization
 				      ;; in js-make-function@function.scm
 				      ;; invalidate cache method and cache
-				      (js-invalidate-cache-method! nextmap index)
+				      (js-invalidate-cache-method! nextmap index
+					 "extend-mapped polymorphic threshold" name)
 				      (js-invalidate-pmap-pcaches! %this "extend-mapped.1" name)
 				      (reset-cmap-vtable! nextmap)
 				      (when cache
@@ -2220,7 +2226,7 @@
 				     (else
 				      (let ((detachedmap (extend-cmap cmap name flags)))
 					 (set! detachcnt (+fx 1 detachcnt))
-					 (with-access::JsConstructMap detachedmap (methods ctor)
+					 (with-access::JsConstructMap detachedmap (methods ctor %id)
 					    ;; validate cache method and don't cache
 					    (vector-set! methods index v))
 					 (set! nextmap detachedmap)
@@ -2238,7 +2244,8 @@
 				;; validate cache method and don't cache
 				(vector-set! methods index v)
 				(begin
-				   (js-invalidate-cache-method! cmap index)
+				   (js-invalidate-cache-method! cmap index
+				      "extend-mapped single non-function" name)
 				   (when cache
 				      (js-pcache-next-direct! cache o cmap index))))
 			    (js-object-push/ctor! o index v ctor))
@@ -2253,7 +2260,8 @@
 				   (vector-set! methods index v)
 				   ;; invalidate cache method and cache
 				   (begin
-				      (js-invalidate-cache-method! nextmap index)
+				      (js-invalidate-cache-method! nextmap index
+					 "exptend-mapped non-function" name)
 				      (when cache
 					 (js-pcache-next-direct! cache o nextmap index))))
 			       (link-cmap! cmap nextmap name v flags)
@@ -3443,7 +3451,13 @@
       (set! cpoint point)
       (set! usage 'call))
 
-   (with-access::JsPropertyCache ccache (pmap vindex method)
+   (with-access::JsPropertyCache ccache (pmap vindex method cntmiss)
+;*       (when (string=? (js-jsstring->string name) "ctor")            */
+;* 	 (tprint "***** call/miss " point " method=" (typeof method) " cntmiss=" cntmiss */
+;* 	    " pmap=" (typeof pmap)                                     */
+;* 	    " arity="                                                  */
+;* 	    (when (procedure? method)                                  */
+;* 	       (=fx (procedure-arity method) (+fx 1 (length args)))))) */
       (when (and (procedure? method)
 		 (isa? pmap JsConstructMap)
 		 (=fx (procedure-arity method) (+fx 1 (length args))))
@@ -3558,12 +3572,14 @@
 
    (js-profile-log-method name point)
 
+;*    (when (string=? (js-jsstring->string name) "ctor")               */
+;*       (tprint "MISS l=" point))                                     */
+   
    (let ((n (js-toname name %this)))
       (let loop ((obj o))
 	 (jsobject-find obj n
 	    ;; map search
 	    (lambda (obj i)
-	       
 	       (with-access::JsObject o ((omap cmap) __proto__)
 		  (with-access::JsObject obj ((wmap cmap) elements)
 		     (with-access::JsConstructMap wmap (methods %id)
@@ -3572,6 +3588,8 @@
 			      ((or (isa? el-or-desc JsAccessorDescriptor)
 				   (isa? el-or-desc JsWrapperDescriptor))
 			       (with-access::JsPropertyCache ccache (pmap emap cmap)
+;* 				  (when (string=? (js-jsstring->string name) "ctor") */
+;* 				     (tprint "SET UNCACHABLE l=" point)) */
 				  (set! pmap #t)
 				  (set! emap #t)
 				  (set! cmap #t))
@@ -3595,6 +3613,8 @@
 					    ((<fx arity 0)
 					     ;; varargs functions, currently not cached...
 					     (with-access::JsPropertyCache ccache (pmap emap cmap)
+;* 						(when (string=? (js-jsstring->string name) "ctor") */
+;* 						   (tprint "SET UNCACHABLE l=" point)) */
 						(set! pmap #t)
 						(set! emap #t)
 						(set! cmap #t)))
@@ -3625,6 +3645,8 @@
 					    (else
 					     ;; arity missmatch, never cache
 					     (with-access::JsPropertyCache ccache (pmap emap cmap)
+;* 						(when (string=? (js-jsstring->string name) "ctor") */
+;* 						   (tprint "SET UNCACHABLE l=" point)) */
 						(set! pmap #t)
 						(set! emap #t)
 						(set! cmap #t))
@@ -3634,6 +3656,9 @@
 			       (with-access::JsPropertyCache ccache (pmap cmap emap)
 				  ;; invalidate the call cache and update the
 				  ;; object cache
+;* 				  (when (string=? (js-jsstring->string name) "ctor") */
+;* 				     (tprint "SET UNCACHABLE l=" point */
+;* 					" " (typeof o) " " (typeof (vector-ref methods i)))) */
 				  (set! cmap #t)
 				  (set! pmap #t)
 				  (set! emap #t)
@@ -3641,6 +3666,8 @@
 	    ;; property search
 	    (lambda (obj v)
 	       (with-access::JsPropertyCache ccache (cmap emap pmap)
+;* 		  (when (string=? (js-jsstring->string name) "ctor")   */
+;* 		     (tprint "SET UNCACHABLE l=" point))               */
 		  (set! pmap #t)
 		  (set! emap #t)
 		  (set! cmap #t)

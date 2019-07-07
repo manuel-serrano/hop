@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Jun 30 15:28:28 2019 (serrano)                */
+;*    Last change :  Sun Jul  7 10:08:11 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -340,14 +340,14 @@
 	 (let ((args (map j2s-type-scheme params)))
 	    (lambda-or-labels rtype idgen
 	       (type-this idthis thisp)
-	       id args body))))
+	       (unless (isa? fun J2SArrow) id) args body))))
    
    (define (rest-lambda fun id body)
       (with-access::J2SFun fun (idgen idthis thisp params rtype)
 	 (let ((args (j2s-scheme params mode return conf)))
 	    (lambda-or-labels rtype idgen
 	       (type-this idthis thisp)
-	       id args body))))
+	       (unless (isa? fun J2SArrow) id) args body))))
    
    (define (normal-vararg-lambda fun id body)
       ;; normal mode: arguments is an alias
@@ -356,14 +356,15 @@
 	 (with-access::J2SFun fun (idgen idthis thisp rtype)
 	    (lambda-or-labels rtype idgen
 	       (type-this idthis thisp)
-	       id rest
+	       (unless (isa? fun J2SArrow) id) rest
 	       (jsfun-normal-vararg-body fun body id rest)))))
    
    (define (strict-vararg-lambda fun id body)
       ;; strict mode: arguments is initialized on entrance
       (let ((rest (gensym 'arguments)))
 	 (with-access::J2SFun fun (idgen idthis thisp rtype)
-	    (lambda-or-labels rtype idgen (type-this idthis thisp) id rest
+	    (lambda-or-labels rtype idgen (type-this idthis thisp)
+	       (unless (isa? fun J2SArrow) id) rest
 	       (jsfun-strict-vararg-body fun body id rest)))))
 
    (with-access::J2SFun this (loc vararg mode params generator name ismethodof)
