@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jul  5 11:48:06 2019 (serrano)                */
+;*    Last change :  Mon Jul  8 16:28:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2735,6 +2735,20 @@
       #t)
    
    (define (propagate-data-descriptor! current desc)
+      (when (isa? current JsWrapperDescriptor)
+	 (let ((ncurrent (duplicate::JsWrapperDescriptor current)))
+	    (if (js-object-inline-elements? o)
+		(with-access::JsObject o (elements)
+		   (let ((len (vector-length elements)))
+		      (let loop ((i 0))
+			 (when (<fx i len)
+			    (if (eq? (vector-ref elements i) current)
+				(vector-set! elements i ncurrent)
+				(loop (+fx i 1)))))))
+		(map! (lambda (p)
+			 (if (eq? p current) ncurrent p))
+		   (js-object-properties o)))
+	    (set! current ncurrent)))
       (propagate-property-descriptor! current desc)
       (with-access::JsDataDescriptor current (writable name)
 	 (with-access::JsDataDescriptor desc ((dwritable writable))
@@ -2789,6 +2803,10 @@
 	 (with-access::JsDataDescriptor desc ((dwritable writable))
 	    (eq? cwritable dwritable))))
    
+   (define (same-value-descriptor? current::JsDataDescriptor desc::JsDataDescriptor)
+      (when (isa? current JsValueDescriptor)
+	 (same-data-descriptor? current desc)))
+   
    (define (same-descriptor? current desc)
       (when (same-property-descriptor? current desc)
 	 (cond
@@ -2796,7 +2814,7 @@
 	     (and (isa? desc JsAccessorDescriptor)
 		  (same-accessor-descriptor? current desc)))
 	    ((isa? desc JsValueDescriptor)
-	     (and (same-data-descriptor? current desc)
+	     (and (same-value-descriptor? current desc)
 		  (with-access::JsValueDescriptor current ((cvalue value))
 		     (with-access::JsValueDescriptor desc ((dvalue value))
 			(equal? cvalue dvalue)))))
@@ -2806,10 +2824,11 @@
 		     (eq? value (js-undefined)))))
 	    ((isa? desc JsAccessorDescriptor)
 	     #f)
+	    ((isa? desc JsWrapperDescriptor)
+	     #f)
 	    (else
-	     (and (same-property-descriptor? current desc)
-		  (with-access::JsValueDescriptor current (value writable)
-		     (and (eq? value (js-undefined)) #f)))))))
+	     (with-access::JsValueDescriptor current (value writable)
+		(and (eq? value (js-undefined)) #f))))))
    
    ;; MS CARE, to be improved
    (js-object-unmap! o)
