@@ -248,7 +248,9 @@
       (cons* this (format "{ ~a: " id)
          (if (isa? body J2SBlock)
              (with-access::J2SBlock body (nodes)
-	        (append (j2s-js* body "" "" "" nodes tildec dollarc mode evalp conf) '("}")))
+		(if (= (length nodes) 1) 
+	            (append (j2s-js* body "" "" "" nodes tildec dollarc mode evalp conf) '("}"))
+	            (append (j2s-js* body "{" "}" "" nodes tildec dollarc mode evalp conf) '("}"))))
              (append (j2s-js body tildec dollarc mode evalp conf) '("}"))))))
 
 ;*---------------------------------------------------------------------*/
@@ -599,7 +601,7 @@
 (define-method (j2s-js this::J2SDataPropertyInit tildec dollarc mode evalp conf)
    (with-access::J2SDataPropertyInit this (name val)
       (cond
-	 ((isa? name J2SString)
+	 ((or (isa? name J2SString) (isa? name J2SNumber))
 	  (cons this
 	     (append (j2s-js name tildec dollarc mode evalp conf)
 		'(":")
@@ -986,7 +988,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SArray tildec dollarc mode evalp conf)
    (with-access::J2SArray this (exprs)
-      (j2s-js* this "[" "]" "," exprs tildec dollarc mode evalp conf)))
+      ; hop parser intentionally ignores the last absent element of 
+      ;  the array as the JavaScript interpreter does.
+      (if (and (> (length exprs) 0) (isa? (car (last-pair exprs)) J2SArrayAbsent))
+	  (j2s-js* this "[" ", ]" "," exprs tildec dollarc mode evalp conf)
+	  (j2s-js* this "[" "]" "," exprs tildec dollarc mode evalp conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SSpread ...                                           */

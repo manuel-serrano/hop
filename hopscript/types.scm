@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Jun 22 06:04:43 2019 (serrano)                */
+;*    Last change :  Mon Jul  8 15:54:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -855,6 +855,19 @@
 	 enumerable
 	 writable
 	 (if (not (js-object? value)) value (typeof value)))))
+
+;*---------------------------------------------------------------------*/
+;*    object-print ::JsDataDescriptor ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (object-print p::JsDataDescriptor port pslot::procedure)
+   (with-access::JsValueDescriptor p (name configurable enumerable writable value)
+      (fprintf port
+	 "#|~s name=~a configurable=~a enumerable=~a writable=~a|"
+	 (class-name (object-class p))
+	 name
+	 configurable
+	 enumerable
+	 writable)))
 
 ;*---------------------------------------------------------------------*/
 ;*    thread-specific ::WorkerHopThread ...                            */
