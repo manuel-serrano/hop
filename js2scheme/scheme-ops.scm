@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jun 21 08:58:15 2019 (serrano)                */
+;*    Last change :  Fri Jul  5 11:29:00 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -68,10 +68,12 @@
 ;*    j2s-scheme-binary-as ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-binary-as this::J2SBinary mode return conf type)
-   (with-access::J2SBinary this (loc op lhs rhs)
+   (with-access::J2SBinary this (loc op lhs rhs (etype type))
       (cond
-	 ((and (eq? op '+)
-	       (memq type '(int32 uint32 int53 integer number string)))
+	 ((and (eq? op '+) (memq type '(int32 uint32 int53 integer number)))
+	  (epairify-deep loc
+	     (js-binop2 loc op type lhs rhs mode return conf)))
+	 ((and (eq? op '+) (eq? type 'string) (eq? etype 'string))
 	  (epairify-deep loc
 	     (js-binop2 loc op type lhs rhs mode return conf)))
 	 ((and (memq op '(* - / >> << >>> & BIT_OR ^))

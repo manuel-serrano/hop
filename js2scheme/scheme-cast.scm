@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Jun 12 13:58:03 2019 (serrano)                */
+;*    Last change :  Fri Jul  5 11:30:14 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -225,7 +225,7 @@
 (define (js-int32->string v expr conf)
    (if (int32? v)
        `(& ,(fixnum->string (int32->fixnum v)))
-       `(js-ascii->jssstring (int32->string ,v))))
+       `(js-ascii->jsstring (int32->string ,v))))
 
 ;; uint32
 (define (js-uint32->integer v expr conf)
@@ -263,11 +263,11 @@
       ((uint32? v)
        `(& ,(llong->string (uint32->llong v))))
       ((inrange-int32? expr)
-       `(js-ascii->jssstring (uint32->fixnum ,v)))
+       `(js-ascii->jsstring (fixnum->string (uint32->fixnum ,v))))
       ((m64? conf)
-       `(js-ascii->jssstring (uint32->string ,v)))
+       `(js-ascii->jsstring (fixnum->string (uint32->fixnum ,v))))
       (else
-       `(js-ascii->jssstring (llong->string (uint32->llong ,v))))))
+       `(js-ascii->jsstring (llong->string (uint32->llong ,v))))))
 
 ;; fixnum
 (define (js-fixnum->int32 v expr conf)
@@ -279,7 +279,7 @@
 (define (js-fixnum->string v expr conf)
    (if (fixnum? v)
        `(& ,(integer->string v))
-       `(js-ascii->jssstring (fixnum->string ,v))))
+       `(js-ascii->jsstring (fixnum->string ,v))))
 
 ;; integer
 (define (js-integer->int32 v expr conf)
@@ -291,7 +291,7 @@
 (define (js-integer->string v expr conf)
    (if (integer? v)
        `(& ,(integer->string v))
-       `(js-ascii->jssstring (integer->string ,v))))
+       `(js-ascii->jsstring (integer->string ,v))))
 
 ;; number
 (define (js-number->string v expr conf)
@@ -303,7 +303,7 @@
       ((uint32? v)
        `(& ,(llong->string (uint32->llong v))))
       (else
-       `(js-ascii->jsstring (js-tonumber ,v %this)))))
+       `(js-ascii->jsstring (number->string ,v)))))
 
 ;; string
 (define (js-string->bool v expr conf)

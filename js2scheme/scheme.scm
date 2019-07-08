@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Jun 30 18:02:25 2019 (serrano)                */
+;*    Last change :  Fri Jul  5 08:04:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -404,9 +404,6 @@
 		(with-access::J2SExport export (index)
 		   (with-access::J2SImport import (ivar mvar)
 		      `(vector-ref ,ivar ,index)))))
-;* 		      (if (eq? scope '%hop)                            */
-;* 			  id                                           */
-;* 			  `(vector-ref ,ivar ,index))))))              */
 	    ((and (pair? exports) (or (not ronly) (not (isa? decl J2SDeclFun))))
 	     (with-access::J2SExport (car exports) (index decl)
 		`(vector-ref %evars ,index)))
@@ -600,15 +597,36 @@
 ;*    j2s-scheme ::J2STemplate ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2STemplate mode return conf)
+   
+   (define (empty-string? expr)
+      (cond
+	 ((isa? expr J2SString)
+	  (with-access::J2SString expr (val) (string=? val "")))
+	 ((isa? expr J2SCast)
+	  (with-access::J2SCast expr (expr) (empty-string? expr)))
+	 (else
+	  #f)))
+   
    (with-access::J2STemplate this (loc exprs)
-      (epairify loc
-	 `(js-stringlist->jsstring
-	     (list
-		,@(map (lambda (expr)
-			  (with-access::J2SNode expr (loc)
-			     (j2s-scheme expr mode return conf)))
-		     exprs))))))
-
+      (let ((xs (filter-map (lambda (expr)
+			       (unless (empty-string? expr)
+				  (j2s-scheme expr mode return conf)))
+		   exprs)))
+	 (cond
+	    ((null? xs)
+	     `(& ""))
+	    ((null? (cdr xs))
+	     (car xs))
+	    (else
+	     (epairify loc
+		`(js-jsstring-append ,(car xs)
+		    ,(let loop ((xs (cdr xs)))
+			(if (null? (cdr xs))
+			    (car xs)
+			    (epairify loc
+			       `(js-jsstring-append ,(car xs)
+				   ,(loop (cdr xs)))))))))))))
+ 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNativeString ...                                 */
 ;*---------------------------------------------------------------------*/

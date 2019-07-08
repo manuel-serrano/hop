@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Jun 19 11:57:55 2019 (serrano)                */
+#*    Last change :  Fri Jul  5 08:57:08 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -24,7 +24,6 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopscript
-BCFLAGSRTS = -unsafe
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -ljs2scheme_s-$(HOPRELEASE) \
   -lhop_s-$(HOPRELEASE) \

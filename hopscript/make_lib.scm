@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Thu May 30 06:55:24 2019 (serrano)                */
+;*    Last change :  Fri Jul  5 10:55:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -52,6 +52,8 @@
    (eval   (export-all)
 
            (class JsStringLiteral)
+           (class JsStringLiteralASCII)
+           (class JsStringLiteralUTF8)
       
            (class JsObject)
 	   (class JsGlobalObject)

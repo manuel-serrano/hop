@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Jun 23 06:24:05 2019 (serrano)                */
+;*    Last change :  Fri Jul  5 12:51:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -528,11 +528,9 @@
 	  `("hop" ,(obj->string val %this) "hop-encoding: hop"))))
    
    (define (scheme->js val)
-      (tprint "SCHEME->JS.1 val=" (typeof val))
       (js-obj->jsobject val %this))
    
    (define (ms-scheme->js val)
-      (tprint "MS-SCHEME->JS val=" (typeof val))
       val)
    
    (define (js-get-string opt key)

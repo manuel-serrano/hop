@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Thu Jul  4 15:27:38 2019 (serrano)                */
+;*    Last change :  Mon Jul  8 12:47:56 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
@@ -89,7 +89,8 @@
    (match-case x
       ((&begin!)
        (thread-parameter-set! '&cnsts '())
-       ''#())
+       ;; must be #f as Scheme files use (vector? __js_strings) to test init
+       #f)
       (else
        (error "&begin!" "Illegal form" x))))
 

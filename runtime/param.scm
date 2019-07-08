@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 13 19:18:59 2019 (serrano)                */
+;*    Last change :  Mon Jul  8 11:45:41 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -472,7 +472,10 @@
 ;*    For that reason it is implemented as an inline function and      */
 ;*    the global register *HOP-VERBOSE* is exported.                   */
 ;*---------------------------------------------------------------------*/
-(define %%*hop-verbose* 0)
+(define %%*hop-verbose*
+   (if (string? (getenv "HOPVERBOSE"))
+       (string->integer (getenv "HOPVERBOSE"))
+       0))
 (define-inline (hop-verbose) %%*hop-verbose*)
 (define (hop-verbose-set! v) (set! %%*hop-verbose* v))
 

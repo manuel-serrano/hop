@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Jun 19 07:40:17 2019 (serrano)                */
+;*    Last change :  Sun Jul  7 07:36:07 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -114,6 +114,8 @@
 	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
 	("forEach" ,j2s-array-foreach array (function) %this #t ,j2s-array-plain?)
 	("forEach" ,j2s-array-foreach array (function any) %this #t ,j2s-array-plain?)
+	("map" ,j2s-array-map array (function) %this #t ,j2s-array-plain?)
+	("map" ,j2s-array-map array (function any) %this #t ,j2s-array-plain?)
 	("join" js-array-join array (any) %this #t ,j2s-array-plain?)
 	("join" js-array-maybe-join any (any) %this #t ,j2s-array-plain?)
 	("push" js-array-push array (any) %this #t ,j2s-array-plain?)
@@ -123,6 +125,8 @@
 	("slice" js-array-maybe-slice0 any () %this #t)
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)
+	("call" ,j2s-call any (any) %this #t)
+	("call" ,j2s-call any (any any) %this #t)
 	("call" ,j2s-call function (any) %this #t)
 	("call" ,j2s-call function (any any) %this #t)
 	;; math
@@ -479,10 +483,14 @@
 			       ,(js-pcache ocache)
 			       ,(loc->point loc)
 			       ',ccspecs
-			       ',(if (>=fx (config-get conf :optim 0) 3)
-				     ;;ocspecs
-				     '(imap+ vtable)
-				     '(imap+))
+			       ;;ocspecs
+			       ',(cond
+				    ((>=fx (config-get conf :optim 0) 4)
+				     '(imap amap vtable))
+				    ((>=fx (config-get conf :optim 0) 3)
+				     '(imap amap+))
+				    (else
+				     '(imap+)))
 			       ,@(map (lambda (arg)
 					 (j2s-scheme arg mode return conf))
 				    args))))))

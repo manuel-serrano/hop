@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed May 15 08:06:22 2019 (serrano)                */
+;*    Last change :  Sun Jul  7 09:43:08 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -37,7 +37,8 @@
 	   (j2s-array-set! ::J2SAssig mode return conf)
 	   (j2s-vector-ref ::J2SAccess mode return conf)
 	   (j2s-vector-set! ::J2SAssig mode return conf)
-	   (j2s-array-foreach obj args mode return conf)))
+	   (j2s-array-foreach obj args mode return conf)
+	   (j2s-array-map obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-builtin-method ...                                     */
@@ -484,12 +485,12 @@
       (j2s-vtype field) 'integer conf))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-array-foreach ...                                            */
+;*    j2s-array-foreach-map ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (j2s-array-foreach obj args mode return conf)
+(define (j2s-array-foreach-map js-foreach-or-map obj args mode return conf)
    
    (define (foreach obj proc thisarg %this cache)
-      `(js-array-foreach-procedure
+      `(,js-foreach-or-map
 	  ,(j2s-scheme obj mode return conf)
 	  ,proc
 	  (js-undefined)
@@ -515,10 +516,11 @@
 			  `(lambda (,this ,v ,n ,arr %this::JsGlobalObject) ,body)
 			  '(js-undefined) %this cache))
 		      (else
+      (tprint "foreach/this fun=" (typeof fun) " -> " proc)
 		       #f))))))
 	 (else
 	  #f)))
-   
+
    (match-case args
       ((?fun ?this ?%this ?cache)
        (foreach/thisarg obj fun (j2s-scheme this mode return conf) %this cache))
@@ -526,4 +528,16 @@
        (foreach/thisarg obj fun '(js-undefined) %this cache))
       (else
        #f)))
+	   
+;*---------------------------------------------------------------------*/
+;*    j2s-array-foreach ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-foreach obj args mode return conf)
+   (j2s-array-foreach-map 'js-array-foreach-procedure obj args mode return conf))
+	   
+;*---------------------------------------------------------------------*/
+;*    j2s-array-map ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-map obj args mode return conf)
+   (j2s-array-foreach-map 'js-array-map-procedure obj args mode return conf))
 	   

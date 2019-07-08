@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Apr  8 16:24:38 2019 (serrano)                */
+;*    Last change :  Fri Jul  5 07:44:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -154,16 +154,6 @@
       (if (=fx nesting 0)
 	  (add-literal! this env 'regexp #f)
 	  this)))
-
-;*---------------------------------------------------------------------*/
-;*    constant! ::J2SString ...                                        */
-;*---------------------------------------------------------------------*/
-;* (define-walk-method (constant! this::J2SString env nesting)         */
-;*    (with-access::J2SString this (val)                               */
-;*       ;; MS 15mar19: first step toward dynamic prop caching         */
-;*       (if (and #f (eq? (string-minimal-charset val) 'ascii))        */
-;* 	  this                                                         */
-;* 	  (add-literal! this env 'string #t))))                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2STilde ...                                         */

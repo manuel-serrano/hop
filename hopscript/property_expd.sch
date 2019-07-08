@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Jun 24 08:13:54 2019 (serrano)                */
+;*    Last change :  Sun Jul  7 07:03:38 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -683,17 +683,23 @@
 	 `(,call ,%this ,m ,obj ,@args)))
    
    (define (calln-miss %this obj prop args ccache ocache loc cspecs ospecs)
-      `(js-object-method-call/cache-miss %this ,obj ,prop
-	  ,(if (pair? args) `(list ,@args) ''())
-	  ,ccache ,ocache ,loc ',cspecs ',ospecs))
+      `(begin
+;* 	  (when (string=? (js-jsstring->string ,prop) "ctor")          */
+;* 	     (tprint "call-miss " (typeof ,obj) " " ,prop " " ,loc))   */
+	  (js-object-method-call/cache-miss %this ,obj ,prop
+	     ,(if (pair? args) `(list ,@args) ''())
+	     ,ccache ,ocache ,loc ',cspecs ',ospecs)))
 
    (define (calln-uncachable %this ocspecs obj prop args ccache ocache loc)
       `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc ',ocspecs)))
 	  (js-profile-log-cache ,ccache :miss)
+;* 	  (when (string=? (js-jsstring->string ,prop) "ctor")          */
+;* 	     (tprint "uncachable " (typeof ,obj) " " ,prop " " ,loc))  */
 	  ,(calln %this 'f obj args)))
    
    (define (expand-cache-specs/args ccspecs ocspecs %this obj prop args ccache ocache loc)
       `(with-access::JsObject ,obj (cmap)
+	  
 	  (let ((%cmap cmap))
 	     ,(let loop ((cs ccspecs))
 		 (if (null? cs)
@@ -726,7 +732,13 @@
 			     (loop (cdr cs)))
 			    (else
 			     `(with-access::JsConstructMap %cmap (vlen vtable)
+;* 				 (when (string=? (js-jsstring->string ,prop) "ctor") */
+;* 				    (tprint "CTOR vtable l=" ,loc))    */
 				 (let ((vidx (js-pcache-vindex ,ccache)))
+;* 				    (when (string=? (js-jsstring->string ,prop) "ctor") */
+;* 				       (tprint "cache vtable " (typeof ,obj) " " ,prop " " ,loc */
+;* 					  " vidx=" vidx " vlen=" vlen  */
+;* 					  " " (when (<fx vidx vlen) (vector-ref vtable vidx)))) */
 				    (if (and (<fx vidx vlen)
 					     (procedure? (vector-ref vtable vidx)))
 					(begin
