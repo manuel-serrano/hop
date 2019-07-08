@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Jul  8 19:25:48 2019 (serrano)                */
+;*    Last change :  Mon Jul  8 19:34:55 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -530,8 +530,6 @@
 	   (not (type-number? typrop))
 	   (not (eq? typrop 'array))))
 
-   (tprint "j2s-get obj=" obj " " tyobj " field=" (j2s->list field)
-      " cache=" (and cache cspecs))
    (let ((propstr (match-case prop
 		     ((& ?str) str)
 		     (else #f))))
@@ -622,7 +620,6 @@
 	 ((memq typrop '(int32 uint32))
 	  (js-get obj (box prop typrop conf) '%this))
 	 (else
-	  (tprint "PAS DE CACHE " prop)
 	  (js-get obj prop '%this)))))
 
 ;*---------------------------------------------------------------------*/
