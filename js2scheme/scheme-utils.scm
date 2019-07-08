@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Jun  5 17:04:44 2019 (serrano)                */
+;*    Last change :  Mon Jul  8 19:25:48 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -529,7 +529,9 @@
       (and (not (number? prop))
 	   (not (type-number? typrop))
 	   (not (eq? typrop 'array))))
-   
+
+   (tprint "j2s-get obj=" obj " " tyobj " field=" (j2s->list field)
+      " cache=" (and cache cspecs))
    (let ((propstr (match-case prop
 		     ((& ?str) str)
 		     (else #f))))
@@ -596,6 +598,11 @@
 	     ((and (maybe-string? prop typrop) (symbol? obj))
 	      `(js-get/cache ,obj ,prop %this ,(loc->point loc) ',cspecs
 		  ,(loc->src loc)))
+	     ((maybe-string? prop typrop)
+	      (let ((tmp (gensym '%tmp)))
+		 `(let ((,tmp ,obj))
+		     (js-get/cache ,tmp ,prop %this ,(loc->point loc) ',cspecs
+			,(loc->src loc)))))
 	     (else
 	      (js-get obj prop '%this))))
 	 ((string? propstr)
@@ -615,6 +622,7 @@
 	 ((memq typrop '(int32 uint32))
 	  (js-get obj (box prop typrop conf) '%this))
 	 (else
+	  (tprint "PAS DE CACHE " prop)
 	  (js-get obj prop '%this)))))
 
 ;*---------------------------------------------------------------------*/

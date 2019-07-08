@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon May 27 17:44:20 2019 (serrano)                */
+;*    Last change :  Mon Jul  8 18:57:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -445,7 +445,12 @@
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((not (js-isindex? i))
-	     (call-next-method))
+	     (if (eq? p (& "length"))
+		 (if (js-object-mode-inline? o)
+		     (with-access::JsArguments o (vec)
+			(vector-length vec))
+		     (call-next-method))
+		 (call-next-method)))
 	    ((<uint32 i (vector-length vec))
 	     (let ((desc (u32vref vec i)))
 		(if (eq? desc (js-absent))

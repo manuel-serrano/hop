@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Jul  7 09:43:08 2019 (serrano)                */
+;*    Last change :  Mon Jul  8 19:21:11 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -516,7 +516,6 @@
 			  `(lambda (,this ,v ,n ,arr %this::JsGlobalObject) ,body)
 			  '(js-undefined) %this cache))
 		      (else
-      (tprint "foreach/this fun=" (typeof fun) " -> " proc)
 		       #f))))))
 	 (else
 	  #f)))

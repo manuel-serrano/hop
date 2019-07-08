@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jul  8 16:00:48 2019 (serrano)                */
+;*    Last change :  Mon Jul  8 18:55:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1614,7 +1614,14 @@
 ;*    js-get ::JsObject ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsObject prop %this::JsGlobalObject)
+   (tprint "js-get prop=[" prop "] " (typeof prop) " o=" (typeof o))
+   (when (and (isa? prop JsStringLiteral) (string=? (js-jsstring->string prop) "notIn"))
+      (if (>=fx cnt 100)
+	  (tprint "ERR " (/fx 1 0))
+	  (set! cnt (+fx cnt 1))))
    (js-get-jsobject o o prop %this))
+
+(define cnt 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject ::JsObject ...                                   */
