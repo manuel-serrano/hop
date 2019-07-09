@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Jul  7 07:36:07 2019 (serrano)                */
+;*    Last change :  Tue Jul  9 07:26:44 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -29,6 +29,7 @@
 	   __js2scheme_scheme-string
 	   __js2scheme_scheme-regexp
 	   __js2scheme_scheme-math
+	   __js2scheme_scheme-json
 	   __js2scheme_scheme-date
 	   __js2scheme_scheme-array
 	   __js2scheme_scheme-class
@@ -451,6 +452,9 @@
    (define (Math? self)
       (is-builtin-ref? self 'Math))
    
+   (define (Json? self)
+      (is-builtin-ref? self 'JSON))
+   
    (define (call-ref-method self ccache ocache ccspecs fun::J2SAccess obj::J2SExpr args)
 
       (with-access::J2SAccess fun (loc field (ocspecs cspecs))
@@ -463,6 +467,10 @@
 	     (lambda (expr) expr))
 	    ((and (Math? self)
 		  (j2s-math-builtin-method fun args this mode return conf))
+	     =>
+	     (lambda (expr) expr))
+	    ((and (Json? self)
+		  (j2s-json-builtin-method fun args this mode return conf))
 	     =>
 	     (lambda (expr) expr))
 	    ((and ccache (= (bigloo-debug) 0) ccspecs)

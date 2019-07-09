@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 12 16:45:39 2019 (serrano)                */
+;*    Last change :  Tue Jul  9 08:47:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -448,16 +448,33 @@
 	     (if (date? val)
 		 (let loop ((val val))
 		    (if (=fx (date-timezone val) 0)
-			(js-string->jsstring
-			   (format "~4,0d-~2,0d-~2,0dT~2,0d:~2,0d:~2,0d.~3,0dZ"
-			      (date-year val)
-			      (date-month val)
-			      (date-day val)
-			      (date-hour val)
-			      (date-minute val)
-			      (date-second val)
-			      (llong->fixnum
-				 (/llong (date-nanosecond val) #l1000000))))
+			(let ((buf (make-string 24 #\0)))
+			   ;; equivalent to
+			   ;; (format "~4,0d-~2,0d-~2,0dT~2,0d:~2,0d:~2,0d.~3,0dZ"
+                           ;;    (date-year val)
+                           ;;    (date-month val)
+                           ;;    (date-day val)
+                           ;;    (date-hour val)
+                           ;;    (date-minute val)
+                           ;;    (date-second val)
+                           ;;    (llong->fixnum
+                           ;;       (/llong (date-nanosecond val) #l1000000)))
+			   (string-set! buf 4 #\-)
+			   (string-set! buf 7 #\-)
+			   (string-set! buf 10 #\T)
+			   (string-set! buf 13 #\:)
+			   (string-set! buf 16 #\:)
+			   (string-set! buf 19 #\.)
+			   (string-set! buf 23 #\Z)
+			   (blit-fixnum! buf (date-year val) 0 4)
+			   (blit-fixnum! buf (date-month val) 5 2)
+			   (blit-fixnum! buf (date-day val) 8 2)
+			   (blit-fixnum! buf (date-hour val) 11 2)
+			   (blit-fixnum! buf (date-minute val) 14 2)
+			   (blit-fixnum! buf (date-second val) 17 2)
+			   (let ((ms (llong->fixnum (/llong (date-nanosecond val) #l1000000))))
+			      (blit-fixnum! buf ms 20 3))
+			   (js-ascii->jsstring buf))
 			(loop (date->utc-date val))))
 		 (js-raise-range-error %this "Invalid date ~s" val)))))
    
@@ -467,7 +484,7 @@
    
    ;; toJSON
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.44
-   (define (date-prototype-toJSON this::JsDate)
+   (define (date-prototype-toJSON this)
       (let* ((o (js-toobject %this this))
 	     (tv (js-toprimitive o 'number %this)))
 	 (if (and (js-number? tv) (not (integer? tv)))
@@ -1147,6 +1164,18 @@
 ;*---------------------------------------------------------------------*/
 (define (->fixnum-safe num)
    (when num (->fixnum num)))
+
+;*---------------------------------------------------------------------*/
+;*    blit-fixnum! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (blit-fixnum! buffer::bstring n idx padding::long)
+   
+   (define (digit->char n) (integer->char (+fx n (char->integer #\0))))
+   
+   (let loop ((n n)
+	      (p (-fx padding 1)))
+      (string-set! buffer (+fx idx p) (digit->char (remainderfx n 10)))
+      (when (>fx p 0) (loop (/fx n 10) (-fx p 1)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

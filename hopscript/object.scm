@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Jul  3 09:55:35 2019 (serrano)                */
+;*    Last change :  Tue Jul  9 07:20:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -166,9 +166,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (obj->json obj::JsObject op::output-port ctx)
    (if (isa? ctx JsGlobalObject)
-       (let ((%this ctx))
-	  (let ((stringify (js-json-stringify %this)))
-	     (display (stringify (js-undefined) obj (js-undefined) 1) op)))
+       (let ((str (js-json-stringify (js-undefined) obj (js-undefined) 1 ctx)))
+	  (display str op))
        (error "obj->json" "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/

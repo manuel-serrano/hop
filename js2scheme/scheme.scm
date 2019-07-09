@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jul  5 08:04:30 2019 (serrano)                */
+;*    Last change :  Tue Jul  9 07:41:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -414,7 +414,8 @@
 		`(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this)))
 	    ((and (memq scope '(global %scope export)) (in-eval? return))
 	     (epairify loc
-		`(js-global-object-get-name %scope (& ,(symbol->string id)) #f %this)))
+		`(js-global-object-get-name %scope
+		    (& ,(symbol->string id)) #f %this)))
 	    (else
 	     (j2s-decl-scheme-id decl))))))
 
@@ -495,8 +496,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SUnresolvedRef mode return conf)
    (with-access::J2SUnresolvedRef this (loc cache id)
-      (epairify loc
-	 (j2s-unresolved id (or loc #t) cache loc))))
+      (cond
+	 ((is-builtin-ref? this 'JSON)
+	  (epairify loc
+	     `(with-access::JsGlobalObject %this (js-json)
+		 js-json)))
+	 (else
+	  (epairify loc
+	     (j2s-unresolved id (or loc #t) cache loc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SArrayAbsent ...                                  */

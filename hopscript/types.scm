@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Jul  8 15:54:16 2019 (serrano)                */
+;*    Last change :  Tue Jul  9 08:15:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -387,6 +387,7 @@
 	      (js-spawn-pcache::vector (default '#()))
 	      (js-service-pcache::vector (default '#()))
 	      (js-number-pcache::vector (default '#()))
+	      (js-json-pcache::vector (default '#()))
 	      ;; cmaps
 	      (js-initial-cmap (default (class-nil JsConstructMap)))
 	      (js-arguments-cmap (default (class-nil JsConstructMap)))
