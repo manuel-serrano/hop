@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Jul  5 08:20:50 2019 (serrano)                */
+;*    Last change :  Tue Jul  9 13:07:47 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -494,12 +494,16 @@
 ;*    js-jsstring->string ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring->string::bstring js::JsStringLiteral)
-   (with-access::JsStringLiteral js (left right)
-      (if (not right)
-	  left
-	  (begin
-	     (js-jsstring-normalize! js)
-	     left))))
+   (with-access::JsStringLiteral js (left right weight)
+      (cond
+	 (right
+	  (js-jsstring-normalize! js)
+	  left)
+	 ((=u32 weight (fixnum->uint32 (string-length left)))
+	  left)
+	 (else
+	  (set! left (substring left 0 (uint32->fixnum weight)))
+	  left))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->number ...                                          */
