@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Jul  7 07:04:49 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 09:50:12 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -238,7 +238,6 @@
       (proxy-check-revoked! proxy "get" %this)
       (cond
 	 ((eq? (js-pcache-pmap cacheget) %cmap)
-      (tprint "PROXY GET " prop)
 	  (js-profile-log-cache cacheget :pmap #t)
 	  (check target
 	     ((js-pcache-method cacheget) handler target prop)))

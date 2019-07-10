@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jul 10 08:04:53 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 11:17:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3455,26 +3455,34 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-join o::JsArray separator %this)
    
-   (define (el->string el)
+   (define (el->jsstring el)
       (if (or (eq? el (js-undefined)) (eq? el (js-null)))
-	  ""
-	  (js-tostring el %this)))
+	  (& "")
+	  (js-tojsstring el %this)))
    
    (let* ((lenval::uint32 (js-get-lengthu32 o %this))
 	  (sep (if (eq? separator (js-undefined))
-		   ","
-		   (js-tostring separator %this))))
-      (if (=u32 lenval #u32:0)
-	  (& "")
-	  (let loop ((r '())
-		     (i (-u32 lenval #u32:1)))
+		   (& ",")
+		   (js-tojsstring separator %this))))
+      (cond
+	 ((=u32 lenval #u32:0)
+	  (& ""))
+	 ((=u32 lenval #u32:1)
+	  (el->jsstring (js-array-index-ref o (-u32 lenval #u32:1) %this)))
+	 (else
+	  (let loop ((r (js-jsstring-append sep
+			   (el->jsstring
+			      (js-array-index-ref o (-u32 lenval #u32:1)
+				 %this))))
+		     (i (-u32 lenval #u32:2)))
 	     (if (=u32 i 0)
 		 (let* ((v0 (js-array-index-ref o #u32:0 %this))
-			(el0 (el->string v0)))
-		    (js-stringlist->jsstring (cons el0 r)))
+			(el0 (el->jsstring v0)))
+		    (js-jsstring-append el0 r))
 		 (let ((v (js-array-index-ref o i %this)))
-		    (loop (cons* sep (el->string v) r)
-		       (-u32 i #u32:1))))))))
+		    (loop (js-jsstring-append sep
+			     (js-jsstring-append (el->jsstring v) r))
+		       (-u32 i #u32:1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-join ...                                                */

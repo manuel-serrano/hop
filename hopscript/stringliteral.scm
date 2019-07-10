@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jul 10 06:54:29 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 08:43:19 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -538,52 +538,52 @@
 	     (set! left r)
 	     (set! right #f)
 	     r))
-	 ((<u32 (js-jsstring-length js) #u32:8192)
-	  ;; small strings, no need for tail recursion
-	  (let ((buffer (make-string
-			   (uint32->fixnum (js-jsstring-length js)))))
-	     (let loop ((i 0)
-			(s js))
-		(with-access::JsStringLiteral s (left right weight)
-		   (let ((len (uint32->fixnum weight)))
-		      (if (string? left)
-			  (blit-buffer! left buffer i len)
-			  (begin
-			     (loop i left)
-			     (loop (+fx i len) right))))))
-	     (set! left buffer)
-	     (set! right #f)
-	     (set! weight (fixnum->uint32 (string-length buffer)))
-	     buffer))
 	 (else
-	  ;; tail recursive with heap allocated stack
-	  (let ((buffer (make-string
-			   (uint32->fixnum (js-jsstring-length js)))))
-	     (let loop ((i 0)
-			(s js)
-			(stack '()))
-		(with-access::JsStringLiteral s (left right weight)
-		   (let ((len (uint32->fixnum weight)))
-		      (cond
-			 (right
-			  (let* ((ni (+fx i len))
-				 (nstack (cons (cons ni right) stack)))
-			     (loop i left nstack)))
-			 ((string? left)
-			  (blit-buffer! left buffer i len)
-			  (if (pair? stack)
-			      (let* ((top (car stack))
-				     (ni (car top))
-				     (s (cdr top)))
-				 (loop ni s (cdr stack)))
-			      (with-access::JsStringLiteral js (left right weight)
-				 (set! weight
-				    (fixnum->uint32 (string-length buffer)))
-				 (set! left buffer)
-				 (set! right #f)
-				 buffer)))
-			 (else
-			  (loop i left stack)))))))))))
+	  (let* ((len (js-jsstring-length js))
+		 (buffer (make-string (uint32->fixnum len))))
+	     (if (<u32 len #u32:8192)
+		 ;; small strings, no need for tail recursion
+		 (begin
+		    (let loop ((i 0)
+			       (s js))
+		       (with-access::JsStringLiteral s (left right weight)
+			  (let ((len (uint32->fixnum weight)))
+			     (if (string? left)
+				 (blit-buffer! left buffer i len)
+				 (begin
+				    (loop i left)
+				    (loop (+fx i len) right))))))
+		    (set! left buffer)
+		    (set! right #f)
+		    (set! weight (fixnum->uint32 (string-length buffer)))
+		    buffer)
+		 ;; tail recursive with heap allocated stack
+		 (let loop ((i 0)
+			    (s js)
+			    (stack '()))
+		    (with-access::JsStringLiteral s (left right weight)
+		       (let ((len (uint32->fixnum weight)))
+			  (cond
+			     (right
+			      (let* ((ni (+fx i len))
+				     (nstack (cons (cons ni right) stack)))
+				 (loop i left nstack)))
+			     ((string? left)
+			      (blit-buffer! left buffer i len)
+			      (if (pair? stack)
+				  (let* ((top (car stack))
+					 (ni (car top))
+					 (s (cdr top)))
+				     (loop ni s (cdr stack)))
+				  (with-access::JsStringLiteral js (left right weight)
+				     (set! weight
+					(fixnum->uint32
+					   (string-length buffer)))
+				     (set! left buffer)
+				     (set! right #f)
+				     buffer)))
+			     (else
+			      (loop i left stack))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-UTF8! ...                                  */
@@ -619,50 +619,48 @@
 		    (set! %idxutf8 ridxutf8)
 		    (set! %idxstr ridxstr)
 		    r))))
-;* 	 ((<u32 (js-jsstring-length js) #u32:8192)                     */
-;* 	  ;; small strings, no need for tail recursion                 */
-;* 	  (let ((buffer (make-string                                   */
-;* 			   (uint32->fixnum (js-jsstring-length js))))) */
-;* 	     (let ((ni (let loop ((i 0)                                */
-;* 				  (s js))                              */
-;* 			  (with-access::JsStringLiteral s (left right weight) */
-;* 			     (if (string? left)                        */
-;* 				 (blit-utf8-buffer! left buffer i)     */
-;* 				 (let ((ni (loop i left)))            */
-;* 				    (loop ni right)))))))     */
-;* 		(string-shrink! buffer ni)                             */
-;* 		(set! left buffer)                                     */
-;* 		(set! right #f)                                        */
-;* 		(set! weight (fixnum->uint32 (string-length buffer)))  */
-;* 		buffer)))                                              */
 	 (else
-	  (let ((buffer (make-string
-			   (uint32->fixnum (js-jsstring-length js)))))
-	     (let loop ((i 0)
-			(s js)
-			(stack '()))
-		(if (string? s)
-		    (let ((ni (blit-utf8-buffer! s buffer i)))
-		       (if (pair? stack)
-			   (let* ((top (car stack))
-				  (ni (car top))
-				  (s (cdr top)))
-			      (loop ni s (cdr stack)))
-			   (begin
-			      (string-shrink! buffer ni)
-			      (set! weight
-				 (fixnum->uint32 (string-length buffer)))
-			      (set! left buffer)
-			      (set! right #f)
-			      buffer)))
-		    (with-access::JsStringLiteral s (left right weight)
-		       (if (not right)
-			   ;; plain left descent
-			   (loop i left stack)
-			   ;; full recursive call with pushed right
-			   (let* ((ni (+fx i (uint32->fixnum weight)))
-				  (nstack (cons (cons ni right) stack)))
-			      (loop i left nstack)))))))))))
+	  (let* ((len (js-jsstring-length js))
+		 (buffer (make-string (uint32->fixnum len))))
+	     (if (<u32 len #u32:8192)
+		 ;; small strings, no need for tail recursion
+		 (let ((ni (let loop ((i 0)
+				      (s js))
+			      (with-access::JsStringLiteral s (left right weight)
+				 (if (string? left)
+				     (blit-utf8-buffer! left buffer i)
+				     (let ((ni (loop i left)))
+					(loop ni right)))))))
+		    (string-shrink! buffer ni)
+		    (set! left buffer)
+		    (set! right #f)
+		    (set! weight (fixnum->uint32 (string-length buffer)))
+		    buffer)
+		 (let loop ((i 0)
+			    (s js)
+			    (stack '()))
+		    (if (string? s)
+			(let ((ni (blit-utf8-buffer! s buffer i)))
+			   (if (pair? stack)
+			       (let* ((top (car stack))
+				      (ni (car top))
+				      (s (cdr top)))
+				  (loop ni s (cdr stack)))
+			       (begin
+				  (string-shrink! buffer ni)
+				  (set! weight
+				     (fixnum->uint32 (string-length buffer)))
+				  (set! left buffer)
+				  (set! right #f)
+				  buffer)))
+			(with-access::JsStringLiteral s (left right weight)
+			   (if (not right)
+			       ;; plain left descent
+			       (loop i left stack)
+			       ;; full recursive call with pushed right
+			       (let* ((ni (+fx i (uint32->fixnum weight)))
+				      (nstack (cons (cons ni right) stack)))
+				  (loop i left nstack))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize! ...                                       */
@@ -1036,7 +1034,7 @@
 		    (eq? (object-class right) JsStringLiteralUTF8))
 		(instantiate::JsStringLiteralUTF8
 		   (weight (js-jsstring-length left))
-		   (left (js-jsstring->string left))
+		   (left left)
 		   (right right))
 		(instantiate::JsStringLiteralASCII
 		   (weight (js-jsstring-length left))
