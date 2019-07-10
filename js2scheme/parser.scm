@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Jun  2 06:24:58 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 16:03:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1077,7 +1077,6 @@
 			(consume-any!) '*))
 		(id (when (or declaration?
 			      (memq (peek-token-type) '(ID)))
-;* 			      (memq (peek-token-type) '(ID service)))  */
 		       (consume-any!))))
 	    (multiple-value-bind (params args)
 	       (function-params #f)

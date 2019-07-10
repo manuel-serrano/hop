@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Jul 10 14:11:16 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 16:08:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -44,6 +44,7 @@
 	   __js2scheme_cast
 	   __js2scheme_vector
 	   __js2scheme_array
+	   __js2scheme_letfun
 	   __js2scheme_letfusion
 	   __js2scheme_letopt
 	   __js2scheme_unletrec
@@ -183,6 +184,7 @@
 	  j2s-multivar-stage
 	  j2s-narrow-stage
 	  j2s-letfusion-stage
+	  j2s-letfun-stage
 	  j2s-letopt-stage
 	  j2s-unletrec-stage
 	  j2s-this-stage
