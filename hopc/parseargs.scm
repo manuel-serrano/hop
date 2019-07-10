@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Apr 21 16:00:50 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 07:12:05 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -370,6 +370,11 @@
 	    (("--profile-alloc" (help "Alloc profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile-alloc #t (hopc-j2s-flags))))
+	    (("--profile-mem?level" (help "Memory profiling mode (see bmem)"))
+	     (if (string=? level "")
+		 (hopc-bigloo-profile-options-set! '("-g2" "-gtrace5"))
+		 (let ((gtrace (string-append "-gtrace" level)))
+		    (hopc-bigloo-profile-options-set! `("-g2" ,gtrace)))))
 	    (section "Dummy option for Hop command line similarity")
 	    (("--no-server" (help "Hop compatibility, ignored"))
 	     #unspecified)

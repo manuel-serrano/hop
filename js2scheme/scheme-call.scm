@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jul  9 07:26:44 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 07:08:02 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -101,6 +101,7 @@
 	("trim" js-jsstring-trim string () #f)
 	("trim" js-jsstring-maybe-trim any () %this #t)
 	("slice" js-jsstring-slice string (any any) %this)
+	("slice" js-jsstring-maybe-slice1 any (any) %this #t)
 	("slice" js-jsstring-maybe-slice any (any any) %this #t)
 	;; regexp
 	("test" ,j2s-regexp-test regexp (any) %this)

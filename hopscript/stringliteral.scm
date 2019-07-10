@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jul  9 13:07:47 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 06:54:29 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -119,6 +119,7 @@
 	   (js-jsstring-unescape ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-slice ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-slice ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-jsstring-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring->jsarray ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring->list ::obj ::JsGlobalObject))
 
@@ -618,6 +619,22 @@
 		    (set! %idxutf8 ridxutf8)
 		    (set! %idxstr ridxstr)
 		    r))))
+;* 	 ((<u32 (js-jsstring-length js) #u32:8192)                     */
+;* 	  ;; small strings, no need for tail recursion                 */
+;* 	  (let ((buffer (make-string                                   */
+;* 			   (uint32->fixnum (js-jsstring-length js))))) */
+;* 	     (let ((ni (let loop ((i 0)                                */
+;* 				  (s js))                              */
+;* 			  (with-access::JsStringLiteral s (left right weight) */
+;* 			     (if (string? left)                        */
+;* 				 (blit-utf8-buffer! left buffer i)     */
+;* 				 (let ((ni (loop i left)))            */
+;* 				    (loop ni right)))))))     */
+;* 		(string-shrink! buffer ni)                             */
+;* 		(set! left buffer)                                     */
+;* 		(set! right #f)                                        */
+;* 		(set! weight (fixnum->uint32 (string-length buffer)))  */
+;* 		buffer)))                                              */
 	 (else
 	  (let ((buffer (make-string
 			   (uint32->fixnum (js-jsstring-length js)))))
@@ -3011,6 +3028,22 @@
 			  (or cache (js-pcache-ref js-string-pcache 22))
 			  -1 '(imap+))))
 	     (js-call2 %this slice this start end))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-slice1 ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-slice1 this start %this cache)
+   (cond
+      ((js-jsstring? this)
+       (js-jsstring-slice this start (js-jsstring-lengthfx this) %this))
+      ((js-array? this)
+       (js-array-prototype-slice this start (js-undefined) %this))
+      (else
+       (with-access::JsGlobalObject %this (js-string-pcache)
+	  (let ((slice (js-get-name/cache this (& "slice") #f %this
+			  (or cache (js-pcache-ref js-string-pcache 37))
+			  -1 '(imap+))))
+	     (js-call1 %this slice this start))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->jsarray ...                                         */

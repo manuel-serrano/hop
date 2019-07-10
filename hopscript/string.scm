@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 19 11:38:02 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 06:58:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -128,7 +128,7 @@
 	 
 	 ;; string pcache
 	 (set! js-string-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 37 "string"))
+	    ((@ js-make-pcache-table __hopscript_property) 38 "string"))
 	 
 	 ;; builtin prototype
 	 (set! js-string-prototype
@@ -152,6 +152,7 @@
 	    
 	    (with-access::JsGlobalObject %this (js-new-target)
 	       (set! js-new-target (js-undefined)))
+	    
 	    (if (null? arg)
 		;; 2
 		(set-ascii-string! "")
@@ -164,8 +165,8 @@
 		      ((js-object? value)
 		       (js-set-string! %this o (js-cast-string %this value)))
 		      (else
-		       (let ((str (js-tostring value %this)))
-			  (js-set-string! %this o (js-string->jsstring str))))))))
+		       (let ((str (js-tojsstring value %this)))
+			  (js-set-string! %this o str)))))))
 
 	 ;; then, create a HopScript object
 	 (set! js-string
