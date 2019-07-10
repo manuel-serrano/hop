@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Feb 25 11:07:40 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 14:11:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -37,6 +37,7 @@
 	   __js2scheme_ctor
 	   __js2scheme_propcce
 	   __js2scheme_clevel
+	   __js2scheme_objinit
 	   __js2scheme_constant
 	   __js2scheme_tyflow
 	   __js2scheme_range
@@ -198,6 +199,7 @@
 	  j2s-return-stage
 	  j2s-inline-stage
 	  j2s-cps-stage
+	  j2s-objinit-stage
 	  j2s-constant-stage
 	  j2s-varpreinit-stage
 	  j2s-tyflow-stage

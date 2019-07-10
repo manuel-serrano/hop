@@ -3,11 +3,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jul  5 07:44:24 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 14:19:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
-;*    closed functions, ...)                                           */
+;*    closed functions, ronly literal objects, ...)                    */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -175,7 +175,7 @@
 ;*    constant! ::J2SObjInit ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constant! this::J2SObjInit env nesting)
-   (with-access::J2SObjInit this (inits cmap loc)
+   (with-access::J2SObjInit this (inits cmap loc ronly)
       (let ((keys (map (lambda (i)
 			  (when (isa? i J2SDataPropertyInit)
 			     (with-access::J2SDataPropertyInit i (name)
@@ -192,15 +192,33 @@
 				    #f)))))
 		     inits)))
 	 (call-default-walker)
-	 (when (and (pair? keys) (every (lambda (x) x) keys))
-	    ;; constant cmap
-	    (let ((n (add-cmap! loc (list->vector keys) env)))
-	       (set! cmap
-		  (instantiate::J2SLiteralCnst
-		     (loc loc)
-		     (index n)
-		     (val (env-list-ref env n))))))
-	 this)))
+	 (if (and (pair? keys) (every (lambda (x) x) keys))
+	     (begin
+		;; constant cmap
+		(let ((n (add-cmap! loc (list->vector keys) env)))
+		   (set! cmap
+		      (instantiate::J2SLiteralCnst
+			 (loc loc)
+			 (index n)
+			 (val (env-list-ref env n)))))
+		(if (and ronly
+			 (every (lambda (init)
+				   (with-access::J2SDataPropertyInit init (val)
+				      (or (isa? val J2SLiteralCnst)
+					  (isa? val J2SString)
+					  (isa? val J2SNumber)
+					  (isa? val J2SBool)
+					  (isa? val J2SUndefined))))
+			    inits))
+		    (let ((index (add-env! this this env #t)))
+		       (with-access::J2SExpr this (loc)
+			  (instantiate::J2SLiteralCnst
+			     (loc loc)
+			     (type 'object)
+			     (index index)
+			     (val this))))
+		    this))
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SAccess ...                                        */

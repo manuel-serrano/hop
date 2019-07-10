@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon Jul  8 19:21:11 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 11:39:15 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -38,7 +38,10 @@
 	   (j2s-vector-ref ::J2SAccess mode return conf)
 	   (j2s-vector-set! ::J2SAssig mode return conf)
 	   (j2s-array-foreach obj args mode return conf)
-	   (j2s-array-map obj args mode return conf)))
+	   (j2s-array-maybe-foreach obj args mode return conf)
+	   (j2s-array-map obj args mode return conf)
+	   (j2s-array-maybe-map obj args mode return conf)
+	   (j2s-array-maybe-join obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-builtin-method ...                                     */
@@ -507,13 +510,25 @@
 		       (foreach obj
 			  `(lambda (,this ,v %n %arr %this::JsGlobalObject) ,body)
 			  '(js-undefined) %this cache))
+		      ((labels ((?id (?this ?v) ?body)) ?id)
+		       (foreach obj
+			  `(labels ((,id (,this ,v %n %arr %this::JsGlobalObject) ,body)) ,id)
+			  '(js-undefined) %this cache))
 		      ((?lambda (?this ?v ?n) ?body)
 		       (foreach obj
 			  `(lambda (,this ,v ,n %arr %this::JsGlobalObject) ,body)
 			  '(js-undefined) %this cache))
+		      ((labels ((?id (?this ?v ?n) ?body)) ?id)
+		       (foreach obj
+			  `(labels ((,id (,this ,v ,n %arr %this::JsGlobalObject) ,body)) ,id)
+			  '(js-undefined) %this cache))
 		      ((?lambda (?this ?v ?n ?arr) ?body)
 		       (foreach obj
 			  `(lambda (,this ,v ,n ,arr %this::JsGlobalObject) ,body)
+			  '(js-undefined) %this cache))
+		      ((labels ((?id (?this ?v ?n ?arr) ?body)) ?id)
+		       (foreach obj
+			  `(labels ((,id (,this ,v ,n ,arr %this::JsGlobalObject) ,body)) ,id)
 			  '(js-undefined) %this cache))
 		      (else
 		       #f))))))
@@ -535,8 +550,35 @@
    (j2s-array-foreach-map 'js-array-foreach-procedure obj args mode return conf))
 	   
 ;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-foreach ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-foreach obj args mode return conf)
+   (j2s-array-foreach-map 'js-array-maybe-foreach-procedure obj args mode return conf))
+	   
+;*---------------------------------------------------------------------*/
 ;*    j2s-array-map ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-map obj args mode return conf)
    (j2s-array-foreach-map 'js-array-map-procedure obj args mode return conf))
-	   
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-map ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-map obj args mode return conf)
+   (j2s-array-foreach-map 'js-array-maybe-map-procedure obj args mode return conf))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-join ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-join obj args mode return conf)
+   (match-case args
+      ((?sep ?%this ?cachej)
+       (let ((obj (j2s-scheme obj mode return conf))
+	     (sep (j2s-scheme sep mode return conf)))
+	  (match-case obj
+	     ((js-array-maybe-map-procedure ?obj ?proc ?arg %this ?cachem)
+	      `(js-array-maybe-map-join ,obj ,proc ,arg ,sep ,%this ,cachem ,cachej))
+	     (else
+	      `(js-array-maybe-join ,obj ,sep ,%this ,cachej)))))
+      (else
+       #f)))

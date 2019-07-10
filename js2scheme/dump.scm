@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Jun 11 13:13:22 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 14:17:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -898,8 +898,13 @@
 ;*    j2s->list ::J2SObjectInit ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SObjInit)
-   (with-access::J2SObjInit this (inits)
-      `(,@(call-next-method) ,@(map j2s->list inits))))
+   (with-access::J2SObjInit this (inits ronly)
+      `(,@(call-next-method)
+	  ,@(if (or (string-contains (or (getenv "HOPTRACE") "") "j2s:usage")
+		    (string-contains (or (getenv "HOPTRACE") "") "j2s:access"))
+		`(:ronly ,ronly)
+		'())
+	  ,@(map j2s->list inits))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDataPropertyInit ...                              */

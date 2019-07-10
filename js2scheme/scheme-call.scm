@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Jul 10 07:08:02 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 11:42:19 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -116,10 +116,14 @@
 	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
 	("forEach" ,j2s-array-foreach array (function) %this #t ,j2s-array-plain?)
 	("forEach" ,j2s-array-foreach array (function any) %this #t ,j2s-array-plain?)
+	("forEach" ,j2s-array-maybe-foreach any (function) %this #t ,j2s-array-plain?)
+	("forEach" ,j2s-array-maybe-foreach any (function any) %this #t ,j2s-array-plain?)
 	("map" ,j2s-array-map array (function) %this #t ,j2s-array-plain?)
 	("map" ,j2s-array-map array (function any) %this #t ,j2s-array-plain?)
+	("map" ,j2s-array-maybe-map any (function) %this #t ,j2s-array-plain?)
+	("map" ,j2s-array-maybe-map any (function any) %this #t ,j2s-array-plain?)
 	("join" js-array-join array (any) %this #t ,j2s-array-plain?)
-	("join" js-array-maybe-join any (any) %this #t ,j2s-array-plain?)
+	("join" ,j2s-array-maybe-join any (any) %this #t ,j2s-array-plain?)
 	("push" js-array-push array (any) %this #t ,j2s-array-plain?)
 	("push" js-array-maybe-push any (any) %this #t ,j2s-array-plain?)
 	("pop" js-array-pop array () %this #t ,j2s-array-plain?)

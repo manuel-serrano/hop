@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Jun 24 09:29:41 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 14:25:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -61,9 +61,64 @@
 ;*    js-constant-init ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-constant-init vec-or-false str-or-vec %this)
+   
+   (define (constant-plain-regexp el)
+      (with-access::JsGlobalObject %this (js-regexp)
+	 (let* ((cnsts (vector-ref el 1))
+		(flags (vector-ref el 2))
+		(rx (js-string->jsstring cnsts)))
+	    (if flags
+		(if (eq? (vector-ref el 0) 4)
+		    (js-new3 %this js-regexp rx
+		       (js-string->jsstring flags)
+		       (vector-ref el 3))
+		    (js-new2 %this js-regexp rx
+		       (js-string->jsstring flags)))
+		(if (eq? (vector-ref el 0) 4)
+		    (js-new2 %this js-regexp rx
+		       (vector-ref el 3))
+		    (js-new1 %this js-regexp rx))))))
+   
+   (define (constant-inline-regexp el)
+      (with-access::JsGlobalObject %this (js-regexp)
+	 (let* ((cnsts (vector-ref el 1))
+		(flags (vector-ref el 2))
+		(rx (js-string->jsstring cnsts))
+		(regexp (if flags
+			    (if (eq? (vector-ref el 0) 5)
+				(js-new3 %this js-regexp rx
+				   (js-string->jsstring flags)
+				   (vector-ref el 3))
+				(js-new2 %this js-regexp rx
+				   (js-string->jsstring flags)))
+			    (if (eq? (vector-ref el 0) 5)
+				(js-new2 %this js-regexp rx
+				   (vector-ref el 3))
+				(js-new1 %this js-regexp rx)))))
+	    (with-access::JsRegExp regexp (rx)
+	       rx))))
+   
+   (define (constant-objinit el cnsts)
+      (with-access::JsGlobalObject %this (__proto__)
+	 (let* ((cmap (vector-ref cnsts (vector-ref el 1)))
+		(vals (vector-ref el 2))
+		(obj (js-make-jsobject (vector-length vals)
+			cmap __proto__)))
+	    (with-access::JsObject obj (elements)
+	       (let loop ((i (-fx (vector-length vals) 1)))
+		  (if (<fx i 0)
+		      obj
+		      (let ((val (vector-ref vals i)))
+			 (vector-set! elements i
+			    (cond
+			       ((pair? val) (vector-ref cnsts (car val)))
+			       ((string? val) (js-string->jsstring val))
+			       (else val)))
+			 (loop (-fx i 1)))))))))
+
    (let ((cnsts (if (string? str-or-vec) (string->obj str-or-vec) str-or-vec)))
-      (let loop ((i (-fx (vector-length cnsts) 1)))
-	 (when (>=fx i 0)
+      (let loop ((i 0))
+	 (when (<fx i (vector-length cnsts))
 	    (let ((el (vector-ref cnsts i)))
 	       (cond
 		  ((isa? el JsRegExp)
@@ -89,45 +144,19 @@
 			     (js-utf8-name->jsstring str)))
 			 ((1 4)
 			  ;; a plain regexp
-			  (with-access::JsGlobalObject %this (js-regexp)
-			     (let* ((cnsts (vector-ref el 1))
-				    (flags (vector-ref el 2))
-				    (rx (js-string->jsstring cnsts)))
-				(if flags
-				    (if (eq? (vector-ref el 0) 4)
-					(js-new3 %this js-regexp rx
-					   (js-string->jsstring flags)
-					   (vector-ref el 3))
-					(js-new2 %this js-regexp rx
-					   (js-string->jsstring flags)))
-				    (if (eq? (vector-ref el 0) 4)
-					(js-new2 %this js-regexp rx
-					   (vector-ref el 3))
-					(js-new1 %this js-regexp rx))))))
+			  (constant-plain-regexp el))
 			 ((2)
 			  ;; a literal cmap
 			  (let ((props (vector-ref el 1)))
 			     (js-strings->cmap props %this)))
 			 ((3 5)
 			  ;; an inlined regexp
-			  (with-access::JsGlobalObject %this (js-regexp)
-			     (let* ((cnsts (vector-ref el 1))
-				    (flags (vector-ref el 2))
-				    (rx (js-string->jsstring cnsts))
-				    (regexp (if flags
-						(if (eq? (vector-ref el 0) 5)
-						    (js-new3 %this js-regexp rx
-						       (js-string->jsstring flags)
-						       (vector-ref el 3))
-						    (js-new2 %this js-regexp rx
-						       (js-string->jsstring flags)))
-						(if (eq? (vector-ref el 0) 5)
-						    (js-new2 %this js-regexp rx
-						       (vector-ref el 3))
-						    (js-new1 %this js-regexp rx)))))
-				(with-access::JsRegExp regexp (rx)
-				   rx))))))))
-	       (loop (-fx i 1)))))
+			  (constant-inline-regexp el))
+			 ((8)
+			  ;; a literal object (it contains the constant indexes
+			  ;; of its cmap and its elements value)
+			  (constant-objinit el cnsts))))))
+	       (loop (+fx i 1)))))
       ;; start fill at index 1 because of the C declaration
       ;; of the constant vector (see constants_expd.sch)
       (when vec-or-false (vector-copy! vec-or-false 1 cnsts 0))

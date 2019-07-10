@@ -1,5 +1,5 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/es6-set.js      */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-set.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Feb 25 11:33:29 2019                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jul 10 11:17:44 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 11:54:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -111,11 +111,14 @@
 	   (js-array-foreach ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-foreach ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-foreach-procedure ::JsArray ::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-foreach-procedure ::obj ::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-map ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-map ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-map-procedure ::JsArray ::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-map-procedure ::obj ::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-join ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-join ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-map-join ::obj ::procedure ::obj ::obj ::JsGlobalObject ::obj ::obj)
 	   (js-array-push ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-push ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-pop ::JsArray ::JsGlobalObject ::obj)
@@ -3509,6 +3512,65 @@
 	     this separator))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-map-join ...                                            */
+;*    -------------------------------------------------------------    */
+;*    This function is called on patterns combining map and join as:   */
+;*      arr.map( fun ).join( str )                                     */
+;*    It does not construct the internal map array.                    */
+;*---------------------------------------------------------------------*/
+(define (js-array-map-join this::JsArray proc::procedure thisarg separator %this)
+   
+   (define (array-map/array o len proc t i::uint32 sep acc)
+      (let loop ((i i)
+		 (acc acc))
+	 (if (<u32 i len)
+	     (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
+		(if (js-absent? pv)
+		    (loop (+u32 i 1) acc)
+		    (let ((v (proc t pv (js-uint32-tointeger i) o %this)))
+		       (loop (+u32 i 1)
+			  (js-jsstring-append acc
+			     (js-jsstring-append sep
+				(js-tojsstring v %this)))))))
+	     acc)))
+   
+   (define (vector-map o len::uint32 proc t sep)
+      (with-access::JsArray o (vec ilen length)
+	 (let ((v (& ""))
+	       (l length))
+	    (if (=u32 l #u32:0)
+		v
+		(let ((val (vector-ref vec 0)))
+		   (let loop ((i #u32:1)
+			      (acc (js-tojsstring (proc t val 0 o %this) %this)))
+		      (if (or (>=u32 i ilen) (>=u32 i l))
+			  (if (=u32 i len)
+			      acc
+			      (array-map/array o len proc t i sep acc))
+			  (let* ((val (vector-ref vec (uint32->fixnum i)))
+				 (v (proc t val (js-uint32-tointeger i) o %this)))
+			     (loop (+u32 i 1)
+				(js-jsstring-append acc
+				   (js-jsstring-append sep
+				      (js-tojsstring v %this))))))))))))
+
+   (let ((sep (if (eq? separator (js-undefined))
+		  (& ",")
+		  (js-tojsstring separator %this))))
+      (with-access::JsArray this (length)
+	 (vector-map this length proc thisarg sep))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-map-join ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-map-join this proc thisarg separator %this cachem cachej)
+   (if (and (js-array? this) (js-object-mode-plain? this))
+       (js-array-map-join this proc thisarg separator %this)
+       (js-array-maybe-join
+	  (js-array-maybe-map-procedure this proc thisarg %this cachem)
+	  separator %this cachej)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-fill ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-fill this::JsArray value start end %this)
@@ -3674,10 +3736,29 @@
 (define (js-array-foreach-procedure this::JsArray proc thisarg %this cache)
    (if (js-object-mode-plain? this)
        (js-array-prototype-foreach-procedure this proc thisarg %this)
-       (let ((jsproc (js-make-function %this proc 3 "forEachProc"
+       (let ((jsproc (js-make-function %this
+			(lambda (_this x y z) (proc _this x y z %this))
+			3 "forEachProc"
 			:constrsize 0
 			:alloc js-object-alloc)))
 	  (js-array-foreach this jsproc thisarg %this cache))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-foreach-procedure ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-foreach-procedure this proc thisarg %this cache)
+   (if (js-array? this)
+       (js-array-prototype-foreach-procedure this proc thisarg %this)
+       (let ((jsproc (js-make-function %this
+			(lambda (_this x y z) (proc _this x y z %this))
+			3 "forEachProc"
+			:constrsize 0
+			:alloc js-object-alloc)))
+	  (with-access::JsGlobalObject %this (js-array-pcache)
+	     (js-call2 %this
+		(js-get-name/cache this (& "forEach") #f %this
+		   (or cache (js-pcache-ref js-array-pcache 12)))
+		this jsproc thisarg)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-map ...                                       */
@@ -3820,24 +3901,36 @@
 			 (proc t val (js-uint32-tointeger i) o %this))
 		      (loop (+u32 i 1)))))))))
    
-   (define (array-map o len proc t i::uint32)
-      (let ((a (js-array-construct/length %this (js-array-alloc %this)
-		  (js-uint32-tointeger len))))
-	 (array-map/array o len proc t i a)))
-   
    (with-access::JsArray this (length)
       (vector-map this length proc thisarg #u32:0)))
- 
+
 ;*---------------------------------------------------------------------*/
 ;*    js-array-map-procedure ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-array-map-procedure this::JsArray proc thisarg %this cache)
    (if (js-object-mode-plain? this)
        (js-array-prototype-map-procedure this proc thisarg %this)
-       (let ((jsproc (js-make-function %this proc 3 "mapProc"
+       (let ((jsproc (js-make-function %this
+			(lambda (_this x y z) (proc _this x y z %this)) 3 "mapProc"
 			:constrsize 0
 			:alloc js-object-alloc)))
 	  (js-array-map this jsproc thisarg %this cache))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-map-procedure ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-map-procedure this proc thisarg %this cache)
+   (if (js-array? this)
+       (js-array-map-procedure this proc thisarg %this cache)
+       (let ((jsproc (js-make-function %this
+			(lambda (_this x y z) (proc _this x y z %this)) 3 "mapProc"
+			:constrsize 0
+			:alloc js-object-alloc)))
+	  (with-access::JsGlobalObject %this (js-array-pcache)
+	     (js-call2 %this
+		(js-get-name/cache this (& "map") #f %this
+		   (or cache (js-pcache-ref js-array-pcache 11)))
+		this jsproc thisarg)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-push ...                                      */

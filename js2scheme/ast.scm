@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Jun 30 07:39:14 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 14:06:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -339,7 +339,7 @@
 
 	   (final-class J2SLiteralCnst::J2SLiteral
 	      (index::long read-only)
-	      (val::J2SLiteralValue read-only (info '("notraverse"))))
+	      (val::J2SExpr read-only (info '("notraverse"))))
 	       
 	   (final-class J2SArray::J2SLiteral
 	      len::int
@@ -384,6 +384,7 @@
 	      op::symbol)
 	   
 	   (final-class J2SObjInit::J2SExpr
+	      (ronly (default #f) (info '("notraverse")))
 	      (inits::pair-nil (info '("ast")))
 	      (cmap (default #f)))
 	   

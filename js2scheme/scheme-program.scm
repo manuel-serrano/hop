@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Jul  4 15:02:02 2019 (serrano)                */
+;*    Last change :  Wed Jul 10 14:24:21 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -531,10 +531,18 @@
 			      s)))
 		  cnsts))
 	  %this))
+
+   (define (data-property-cnst init)
+      (with-access::J2SDataPropertyInit init (val)
+	 (if (isa? val J2SLiteralValue)
+	     (with-access::J2SLiteralValue val (val)
+		val)
+	     (with-access::J2SLiteralCnst val (index)
+		(cons index index)))))
    
    (define (%cnst-table-intext cnsts)
       
-      (define (j2s-constant this::J2SLiteralValue)
+      (define (j2s-constant this::J2SExpr)
 	 (cond
 	    ((isa? this J2SString)
 	     (with-access::J2SString this (val)
@@ -549,6 +557,11 @@
 	    ((isa? this J2SCmap)
 	     (with-access::J2SCmap this (val)
 		(vector 2 (vector-map symbol->string val))))
+	    ((isa? this J2SObjInit)
+	     (with-access::J2SObjInit this (inits cmap)
+		(with-access::J2SLiteralCnst cmap (index)
+		   (vector 8 index
+		      (list->vector (map data-property-cnst inits))))))
 	    (else
 	     (error "j2s-constant" "wrong literal" this))))
       
