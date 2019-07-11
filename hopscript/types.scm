@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jul  9 08:15:30 2019 (serrano)                */
+;*    Last change :  Thu Jul 11 08:37:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -446,6 +446,8 @@
 	   
 	   (inline js-object-mode-hasnumeralprop?::bool ::JsObject)
 	   (inline js-object-mode-hasnumeralprop-set! ::JsObject ::bool)
+
+	   (js-object-elements-inline?::bool ::JsObject)
 	   
 	   (inline JS-OBJECT-MODE-EXTENSIBLE::uint32)
 	   (inline JS-OBJECT-MODE-SEALED::uint32)
@@ -720,6 +722,10 @@
       (if flag
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-HASNUMERALPROP))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-HASNUMERALPROP))))))
+
+(define (js-object-elements-inline? o)
+   ;; only used for debugging
+   ($jsobject-elements-inline? o))
 
 ;*---------------------------------------------------------------------*/
 ;*    regexp                                                           */

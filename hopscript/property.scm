@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jul  9 07:55:24 2019 (serrano)                */
+;*    Last change :  Thu Jul 11 08:49:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -733,7 +733,7 @@
    (with-access::JsObject o (cmap)
       (unless (eq? cmap (js-not-a-cmap))
 	 (js-validate-pmap-pcache! pcache)
-	 (with-access::JsConstructMap cmap (inline)
+	 (with-access::JsConstructMap nextmap (inline)
 	    (if (and inline enable-sibling)
 		(next-inline! pcache cmap)
 		(next-noinline! pcache cmap))))))
@@ -783,7 +783,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    extend-cmap ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (extend-cmap omap::JsConstructMap name flags)
+(define (extend-cmap omap::JsConstructMap name flags inline)
    
    (define (vector-extend::vector vec::vector val)
       ;; extend a vector with one additional slot
@@ -792,7 +792,7 @@
 	 (vector-set! nvec len val)
 	 nvec))
    
-   (with-access::JsConstructMap omap (props methods ctor inline)
+   (with-access::JsConstructMap omap (props methods ctor)
       (let ((newprops (vector-extend props (prop name flags)))
 	    (newmethods (vector-extend methods #unspecified)))
 	 (instantiate::JsConstructMap
@@ -2187,7 +2187,8 @@
 			 (lambda (nmap)
 			    ;; follow the next map
 			    (let ((nextmap (cmap-find-sibling nmap
-					      (js-object-inline-elements? o))))
+					      (and (js-object-inline-elements? o)
+						   (<fx index (vector-length elements))))))
 			       (with-access::JsConstructMap nextmap (ctor methods props detachcnt)
 				  (cond
 				     ((not (js-function? v))
@@ -2221,7 +2222,9 @@
 					 ;; MS 9may2019 CARE INVALIDATE
 					 (js-pcache-next-direct! cache o nextmap index)))
 				     (else
-				      (let ((detachedmap (extend-cmap cmap name flags)))
+				      (let ((detachedmap (extend-cmap cmap name flags
+							    (and (js-object-inline-elements? o)
+								 (<fx index (vector-length elements))))))
 					 (set! detachcnt (+fx 1 detachcnt))
 					 (with-access::JsConstructMap detachedmap (methods ctor %id)
 					    ;; validate cache method and don't cache
@@ -2249,7 +2252,9 @@
 			 v)
 			(else
 			 ;; create a new map
-			 (let ((nextmap (extend-cmap cmap name flags)))
+			 (let ((nextmap (extend-cmap cmap name flags
+					   (and (js-object-inline-elements? o)
+						(<fx index (vector-length elements))))))
 			    (js-invalidate-pmap-pcaches! %this "extend-mapped.5" name)
 			    (with-access::JsConstructMap nextmap (methods ctor)
 			       (if (js-function? v)
@@ -2567,10 +2572,10 @@
 	     value))))
 
    (define (next-cmap o::JsObject name value flags)
-      (with-access::JsObject o (cmap)
-	 (with-access::JsConstructMap cmap (single)
+      (with-access::JsObject o (cmap elements)
+	 (with-access::JsConstructMap cmap (single inline)
 	    (if (and hidden-class (not single))
-		(let ((nextmap (extend-cmap cmap name flags)))
+		(let ((nextmap (extend-cmap cmap name flags inline)))
 		   (link-cmap! cmap nextmap name value flags)
 		   (set! cmap
 		      (cmap-find-sibling nextmap
