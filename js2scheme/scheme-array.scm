@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Jul 10 11:39:15 2019 (serrano)                */
+;*    Last change :  Thu Jul 11 08:03:02 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -496,7 +496,7 @@
       `(,js-foreach-or-map
 	  ,(j2s-scheme obj mode return conf)
 	  ,proc
-	  (js-undefined)
+	  ,thisarg
 	  ,%this ,cache))
    
    (define (foreach/thisarg obj fun thisarg %this cache)
@@ -509,35 +509,35 @@
 		      ((?lambda (?this ?v) ?body)
 		       (foreach obj
 			  `(lambda (,this ,v %n %arr %this::JsGlobalObject) ,body)
-			  '(js-undefined) %this cache))
+			  thisarg %this cache))
 		      ((labels ((?id (?this ?v) ?body)) ?id)
 		       (foreach obj
 			  `(labels ((,id (,this ,v %n %arr %this::JsGlobalObject) ,body)) ,id)
-			  '(js-undefined) %this cache))
+			  thisarg %this cache))
 		      ((?lambda (?this ?v ?n) ?body)
 		       (foreach obj
 			  `(lambda (,this ,v ,n %arr %this::JsGlobalObject) ,body)
-			  '(js-undefined) %this cache))
+			  thisarg %this cache))
 		      ((labels ((?id (?this ?v ?n) ?body)) ?id)
 		       (foreach obj
 			  `(labels ((,id (,this ,v ,n %arr %this::JsGlobalObject) ,body)) ,id)
-			  '(js-undefined) %this cache))
+			  thisarg %this cache))
 		      ((?lambda (?this ?v ?n ?arr) ?body)
 		       (foreach obj
 			  `(lambda (,this ,v ,n ,arr %this::JsGlobalObject) ,body)
-			  '(js-undefined) %this cache))
+			  thisarg %this cache))
 		      ((labels ((?id (?this ?v ?n ?arr) ?body)) ?id)
 		       (foreach obj
 			  `(labels ((,id (,this ,v ,n ,arr %this::JsGlobalObject) ,body)) ,id)
-			  '(js-undefined) %this cache))
+			  thisarg %this cache))
 		      (else
 		       #f))))))
 	 (else
 	  #f)))
 
    (match-case args
-      ((?fun ?this ?%this ?cache)
-       (foreach/thisarg obj fun (j2s-scheme this mode return conf) %this cache))
+      ((?fun ?thisarg ?%this ?cache)
+       (foreach/thisarg obj fun (j2s-scheme thisarg mode return conf) %this cache))
       ((?fun ?%this ?cache)
        (foreach/thisarg obj fun '(js-undefined) %this cache))
       (else

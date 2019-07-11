@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jul 10 11:54:12 2019 (serrano)                */
+;*    Last change :  Thu Jul 11 07:45:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3702,7 +3702,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-foreach-procedure this::JsArray proc::procedure thisarg %this)
    
-   (define (vector-foreach o len::uint32 proc t i::uint32)
+   (define (vector-foreach o len::uint32 proc thisarg i::uint32)
       [%assert-array! o "vector-foreach"]
       (if (js-object-mode-inline? o)
 	  (with-access::JsArray o (vec ilen)
@@ -3711,20 +3711,20 @@
 		   ((>=u32 i ilen)
 		    (js-undefined))
 		   ((not (js-object-mode-inline? o))
-		    (array-foreach o len proc t i))
+		    (array-foreach o len proc thisarg i))
 		   (else
 		    (let ((v (vector-ref vec (uint32->fixnum i))))
-		       (proc t v (js-uint32-tointeger i) o %this)
+		       (proc thisarg v (js-uint32-tointeger i) o %this)
 		       (loop (+u32 i 1)))))))
-	  (array-foreach o len proc t i)))
+	  (array-foreach o len proc thisarg i)))
    
-   (define (array-foreach o len proc t i::uint32)
+   (define (array-foreach o len proc thisarg i::uint32)
       (let loop ((i i))
 	 (when (<u32 i len)
 	    (let ((pv (js-get-property-value o o
 			 (js-toname i %this) %this)))
 	       (unless (js-absent? pv)
-		  (proc t pv (uint32->fixnum i) o %this))
+		  (proc thisarg pv (uint32->fixnum i) o %this))
 	       (loop (+u32 i 1))))))
 
    (with-access::JsArray this (length)
@@ -3748,7 +3748,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-foreach-procedure this proc thisarg %this cache)
    (if (js-array? this)
-       (js-array-prototype-foreach-procedure this proc thisarg %this)
+       (js-array-foreach-procedure this proc thisarg %this cache)
        (let ((jsproc (js-make-function %this
 			(lambda (_this x y z) (proc _this x y z %this))
 			3 "forEachProc"
@@ -3765,9 +3765,9 @@
 ;*    ------------------------------------------------------------     */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.19    */
 ;*---------------------------------------------------------------------*/
-(define (js-array-prototype-map this proc t %this)
+(define (js-array-prototype-map this proc thisarg %this)
    
-   (define (array-map/array this o len proc t i::uint32 a::JsArray %this)
+   (define (array-map/array this o len proc thisarg i::uint32 a::JsArray %this)
       (let loop ((i i))
 	 (if (<u32 i len)
 	     (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
@@ -3778,7 +3778,7 @@
 			  (if (>u32 i 0)
 			      (set! ilen (-u32 i #u32:1))
 			      (set! ilen #u32:0))))
-		    (let ((v (js-call3 %this proc t pv
+		    (let ((v (js-call3 %this proc thisarg pv
 				(js-uint32-tointeger i) o)))
 		       (with-access::JsArray a (vec)
 			  (if (<u32 i (fixnum->uint32 (vector-length vec)))
@@ -3795,7 +3795,7 @@
 		(loop (+u32 i 1)))
 	     a)))
    
-   (define (vector-map this o len::uint32 proc::JsFunction t i::uint32 %this)
+   (define (vector-map this o len::uint32 proc::JsFunction thisarg i::uint32 %this)
       (with-access::JsArray o (vec ilen length)
 	 (let ((v (js-create-vector (vector-length vec)))
 	       (l length))
@@ -3809,20 +3809,20 @@
 			     (set! ilen len)
 			     a)
 			  ;; the array has been uninlined by the callback
-			  (array-map/array this o len proc t i a %this))))
+			  (array-map/array this o len proc thisarg i a %this))))
 		  (else
 		   (let ((val (vector-ref vec (uint32->fixnum i))))
 		      (vector-set! v (uint32->fixnum i)
-			 (js-call3 %this proc t val
+			 (js-call3 %this proc thisarg val
 			    (js-uint32-tointeger i) o))
 		      (loop (+u32 i 1)))))))))
    
-   (define (array-map this o len proc t i::uint32 %this)
+   (define (array-map this o len proc thisarg i::uint32 %this)
       (let ((a (js-array-construct/length %this (js-array-alloc %this)
 		  (js-uint32-tointeger len))))
-	 (array-map/array this o len proc t i a %this)))
+	 (array-map/array this o len proc thisarg i a %this)))
    
-   (array-prototype-iterator this proc t array-map vector-map %this))
+   (array-prototype-iterator this proc thisarg array-map vector-map %this))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-map ...                                                 */
@@ -3853,7 +3853,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-map-procedure this::JsArray proc::procedure thisarg %this)
    
-   (define (array-map/array o len proc t i::uint32 a::JsArray)
+   (define (array-map/array o len proc thisarg i::uint32 a::JsArray)
       (let loop ((i i))
 	 (if (<u32 i len)
 	     (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
@@ -3864,7 +3864,7 @@
 			  (if (>u32 i 0)
 			      (set! ilen (-u32 i #u32:1))
 			      (set! ilen #u32:0))))
-		    (let ((v (proc t pv (js-uint32-tointeger i) o %this)))
+		    (let ((v (proc thisarg pv (js-uint32-tointeger i) o %this)))
 		       (with-access::JsArray a (vec)
 			  (if (<u32 i (fixnum->uint32 (vector-length vec)))
 			      (vector-set! vec (uint32->fixnum i) v)
@@ -3880,7 +3880,7 @@
 		(loop (+u32 i 1)))
 	     a)))
    
-   (define (vector-map o len::uint32 proc t i::uint32)
+   (define (vector-map o len::uint32 proc thisarg i::uint32)
       (with-access::JsArray o (vec ilen length)
 	 (let ((v (js-create-vector (vector-length vec)))
 	       (l length))
@@ -3894,11 +3894,11 @@
 			     (set! ilen len)
 			     a)
 			  ;; the array has been uninlined by the callback
-			  (array-map/array o len proc t i a))))
+			  (array-map/array o len proc thisarg i a))))
 		  (else
 		   (let ((val (vector-ref vec (uint32->fixnum i))))
 		      (vector-set! v (uint32->fixnum i)
-			 (proc t val (js-uint32-tointeger i) o %this))
+			 (proc thisarg val (js-uint32-tointeger i) o %this))
 		      (loop (+u32 i 1)))))))))
    
    (with-access::JsArray this (length)
