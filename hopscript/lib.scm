@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Jul 10 14:25:07 2019 (serrano)                */
+;*    Last change :  Thu Jul 11 17:12:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -281,6 +281,7 @@
 	     (props ($create-vector len))
 	     (methods (make-vector len #f))
 	     (cmap (instantiate::JsConstructMap
+		      (inline #t)
 		      (props props)
 		      (methods methods)))
 	     (obj (instantiateJsObject
