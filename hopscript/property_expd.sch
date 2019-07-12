@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Jul 11 19:36:53 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 07:17:47 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -214,23 +214,6 @@
       e))
 
 ;*---------------------------------------------------------------------*/
-;*    js-pcache-zmap-expander ...                                      */
-;*---------------------------------------------------------------------*/
-(define (js-pcache-zmap-expander x e)
-   (e (match-case x
-	 ((js-pcache-zmap (and ?c (js-pcache-ref %pcache ?idx)))
-	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_za7mapza7)" ,idx))
-	     (else
-	      `(with-access::JsPropertyCache ,c (zmap) zmap))))
-	 ((js-pcache-zmap ?c)
-	  `(with-access::JsPropertyCache ,c (zmap) zmap))
-	 (else
-	  (error "js-pcache-zmap" "bad syntax" x)))
-      e))
-
-;*---------------------------------------------------------------------*/
 ;*    js-pcache-index-expander ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-index-expander x e)
@@ -363,8 +346,6 @@
 			  (js-profile-log-index idx)
 			  (js-property-value ,obj
 			     propowner ,prop desc ,%this)))))
-	       ((eq? cs 'zmap)
-		`(js-get-notfound ,prop ,throw ,%this))
 	       ((not (pair? cs))
 		(error "js-object-get-name/cache" "bad form" x))
 	       (else
@@ -402,11 +383,6 @@
 		    ;; accessor property get
 		    `(if (eq? %cmap (js-pcache-amap ,cache))
 			 ,(loop 'amap)
-			 ,(loop (cdr cs))))
-		   ((zmap)
-		    ;; not found cache
-		    `(if (eq? %cmap (js-pcache-zmap ,cache))
-			 ,(loop 'zmap)
 			 ,(loop (cdr cs))))
 		   ((vtable)
 		    ;; vtable property get
@@ -618,8 +594,6 @@
 			 `(if (eq? %cmap (js-pcache-amap ,cache))
 			      ,(loop 'amap)
 			      ,(loop (cdr cs))))
-			((zmap)
-			 (loop (cdr cs)))
 			((vtable)
 			 ;; vtable property set
 			 (cond-expand
@@ -708,15 +682,14 @@
 		      (format "js-call~a" (if (>=fx len 11) "n" len)))))
 	 `(,call ,%this ,m ,obj ,@args)))
    
+   (define (calln-uncachable %this ocspecs obj prop args ccache ocache loc)
+      `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc ',ocspecs)))
+	  ,(calln %this 'f obj args)))
+
    (define (calln-miss %this obj prop args ccache ocache loc cspecs ospecs)
       `(js-object-method-call/cache-miss %this ,obj ,prop
 	  ,(if (pair? args) `(list ,@args) ''())
 	  ,ccache ,ocache ,loc ',cspecs ',ospecs))
-
-   (define (calln-uncachable %this ocspecs obj prop args ccache ocache loc)
-      `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc ',ocspecs)))
-	  (js-profile-log-cache ,ccache :miss)
-	  ,(calln %this 'f obj args)))
    
    (define (expand-cache-specs/args ccspecs ocspecs %this obj prop args ccache ocache loc)
       `(with-access::JsObject ,obj (cmap)
@@ -730,7 +703,7 @@
 			      ,(calln-miss %this obj prop args ccache ocache loc ccspecs ocspecs))
 			 (calln-uncachable %this ocspecs obj prop args ccache ocache loc))
 		     (case (car cs)
-			((cmap amap imap emap zmap)
+			((cmap amap imap emap)
 			 (loop (cdr cs)))
 			((pmap)
 			 `(if (eq? %cmap (js-pcache-pmap ,ccache))
@@ -811,7 +784,7 @@
 	  ((js-object-method-call-name/cache ?%this ?obj . ?rest)
 	   (let ((o (gensym '%o)))
 	      (e `(let ((,o ,obj))
-		     (js-object-method-call-name/cache ?%this ,o ,@rest))
+		     (js-object-method-call-name/cache %this ,o ,@rest))
 		 e)))
 	  (else
 	   (error "js-object-method-call-name/cache" "bad form" x))))))

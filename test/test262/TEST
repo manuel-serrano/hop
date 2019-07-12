@@ -6,6 +6,7 @@ verb=-v
 basedir=/usr/local/src/ecma-262-51/test262-d067d2f0ca30
 hopc=../../bin/hopc
 testjs=../../bin/testjs
+flags=-O3
 
 while : ; do
 
@@ -14,7 +15,7 @@ while : ; do
      break;;
 
     -h|--help)
-      echo "usage: $0 [-v|-s] [--basedir path] [chapter0 [chapter1...]]";
+      echo "usage: $0 [-v|-s] [--basedir path] [--flags=flags] [chapter0 [chapter1...]]";
       echo "example: $0 ch07 ch10 ch15/15.9";
       echo "";
       echo "default path: $basedir";
@@ -30,6 +31,9 @@ while : ; do
       shift;
       basedir=$1;;    
 
+    --flags=*)
+      flags="`echo $1 | sed 's/^[^=]*=//'`";;
+    
     -*)
       rest=$1;;
 
@@ -45,8 +49,8 @@ if [ "$chapters " = " " ]; then
 fi
 
 for c in $chapters; do
-  echo "$testjs $verb --hopc=$hopc $basedir/test/suite/$c $*"
-  $testjs $verb --hopc=$hopc --flags="-O3" $basedir/test/suite/$c $rest || exit 1
+  echo "$testjs $verb --hopc=$hopc --flags=\"$flags\" $basedir/test/suite/$c $*"
+  $testjs $verb --hopc=$hopc --flags="$flags" $basedir/test/suite/$c $rest || exit 1
   echo
   echo "all test succeeded..."
 done

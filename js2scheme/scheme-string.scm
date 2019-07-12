@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Jun 19 07:40:42 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 08:53:05 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -34,7 +34,9 @@
 	   (j2s-jsstring-maybe-replace obj args mode return conf)
 	   (j2s-jsstring-charcodeat obj args mode return conf)
 	   (j2s-jsstring-match-string obj args mode return conf)
-	   (j2s-jsstring-match-regexp obj args mode return conf)))
+	   (j2s-jsstring-match-regexp obj args mode return conf)
+	   (j2s-jsstring-substr obj args mode return conf)
+	   (j2s-jsstring-maybe-substr obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-ref ...                                               */
@@ -286,6 +288,28 @@
 		     ,(j2s-scheme (car args) mode return conf)
 		     %this
 		     #f)
-		 `(js-regexp-prototype-exec %this
+		 `(js-regexp-prototype-exec 
 		     ,(j2s-scheme (car args) mode return conf)
-		     ,(j2s-scheme obj mode return conf)))))))
+		     ,(j2s-scheme obj mode return conf)
+		     %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-substr ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-substr obj args mode return conf)
+   `(js-jsstring-substr
+       ,(j2s-scheme obj mode return conf)
+       ,(j2s-scheme (car args) mode return conf)
+       (js-undefined)
+       %this))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-maybe-substr ...                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-maybe-substr obj args mode return conf)
+   `(js-jsstring-maybe-substr
+       ,(j2s-scheme obj mode return conf)
+       ,(j2s-scheme (car args) mode return conf)
+       (js-undefined)
+       ,@(cdr args)))
+

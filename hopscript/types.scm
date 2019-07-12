@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Jul 11 17:58:36 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 07:17:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -94,7 +94,6 @@
 	      (pmap::obj (default #t))
 	      (fmap::obj (default #t))
 	      (amap::obj (default #t))
-	      (zmap::obj (default #f))
 	      (index::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))

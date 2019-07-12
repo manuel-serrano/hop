@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Jul 11 10:21:13 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 07:20:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -93,8 +93,6 @@
 	   (js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache ::long ::pair-nil)
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
-	   
-	   (js-get-notfound ::obj ::obj ::JsGlobalObject)
 	   
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
 
@@ -250,6 +248,14 @@
 (define js-pmap-valid #f)
 
 ;*---------------------------------------------------------------------*/
+;*    miss-object ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    This dummy object is used by JS-OBJECT-GET-LOOKUP to fill        */
+;*    its cache on a miss.                                             */
+;*---------------------------------------------------------------------*/
+(define miss-object #f)
+
+;*---------------------------------------------------------------------*/
 ;*    js-validate-pmap-pcache! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-validate-pmap-pcache! pcache)
@@ -279,13 +285,12 @@
 (define (js-invalidate-pmap-pcaches! %this::JsGlobalObject reason who)
    
    (define (invalidate-pcache-pmap! pcache)
-      (with-access::JsPropertyCache pcache (pmap emap amap zmap)
+      (with-access::JsPropertyCache pcache (pmap emap amap)
 	 (when (object? pmap) (reset-cmap-vtable! pmap))
 	 (when (object? amap) (reset-cmap-vtable! amap))
 	 (set! pmap #t)
 	 (set! emap #t)
-	 (set! amap #t)
-	 (set! zmap #f)))
+	 (set! amap #t)))
 
    (when js-pmap-valid
       (synchronize js-cache-table-lock
@@ -325,7 +330,18 @@
 ;*    js-init-property! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-init-property! %this)
-   (unless (vector? __js_strings) (set! __js_strings (&init!))))
+   (unless (vector? __js_strings)
+      (set! __js_strings (&init!))
+      (set! miss-object
+	 (let ((prop (instantiate::JsAccessorDescriptor
+			(name (& "dummy"))
+			(get (js-undefined))
+			(set (js-undefined))
+			(%get (lambda (o) (js-undefined)))
+			(%set (lambda (this v) (js-undefined))))))
+	    (instantiateJsObject
+	       (__proto__ (js-null))
+	       (elements (vector prop)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -448,11 +464,6 @@
 	       (vector-fill! elements #unspecified)
 	       ;; when switching from inlined properties to non-inlined
 	       ;; properties, the object cmap must change
-	       (with-access::JsConstructMap cmap (inline)
-		  (unless inline
-		     (tprint "JS-OBJECT-ADD PAS BON...")
-		     (js-debug-object obj)
-		     (js-debug-cmap cmap)))
 	       (set! cmap (sibling-cmap! cmap #f)))
 	    (set! elements nels)
 	    obj))))
@@ -642,15 +653,6 @@
 	     (update-noinline! pcache cmap)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-pcache-get-notfound! ...                                      */
-;*---------------------------------------------------------------------*/
-(define (js-pcache-get-notfound! pcache::JsPropertyCache o::JsObject)
-   (js-validate-pmap-pcache! pcache)
-   (with-access::JsObject o (cmap)
-      (with-access::JsPropertyCache pcache (zmap)
-	 (set! zmap cmap))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-direct! ...                                     */
 ;*    -------------------------------------------------------------    */
 ;*    Used to access a direct object property.                         */
@@ -787,7 +789,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    extend-cmap ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (extend-cmap omap::JsConstructMap name flags inline)
+(define (extend-cmap omap::JsConstructMap name flags::long inline::bool)
    
    (define (vector-extend::vector vec::vector val)
       ;; extend a vector with one additional slot
@@ -808,7 +810,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    extend-cmap! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (extend-cmap! omap::JsConstructMap name flags)
+(define (extend-cmap! omap::JsConstructMap name flags::long)
    
    (define (vector-extend::vector vec::vector val)
       ;; extend a vector with one additional slot
@@ -1678,65 +1680,60 @@
 ;*    the property value.                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-object-get-lookup o::JsObject name::obj throw::bool
-	   %this::JsGlobalObject
-	   cache::JsPropertyCache point::long cspecs::pair-nil)
+           %this::JsGlobalObject
+           cache::JsPropertyCache point::long cspecs::pair-nil)
 
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
-	 (when (=fx vindex (js-not-a-index))
-	    (set! vindex (js-get-vindex %this)))
-	 (js-cmap-vtable-add! omap vindex i cache)))
+         (when (=fx vindex (js-not-a-index))
+            (set! vindex (js-get-vindex %this)))
+         (js-cmap-vtable-add! omap vindex i cache)))
 
-   (define (lookup obj)
+   (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage)
+      (set! cntmiss (+u32 #u32:1 cntmiss))
+      (set! cname name)
+      (set! cpoint point)
+      (set! usage 'get))
+
+   (let loop ((obj o))
       (jsobject-find obj name
-	 ;; map search
-	 (lambda (obj i)
-	    (with-access::JsObject o ((omap cmap))
-	       (with-access::JsObject obj (elements)
-		  (with-access::JsPropertyCache cache (index owner cntmiss)
-		     (let ((el-or-desc (vector-ref elements i)))
-			(cond
-			   ((isa? el-or-desc JsPropertyDescriptor)
-			    ;; accessor property
-			    (js-pcache-update-descriptor! cache i o obj)
-			    (js-property-value o obj name el-or-desc %this))
-			   ((eq? o obj)
-			    ;; direct access to the direct object
-			    [assert (i) (<=fx i (vector-length elements))]
-			    (cond
-			       ((<u32 cntmiss (inline-threshold))
-				(js-pcache-get-direct! cache i o #t))
-			       ((<u32 cntmiss (vtable-threshold))
-				(js-pcache-get-direct! cache i o #f))
-			       ((not (eq? name (& "__proto__")))
-				(js-pcache-vtable! omap cache i)))
-			    el-or-desc)
-			   (else
-			    ;; direct access to a prototype object
-			    (js-pcache-update-owner! cache i o obj)
-			    el-or-desc)))))))
-	 ;; property search
-	 (lambda (obj desc)
-	    (js-property-value o obj name desc %this))
-	 ;; not found
-	 (lambda ()
+         ;; map search
+         (lambda (obj i)
+            (with-access::JsObject o ((omap cmap))
+               (with-access::JsObject obj (elements)
+                  (with-access::JsPropertyCache cache (index owner cntmiss)
+                     (let ((el-or-desc (vector-ref elements i)))
+                        (cond
+                           ((isa? el-or-desc JsPropertyDescriptor)
+                            ;; accessor property
+                            (js-pcache-update-descriptor! cache i o obj)
+                            (js-property-value o obj name el-or-desc %this))
+                           ((eq? o obj)
+                            ;; direct access to the direct object
+                            [assert (i) (<=fx i (vector-length elements))]
+                            (cond
+                               ((<u32 cntmiss (inline-threshold))
+                                (js-pcache-get-direct! cache i o #t))
+                               ((<u32 cntmiss (vtable-threshold))
+                                (js-pcache-get-direct! cache i o #f))
+                               ((not (eq? prop (& "__proto__")))
+                                (js-pcache-vtable! omap cache i)))
+                            el-or-desc)
+                           (else
+                            ;; direct access to a prototype object
+                            (js-pcache-update-owner! cache i o obj)
+                            el-or-desc)))))))
+         ;; property search
+         (lambda (obj desc)
+            (js-property-value o obj name desc %this))
+         ;; not found
+         (lambda ()
 	    (with-access::JsObject o (cmap)
-	       (unless (eq? cmap (js-not-a-cmap))
-		  (js-pcache-get-notfound! cache o)))
-	    (js-get-notfound name throw %this))
-	 ;; lookup
-	 lookup))
-
-   (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage zmap)
-      (with-access::JsObject o (cmap)
-	 (if (eq? zmap cmap)
-	     (js-get-notfound name throw %this)
-	     (begin
-		(set! cntmiss (+u32 #u32:1 cntmiss))
-		(set! cname name)
-		(set! cpoint point)
-		(set! usage 'get)
-		(lookup o))))))
+	       (unless (or (eq? cmap (js-not-a-cmap)) throw)
+		  (js-pcache-update-descriptor! cache 0 o miss-object)))
+            (js-get-notfound name throw %this))
+         ;; loop
+         loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::obj ...                                          */
@@ -2597,7 +2594,7 @@
 		   (set! cmap nextmap)
 		   nextmap)
 		(begin
-		   (extend-cmap! cmap name inline)
+		   (extend-cmap! cmap name flags)
 		   cmap)))))
    
    (define (extend-mapped-object!)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jun 19 09:19:47 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 09:16:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -35,8 +35,10 @@
 	   (inline js-regexp?::bool ::obj)
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
 	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)
-	   (js-regexp-prototype-exec ::JsGlobalObject ::JsRegExp ::obj)
-	   (js-regexp-prototype-exec-as-bool ::JsGlobalObject ::JsRegExp ::obj)
+	   (js-regexp-prototype-exec ::JsRegExp ::obj ::JsGlobalObject)
+	   (js-regexp-prototype-maybe-exec ::JsRegExp ::obj ::JsGlobalObject cache)
+	   (js-regexp-prototype-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject)
+	   (js-regexp-prototype-maybe-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject cache)
 	   (js-regexp-prototype-exec-for-match-string %this::JsGlobalObject this::JsRegExp string::obj))
 
    ;; export for memory profiling
@@ -115,7 +117,7 @@
 
       ;; regexp pcache
       (set! js-regexp-pcache
-	 ((@ js-make-pcache-table __hopscript_property) 1 "regexp"))
+	 ((@ js-make-pcache-table __hopscript_property) 4 "regexp"))
 
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 ;; default regexp cmap
@@ -604,7 +606,7 @@
 		(lambda (this string::obj)
 		   (if (not (isa? this JsRegExp))
 		       (js-raise-type-error %this "Not a RegExp ~s" this)
-		       (js-regexp-prototype-exec %this this string)))
+		       (js-regexp-prototype-exec this string %this)))
 		1 "exec"
 		:prototype (js-undefined))
       :writable #t
@@ -633,18 +635,20 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.2    */
 ;*---------------------------------------------------------------------*/
-(define (js-regexp-prototype-exec %this::JsGlobalObject this::JsRegExp string::obj)
+(define (js-regexp-prototype-exec this::JsRegExp string::obj %this::JsGlobalObject)
+
+   (define X %this)
    
    (define (js-substring s start end utf8)
       (cond
 	 ((=fx end (+fx start 1))
-	  (js-jsstring-fromcharcode %this
+	  (js-jsstring-fromcharcode
 	     (char->integer (string-ref s start)) %this))
 	 (utf8
 	  (js-utf8->jsstring (substring s start end)))
 	 (else
 	  (js-ascii->jsstring (substring s start end)))))
-   
+
    (with-access::JsGlobalObject %this (js-regexp-pcache)
       (with-access::JsRegExp this (rx flags)
 	 (let ((lastindex (js-object-get-name/cache this (& "lastIndex")
@@ -711,6 +715,18 @@
 		   (js-null))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-regexp-prototype-maybe-exec ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-prototype-maybe-exec this string::obj %this::JsGlobalObject cache)
+   (if (isa? this JsRegExp)
+       (js-regexp-prototype-exec this string %this)
+       (with-access::JsGlobalObject %this (js-regexp-pcache)
+	  (let ((exec (js-get-name/cache this (& "exec") #f %this
+			 (or cache (js-pcache-ref js-regexp-pcache 1))
+			 -1 '(imap+))))
+	     (js-call1 %this exec this string)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-regexp-prototype-exec-for-match-string ...                    */
 ;*    -------------------------------------------------------------    */
 ;*    This function is used when the regexp is executed on behalf of   */
@@ -723,7 +739,7 @@
    (define (js-substring s start end utf8)
       (cond
 	 ((=fx end (+fx start 1))
-	  (js-jsstring-fromcharcode %this
+	  (js-jsstring-fromcharcode
 	     (char->integer (string-ref s start)) %this))
 	 (utf8
 	  (js-utf8->jsstring (substring s start end)))
@@ -785,11 +801,27 @@
 ;*    RX is not global and when the expression is used for its         */
 ;*    boolean result.                                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-regexp-prototype-exec-as-bool %this::JsGlobalObject this::JsRegExp string::obj)
+(define (js-regexp-prototype-exec-as-bool this::JsRegExp string::obj %this::JsGlobalObject)
    (with-access::JsRegExp this (rx flags)
       (let* ((s (js-tostring string %this))
 	     (len (string-length s)))
 	 (=fx (pregexp-match-n-positions! rx s literal-test-pos 0 len) 1))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-prototype-maybe-exec-as-bool ...                       */
+;*    -------------------------------------------------------------    */
+;*    This version is directly invoked in compiled code when the       */
+;*    RX is not global and when the expression is used for its         */
+;*    boolean result.                                                  */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-prototype-maybe-exec-as-bool this string::obj %this::JsGlobalObject cache)
+   (if (isa? this JsRegExp)
+       (js-regexp-prototype-exec-as-bool this string %this)
+       (with-access::JsGlobalObject %this (js-regexp-pcache)
+	  (let ((exec (js-get-name/cache this (& "exec") #f %this
+			 (or cache (js-pcache-ref js-regexp-pcache 2))
+			 -1 '(imap+))))
+	     (js-totest (js-call1 %this exec this string))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-regexp-prototype-test ...                                   */
@@ -800,7 +832,7 @@
    (lambda (this string::obj)
       (if (not (isa? this JsRegExp))
 	  (js-raise-type-error %this "Not a RegExp ~s" this)
-	  (not (eq? (js-regexp-prototype-exec %this this string) (js-null))))))
+	  (not (eq? (js-regexp-prototype-exec this string %this) (js-null))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    literal-test-pos ...                                             */
@@ -820,7 +852,7 @@
    (with-access::JsGlobalObject %this (js-regexp-pcache)
       (with-access::JsRegExp this (rx flags)
 	 (let* ((lastindex (js-object-get-name/cache this (& "lastIndex")
-			      #f %this (js-pcache-ref js-regexp-pcache 0)))
+			      #f %this (js-pcache-ref js-regexp-pcache 3)))
 		(global (js-regexp-flags-global? flags))
 		(s (js-jsstring->string str))
 		(i (cond

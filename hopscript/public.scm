@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Jul  9 13:56:39 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 08:10:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -861,7 +861,7 @@
 		 ((not (js-function? target))
 		  (js-raise-type-error ,%this
 		     ,(format "call~a: not a function ~~s" (length args))
-		     ,fun))  
+		     ,fun))
 		 ((js-function? xfun)
 		  (with-access::JsFunction xfun (procedure)
                      (js-call3% %this xfun procedure handler target
@@ -874,41 +874,6 @@
 	   (with-access::JsFunction target (procedure)
 	      (,(string->symbol (format "js-call~a%" (length args)))
 	       ,%this target procedure ,this ,@args))))))
-
-(define-macro (gen-proxy-call-TBT-4jun19 %this fun this . args)
-   `(with-access::JsProxy ,fun ((target __proto__) handler
-				  cacheapply cacheapplyfun cacheapplyproc)
-       (if (not (js-object? target))
-	   ;; first test js-object? as it is much faster than
-	   ;; testing js-function?
-	   (js-raise-type-error ,%this
-	      ,(format "call~a: not a function ~~s" (length args))
-	      ,fun)
-	   (let ((xfun (js-object-get-name/cache handler (& "apply")
-			  #f ,%this cacheapply)))
-	      (cond
-		 ((eq? xfun cacheapplyfun)
-		  (cacheapplyproc handler target
-		     ,this (js-vector->jsarray (vector ,@args) ,%this)))
-		 ((and (object? xfun) (eq? (object-class xfun) JsFunction4))
-		  (with-access::JsFunction xfun (procedure)
-		     (let ((v (procedure handler target ,this
-				 (js-vector->jsarray (vector ,@args) ,%this))))
-			(set! cacheapplyfun xfun)
-			(set! cacheapplyproc procedure)
-			v)))
-		 ((not (js-function? target))
-		  (js-raise-type-error ,%this
-		     ,(format "call~a: not a function ~~s" (length args))
-		     ,fun))  
-		 ((js-function? xfun)
-		  (with-access::JsFunction xfun (procedure)
-                     (js-call3% %this xfun procedure handler target
-                        ,this (js-vector->jsarray (vector ,@args) ,%this))))
-		 (else
-		  (with-access::JsFunction target (procedure)
-		     (,(string->symbol (format "js-call~a%" (length args)))
-		      ,%this target procedure ,this ,@args))))))))
 
 (define (js-call-proxy0 %this fun this)
    (gen-proxy-call %this fun this))
@@ -2030,7 +1995,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
 ;*---------------------------------------------------------------------*/
 (define (js-parseint string radix %this)
-   (if (and (isa? string JsStringLiteralIndex) (=fx radix 10))
+   (if (and (isa? string JsStringLiteralIndex)
+	    (or (not radix) (and (fixnum? radix) (=fx radix 10))))
        (with-access::JsStringLiteralIndex string (index)
 	  index)
        (js-string-parseint (trim-whitespaces+ (js-tostring string %this) :plus #t)

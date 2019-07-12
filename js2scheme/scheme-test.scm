@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Wed Jun 19 08:05:11 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 09:27:41 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
@@ -63,8 +63,10 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-totest expr)
    (match-case expr
-      ((js-regexp-prototype-exec ?%this ?rx ?arg)
-       `(js-regexp-prototype-exec-as-bool ,%this ,rx ,arg))
+      ((js-regexp-prototype-exec ?rx ?arg ?%this)
+       `(js-regexp-prototype-exec-as-bool ,rx ,arg ,%this))
+      ((js-regexp-prototype-maybe-exec ?rx ?arg ?%this ?cache)
+       `(js-regexp-prototype-maybe-exec-as-bool ,rx ,arg ,%this ,cache))
       ((js-jsstring-match-regexp-from-string ?obj ?arg ?rx ?%this)
        `(js-jsstring-match-regexp-from-string-as-bool ,obj ,arg ,rx ,%this))
       ((let ((?var ?-)) ((kwote or) (js-array? ?var) (js-proxy-array? ?var)))

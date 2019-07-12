@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Jul  8 19:34:55 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 09:03:48 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -701,7 +701,7 @@
 		  ,(box val tyval conf) ,mode %this))
 	     ((or (number? prop) (null? cspecs))
 	      (maybe-array-set! prop (box val tyval conf)))
-	     ((and (maybe-string? prop typrop) (symbol? obj))
+	     ((maybe-string? prop typrop)
 	      `(js-put/cache! ,obj ,prop
 		  ,(box val tyval conf) ,mode %this
 		  ,(loc->point loc) ',cspecs ,(loc->src loc)))

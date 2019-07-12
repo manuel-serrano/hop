@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Jul  9 07:20:08 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 08:45:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -968,6 +968,8 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.2
       (define (js-object-prototype-tostring this)
 	 (cond
+	    ((js-jsstring? this)
+	     this)
 	    ((eq? this (js-undefined))
 	     (js-ascii->jsstring "[object Undefined]"))
 	    ((eq? this (js-null))

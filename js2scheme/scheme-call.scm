@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Jul 10 11:42:19 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 08:53:49 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -73,8 +73,9 @@
 	("substring" js-jsstring-substring string (any any) %this)
 	("substring" js-jsstring-maybe-substring any (any any) %this #t)
 	("substr" js-jsstring-substr string (any any) %this)
-	("substr" ,js-jsstring-substr string (any) %this)
+	("substr" ,j2s-jsstring-substr string (any) %this)
 	("substr" js-jsstring-maybe-substr any (any any) %this #t)
+	("substr" ,j2s-jsstring-maybe-substr any (any) %this #t)
 	("toUpperCase" js-jsstring-touppercase string () #f)
 	("toUpperCase" js-jsstring-maybe-touppercase any () %this #t)
 	("toLocaleUpperCase" js-jsstring-tolocaleuppercase string () #f)
@@ -105,6 +106,8 @@
 	("slice" js-jsstring-maybe-slice any (any any) %this #t)
 	;; regexp
 	("test" ,j2s-regexp-test regexp (any) %this)
+	("exec" js-regexp-prototype-exec regexp (any) %this #f ,j2s-regexp-plain?)
+	("exec" js-regexp-prototype-maybe-exec any (any) %this #t ,j2s-regexp-plain?)
 	;; array methods
 	("concat" js-array-concat1 array (array) %this #t ,j2s-array-plain?)
 	("concat" js-array-maybe-concat1 any (any) %this #t ,j2s-array-plain?)
@@ -227,19 +230,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-fromcharcode obj args mode return conf)
    `(js-jsstring-fromcharcode
-       ;; direct access to String, skip lookup
-       (with-access::JsGlobalObject %this (js-string) js-string)
        ,@(map (lambda (arg) (j2s-scheme arg mode return conf)) args)))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring-substr ...                                           */
-;*---------------------------------------------------------------------*/
-(define (js-jsstring-substr obj args mode return conf)
-   `(js-jsstring-substr
-       ,(j2s-scheme obj mode return conf)
-       ,(j2s-scheme (car args) mode return conf)
-       (js-undefined)
-       %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function ...                                           */

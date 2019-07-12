@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Jul 10 08:43:19 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 09:37:12 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -114,7 +114,7 @@
 	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-trim ::JsStringLiteral)
 	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-fromcharcode ::JsObject ::obj ::JsGlobalObject)
+	   (js-jsstring-fromcharcode ::obj ::JsGlobalObject)
 	   (js-jsstring-escape ::JsStringLiteral)
 	   (js-jsstring-unescape ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-slice ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
@@ -2641,10 +2641,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-match-regexp-from-string-as-bool ...                 */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-match-regexp-from-string-as-bool this string rx %this)
+(define (js-jsstring-match-regexp-from-string-as-bool this string rx %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype js-string-pcache)
       (if (js-object-mode-plain? js-regexp-prototype)
-	  (js-regexp-prototype-exec-as-bool %this rx this)
+	  (js-regexp-prototype-exec-as-bool rx this %this)
 	  (let* ((proto (js-object-get-name/cache js-regexp (& "prototype")
 			   #f %this (js-pcache-ref js-string-pcache 35)))
 		 (exec (js-object-get-name/cache proto (& "exec")
@@ -2761,7 +2761,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-fromcharcode ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-fromcharcode this code %this)
+(define (js-jsstring-fromcharcode code %this)
    (let loop ((code code))
       (cond
 	 ((or (not (fixnum? code)) (<fx code 0) (>=fx code 65536))

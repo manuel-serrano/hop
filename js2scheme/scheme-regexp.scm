@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-regexp.scm       */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-regexp.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 25 17:49:28 2017                          */

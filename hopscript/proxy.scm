@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Jul 10 09:50:12 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 10:59:09 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -193,18 +193,23 @@
 	 (set! handler h)
 	 proxy)))
 
+(define precache (getenv "PRECACHE"))
+(when precache (tprint "precaching proxies..."))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-new-proxy/caches ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-new-proxy/caches %this t h gcache scache acache)
-   (instantiateJsProxy
-      (cmap proxy-cmap)
-      (__proto__ t)
-      (elements proxy-elements)
-      (handler h)
-      (cacheget gcache)
-      (cacheset scache)
-      (cacheapply acache)))
+   (if precache
+       (instantiateJsProxy
+	  (cmap proxy-cmap)
+	  (__proto__ t)
+	  (elements proxy-elements)
+	  (handler h)
+	  (cacheget gcache)
+	  (cacheset scache)
+	  (cacheapply acache))
+       (js-new-proxy %this t h)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-debug-name ...                                          */
@@ -339,13 +344,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsproxy-get/name-cache o::JsProxy prop::obj %this::JsGlobalObject)
    (js-proxy-property-value o o (js-toname prop %this) %this))
-
-;*---------------------------------------------------------------------*/
-;*    js-get/cache ::JsProxy ...                                       */
-;*---------------------------------------------------------------------*/
-;* (define-method (js-get/cache o::JsProxy prop::obj %this::JsGlobalObject */
-;* 		  #!optional (point -1) (cspecs '()))                  */
-;*    (js-jsproxy-get-name/cache o prop %this point cspecs))           */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ::JsProxy ...                      */
@@ -786,35 +784,6 @@
 	   (with-access::JsFunction target (procedure)
 	      (,(string->symbol (format "js-call~a%" (length args)))
 	       ,%this target procedure ,this ,@args))))))
-
-'(define-macro (gen-call-proxy/cache-miss-TBR-4jun19 %this cache fun this . args)
-   (with-access::JsProxy ,fun ((target __proto__) handler
-				  cacheapply cacheapplyfun cacheapplyproc)
-       (let ((xfun (js-object-get-name/cache handler (& "apply")
-		      #f ,%this cacheapply)))
-	  (cond
-	     ((eq? xfun cacheapplyfun)
-	      (cacheapplyproc handler target ,this
-		 (jsarray ,%this ,@args)))
-	     ((and (object? xfun) (eq? (object-class xfun) JsFunction4))
-	      (with-access::JsFunction xfun (procedure)
-		 (let ((res (procedure handler target ,this
-			       (jsarray ,%this ,@args))))
-		    (set! cacheapplyfun xfun)
-		    (set! cacheapplyproc procedure)
-		    res)))
-	     ((not (js-function? target))
-	      (js-raise-type-error ,%this
-		 ,(format "call~a: not a function ~~s" (length args))
-		 ,fun))  
-	     ((js-function? xfun)
-	      (with-access::JsFunction xfun (procedure)
-		 (js-call3% %this xfun procedure handler target
-		    ,this (js-vector->jsarray (vector ,@args) ,%this))))
-	     (else
-	      (with-access::JsFunction target (procedure)
-		 (,(string->symbol (format "js-call~a%" (length args)))
-		  ,%this target procedure ,this ,@args)))))))
 
 (define (js-call-proxy/cache-miss0 %this cache proxy this)
    (gen-call-proxy/cache-miss %this cache proxy this))
