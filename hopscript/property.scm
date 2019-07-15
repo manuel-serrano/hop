@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/property.new.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jul 14 12:06:55 2019 (serrano)                */
+;*    Last change :  Mon Jul 15 12:06:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -90,8 +90,6 @@
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
 	   
-	   (js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
-	      ::JsPropertyCache ::long ::pair-nil)
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 	   
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
@@ -250,8 +248,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    miss-object ...                                                  */
 ;*    -------------------------------------------------------------    */
-;*    This dummy object is used by JS-OBJECT-GET-LOOKUP to fill        */
-;*    its cache on a miss.                                             */
+;*    This dummy object is used by JS-OBJECT-GET-NAME/CACHE-MISS       */
+;*    to fill its cache on a miss.                                     */
 ;*---------------------------------------------------------------------*/
 (define miss-object #f)
 
@@ -1098,7 +1096,7 @@
 ;*    (iff the optional loop argument is provided) looking for a       */
 ;*    property. It calls one of the successXXX hooks when found.       */
 ;*---------------------------------------------------------------------*/
-(define-macro (jsobject-find o name foundinmap foundinprop notfound . loop)
+(define-macro (jsobject-find o base name foundinmap foundinprop notfound . loop)
 
    (define (find obj name)
       `(with-access::JsObject ,obj (cmap __proto__)
@@ -1108,23 +1106,25 @@
 		   ,(if (pair? loop)
 			`(if (js-object? __proto__)
 			     (,(car loop) __proto__)
-			     (,notfound))
-			`(,notfound))))
+			     (,notfound ,base))
+			`(,notfound ,base))))
 	     (jsobject-properties-find ,obj ,name ,foundinprop
 		(lambda ()
 		   ,(if (pair? loop)
 			`(if (js-object? __proto__)
 			     (,(car loop) __proto__)
-			     (,notfound))
-			`(,notfound)))))))
+			     (,notfound ,base))
+			`(,notfound ,base)))))))
 
-   (let ((obj (gensym 'o)))
-      `(let ((,obj ,o))
-	  ,(if (symbol? name)
-	       (find obj name)
-	       (let ((nm (gensym 'name)))
-		  `(let ((,nm ,name))
-		      ,(find obj nm)))))))
+   (if (and (symbol? o) (symbol? base))
+       (let ((obj (gensym 'obj)))
+	  `(let ((,obj ,o))
+	      ,(if (symbol? name)
+		   (find obj name)
+		   (let ((nm (gensym 'name)))
+		      `(let ((,nm ,name))
+			  ,(find obj nm))))))
+       (error "js-object-find" "arguments must be a symbol" (cons obj base))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-unmap! ...                                             */
@@ -1450,13 +1450,13 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.6       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property::bool o::JsObject name::obj %this)
-   (jsobject-find o (js-toname name %this)
+   (jsobject-find o o (js-toname name %this)
       ;; cmap search
       (lambda (o i) #t)
       ;; property search
       (lambda (o d) #t)
       ;; failure
-      (lambda () #f)
+      (lambda (o) #f)
       ;; prototype search
       (lambda (__proto__) (js-has-property __proto__ name %this))))
 
@@ -1473,13 +1473,13 @@
 ;*    js-has-own-property ::JsObject ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-own-property o::JsObject p::obj %this)
-   (jsobject-find o (js-toname p %this)
+   (jsobject-find o o (js-toname p %this)
       ;; cmap search
       (lambda (owner i) #t)
       ;; prototype search
       (lambda (o d) #t)
       ;; not found
-      (lambda () #f)))
+      (lambda (o) #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-upto-property ...                                         */
@@ -1513,7 +1513,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property o::JsObject p::obj %this::JsGlobalObject)
    ;; JsObject x obj x JsGlobalObject -> JsPropertyDescriptor | Undefined
-   (jsobject-find o (js-toname p %this)
+   (jsobject-find o o (js-toname p %this)
       ;; cmap search
       (lambda (owner i)
 	 (with-access::JsObject owner (cmap elements)
@@ -1531,7 +1531,7 @@
       ;; prototype search
       (lambda (o d) d)
       ;; not found
-      (lambda () (js-undefined))))
+      (lambda (o) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property ...                                              */
@@ -1572,7 +1572,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property-value o::JsObject base p::obj %this::JsGlobalObject)
    ;; JsObject x obj x JsGlobalObject -> value | Absent
-   (jsobject-find o (js-toname p %this)
+   (jsobject-find o o (js-toname p %this)
       ;; cmap search
       (lambda (owner i)
 	 (with-access::JsObject owner (elements)
@@ -1584,7 +1584,7 @@
       (lambda (o d)
 	 (js-property-value base o p d %this))
       ;; not found
-      (lambda ()
+      (lambda (o)
 	 (js-absent))
       ;; prototype search
       (lambda (__proto__)
@@ -1672,68 +1672,6 @@
 	  ;; see https://bugs.ecmascript.org/show_bug.cgi?id=333
 	  ;; or test262 10.4.3-1-106.js
 	  (js-get _o prop %this)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-get-lookup ...                                         */
-;*    -------------------------------------------------------------    */
-;*    Look for the property, if found update the cache and return      */
-;*    the property value.                                              */
-;*---------------------------------------------------------------------*/
-(define (js-object-get-lookup o::JsObject name::obj throw::bool
-           %this::JsGlobalObject
-           cache::JsPropertyCache point::long cspecs::pair-nil)
-
-   (define (js-pcache-vtable! omap cache i)
-      (with-access::JsPropertyCache cache (cntmiss vindex)
-         (when (=fx vindex (js-not-a-index))
-            (set! vindex (js-get-vindex %this)))
-         (js-cmap-vtable-add! omap vindex i cache)))
-
-   (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage)
-      (set! cntmiss (+u32 #u32:1 cntmiss))
-      (set! cname name)
-      (set! cpoint point)
-      (set! usage 'get))
-
-   (let loop ((obj o))
-      (jsobject-find obj name
-         ;; map search
-         (lambda (obj i)
-            (with-access::JsObject o ((omap cmap))
-               (with-access::JsObject obj (elements)
-                  (with-access::JsPropertyCache cache (index owner cntmiss)
-                     (let ((el-or-desc (vector-ref elements i)))
-                        (cond
-                           ((isa? el-or-desc JsPropertyDescriptor)
-                            ;; accessor property
-                            (js-pcache-update-descriptor! cache i o obj)
-                            (js-property-value o obj name el-or-desc %this))
-                           ((eq? o obj)
-                            ;; direct access to the direct object
-                            [assert (i) (<=fx i (vector-length elements))]
-                            (cond
-                               ((<u32 cntmiss (inline-threshold))
-                                (js-pcache-get-direct! cache i o #t))
-                               ((<u32 cntmiss (vtable-threshold))
-                                (js-pcache-get-direct! cache i o #f))
-                               ((not (eq? prop (& "__proto__")))
-                                (js-pcache-vtable! omap cache i)))
-                            el-or-desc)
-                           (else
-                            ;; direct access to a prototype object
-                            (js-pcache-update-owner! cache i o obj)
-                            el-or-desc)))))))
-         ;; property search
-         (lambda (obj desc)
-            (js-property-value o obj name desc %this))
-         ;; not found
-         (lambda ()
-	    (with-access::JsObject o (cmap)
-	       (unless (or (eq? cmap (js-not-a-cmap)) throw)
-		  (js-pcache-update-descriptor! cache 0 o miss-object)))
-            (js-get-notfound name throw %this))
-         ;; loop
-         loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::obj ...                                          */
@@ -1877,12 +1815,63 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-object-get-name/cache-miss obj::JsObject
+(define-generic (js-object-get-name/cache-miss o::JsObject
 		   name::JsStringLiteral
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache
 		   #!optional (point -1) (cspecs '()))
-   (js-object-get-lookup obj name throw %this cache point cspecs))
+   
+   (define (js-pcache-vtable! omap cache i)
+      (with-access::JsPropertyCache cache (cntmiss vindex)
+         (when (=fx vindex (js-not-a-index))
+            (set! vindex (js-get-vindex %this)))
+         (js-cmap-vtable-add! omap vindex i cache)))
+   
+   (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage)
+      (set! cntmiss (+u32 #u32:1 cntmiss))
+      (set! cname name)
+      (set! cpoint point)
+      (set! usage 'get))
+
+   (let loop ((obj o))
+      (jsobject-find obj o name
+         ;; map search
+         (lambda (obj i)
+            (with-access::JsObject o ((omap cmap))
+               (with-access::JsObject obj (elements)
+                  (with-access::JsPropertyCache cache (index owner cntmiss)
+                     (let ((el-or-desc (vector-ref elements i)))
+                        (cond
+                           ((isa? el-or-desc JsPropertyDescriptor)
+                            ;; accessor property
+                            (js-pcache-update-descriptor! cache i o obj)
+                            (js-property-value o obj name el-or-desc %this))
+                           ((eq? o obj)
+                            ;; direct access to the direct object
+                            [assert (i) (<=fx i (vector-length elements))]
+                            (cond
+                               ((<u32 cntmiss (inline-threshold))
+                                (js-pcache-get-direct! cache i o #t))
+                               ((<u32 cntmiss (vtable-threshold))
+                                (js-pcache-get-direct! cache i o #f))
+                               ((not (eq? prop (& "__proto__")))
+                                (js-pcache-vtable! omap cache i)))
+                            el-or-desc)
+                           (else
+                            ;; direct access to a prototype object
+                            (js-pcache-update-owner! cache i o obj)
+                            el-or-desc)))))))
+         ;; property search
+         (lambda (obj desc)
+            (js-property-value o obj name desc %this))
+         ;; not found
+         (lambda (_o)
+	    (with-access::JsObject o (cmap)
+	       (unless (or (eq? cmap (js-not-a-cmap)) throw)
+		  (js-pcache-update-descriptor! cache 0 o miss-object)))
+            (js-get-notfound name throw %this))
+         ;; loop
+         loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-cmap+ ...                               */
@@ -1916,10 +1905,10 @@
 (define (js-can-put o::JsObject p::obj %this::JsGlobalObject)
 
    (define (js-get-inherited-property o::JsObject name::obj)
-      (jsobject-find o name
+      (jsobject-find o o name
 	 (lambda (o i) i)
 	 (lambda (o d) d)
-	 (lambda () #f)))
+	 (lambda (o) #f)))
 
    (let ((desc (js-get-own-property o p %this)))
       ;; 1
@@ -2157,7 +2146,7 @@
 				 ;; see js-proxy-property-value-set!
 				 (with-access::JsProxy obj ((target __proto__))
 				    (let loop ((obj target))
-				       (jsobject-find obj name
+				       (jsobject-find obj target name
 					  update-mapped-object!
 					  update-properties-object!
 					  extend-object!
@@ -2175,16 +2164,16 @@
 		      (reject "frozen object"))
 		     ((not (isa? el-or-desc JsPropertyDescriptor))
 		      ;; 8.12.5, step 6
-		      (extend-object!))
+		      (extend-object! o))
 		     ((and (not (js-object-mode-extensible? obj))
 			   (not (js-object-mode-sealed? obj)))
 		      ;; special hop situation to handle hop-builtin object
-		      (extend-object!))
+		      (extend-object! o))
 		     (else
 		      (with-access::JsDataDescriptor el-or-desc (writable)
 			 (if writable
 			     ;; 8.12.5, step 6
-			     (extend-object!)
+			     (extend-object! o)
 			     ;; 8.12.4, step 8.b
 			     (reject "Read-only property"))))))))))
    
@@ -2309,7 +2298,7 @@
 		    (if (js-proxy? obj)
 			(with-access::JsProxy obj ((target __proto__))
 			   (let loop ((obj target))
-			      (jsobject-find obj name
+			      (jsobject-find obj target name
 				 update-mapped-object!
 				 update-properties-object!
 				 extend-object!
@@ -2318,7 +2307,7 @@
 		   (v
 		    v)
 		   ((js-object-mode-extensible? obj)
-		    (extend-object!))
+		    (extend-object! o))
 		   (else
 		    (reject "sealed object")))))
 	    ((not (js-object-mode-extensible? obj))
@@ -2328,7 +2317,7 @@
 	     (with-access::JsDataDescriptor desc (writable)
 		(if writable
 		    ;; 8.12.5, step 6
-		    (extend-object!)
+		    (extend-object! o)
 		    ;; 8.12.4, step 8.b
 		    (reject "Read-only property")))))))
    
@@ -2344,7 +2333,7 @@
 	    (js-define-own-property o name newdesc throw %this)
 	    v)))
    
-   (define (extend-object!)
+   (define (extend-object! _o)
       (with-trace 'prop "extend-object!"
 	 (with-access::JsObject o (cmap)
 	    (cond
@@ -2364,7 +2353,7 @@
 
    (check-unplain! o name)
    (let ((v (let loop ((obj o))
-	       (jsobject-find obj name
+	       (jsobject-find obj o name
 		  update-mapped-object!
 		  update-properties-object!
 		  extend-object!
@@ -3609,12 +3598,9 @@
 
    (js-profile-log-method name point)
 
-;*    (when (string=? (js-jsstring->string name) "ctor")               */
-;*       (tprint "MISS l=" point))                                     */
-   
    (let ((n (js-toname name %this)))
       (let loop ((obj o))
-	 (jsobject-find obj n
+	 (jsobject-find obj o n
 	    ;; map search
 	    (lambda (obj i)
 	       (with-access::JsObject o ((omap cmap) __proto__)
@@ -3625,10 +3611,6 @@
 			      ((or (isa? el-or-desc JsAccessorDescriptor)
 				   (isa? el-or-desc JsWrapperDescriptor))
 			       (with-access::JsPropertyCache ccache (pmap emap cmap)
-;* 				  (when (string=? (js-jsstring->string name) "ctor") */
-;* 				     (tprint "SET UNCACHABLE l=" point)) */
-				  (tprint "Calling " name " uncachable "
-				     (typeof el-or-desc))
 				  (set! pmap #t)
 				  (set! emap #t)
 				  (set! cmap #t))
@@ -3652,8 +3634,6 @@
 					    ((<fx arity 0)
 					     ;; varargs functions, currently not cached...
 					     (with-access::JsPropertyCache ccache (pmap emap cmap)
-;* 						(when (string=? (js-jsstring->string name) "ctor") */
-;* 						   (tprint "SET UNCACHABLE l=" point)) */
 						(set! pmap #t)
 						(set! emap #t)
 						(set! cmap #t)))
@@ -3684,8 +3664,6 @@
 					    (else
 					     ;; arity missmatch, never cache
 					     (with-access::JsPropertyCache ccache (pmap emap cmap)
-;* 						(when (string=? (js-jsstring->string name) "ctor") */
-;* 						   (tprint "SET UNCACHABLE l=" point)) */
 						(set! pmap #t)
 						(set! emap #t)
 						(set! cmap #t))
@@ -3695,9 +3673,6 @@
 			       (with-access::JsPropertyCache ccache (pmap cmap emap)
 				  ;; invalidate the call cache and update the
 				  ;; object cache
-;* 				  (when (string=? (js-jsstring->string name) "ctor") */
-;* 				     (tprint "SET UNCACHABLE l=" point */
-;* 					" " (typeof o) " " (typeof (vector-ref methods i)))) */
 				  (set! cmap #t)
 				  (set! pmap #t)
 				  (set! emap #t)
@@ -3705,14 +3680,12 @@
 	    ;; property search
 	    (lambda (obj v)
 	       (with-access::JsPropertyCache ccache (cmap emap pmap)
-;* 		  (when (string=? (js-jsstring->string name) "ctor")   */
-;* 		     (tprint "SET UNCACHABLE l=" point))               */
 		  (set! pmap #t)
 		  (set! emap #t)
 		  (set! cmap #t)
 		  (jsapply (js-property-value o obj name v %this))))
 	    ;; not found
-	    (lambda ()
+	    (lambda (o)
 	       (js-raise-type-error %this "call: not a function ~s"
 		  (js-undefined)))
 	    ;; loop

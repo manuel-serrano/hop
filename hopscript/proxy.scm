@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Jul 12 20:01:47 2019 (serrano)                */
+;*    Last change :  Mon Jul 15 08:23:14 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -42,7 +42,6 @@
 	   (js-new-proxy/caches ::JsGlobalObject ::obj ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
-	   (js-proxy-property-value proxy obj prop %this)
 	   (inline js-jsproxy-get/name-cache ::JsProxy ::obj ::JsGlobalObject)
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (js-call-proxy/cache-miss0 ::JsGlobalObject ::JsPropertyCache
@@ -187,14 +186,11 @@
 ;*    js-new-proxy ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-new-proxy %this t h)
-   (let ((proxy (instantiateJsProxy
-		   (cmap proxy-cmap)
-		   (__proto__ (js-null))
-		   (elements proxy-elements))))
-      (with-access::JsProxy proxy ((target __proto__) handler)
-	 (set! target t)
-	 (set! handler h)
-	 proxy)))
+   (instantiateJsProxy
+      (cmap proxy-cmap)
+      (__proto__ t)
+      (elements proxy-elements)
+      (handler h)))
 
 (define precache (getenv "PRECACHE"))
 (when precache (tprint "precaching proxies..."))
@@ -236,64 +232,48 @@
 ;*    js-proxy-property-value ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value proxy obj prop %this)
-   
-   (define (check target v)
-      (if (null? (js-object-properties target))
-	  v
-	  (proxy-check-property-value target obj prop %this v (& "get"))))
-   
-   (with-access::JsProxy proxy ((target __proto__) handler cacheget)
-      (proxy-check-revoked! proxy "get" %this)
-      (with-access::JsGlobalObject %this (js-proxy-pcache)
-	 (check target
-	    (js-object-method-call-name/cache %this handler (& "get")
-	       cacheget (js-pcache-ref js-proxy-pcache 0)
-	       -1 '(pmap vtable) '(imap+) target prop obj)))))
 
-(define (js-proxy-property-value-TBR-14jul2019 proxy obj prop %this)
+   (define (profile-miss cache)
+      (with-access::JsPropertyCache cache (cntmiss (cname name) usage)
+	 (set! cntmiss (+u32 #u32:1 cntmiss))
+	 (set! cname prop)
+	 (set! usage 'xget)))
    
    (define (check target v)
       (if (null? (js-object-properties target))
 	  v
 	  (proxy-check-property-value target obj prop %this v (& "get"))))
    
-   (with-access::JsProxy proxy ((target __proto__) handler cacheget (%cmap cmap))
+   (with-access::JsProxy proxy ((target __proto__) handler cmap cacheget)
       (proxy-check-revoked! proxy "get" %this)
-      (cond
-	 ((eq? (js-pcache-pmap cacheget) %cmap)
-	  (js-profile-log-cache cacheget :pmap #t)
+      (if (eq? (js-pcache-pmap cacheget) cmap)
+	  ;;(js-profile-log-cache cacheget :pmap #t)
 	  (check target
-	     ((js-pcache-method cacheget) handler target prop)))
-	 ((js-get-jsobject handler handler (& "get") %this)
-	  =>
-	  (lambda (get)
+	     ((js-pcache-method cacheget) handler target prop))
+	  (let ((get (js-get-jsobject handler handler (& "get") %this)))
+	     (profile-miss cacheget)
 	     (cond
-		((and (object? get) (eq? (object-class get) JsFunction3))
-		 (with-access::JsFunction get ((met method))
-		    (with-access::JsPropertyCache cacheget (pmap emap cmap index method function)
-		       (js-validate-pmap-pcache! cacheget)
-		       (set! pmap %cmap)
-		       (set! emap #t)
-		       (set! cmap #f)
-		       (set! index -1)
-		       (set! function #f)
-		       (set! method met)
-		       (check target (met handler target prop)))))
 		((js-function? get)
 		 (with-access::JsFunction get (procedure)
 		    (check target 
 		       (js-call3% %this get procedure handler target prop obj))))
+		((eq? get (js-undefined))
+		 (js-get-jsobject target obj prop %this))
 		((js-proxy? get)
 		 (check target (js-call3 %this get handler target prop obj)))
 		(else
-		 (js-get-jsobject target obj prop %this)))))
-	 (else
-	  (js-get-jsobject target obj prop %this)))))
+		 (js-raise-type-error %this "not a function" get)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value-set! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value-set! proxy obj prop v %this)
+   
+   (define (profile-miss cache)
+      (with-access::JsPropertyCache cache (cntmiss (cname name) usage)
+	 (set! cntmiss (+u32 #u32:1 cntmiss))
+	 (set! cname prop)
+	 (set! usage 'xput)))
    
    (define (check target v r)
       (cond
@@ -306,13 +286,28 @@
 	 (else
 	  (proxy-check-property-value target obj prop %this v (& "set")))))
    
+   (tprint "js-proxy-property-value-set..." prop)
    (with-access::JsProxy proxy ((target __proto__) handler cacheset (%cmap cmap))
       (proxy-check-revoked! proxy "put" %this)
-      (with-access::JsGlobalObject %this (js-proxy-pcache)
-	 (check target v
-	    (js-object-method-call-name/cache %this handler (& "set")
-	       cacheset (js-pcache-ref js-proxy-pcache 0)
-	       -1 '(pmap vtable) '(imap+) target prop v obj)))))
+      (if (eq? (js-pcache-pmap cacheset) %cmap)
+	  (check target v
+	     ((js-pcache-method cacheset) handler target prop v))
+	  (let ((set (js-get-jsobject handler handler (& "set") %this)))
+	     (cond
+		((js-function? set)
+		 (with-access::JsFunction set (procedure)
+		    (check target v
+		       (js-call4% %this set procedure handler target prop v obj))))
+		((eq? set (js-undefined))
+		 (if (eq? proxy obj)
+		     (js-put/cache! target prop v #f %this)
+		     (js-absent)))
+		((js-proxy? set)
+		 (check target v (js-call4 %this set handler target prop v obj)))
+		((eq? proxy obj)
+		 (js-put/cache! target prop v #f %this))
+		(else
+		 (js-absent)))))))
 
 (define (js-proxy-property-value-set!-TBR-14jul2019 proxy obj prop v %this)
    
@@ -376,7 +371,27 @@
 ;*    js-get ::JsProxy ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsProxy prop %this::JsGlobalObject)
-   (js-proxy-property-value o o (js-toname prop %this) %this))
+
+   (define (check o target v)
+      (if (null? (js-object-properties target))
+	  v
+	  (proxy-check-property-value target o prop %this v (& "get"))))
+   
+   (with-access::JsProxy o ((target __proto__) handler)
+      (let ((get (js-get-property-value handler handler (& "get") %this))
+	    (name (js-toname prop %this)))
+	 (cond
+	    ((eq? get (js-absent))
+	     (js-get-jsobject target o name %this))
+	    ((js-function? get)
+	     (check o target 
+		(with-access::JsFunction get (procedure)
+		   (js-call3% %this get procedure handler target name o))))
+	    ((js-proxy? get)
+	     (check o target
+		(js-call3 %this get handler target name o)))
+	    (else
+	     (js-raise-type-error %this "not a function" get))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsproxy-get/name-cache ::JsProxy ...                          */
@@ -388,29 +403,69 @@
 ;*    js-object-get-name/cache-miss ::JsProxy ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-object-get-name/cache-miss obj::JsProxy
-		  name::JsStringLiteral
+		  prop::JsStringLiteral
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache
 		  #!optional (point -1) (cspecs '()))
-   (with-access::JsProxy obj (elements)
-      (with-access::JsPropertyCache cache (usage (loc point))
-	 (set! loc point)
-	 (set! usage 'xget))
-      (js-pcache-update-descriptor! cache 0 obj obj)
-      (js-proxy-property-value obj obj name %this)))
    
+   (define (check o target v)
+      (if (null? (js-object-properties target))
+	  v
+	  (proxy-check-property-value target o prop %this v (& "get"))))
+   
+   (with-access::JsPropertyCache cache (usage (loc point))
+      (set! loc point)
+      (set! usage 'xget))
+   
+   (with-access::JsProxy obj ((target __proto__) handler cacheget (%cmap cmap))
+      (let ((get (js-object-get-name/cache handler (& "get")
+		    throw %this cache point cspecs)))
+	 (cond
+	    ((and (object? get) (eq? (object-class get) JsFunction4))
+	     (with-access::JsFunction get (method)
+		(js-pcache-update-descriptor! cache 0 obj obj)
+		(with-access::JsPropertyCache cacheget (pmap emap cmap index
+							  (cmet method)
+							  (cfun function))
+		   (js-validate-pmap-pcache! cacheget)
+		   (set! pmap cmap)
+		   (set! emap #t)
+		   (set! cmap #f)
+		   (set! index -1)
+		   (set! cfun #f)
+		   (set! cmet method)
+		   (js-proxy-property-value obj obj prop %this))))
+	    ((js-function? get)
+	     (with-access::JsFunction get (procedure)
+		(check obj target
+		   (js-call3% %this get procedure handler target prop obj))))
+	    ((eq? get (js-undefined))
+	     (js-get-jsobject target obj prop %this))
+	    ((js-proxy? get)
+	     (check obj target
+		(js-call3 %this get handler target prop obj)))
+	    (else
+	     (js-raise-type-error %this "not a function" get))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsProxy ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::JsProxy prop v throw %this::JsGlobalObject)
    (proxy-check-revoked! o "put" %this)
-   (with-access::JsProxy o ((target __proto__) handler cacheset)
-      (let ((set (js-object-get-name/cache handler (& "set") #f %this cacheset)))
-	 (if (js-function? set)
-	     (begin
-		(proxy-check-property-value target target prop %this v (& "set"))
-		(js-call4 %this set handler target prop v o))
-	     (js-put! target prop v throw %this)))))
+   (with-access::JsProxy o ((target __proto__) handler)
+      (let ((set (js-get-property-value handler handler (& "set") %this))
+	    (name (js-toname prop %this)))
+	 (tprint "js-put JsProxy set=" set)
+	 (cond
+	    ((js-function? set)
+	     (proxy-check-property-value target target name %this v (& "set"))
+	     (js-call4 %this set handler target name v o))
+	    ((eq? set (js-undefined))
+	     (js-put! target name v throw %this))
+	    ((js-proxy? set)
+	     (js-call4 %this set handler target name v o))
+	    (else
+	     (js-raise-type-error %this "not a function" set))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/cache! ::JsProxy ...                                      */
