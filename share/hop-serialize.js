@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat May 11 18:38:47 2019 (serrano)                */
+/*    Last change :  Sat Jul 13 06:55:15 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1007,8 +1007,11 @@ function hop_bytearray_to_obj( s, extension ) {
    }
 
    function read_cnst() {
-      switch( read_integer( s ) ) {
-	 default: alert( "read_cnst: not implemented: " + s );
+      var i = read_integer( s );
+
+      switch( i ) {
+	 case 30: return "#!key";
+	 default: alert( "read_cnst[" + i + "]: not implemented: " + s );
       }
    }
 
@@ -1103,7 +1106,7 @@ function hop_bytearray_to_obj( s, extension ) {
       clazz = sc_class_exists( key );
       cinfo = read_item();
       sz--;
-
+      
       if( clazz ) {
 	 res = sc_class_allocator( clazz )();
 	 fields = sc_class_all_fields( clazz );

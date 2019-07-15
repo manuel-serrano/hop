@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri May  3 18:14:10 2019 (serrano)                */
+;*    Last change :  Sun Jul 14 11:14:14 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -183,7 +183,7 @@
 	      ;; an optional service handler that is in charge of invoking proc
 	      (handler read-only (default #f))
 	      ;; the service formals
-	      (args::obj read-only)
+	      (args::obj read-only (info '(serialize: #f)))
 	      ;; the user procedure associated
 	      (proc::procedure read-only (info '(serialize: #f)))
 	      ;; the JS code calling that service

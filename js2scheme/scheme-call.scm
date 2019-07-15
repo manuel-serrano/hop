@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Jul 12 08:53:49 2019 (serrano)                */
+;*    Last change :  Sat Jul 13 06:35:43 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -344,7 +344,7 @@
 		      (when (eq? id ty)
 			 (not (decl-usage? decl '(assig))))))))))
 
-      (when (isa? field J2SString)
+      (when (and (isa? field J2SString) (= (config-get conf debug: 0) 0))
 	 (with-access::J2SString field (val)
 	    (let ((tyobj (j2s-type obj)))
 	       (find (lambda (m)

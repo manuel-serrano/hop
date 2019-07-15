@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jul 12 08:10:04 2019 (serrano)                */
+;*    Last change :  Sun Jul 14 12:12:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -864,8 +864,8 @@
 		     ,fun))
 		 ((js-function? xfun)
 		  (with-access::JsFunction xfun (procedure)
-                     (js-call3% %this xfun procedure handler target
-                        ,this (js-vector->jsarray (vector ,@args) ,%this))))
+		     (js-call3% %this xfun procedure handler target
+			,this (js-vector->jsarray (vector ,@args) ,%this))))
 		 (else
 		  (with-access::JsFunction target (procedure)
 		     (,(string->symbol (format "js-call~a%" (length args)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Jul 12 10:59:09 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 20:01:47 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -111,7 +111,7 @@
 	    (%get js-proxy-property-value)
 	    (%set js-proxy-property-value-set!))))
 
-   (with-access::JsGlobalObject %this (js-function-prototype js-proxy)
+   (with-access::JsGlobalObject %this (js-function-prototype js-proxy js-proxy-pcache)
 
       (define (js-proxy-alloc %this constructor::JsFunction)
 	 ;; not used in optimized code, see below
@@ -166,6 +166,9 @@
 	    :size 1
 	    :construct js-proxy-construct))
 
+      (set! js-proxy-pcache
+	 ((@ js-make-pcache-table __hopscript_property) 3 "proxy"))
+      
       (js-bind! %this js-proxy (& "revocable")
 	 :writable #t :configurable #t :enumerable #f
 	 :value (js-make-function %this %js-revocable 2 "revocable"
@@ -239,6 +242,21 @@
 	  v
 	  (proxy-check-property-value target obj prop %this v (& "get"))))
    
+   (with-access::JsProxy proxy ((target __proto__) handler cacheget)
+      (proxy-check-revoked! proxy "get" %this)
+      (with-access::JsGlobalObject %this (js-proxy-pcache)
+	 (check target
+	    (js-object-method-call-name/cache %this handler (& "get")
+	       cacheget (js-pcache-ref js-proxy-pcache 0)
+	       -1 '(pmap vtable) '(imap+) target prop obj)))))
+
+(define (js-proxy-property-value-TBR-14jul2019 proxy obj prop %this)
+   
+   (define (check target v)
+      (if (null? (js-object-properties target))
+	  v
+	  (proxy-check-property-value target obj prop %this v (& "get"))))
+   
    (with-access::JsProxy proxy ((target __proto__) handler cacheget (%cmap cmap))
       (proxy-check-revoked! proxy "get" %this)
       (cond
@@ -276,6 +294,27 @@
 ;*    js-proxy-property-value-set! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value-set! proxy obj prop v %this)
+   
+   (define (check target v r)
+      (cond
+	 ((not (js-totest r))
+	  (js-raise-type-error %this
+	     "Proxy \"set\" returns false on property \"~a\""
+	     prop))
+	 ((null? (js-object-properties target))
+	  r)
+	 (else
+	  (proxy-check-property-value target obj prop %this v (& "set")))))
+   
+   (with-access::JsProxy proxy ((target __proto__) handler cacheset (%cmap cmap))
+      (proxy-check-revoked! proxy "put" %this)
+      (with-access::JsGlobalObject %this (js-proxy-pcache)
+	 (check target v
+	    (js-object-method-call-name/cache %this handler (& "set")
+	       cacheset (js-pcache-ref js-proxy-pcache 0)
+	       -1 '(pmap vtable) '(imap+) target prop v obj)))))
+
+(define (js-proxy-property-value-set!-TBR-14jul2019 proxy obj prop v %this)
    
    (define (check target v r)
       (cond
@@ -357,9 +396,8 @@
       (with-access::JsPropertyCache cache (usage (loc point))
 	 (set! loc point)
 	 (set! usage 'xget))
-      (let ((desc (vector-ref elements 0)))
-	 (js-pcache-update-descriptor! cache 0 obj obj)
-	 (js-proxy-property-value obj obj name %this))))
+      (js-pcache-update-descriptor! cache 0 obj obj)
+      (js-proxy-property-value obj obj name %this)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsProxy ...                                            */
@@ -750,7 +788,7 @@
        (proxy-check-revoked! ,fun "apply" %this)
        (cond
 	  ((eq? (js-pcache-pmap cacheapply) %cmap)
-	   (js-profile-log-cache cacheapply :pmap #t)
+	   ;; (js-profile-log-cache cacheapply :pmap #t)
 	   ((js-pcache-method cacheapply)
 	    handler target ,this (jsarray ,%this ,@args)))
 	  ((js-get-jsobject handler handler (& "apply") %this)

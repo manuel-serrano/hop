@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu Jul 11 14:26:29 2019 (serrano)                */
+;*    Last change :  Sun Jul 14 20:35:51 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -165,13 +165,14 @@
 (define (js-profile-log-cache cache::JsPropertyCache
 	   #!key imap emap cmap pmap amap vtable)
    (with-access::JsPropertyCache cache (name cntimap cntemap cntcmap cntpmap cntamap cntvtable usage)
-      (cond
-	 (imap (set! cntimap (+u32 #u32:1 cntimap)))
-	 (emap (set! cntemap (+u32 #u32:1 cntemap)))
-	 (cmap (set! cntcmap (+u32 #u32:1 cntcmap)))
-	 (pmap (set! cntpmap (+u32 #u32:1 cntpmap)))
-	 (amap (set! cntamap (+u32 #u32:1 cntamap)))
-	 (vtable (set! cntvtable (+u32 #u32:1 cntvtable))))))
+      (when *profile-cache*
+	 (cond
+	    (imap (set! cntimap (+u32 #u32:1 cntimap)))
+	    (emap (set! cntemap (+u32 #u32:1 cntemap)))
+	    (cmap (set! cntcmap (+u32 #u32:1 cntcmap)))
+	    (pmap (set! cntpmap (+u32 #u32:1 cntpmap)))
+	    (amap (set! cntamap (+u32 #u32:1 cntamap)))
+	    (vtable (set! cntvtable (+u32 #u32:1 cntvtable)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-index ...                                         */

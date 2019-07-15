@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jul 12 07:20:01 2019 (serrano)                */
+;*    Last change :  Sun Jul 14 12:06:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3627,6 +3627,8 @@
 			       (with-access::JsPropertyCache ccache (pmap emap cmap)
 ;* 				  (when (string=? (js-jsstring->string name) "ctor") */
 ;* 				     (tprint "SET UNCACHABLE l=" point)) */
+				  (tprint "Calling " name " uncachable "
+				     (typeof el-or-desc))
 				  (set! pmap #t)
 				  (set! emap #t)
 				  (set! cmap #t))

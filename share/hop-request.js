@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/hop/share/hop-request.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue May 15 06:30:12 2018 (serrano)                */
-/*    Copyright   :  2004-18 Manuel Serrano                            */
+/*    Last change :  Sun Jul 14 10:17:26 2019 (serrano)                */
+/*    Copyright   :  2004-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/

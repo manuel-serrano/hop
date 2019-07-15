@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Wed Jul  3 10:49:36 2019 (serrano)                */
+/*    Last change :  Sun Jul 14 11:29:36 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -183,6 +183,60 @@ function miscl() {
    return toString.call( new Proxy( {}, {} ) );
 }
 
+function miscm() {
+   // get cache test
+   function ret( o ) {
+      return o.x;
+   }
+
+   function test( o ) {
+      let v;
+   
+      for( let i = 0; i < 10; i++ ) {
+      	 v = ret( o );
+      }
+      
+      return v;
+   }
+
+   const o = { a: 1 };
+   let h = { get: function( target, key ) { return 3; } };
+   let p = new Proxy( o, h );
+
+   let v0 = test( p );
+   h.get = function( target, key ) { return 4; };
+   let v1 = test( p );
+
+   return v0 === 3 && v1 === 4;
+}
+
+function miscn() {
+   // apply cache test
+   function ret( o ) {
+      return o();
+   }
+
+   function test( o ) {
+      let v;
+   
+      for( let i = 0; i < 10; i++ ) {
+      	 v = ret( o );
+      }
+      
+      return v;
+   }
+
+   function o() { return 1; }
+   let h = { get: function( target, key ) { return 3; } };
+   let p = new Proxy( o, h );
+
+   let v0 = test( p );
+   h.get = function( target, key ) { return 4; };
+   let v1 = test( p );
+
+   return v0 === 3 && v1 === 4;
+}
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
@@ -196,6 +250,8 @@ console.log( "   misci()"); assert.ok( misci(), "misci" );
 console.log( "   miscj()"); assert.ok( miscj(), "miscj" );
 console.log( "   misck()"); assert.ok( misck(), "misck" );
 console.log( "   miscl()"); assert.ok( miscl(), "miscl" );
+console.log( "   miscm()"); assert.ok( miscm(), "miscm" );
+console.log( "   miscn()"); assert.ok( miscn(), "miscn" );
       
 /*---------------------------------------------------------------------*/
 /*    mdn ...                                                          */
