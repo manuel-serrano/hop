@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jun 22 06:23:16 2019 (serrano)                */
+;*    Last change :  Thu Jul 18 07:01:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -68,6 +68,12 @@
    (lambda (o)
       (js-undefined))
    (lambda (o %this) o))
+
+;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsFunction ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (hop->javascript o::JsFunction op compile isexpr ctx)
+   (error "js" "Cannot compile function" o))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-equal? ::JsFunction ...                                   */

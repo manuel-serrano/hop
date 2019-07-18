@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon Jul 15 08:23:14 2019 (serrano)                */
+;*    Last change :  Tue Jul 16 06:59:00 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -42,6 +42,7 @@
 	   (js-new-proxy/caches ::JsGlobalObject ::obj ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
+	   (js-proxy-property-value ::JsProxy ::obj ::JsStringLiteral ::JsGlobalObject)
 	   (inline js-jsproxy-get/name-cache ::JsProxy ::obj ::JsGlobalObject)
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (js-call-proxy/cache-miss0 ::JsGlobalObject ::JsPropertyCache
@@ -246,6 +247,9 @@
    
    (with-access::JsProxy proxy ((target __proto__) handler cmap cacheget)
       (proxy-check-revoked! proxy "get" %this)
+;*       (js-object-method-call-name/cache %this                       */
+;* 	 handler (& "get") cacheget (js-pcache-ref js-proxy-pcache 0)  */
+;* 	 target prop obj)                                              */
       (if (eq? (js-pcache-pmap cacheget) cmap)
 	  ;;(js-profile-log-cache cacheget :pmap #t)
 	  (check target
@@ -403,49 +407,62 @@
 ;*    js-object-get-name/cache-miss ::JsProxy ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-object-get-name/cache-miss obj::JsProxy
-		  prop::JsStringLiteral
+		  name::JsStringLiteral
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache
 		  #!optional (point -1) (cspecs '()))
-   
-   (define (check o target v)
-      (if (null? (js-object-properties target))
-	  v
-	  (proxy-check-property-value target o prop %this v (& "get"))))
-   
-   (with-access::JsPropertyCache cache (usage (loc point))
-      (set! loc point)
-      (set! usage 'xget))
-   
-   (with-access::JsProxy obj ((target __proto__) handler cacheget (%cmap cmap))
-      (let ((get (js-object-get-name/cache handler (& "get")
-		    throw %this cache point cspecs)))
-	 (cond
-	    ((and (object? get) (eq? (object-class get) JsFunction4))
-	     (with-access::JsFunction get (method)
-		(js-pcache-update-descriptor! cache 0 obj obj)
-		(with-access::JsPropertyCache cacheget (pmap emap cmap index
-							  (cmet method)
-							  (cfun function))
-		   (js-validate-pmap-pcache! cacheget)
-		   (set! pmap cmap)
-		   (set! emap #t)
-		   (set! cmap #f)
-		   (set! index -1)
-		   (set! cfun #f)
-		   (set! cmet method)
-		   (js-proxy-property-value obj obj prop %this))))
-	    ((js-function? get)
-	     (with-access::JsFunction get (procedure)
-		(check obj target
-		   (js-call3% %this get procedure handler target prop obj))))
-	    ((eq? get (js-undefined))
-	     (js-get-jsobject target obj prop %this))
-	    ((js-proxy? get)
-	     (check obj target
-		(js-call3 %this get handler target prop obj)))
-	    (else
-	     (js-raise-type-error %this "not a function" get))))))
+   (with-access::JsProxy obj (elements)
+      (with-access::JsPropertyCache cache (usage (loc point))
+	 (set! loc point)
+	 (set! usage 'xget))
+      (let ((desc (vector-ref elements 0)))
+	 (js-pcache-update-descriptor! cache 0 obj obj)
+	 (js-proxy-property-value obj obj name %this))))
+
+;* (define-method (js-object-get-name/cache-miss-TBR obj::JsProxy      */
+;* 		  prop::JsStringLiteral                                */
+;* 		  throw::bool %this::JsGlobalObject                    */
+;* 		  cache::JsPropertyCache                               */
+;* 		  #!optional (point -1) (cspecs '()))                  */
+;*                                                                     */
+;*    (define (check o target v)                                       */
+;*       (if (null? (js-object-properties target))                     */
+;* 	  v                                                            */
+;* 	  (proxy-check-property-value target o prop %this v (& "get")))) */
+;*                                                                     */
+;*    (with-access::JsPropertyCache cache (usage (loc point))          */
+;*       (set! loc point)                                              */
+;*       (set! usage 'xget))                                           */
+;*                                                                     */
+;*    (with-access::JsProxy obj ((target __proto__) handler cacheget (%cmap cmap)) */
+;*       (let ((get (js-object-get-name/cache handler (& "get")        */
+;* 		    throw %this cache point cspecs)))                  */
+;* 	 (cond                                                         */
+;* 	    ((and (object? get) (eq? (object-class get) JsFunction4))  */
+;* 	     (with-access::JsFunction get (method)                     */
+;* 		(js-pcache-update-descriptor! cache 0 obj obj)         */
+;* 		(with-access::JsPropertyCache cacheget (pmap emap cmap index */
+;* 							  (cmet method) */
+;* 							  (cfun function)) */
+;* 		   (js-validate-pmap-pcache! cacheget)                 */
+;* 		   (set! pmap cmap)                                    */
+;* 		   (set! emap #t)                                      */
+;* 		   (set! cmap #f)                                      */
+;* 		   (set! index -1)                                     */
+;* 		   (set! cfun #f)                                      */
+;* 		   (set! cmet method)                                  */
+;* 		   (js-proxy-property-value obj obj prop %this))))     */
+;* 	    ((js-function? get)                                        */
+;* 	     (with-access::JsFunction get (procedure)                  */
+;* 		(check obj target                                      */
+;* 		   (js-call3% %this get procedure handler target prop obj)))) */
+;* 	    ((eq? get (js-undefined))                                  */
+;* 	     (js-get-jsobject target obj prop %this))                  */
+;* 	    ((js-proxy? get)                                           */
+;* 	     (check obj target                                         */
+;* 		(js-call3 %this get handler target prop obj)))         */
+;* 	    (else                                                      */
+;* 	     (js-raise-type-error %this "not a function" get))))))     */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsProxy ...                                            */
