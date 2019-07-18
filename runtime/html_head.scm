@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Jun 12 06:55:39 2019 (serrano)                */
+;*    Last change :  Thu Jul 18 06:50:12 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -57,8 +57,8 @@
 (define (head-runtime-system-packed idiom)
    (cond
       ((string=? idiom "scheme") head-runtime-system-packed-scheme)
-      ((string=? idiom "hopscript")  head-runtime-system-packed-javascript)
-      ((string=? idiom "javascript")  head-runtime-system-packed-javascript)
+      ((string=? idiom "hopscript") head-runtime-system-packed-javascript)
+      ((string=? idiom "javascript") head-runtime-system-packed-javascript)
       (else '())))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Mar 12 17:23:37 2019 (serrano)                */
+;*    Last change :  Thu Jul 18 06:47:15 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -997,9 +997,13 @@
 	  ;; find the attribute (if any)
 	  (with-access::xml-element parent (tag id)
 	     (let ((attr (element-attribute parent)))
-		(if attr
-		    (format "~a#~a.~a" tag id (keyword->string attr))
-		    (format "~a#~a" tag id)))))
+		(cond
+		   ((eq? id #unspecified)
+		    (symbol->string tag))
+		   ((not attr)
+		    (format "~a#~a" tag id))
+		   (else
+		    (format "~a#~a.~a" tag id (keyword->string attr)))))))
 	 (else
 	  "")))
 
