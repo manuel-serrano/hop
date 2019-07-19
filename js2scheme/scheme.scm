@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Mar 28 15:42:06 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 08:01:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -221,6 +221,8 @@
 		(if ronly
 		    `(,(vtype-ident ident vtype conf) ,value)
 		    `(,ident ,value)))
+	       ((eq? scope 'unbound)
+		#unspecified)
 	       (else
 		`(define ,ident ,value)))))))
 
