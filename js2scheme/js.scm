@@ -291,6 +291,8 @@
 	  '())
 	 ((j2s-param? this)
 	  (list this (j2s-binder binder #t) (j2s-js-id this)))
+	 ((eq? scope 'unbound)
+	  '())
 	 (else
 	  (list this (j2s-binder binder #t) (j2s-js-id this) ";")))))
 

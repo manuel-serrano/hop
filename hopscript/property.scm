@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property.new.scm          */
+;*    serrano/prgm/project/hop/hop/hopscript/property.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jul 15 12:06:02 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 10:04:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -382,10 +382,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-debug-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
-       (with-access::JsPropertyCache pcache (imap cmap pmap amap index vindex cntmiss)
+       (with-access::JsPropertyCache pcache (src imap cmap pmap amap index vindex cntmiss)
 	  (cond
 	     ((isa? cmap JsConstructMap)
 	      (fprint (current-error-port) "--- " msg (typeof pcache)
+		 " src=" src
 		 " index=" index " vindex=" vindex " cntmiss=" cntmiss)
 	      (when (isa? imap JsConstructMap)
 		 (with-access::JsConstructMap imap ((%iid %id) (iprops props))
@@ -413,12 +414,15 @@
 	     ((isa? amap JsConstructMap)
 	      (with-access::JsConstructMap amap ((%aid %id) (aprops props))
 		 (fprint (current-error-port) "--- " msg (typeof pcache)
+		    " src=" src
 		    " index=" index " vindex=" vindex
 		    "\n  amap.%id=" %aid
 		    " amap.props=" aprops
 		    " owner=" (typeof (js-pcache-owner pcache)))))
 	     (else
-	      (fprint (current-error-port) "--- " msg (typeof pcache) " vindex=" vindex " cntmiss=" cntmiss " no map"))))
+	      (fprint (current-error-port) "--- " msg (typeof pcache)
+		 " src=" src
+		 " vindex=" vindex " cntmiss=" cntmiss " no map"))))
        (fprint (current-error-port) msg (typeof pcache))))
 
 ;*---------------------------------------------------------------------*/
@@ -755,19 +759,6 @@
    (with-access::JsObject o (elements)
       (and (js-object-inline-elements? o) (<fx idx (vector-length elements)))))
 
-(define (check-inline-elementsDEBUG! o::JsObject where prop)
-   (with-access::JsObject o (cmap)
-      (unless (js-object-inline-elements? o)
-	 (with-access::JsConstructMap cmap (inline)
-	    (when inline
-	       (tprint "*** ERROR: " where " INCONSISTENT OBJECT " (typeof o) " " prop)
-	       (js-debug-object o)
-	       (js-debug-cmap cmap)
-	       (tprint "forcing fpe...(for gdb)")
-	       (tprint (/fx 1 0))
-	       (error where "inconsistent object/cmap"
-		  prop))))))
-	  
 ;*---------------------------------------------------------------------*/
 ;*    transition ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -847,13 +838,6 @@
 ;*---------------------------------------------------------------------*/
 (define (sibling-cmap! cmap::JsConstructMap inl)
    (with-access::JsConstructMap cmap (sibling inline)
-      ;; TBR: debug 
-      (when (eq? inline inl)
-	 (tprint "*** ERROR: INCONSISTENT CMAP")
-	 (js-debug-cmap cmap)
-	 (tprint "forcing fpe...(for gdb)")
-	 (tprint (/fx 1 0))
-	 (error "sibling-cmap!" "inconsistent cmap" inl))
       (unless sibling
 	 (let ((ncmap (duplicate::JsConstructMap cmap
 			 (inline inl)
@@ -2028,7 +2012,7 @@
 	   throw::bool extend::bool
 	   %this::JsGlobalObject
 	   cache #!optional (loc #f) (cspecs '()))
-
+   
    (define name (js-toname prop %this))
    
    (define (reject msg)
@@ -2036,7 +2020,7 @@
 	  (js-raise-type-error/loc %this loc
 	     (format "[[PUT]], ~a ~~s" msg) name)
 	  v))
-
+   
    (define (check-unplain! obj prop)
       (when (and (js-function? obj)
 		 (or (eq? prop (& "call"))
@@ -2158,7 +2142,7 @@
 				       (js-pcache-update-descriptor! cache i obj obj)
 				       (js-pcache-update-descriptor! cache i o o)))
 				v))))
-		      ;; hopjs extension
+		     ;; hopjs extension
 		     ((js-object-mode-frozen? obj)
 		      ;; 8.12.9, step 3
 		      (reject "frozen object"))
@@ -2350,16 +2334,14 @@
 	       (else
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
-
+   
    (check-unplain! o name)
-   (let ((v (let loop ((obj o))
-	       (jsobject-find obj o name
-		  update-mapped-object!
-		  update-properties-object!
-		  extend-object!
-		  loop))))
-      (check-inline-elementsDEBUG! o "<<< js-put-jsobject" name)
-      v))
+   (let loop ((obj o))
+      (jsobject-find obj o name
+	 update-mapped-object!
+	 update-properties-object!
+	 extend-object!
+	 loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/debug! ...                                                */
@@ -2573,7 +2555,7 @@
 	  (with-access::JsObject o (elements)
 	     (vector-set! elements i value)
 	     value))))
-
+   
    (define (next-cmap o::JsObject name value flags inline::bool)
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (single)
@@ -2689,20 +2671,18 @@
 			 (configurable configurable)))))
 	 (js-define-own-property o name desc #f %this)
 	 (js-undefined)))
-
+   
    [assert (name) (not (symbol? name))]
    [assert (name) (eq? name (js-toname name %this))]
-
-   (let ((v (with-access::JsObject o (cmap)
-	       (if (not (eq? cmap (js-not-a-cmap)))
-		   (jsobject-map-find o name
-		      update-mapped-object!
-		      extend-mapped-object!)
-		   (jsobject-properties-find o name
-		      update-properties-object!
-		      extend-properties-object!)))))
-      (check-inline-elementsDEBUG! o "<<< js-bind!" name)
-      v))
+   
+   (with-access::JsObject o (cmap)
+      (if (not (eq? cmap (js-not-a-cmap)))
+	  (jsobject-map-find o name
+	     update-mapped-object!
+	     extend-mapped-object!)
+	  (jsobject-properties-find o name
+	     update-properties-object!
+	     extend-properties-object!))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-define ...                                                    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Jul  3 09:00:33 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 07:58:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -82,7 +82,12 @@
 	       (map! (lambda (o) (resolve! o env mode '() '() genv #f conf))
 		  nodes))
 	    (when (config-get conf :commonjs-export #f)
-	       (commonjs-export this (find-decl 'module env))))))
+	       (commonjs-export this (find-decl 'module env)))
+	    (for-each (lambda (d)
+			 (with-access::J2SDecl d (scope)
+			    (when (eq? scope 'unbound)
+			       (set! decls (cons d decls)))))
+	       genv))))
    (when (and (>= (config-get conf :verbose 0) 2)
 	      (not (config-get conf :verbmargin #f)))
       (newline (current-error-port)))
@@ -699,6 +704,7 @@
 	     (let ((decl (instantiate::J2SDecl
 			    (ronly #t)
 			    (utype 'any)
+			    (scope 'unbound)
 			    (loc loc)
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))

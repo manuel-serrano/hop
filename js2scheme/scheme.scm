@@ -221,6 +221,8 @@
 		(if ronly
 		    `(,(vtype-ident ident vtype conf) ,value)
 		    `(,ident ,value)))
+	       ((eq? scope 'unbound)
+		#unspecified)
 	       (else
 		`(define ,ident ,value)))))))
 

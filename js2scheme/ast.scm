@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Jul 10 14:06:04 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 13:51:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -384,9 +384,9 @@
 	      op::symbol)
 	   
 	   (final-class J2SObjInit::J2SExpr
-	      (ronly (default #f) (info '("notraverse")))
 	      (inits::pair-nil (info '("ast")))
-	      (cmap (default #f)))
+	      (cmap (default #f))
+	      (ronly (default #f) (info '("notraverse"))))
 	   
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f) (info '("nojson" "notraverse")))

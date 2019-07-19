@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Jul 14 21:35:26 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 08:17:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -297,6 +297,7 @@
 ;* 	      (target::JsObject (default (class-nil JsObject)))        */
 	      (handler::JsObject (default (class-nil JsObject)))
 	      (revoked::bool (default #f))
+	      (%get (default #f))
 	      (cacheget read-only (default (instantiate::JsPropertyCache (src "proxy-get"))))
 	      (cacheset read-only (default (instantiate::JsPropertyCache (src "proxy-set"))))
 	      (cacheapply read-only (default (instantiate::JsPropertyCache (src "proxy-apply")))))
@@ -445,6 +446,9 @@
 	   (inline js-object-mode-enumerable?::bool ::JsObject)
 	   (inline js-object-mode-enumerable-set! ::JsObject ::bool)
 	   
+	   (inline js-object-mode-uncachable?::bool ::JsObject)
+	   (inline js-object-mode-uncachable-set! ::JsObject ::bool)
+	   
 	   (inline js-object-mode-hasnumeralprop?::bool ::JsObject)
 	   (inline js-object-mode-hasnumeralprop-set! ::JsObject ::bool)
 
@@ -458,6 +462,7 @@
 	   (inline JS-OBJECT-MODE-HASINSTANCE::uint32)
 	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
 	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
+	   (inline JS-OBJECT-MODE-UNCACHABLE::uint32)
 	   (inline JS-OBJECT-MODE-HASNUMERALPROP::uint32)
 	   (inline JS-OBJECT-MODE-PLAIN::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
@@ -598,15 +603,16 @@
 (define-inline (JS-OBJECT-MODE-INLINE) #u32:8)
 (define-inline (JS-OBJECT-MODE-GETTER) #u32:16)
 (define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
-(define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:64)
+(define-inline (JS-OBJECT-MODE-UNCACHABLE) #u32:64)
 (define-inline (JS-OBJECT-MODE-ENUMERABLE) #u32:128)
 (define-inline (JS-OBJECT-MODE-PLAIN) #u32:256)
 (define-inline (JS-OBJECT-MODE-HASNUMERALPROP) #u32:512)
 (define-inline (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1024)
 (define-inline (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2048)
+(define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4096)
 ;; WARNING: music be the two last constants (see js-array?)
-(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:4096)
-(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:8192)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
+(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-macro (JS-OBJECT-MODE-SEALED) #u32:2)
@@ -614,15 +620,16 @@
 (define-macro (JS-OBJECT-MODE-INLINE) #u32:8)
 (define-macro (JS-OBJECT-MODE-GETTER) #u32:16)
 (define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
-(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:64)
+(define-macro (JS-OBJECT-MODE-UNCACHABLE) #u32:64)
 (define-macro (JS-OBJECT-MODE-ENUMERABLE) #u32:128)
 (define-macro (JS-OBJECT-MODE-PLAIN) #u32:256)
 (define-macro (JS-OBJECT-MODE-HASNUMERALPROP) #u32:512)
 (define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1024)
 (define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2048)
+(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4096)
 ;; WARNING: music be the two last constants (see js-array?)
-(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:4096)
-(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:8192)
+(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
+(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -713,6 +720,16 @@
       (if flag
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-ENUMERABLE))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-ENUMERABLE))))))
+
+(define-inline (js-object-mode-uncachable? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-UNCACHABLE) (js-object-mode o))
+      (JS-OBJECT-MODE-UNCACHABLE)))
+
+(define-inline (js-object-mode-uncachable-set! o flag)
+   (js-object-mode-set! o
+      (if flag
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-UNCACHABLE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-UNCACHABLE))))))
 
 (define-inline (js-object-mode-hasnumeralprop? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-HASNUMERALPROP) (js-object-mode o))
