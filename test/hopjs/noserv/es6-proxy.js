@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sun Jul 14 11:29:36 2019 (serrano)                */
+/*    Last change :  Fri Jul 19 18:23:44 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -227,14 +227,150 @@ function miscn() {
    }
 
    function o() { return 1; }
-   let h = { get: function( target, key ) { return 3; } };
+   let h = { apply: function( target, thisa, alist ) { return 3; } };
    let p = new Proxy( o, h );
 
    let v0 = test( p );
-   h.get = function( target, key ) { return 4; };
+   h.apply = function( target, thisa, alist ) { return 4; };
    let v1 = test( p );
 
    return v0 === 3 && v1 === 4;
+}
+
+function misco() {
+   function getProxy( obj ) {
+      return obj.x; 
+   }
+
+   const noinline = { f: getProxy };
+   const get = noinline.f;
+
+   function test( obj ) {
+      const g = [ get( obj ), get( obj ), get( obj ), get( obj ), get( obj ) ];
+      
+      for( let i = 1; i < g.length; i++ ) {
+      	 if( g[ i ] !== g[ 0 ] ) 
+	    return false;
+      }
+      
+      return g[ 0 ];
+   }
+
+   // test 0
+   function test0() {
+      console.log( "      misco.test0..." );
+      const h = {};
+      const p = new Proxy( { x : 10 }, h );
+      return test( p ) === 10;
+   }
+
+   // test 1
+   function test1() {
+      console.log( "      misco.test1..." );
+      const h = { get: function() { return 19; } };
+      const p = new Proxy( {}, h );
+      return test( p ) === 19;
+   }
+
+   // test 2
+   function test2() {
+      console.log( "      misco.test2..." );
+      const h = { get: function(t, p, r) { return 15; } };
+      const p = new Proxy( {}, h );
+      return test( p ) === 15;
+   }
+
+   // test 3
+   function test3() {
+      console.log( "      misco.test3..." );
+      const h = { get: function(t, p) { return 14; } };
+      const p = new Proxy( {}, h );
+      return test( p ) === 14;
+   }
+
+   // test 4
+   function test4() {
+      console.log( "      misco.test4..." );
+      const h = { get: 3 };
+      h.get = function() { return 2; };
+      
+      const p = new Proxy( {}, h );
+      return test( p ) === 2;
+   }
+
+   // test 5
+   function test5() {
+      console.log( "      misco.test5..." );
+      const ph = {};
+      const h = { __proto__: ph };
+      const p = new Proxy( { x: 2 }, h );
+      
+      if( test( p ) !== 2 ) return false;
+      
+      ph.get = function(t,p,r) { return 5; };
+      if( test( p ) !== 5 ) return false;
+      
+      ph.get = function(t,p,r) { return 6; }
+      if( test( p ) !== 6 ) return false;
+      
+      h.get = function(t,p,r) { return 7; }
+      if( test( p ) !== 7 ) return false;
+      
+      h.get = function(t,p,r) { return 8; }
+      if( test( p ) !== 8 ) return false;
+      
+      h.get = 3;
+      h.get = function(t,p,r) { return 9; }
+      if( test( p ) !== 9 ) return false;
+      
+      h.get = 4;
+      h.get = function(t,p,r) { return 10; }
+      if( test( p ) !== 10 ) return false;
+      
+      return true;
+   }
+
+   // test 6
+   function test6() {
+      console.log( "      misco.test6..." );
+      const ph = {};
+      const h = { __proto__: ph };
+      const p = new Proxy( { x: 2 }, h );
+      
+      if( test( p ) !== 2 ) return false;
+      
+      ph.get = function(t,p,r) { return 5; };
+      if( test( p ) !== 5 ) return false;
+      
+      ph.get = function(t,p,r) { return 6; }
+      if( test( p ) !== 6 ) return false;
+      
+      ph.get = 3;
+      ph.get = function(t,p,r) { return 9; }
+      if( test( p ) !== 9 ) return false;
+      
+      return true;
+   }
+
+   // test 7
+   function test7() {
+      console.log( "      misco.test7..." );
+      const p = new Proxy( {}, { get: function() { return 4; } } );
+      const o = { __proto__: p, y: 18 };
+      
+      return test( o ) === 4;
+   }
+
+   assert.ok( test0(), "misco.test0" );
+   assert.ok( test1(), "misco.test1" );
+   assert.ok( test2(), "misco.test2" );
+   assert.ok( test3(), "misco.test3" );
+   assert.ok( test4(), "misco.test4" );
+   assert.ok( test5(), "misco.test5" );
+   assert.ok( test6(), "misco.test6" );
+   assert.ok( test7(), "misco.test7" );
+   
+   return true;
 }
 
 console.log( "misc" );
@@ -252,6 +388,7 @@ console.log( "   misck()"); assert.ok( misck(), "misck" );
 console.log( "   miscl()"); assert.ok( miscl(), "miscl" );
 console.log( "   miscm()"); assert.ok( miscm(), "miscm" );
 console.log( "   miscn()"); assert.ok( miscn(), "miscn" );
+console.log( "   misco()"); assert.ok( misco(), "misco" );
       
 /*---------------------------------------------------------------------*/
 /*    mdn ...                                                          */

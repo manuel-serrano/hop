@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jul 14 12:12:13 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 18:54:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -839,25 +839,25 @@
 	   (js-raise-type-error ,%this
 	      ,(format "call~a: not a function ~~s" (length args))
 	      ,fun))
-	  ((eq? (js-pcache-pmap cacheapply) %cmap)
-	   (js-profile-log-cache cacheapply :pmap #t)
-	   ((js-pcache-method cacheapply)
-	    handler target ,this (jsarray ,%this ,@args)))
-	  ((js-get-jsobject handler handler (& "apply") %this)
+;* 	  ((eq? (js-pcache-pmap cacheapply) %cmap)                     */
+;* 	   (js-profile-log-cache cacheapply :pmap #t)                  */
+;* 	   ((js-pcache-method cacheapply)                              */
+;* 	    handler target ,this (jsarray ,%this ,@args)))             */
+	  ((js-get handler (& "apply") %this)
 	   =>
 	   (lambda (xfun)
 	      (cond
-		 ((and (object? xfun) (eq? (object-class xfun) JsFunction4))
-		  (with-access::JsFunction xfun ((met method))
-		     (with-access::JsPropertyCache cacheapply (pmap emap cmap index method function)
-			(js-validate-pmap-pcache! cacheapply)
-			(set! pmap %cmap)
-			(set! emap #t)
-			(set! cmap #f)
-			(set! index -1)
-			(set! function #f)
-			(set! method met)
-			(met handler target ,this (jsarray ,%this ,@args)))))
+;* 		 ((and (object? xfun) (eq? (object-class xfun) JsFunction4)) */
+;* 		  (with-access::JsFunction xfun ((met method))         */
+;* 		     (with-access::JsPropertyCache cacheapply (pmap emap cmap index method function) */
+;* 			(js-validate-pmap-pcache! cacheapply)          */
+;* 			(set! pmap %cmap)                              */
+;* 			(set! emap #t)                                 */
+;* 			(set! cmap #f)                                 */
+;* 			(set! index -1)                                */
+;* 			(set! function #f)                             */
+;* 			(set! method met)                              */
+;* 			(met handler target ,this (jsarray ,%this ,@args))))) */
 		 ((not (js-function? target))
 		  (js-raise-type-error ,%this
 		     ,(format "call~a: not a function ~~s" (length args))
