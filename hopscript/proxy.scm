@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Jul 20 07:24:04 2019 (serrano)                */
+;*    Last change :  Sat Jul 20 07:30:37 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -193,23 +193,11 @@
       (elements proxy-elements)
       (handler h)))
 
-(define precache (getenv "PRECACHE"))
-(when precache (tprint "precaching proxies..."))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-new-proxy/caches ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-new-proxy/caches %this t h gcache scache acache)
-   (if precache
-       (instantiateJsProxy
-	  (cmap proxy-cmap)
-	  (__proto__ t)
-	  (elements proxy-elements)
-	  (handler h)
-	  (cacheget gcache)
-	  (cacheset scache)
-	  (cacheapply acache))
-       (js-new-proxy %this t h)))
+   (js-new-proxy %this t h))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-debug-name ...                                          */
@@ -282,27 +270,24 @@
 	 (else
 	  (proxy-check-property-value target obj prop %this v (& "set")))))
    
-   (with-access::JsProxy proxy ((target __proto__) handler cacheset (%cmap cmap))
+   (with-access::JsProxy proxy ((target __proto__) handler (%cmap cmap))
       (proxy-check-revoked! proxy "put" %this)
-      (if (eq? (js-pcache-pmap cacheset) %cmap)
-	  (check target v
-	     ((js-pcache-method cacheset) handler target prop v))
-	  (let ((set (js-get-jsobject handler handler (& "set") %this)))
-	     (cond
-		((js-function? set)
-		 (with-access::JsFunction set (procedure)
-		    (check target v
-		       (js-call4% %this set procedure handler target prop v obj))))
-		((eq? set (js-undefined))
-		 (if (eq? proxy obj)
-		     (js-put/cache! target prop v #f %this)
-		     (js-absent)))
-		((js-proxy? set)
-		 (check target v (js-call4 %this set handler target prop v obj)))
-		((eq? proxy obj)
-		 (js-put/cache! target prop v #f %this))
-		(else
-		 (js-absent)))))))
+      (let ((set (js-get-jsobject handler handler (& "set") %this)))
+	 (cond
+	    ((js-function? set)
+	     (with-access::JsFunction set (procedure)
+		(check target v
+		   (js-call4% %this set procedure handler target prop v obj))))
+	    ((eq? set (js-undefined))
+	     (if (eq? proxy obj)
+		 (js-put/cache! target prop v #f %this)
+		 (js-absent)))
+	    ((js-proxy? set)
+	     (check target v (js-call4 %this set handler target prop v obj)))
+	    ((eq? proxy obj)
+	     (js-put/cache! target prop v #f %this))
+	    (else
+	     (js-absent))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typeof ...                                                    */
@@ -364,7 +349,7 @@
 	  v
 	  (proxy-check-property-value target o prop %this v (& "get"))))
    
-   (with-access::JsProxy proxy ((target __proto__) handler cacheget)
+   (with-access::JsProxy proxy ((target __proto__) handler)
       (proxy-check-revoked! proxy "get" %this)
       (let ((get (js-object-get-name/cache handler (& "get") #f %this
 		    cache -1 '(emap imap pmap))))
@@ -781,28 +766,13 @@
 ;*    js-call-proxy/cache-miss ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-call-proxy/cache-miss %this cache fun this . args)
-   `(with-access::JsProxy ,fun ((target __proto__) handler cacheapply (%cmap cmap))
+   `(with-access::JsProxy ,fun ((target __proto__) handler (%cmap cmap))
        (proxy-check-revoked! ,fun "apply" %this)
        (cond
-	  ((eq? (js-pcache-pmap cacheapply) %cmap)
-	   ;; (js-profile-log-cache cacheapply :pmap #t)
-	   ((js-pcache-method cacheapply)
-	    handler target ,this (jsarray ,%this ,@args)))
 	  ((js-get handler (& "apply") %this)
 	   =>
 	   (lambda (xfun)
 	      (cond
-;* 		 ((and (object? xfun) (eq? (object-class xfun) JsFunction4)) */
-;* 		  (with-access::JsFunction xfun ((met method))         */
-;* 		     (with-access::JsPropertyCache cacheapply (pmap emap cmap index method function) */
-;* 			(js-validate-pmap-pcache! cacheapply)          */
-;* 			(set! pmap %cmap)                              */
-;* 			(set! emap #t)                                 */
-;* 			(set! cmap #f)                                 */
-;* 			(set! index -1)                                */
-;* 			(set! function #f)                             */
-;* 			(set! method met)                              */
-;* 			(met handler target ,this (jsarray ,%this ,@args))))) */
 		 ((not (js-function? target))
 		  (js-raise-type-error ,%this
 		     ,(format "call~a: not a function ~~s" (length args))
