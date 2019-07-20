@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Jul 20 07:30:37 2019 (serrano)                */
+;*    Last change :  Sat Jul 20 08:44:50 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -308,7 +308,7 @@
    
    (with-access::JsProxy o ((target __proto__) handler)
       (proxy-check-revoked! o "get" %this)
-      (let ((get (js-get-property-value handler handler (& "get") %this))
+      (let ((get (js-object-get-property-value handler handler (& "get") %this))
 	    (name (js-toname prop %this)))
 	 (cond
 	    ((eq? get (js-absent))
@@ -357,14 +357,15 @@
 	    ((and (object? get) (eq? (object-class get) JsFunction3))
 	     (with-access::JsFunction get (procedure)
 		(check proxy target
-		   (js-call2% %this get procedure handler target prop))))
+		   (procedure handler target prop))))
 	    ((js-function? get)
 	     (check proxy target
 		(js-call3 %this get handler target prop proxy)))
 	    ((eq? get (js-undefined))
 	     (js-get target prop %this))
 	    ((js-proxy? get)
-	     (check proxy target (js-call3 %this get handler target prop proxy)))
+	     (check proxy target
+		(js-call3 %this get handler target prop proxy)))
 	    (else
 	     (js-raise-type-error %this "not a function" get))))))
 
@@ -374,7 +375,7 @@
 (define-method (js-put! o::JsProxy prop v throw %this::JsGlobalObject)
    (proxy-check-revoked! o "put" %this)
    (with-access::JsProxy o ((target __proto__) handler)
-      (let ((set (js-get-property-value handler handler (& "set") %this))
+      (let ((set (js-object-get-property-value handler handler (& "set") %this))
 	    (name (js-toname prop %this)))
 	 (cond
 	    ((js-function? set)
@@ -399,7 +400,23 @@
 	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (js-put! o prop v throw %this))
+   (proxy-check-revoked! o "put" %this)
+   (with-access::JsProxy o ((target __proto__) handler)
+      (let ((set (js-object-get-name/cache handler (& "set") #f %this
+		    cache -1 '(emap imap pmap))))
+;*       (let ((set (js-object-get-property-value handler handler (& "set") %this)) */
+	 (cond
+	    ((and (object? set) (eq? (object-class set) JsFunction4))
+	     (proxy-check-property-value target target prop %this v (& "set"))
+	     (with-access::JsFunction set (procedure)
+		(procedure handler target prop v)))
+	    ((js-function? set)
+	     (proxy-check-property-value target target prop %this v (& "set"))
+	     (js-call4 %this set handler target prop v o))
+	    ((js-proxy? set)
+	     (js-call4 %this set handler target prop v o))
+	    (else
+	     (js-put! target prop v throw %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-delete! ::JsProxy ...                                         */

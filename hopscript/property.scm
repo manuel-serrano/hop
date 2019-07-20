@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jul 20 07:24:59 2019 (serrano)                */
+;*    Last change :  Sat Jul 20 08:46:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -89,6 +89,7 @@
 	   (generic js-get-own-property ::obj ::obj ::JsGlobalObject)
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-object-get-property-value ::JsObject ::obj ::obj ::JsGlobalObject)
 	   
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 	   
@@ -1555,6 +1556,12 @@
 ;*    js-get-property-value ::JsObject ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property-value o::JsObject base p::obj %this::JsGlobalObject)
+   (js-object-get-property-value o base p %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-get-property-value ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-object-get-property-value o::JsObject base p::obj %this::JsGlobalObject)
    ;; JsObject x obj x JsGlobalObject -> value | Absent
    (jsobject-find o o (js-toname p %this)
       ;; cmap search
