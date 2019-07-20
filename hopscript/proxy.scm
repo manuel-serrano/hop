@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Jul 19 16:59:32 2019 (serrano)                */
+;*    Last change :  Sat Jul 20 06:31:45 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -428,7 +428,7 @@
 	     (check proxy target
 		(js-call3 %this get handler target prop proxy)))
 	    ((eq? get (js-undefined))
-	     (js-get proxy prop %this))
+	     (js-get target prop %this))
 	    ((js-proxy? get)
 	     (check proxy target (js-call3 %this get handler target prop proxy)))
 	    (else

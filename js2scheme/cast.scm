@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Jul  5 08:08:22 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 19:57:34 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -257,7 +257,7 @@
 		      (else
 		       (error "js2scheme" "internal call error"
 			  (j2s->list this))))
-		   (cast-expr this type totype))
+		   (cast-expr this rtype totype))
 		  ((null? params)
 		   (loop params '()
 		      (append (reverse

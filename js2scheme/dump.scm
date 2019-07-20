@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Jul 10 14:17:02 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 19:58:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -131,11 +131,22 @@
 ;*    dump-rtype ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (dump-rtype this)
-   (with-access::J2SFun this (rtype)
-      (if (or (>= (bigloo-debug) 2)
-	      (string-contains  (or (getenv "HOPTRACE") "") "j2s:type"))
-	  `(:rtype ,rtype)
-	  '())))
+   (if (or (>= (bigloo-debug) 2)
+	   (string-contains  (or (getenv "HOPTRACE") "") "j2s:type"))
+       (let loop ((this this))
+	  (cond
+	     ((isa? this J2SFun)
+	      (with-access::J2SFun this (rtype)
+		 `(:rtype ,rtype)))
+	     ((isa? this J2SRef)
+	      (with-access::J2SRef this (decl)
+		 (if (isa? decl J2SDeclInit)
+		     (with-access::J2SDeclInit decl (val)
+			(loop val))
+		     '())))
+	     (else
+	      '())))
+       '()))
       
 ;*---------------------------------------------------------------------*/
 ;*    dump-vtype ...                                                   */
@@ -856,6 +867,7 @@
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
 	  ,@(dump-type this)
+	  ,@(dump-rtype fun)
 	  ,@(dump-info this)
 	  ,@(dump-range this)
 	  ,@(dump-protocol this)

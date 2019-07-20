@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jul  5 11:29:00 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 19:50:33 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -78,8 +78,12 @@
 	     (js-binop2 loc op type lhs rhs mode return conf)))
 	 ((and (memq op '(* - / >> << >>> & BIT_OR ^))
 	       (memq type '(int32 uint32)))
-	  (epairify-deep loc
-	     (js-binop2 loc op type lhs rhs mode return conf)))
+	  (if (memq etype '(int32 uint32))
+	      (epairify-deep loc
+		 (j2s-cast (js-binop2 loc op type lhs rhs mode return conf)
+		    this etype type conf))
+	      (epairify-deep loc
+		 (js-binop2 loc op type lhs rhs mode return conf))))
 	 (else
 	  #f))))
 
@@ -2359,10 +2363,14 @@
 	       (binop-number-number op type
 		  (box left tl conf) (box right tr conf) flip)))))
       ((uint32)
-       (if (and (not (eq? type 'uint32))
+       (cond
+	  ((and (eq? type 'bool) (memq op '(< <= > >= == === != !==)))
+	   (binop-uint32-uint32 op type left right flip))
+	  ((and (not (eq? type 'uint32))
 		(inrange-int32? lhs) (inrange-int32? rhs))
-	   (binop-int32-int32 op type (asint32 left tl) (asint32 right tr) flip)
-	   (binop-uint32-uint32 op type left right flip)))
+	   (binop-int32-int32 op type (asint32 left tl) (asint32 right tr) flip))
+	  (else
+	   (binop-uint32-uint32 op type left right flip))))
       ((bint)
        (cond
 	  ((m64? conf)

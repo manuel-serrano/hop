@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Jul 12 07:17:47 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 21:22:34 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -339,7 +339,7 @@
 		       (vector-ref elements idx))))
 	       ((eq? cs 'amap)
 		`(let* ((idx (js-pcache-index ,cache))
-			(propowner (or (js-pcache-owner ,cache) ,obj)))
+			(propowner (js-pcache-owner ,cache)))
 		    (with-access::JsObject propowner (elements)
 		       (let ((desc (vector-ref elements idx)))
 			  (js-profile-log-cache ,cache :amap #t)
