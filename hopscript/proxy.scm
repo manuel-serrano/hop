@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Jul 20 06:41:25 2019 (serrano)                */
+;*    Last change :  Sat Jul 20 07:24:04 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -405,6 +405,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-put/cache! o::JsProxy prop v::obj throw::bool %this
 		  #!optional (point -1) (cspecs '()))
+   (js-put! o prop v throw %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-put-name/cache-miss! ::JsProxy ...                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-object-put-name/cache-miss! o::JsProxy prop::JsStringLiteral
+	   v::obj throw::bool
+	   %this::JsGlobalObject
+	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-put! o prop v throw %this))
 
 ;*---------------------------------------------------------------------*/

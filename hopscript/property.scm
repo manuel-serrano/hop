@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jul 19 17:22:19 2019 (serrano)                */
+;*    Last change :  Sat Jul 20 07:24:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -149,7 +149,7 @@
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
-	   (js-object-put-name/cache-miss! ::JsObject ::obj ::obj ::bool
+	   (generic js-object-put-name/cache-miss! ::JsObject ::JsStringLiteral ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   (js-object-put-name/cache-imap+! ::JsObject ::obj ::obj ::bool
@@ -2422,7 +2422,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-miss! ...                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-miss! o::JsObject prop::JsStringLiteral
+(define-generic (js-object-put-name/cache-miss! o::JsObject prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
