@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Jul 20 08:44:50 2019 (serrano)                */
+;*    Last change :  Sun Jul 21 07:37:08 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -227,6 +227,7 @@
 	  v
 	  (proxy-check-property-value target propowner prop %this v (& "get"))))
 
+   (tprint "ICI")
    (with-access::JsProxy proxy ((target __proto__) handler cacheget)
       (proxy-check-revoked! proxy "get" %this)
 ;*       (let ((get (js-object-get-name/cache handler (& "get") #f %this */
@@ -343,7 +344,6 @@
 	 (set! cntmiss (+u32 #u32:1 cntmiss))
 	 (set! usage 'xget)))
 
-   
    (define (check o target v)
       (if (null? (js-object-properties target))
 	  v
@@ -404,7 +404,6 @@
    (with-access::JsProxy o ((target __proto__) handler)
       (let ((set (js-object-get-name/cache handler (& "set") #f %this
 		    cache -1 '(emap imap pmap))))
-;*       (let ((set (js-object-get-property-value handler handler (& "set") %this)) */
 	 (cond
 	    ((and (object? set) (eq? (object-class set) JsFunction4))
 	     (proxy-check-property-value target target prop %this v (& "set"))
