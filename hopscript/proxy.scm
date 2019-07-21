@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Jul 21 07:37:08 2019 (serrano)                */
+;*    Last change :  Sun Jul 21 07:52:50 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -219,6 +219,10 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value ...                                      */
+;*    -------------------------------------------------------------    */
+;*    Although almost similar to JS-GET ::JsProxy, this code differs   */
+;*    when no proxy GET handler is defined and then two different      */
+;*    functions have to be used.                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-property-value proxy propowner prop %this)
    
@@ -227,11 +231,8 @@
 	  v
 	  (proxy-check-property-value target propowner prop %this v (& "get"))))
 
-   (tprint "ICI")
-   (with-access::JsProxy proxy ((target __proto__) handler cacheget)
+   (with-access::JsProxy proxy ((target __proto__) handler)
       (proxy-check-revoked! proxy "get" %this)
-;*       (let ((get (js-object-get-name/cache handler (& "get") #f %this */
-;* 		    cacheget -1 '(emap imap pmap))))                   */
 	 (let ((get (js-get-jsobject handler handler (& "get") %this)))
 	    (cond
 	       ((and (object? get) (eq? (object-class get) JsFunction3))
@@ -242,6 +243,7 @@
 		(check target
 		   (js-call4 %this get handler target prop propowner proxy)))
 	       ((eq? get (js-undefined))
+		;; the difference with JS-GET is here...
 		(js-get-jsobject target propowner prop %this))
 	       ((js-proxy? get)
 		(check target
@@ -299,6 +301,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsProxy ...                                             */
+;*    -------------------------------------------------------------    */
+;*    See JS-PROXY-PROPERTY-VALUE.                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsProxy prop %this::JsGlobalObject)
 
@@ -328,7 +332,23 @@
 ;*    js-jsproxy-get/name-cache ::JsProxy ...                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsproxy-get/name-cache o::JsProxy prop::obj %this::JsGlobalObject)
-   (js-proxy-property-value o o (js-toname prop %this) %this))
+   (if (not (js-jsstring? prop))
+       (js-get o prop %this)
+       (synchronize-name
+	  (let ((pname (js-jsstring-toname-unsafe prop)))
+	     (cond
+		((js-name-pcacher pname)
+		 =>
+		 (lambda (cache)
+		    (js-object-get-name/cache-miss o pname #f %this cache)))
+		((js-isindex? (js-toindex prop))
+		 (js-get o prop %this))
+		(else
+		 (let ((cache (instantiate::JsPropertyCache
+				 (usage 'dget)
+				 (src ""))))
+		    (js-name-pcacher-set! pname cache)
+		    (js-object-get-name/cache-miss o pname #f %this cache))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ::JsProxy ...                      */
@@ -362,7 +382,7 @@
 	     (check proxy target
 		(js-call3 %this get handler target prop proxy)))
 	    ((eq? get (js-undefined))
-	     (js-get target prop %this))
+	     (js-get-jsobject target proxy (js-toname prop %this) %this))
 	    ((js-proxy? get)
 	     (check proxy target
 		(js-call3 %this get handler target prop proxy)))
