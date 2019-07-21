@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jul 20 08:46:58 2019 (serrano)                */
+;*    Last change :  Sun Jul 21 10:08:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -406,6 +406,13 @@
 		    (fprint (current-error-port) "  amap.%id=" %aid
 		       " amap.props=" aprops
 		       " owner=" (typeof (js-pcache-owner pcache))))))
+	     ((isa? imap JsConstructMap)
+	      (with-access::JsConstructMap imap ((%iid %id) (iprops props))
+		 (fprint (current-error-port) "--- " msg (typeof pcache)
+		    " src=" src
+		    " index=" index " vindex=" vindex " cntmiss=" cntmiss)
+		 (fprint (current-error-port) "  imap.%id=" %iid
+		    " imap.props=" iprops)))
 	     ((isa? pmap JsConstructMap)
 	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
 		 (fprint (current-error-port) "--- " msg (typeof pcache)

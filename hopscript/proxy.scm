@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Jul 21 07:52:50 2019 (serrano)                */
+;*    Last change :  Sun Jul 21 09:35:14 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -197,7 +197,14 @@
 ;*    js-new-proxy/caches ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-new-proxy/caches %this t h gcache scache acache)
-   (js-new-proxy %this t h))
+   (instantiateJsProxy
+      (cmap proxy-cmap)
+      (__proto__ t)
+      (elements proxy-elements)
+      (handler h)
+      (getcache gcache)
+      (setcache scache)
+      (applycache acache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-debug-name ...                                          */
@@ -231,9 +238,10 @@
 	  v
 	  (proxy-check-property-value target propowner prop %this v (& "get"))))
 
-   (with-access::JsProxy proxy ((target __proto__) handler)
+   (with-access::JsProxy proxy ((target __proto__) handler getcache)
       (proxy-check-revoked! proxy "get" %this)
-	 (let ((get (js-get-jsobject handler handler (& "get") %this)))
+	 (let ((get (js-object-get-name/cache handler (& "get") #f %this
+		       getcache -1 '(imap cmap pmap))))
 	    (cond
 	       ((and (object? get) (eq? (object-class get) JsFunction3))
 		(with-access::JsFunction get (procedure)
@@ -272,10 +280,11 @@
 	  r)
 	 (else
 	  (proxy-check-property-value target obj prop %this v (& "set")))))
-   
-   (with-access::JsProxy proxy ((target __proto__) handler (%cmap cmap))
+
+   (with-access::JsProxy proxy ((target __proto__) handler setcache)
       (proxy-check-revoked! proxy "put" %this)
-      (let ((set (js-get-jsobject handler handler (& "set") %this)))
+      (let ((set (js-object-get-name/cache handler (& "set") #f %this
+		    setcache -1 '(imap cmap pmap))))
 	 (cond
 	    ((js-function? set)
 	     (with-access::JsFunction set (procedure)
@@ -311,7 +320,7 @@
 	  v
 	  (proxy-check-property-value target o prop %this v (& "get"))))
    
-   (with-access::JsProxy o ((target __proto__) handler)
+   (with-access::JsProxy o ((target __proto__) handler getcache)
       (proxy-check-revoked! o "get" %this)
       (let ((get (js-object-get-property-value handler handler (& "get") %this))
 	    (name (js-toname prop %this)))
@@ -368,11 +377,12 @@
       (if (null? (js-object-properties target))
 	  v
 	  (proxy-check-property-value target o prop %this v (& "get"))))
-   
-   (with-access::JsProxy proxy ((target __proto__) handler)
+
+   (with-access::JsProxy proxy ((target __proto__) handler getcache)
+      ;; (js-pcache-update-descriptor! cache 0 proxy proxy)
       (proxy-check-revoked! proxy "get" %this)
       (let ((get (js-object-get-name/cache handler (& "get") #f %this
-		    cache -1 '(emap imap pmap))))
+		    getcache point cspecs)))
 	 (cond
 	    ((and (object? get) (eq? (object-class get) JsFunction3))
 	     (with-access::JsFunction get (procedure)
@@ -395,16 +405,15 @@
 (define-method (js-put! o::JsProxy prop v throw %this::JsGlobalObject)
    (proxy-check-revoked! o "put" %this)
    (with-access::JsProxy o ((target __proto__) handler)
-      (let ((set (js-object-get-property-value handler handler (& "set") %this))
-	    (name (js-toname prop %this)))
+      (let ((set (js-object-get-property-value handler handler (& "set") %this)))
 	 (cond
 	    ((js-function? set)
-	     (proxy-check-property-value target target name %this v (& "set"))
-	     (js-call4 %this set handler target name v o))
+	     (proxy-check-property-value target target prop %this v (& "set"))
+	     (js-call4 %this set handler target prop v o))
 	    ((js-proxy? set)
-	     (js-call4 %this set handler target name v o))
+	     (js-call4 %this set handler target prop v o))
 	    (else
-	     (js-put! target name v throw %this))))))
+	     (js-put! target prop v throw %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/cache! ::JsProxy ...                                      */
@@ -421,9 +430,9 @@
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (proxy-check-revoked! o "put" %this)
-   (with-access::JsProxy o ((target __proto__) handler)
+   (with-access::JsProxy o ((target __proto__) handler setcache)
       (let ((set (js-object-get-name/cache handler (& "set") #f %this
-		    cache -1 '(emap imap pmap))))
+		    setcache -1 '(emap imap pmap))))
 	 (cond
 	    ((and (object? set) (eq? (object-class set) JsFunction4))
 	     (proxy-check-property-value target target prop %this v (& "set"))
@@ -802,10 +811,11 @@
 ;*    js-call-proxy/cache-miss ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-call-proxy/cache-miss %this cache fun this . args)
-   `(with-access::JsProxy ,fun ((target __proto__) handler (%cmap cmap))
+   `(with-access::JsProxy ,fun ((target __proto__) handler applycache)
        (proxy-check-revoked! ,fun "apply" %this)
        (cond
-	  ((js-get handler (& "apply") %this)
+	  ((js-object-get-name/cache handler (& "apply") #f %this
+	      applycache -1 '(imap cmap pmap))
 	   =>
 	   (lambda (xfun)
 	      (cond
