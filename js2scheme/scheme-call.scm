@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jul 13 06:35:43 2019 (serrano)                */
+;*    Last change :  Mon Jul 22 06:59:07 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -113,8 +113,6 @@
 	("concat" js-array-maybe-concat1 any (any) %this #t ,j2s-array-plain?)
 	("sort" js-array-sort array (any) %this #t ,j2s-array-plain?)
 	("sort" js-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
-;* 	("slice" js-array-slice array () %this)                        */
-;* 	("slice" js-array-maybe-slice any () %this)                    */
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
 	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
 	("forEach" ,j2s-array-foreach array (function) %this #t ,j2s-array-plain?)
