@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jul 21 10:08:31 2019 (serrano)                */
+;*    Last change :  Wed Jul 24 07:46:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3483,6 +3483,12 @@
 		 (=fx (procedure-arity method) (+fx 1 (length args))))
 	 (when (=fx vindex (js-not-a-index))
 	    (set! vindex (js-get-vindex %this)))
+	 (when (eq? (js-toname name %this) (& "call"))
+	    (tprint "ADDING VTABLE call vindex=" vindex
+	       " " method
+	       " pmap="
+	       (with-access::JsConstructMap pmap (%id)
+		  %id)))
 	 (js-cmap-vtable-add! pmap vindex method ccache))
       (js-object-method-call/cache-fill %this o name args
 	 ccache ocache point ccspecs ocspecs)))
@@ -3510,11 +3516,6 @@
       (with-access::JsGlobalObject %this (js-call)
 	 (let loop ((el-or-desc el-or-desc))
 	    (cond
-	       ((eq? el-or-desc js-call)
-		(with-access::JsFunction o (procedure)
-		   (if (=fx (procedure-arity procedure) (length args))
-		       procedure
-		       el-or-desc)))
 	       ((isa? el-or-desc JsPropertyDescriptor)
 		(loop (js-property-value o obj name el-or-desc %this)))
 	       (else
@@ -3610,41 +3611,30 @@
 				  (set! cmap #t))
 			       (jsapply (js-property-value o obj name el-or-desc %this)))
 			      ((js-function? (vector-ref methods i))
-			       (let ((f (funval obj el-or-desc)))
-				  (cond
-				     ((procedure? f)
-				      (with-access::JsPropertyCache ccache (pmap emap cmap index method function)
-					 ;; correct arity, put in cache
-					 (js-validate-pmap-pcache! ccache)
-					 (set! pmap omap)
-					 (set! emap #t)
-					 (set! cmap #f)
-					 (set! index i)
-					 (set! function #f)
-					 (set! method (method->procedure f))))
-				     ((js-function? f)
-				      (with-access::JsFunction f (len method arity)
-					 (cond
-					    ((<fx arity 0)
-					     ;; varargs functions, currently not cached...
-					     (with-access::JsPropertyCache ccache (pmap emap cmap)
-						(set! pmap #t)
-						(set! emap #t)
-						(set! cmap #t)))
-					    ((=fx (procedure-arity method) (+fx 1 (length args)))
-					     (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
-						;; correct arity, put in cache
-						(js-validate-pmap-pcache! ccache)
-						(set! pmap omap)
-						(set! emap #t)
-						(set! cmap #f)
-						(set! index i)
-						(set! function f)
-						(procedure-attr-set! method f)
-						(set! cmethod method)))
-					    ((procedureN method (length args))
-					     =>
-					     (lambda (procedure)
+				  (let ((f (funval obj el-or-desc)))
+				     (cond
+					((procedure? f)
+					 (with-access::JsGlobalObject %this (js-apply)
+					    (unless (eq? el-or-desc js-apply)
+					       (with-access::JsPropertyCache ccache (pmap emap cmap index method function)
+						  ;; correct arity, put in cache
+						  (js-validate-pmap-pcache! ccache)
+						  (set! pmap omap)
+						  (set! emap #t)
+						  (set! cmap #f)
+						  (set! index i)
+						  (set! function #f)
+						  (set! method (method->procedure f))))))
+					((js-function? f)
+					 (with-access::JsFunction f (len method arity)
+					    (cond
+					       ((<fx arity 0)
+						;; varargs functions, currently not cached...
+						(with-access::JsPropertyCache ccache (pmap emap cmap)
+						   (set! pmap #t)
+						   (set! emap #t)
+						   (set! cmap #t)))
+					       ((=fx (procedure-arity method) (+fx 1 (length args)))
 						(with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
 						   ;; correct arity, put in cache
 						   (js-validate-pmap-pcache! ccache)
@@ -3653,16 +3643,29 @@
 						   (set! cmap #f)
 						   (set! index i)
 						   (set! function f)
-						   (procedure-attr-set! procedure f)
-						   (set! cmethod procedure))))
-					    (else
-					     ;; arity missmatch, never cache
-					     (with-access::JsPropertyCache ccache (pmap emap cmap)
-						(set! pmap #t)
-						(set! emap #t)
-						(set! cmap #t))
-					     )))))
-				  (jsapply f)))
+						   (procedure-attr-set! method f)
+						   (set! cmethod method)))
+					       ((procedureN method (length args))
+						=>
+						(lambda (procedure)
+						   (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
+						      ;; correct arity, put in cache
+						      (js-validate-pmap-pcache! ccache)
+						      (set! pmap omap)
+						      (set! emap #t)
+						      (set! cmap #f)
+						      (set! index i)
+						      (set! function f)
+						      (procedure-attr-set! procedure f)
+						      (set! cmethod procedure))))
+						(else
+						 ;; arity missmatch, never cache
+						 (with-access::JsPropertyCache ccache (pmap emap cmap)
+						    (set! pmap #t)
+						    (set! emap #t)
+						    (set! cmap #t))
+						 )))))
+					(jsapply f)))
 			      (else
 			       (with-access::JsPropertyCache ccache (pmap cmap emap)
 				  ;; invalidate the call cache and update the

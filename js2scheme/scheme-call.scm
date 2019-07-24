@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Jul 22 06:59:07 2019 (serrano)                */
+;*    Last change :  Wed Jul 24 06:42:24 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -736,7 +736,7 @@
 		       (string->symbol (format "js-call~a" len)))))
 	 (with-access::J2SCall this (loc cache profid)
 	    (cond
-	       ((> (bigloo-debug) 0)
+	       ((or #t (> (bigloo-debug) 0))
 		`(,(symbol-append call '/debug)
 		  ,j2s-unresolved-call-workspace
 		  ',loc

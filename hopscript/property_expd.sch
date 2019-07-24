@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Jul 21 07:41:03 2019 (serrano)                */
+;*    Last change :  Wed Jul 24 07:31:08 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -732,6 +732,8 @@
 					(begin
 					   (js-profile-log-cache ,ccache
 					      :vtable #t)
+					   (tprint "CALLING VTABLE..."
+					      (vector-ref vtable vidx))
 					   ((vector-ref vtable vidx) ,obj ,@args))
 					,(loop (cdr cs))))))))
 			((vtable-inline)
