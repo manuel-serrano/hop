@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Jul 18 07:01:01 2019 (serrano)                */
+;*    Last change :  Thu Jul 25 07:46:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -54,7 +54,9 @@
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-call ::JsGlobalObject ::obj ::obj ::obj ::obj)
-	   (js-function-maybe-call ::JsGlobalObject ::obj ::obj ::obj ::obj)))
+	   (js-function-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
+	   (js-function-maybe-call ::JsGlobalObject ::obj ::obj ::obj ::obj)
+	   (js-function-maybe-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -858,6 +860,18 @@
 	     this thisarg arg))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-function-call2 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-function-call2 %this this thisarg arg0 arg1 cache)
+   (if (js-object-mode-plain? this)
+       (js-call2 %this this thisarg arg0 arg1)
+       (with-access::JsGlobalObject %this (js-function-pcache)
+	  (js-call3 %this
+	     (js-get-name/cache this (& "call") #f %this
+		(or cache (js-pcache-ref js-function-pcache 4)))
+	     this thisarg arg0 arg1))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-call ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-function-maybe-call %this this thisarg arg cache)
@@ -871,6 +885,23 @@
 		(js-get-name/cache this (& "call") #f %this
 		   (or cache (js-pcache-ref js-function-pcache 5)))
 		this thisarg arg)))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-call2 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-call2 %this this thisarg arg0 arg1 cache)
+   (let loop ((this this))
+      (cond
+	 ((js-function? this)
+	  (js-function-call2 %this this thisarg arg0 arg1 cache))
+	 ((js-object? this)
+	  (with-access::JsGlobalObject %this (js-function-pcache)
+	     (js-call3 %this
+		(js-get-name/cache this (& "call") #f %this
+		   (or cache (js-pcache-ref js-function-pcache 5)))
+		this thisarg arg0 arg1)))
 	 (else
 	  (loop (js-toobject %this this))))))
 

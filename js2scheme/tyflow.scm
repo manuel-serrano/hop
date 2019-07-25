@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Jun 12 12:54:33 2019 (serrano)                */
+;*    Last change :  Thu Jul 25 07:02:19 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -704,7 +704,7 @@
 		  (if (isa? val J2SMethod)
 		      (escape-method val fix)
 		      (escape-fun val fix #f))))
-	    (if (eq? utype 'unknown)
+	    (if (memq utype '(unknown any))
 		(let ((ty (env-lookup env decl)))
 		   (expr-type-add! this nenv fix ty))
 		(expr-type-add! this nenv fix utype))))))

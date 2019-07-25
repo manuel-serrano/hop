@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jul 24 07:46:14 2019 (serrano)                */
+;*    Last change :  Thu Jul 25 08:02:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2179,6 +2179,7 @@
       (js-object-mode-enumerable-set! o #t)
       (when (and (js-jsstring? name) (js-jsstring->number name))
 	 (js-object-mode-hasnumeralprop-set! o #t))
+      (tprint "extend-mapped name=" name)
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (props single lock)
@@ -2209,6 +2210,10 @@
 				      (when cache
 					 (js-pcache-next-direct! cache o nextmap index)))
 				     ((eq? (vector-ref methods index) #f)
+				      ;; invalidate the pmap caches as it might
+				      ;; be that this function will be now be used
+				      ;; when searching for a prototype chain
+				      (js-invalidate-pmap-pcaches! %this "extend-method" name)
 				      (when cache
 					 (js-pcache-next-direct! cache o nextmap index)))
 				     ((>fx detachcnt (method-invalidation-threshold))
