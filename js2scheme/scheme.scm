@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jul 12 12:01:44 2019 (serrano)                */
+;*    Last change :  Thu Jul 25 06:34:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2628,14 +2628,6 @@
 		      (append args
 			 (make-list (-fx lparams largs) #unspecified)))))))))
 
-;*    (define (j2s-new-proxy this mode return conf)                    */
-;*       (with-access::J2SNew this (caches args)                       */
-;* 	 `(js-new-proxy                                                */
-;* 	     %this                                                     */
-;* 	     ,@(map (lambda (a)                                        */
-;* 		       (j2s-scheme a mode return conf))                */
-;* 		  args))))                                             */
-
    (define (j2s-new-proxy this mode return conf)
       (with-access::J2SNew this (caches args)
 	 `(,(if (pair? caches) 'js-new-proxy/caches 'js-new-proxy)
@@ -2666,7 +2658,7 @@
 	     (epairify loc
 		(j2s-new-opt decl clazz
 		   (map (lambda (a)
-			   (box (j2s-scheme a mode return conf) (j2s-vtype a) conf))
+			   (j2s-scheme a mode return conf) (j2s-vtype a))
 		      args)))))
 	 ((and (=fx (bigloo-debug) 0) (pair? caches))
 	  (epairify loc

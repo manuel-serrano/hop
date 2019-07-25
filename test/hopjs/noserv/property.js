@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Fri Jun 28 13:25:32 2019 (serrano)                */
+/*    Last change :  Thu Jul 25 06:21:50 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
@@ -435,3 +435,25 @@ Object.defineProperty( Bar.prototype, "prop", {
 
 assert.strictEqual( Foo.prototype.propertyIsEnumerable( "prop" ), true );
 assert.strictEqual( Bar.prototype.propertyIsEnumerable( "prop" ), false );
+
+/*---------------------------------------------------------------------*/
+/*    Call bug                                                         */
+/*---------------------------------------------------------------------*/
+function caller( f, a, b ) {
+   return f.call( undefined, a, b );
+}
+
+function test( caller ) {
+   // log: 6283f5308940c164e74a6a70be89053826ea8bbc
+   // all the built closures share the same cmap but still 
+   // call cannot be cached
+   function mkClo( x ) {
+      return function( a, b ) { return x + a + b }
+   }
+   
+   return caller( mkClo( 1 ), 2, 3 ) === 6
+      && caller( mkClo( 2 ), 4, 5 ) === 11
+      && caller( mkClo( 3 ), 4, 5 ) === 12;
+}
+
+assert.ok( caller, "caller" );
