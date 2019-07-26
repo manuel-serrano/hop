@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Jul 24 06:42:24 2019 (serrano)                */
+;*    Last change :  Fri Jul 26 06:44:09 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -134,8 +134,7 @@
 	("apply",j2s-apply any (any any) %this #t)
 	("call" ,j2s-call any (any) %this #t)
 	("call" ,j2s-call any (any any) %this #t)
-	("call" ,j2s-call function (any) %this #t)
-	("call" ,j2s-call function (any any) %this #t)
+	("call" ,j2s-call2 any (any any any) %this #t)
 	;; math
 	("toFixed" js-maybe-tofixed any (any) %this #t)
 	)))
@@ -219,6 +218,41 @@
 	     (else
 	      #f))))
       ((pair? (cdddr args))
+       (def obj args mode return conf))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-call2 ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-call2 obj args mode return conf)
+   
+   (define (def obj args mode return conf)
+      `(js-function-maybe-call2 ,(cadddr args)
+	  ,(j2s-scheme obj mode return conf)
+	  ,(j2s-scheme (car args) mode return conf)
+	  ,(j2s-scheme (cadr args) mode return conf)
+	  ,(j2s-scheme (caddr args) mode return conf)
+	  ,(cadddr args)))
+   
+   (cond
+      ((isa? obj J2SRef)
+       (with-access::J2SRef obj (loc decl)
+	  (cond
+	     ((and (or (isa? decl J2SDeclFun)
+		       (and (isa? decl J2SDeclInit)
+			    (with-access::J2SDeclInit decl (val ronly)
+			       (and (isa? val J2SFun) ronly))))
+		   (decl-only-usage? decl '(get call new init instanceof)))
+	      (j2s-scheme (J2SMethodCall* obj
+			     (list (car args))
+			     (cdr args))
+		 mode return conf))
+	     ((pair? (cddddr args))
+	      (def obj args mode return conf))
+	     (else
+	      #f))))
+      ((pair? (cddddr args))
        (def obj args mode return conf))
       (else
        #f)))

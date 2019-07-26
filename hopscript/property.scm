@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Jul 25 08:02:21 2019 (serrano)                */
+;*    Last change :  Fri Jul 26 07:01:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2179,7 +2179,6 @@
       (js-object-mode-enumerable-set! o #t)
       (when (and (js-jsstring? name) (js-jsstring->number name))
 	 (js-object-mode-hasnumeralprop-set! o #t))
-      (tprint "extend-mapped name=" name)
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (props single lock)

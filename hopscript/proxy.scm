@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Thu Jul 25 07:57:11 2019 (serrano)                */
+;*    Last change :  Fri Jul 26 07:10:50 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -109,6 +109,13 @@
 	    (enumerable #t)
 	    (name (& "%%proxy"))
 	    (%get js-proxy-property-value)
+	    (%set js-proxy-property-value-set!))
+	 (instantiate::JsWrapperDescriptor
+	    (writable #t)
+	    (configurable #t)
+	    (enumerable #t)
+	    (name (& "%%proxy"))
+	    (%get js-proxy-get-amap)
 	    (%set js-proxy-property-value-set!))))
 
    (with-access::JsGlobalObject %this (js-function-prototype js-proxy js-proxy-pcache)
@@ -360,18 +367,13 @@
 		    (js-object-get-name/cache-miss o pname #f %this cache))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-miss ::JsProxy ...                      */
+;*    js-proxy-get-amap ...                                            */
+;*    -------------------------------------------------------------    */
+;*    This function is called when an inline cache is armed for        */
+;*    proxy (amap cache hit) and when the proxy wrapper accesor        */
+;*    is called (see property_expd.sch).                               */
 ;*---------------------------------------------------------------------*/
-(define-method (js-object-get-name/cache-miss proxy::JsProxy
-		  prop::JsStringLiteral
-		  throw::bool %this::JsGlobalObject
-		  cache::JsPropertyCache
-		  #!optional (point -1) (cspecs '()))
-   
-   (define (profile-miss cache)
-      (with-access::JsPropertyCache cache (cntmiss (cname name) usage)
-	 (set! cntmiss (+u32 #u32:1 cntmiss))
-	 (set! usage 'xget)))
+(define (js-proxy-get-amap proxy::JsProxy propowner prop desc %this::JsGlobalObject)
 
    (define (check o target v)
       (if (null? (js-object-properties target))
@@ -379,11 +381,9 @@
 	  (proxy-check-property-value target o prop %this v (& "get"))))
 
    (with-access::JsProxy proxy ((target __proto__) handler getcache)
-      ;; (js-pcache-update-descriptor! cache 0 proxy proxy)
       (proxy-check-revoked! proxy "get" %this)
       (let ((get (js-object-get-name/cache handler (& "get") #f %this
-		    getcache point cspecs)))
-	 (tprint "MISS prop=" prop " get=" (typeof get))
+		    getcache -1 '(emap imap amap vtable))))
 	 (cond
 	    ((and (object? get) (eq? (object-class get) JsFunction3))
 	     (with-access::JsFunction get (procedure)
@@ -399,6 +399,24 @@
 		(js-call3 %this get handler target prop proxy)))
 	    (else
 	     (js-raise-type-error %this "not a function" get))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-get-name/cache-miss ::JsProxy ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-object-get-name/cache-miss proxy::JsProxy
+		  prop::JsStringLiteral
+		  throw::bool %this::JsGlobalObject
+		  cache::JsPropertyCache
+		  #!optional (point -1) (cspecs '()))
+   
+   (define (profile-miss cache)
+      (with-access::JsPropertyCache cache (cntmiss (cname name) usage)
+	 (set! cntmiss (+u32 #u32:1 cntmiss))
+	 (set! usage 'xget)))
+   
+   (profile-miss cache)
+   ;;(js-pcache-update-descriptor! cache 1 proxy proxy)
+   (js-proxy-get-amap proxy proxy prop #unspecified %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsProxy ...                                            */
