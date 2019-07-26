@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jul 26 07:01:48 2019 (serrano)                */
+;*    Last change :  Fri Jul 26 07:42:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1307,6 +1307,12 @@
 (define (js-property-value obj propowner propname desc %this)
    (let ((cn (object-class desc)))
       (cond
+	 ((eq? cn JsAccessorDescriptor)
+	  (with-access::JsAccessorDescriptor desc (%get)
+	     (%get obj)))
+	 ((eq? cn JsValueDescriptor)
+	  (with-access::JsValueDescriptor desc (value)
+	     value))
 	 ((eq? cn JsWrapperDescriptor)
 	  (with-access::JsWrapperDescriptor desc (%get)
 	     ;; JsWrapperDescriptor are used by JsFunction and JsProxy. 
@@ -1315,12 +1321,6 @@
 	     ;; is meaningless and this is why the %GET and %SET functions of
 	     ;; JsWrapperDescriptor take an explicit name as argument
 	     (%get propowner obj propname %this)))
-	 ((eq? cn JsAccessorDescriptor)
-	  (with-access::JsAccessorDescriptor desc (%get)
-	     (%get obj)))
-	 ((eq? cn JsValueDescriptor)
-	  (with-access::JsValueDescriptor desc (value)
-	     value))
 	 (else
 	  (js-undefined)))))
 
