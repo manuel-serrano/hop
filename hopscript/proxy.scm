@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Jul 26 07:21:26 2019 (serrano)                */
+;*    Last change :  Fri Jul 26 08:22:04 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -41,7 +41,6 @@
 	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
 	   (js-proxy-property-value ::JsProxy ::JsObject ::JsStringLiteral ::JsGlobalObject)
-	   (inline js-jsproxy-get/name-cache ::JsProxy ::obj ::JsGlobalObject)
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (js-call-proxy/cache-miss0 ::JsGlobalObject ::JsPropertyCache
 	      ::JsProxy ::obj)
@@ -368,28 +367,6 @@
 ;* 		(js-call3 %this get handler target name o)))           */
 ;* 	    (else                                                      */
 ;* 	     (js-raise-type-error %this "not a function" get))))))     */
-
-;*---------------------------------------------------------------------*/
-;*    js-jsproxy-get/name-cache ::JsProxy ...                          */
-;*---------------------------------------------------------------------*/
-(define-inline (js-jsproxy-get/name-cache o::JsProxy prop::obj %this::JsGlobalObject)
-   (if (not (js-jsstring? prop))
-       (js-get o prop %this)
-       (synchronize-name
-	  (let ((pname (js-jsstring-toname-unsafe prop)))
-	     (cond
-		((js-name-pcacher pname)
-		 =>
-		 (lambda (cache)
-		    (js-object-get-name/cache-miss o pname #f %this cache)))
-		((js-isindex? (js-toindex prop))
-		 (js-get o prop %this))
-		(else
-		 (let ((cache (instantiate::JsPropertyCache
-				 (usage 'dget)
-				 (src ""))))
-		    (js-name-pcacher-set! pname cache)
-		    (js-object-get-name/cache-miss o pname #f %this cache))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ::JsProxy ...                      */

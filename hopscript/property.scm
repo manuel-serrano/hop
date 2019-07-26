@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jul 26 07:42:12 2019 (serrano)                */
+;*    Last change :  Fri Jul 26 08:21:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1714,8 +1714,6 @@
    (cond
       ((js-object? o)
        (js-jsobject-get/name-cache o prop %this point cspecs src))
-      ((and (object? o) (eq? (object-class o) JsProxy))
-       (js-jsproxy-get/name-cache o prop %this))
       (else
        (js-get o prop %this))))
 
