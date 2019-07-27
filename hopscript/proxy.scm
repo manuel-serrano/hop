@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Jul 26 08:22:04 2019 (serrano)                */
+;*    Last change :  Sat Jul 27 07:13:18 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -137,8 +137,7 @@
 	    (lambda (this)
 	       (let ((prox (js-get this (& "proxy") %this)))
 		  (if (js-proxy? prox)
-		      (with-access::JsProxy prox (revoked)
-			 (set! revoked #t))
+		      (js-object-mode-revoked-set! prox #t)
 		      (js-raise-type-error %this
 			 "Not a Revocable proxy" this))))
 	    0 "revoke"
@@ -238,7 +237,7 @@
    (with-access::JsProxy proxy ((target __proto__) handler getcache)
       (proxy-check-revoked! proxy "get" %this)
 	 (let ((get (js-object-get-name/cache handler (& "get") #f %this
-		       getcache -1 '(imap cmap pmap))))
+		       getcache -1 '(imap emap cmap pmap amap vtable))))
 	    (cond
 	       ((and (object? get) (eq? (object-class get) JsFunction3))
 		(with-access::JsFunction get (procedure)
@@ -275,7 +274,7 @@
    (with-access::JsProxy proxy ((target __proto__) handler setcache)
       (proxy-check-revoked! proxy "put" %this)
       (let ((set (js-object-get-name/cache handler (& "set") #f %this
-		    setcache -1 '(imap cmap pmap))))
+		    setcache -1 '(imap emap cmap pmap amap vtable))))
 	 (cond
 	    ((js-function? set)
 	     (with-access::JsFunction set (procedure)
@@ -317,7 +316,7 @@
    (with-access::JsProxy proxy ((target __proto__) handler getcache)
       (proxy-check-revoked! proxy "get" %this)
       (let ((get (js-object-get-name/cache handler (& "get") #f %this
-		    getcache point cspecs)))
+		    getcache point '(imap emap cmap pmap amap vtable))))
 	 (cond
 	    ((and (object? get) (eq? (object-class get) JsFunction3))
 	     (with-access::JsFunction get (procedure)
@@ -386,14 +385,16 @@
    (proxy-check-revoked! o "put" %this)
    (with-access::JsProxy o ((target __proto__) handler setcache)
       (let ((set (js-object-get-name/cache handler (& "set") #f %this
-		    setcache point cspecs)))
+		    setcache point '(imap emap cmap pmap amap vtable))))
 	 (cond
 	    ((and (object? set) (eq? (object-class set) JsFunction4))
-	     (proxy-check-property-value target target prop %this v (& "set"))
+	     (unless (null? (js-object-properties target))
+		(proxy-check-property-value target target prop %this v (& "set")))
 	     (with-access::JsFunction set (procedure)
 		(procedure handler target prop v)))
 	    ((js-function? set)
-	     (proxy-check-property-value target target prop %this v (& "set"))
+	     (unless (null? (js-object-properties target))
+		(proxy-check-property-value target target prop %this v (& "set")))
 	     (js-call4 %this set handler target prop v o))
 	    ((js-proxy? set)
 	     (js-call4 %this set handler target prop v o))
@@ -556,16 +557,16 @@
 ;*    proxy-check-revoked! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (proxy-check-revoked! o::JsProxy action %this::JsGlobalObject)
-   (with-access::JsProxy o (revoked)
-      (when revoked
-	 (js-raise-type-error %this
-	    (format "Cannot perform \"~s\" on a revoked proxy" action)
-	    (js-string->jsstring (typeof o))))))
+   (when (js-object-mode-revoked? o)
+      (js-raise-type-error %this
+	 (format "Cannot perform \"~s\" on a revoked proxy" action)
+	 (js-string->jsstring (typeof o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    proxy-check-property-value ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (proxy-check-property-value target owner prop %this v get-or-set)
+   (tprint "proxy-check-prop-value " prop)
    (let ((prop (js-get-own-property target prop %this)))
       (if (eq? prop (js-undefined))
 	  v
@@ -792,7 +793,7 @@
        (proxy-check-revoked! ,fun "apply" %this)
        (cond
 	  ((js-object-get-name/cache handler (& "apply") #f %this
-	      applycache -1 '(imap cmap pmap))
+	      applycache -1 '(imap emap cmap pmap amap vtable))
 	   =>
 	   (lambda (xfun)
 	      (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Jul 21 17:34:43 2019 (serrano)                */
+;*    Last change :  Sat Jul 27 07:05:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -295,7 +295,6 @@
 
 	   (final-class JsProxy::JsObject
 	      (handler::JsObject (default (class-nil JsObject)))
-	      (revoked::bool (default #f))
 	      (getcache read-only (default (instantiate::JsPropertyCache)))
 	      (setcache read-only (default (instantiate::JsPropertyCache)))
 	      (applycache read-only (default (instantiate::JsPropertyCache))))
@@ -447,6 +446,9 @@
 	   (inline js-object-mode-hasnumeralprop?::bool ::JsObject)
 	   (inline js-object-mode-hasnumeralprop-set! ::JsObject ::bool)
 
+	   (inline js-object-mode-revoked?::bool ::JsObject)
+	   (inline js-object-mode-revoked-set! ::JsObject ::bool)
+
 	   (js-object-elements-inline?::bool ::JsObject)
 	   
 	   (inline JS-OBJECT-MODE-EXTENSIBLE::uint32)
@@ -461,6 +463,7 @@
 	   (inline JS-OBJECT-MODE-PLAIN::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSFUNCTIONTAG::uint32)
+	   (inline JS-OBJECT-MODE-REVOKED::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
 
@@ -591,6 +594,9 @@
 		  (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
 		     (JS-OBJECT-MODE-HASNUMERALPROP))))))))
 
+;*---------------------------------------------------------------------*/
+;*    Object header tag (max size 1<<15)                               */
+;*---------------------------------------------------------------------*/
 (define-inline (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-inline (JS-OBJECT-MODE-SEALED) #u32:2)
 (define-inline (JS-OBJECT-MODE-FROZEN) #u32:4)
@@ -603,9 +609,10 @@
 (define-inline (JS-OBJECT-MODE-JSSTRINGTAG) #u32:512)
 (define-inline (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:1024)
 (define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:2048)
+(define-inline (JS-OBJECT-MODE-REVOKED) #u32:4096)
 ;; WARNING: music be the two last constants (see js-array?)
-(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:4096)
-(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:8192)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
+(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-macro (JS-OBJECT-MODE-SEALED) #u32:2)
@@ -619,9 +626,10 @@
 (define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:512)
 (define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:1024)
 (define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:2048)
+(define-macro (JS-OBJECT-MODE-REVOKED) #u32:4096)
 ;; WARNING: music be the two last constants (see js-array?)
-(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:4096)
-(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:8192)
+(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
+(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -722,6 +730,16 @@
       (if flag
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-HASNUMERALPROP))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-HASNUMERALPROP))))))
+
+(define-inline (js-object-mode-revoked? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-REVOKED) (js-object-mode o))
+      (JS-OBJECT-MODE-REVOKED)))
+
+(define-inline (js-object-mode-revoked-set! o flag)
+   (js-object-mode-set! o
+      (if flag
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-REVOKED))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-REVOKED))))))
 
 (define (js-object-elements-inline? o)
    ;; only used for debugging
