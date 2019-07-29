@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jul 29 06:53:47 2019 (serrano)                */
+;*    Last change :  Mon Jul 29 07:29:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1105,7 +1105,7 @@
 			 (cond
 			    ((null? l)
 			     len)
-			    ((js-array? (car l))
+			    ((or (js-array? (car l)) (js-proxy? (car l)))
 			     (loop (cdr l)
 				(+fx/overflow len
 				   (js-get-length (car l) %this))))
