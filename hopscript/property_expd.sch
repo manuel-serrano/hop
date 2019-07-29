@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Jul 24 07:31:08 2019 (serrano)                */
+;*    Last change :  Sun Jul 28 06:23:42 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -732,8 +732,6 @@
 					(begin
 					   (js-profile-log-cache ,ccache
 					      :vtable #t)
-					   (tprint "CALLING VTABLE..."
-					      (vector-ref vtable vidx))
 					   ((vector-ref vtable vidx) ,obj ,@args))
 					,(loop (cdr cs))))))))
 			((vtable-inline)
@@ -876,9 +874,9 @@
 	      ((js-pcache-method ,ccache) ,this ,@args)
 	      ,(case len
 		  ((0 1 2 3 4 5 6 7 8)
-		   (let ((call (symbol-append 'js-call/cache-miss
-				  (string->symbol (integer->string len)))))
-		      `(,call ,%this ,ccache ,fun ,this ,@args)))
+		   (let ((caller (symbol-append 'js-call/cache-miss
+				    (string->symbol (integer->string len)))))
+		      `(,caller ,%this ,ccache ,fun ,this ,@args)))
 		  (else
 		   `(if (and (js-function? ,fun)
 			     (with-access::JsFunction ,fun (procedure arity)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Jul 27 07:13:18 2019 (serrano)                */
+;*    Last change :  Sun Jul 28 07:07:20 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -42,24 +42,28 @@
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
 	   (js-proxy-property-value ::JsProxy ::JsObject ::JsStringLiteral ::JsGlobalObject)
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
-	   (js-call-proxy/cache-miss0 ::JsGlobalObject ::JsPropertyCache
+	   (js-call-proxy/cache-miss0 ::JsGlobalObject
 	      ::JsProxy ::obj)
-	   (js-call-proxy/cache-miss1 ::JsGlobalObject ::JsPropertyCache
+	   (js-call-proxy/cache-miss1 ::JsGlobalObject
 	      ::JsProxy ::obj a0)
-	   (js-call-proxy/cache-miss2 ::JsGlobalObject ::JsPropertyCache
+	   (js-call-proxy/cache-miss2 ::JsGlobalObject
 	      ::JsProxy ::obj a0 a1)
-	   (js-call-proxy/cache-miss3 ::JsGlobalObject ::JsPropertyCache
+	   (js-call-proxy/cache-miss3 ::JsGlobalObject
 	      ::JsProxy ::obj a0 a1 a2)
-	   (js-call-proxy/cache-miss4 ::JsGlobalObject ::JsPropertyCache
+	   (js-call-proxy/cache-miss4 ::JsGlobalObject
 	      ::JsProxy ::obj a0 a1 a2 a3)
-	   (js-call-proxy/cache-miss5 ::JsGlobalObject ::JsPropertyCache
+	   (js-call-proxy/cache-miss5 ::JsGlobalObject
 	      ::JsProxy ::obj a0 a1 a2 a3 a4)
-	   (js-call-proxy/cache-miss6 ::JsGlobalObject ::JsPropertyCache
+	   (js-call-proxy/cache-miss6 ::JsGlobalObject
 	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5)
-	   (js-call-proxy/cache-miss7 ::JsGlobalObject ::JsPropertyCache
+	   (js-call-proxy/cache-miss7 ::JsGlobalObject
 	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6)
-	   (js-call-proxy/cache-miss8 ::JsGlobalObject ::JsPropertyCache
-	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7)))
+	   (js-call-proxy/cache-miss8 ::JsGlobalObject
+	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call-proxy/cache-miss9 ::JsGlobalObject
+	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call-proxy/cache-miss10 ::JsGlobalObject
+	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -230,7 +234,8 @@
 (define (js-proxy-property-value proxy propowner prop %this)
    
    (define (check target v)
-      (if (null? (js-object-properties target))
+;;      (if (null? (js-object-properties target))
+      (if (js-object-mode-plain? target)
 	  v
 	  (proxy-check-property-value target propowner prop %this v (& "get"))))
 
@@ -309,7 +314,8 @@
 		  point cspecs)
 
    (define (check o target v)
-      (if (null? (js-object-properties target))
+;;      (if (null? (js-object-properties target))
+      (if (js-object-mode-plain? target)
 	  v
 	  (proxy-check-property-value target o prop %this v (& "get"))))
 
@@ -339,33 +345,9 @@
 ;*    See JS-PROXY-PROPERTY-VALUE.                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsProxy prop %this::JsGlobalObject)
-   (js-profile-log-get prop -1)
-   (js-proxy-get o (js-toname prop %this) %this
-      -1 '(emap imap amap vtable)))
-
-;* (define-method (js-get o::JsProxy prop %this::JsGlobalObject)       */
-;*                                                                     */
-;*    (define (check o target v)                                       */
-;*       (if (null? (js-object-properties target))                     */
-;* 	  v                                                            */
-;* 	  (proxy-check-property-value target o prop %this v (& "get")))) */
-;*                                                                     */
-;*    (with-access::JsProxy o ((target __proto__) handler getcache)    */
-;*       (proxy-check-revoked! o "get" %this)                          */
-;*       (let ((get (js-object-get-property-value handler handler (& "get") %this)) */
-;* 	    (name (js-toname prop %this)))                             */
-;* 	 (cond                                                         */
-;* 	    ((eq? get (js-absent))                                     */
-;* 	     (js-get-jsobject target o name %this))                    */
-;* 	    ((js-function? get)                                        */
-;* 	     (check o target                                           */
-;* 		(with-access::JsFunction get (procedure)               */
-;* 		   (js-call3% %this get procedure handler target name o)))) */
-;* 	    ((js-proxy? get)                                           */
-;* 	     (check o target                                           */
-;* 		(js-call3 %this get handler target name o)))           */
-;* 	    (else                                                      */
-;* 	     (js-raise-type-error %this "not a function" get))))))     */
+   (let ((name (js-toname prop %this)))
+      (js-profile-log-get name -1)
+      (js-proxy-get o name %this -1 '(emap imap amap vtable))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ::JsProxy ...                      */
@@ -405,8 +387,9 @@
 ;*    js-put! ::JsProxy ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::JsProxy prop v throw %this::JsGlobalObject)
-   (js-profile-log-put prop -1)
-   (js-proxy-put! o (js-toname prop %this) v throw %this -1 '(imap+)))
+   (let ((name (js-toname prop %this)))
+      (cond-expand (profile (js-profile-log-put name -1)))
+      (js-proxy-put! o name v throw %this -1 '(imap+))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/cache! ::JsProxy ...                                      */
@@ -566,38 +549,39 @@
 ;*    proxy-check-property-value ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (proxy-check-property-value target owner prop %this v get-or-set)
-   (tprint "proxy-check-prop-value " prop)
-   (let ((prop (js-get-own-property target prop %this)))
-      (if (eq? prop (js-undefined))
-	  v
-	  (with-access::JsPropertyDescriptor prop (configurable)
-	     (cond
-		(configurable
-		 v)
-		((isa? prop JsValueDescriptor)
-		 (with-access::JsValueDescriptor prop (writable value)
-		    (if (or writable (js-strict-equal? value v))
-			v
-			(js-raise-type-error %this
-			   (format "Proxy \"~a\" inconsistency" get-or-set)
-			   owner))))
-		((isa? prop JsAccessorDescriptor)
-		 (with-access::JsAccessorDescriptor prop (get set)
-		    (cond
-		       ((and (eq? get (js-undefined))
-			     (eq? get-or-set (& "get")))
-			(js-raise-type-error %this
-			   "Proxy \"get\" inconsistency"
-			   owner))
-		       ((and (eq? set (js-undefined))
-			     (eq? get-or-set (& "set")))
-			(js-raise-type-error %this
-			   "Proxy \"set\" inconsistency"
-			   owner))
-		       (else
-			v))))
-		(else
-		 v))))))
+   (if (null? (js-object-properties target))
+       #t
+       (let ((prop (js-get-own-property target prop %this)))
+	  (if (eq? prop (js-undefined))
+	      v
+	      (with-access::JsPropertyDescriptor prop (configurable)
+		 (cond
+		    (configurable
+		     v)
+		    ((isa? prop JsValueDescriptor)
+		     (with-access::JsValueDescriptor prop (writable value)
+			(if (or writable (js-strict-equal? value v))
+			    v
+			    (js-raise-type-error %this
+			       (format "Proxy \"~a\" inconsistency" get-or-set)
+			       owner))))
+		    ((isa? prop JsAccessorDescriptor)
+		     (with-access::JsAccessorDescriptor prop (get set)
+			(cond
+			   ((and (eq? get (js-undefined))
+				 (eq? get-or-set (& "get")))
+			    (js-raise-type-error %this
+			       "Proxy \"get\" inconsistency"
+			       owner))
+			   ((and (eq? set (js-undefined))
+				 (eq? get-or-set (& "set")))
+			    (js-raise-type-error %this
+			       "Proxy \"set\" inconsistency"
+			       owner))
+			   (else
+			    v))))
+		    (else
+		     v)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    proxy-check-property-has ...                                     */
@@ -788,23 +772,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-call-proxy/cache-miss ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-macro (gen-call-proxy/cache-miss %this cache fun this . args)
+(define-macro (gen-call-proxy/cache-miss %this fun this . args)
    `(with-access::JsProxy ,fun ((target __proto__) handler applycache)
        (proxy-check-revoked! ,fun "apply" %this)
        (cond
+	  ((and (not (js-function? target)) (not (js-proxy? target)))
+	   (js-raise-type-error ,%this
+	      ,(format "call~a: not a function ~~s" (length args))
+	      target))
 	  ((js-object-get-name/cache handler (& "apply") #f %this
 	      applycache -1 '(imap emap cmap pmap amap vtable))
 	   =>
 	   (lambda (xfun)
 	      (cond
-		 ((not (js-function? target))
-		  (js-raise-type-error ,%this
-		     ,(format "call~a: not a function ~~s" (length args))
-		     ,fun))  
 		 ((js-function? xfun)
 		  (with-access::JsFunction xfun (procedure)
 		     (js-call3% %this xfun procedure handler target
-			,this (js-vector->jsarray (vector ,@args) ,%this))))
+			,this (jsarray ,%this ,@args))))
 		 (else
 		  (with-access::JsFunction target (procedure)
 		     (,(string->symbol (format "js-call~a%" (length args)))
@@ -814,32 +798,38 @@
 	      (,(string->symbol (format "js-call~a%" (length args)))
 	       ,%this target procedure ,this ,@args))))))
 
-(define (js-call-proxy/cache-miss0 %this cache proxy this)
-   (gen-call-proxy/cache-miss %this cache proxy this))
+(define (js-call-proxy/cache-miss0 %this proxy this)
+   (gen-call-proxy/cache-miss %this proxy this))
 
-(define (js-call-proxy/cache-miss1 %this cache proxy this a0)
-   (gen-call-proxy/cache-miss %this cache proxy this a0))
+(define (js-call-proxy/cache-miss1 %this proxy this a0)
+   (gen-call-proxy/cache-miss %this proxy this a0))
 
-(define (js-call-proxy/cache-miss2 %this cache proxy this a0 a1)
-   (gen-call-proxy/cache-miss %this cache proxy this a0 a1))
+(define (js-call-proxy/cache-miss2 %this proxy this a0 a1)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1))
 
-(define (js-call-proxy/cache-miss3 %this cache proxy this a0 a1 a2)
-   (gen-call-proxy/cache-miss %this cache proxy this a0 a1 a2))
+(define (js-call-proxy/cache-miss3 %this proxy this a0 a1 a2)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2))
 
-(define (js-call-proxy/cache-miss4 %this cache proxy this a0 a1 a2 a3)
-   (gen-call-proxy/cache-miss %this cache proxy this a0 a1 a2 a3))
+(define (js-call-proxy/cache-miss4 %this proxy this a0 a1 a2 a3)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3))
 
-(define (js-call-proxy/cache-miss5 %this cache proxy this a0 a1 a2 a3 a4)
-   (gen-call-proxy/cache-miss %this cache proxy this a0 a1 a2 a3 a4))
+(define (js-call-proxy/cache-miss5 %this proxy this a0 a1 a2 a3 a4)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4))
 
-(define (js-call-proxy/cache-miss6 %this cache proxy this a0 a1 a2 a3 a4 a5)
-   (gen-call-proxy/cache-miss %this cache proxy this a0 a1 a2 a3 a4 a5))
+(define (js-call-proxy/cache-miss6 %this proxy this a0 a1 a2 a3 a4 a5)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5))
 
-(define (js-call-proxy/cache-miss7 %this cache proxy this a0 a1 a2 a3 a4 a5 a6)
-   (gen-call-proxy/cache-miss %this cache proxy this a0 a1 a2 a3 a4 a5 a6))
+(define (js-call-proxy/cache-miss7 %this proxy this a0 a1 a2 a3 a4 a5 a6)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6))
 
-(define (js-call-proxy/cache-miss8 %this cache proxy this a0 a1 a2 a3 a4 a5 a6 a7)
-   (gen-call-proxy/cache-miss %this cache proxy this a0 a1 a2 a3 a4 a5 a6 a7))
+(define (js-call-proxy/cache-miss8 %this proxy this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6 a7))
+
+(define (js-call-proxy/cache-miss9 %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+
+(define (js-call-proxy/cache-miss10 %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

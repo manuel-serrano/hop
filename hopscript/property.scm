@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jul 26 08:21:49 2019 (serrano)                */
+;*    Last change :  Sun Jul 28 07:22:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3350,7 +3350,7 @@
 	     ((js-proxy? ,obj)
 	      ,(let ((call (symbol-append 'js-call-proxy/cache-miss
 			      (string->symbol (integer->string largs)))))
-		  `(,call ,%this ,cache ,obj ,this ,@args)))
+		  `(,call ,%this ,obj ,this ,@args)))
 	     (else
 	      ,(let ((call (symbol-append 'js-call
 			      (string->symbol (integer->string largs)))))
@@ -3373,7 +3373,7 @@
 	     ((eq? (object-class ,obj) JsProxy)
 	      ,(let ((call (symbol-append 'js-call-proxy/cache-miss
 			      (string->symbol (integer->string largs)))))
-		  `(,call ,%this ,cache ,obj ,this ,@args)))
+		  `(,call ,%this ,obj ,this ,@args)))
 	     ((and (js-function? ,obj)
 		   (with-access::JsFunction ,obj (procedure arity)
 		      (and (>=fx arity 0)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Jul 11 07:45:16 2019 (serrano)                */
+;*    Last change :  Mon Jul 29 06:53:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1911,7 +1911,7 @@
 			       (max (+ len relativestart) 0)
 			       (min relativestart len))))
 		(when (< k final)
-		   (let ((pk (js-tostring k %this)))
+		   (let ((pk (js-integer-name->jsstring k)))
 		      (let ((setstatus (js-put! o pk value #t %this)))
 			 (loop (+ k 1))))))
 	     o)))

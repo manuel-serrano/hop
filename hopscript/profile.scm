@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sun Jul 14 20:35:51 2019 (serrano)                */
+;*    Last change :  Mon Jul 29 07:01:50 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -37,9 +37,9 @@
 	      #!key imap emap cmap pmap amap vtable)
 	   (js-profile-log-index ::long)
 	   
-	   (js-profile-log-get ::JsStringLiteral loc)
-	   (js-profile-log-put ::JsStringLiteral loc)
-	   (js-profile-log-method ::JsStringLiteral point)
+	   (js-profile-log-get ::obj loc)
+	   (js-profile-log-put ::obj loc)
+	   (js-profile-log-method ::obj point)
 
 	   (inline js-profile-log-call ::vector ::long)
 	   (js-profile-log-funcall ::vector ::long ::obj ::obj)

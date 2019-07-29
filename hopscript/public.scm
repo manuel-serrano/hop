@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jul 19 18:54:59 2019 (serrano)                */
+;*    Last change :  Sun Jul 28 07:19:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -79,6 +79,8 @@
 	   (js-call6% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3 a4 a5)
 	   (js-call7% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3 a4 a5 a6)
 	   (js-call8% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call9% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call10% ::JsGlobalObject fun::JsFunction ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   
 	   (js-call0 ::JsGlobalObject fun::obj this)
 	   (js-call1 ::JsGlobalObject fun::obj this a0)
@@ -614,7 +616,7 @@
 	   (,(string->symbol (format "js-call~a%" (length args)))
 	    ,%this ,fun procedure ,this ,@args)))
        ((js-proxy? ,fun)
-	(,(string->symbol (format "js-call-proxy~a" (length args)))
+	(,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))
 	 ,%this ,fun ,this ,@args))
        ((procedure? fun)
 	(,fun ,@args))
@@ -720,7 +722,7 @@
 	   (let ((env (current-dynamic-env))
 		 (name (js-proxy-debug-name ,fun %this)))
 	      ($env-push-trace env name loc)
-	      (let ((aux (,(string->symbol (format "js-call-proxy~a" (length args)))
+	      (let ((aux (,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))
 			  ,%this ,fun ,this ,@args)))
 		 ($env-pop-trace env)
 		 aux))))
@@ -828,86 +830,8 @@
 	     a))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-call-proxy ...                                                */
-;*    -------------------------------------------------------------    */
-;*    These functions are used to invoked trapped proxy functions.     */
+;*    js-call-proxyn ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-macro (gen-proxy-call %this fun this . args)
-   `(with-access::JsProxy ,fun ((target __proto__) handler cacheapply (%cmap cmap))
-       (cond
-	  ((not (js-object? target))
-	   (js-raise-type-error ,%this
-	      ,(format "call~a: not a function ~~s" (length args))
-	      ,fun))
-;* 	  ((eq? (js-pcache-pmap cacheapply) %cmap)                     */
-;* 	   (js-profile-log-cache cacheapply :pmap #t)                  */
-;* 	   ((js-pcache-method cacheapply)                              */
-;* 	    handler target ,this (jsarray ,%this ,@args)))             */
-	  ((js-get handler (& "apply") %this)
-	   =>
-	   (lambda (xfun)
-	      (cond
-;* 		 ((and (object? xfun) (eq? (object-class xfun) JsFunction4)) */
-;* 		  (with-access::JsFunction xfun ((met method))         */
-;* 		     (with-access::JsPropertyCache cacheapply (pmap emap cmap index method function) */
-;* 			(js-validate-pmap-pcache! cacheapply)          */
-;* 			(set! pmap %cmap)                              */
-;* 			(set! emap #t)                                 */
-;* 			(set! cmap #f)                                 */
-;* 			(set! index -1)                                */
-;* 			(set! function #f)                             */
-;* 			(set! method met)                              */
-;* 			(met handler target ,this (jsarray ,%this ,@args))))) */
-		 ((not (js-function? target))
-		  (js-raise-type-error ,%this
-		     ,(format "call~a: not a function ~~s" (length args))
-		     ,fun))
-		 ((js-function? xfun)
-		  (with-access::JsFunction xfun (procedure)
-		     (js-call3% %this xfun procedure handler target
-			,this (js-vector->jsarray (vector ,@args) ,%this))))
-		 (else
-		  (with-access::JsFunction target (procedure)
-		     (,(string->symbol (format "js-call~a%" (length args)))
-		      ,%this target procedure ,this ,@args))))))
-	  (else
-	   (with-access::JsFunction target (procedure)
-	      (,(string->symbol (format "js-call~a%" (length args)))
-	       ,%this target procedure ,this ,@args))))))
-
-(define (js-call-proxy0 %this fun this)
-   (gen-proxy-call %this fun this))
-
-(define (js-call-proxy1 %this fun this a0)
-   (gen-proxy-call %this fun this a0))
-
-(define (js-call-proxy2 %this fun this a0 a1)
-   (gen-proxy-call %this fun this a0 a1))
-
-(define (js-call-proxy3 %this fun this a0 a1 a2)
-   (gen-proxy-call %this fun this a0 a1 a2))
-
-(define (js-call-proxy4 %this fun this a0 a1 a2 a3)
-   (gen-proxy-call %this fun this a0 a1 a2 a3))
-
-(define (js-call-proxy5 %this fun this a0 a1 a2 a3 a4)
-   (gen-proxy-call %this fun this a0 a1 a2 a3 a4))
-
-(define (js-call-proxy6 %this fun this a0 a1 a2 a3 a4 a5)
-   (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5))
-
-(define (js-call-proxy7 %this fun this a0 a1 a2 a3 a4 a5 a6)
-   (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5 a6))
-
-(define (js-call-proxy8 %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
-   (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7))
-
-(define (js-call-proxy9 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-   (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8))
-
-(define (js-call-proxy10 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-   (gen-proxy-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
-
 (define (js-call-proxyn %this fun this args)
    (with-access::JsProxy fun ((target __proto__) handler)
       (cond
@@ -925,6 +849,9 @@
 	 (else
 	  (js-raise-type-error %this "calln: not a function ~s" fun)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-apply-proxy ...                                               */
+;*---------------------------------------------------------------------*/
 (define (js-apply-proxy %this fun this args)
    (with-access::JsProxy fun ((target __proto__) handler)
       (cond
