@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jul 28 07:22:50 2019 (serrano)                */
+;*    Last change :  Thu Aug  1 06:58:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1710,18 +1710,24 @@
 ;*    name is not known statically.                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-get/cache o prop::obj %this::JsGlobalObject
-		   #!optional (point -1) (cspecs '()) (src ""))
+	   #!optional (point -1) (cspecs '()) (src ""))
    (cond
       ((js-object? o)
-       (js-jsobject-get/name-cache o prop %this point cspecs src))
+       (js-object-get/name-cache o prop %this point src))
       (else
        (js-get o prop %this))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get/cache ::JsObject ...                                      */
+;*    js-jsobject-get/cache ::JsObject ...                             */
 ;*---------------------------------------------------------------------*/
 (define (js-jsobject-get/name-cache o::JsObject prop::obj %this::JsGlobalObject
 	   #!optional (point -1) (cspecs '()) (src ""))
+   (js-object-get/name-cache o prop %this point src))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-get/name-cache ...                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-get/name-cache o prop %this point src)
    (if (not (js-jsstring? prop))
        (js-get o prop %this)
        (synchronize-name
@@ -1731,7 +1737,8 @@
 		 =>
 		 (lambda (cache)
 		    (js-object-get-name/cache o pname #f
-		       %this cache point cspecs)))
+		       %this cache point
+		       '(imap emap cmap pmap amap vtable))))
 		((js-isindex? (js-toindex prop))
 		 (js-get o prop %this))
 		(else

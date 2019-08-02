@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Jul 10 19:07:54 2019 (serrano)                */
+;*    Last change :  Fri Aug  2 07:04:41 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -110,7 +110,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-hints! ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (add-hints! decl::J2SDecl hints::pair-nil)
+(define (add-hints! decl::J2SDecl hints::pair-nil reason)
    
    (define (add-hint! decl type::symbol inc)
       (with-access::J2SDecl decl (id hint vtype)
@@ -154,16 +154,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SRef hints)
    (with-access::J2SRef this (decl loc type)
-      (add-hints! decl hints)))
+      (add-hints! decl hints this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SExpr ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SExpr hints)
-   (multiple-value-bind (op decl type ref)
+   (multiple-value-bind (op decl type ref loc)
       (j2s-expr-type-test this)
       (if op
-	  (add-hints! decl `((,type . 2)))
+	  (add-hints! decl `((,type . 2)) this)
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
@@ -323,10 +323,12 @@
 ;*    j2s-hint ::J2SDeclInit ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SDeclInit hints)
-   (with-access::J2SDeclInit this (val type hint)
+   (with-access::J2SDeclInit this (val vtype hint loc)
       (let ((ty (j2s-type val)))
 	 (when (symbol? ty)
-	    (add-hints! this `((,ty . 3)))))
+	    (set! hints `((,ty . 3)))
+	    (add-hints! this hints this)))
+      (set! hints `((,vtype . 1)))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
