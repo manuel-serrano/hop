@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Jul 25 07:40:40 2019 (serrano)                */
+;*    Last change :  Sat Aug  3 07:08:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1438,6 +1438,13 @@
 			 expr
 			 mode return conf)
 		     ,body)))))
+      
+      (define (comp-switch-cond-string-clause case tmp body tleft)
+	 (with-access::J2SCase case (loc expr)
+	    (if (isa? case J2SDefault)
+		(epairify loc `(else ,body))
+		(epairify loc
+		   `((eq? ,tmp ,(j2s-scheme expr mode return conf)) ,body)))))
 
       (define (comp-switch-case-clause case body tleft)
 	 (with-access::J2SCase case (loc expr)
@@ -1510,7 +1517,7 @@
 		(loop (cdr cases) (cdr bodies)
 		   default
 		   (cons (proc (car cases) (car bodies)) res))))))
-		
+
       (define (comp-switch-cond key cases)
 	 (let ((tmp (gensym 'tmp))
 	       (ttmp (j2s-vtype key))
@@ -1535,6 +1542,29 @@
 		      ,@(mapc (lambda (c body)
 				 (comp-switch-case-clause c body tleft))
 			 cases bodies))))))
+
+      (define (comp-string-case key cases)
+	 (if (<=fx (length cases) 3)
+	     (comp-switch-cond key cases)
+	     (let ((val (gensym 'val))
+		   (tmp (gensym 'tmp))
+		   (funs (map (lambda (c) (gensym 'fun)) cases))
+		   (tleft (j2s-vtype key)))
+		(multiple-value-bind (bindings bodies)
+		   (comp-switch-clause-bodies cases funs)
+		   `(let* ((,val ,(j2s-scheme key mode return conf))
+			   (,tmp ,(if (eq? (j2s-type key) 'string)
+				      `(js-jsstring-toname-unsafe ,val)
+				      `(if (js-jsstring? ,val)
+					   (js-jsstring-toname-unsafe ,val)
+					   #f)))
+			   ,@bindings)
+		       (cond
+			  ,@(mapc (lambda (c body)
+				     (comp-switch-cond-string-clause c tmp body tleft))
+			     cases bodies)))))))
+	     
+	     
       
       (define (scheme-case? key cases)
 	 (let ((t (j2s-vtype key)))
@@ -1556,11 +1586,22 @@
 				   (else
 				    #f)))))
 		  cases))))
+
+      (define (string-case? key cases)
+	 (every (lambda (c)
+		   (or (isa? c J2SDefault)
+		       (with-access::J2SCase c (expr)
+			  (isa? expr J2SString))))
+	    cases))
       
       (define (comp-switch)
-	 (if (scheme-case? key cases)
-	     (comp-switch-case key cases)
-	     (comp-switch-cond key cases)))
+	 (cond
+	    ((scheme-case? key cases)
+	     (comp-switch-case key cases))
+	    ((string-case? key cases)
+	     (comp-string-case key cases))
+	    (else
+	     (comp-switch-cond key cases))))
       
       (define (eval-switch)
 	 (let ((elsebody #f)

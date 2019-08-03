@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Aug  2 07:04:41 2019 (serrano)                */
+;*    Last change :  Sat Aug  3 06:59:41 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -326,9 +326,8 @@
    (with-access::J2SDeclInit this (val vtype hint loc)
       (let ((ty (j2s-type val)))
 	 (when (symbol? ty)
-	    (set! hints `((,ty . 3)))
-	    (add-hints! this hints this)))
-      (set! hints `((,vtype . 1)))
+	    (add-hints! this `((,ty . 3)) this)))
+      (set! hints hint)
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
