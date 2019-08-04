@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Aug  3 07:08:08 2019 (serrano)                */
+;*    Last change :  Sat Aug  3 07:30:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2593,11 +2593,6 @@
 	  #t)
 	 ((old-new-builtin? clazz builtin)
 	  #f)
-;* 	  (with-access::J2SRef clazz (decl)                            */
-;* 	     (with-access::J2SDecl decl (scope usage)                  */
-;* 		(tprint "PAS GLOP " (j2s->list decl) " scope=" scope   */
-;* 		   " usage=" usage)))                                  */
-;* 	  (error "new-builtin" "old says yes" (j2s->list clazz)))      */
 	 (else
 	  #f)))
 

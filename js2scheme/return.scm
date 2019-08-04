@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/return.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/return.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sun Dec  2 07:26:28 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Sat Aug  3 07:47:01 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
 ;*    -------------------------------------------------------------    */
@@ -91,10 +91,10 @@
 	       (set-car! n (walk! (car n) target t? in-handler args))
 	       (loop (cdr n)))))
       ;; force a return when needed
-      (when (and target tail? (not (return? this in-handler)))
+      (when (and (not (return? this in-handler)) target tail?)
 	 ;; this is a function tail statement that misses a return
 	 ;; statement and we add one.
-	 ;; we could do better here, instead of transformaing
+	 ;; we could do better here, instead of transforming
 	 ;;    (if test (return XXX))
 	 ;; into
 	 ;;    (seq (if test (return XXXX)) (return (js-undefined)))
@@ -391,7 +391,7 @@
 	     (for-each (lambda (c)
 			  (with-access::J2SCase c (cascade body)
 			     (set! cascade
-				(not (return-or-break? body in-handler)))))
+				(not (return-or-break? body this in-handler)))))
 		cases)
 	     #f)))))
 
@@ -438,7 +438,7 @@
    (not in-handler))
 
 ;*---------------------------------------------------------------------*/
-;*    return-or-break? ::J2STry ...                                    */
+;*    return? ::J2STry ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (return? this::J2STry in-handler)
    (with-access::J2STry this (body)
@@ -449,36 +449,36 @@
 ;*    -------------------------------------------------------------    */
 ;*    Does a node always breaks and returns.                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return-or-break? this::J2SNode in-handler)
+(define-walk-method (return-or-break? this::J2SNode target in-handler)
    #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    return-or-break? ::J2SSeq ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return-or-break? this::J2SSeq in-handler)
+(define-walk-method (return-or-break? this::J2SSeq target in-handler)
    (with-access::J2SSeq this (nodes)
       (when (pair? nodes)
-	 (return-or-break? (car (last-pair nodes)) in-handler))))
+	 (return-or-break? (car (last-pair nodes)) target in-handler))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-or-break? ::J2SIf ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return-or-break? this::J2SIf in-handler)
+(define-walk-method (return-or-break? this::J2SIf target in-handler)
    (with-access::J2SIf this (then else)
-      (and (return-or-break? then in-handler)
-	   (return-or-break? else in-handler))))
+      (and (return-or-break? then target in-handler)
+	   (return-or-break? else target in-handler))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-or-break? ::J2SStmtExpr ...                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return-or-break? this::J2SStmtExpr in-handler)
+(define-walk-method (return-or-break? this::J2SStmtExpr target in-handler)
    (with-access::J2SStmtExpr this (expr)
-      (return-or-break? expr in-handler)))
+      (return-or-break? expr target in-handler)))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-or-break? ::J2SSwitch ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return-or-break? this::J2SSwitch in-handler)
+(define-walk-method (return-or-break? this::J2SSwitch target in-handler)
    
    (define (empty-block? this)
       (with-access::J2SCase this (body)
@@ -491,7 +491,7 @@
 	 (cond
 	    ((null? cases)
 	     #t)
-	    ((return-or-break? (car cases) in-handler)
+	    ((return-or-break? (car cases) target in-handler)
 	     (loop (cdr cases)))
 	    (else
 	     #f)))))
@@ -499,10 +499,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    return-or-break? ::J2SCase ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return-or-break? this::J2SCase in-handler)
+(define-walk-method (return-or-break? this::J2SCase target in-handler)
    (with-access::J2SCase this (expr body)
-      (and (not (return-or-break? expr in-handler))
-	   (return-or-break? body in-handler))))
+      (and (not (return-or-break? expr target in-handler))
+	   (return-or-break? body target in-handler))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-or-break? ::J2SDo ...                                     */
@@ -510,26 +510,26 @@
 ;*    Only the Do loop is considered as other loops are not            */
 ;*    guarantied to execute once.                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return-or-break? this::J2SDo in-handler)
+(define-walk-method (return-or-break? this::J2SDo target in-handler)
    (with-access::J2SDo this (body)
-      (return-or-break? body in-handler)))
+      (return-or-break? body target in-handler)))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-or-break? ::J2SReturn ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return-or-break? this::J2SReturn in-handler)
+(define-walk-method (return-or-break? this::J2SReturn target in-handler)
    #t)
 
 ;*---------------------------------------------------------------------*/
-;*    return-or-break? ::J2SReturn ...                                 */
+;*    return-or-break? ::J2SBreak ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return-or-break? this::J2SBreak in-handler)
-   (with-access::J2SBreak this (target)
-      (not target)))
+(define-walk-method (return-or-break? this::J2SBreak target in-handler)
+   (with-access::J2SBreak this ((t target))
+      (eq? t target)))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-or-break? ::J2STry ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return-or-break? this::J2STry in-handler)
+(define-walk-method (return-or-break? this::J2STry target in-handler)
    (with-access::J2STry this (body)
-      (return-or-break? body #t)))
+      (return-or-break? body target #t)))

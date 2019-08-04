@@ -2,6 +2,11 @@
 Hop.js TODO list
 ================
 
+Js2Scheme
+---------
+
+  1. (2019-08-93) Improve switch cascade computation (return.scm)
+
 
 HopScript
 ---------
@@ -10,6 +15,7 @@ HopScript
   2. (2015-10-03) mmap binding
   3. (2015-10-19) Server side cooking
   4. (2015-11-26) File + FormData api support.
+
 
 EcmaScript 6
 ------------
