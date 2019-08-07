@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sun May 12 07:15:33 2019 (serrano)                */
+;*    Last change :  Wed Aug  7 08:59:05 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -324,19 +324,7 @@
       (let loop ((ttl (hop-connection-ttl)))
 	 (let ((res (with-handler
 		       (lambda (e)
-			  (tprint ">>> -------------------------")
-			  (tprint "loop ttl=" ttl " " (current-thread))
-			  (tprint "make-client-socket/timeout error..."
-			     (typeof e) " host=" (typeof host) " port="
-			     (typeof port) " tmt=" (typeof tmt)
-			     " ssl=" ssl)
-			  (when (isa? e &error)
-			     (with-access::&error e (proc msg obj)
-				(tprint "proc=" proc)
-				(tprint "msg=" msg)
-				(tprint "obj=" (typeof obj))))
 			  (exception-notify e)
-			  (tprint "<<< -------------------------")
 			  (if (and (>fx ttl 0) (isa? e &io-timeout-error))
 			      (begin
 				 (hop-verb 1

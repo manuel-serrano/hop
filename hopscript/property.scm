@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Aug  4 07:25:23 2019 (serrano)                */
+;*    Last change :  Wed Aug  7 08:42:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1318,7 +1318,7 @@
 	     ;; all its attributes. Hence, the NAME property of the descriptor
 	     ;; is meaningless and this is why the %GET and %SET functions of
 	     ;; JsWrapperDescriptor take an explicit name as argument
-	     (%get propowner obj propname %this)))
+	     (%get obj propowner propname %this)))
 	 (else
 	  (js-undefined)))))
 
@@ -1340,7 +1340,7 @@
 	 ((eq? cn JsWrapperDescriptor)
 	  (with-access::JsWrapperDescriptor desc (%set)
 	     ;; see JS-PROPERTY-VALUE for name
-	     (%set propowner obj propname v %this)))
+	     (%set obj propowner propname v %this)))
 	 (else
 	  (js-undefined)))))
 

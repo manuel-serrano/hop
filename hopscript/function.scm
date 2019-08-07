@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Jul 25 07:46:47 2019 (serrano)                */
+;*    Last change :  Wed Aug  7 08:39:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -48,7 +48,7 @@
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::bstring ::int ::int ::symbol ::bool ::int)
 	   
-	   (inline js-function-prototype-get ::JsFunction ::obj ::obj ::JsGlobalObject)
+	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
 	   
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
@@ -514,29 +514,29 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-function-prototype-get o::JsFunction obj propname %this)
-   (with-access::JsFunction o (prototype)
+(define-inline (js-function-prototype-get obj owner::JsFunction propname %this)
+   (with-access::JsFunction owner (prototype)
       prototype))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-set ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-function-prototype-set o::JsFunction obj propname v %this)
-   (with-access::JsFunction o (constrmap %prototype prototype elements cmap)
+(define (js-function-prototype-set obj owner::JsFunction propname v %this)
+   (with-access::JsFunction owner (constrmap %prototype prototype elements cmap)
       ;; as the prototype property is not configurable,
       ;; it is always owned by the object
       (let ((desc (if (eq? cmap (js-not-a-cmap))
 		      (find (lambda (d)
 			       (with-access::JsPropertyDescriptor d (name)
 				  (eq? name (& "prototype"))))
-			 (js-object-properties o))
+			 (js-object-properties owner))
 		      (vector-ref elements 0))))
 	 (with-access::JsDataDescriptor desc (writable)
 	    (when writable
 	       ;; changing the prototype invalidates the fun's constrmap
 	       ;; (MS, change 2019-01-18)
 	       (unless (eq? constrmap (js-not-a-cmap))
-		  (js-function-set-constrmap! o))
+		  (js-function-set-constrmap! owner))
 	       (with-access::JsGlobalObject %this (__proto__)
 		  (set! prototype v)
 		  (set! %prototype (if (js-object? v) v __proto__)))))))

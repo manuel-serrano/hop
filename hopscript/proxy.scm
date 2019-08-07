@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Jul 28 07:07:20 2019 (serrano)                */
+;*    Last change :  Wed Aug  7 08:41:07 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -40,7 +40,7 @@
 	   (js-new-proxy/caches ::JsGlobalObject ::obj ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
-	   (js-proxy-property-value ::JsProxy ::JsObject ::JsStringLiteral ::JsGlobalObject)
+	   (js-proxy-property-value ::JsObject ::JsProxy ::JsStringLiteral ::JsGlobalObject)
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (js-call-proxy/cache-miss0 ::JsGlobalObject
 	      ::JsProxy ::obj)
@@ -231,13 +231,12 @@
 ;*    when no proxy GET handler is defined and then two different      */
 ;*    functions have to be used.                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-property-value proxy propowner prop %this)
+(define (js-proxy-property-value obj proxy prop %this)
    
    (define (check target v)
-;;      (if (null? (js-object-properties target))
       (if (js-object-mode-plain? target)
 	  v
-	  (proxy-check-property-value target propowner prop %this v (& "get"))))
+	  (proxy-check-property-value target obj prop %this v (& "get"))))
 
    (with-access::JsProxy proxy ((target __proto__) handler getcache)
       (proxy-check-revoked! proxy "get" %this)
@@ -247,23 +246,23 @@
 	       ((and (object? get) (eq? (object-class get) JsFunction3))
 		(with-access::JsFunction get (procedure)
 		   (check target
-		      (js-call3% %this get procedure handler target prop propowner))))
+		      (js-call3% %this get procedure handler target prop obj))))
 	       ((js-function? get)
 		(check target
-		   (js-call4 %this get handler target prop propowner proxy)))
+		   (js-call4 %this get handler target prop obj proxy)))
 	       ((eq? get (js-undefined))
 		;; the difference with JS-GET is here...
-		(js-get-jsobject target propowner prop %this))
+		(js-get-jsobject target obj prop %this))
 	       ((js-proxy? get)
 		(check target
-		   (js-call3 %this get handler target prop propowner)))
+		   (js-call3 %this get handler target prop obj)))
 	       (else
 		(js-raise-type-error %this "not a function" get))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value-set! ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-property-value-set! proxy obj prop v %this)
+(define (js-proxy-property-value-set! obj proxy prop v %this)
    
    (define (check target v r)
       (cond
