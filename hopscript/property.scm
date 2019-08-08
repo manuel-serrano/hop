@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Aug  7 08:42:04 2019 (serrano)                */
+;*    Last change :  Thu Aug  8 08:30:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -330,12 +330,14 @@
    (unless (vector? __js_strings)
       (set! __js_strings (&init!))
       (set! miss-object
-	 (let ((prop (instantiate::JsAccessorDescriptor
+	 (let ((prop (instantiate::JsWrapperDescriptor
 			(name (& "dummy"))
-			(get (js-undefined))
-			(set (js-undefined))
-			(%get (lambda (o) (js-undefined)))
-			(%set (lambda (this v) (js-undefined))))))
+;* 			(get (js-undefined))                           */
+;* 			(set (js-undefined))                           */
+			(%get (lambda (obj owner prop %this)
+				 (js-undefined)))
+			(%set (lambda (obj owner prop v %this)
+				 (js-put-jsobject! obj prop v #t #t %this #f))))))
 	    (instantiateJsObject
 	       (__proto__ (js-null))
 	       (elements (vector prop)))))))
