@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu May 16 16:23:16 2019 (serrano)                */
+;*    Last change :  Fri Jul 12 11:12:27 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -800,7 +800,7 @@
 	  ((js-object-method-call-name/cache ?%this ?obj . ?rest)
 	   (let ((o (gensym '%o)))
 	      (e `(let ((,o ,obj))
-		     (js-object-method-call-name/cache ?%this ,o ,@rest))
+		     (js-object-method-call-name/cache %this ,o ,@rest))
 		 e)))
 	  (else
 	   (error "js-object-method-call-name/cache" "bad form" x))))))
