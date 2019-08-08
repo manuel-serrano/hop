@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/tools/testjs.scm                  */
+;*    serrano/prgm/project/hop/hop/tools/testjs.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 27 17:13:14 2013                          */
-;*    Last change :  Wed Jan 30 15:39:57 2019 (serrano)                */
+;*    Last change :  Thu Aug  8 11:36:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing JavaScript programs                                      */
@@ -384,8 +384,9 @@ return true; };\n" p)
 ;*    compile-test ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (compile-test tmp isnegative)
-   (let ((cmd (format "~a ~a ~a -o ~a ~a" hopc hopcflags tmp (prefix tmp)
+   (let ((cmd (format "gdb -x gdbinit --args ~a ~a ~a -o ~a ~a" hopc hopcflags tmp (prefix tmp)
 		 (apply string-append flags))))
+      (print "cmd=" cmd)
       (with-trace 3 cmd
 	 (let ((res (system (format "~a 2> ~a/testjs-err.comp > ~a/testjs.comp" cmd /tmp /tmp))))
 	    (cond
@@ -406,7 +407,7 @@ return true; };\n" p)
 ;*---------------------------------------------------------------------*/
 (define (execute-test tmp ccmd)
    (let ((cmd (prefix tmp)))
-      (unless (=fx (system (format "~a 2> ~a/testjs-err.exec > ~a/testjs.exec" cmd /tmp /tmp)) 0)
+      (unless (=fx (system (format "gdb -x gdbinit --args ~a 2> ~a/testjs-err.exec > ~a/testjs.exec" cmd /tmp /tmp)) 0)
 	 (raise
 	    (instantiate::&test-error
 	       (proc "exec")

@@ -1,4 +1,8 @@
 {
+<<<<<<< HEAD:doc/doc.json.in
+=======
+   "version": "3.1.0",
+>>>>>>> 218f48c7d71b892dc143cee9e9b2071cae3bc93a:doc/doc.json
    "title": "Hop.js",
    "version": "@VERSION@",
    "branch": "@BRANCH@",

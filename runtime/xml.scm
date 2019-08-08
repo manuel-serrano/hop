@@ -3,7 +3,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
+<<<<<<< HEAD
 ;*    Last change :  Fri Jun  7 16:16:51 2019 (serrano)                */
+=======
+;*    Last change :  Tue Mar 12 17:25:18 2019 (serrano)                */
+>>>>>>> 218f48c7d71b892dc143cee9e9b2071cae3bc93a
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
