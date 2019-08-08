@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 27 17:13:14 2013                          */
-;*    Last change :  Thu Aug  8 11:36:49 2019 (serrano)                */
+;*    Last change :  Thu Aug  8 11:32:53 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing JavaScript programs                                      */
@@ -45,6 +45,11 @@
 ;*    recursive ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define recursive #t)
+
+;*---------------------------------------------------------------------*/
+;*    gdb ...                                                          */
+;*---------------------------------------------------------------------*/
+(define gdb #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    score                                                            */
@@ -104,6 +109,8 @@
        (set! blacklist (cons dir blacklist)))
       ((("-I" "--include-path") ?dir (help "Add include directory"))
        (set! include-path (cons dir include-path)))
+      (("--gdb" (help "Run inside gdb"))
+       (set! gdb #t))
       (("--help" (help "This message"))
        (args-parse-usage #f)
        (exit 0))
@@ -381,14 +388,31 @@ return true; };\n" p)
       include-path))
 
 ;*---------------------------------------------------------------------*/
+;*    gdbcmd ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (gdbcmd cmd)
+   (let ((gdbinit (make-file-name /tmp "gdbinit")))
+      (unless (file-exists? gdbinit)
+	 (call-with-output-file gdbinit
+	    (lambda (port)
+	       (display "set $_exitcode = -1\n" port)
+	       (display "run\n" port)
+	       (display "if $_exitcode != -1\n" port)
+	       (display "   quit\n" port)
+	       (display "end\n" port))))
+      (format "gdb -x ~a --args ~a" gdbinit cmd)))
+
+;*---------------------------------------------------------------------*/
 ;*    compile-test ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (compile-test tmp isnegative)
-   (let ((cmd (format "gdb -x gdbinit --args ~a ~a ~a -o ~a ~a" hopc hopcflags tmp (prefix tmp)
+   (let ((cmd (format "~a ~a ~a -o ~a ~a" hopc hopcflags tmp (prefix tmp)
 		 (apply string-append flags))))
-      (print "cmd=" cmd)
       (with-trace 3 cmd
-	 (let ((res (system (format "~a 2> ~a/testjs-err.comp > ~a/testjs.comp" cmd /tmp /tmp))))
+	 (let ((res (system (if gdb
+				(gdbcmd cmd)
+				(format "~a 2> ~a/testjs-err.comp > ~a/testjs.comp"
+				   cmd /tmp /tmp)))))
 	    (cond
 	       ((=fx res 0)
 		cmd)
@@ -407,13 +431,14 @@ return true; };\n" p)
 ;*---------------------------------------------------------------------*/
 (define (execute-test tmp ccmd)
    (let ((cmd (prefix tmp)))
-      (unless (=fx (system (format "gdb -x gdbinit --args ~a 2> ~a/testjs-err.exec > ~a/testjs.exec" cmd /tmp /tmp)) 0)
+      (unless (=fx (system (if gdb
+			       (gdbcmd cmd)
+			       (format "~a 2> ~a/testjs-err.exec > ~a/testjs.exec"
+				  cmd /tmp /tmp)))
+		 0)
 	 (raise
 	    (instantiate::&test-error
 	       (proc "exec")
 	       (msg ccmd)
 	       (path tmp)
 	       (obj (system->string (string-append cmd " 2>&1"))))))))
-      
-
-
