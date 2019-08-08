@@ -7,6 +7,7 @@ basedir=/usr/local/src/ecma-262-51/test262-d067d2f0ca30
 hopc=../../bin/hopc
 testjs=../../bin/testjs
 flags=-O3
+gdb=
 
 while : ; do
 
@@ -34,6 +35,9 @@ while : ; do
     --flags=*)
       flags="`echo $1 | sed 's/^[^=]*=//'`";;
     
+    --gdb)
+      gdb="--gdb";;
+    
     -*)
       rest=$1;;
 
@@ -49,8 +53,8 @@ if [ "$chapters " = " " ]; then
 fi
 
 for c in $chapters; do
-  echo "$testjs $verb --hopc=$hopc --flags=\"$flags\" $basedir/test/suite/$c $*"
-  $testjs $verb --hopc=$hopc --flags="$flags" $basedir/test/suite/$c $rest || exit 1
+  echo "$testjs $gdb $verb --hopc=$hopc --flags=\"$flags\" $basedir/test/suite/$c $*"
+  $testjs $gdb $verb --hopc=$hopc --flags="$flags" $basedir/test/suite/$c $rest || exit 1
   echo
   echo "all test succeeded..."
 done
