@@ -1,10 +1,4 @@
 #!/bin/sh
-<<<<<<< HEAD
 major=3.3.0
 state=pre
 minor=1
-=======
-major=3.1.0
-state=
-minor=
->>>>>>> 218f48c7d71b892dc143cee9e9b2071cae3bc93a
