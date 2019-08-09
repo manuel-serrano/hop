@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jul 12 08:45:12 2019 (serrano)                */
+;*    Last change :  Fri Aug  9 07:58:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -969,11 +969,12 @@
       (define (js-object-prototype-tostring this)
 	 (cond
 	    ((js-jsstring? this)
-	     this)
+	     (& "[object String]"))
+;* 	     this)                                                     */
 	    ((eq? this (js-undefined))
-	     (js-ascii->jsstring "[object Undefined]"))
+	     (& "[object Undefined]"))
 	    ((eq? this (js-null))
-	     (js-ascii->jsstring "[object Null]"))
+	     (& "[object Null]"))
 	    ((isa? this JsWrapper)
 	     (with-access::JsWrapper this (obj)
 		(js-string->jsstring (js-tostring obj %this))))
@@ -989,21 +990,23 @@
 				      JsFunction
 				      (object-class obj)))
 			   (name (symbol->string! (class-name clazz))))
-		       (js-string->jsstring
-			  (cond
-			     ((not (string-prefix? "Js" name))
-			      (string-append "[object " name "]"))
-			     ((string=? name "JsGlobalObject")
-			      "[object Object]")
-			     ((string=? name "JsProxy")
-			      "[object Object]")
-			     ((isa? obj JsArrayBufferView)
-			      (let ((ctor (js-get obj (& "constructor") %this)))
+		       (cond
+			  ((not (string-prefix? "Js" name))
+			   (js-string->jsstring
+			      (string-append "[object " name "]")))
+			  ((string=? name "JsGlobalObject")
+			   (& "[object Object]"))
+			  ((string=? name "JsProxy")
+			   (&  "[object Object]"))
+			  ((isa? obj JsArrayBufferView)
+			   (let ((ctor (js-get obj (& "constructor") %this)))
+			      (js-string->jsstring
 				 (string-append "[object "
 				    (js-get ctor (& "name") %this)
-				    "]")))
-			     
-			     (else
+				    "]"))))
+			  
+			  (else
+			   (js-string->jsstring
 			      (string-append "[object "
 				 (substring name 2)
 				 "]"))))))))))
