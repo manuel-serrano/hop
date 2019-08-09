@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Jul 19 19:57:34 2019 (serrano)                */
+;*    Last change :  Fri Aug  9 08:32:27 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -509,9 +509,9 @@
 		 (set! rhs (type-cast! rhs '*))))
 	  (cast this totype))
 	 ((OR &&)
-	  (set! lhs (type-cast! lhs totype))
-	  (set! rhs (type-cast! rhs totype))
-	  this)
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs (type-cast! rhs '*))
+	  (cast this totype))
 	 ((instanceof)
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs 'any))

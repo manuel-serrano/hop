@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Aug  4 07:28:21 2019 (serrano)                */
+;*    Last change :  Fri Aug  9 08:41:31 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2658,10 +2658,14 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-match this regexp %this)
    (with-access::JsGlobalObject %this (js-regexp)
-      (if (not (isa? regexp JsRegExp))
+      (cond
+	 ((isa? regexp JsRegExp)
+	  (js-jsstring-match-regexp this string regexp %this))
+	 ((js-jsstring? regexp)
 	  (js-jsstring-match-regexp-from-string this regexp
-	     (js-new %this js-regexp regexp) %this)
-	  (js-jsstring-match-regexp this string regexp %this))))
+	     (js-new %this js-regexp regexp) %this))
+	 (else
+	  (js-jsstring-match this (js-new %this js-regexp regexp) %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-match ...                                      */

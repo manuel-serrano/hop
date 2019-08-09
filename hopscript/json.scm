@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jul  9 07:20:51 2019 (serrano)                */
+;*    Last change :  Fri Aug  9 09:55:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -440,39 +440,35 @@
 				 (display "}" op)))
 			     (set! gap mind)))))))))))
    
-   (with-access::JsGlobalObject %this (js-object)
-      (cond
-	 ((js-jsstring? value)
-	  (string-quote value))
-	 ((js-number? value)
-	  (cond
-	     ((fixnum? value)
-	      (js-ascii->jsstring (fixnum->string value)))
-	     ((not (infinitefl? value))
-	      (js-ascii->jsstring (number->string value)))
-	     ((= value +inf.0)
-	      (& "Infinity"))
-	     (else
-	      (& "-Infinity"))))
-	 ((eq? (js-null) value)
-	  (& "null"))
-	 ((eq? value #t)
-	  (& "true"))
-	 ((eq? value #f)
-	  (& "false"))
-	 (else
-	  (let ((holder (js-new0 %this js-object)))
-	     (js-put! holder (& "") value #f %this)
-	     (str (& "") holder '()))))))
-(define (date->utc-date dt::date)
-   (let ((tz (date-timezone dt))
-	 (ctz (date-timezone (date-copy dt))))
-      (date-copy
-	 (nanoseconds->date
-	    (- (date->nanoseconds dt)
-	       (*llong (fixnum->llong ctz)
-		  #l1000000000)))
-	 :timezone 0)))
+   (define (default)
+      (with-access::JsGlobalObject %this (js-object)
+	 (let ((holder (js-new0 %this js-object)))
+	    (js-put! holder (& "") value #f %this)
+	    (str (& "") holder '()))))
+   
+   (cond
+      ((isa? replacer JsFunction)
+       (default))
+      ((js-jsstring? value)
+       (string-quote value))
+      ((js-number? value)
+       (cond
+	  ((fixnum? value)
+	   (js-ascii->jsstring (fixnum->string value)))
+	  ((not (infinitefl? value))
+	   (js-ascii->jsstring (number->string value)))
+	  ((= value +inf.0)
+	   (& "Infinity"))
+	  (else
+	   (& "-Infinity"))))
+      ((eq? (js-null) value)
+       (& "null"))
+      ((eq? value #t)
+       (& "true"))
+      ((eq? value #f)
+       (& "false"))
+      (else
+       (default))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

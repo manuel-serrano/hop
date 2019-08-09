@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jul 12 09:16:30 2019 (serrano)                */
+;*    Last change :  Fri Aug  9 09:37:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -36,7 +36,7 @@
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
 	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-exec ::JsRegExp ::obj ::JsGlobalObject)
-	   (js-regexp-prototype-maybe-exec ::JsRegExp ::obj ::JsGlobalObject cache)
+	   (js-regexp-prototype-maybe-exec ::obj ::obj ::JsGlobalObject cache)
 	   (js-regexp-prototype-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-maybe-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject cache)
 	   (js-regexp-prototype-exec-for-match-string %this::JsGlobalObject this::JsRegExp string::obj))
@@ -167,7 +167,7 @@
 (define (%js-regexp %this::JsGlobalObject)
    (lambda (this pattern flags loc)
       (with-access::JsGlobalObject %this (js-regexp)
-	 (if (and (isa? pattern JsRegExp) (eq? flags (js-undefined)))
+	 (if (and (js-regexp? pattern) (eq? flags (js-undefined)))
 	     pattern
 	     (js-new3 %this js-regexp pattern flags loc)))))
 
@@ -462,7 +462,7 @@
 (define (js-regexp-construct %this::JsGlobalObject pattern uflags loc)
    (let ((flags #u32:0))
       (cond
-	 ((isa? pattern JsRegExp)
+	 ((js-regexp? pattern)
 	  (with-access::JsRegExp pattern ((rxflags flags) source)
 	     (if (eq? uflags (js-undefined))
 		 (set! flags rxflags)
@@ -552,7 +552,7 @@
    (js-bind! %this obj (& "ignoreCase")
       :get (js-make-function %this
 	      (lambda (this)
-		 (if (isa? this JsRegExp)
+		 (if (js-regexp? this)
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-ignorecase? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
@@ -565,7 +565,7 @@
    (js-bind! %this obj (& "multiline")
       :get (js-make-function %this
 	      (lambda (this)
-		 (if (isa? this JsRegExp)
+		 (if (js-regexp? this)
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-multiline? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
@@ -578,7 +578,7 @@
    (js-bind! %this obj (& "global")
       :get (js-make-function %this
 	      (lambda (this)
-		 (if (isa? this JsRegExp)
+		 (if (js-regexp? this)
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-global? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
@@ -591,7 +591,7 @@
    (js-bind! %this obj (& "source")
       :get (js-make-function %this
 	      (lambda (this)
-		 (if (isa? this JsRegExp)
+		 (if (js-regexp? this)
 		     (with-access::JsRegExp this (source)
 			(js-string->jsstring source))
 		     (js-raise-type-error %this "Not a regexp" this)))
@@ -604,7 +604,7 @@
    (js-bind! %this obj (& "exec")
       :value (js-make-function %this
 		(lambda (this string::obj)
-		   (if (not (isa? this JsRegExp))
+		   (if (not (js-regexp? this))
 		       (js-raise-type-error %this "Not a RegExp ~s" this)
 		       (js-regexp-prototype-exec this string %this)))
 		1 "exec"
@@ -718,7 +718,7 @@
 ;*    js-regexp-prototype-maybe-exec ...                               */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-prototype-maybe-exec this string::obj %this::JsGlobalObject cache)
-   (if (isa? this JsRegExp)
+   (if (js-regexp? this)
        (js-regexp-prototype-exec this string %this)
        (with-access::JsGlobalObject %this (js-regexp-pcache)
 	  (let ((exec (js-get-name/cache this (& "exec") #f %this
@@ -815,7 +815,7 @@
 ;*    boolean result.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-prototype-maybe-exec-as-bool this string::obj %this::JsGlobalObject cache)
-   (if (isa? this JsRegExp)
+   (if (js-regexp? this)
        (js-regexp-prototype-exec-as-bool this string %this)
        (with-access::JsGlobalObject %this (js-regexp-pcache)
 	  (let ((exec (js-get-name/cache this (& "exec") #f %this
@@ -830,7 +830,7 @@
 ;*---------------------------------------------------------------------*/
 (define (make-regexp-prototype-test %this::JsGlobalObject)
    (lambda (this string::obj)
-      (if (not (isa? this JsRegExp))
+      (if (not (js-regexp? this))
 	  (js-raise-type-error %this "Not a RegExp ~s" this)
 	  (not (eq? (js-regexp-prototype-exec this string %this) (js-null))))))
 
