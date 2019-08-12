@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Aug 12 15:29:54 2019 (serrano)                */
+;*    Last change :  Mon Aug 12 16:50:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -526,7 +526,8 @@
    (if (js-function? fun)
        (with-access::JsFunction fun (procedure)
 	  (if (correct-arity? procedure 1)
-	      procedure
+	      (lambda (this owner pname %this)
+		 (procedure this))
 	      (lambda (this owner pname %this)
 		 (js-call0 %this fun this))))
        (lambda (obj owner pname %this)
@@ -539,7 +540,8 @@
    (if (js-function? fun)
        (with-access::JsFunction fun (procedure)
 	  (if (correct-arity? procedure 2)
-	      procedure
+	      (lambda (this v owner pname %this)
+		 (procedure this v))
 	      (lambda (this v owner pname %this)
 		 (js-call1 %this fun this v))))
        (lambda (obj v owner pname %this)
