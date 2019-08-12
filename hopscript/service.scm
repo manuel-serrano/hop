@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Jul  5 12:51:40 2019 (serrano)                */
+;*    Last change :  Mon Aug 12 16:00:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -1021,13 +1021,13 @@
 	 (with-access::WorkerHopThread worker (services)
 	    (set! services (cons svc services)))))
    
-   (define (get-path o)
+   (define (get-path o owner pname %this)
       (with-access::JsService o (svc)
 	 (when svc
 	    (with-access::hop-service svc (path)
 	       (js-string->jsstring path)))))
    
-   (define (set-path o v)
+   (define (set-path o v owner pname %this)
       (set-service-path! o (js-tostring v %this))
       v)
    

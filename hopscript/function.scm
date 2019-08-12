@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Aug  7 08:39:50 2019 (serrano)                */
+;*    Last change :  Mon Aug 12 15:30:11 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -225,9 +225,17 @@
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype))
       ;; throwers
-      (let* ((throw (lambda (o)
-			(js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
-	     (thrower (js-make-function %this throw 1 "thrower")))
+      (let* ((throwget (lambda (o owner pname %this)
+			  (js-raise-type-error %this
+			     "[[ThrowTypeError]] ~a" o)))
+	     (throwset (lambda (o v owner pname %this)
+			  (js-raise-type-error %this
+			     "[[ThrowTypeError]] ~a" o)))
+	     (thrower (js-make-function %this
+			 (lambda (o v)
+			    (js-raise-type-error %this
+			       "[[ThrowTypeError]] ~a" o))
+			 1 "thrower")))
 	 (set! thrower-get thrower)
 	 (set! thrower-set thrower)
 	 (set! strict-arguments-property
@@ -235,8 +243,8 @@
 	       (name (& "arguments"))
 	       (get thrower-get)
 	       (set thrower-set)
-	       (%get throw)
-	       (%set (lambda (this v) (throw this)))
+	       (%get throwget)
+	       (%set throwset)
 	       (enumerable #f)
 	       (configurable #f)))
 	 (set! strict-caller-property
@@ -244,8 +252,8 @@
 	       (name (& "caller"))
 	       (get thrower-get)
 	       (set thrower-set)
-	       (%get throw)
-	       (%set (lambda (this v) (throw this)))
+	       (%get throwget)
+	       (%set throwset)
 	       (enumerable #f)
 	       (configurable #f))))
 
@@ -521,7 +529,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-set ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-function-prototype-set obj owner::JsFunction propname v %this)
+(define (js-function-prototype-set obj v owner::JsFunction propname %this)
    (with-access::JsFunction owner (constrmap %prototype prototype elements cmap)
       ;; as the prototype property is not configurable,
       ;; it is always owned by the object

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Jul  8 18:57:38 2019 (serrano)                */
+;*    Last change :  Mon Aug 12 15:53:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -121,15 +121,19 @@
       ;; local constant strings
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
       ;; properties
-      (let ((throw (lambda (o)
-		      (js-raise-type-error %this "[[ThrowTypeError]] ~a" o))))
+      (let ((throwget (lambda (o owner pname %this)
+			 (js-raise-type-error %this
+			    "[[ThrowTypeError]] ~a" o)))
+	    (throwset (lambda (o v owner pname %this)
+			 (js-raise-type-error %this
+			    "[[ThrowTypeError]] ~a" o))))
 	 (set! strict-caller-property
 	    (instantiate::JsAccessorDescriptor
 	       (name (& "caller"))
 	       (get thrower-get)
 	       (set thrower-set)
-	       (%get throw)
-	       (%set (lambda (this v) (throw this)))
+	       (%get throwget)
+	       (%set throwset)
 	       (enumerable #f)
 	       (configurable #f)))
 	 (set! strict-callee-property
@@ -137,8 +141,8 @@
 	       (name (& "callee"))
 	       (get thrower-get)
 	       (set thrower-set)
-	       (%get throw)
-	       (%set (lambda (this v) (throw this)))
+	       (%get throwget)
+	       (%set throwset)
 	       (enumerable #f)
 	       (configurable #f))))
       ;; arguments cmap
@@ -317,9 +321,9 @@
        (with-access::JsFunction fun (procedure)
 	  (if (correct-arity? procedure 2)
 	      procedure
-	      (lambda (this a0)
-		 (js-call1 %this fun this a0))))
-       (lambda (obj v)
+	      (lambda (this v owner pname %this)
+		 (js-call1 %this fun this v))))
+       (lambda (obj v owner pname %this)
 	  (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
@@ -358,8 +362,7 @@
 		    (with-access::JsValueDescriptor desc (value)
 		       (cond
 			  ((isa? ismapped JsAccessorDescriptor)
-			   (with-access::JsAccessorDescriptor ismapped
-				 (set)
+			   (with-access::JsAccessorDescriptor ismapped (set)
 			      (when (js-function? set)
 				 (js-call1 %this set o value))))
 			  ((isa? ismapped JsValueDescriptor)
