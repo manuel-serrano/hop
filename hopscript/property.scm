@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Aug 12 15:05:07 2019 (serrano)                */
+;*    Last change :  Mon Aug 12 15:29:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -527,9 +527,9 @@
        (with-access::JsFunction fun (procedure)
 	  (if (correct-arity? procedure 1)
 	      procedure
-	      (lambda (this)
+	      (lambda (this owner pname %this)
 		 (js-call0 %this fun this))))
-       (lambda (obj)
+       (lambda (obj owner pname %this)
 	  (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
@@ -540,9 +540,9 @@
        (with-access::JsFunction fun (procedure)
 	  (if (correct-arity? procedure 2)
 	      procedure
-	      (lambda (this a0)
-		 (js-call1 %this fun this a0))))
-       (lambda (obj v)
+	      (lambda (this v owner pname %this)
+		 (js-call1 %this fun this v))))
+       (lambda (obj v owner pname %this)
 	  (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
@@ -1301,7 +1301,7 @@
       (cond
 	 ((eq? cn JsAccessorDescriptor)
 	  (with-access::JsAccessorDescriptor desc (%get)
-	     (%get obj)))
+	     (%get obj propowner propname %this)))
 	 ((eq? cn JsValueDescriptor)
 	  (with-access::JsValueDescriptor desc (value)
 	     value))
@@ -1326,7 +1326,7 @@
       (cond
 	 ((eq? cn JsAccessorDescriptor)
 	  (with-access::JsAccessorDescriptor desc (%set)
-	     (%set obj v)))
+	     (%set obj v propowner propname %this)))
 	 ((eq? cn JsValueDescriptor)
 	  (with-access::JsValueDescriptor desc (value)
 	     (set! value v)
@@ -1334,7 +1334,7 @@
 	 ((eq? cn JsWrapperDescriptor)
 	  (with-access::JsWrapperDescriptor desc (%set)
 	     ;; see JS-PROPERTY-VALUE for name
-	     (%set obj propowner propname v %this)))
+	     (%set obj v propowner propname %this)))
 	 (else
 	  (js-undefined)))))
 
@@ -2888,7 +2888,7 @@
 		      (set! value dvalue)))
 		  ((isa? current JsWrapperDescriptor)
 		   (with-access::JsWrapperDescriptor current (%set)
-		      (%set o o dvalue name %this)))))))
+		      (%set o dvalue o name %this)))))))
       #t)
    
    (define (propagate-accessor-descriptor! current desc)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Aug  7 08:41:07 2019 (serrano)                */
+;*    Last change :  Mon Aug 12 15:29:52 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -262,7 +262,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-property-value-set! ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-property-value-set! obj proxy prop v %this)
+(define (js-proxy-property-value-set! obj v proxy prop %this)
    
    (define (check target v r)
       (cond
