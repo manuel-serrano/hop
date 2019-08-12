@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Aug 12 15:53:51 2019 (serrano)                */
+;*    Last change :  Mon Aug 12 16:49:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -320,7 +320,8 @@
    (if (js-function? fun)
        (with-access::JsFunction fun (procedure)
 	  (if (correct-arity? procedure 2)
-	      procedure
+	      (lambda (this v owner pname %this)
+		 (procedure this v))
 	      (lambda (this v owner pname %this)
 		 (js-call1 %this fun this v))))
        (lambda (obj v owner pname %this)
