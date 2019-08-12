@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Aug  8 08:30:44 2019 (serrano)                */
+;*    Last change :  Mon Aug 12 15:05:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -330,17 +330,9 @@
    (unless (vector? __js_strings)
       (set! __js_strings (&init!))
       (set! miss-object
-	 (let ((prop (instantiate::JsWrapperDescriptor
-			(name (& "dummy"))
-;* 			(get (js-undefined))                           */
-;* 			(set (js-undefined))                           */
-			(%get (lambda (obj owner prop %this)
-				 (js-undefined)))
-			(%set (lambda (obj owner prop v %this)
-				 (js-put-jsobject! obj prop v #t #t %this #f))))))
-	    (instantiateJsObject
-	       (__proto__ (js-null))
-	       (elements (vector prop)))))))
+	 (instantiateJsObject
+	    (__proto__ (js-null))
+	    (elements (vector (js-undefined)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -1869,7 +1861,8 @@
          (lambda (_o)
 	    (with-access::JsObject o (cmap)
 	       (unless (or (eq? cmap (js-not-a-cmap)) throw)
-		  (js-pcache-update-descriptor! cache 0 o miss-object)))
+		  (js-pcache-update-owner! cache 0 o miss-object)))
+;* 		  (js-pcache-update-descriptor! cache 0 o miss-object))) */
             (js-get-notfound name throw %this))
          ;; loop
          loop)))
