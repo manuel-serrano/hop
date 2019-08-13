@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Aug 13 07:35:18 2019 (serrano)                */
+;*    Last change :  Wed Aug  7 08:55:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -439,7 +439,7 @@
 	 (let loop ((withs withs))
 	    (if (null? withs)
 		(j2s-scheme expr mode return conf)
-		`(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs))
+		`(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs) conf)
 		     ,(j2s-get loc (car withs) #f 'object
 			 `(& ,(symbol->string id)) 'string 'any conf #f #f)
 		     ,(loop (cdr withs))))))))
@@ -1364,7 +1364,8 @@
 		   (let liip ((withs withs))
 		      (if (null? withs)
 			  (loop expr)
-			  `(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs))
+			  `(if ,(j2s-in? loc
+				   `(& ,(symbol->string id)) (car withs) conf)
 			       ,(j2s-put! loc (car withs) #f
 				   'object
 				   `(& ,(symbol->string id)) 'propname
@@ -1747,7 +1748,8 @@
 		   (let liip ((withs withs))
 		      (if (null? withs)
 			  (loop expr)
-			  `(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs))
+			  `(if ,(j2s-in? loc
+				   `(& ,(symbol->string id)) (car withs) conf)
 			       ,(j2s-put! loc (car withs) #f 'object
 				   `(& ,(symbol->string id)) 'propname
 				   (j2s-scheme rhs mode return conf)
@@ -2118,7 +2120,8 @@
 	 (let* ((prov (j2s-property-scheme field mode return conf))
 		(pro (match-case prov
 			((& ?-) #f)
-			(else (gensym 'aprop)))))
+			(else (gensym 'aprop))))
+		(cspecs-safe (remq 'pmap cspecs)))
 	    `(let* (,@(if pro (list `(,pro ,prov)) '()))
 		,(cond
 		    ((or (not cache) (is-integer? field))
@@ -2129,28 +2132,36 @@
 			  (eq? (j2s-type obj) 'object))
 		     ;; see the PCE optimization
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs '(imap-incache) (remq 'pmap cspecs) field))
+			tl lhs rhs '(imap-incache) cspecs-safe field))
 		    ((memq (typeof-this obj conf) '(object this global))
 		     `(with-access::JsObject ,otmp (cmap)
 			 (let ((%omap cmap))
-			    ,(aput-assigop otmp pro prov op
-				tl lhs rhs '(imap cmap)
-				(if (nocall? rhs)
-				    '(imap cmap)
-				    (remq 'pmap cspecs))
-				field))))
+			    (if (eq? (js-pcache-cmap ,(js-pcache cache)) %omap)
+				,(aput-assigop otmp pro prov op
+				    tl lhs rhs '(cmap-incache)
+				    (if (nocall? rhs)
+					'(cmap-incache)
+					cspecs-safe)
+				    field)
+				,(aput-assigop otmp pro prov op
+				    tl lhs rhs '(cmap+) '(cmap+) field)))))
 		    (else
 		      `(if (js-object? ,otmp)
 			   ,(with-object obj
 			      (lambda ()
 				 `(with-access::JsObject ,otmp (cmap)
 				    (let ((%omap cmap))
-				       ,(aput-assigop otmp pro prov op
-					   tl lhs rhs '(cmap-incache)
-					   (if (nocall? rhs)
-					       '(imap cmap)
-					       (remq 'pmap cspecs))
-					   field)))))
+				       (if (eq? (js-pcache-cmap ,(js-pcache cache))
+					      %omap)
+					   ,(aput-assigop otmp pro prov op
+					       tl lhs rhs '(cmap-incache)
+					       (if (nocall? rhs)
+						   '(cmap-incache)
+						   cspecs-safe)
+					       field)
+					   ,(aput-assigop otmp pro prov op
+					       tl lhs rhs '(cmap+) '(cmap+)
+					       field))))))
 			  (let ((%omap (js-not-a-cmap)))
 			     ,(aput-assigop otmp pro prov op
 				 tl lhs rhs '() '() field)))))))))

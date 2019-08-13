@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jul 19 19:50:33 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 08:45:34 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -28,7 +28,7 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-test)
 
-   (export (j2s-in? loc id obj)
+   (export (j2s-in? loc id obj conf)
 	   (j2s-scheme-binary-as ::J2SBinary mode return conf type)
 	   (j2s-scheme-unary-as ::J2SUnary mode return conf type)
 	   (js-binop2 loc op::symbol type lhs::J2SNode rhs::J2SNode
@@ -119,15 +119,6 @@
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
-;*    scm-if ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (scm-if test then otherwise)
-   (cond
-      ((eq? test #t) then)
-      ((> (bigloo-debug) 0) otherwise)
-      (else `(if ,test ,then ,otherwise))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-unop ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-unop loc op type expr mode return conf)
@@ -158,7 +149,7 @@
 	     (let loop ((withs withs))
 		(if (null? withs)
 		    `(begin ,(j2s-scheme expr mode return conf) #f)
-		    `(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs))
+		    `(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs) conf)
 			 (js-delete! ,(j2s-scheme (car withs) mode return conf)
 			    (& ,(symbol->string (j2s-scheme id mode return conf)))
 			    #f
@@ -437,8 +428,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-in? ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-in? loc id obj)
-   (if (> (bigloo-debug) 0)
+(define (j2s-in? loc id obj conf)
+   (if (> (config-get conf :debug 0) 0)
        `(js-in?/debug %this ',loc ,id ,obj)
        `(js-in? %this ,id ,obj)))
 
@@ -522,11 +513,11 @@
       ((<-)
        `(js<- ,lhs ,rhs %this))
       ((instanceof)
-       (if (> (bigloo-debug) 0)
+       (if (> (config-get conf :debug 0) 0)
 	   `(js-instanceof?/debug %this ',loc ,lhs ,rhs)
 	   (j2s-instanceof? lhs rhs)))
       ((in)
-       (j2s-in? loc lhs rhs))
+       (j2s-in? loc lhs rhs conf))
       ((+)
        `(js+ ,(box lhs (j2s-vtype l) conf)
 	   ,(box rhs (j2s-vtype r) conf)

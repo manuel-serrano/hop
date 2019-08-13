@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Aug 12 16:00:51 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 08:45:23 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -600,7 +600,7 @@
 	 "HopService( ~s, ~s )")
 
       (define (service-debug name loc body)
-	 (if (>fx (bigloo-debug) 0)
+	 (if (>fx (config-get conf :debug 0) 0)
 	     `(lambda () (js-service/debug ',name ',loc ,body))
 	     body))
 

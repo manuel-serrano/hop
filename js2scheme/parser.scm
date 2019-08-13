@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Jul 10 16:03:43 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 08:44:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -35,7 +35,7 @@
    
    (define tilde-level (config-get conf :tilde-level 0))
    (define lang (config-get conf :language "hopscript"))
-   (define debug-function (>= (bigloo-debug) 2))
+   (define debug-function (>= (config-get conf :debug 0) 2))
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
 
