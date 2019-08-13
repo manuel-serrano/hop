@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Aug 12 16:50:35 2019 (serrano)                */
+;*    Last change :  Mon Aug 12 16:51:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2047,7 +2047,7 @@
 	     (begin
 		(when (and (>=fx index 0) cache)
 		   (js-pcache-update-descriptor! cache index o propobj))
-		(%set o v)
+		(%set o v o prop %this)
 		;;(js-call1 %this set o v)
 		v)
 	     ;; 8.12.4, setp 2.a
