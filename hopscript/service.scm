@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Aug 12 16:00:19 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 08:12:45 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -1031,14 +1031,14 @@
       (set-service-path! o (js-tostring v %this))
       v)
    
-   (define (get-name o)
+   (define (get-name o owner pname %this)
       (with-access::JsService o (svc)
 	 (when svc
 	    (with-access::hop-service svc (id)
 	       (js-string->jsstring
 		  (symbol->string! id))))))
    
-   (define (set-name o v)
+   (define (set-name o v owner pname %this)
       (set-service-path! o
 	 (make-file-name (hop-service-base) (js-tostring v %this)))
       v)
