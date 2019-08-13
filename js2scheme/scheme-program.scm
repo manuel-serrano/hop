@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Jul 10 14:24:21 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 08:41:36 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -570,7 +570,7 @@
    
    ;; this must be executed after the code is compiled as this
    ;; compilation might change or add new constants.
-   (if (>fx (bigloo-debug) 0)
+   (if (>fx (config-get conf :debug 0) 0)
        (%cnst-table-debug cnsts)
        (%cnst-table-intext cnsts)))
 

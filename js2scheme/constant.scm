@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Jul 10 14:19:02 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 08:46:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -37,7 +37,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-constant ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (j2s-constant this args)
+(define (j2s-constant this conf)
    
    (define (keys-hashnumber v)
       (cond
@@ -61,9 +61,9 @@
 		       (create-hashtable :eqtest equal?
 			  :hash keys-hashnumber)
 		       '())))
-	    (for-each (lambda (n) (constant! n env 0)) headers)
-	    (for-each (lambda (n) (constant! n env 0)) decls)
-	    (for-each (lambda (n) (constant! n env 0)) nodes)
+	    (for-each (lambda (n) (constant! n env 0 conf)) headers)
+	    (for-each (lambda (n) (constant! n env 0 conf)) decls)
+	    (for-each (lambda (n) (constant! n env 0 conf)) nodes)
 	    (set! cnsts (reverse! (env-list env)))
 	    (set! decls (append decls (env-vars env))))))
    this)
@@ -143,13 +143,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SNode env::struct nesting)
+(define-walk-method (constant! this::J2SNode env::struct nesting conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SRegExp ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SRegExp env nesting)
+(define-walk-method (constant! this::J2SRegExp env nesting conf)
    (with-access::J2SRegExp this (val flags)
       (if (=fx nesting 0)
 	  (add-literal! this env 'regexp #f)
@@ -158,23 +158,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2STilde ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2STilde env nesting)
+(define-walk-method (constant! this::J2STilde env nesting conf)
    (with-access::J2STilde this (stmt)
-      (set! stmt (constant! stmt env (+fx nesting 1)))
+      (set! stmt (constant! stmt env (+fx nesting 1) conf))
       this))
    
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SDollar ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SDollar env nesting)
+(define-walk-method (constant! this::J2SDollar env nesting conf)
    (with-access::J2SDollar this (node)
-      (set! node (constant! node env (-fx nesting 1)))
+      (set! node (constant! node env (-fx nesting 1) conf))
       this))
    
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SObjInit ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SObjInit env nesting)
+(define-walk-method (constant! this::J2SObjInit env nesting conf)
    (with-access::J2SObjInit this (inits cmap loc ronly)
       (let ((keys (map (lambda (i)
 			  (when (isa? i J2SDataPropertyInit)
@@ -192,9 +192,15 @@
 				    #f)))))
 		     inits)))
 	 (call-default-walker)
-	 (if (and (pair? keys) (every (lambda (x) x) keys))
+	 (if (and (pair? keys)
+		  (every (lambda (x) x) keys)
+		  (=fx (config-get conf :debug 0) 0))
 	     (begin
-		;; constant cmap
+		;; WARNING: Constant cmap are only computed in non-debug mode
+		;; because the debug initialization does not support
+		;; recursivity between the objects that use cmaps and
+		;; cmaps themselves (see js-constant-init@hopscript/lib.scm
+		;; and j2sscheme/scheme-program.scm)
 		(let ((n (add-cmap! loc (list->vector keys) env)))
 		   (set! cmap
 		      (instantiate::J2SLiteralCnst
@@ -223,20 +229,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SAccess ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SAccess env nesting)
+(define-walk-method (constant! this::J2SAccess env nesting conf)
    (with-access::J2SAccess this (obj field)
-      (set! obj (constant! obj env nesting))
+      (set! obj (constant! obj env nesting conf))
       (unless (isa? field J2SString)
 	 ;; MS 15mar19: otherwise, no hidden class test would ever be emitted
 	 ;; (see "constant! ::J2SString" and Scheme code generation
 	 ;; (put and get)
-	 (set! field (constant! field env nesting)))
+	 (set! field (constant! field env nesting conf)))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SUnary ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SUnary env nesting)
+(define-walk-method (constant! this::J2SUnary env nesting conf)
    (call-default-walker)
    (with-access::J2SUnary this (op expr expr loc type)
       (if (isa? expr J2SNumber)
@@ -266,7 +272,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SBinary ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SBinary env nesting)
+(define-walk-method (constant! this::J2SBinary env nesting conf)
    
    (define (evaluate this op l r)
       (with-access::J2SBinary this (loc)
@@ -361,15 +367,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SDeclFun ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SDeclFun env nesting)
+(define-walk-method (constant! this::J2SDeclFun env nesting conf)
    (with-access::J2SDeclFun this (val)
-      (constant! val env nesting))
+      (constant! val env nesting conf))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SFun env nesting)
+(define-walk-method (constant! this::J2SFun env nesting conf)
    (call-default-walker)
    (with-access::J2SFun this (body params)
       ;; in order to activate this optimization, it must be proved

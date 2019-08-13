@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Jun 19 11:58:32 2019 (serrano)                */
+#*    Last change :  Tue Aug 13 09:28:18 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -24,7 +24,7 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = nodejs
-BCFLAGSRTS = -unsafe
+BCFLAGSRTS = #-unsafe
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -ljs2scheme_s-$(HOPRELEASE) -lhopscript_s-$(HOPRELEASE) \
   -lhop_s-$(HOPRELEASE)

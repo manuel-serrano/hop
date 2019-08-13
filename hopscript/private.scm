@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu May 23 09:27:36 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 09:03:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -57,7 +57,7 @@
 	   
 	   (generic js-valueof ::obj ::JsGlobalObject)
 	   
-	   (js-number->string obj)
+	   (js-number->string ::obj)
 	   (js-serializer ::JsObject)
 	   (js-unserializer ::obj)
 
@@ -271,10 +271,10 @@
 		 s)))))
 
    (cond
+      ((fixnum? obj) (integer->string obj))
       ((not (= obj obj)) "NaN")
       ((= obj +inf.0) "Infinity")
       ((= obj -inf.0) "-Infinity")
-      ((fixnum? obj) (integer->string obj))
       ((real? obj) (js-real->string obj))
       ((bignum? obj) (js-bignum->string obj))
       (else (number->string obj))))

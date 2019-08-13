@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jul 27 07:24:01 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 08:45:09 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -501,7 +501,7 @@
 		  (j2s-json-builtin-method fun args this mode return conf))
 	     =>
 	     (lambda (expr) expr))
-	    ((and ccache (= (bigloo-debug) 0) ccspecs)
+	    ((and ccache (= (config-get conf :debug 0) 0) ccspecs)
 	     (cond
 		((isa? field J2SString)
 		 (with-access::J2SString field (val)
@@ -729,7 +729,7 @@
 	 (let loop ((withs withs))
 	    (if (null? withs)
 		(call-unknown-function fun '((js-undefined)) args)
-		`(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs))
+		`(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs) conf)
 		     ,(call-unknown-function
 			 (j2s-get loc (car withs) #f 'object
 			    `(& ,(symbol->string id)) 'string 'any conf #f #f)
@@ -770,7 +770,7 @@
 		       (string->symbol (format "js-call~a" len)))))
 	 (with-access::J2SCall this (loc cache profid)
 	    (cond
-	       ((> (bigloo-debug) 0)
+	       ((> (config-get conf :debug 0) 0)
 		`(,(symbol-append call '/debug)
 		  ,j2s-unresolved-call-workspace
 		  ',loc

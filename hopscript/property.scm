@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Aug 12 16:51:45 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 09:47:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1864,7 +1864,6 @@
 	    (with-access::JsObject o (cmap)
 	       (unless (or (eq? cmap (js-not-a-cmap)) throw)
 		  (js-pcache-update-owner! cache 0 o miss-object)))
-;* 		  (js-pcache-update-descriptor! cache 0 o miss-object))) */
             (js-get-notfound name throw %this))
          ;; loop
          loop)))
