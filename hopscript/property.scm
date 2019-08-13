@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Aug 13 09:47:47 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 13:40:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1877,8 +1877,11 @@
 	   throw::bool %this::JsGlobalObject
 	   cache::JsPropertyCache
 	   #!optional (point -1) (cspecs '()))
+   ;; WARNING: because of the caching of cache misses that uses the
+   ;; pmap test to cache misses, pmap cannot be used in assigop.
+   ;; see j2s-scheme@js2scheme/scheme.scm
    (js-object-get-name/cache obj name throw %this cache point
-      '(pmap amap vtable)))
+      '(amap vtable)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-imap+ ...                               */
@@ -2480,8 +2483,11 @@
 	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+   ;; WARNING: because of the caching of cache misses that uses the
+   ;; pmap test to cache misses, pmap cannot be used in assigop.
+   ;; see j2s-scheme@js2scheme/scheme.scm
    (js-object-put-name/cache! o prop v throw %this cache point
-      '(pmap amap vtable)))
+      '(amap vtable)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-pmap+! ...                              */
