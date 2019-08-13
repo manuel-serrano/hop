@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Aug  7 08:55:26 2019 (serrano)                */
+;*    Last change :  Tue Aug 13 07:35:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2112,6 +2112,8 @@
 		      ,vtmp))))))
 
    (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
+      ;; WARNING: because of the caching of cache misses that uses the
+      ;; pmap test to cache misses, pmap cannot be used in assigop.
       (with-access::J2SAccess lhs (obj field cache cspecs)
 	 (let* ((prov (j2s-property-scheme field mode return conf))
 		(pro (match-case prov
@@ -2127,34 +2129,28 @@
 			  (eq? (j2s-type obj) 'object))
 		     ;; see the PCE optimization
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs '(imap-incache) cspecs field))
+			tl lhs rhs '(imap-incache) (remq 'pmap cspecs) field))
 		    ((memq (typeof-this obj conf) '(object this global))
 		     `(with-access::JsObject ,otmp (cmap)
 			 (let ((%omap cmap))
-			    (if (eq? (js-pcache-cmap ,(js-pcache cache)) %omap)
-				,(aput-assigop otmp pro prov op
-				    tl lhs rhs '(cmap-incache)
-				    (if (nocall? rhs) '(cmap-incache) cspecs)
-				    field)
-				,(aput-assigop otmp pro prov op
-				    tl lhs rhs '(cmap+) '(cmap+) field)))))
+			    ,(aput-assigop otmp pro prov op
+				tl lhs rhs '(imap cmap)
+				(if (nocall? rhs)
+				    '(imap cmap)
+				    (remq 'pmap cspecs))
+				field))))
 		    (else
 		      `(if (js-object? ,otmp)
 			   ,(with-object obj
 			      (lambda ()
 				 `(with-access::JsObject ,otmp (cmap)
 				    (let ((%omap cmap))
-				       (if (eq? (js-pcache-cmap ,(js-pcache cache))
-					      %omap)
-					   ,(aput-assigop otmp pro prov op
-					       tl lhs rhs '(cmap-incache)
-					       (if (nocall? rhs)
-						   '(cmap-incache)
-						   cspecs)
-					       field)
-					   ,(aput-assigop otmp pro prov op
-					       tl lhs rhs '(cmap+) '(cmap+)
-					       field))))))
+				       ,(aput-assigop otmp pro prov op
+					   tl lhs rhs '(cmap-incache)
+					   (if (nocall? rhs)
+					       '(imap cmap)
+					       (remq 'pmap cspecs))
+					   field)))))
 			  (let ((%omap (js-not-a-cmap)))
 			     ,(aput-assigop otmp pro prov op
 				 tl lhs rhs '() '() field)))))))))
