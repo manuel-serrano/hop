@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Aug 14 07:46:48 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 09:20:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1588,7 +1588,6 @@
 		   e))))
       ;; property search
       (lambda (o d)
-	 (tprint "property search p=" p " d=" (typeof d))
 	 (js-property-value base o p d %this))
       ;; not found
       (lambda (o)
