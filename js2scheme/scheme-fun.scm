@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Aug 13 08:45:23 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 07:58:46 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -793,8 +793,8 @@
 			   (lambda (%) ,id) 0 "get"))
 		   (set (js-make-function %this
 			   (lambda (% %v) (set! ,id %v)) 1 "set"))
-		   (%get (lambda (% %owner %pname %this) ,id))
-		   (%set (lambda (% %v %owner %pname %this) (set! ,id %v)))
+		   (%get (lambda (%) ,id))
+		   (%set (lambda (% %v) (set! ,id %v)))
 		   (configurable #t)
 		   (enumerable #t))))))
    

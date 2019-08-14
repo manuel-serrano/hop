@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jul 29 07:29:52 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 10:46:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2605,11 +2605,9 @@
 ;*    js-object-get-name/cache-miss ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (js-object-get-name/cache-miss o::JsArray p::JsStringLiteral
-		  throw::bool %this::JsGlobalObject
-		  cache::JsPropertyCache
-		  #!optional (point -1) (cspecs '()))
+		  throw::bool %this::JsGlobalObject cache::JsPropertyCache)
    (with-access::JsArray o (vec ilen length)
-      (let ((i::uint32 (js-toindex p)))
+      (let ((i::uint32 ((@ js-toindex __hopscript_public) p)))
 	 (cond
 	    ((<u32 i ilen)
 	     (u32vref vec i))

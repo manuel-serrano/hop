@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Mon Jul 29 07:01:50 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 10:19:16 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -164,7 +164,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-cache cache::JsPropertyCache
 	   #!key imap emap cmap pmap amap vtable)
-   (with-access::JsPropertyCache cache (name cntimap cntemap cntcmap cntpmap cntamap cntvtable usage)
+   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntamap cntvtable usage)
       (when *profile-cache*
 	 (cond
 	    (imap (set! cntimap (+u32 #u32:1 cntimap)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Aug 12 16:49:41 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 10:45:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -121,10 +121,10 @@
       ;; local constant strings
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
       ;; properties
-      (let ((throwget (lambda (o owner pname %this)
+      (let ((throwget (lambda (o)
 			 (js-raise-type-error %this
 			    "[[ThrowTypeError]] ~a" o)))
-	    (throwset (lambda (o v owner pname %this)
+	    (throwset (lambda (o v)
 			 (js-raise-type-error %this
 			    "[[ThrowTypeError]] ~a" o))))
 	 (set! strict-caller-property
@@ -468,7 +468,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-object-get-name/cache-miss o::JsArguments p::JsStringLiteral
 		  throw::bool %this::JsGlobalObject
-		  cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+		  cache::JsPropertyCache)
    (js-get o p %this))
 
 ;*---------------------------------------------------------------------*/
