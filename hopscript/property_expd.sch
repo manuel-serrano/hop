@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Jul 28 06:23:42 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 09:34:48 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -82,16 +82,24 @@
 ;*---------------------------------------------------------------------*/
 (define (js-make-pcache-table-expander x e)
    (match-case x
-      ((?- (and (? integer?) ?num) ?src)
+      ((?- (and (? integer?) ?num) ?src . ?profile-table-info)
        (e `(cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
-	      ($js-make-pcache-table (pragma::obj "(obj_t)(__bgl_pcache)")
-		 ,num ,src (current-thread)
-		 (instantiate::JsPropertyCache
-		    (pctable (pragma::obj "(obj_t)(__bgl_pcache)"))
-		    (src ,src))))
+	      ((and bigloo-c (not hopjs-worker-slave))
+	       ,(if (pair? profile-table-info)
+		    `((@ js-pcache-table-profile-init __hopscript_property)
+		      ($js-make-pcache-table (pragma::obj "(obj_t)(__bgl_pcache)")
+			 ,num ,src (current-thread)
+			 (instantiate::JsPropertyCache
+			    (pctable (pragma::obj "(obj_t)(__bgl_pcache)"))
+			    (src ,src)))
+		      ,(car profile-table-info))
+		    `($js-make-pcache-table (pragma::obj "(obj_t)(__bgl_pcache)")
+			,num ,src (current-thread)
+			(instantiate::JsPropertyCache
+			   (pctable (pragma::obj "(obj_t)(__bgl_pcache)"))
+			   (src ,src)))))
 	     (else
-	      ((@ js-make-pcache-table __hopscript_property) ,num ,src)))
+	      ((@ js-make-pcache-table __hopscript_property) ,num ,src ,@profile-table-info)))
 	  e))
       (else
        (error "js-make-pcache" "bad syntax" x))))
@@ -318,8 +326,7 @@
 	    (cond
 	       ((null? cs)
 		;; cache miss
-		`(,(cache-miss-fun prop)
-		  ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs))
+		`(,(cache-miss-fun prop) ,obj ,prop ,throw ,%this ,cache))
 	       ((eq? cs 'imap)
 		`(let ((idx (js-pcache-index ,cache)))
 		    (js-profile-log-cache ,cache :imap #t)
@@ -508,8 +515,7 @@
 		 (cond
 		    ((null? cs)
 		     `((@ js-object-put-name/cache-miss! __hopscript_property)
-		       ,obj ,prop ,tmp ,throw ,%this
-		       ,cache ,loc ',cspecs))
+		       ,obj ,prop ,tmp ,throw ,%this ,cache ,loc))
 		    ((eq? cs 'imap)
 		     `(let ((idx (js-pcache-index ,cache)))
 			 (js-profile-log-cache ,cache :imap #t)

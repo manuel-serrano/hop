@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Aug 13 08:41:36 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 09:24:53 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -41,7 +41,10 @@
 	    `(%define-cnst-table ,(length cnsts))
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
-		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
+		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)
+		   ,@(if (config-get conf :profile-cache #f)
+			 (list `',(j2s-profile-cache this conf))
+			 '())))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    (when (config-get conf :profile-call #f)
@@ -76,7 +79,11 @@
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
 		   (define %pcache
-		      (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
+		      (js-make-pcache-table ,pcache-size
+			 ,(config-get conf :filename)
+			 ,@(if (config-get conf :profile-cache #f)
+			       (list `',(j2s-profile-cache this conf))
+			       '())))
 		   ,@(if (config-get conf :profile-call #f)
 			 `((define %call-log (make-vector ,call-size #l0))
 			   (define %call-locations ',(call-locations this)))
@@ -118,7 +125,11 @@
 		(%define-pcache ,pcache-size)
 		(hop-sofile-compile-policy-set! 'static)
 		(define %pcache
-		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
+		   (js-make-pcache-table ,pcache-size
+		      ,(config-get conf :filename)
+		      ,@(if (config-get conf :profile-cache #f)
+			    (list `',(j2s-profile-cache this conf))
+			    '())))
 		,@(if (config-get conf :profile-call #f)
 		      `((define %call-log (make-vector ,call-size #l0)))
 		      '())
@@ -188,7 +199,11 @@
 			      (%define-cnst-table ,(length cnsts))
 			      (%define-pcache ,pcache-size)	       
 			      (define %pcache
-				 (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
+				 (js-make-pcache-table ,pcache-size
+				    ,(config-get conf :filename)
+				    ,@(if (config-get conf :profile-cache #f)
+					  (list `',(j2s-profile-cache this conf))
+					  '())))
 			      ,@(if (config-get conf :profile-call #f)
 				    `((define %call-log (make-vector ,call-size #l0))
 				      (define %call-locations ',(call-locations this)))
@@ -225,7 +240,11 @@
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
 		(define %pcache
-		   (js-make-pcache-table ,pcache-size ,(config-get conf :filename)))
+		   (js-make-pcache-table ,pcache-size
+		      ,(config-get conf :filename)
+		      ,@(if (config-get conf :profile-cache #f)
+			    (list `',(j2s-profile-cache this conf))
+			    '())))
 		,@(if (config-get conf :profile-call #f)
 		      `((define %call-log (make-vector ,call-size #l0))
 			(define %call-locations ',(call-locations this)))
@@ -622,3 +641,60 @@
 	       (with-access::J2SDeclExtern d (id)
 		  (eq? id searchid))))
       decls))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-profile-cache ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-profile-cache this::J2SProgram conf)
+   (with-access::J2SProgram this (pcache-size)
+      (let ((profile-info-table (make-vector pcache-size '#(-1 "" get))))
+	 (profile-cache-info-init this profile-info-table)
+	 profile-info-table)))
+
+;*---------------------------------------------------------------------*/
+;*    profile-access ...                                               */
+;*---------------------------------------------------------------------*/
+(define (profile-access this::J2SAccess table usage #!optional cache)
+   (with-access::J2SAccess this (obj field (acache cache) loc)
+      (let ((c (or cache acache)))
+	 (when (and c (isa? field J2SString))
+	    (with-access::J2SString field (val)
+	       (match-case loc
+		  ((at ?- ?point)
+		   (vector-set! table c `#(,point ,val ,usage)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    profile-cache-info-init ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (profile-cache-info-init this::J2SNode table)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    profile-cache-info-init ::J2SAccess ...                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (profile-cache-info-init this::J2SAccess table)
+   (profile-access this table 'get))
+   
+;*---------------------------------------------------------------------*/
+;*    profile-cache-info-init ::J2SAssig ...                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (profile-cache-info-init this::J2SAssig table)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SAccess)
+	  (profile-access lhs table 'put)
+	  (profile-cache-info-init lhs table))
+      (profile-cache-info-init rhs table)))
+	  
+;*---------------------------------------------------------------------*/
+;*    profile-cache-info-init ::J2SCall ...                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (profile-cache-info-init this::J2SCall table)
+   (with-access::J2SCall this (fun args thisarg cache loc)
+      (if (isa? fun J2SAccess)
+	  (begin
+	     (when cache
+		(profile-access fun table 'get cache))
+	     (profile-access fun table 'call))
+	  (profile-cache-info-init fun table))
+      (for-each (lambda (a) (profile-cache-info-init a table)) args)
+      (for-each (lambda (a) (profile-cache-info-init a table)) thisarg)))

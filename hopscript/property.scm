@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Aug 14 07:46:48 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 09:26:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -50,7 +50,8 @@
 	   (js-debug-pcache ::obj #!optional (msg ""))
 	   (js-debug-cmap ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
-	   (js-make-pcache-table ::int ::obj)
+	   (js-make-pcache-table ::int ::obj #!optional profile-info-table)
+	   (js-pcache-table-profile-init::vector ::vector ::obj)
 	   (js-validate-pmap-pcache! ::JsPropertyCache)
 	   (js-pcache-update-descriptor! ::JsPropertyCache ::long ::JsObject ::obj)
 	   (inline js-pcache-ref ::obj ::int)
@@ -113,8 +114,7 @@
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
 	   (generic js-object-get-name/cache-miss ::JsObject ::JsStringLiteral
-	      ::bool ::JsGlobalObject
-	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	      ::bool ::JsGlobalObject ::JsPropertyCache)
 	   
 	   (js-object-get-name/cache-imap+ ::JsObject ::obj ::bool
 	      ::JsGlobalObject
@@ -127,8 +127,7 @@
 	      ::JsGlobalObject)
 	   (js-global-object-get-name/cache ::JsObject ::JsStringLiteral ::bool
 	      ::JsGlobalObject
-	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   
+	      ::JsPropertyCache)
 	   
 	   (js-can-put o::JsObject ::obj ::JsGlobalObject)
 	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::obj ::JsGlobalObject)
@@ -139,7 +138,7 @@
 	   (generic js-put-length! ::obj ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-put-jsobject! ::JsObject ::obj ::obj ::bool ::bool
 	      ::JsGlobalObject
-	      ::obj #!optional (loc #f) (cspecs '()))
+	      ::obj #!optional (loc #f))
 	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (generic js-put/cache! ::obj ::obj ::obj ::bool ::JsGlobalObject
 	      #!optional (point -1) (cspecs '()) (src ""))
@@ -152,7 +151,7 @@
 	   
 	   (generic js-object-put-name/cache-miss! ::JsObject ::JsStringLiteral ::obj ::bool
 	      ::JsGlobalObject
-	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	      ::JsPropertyCache #!optional (point -1))
 	   (js-object-put-name/cache-imap+! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
@@ -562,17 +561,36 @@
 ;*    -------------------------------------------------------------    */
 ;*    This function is used by a macro of property_expd.sch.           */
 ;*---------------------------------------------------------------------*/
-(define (js-make-pcache-table len src)
+(define (js-make-pcache-table len src #!optional profile-info-table)
    (let ((pctable ($make-vector-uncollectable len #unspecified)))
       (let loop ((i 0))
-	 (if (=fx i len)
-	     pctable
-	     (begin
-		(vector-set! pctable i
-		   (instantiate::JsPropertyCache
-		      (src src)
-		      (pctable pctable)))
-		(loop (+fx i 1)))))))
+	 (when (<fx i len)
+	    (vector-set! pctable i
+	       (instantiate::JsPropertyCache
+		  (src src)
+		  (pctable pctable)))
+	    (loop (+fx i 1))))
+      (if (vector? profile-info-table)
+	  ;; optional profile-info-table that is only provided when
+	  ;; the module is compiled in profile mode
+	  (js-pcache-table-profile-init pctable profile-info-table)
+	  pctable)))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-table-profile-init ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-table-profile-init pctable profile-info-table)
+   (when (vector? profile-info-table)
+      (let loop ((i (-fx (vector-length pctable) 1)))
+	 (when (>=fx i 0)
+	    (let ((c (vector-ref pctable i))
+		  (e (vector-ref profile-info-table i)))
+	       (with-access::JsPropertyCache e (name point usage)
+		  (set! point (vector-ref e 0))
+		  (set! name (js-name->jsstring (vector-ref e 1)))
+		  (set! usage (vector-ref e 2)))
+	       (loop (+fx i 1))))))
+   pctable)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-ref ...                                                */
@@ -1588,7 +1606,6 @@
 		   e))))
       ;; property search
       (lambda (o d)
-	 (tprint "property search p=" p " d=" (typeof d))
 	 (js-property-value base o p d %this))
       ;; not found
       (lambda (o)
@@ -1802,7 +1819,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-global-object-get-name/cache o::JsObject name::JsStringLiteral
 	   throw::bool %this::JsGlobalObject
-	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   cache::JsPropertyCache)
    (with-access::JsObject o ((omap cmap) elements)
       (with-access::JsPropertyCache cache (cmap pmap amap index owner)
 	 (cond
@@ -1816,7 +1833,7 @@
 		(let ((desc (vector-ref elements index)))
 		   (js-property-value o owner name desc %this))))
 	    (else
-	     (js-object-get-name/cache-miss o name throw %this cache point cspecs))))))
+	     (js-object-get-name/cache-miss o name throw %this cache))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ...                                */
@@ -1828,8 +1845,7 @@
 (define-generic (js-object-get-name/cache-miss o::JsObject
 		   name::JsStringLiteral
 		   throw::bool %this::JsGlobalObject
-		   cache::JsPropertyCache
-		   #!optional (point -1) (cspecs '()))
+		   cache::JsPropertyCache)
    
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
@@ -1838,10 +1854,7 @@
          (js-cmap-vtable-add! omap vindex i cache)))
    
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage)
-      (set! cntmiss (+u32 #u32:1 cntmiss))
-      (set! cname name)
-      (set! cpoint point)
-      (set! usage 'get))
+      (set! cntmiss (+u32 #u32:1 cntmiss)))
 
    (let loop ((obj o))
       (jsobject-find obj o name
@@ -2040,7 +2053,7 @@
 (define (js-put-jsobject! o prop v
 	   throw::bool extend::bool
 	   %this::JsGlobalObject
-	   cache #!optional (loc #f) (cspecs '()))
+	   cache #!optional (loc #f))
    
    (define name (js-toname prop %this))
    
@@ -2458,10 +2471,10 @@
 (define-generic (js-object-put-name/cache-miss! o::JsObject prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
-	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   cache::JsPropertyCache #!optional (point -1))
    (with-access::JsObject o (cmap)
       (let* ((%omap cmap)
-	     (tmp (js-put-jsobject! o prop v throw #t %this cache point cspecs)))
+	     (tmp (js-put-jsobject! o prop v throw #t %this cache point)))
 	 (with-access::JsPropertyCache cache (cntmiss name (cpoint point) usage)
 	    (set! cntmiss (+u32 #u32:1 cntmiss))
 	    (set! name prop)
