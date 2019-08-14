@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Aug 13 13:40:28 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 07:46:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -73,8 +73,10 @@
 	   (inline js-is-generic-descriptor?::bool obj)
 	   (js-from-property-descriptor ::JsGlobalObject propname desc ::obj)
 	   (js-to-property-descriptor ::JsGlobalObject desc ::obj)
-	   (js-property-value ::obj ::obj ::obj ::JsPropertyDescriptor ::JsGlobalObject)
-	   (js-property-value-set! obj::JsObject ::obj ::obj ::JsPropertyDescriptor v ::JsGlobalObject)
+	   (inline js-property-amap-value ::obj ::JsObject ::obj ::JsPropertyDescriptor ::JsGlobalObject)
+	   (inline js-property-amap-value-set! ::obj ::JsObject ::obj ::JsPropertyDescriptor ::obj ::JsGlobalObject)
+	   (js-property-value ::obj ::JsObject ::obj ::JsPropertyDescriptor ::JsGlobalObject)
+	   (js-property-value-set! ::obj ::JsObject ::obj ::JsPropertyDescriptor ::obj ::JsGlobalObject)
 	   
 	   (js-object-add! obj::JsObject index::long value)
 	   (js-object-ctor-add! obj::JsObject index::long value)
@@ -526,11 +528,10 @@
    (if (js-function? fun)
        (with-access::JsFunction fun (procedure)
 	  (if (correct-arity? procedure 1)
-	      (lambda (this owner pname %this)
-		 (procedure this))
-	      (lambda (this owner pname %this)
+	      procedure
+	      (lambda (this)
 		 (js-call0 %this fun this))))
-       (lambda (obj owner pname %this)
+       (lambda (this)
 	  (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
@@ -540,11 +541,10 @@
    (if (js-function? fun)
        (with-access::JsFunction fun (procedure)
 	  (if (correct-arity? procedure 2)
-	      (lambda (this v owner pname %this)
-		 (procedure this v))
-	      (lambda (this v owner pname %this)
+	      procedure
+	      (lambda (this v)
 		 (js-call1 %this fun this v))))
-       (lambda (obj v owner pname %this)
+       (lambda (this v)
 	  (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
@@ -1294,6 +1294,28 @@
 		 (configurable configurable)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-property-amap-value ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-property-amap-value obj propowner propname desc %this)
+   (with-access::JsWrapperDescriptor desc (%get)
+      ;; JsWrapperDescriptor are used by JsFunction and JsProxy. 
+      ;; Each proxy object, uses exactly one JsWrapperDescriptor for
+      ;; all its attributes. Hence, the NAME property of the descriptor
+      ;; is meaningless and this is why the %GET and %SET functions of
+      ;; JsWrapperDescriptor take an explicit name as argument
+      (%get obj propowner propname %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-property-amap-value-set! ...                                  */
+;*    -------------------------------------------------------------    */
+;*    Set the value of a property.                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-property-amap-value-set! obj propowner propname desc v %this)
+   (with-access::JsWrapperDescriptor desc (%set)
+      ;; see JS-PROPERTY-VALUE for name
+      (%set obj v propowner propname %this)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-property-value ...                                            */
 ;*    -------------------------------------------------------------    */
 ;*    Get the value of a property.                                     */
@@ -1303,18 +1325,12 @@
       (cond
 	 ((eq? cn JsAccessorDescriptor)
 	  (with-access::JsAccessorDescriptor desc (%get)
-	     (%get obj propowner propname %this)))
+	     (%get obj)))
 	 ((eq? cn JsValueDescriptor)
 	  (with-access::JsValueDescriptor desc (value)
 	     value))
 	 ((eq? cn JsWrapperDescriptor)
-	  (with-access::JsWrapperDescriptor desc (%get)
-	     ;; JsWrapperDescriptor are used by JsFunction and JsProxy. 
-	     ;; Each proxy object, uses exactly one JsWrapperDescriptor for
-	     ;; all its attributes. Hence, the NAME property of the descriptor
-	     ;; is meaningless and this is why the %GET and %SET functions of
-	     ;; JsWrapperDescriptor take an explicit name as argument
-	     (%get obj propowner propname %this)))
+	  (js-property-amap-value obj propowner propname desc %this))
 	 (else
 	  (js-undefined)))))
 
@@ -1328,15 +1344,13 @@
       (cond
 	 ((eq? cn JsAccessorDescriptor)
 	  (with-access::JsAccessorDescriptor desc (%set)
-	     (%set obj v propowner propname %this)))
+	     (%set obj v)))
 	 ((eq? cn JsValueDescriptor)
 	  (with-access::JsValueDescriptor desc (value)
 	     (set! value v)
 	     v))
 	 ((eq? cn JsWrapperDescriptor)
-	  (with-access::JsWrapperDescriptor desc (%set)
-	     ;; see JS-PROPERTY-VALUE for name
-	     (%set obj v propowner propname %this)))
+	  (js-property-amap-value-set! obj propowner propname desc v %this))
 	 (else
 	  (js-undefined)))))
 
@@ -1574,6 +1588,7 @@
 		   e))))
       ;; property search
       (lambda (o d)
+	 (tprint "property search p=" p " d=" (typeof d))
 	 (js-property-value base o p d %this))
       ;; not found
       (lambda (o)
@@ -2049,7 +2064,7 @@
 	     (begin
 		(when (and (>=fx index 0) cache)
 		   (js-pcache-update-descriptor! cache index o propobj))
-		(%set o v o prop %this)
+		(%set o v)
 		;;(js-call1 %this set o v)
 		v)
 	     ;; 8.12.4, setp 2.a
@@ -2895,7 +2910,7 @@
 		      (set! value dvalue)))
 		  ((isa? current JsWrapperDescriptor)
 		   (with-access::JsWrapperDescriptor current (%set)
-		      (%set o dvalue o name %this)))))))
+		      (js-property-amap-value-set! o o name current dvalue %this)))))))
       #t)
    
    (define (propagate-accessor-descriptor! current desc)

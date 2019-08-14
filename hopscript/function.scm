@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Aug 12 15:30:11 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 07:56:49 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -225,10 +225,10 @@
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype))
       ;; throwers
-      (let* ((throwget (lambda (o owner pname %this)
+      (let* ((throwget (lambda (o)
 			  (js-raise-type-error %this
 			     "[[ThrowTypeError]] ~a" o)))
-	     (throwset (lambda (o v owner pname %this)
+	     (throwset (lambda (o v)
 			  (js-raise-type-error %this
 			     "[[ThrowTypeError]] ~a" o)))
 	     (thrower (js-make-function %this
