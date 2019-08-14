@@ -121,10 +121,10 @@
       ;; local constant strings
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
       ;; properties
-      (let ((throwget (lambda (o owner pname %this)
+      (let ((throwget (lambda (o)
 			 (js-raise-type-error %this
 			    "[[ThrowTypeError]] ~a" o)))
-	    (throwset (lambda (o v owner pname %this)
+	    (throwset (lambda (o v)
 			 (js-raise-type-error %this
 			    "[[ThrowTypeError]] ~a" o))))
 	 (set! strict-caller-property
