@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Aug 14 10:45:54 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 13:29:13 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -41,6 +41,8 @@
 	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
 	   (js-proxy-property-value ::JsObject ::JsProxy ::JsStringLiteral ::JsGlobalObject)
+	   (js-object-proxy-get-name/cache-miss ::JsObject
+	      ::JsStringLiteral ::bool ::JsGlobalObject ::JsPropertyCache)
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (js-call-proxy/cache-miss0 ::JsGlobalObject
 	      ::JsProxy ::obj)
@@ -312,7 +314,6 @@
 (define-inline (js-proxy-get proxy::JsProxy prop %this::JsGlobalObject)
 
    (define (check o target v)
-;;      (if (null? (js-object-properties target))
       (if (js-object-mode-plain? target)
 	  v
 	  (proxy-check-property-value target o prop %this v (& "get"))))
@@ -346,6 +347,21 @@
    (let ((name (js-toname prop %this)))
       (js-profile-log-get name -1)
       (js-proxy-get o name %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-proxy-get-name/cache-miss ...                          */
+;*    -------------------------------------------------------------    */
+;*    The performance of cache misses only matters for proxy object.   */
+;*    The purpose of this function is to favor them by eliminating the */
+;*    cost of an expensive generic function dispatch.                  */
+;*---------------------------------------------------------------------*/
+(define (js-object-proxy-get-name/cache-miss o::JsObject
+		   name::JsStringLiteral
+		   throw::bool %this::JsGlobalObject
+		   cache::JsPropertyCache)
+   (if (js-proxy? o)
+       (js-proxy-get o name %this)
+       (js-object-get-name/cache-miss o name throw %this cache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ::JsProxy ...                      */
