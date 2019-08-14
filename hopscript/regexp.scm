@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Aug  9 09:37:35 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 13:54:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -29,7 +29,8 @@
 	   __hopscript_lib
 	   __hopscript_string
 	   __hopscript_stringliteral
-	   __hopscript_error)
+	   __hopscript_error
+	   __hopscript_proxy)
 
    (export (js-init-regexp! ::JsGlobalObject)
 	   (inline js-regexp?::bool ::obj)

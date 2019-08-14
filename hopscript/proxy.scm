@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Aug 14 13:29:13 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 13:46:34 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -43,6 +43,10 @@
 	   (js-proxy-property-value ::JsObject ::JsProxy ::JsStringLiteral ::JsGlobalObject)
 	   (js-object-proxy-get-name/cache-miss ::JsObject
 	      ::JsStringLiteral ::bool ::JsGlobalObject ::JsPropertyCache)
+	   (js-object-proxy-put-name/cache-miss! ::JsObject ::JsStringLiteral
+	      ::obj ::bool
+	      ::JsGlobalObject
+	      ::JsPropertyCache #!optional (point -1))
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (js-call-proxy/cache-miss0 ::JsGlobalObject
 	      ::JsProxy ::obj)
@@ -410,6 +414,17 @@
 (define-method (js-put/cache! o::JsProxy prop v::obj throw::bool %this
 		  #!optional (point -1) (cspecs '()))
    (js-put! o prop v throw %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-proxy-put-name/cache-miss! ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-object-proxy-put-name/cache-miss! o::JsObject prop::JsStringLiteral
+	   v::obj throw::bool
+	   %this::JsGlobalObject
+	   cache::JsPropertyCache #!optional (point -1))
+   (if (js-proxy? o)
+       (js-proxy-put! o prop v throw %this)
+       (js-object-put-name/cache-miss! o prop v throw %this cache point)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-miss! ::JsProxy ...                     */

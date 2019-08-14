@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Aug 14 13:26:46 2019 (serrano)                */
+;*    Last change :  Wed Aug 14 13:46:53 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -311,9 +311,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-get-name/cache-expander x e)
 
-   (define (cache-miss-fun prop)
-      '(@ js-object-proxy-get-name/cache-miss __hopscript_proxy))
-
    (define (let-cmap cs obj body)
       (if (pair? cs)
 	  `(with-access::JsObject ,obj (cmap)
@@ -326,7 +323,8 @@
 	    (cond
 	       ((null? cs)
 		;; cache miss
-		`(,(cache-miss-fun prop) ,obj ,prop ,throw ,%this ,cache))
+		`((@ js-object-proxy-get-name/cache-miss __hopscript_proxy)
+		  ,obj ,prop ,throw ,%this ,cache))
 	       ((eq? cs 'imap)
 		`(let ((idx (js-pcache-index ,cache)))
 		    (js-profile-log-cache ,cache :imap #t)
@@ -514,7 +512,7 @@
 	     ,(let loop ((cs cspecs))
 		 (cond
 		    ((null? cs)
-		     `((@ js-object-put-name/cache-miss! __hopscript_property)
+		     `((@ js-object-proxy-put-name/cache-miss! __hopscript_proxy)
 		       ,obj ,prop ,tmp ,throw ,%this ,cache ,loc))
 		    ((eq? cs 'imap)
 		     `(let ((idx (js-pcache-index ,cache)))
