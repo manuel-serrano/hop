@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Aug 14 13:46:34 2019 (serrano)                */
+;*    Last change :  Thu Aug 15 07:39:01 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -75,6 +75,17 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-debug-object ::JsProxy ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-debug-object obj::JsProxy #!optional (msg ""))
+   (with-access::JsProxy obj ((target __proto__) handler)
+      (fprint (current-error-port) ">>> JsProxy" msg)
+      (fprint (current-error-port) ">>> target: ")
+      (js-debug-object target)
+      (fprint (current-error-port) ">>> handler: ")
+      (js-debug-object handler)))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarray ...                                                      */
@@ -240,9 +251,11 @@
 (define (js-proxy-property-value obj proxy prop %this)
    
    (define (check target v)
-      (if (js-object-mode-plain? target)
-	  v
-	  (proxy-check-property-value target obj prop %this v (& "get"))))
+      (cond
+	 ((js-object-mode-plain? target)
+	  v)
+	 (else
+	  (proxy-check-property-value target obj prop %this v (& "get")))))
 
    (with-access::JsProxy proxy ((target __proto__) handler getcache)
       (proxy-check-revoked! proxy "get" %this)
@@ -577,8 +590,13 @@
 ;*    proxy-check-property-value ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (proxy-check-property-value target owner prop %this v get-or-set)
-   (if (null? (js-object-properties target))
-       #t
+   (cond
+      ((null? (js-object-properties target))
+       v)
+      (else
+       (tprint "prop=" prop " " (typeof prop) " target=" (typeof target)
+	  " " (js-object-properties target))
+       (js-debug-object target)
        (let ((prop (js-get-own-property target prop %this)))
 	  (if (eq? prop (js-undefined))
 	      v
@@ -609,7 +627,7 @@
 			   (else
 			    v))))
 		    (else
-		     v)))))))
+		     v))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    proxy-check-property-has ...                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Aug 14 09:26:06 2019 (serrano)                */
+;*    Last change :  Fri Aug 16 07:43:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -356,6 +356,7 @@
 		 (with-access::JsConstructMap cmap (%id props methods size)
 		    (fprint (current-error-port) "===" msg (typeof obj) " MAPPED"
 		       " length=" (vector-length elements)
+		       " plain=" (js-object-mode-plain? obj)
 		       " inline=" (js-object-inline-elements? obj)
 		       " size=" size
 		       " extensible=" (js-object-mode-extensible? obj)
