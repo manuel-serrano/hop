@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Thu Aug 15 07:39:01 2019 (serrano)                */
+;*    Last change :  Fri Aug 16 08:59:35 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -400,12 +400,12 @@
 		    setcache point '(imap emap cmap pmap amap vtable))))
 	 (cond
 	    ((and (object? set) (eq? (object-class set) JsFunction4))
-	     (unless (null? (js-object-properties target))
+	     (unless (js-object-mode-plain? target)
 		(proxy-check-property-value target target prop %this v (& "set")))
 	     (with-access::JsFunction set (procedure)
 		(procedure handler target prop v)))
 	    ((js-function? set)
-	     (unless (null? (js-object-properties target))
+	     (unless (js-object-mode-plain? target)
 		(proxy-check-property-value target target prop %this v (& "set")))
 	     (js-call4 %this set handler target prop v o))
 	    ((js-proxy? set)
@@ -594,9 +594,6 @@
       ((null? (js-object-properties target))
        v)
       (else
-       (tprint "prop=" prop " " (typeof prop) " target=" (typeof target)
-	  " " (js-object-properties target))
-       (js-debug-object target)
        (let ((prop (js-get-own-property target prop %this)))
 	  (if (eq? prop (js-undefined))
 	      v
