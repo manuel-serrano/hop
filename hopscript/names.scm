@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri Jun  7 09:11:41 2019 (serrano)                */
+;*    Last change :  Tue Aug 20 10:43:39 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -415,12 +415,12 @@
 	     (let ((l (memq js-integer-names gcroots)))
 		(set-car! l nvec))))
 	 (set! js-integer-names nvec)))
-   
+
    (cond
+      ((and (>fx num -10) (<fx num js-integer-length))
+       (vector-ref js-integer-names (+fx num 10)))
       ((or (<=fx num -10) (>=fx num (uint32->fixnum js-index-threshold)))
        (js-ascii-toname-unsafe (fixnum->string num)))
-      ((<fx num js-integer-length)
-       (vector-ref js-integer-names (+fx num 10)))
       (else
        (let ((len (vector-length js-integer-names)))
 	  (when (<=fx len (+fx 10 num))

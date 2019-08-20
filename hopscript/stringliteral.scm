@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Aug  9 08:41:31 2019 (serrano)                */
+;*    Last change :  Tue Aug 20 10:36:48 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -272,7 +272,7 @@
 		(js-toindex num)))
 	  false))
 
-   (string->index (js-jsstring->string obj)))
+    (string->index (js-jsstring->string obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toindex ::JsStringLiteralIndex ...                            */
