@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Aug 13 14:09:33 2019 (serrano)                */
+;*    Last change :  Tue Aug 20 14:30:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -442,13 +442,15 @@
       (unless (memq :commonjs-export o)
 	 (set! o (cons* :commonjs-export #t o)))
       ;; debugging
-      (when (or (>= (bigloo-debug) 2)
-		(string-contains (or (getenv "HOPTRACE") "") "j2s:"))
-	 (unless (memq :debug-stage o)
-	    (set! o (cons* :debug-stage #t o)))
-	 (when (string-contains (or (getenv "HOPTRACE") "") "format:json")
-	    (unless (memq :debug-stage-format o)
-	       (set! o (cons* :debug-stage-format 'json o)))))
+      (when (>= (bigloo-debug) 0)
+	 (set! o (append o `(:debug ,(bigloo-debug))))
+	 (when (or (>= (bigloo-debug) 2)
+		   (string-contains (or (getenv "HOPTRACE") "") "j2s:"))
+	    (unless (memq :debug-stage o)
+	       (set! o (cons* :debug-stage #t o)))
+	    (when (string-contains (or (getenv "HOPTRACE") "") "format:json")
+	       (unless (memq :debug-stage-format o)
+		  (set! o (cons* :debug-stage-format 'json o))))))
       ;; profiling
       (when (config-get args :profile #f)
 	 (unless (memq :profile-call o)
