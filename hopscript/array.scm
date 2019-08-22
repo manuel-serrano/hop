@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Aug 22 07:16:47 2019 (serrano)                */
+;*    Last change :  Thu Aug 22 17:04:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2939,9 +2939,13 @@
 (define (js-array-put-length! o::JsArray len::uint32)
    (with-access::JsArray o (length ilen)
       (set! length len)
-      (when (<u32 len ilen)
-	 (js-array-mark-invalidate!)
-	 (set! ilen len))
+      (cond
+	 ((<u32 len ilen)
+	  (js-array-mark-invalidate!)
+	  (set! ilen len))
+	 ((js-object-mode-inline? o)
+	  (js-object-mode-inline-set! o #f)
+	  (js-object-mode-holey-set! o #t)))
       (%assert-array! o "js-put-length!")))
    
 ;*---------------------------------------------------------------------*/
