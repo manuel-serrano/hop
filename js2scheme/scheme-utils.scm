@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Aug  4 07:26:42 2019 (serrano)                */
+;*    Last change :  Tue Aug 20 14:24:56 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -521,7 +521,8 @@
 	   optim-arrayp #!optional (cspecs '(cmap pmap amap vtable)))
    
    (define (js-get obj prop %this)
-      (if (config-get conf :profile-cache #f)
+      (if (or (config-get conf :profile-cache #f)
+	      (> (config-get conf :debug 0) 0))
 	  `(js-get/debug ,(box obj tyobj conf) ,prop %this ',loc)
 	  `(js-get ,(box obj tyobj conf) ,prop %this)))
    
@@ -534,7 +535,7 @@
 		     ((& ?str) str)
 		     (else #f))))
       (cond
-	 ((> (bigloo-debug) 0)
+	 ((> (config-get conf :debug 0) 0)
 	  (if (string? propstr)
 	      `(js-get/debug ,obj ,prop %this ',loc)
 	      `(js-get/debug ,obj ,(box prop typrop conf) %this ',loc)))
@@ -633,7 +634,8 @@
 	   optim-arrayp #!optional (cspecs '(cmap pmap amap vtable)))
 
    (define (js-put! o p v mode %this)
-      (if (config-get conf :profile-cache #f)
+      (if (or (config-get conf :profile-cache #f)
+	      (> (config-get conf :debug 0) 0))
 	  `(js-put/debug! ,o ,p ,v ,mode %this ',loc)
 	  `(js-put! ,o ,p ,v ,mode %this)))
    
@@ -657,7 +659,7 @@
 		     ((& ?str) str)
 		     (else #f))))
       (cond
-	 ((> (bigloo-debug) 0)
+	 ((> (config-get conf :debug 0) 0)
 	  (if (string? propstr)
 	      `(js-put/debug! ,obj ,prop
 		  ,(box val tyval conf) ,mode %this ',loc)

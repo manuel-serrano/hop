@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun Jun 23 08:18:28 2019 (serrano)                */
+;*    Last change :  Tue Aug 20 14:52:43 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -666,14 +666,18 @@
 ;*    hopjs-response-file ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-file this file req %this)
-   (if (js-object? req)
-       (instantiate::http-response-file
-	  (charset (get/default req (& "charset") %this (hop-charset)))
-	  (content-type (get/default req (& "contentType") %this #f))
-	  (header (get/list req (& "header") %this '()))
-	  (file (js-tostring file %this)))
-       (instantiate::http-response-file
-	  (file (js-tostring file %this)))))
+   (let ((path (js-tostring file %this)))
+      (if (js-object? req)
+	  (instantiate::http-response-file
+	     (charset (get/default req (& "charset") %this (hop-charset)))
+	     (content-type (get/default req (& "contentType") %this
+			      (mime-type path "text/plain")))
+	     (header (get/list req (& "header") %this '()))
+	     (file path))
+	  (instantiate::http-response-file
+	     (file path)
+	     (charset (hop-locale))
+	     (content-type (mime-type path "text/plain"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-string ...                                        */

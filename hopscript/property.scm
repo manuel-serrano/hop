@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Aug 16 07:43:17 2019 (serrano)                */
+;*    Last change :  Thu Aug 22 07:13:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1753,8 +1753,8 @@
 ;*    js-object-get/name-cache ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-get/name-cache o prop %this)
-   (if (not (js-jsstring? prop))
-       (js-get o prop %this)
+   (cond
+      ((js-jsstring? prop)
        (synchronize-name
 	  (let ((pname (js-jsstring-toname-unsafe prop)))
 	     (cond
@@ -1773,7 +1773,11 @@
 		    (js-name-pcacher-set! pname cache)
 		    (js-object-get-name/cache o pname #f
 		       %this
-		       cache -1 '(imap emap cmap pmap amap)))))))))
+		       cache -1 '(imap emap cmap pmap amap))))))))
+      ((js-array? o)
+       (js-array-ref o prop %this))
+      (else
+       (js-get o prop %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache ...                                            */
@@ -2420,8 +2424,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-put/cache! o::JsObject prop v::obj throw::bool %this
 		  #!optional (point -1) (cspecs '()) (src ""))
-   (if (not (js-jsstring? prop))
-       (js-put! o prop v throw %this)
+   (cond
+      ((js-jsstring? prop)
        (let ((pname (js-jsstring-toname prop)))
 	  (synchronize-name
 	     (cond
@@ -2440,7 +2444,11 @@
 				 (src src))))
 		    (js-name-pcachew-set! pname cache)
 		    (js-object-put-name/cache! o pname v throw
-		       %this cache point cspecs))))))))
+		       %this cache point cspecs)))))))
+      ((js-array? o)
+       (js-array-set! o prop v throw %this))
+      (else
+       (js-put! o prop v throw %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache ...                                            */

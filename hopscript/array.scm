@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Aug 16 07:29:15 2019 (serrano)                */
+;*    Last change :  Thu Aug 22 07:16:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -907,10 +907,9 @@
 ;*    js-array-set! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-set! arr::JsArray idx val throw %this)
-   (with-access::JsArray arr (vec ilen length)
-      (if (fixnum? idx)
-	  (js-array-fixnum-set! arr idx val throw %this)
-	  (js-array-put! arr idx val throw %this))))
+   (if (fixnum? idx)
+       (js-array-fixnum-set! arr idx val throw %this)
+       (js-array-put! arr idx val throw %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-fixnum-set! ...                                         */
