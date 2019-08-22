@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Apr 26 14:41:07 2019 (serrano)                */
+;*    Last change :  Fri Jul 19 08:00:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -290,6 +290,8 @@
 	  '())
 	 ((j2s-param? this)
 	  (list this (j2s-binder binder #t) (j2s-js-id this)))
+	 ((eq? scope 'unbound)
+	  '())
 	 (else
 	  (list this (j2s-binder binder #t) (j2s-js-id this) ";")))))
 
