@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Aug 22 17:04:43 2019 (serrano)                */
+;*    Last change :  Fri Aug 23 07:47:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2888,7 +2888,8 @@
 		       (js-object-mode-holey-set! o #t)))
 		(when (>=u32 idx length)
 		   (set! length (+u32 idx #u32:1)))))
-	    ((and (array-extensible? o)
+	    ((and (js-isindex? idx)
+		  (array-extensible? o)
 		  (js-object-mode-inline? o)
 		  (<u32 idx (MAX-EXPANDABLE-ARRAY-SIZE)))
 	     (let* ((len (vector-length vec))
@@ -2929,9 +2930,40 @@
 ;*    js-put-length! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put-length! o::JsArray v::obj throw::bool cache %this)
-   (unless (js-object-mode-plain? o)
-      (js-array-put! o (& "length") v throw %this))
-   (js-array-put-length! o (->uint32 v)))
+   (js-array-put! o (& "length") v throw %this)
+   (with-access::JsArray o (length ilen)
+      (let ((len (->uint32 v)))
+	 (set! length len)
+	 (when (<u32 len ilen)
+	    (js-array-mark-invalidate!)
+	    (set! ilen len))
+	 (%assert-array! o "js-put-length!"))))
+
+;*---------------------------------------------------------------------*/
+;*    js-put-length! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-put-length! o::JsArray v::obj throw::bool cache %this)
+   (let ((vu (->uint32 v)))
+      (with-access::JsArray o (length ilen)
+	 (if (>=u32 vu length)
+	     (js-array-put-length! o (->uint32 v))
+	     (js-array-put! o (& "length") v throw %this)))))
+
+;*    (with-access::JsArray o (length ilen)                            */
+;*       (let ((len (->uint32 v)))                                     */
+;* 	 (set! length len)                                             */
+;* 	 (when (<u32 len ilen)                                         */
+;* 	    (js-array-mark-invalidate!)                                */
+;* 	    (set! ilen len))                                           */
+;* 	 (%assert-array! o "js-put-length!"))))                        */
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-put-length! ...                                               *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-put-length! o::JsArray v::obj throw::bool cache %this) */
+;*    (unless (js-object-mode-plain? o)                                */
+;*       (js-array-put! o (& "length") v throw %this))                 */
+;*    (js-array-put-length! o (->uint32 v)))                           */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-put-length! ...                                         */
