@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Aug 23 07:47:57 2019 (serrano)                */
+;*    Last change :  Fri Aug 23 13:09:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2902,7 +2902,11 @@
 	    ((and (js-object-mode-plain? o) (js-isname? p (& "length") %this))
 	     (let ((vu (->uint32 v)))
 		(if (>=u32 vu length)
-		    (js-array-put-length! o vu)
+		    (let ((nv (js-tonumber v %this)))
+		       (if (=uint32 vu nv)
+			   (js-array-put-length! o vu)
+			   (js-raise-range-error %this
+			      "Illegal length: ~s" (js-tostring v %this))))
 		    (aput! o (js-toname p %this) v))))
 	    (else
 	     (aput! o (js-toname p %this) v))))))
