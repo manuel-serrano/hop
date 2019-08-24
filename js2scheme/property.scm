@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Aug 24 09:09:10 2019 (serrano)                */
+;*    Last change :  Sat Aug 24 16:39:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -49,7 +49,6 @@
    
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes headers decls loc pcache-size)
-	 (tprint "pcache-size=" pcache-size)
 	 (let* ((count (make-counter pcache-size))
 		(env (cons '() '()))
 		(caches (append
@@ -166,8 +165,6 @@
 			       (set! cache (inc! count))))))
 		    ((not (memq (j2s-type field) '(integer number real)))
 		     (set! cache (inc! count))))
-		 (when cache
-		    (tprint "CACHE: " loc " " (typeof this) " " cache))
 		 (let ((nexts (call-default-walker)))
 		    (if cache
 			(cons cache nexts)
@@ -190,7 +187,6 @@
    (if infunloop
        (with-access::J2SGlobalRef this (cache loc)
 	  (set! cache (inc! count))
-	  (tprint "CACHE: " loc " " (typeof this) " " cache)
 	  (cons cache (call-default-walker)))
        (call-default-walker)))
 
@@ -231,13 +227,11 @@
 		 (call-default-walker)
 		 (begin
 		    (unless cache (set! cache (inc! count)))
-		    (tprint "CACHE: " loc " " (typeof this) " " cache)
 		    (cons cache (call-default-walker))))))
 	 ((read-only-function? fun)
 	  (call-default-walker))
 	 (else
 	  (set! cache (inc! count))
-	  (tprint "CACHE: " loc " " (typeof this) " "  cache)
 	  (cons cache (call-default-walker))))))
 
 ;*---------------------------------------------------------------------*/
@@ -260,12 +254,10 @@
 		 (scache (inc! count))
 		 (acache (inc! count)))
 	     (set! caches (list gcache scache acache))
-	     (tprint "CACHE: " loc " " (typeof this) " " caches)
 	     (append caches (call-default-walker))))
 	 ((and infunloop (ctor-function? clazz args))
 	  (let ((cache (inc! count)))
 	     (set! caches (list cache))
-	     (tprint "CACHE: " loc " " (typeof this) " " cache)
 	     (cons cache (call-default-walker))))
 	 (else
 	  (call-default-walker)))))

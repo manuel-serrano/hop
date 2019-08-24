@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Jun 14 13:53:34 2019 (serrano)                */
+;*    Last change :  Sat Aug 24 09:25:04 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -713,98 +713,6 @@
 			      #f leaf limit
 			      (cons val stack) pmethods prgm conf)))))))))
    
-   (define (inline-object-method-call-PAS-BON fun obj args)
-      (with-access::J2SAccess fun (field cspecs)
-	 (tprint "ICI PAS bON LE CALL...qui fait un cache miss")
-	 (set! cspecs '(pmap vtable-method))
-	 (let loop ((callees callees)
-		    (caches '()))
-	    (if (null? callees)
-		(let ((f (J2SLetOpt '(call) (gensym 'f) fun)))
-		   (J2SLetRecBlock #f (list f)
-		      (let loop ((caches caches))
-			 (if (null? caches)
-			     (J2SNop)
-			     (let ((v (get-svar (cdar caches))))
-				(J2SIf
-				   (J2SBinary 'eq? (J2SRef f)
-				      (J2SHopRef v))
-				   (J2SStmtExpr
-				      (J2SCacheUpdate 'proto-method
-					 (caar caches) obj))
-				   (loop (cdr caches))))))
-		      (J2SReturn #t
-			 (J2SMethodCall* (J2SRef f) (list obj) args))))
-		(let ((cache (get-cache prgm)))
-		   (inline-method obj field (car callees) args cache loc
-		      (lambda ()
-			 (loop (cdr callees)
-			    (cons (cons cache (car callees)) caches)))))))))
-
-   (define (inline-object-method-call-cache-proto-UNUSED fun obj args)
-      (with-access::J2SAccess fun (field cspecs)
-	 (let loop ((callees callees)
-		    (caches '()))
-	    (if (null? callees)
-		(let* ((c (get-cache prgm))
-		       (r (J2SLetOpt '(call) (gensym 'r)
-			     (J2SMethodCall/cache* fun (list obj) args '(pmap-inline vtable-inline) c))))
-		   (J2SLetRecBlock #f (list r)
-		      (let loop ((cs caches))
-			 (if (null? cs)
-			     (J2SSeq*
-				(map (lambda (c)
-					(J2SStmtExpr
-					   (J2SCacheUpdate 'proto-reset
-					      (car c) obj)))
-				   caches))
-			     (let ((v (get-svar (cdar cs))))
-				(J2SIf
-				   (J2SCacheCheck 'method
-				      c (J2SHopRef v))
-				   (J2SSeq*
-				      (map (lambda (c)
-					      (J2SStmtExpr
-						 (if (eq? c (car cs))
-						     (J2SCacheUpdate 'proto-method
-							(car c) obj)
-						     (J2SCacheUpdate 'proto-reset
-							(car c) obj))))
-					 caches))
-				   (loop (cdr cs))))))
-		      (J2SReturn #t (J2SRef r))))
-		(let ((cache (get-cache prgm)))
-		   (inline-method obj field (car callees) args cache loc
-		      (lambda ()
-			 (loop (cdr callees)
-			    (cons (cons cache (car callees)) caches)))))))))
-
-   (define (inline-object-method-call-UNUSED fun obj args)
-      (with-access::J2SAccess fun (field cspecs)
-	 (let* ((c (get-cache prgm))
-		(f (J2SLetOpt '(call) (gensym 'f)
-		      (J2SAccess/cache obj field c '(pmap vtable)))))
-	    (J2SLetRecBlock #f (cons f (filter (lambda (b) (isa? b J2SDecl)) args))
-	       (let loop ((callees callees))
-		  (if (null? callees)
-		      (J2SReturn #t
-			 (J2SMethodCall* (J2SRef f) (list obj)
-			    (map (lambda (a) (if (isa? a J2SDecl) (J2SRef a) a)) args)))
-		      (let ((v (get-svar (car callees))))
-			 (J2SIf (J2SBinary '=== (J2SRef f) (J2SHopRef v))
-			    (let ((val (protoinfo-method (car callees))))
-			       (with-access::J2SFun val (body thisp params (floc loc))
-				  (with-access::J2SRef obj (decl)
-				     (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) args)
-					(J2SMetaInl (cons val stack)
-					   (config-get conf :optim 0)
-					   (inline!
-					      (j2s-alpha body
-						 (cons thisp params) (cons decl args))
-					      #f leaf limit
-					      (cons val stack) pmethods prgm conf))))))
-			    (loop (cdr callees))))))))))
-
    (define (inline-object-method-call fun obj args)
       (with-access::J2SAccess fun (field cspecs)
 	 (let loop ((callees callees)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Aug 23 14:20:52 2019 (serrano)                */
+;*    Last change :  Sat Aug 24 16:06:01 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -615,9 +615,7 @@
       (when (>=fx profid 0)
 	 (match-case loc
 	    ((at ?- ?point)
-	     (vector-set! vec profid point))
-	    (else
-	     #f))))
+	     (vector-set! vec profid point)))))
    vec)
 
 ;*---------------------------------------------------------------------*/
@@ -648,6 +646,11 @@
 (define (j2s-profile-cache this::J2SProgram conf)
    (with-access::J2SProgram this (pcache-size)
       (let ((profile-info-table (make-vector pcache-size '#(-1 "" get))))
+	 (let loop ((i pcache-size))
+	    (when (>=fx i 0)
+	       (vector-set! profile-info-table i
+		  `#(,(- i) "" get))
+	       (loop (-fx i 1))))
 	 (profile-cache-info-init this profile-info-table)
 	 profile-info-table)))
 
@@ -667,11 +670,14 @@
 (define (profile-access this::J2SAccess table usage #!optional cache)
    (with-access::J2SAccess this (obj field (acache cache) loc)
       (let ((c (or cache acache)))
-	 (when (and c (isa? field J2SString))
-	    (with-access::J2SString field (val)
-	       (match-case loc
-		  ((at ?- ?point)
-		   (vector-set! table c `#(,point ,val ,usage)))))))))
+	 (if (isa? field J2SString)
+	     (when c
+		(with-access::J2SString field (val)
+		   (match-case loc
+		      ((at ?- ?point)
+		       (vector-set! table c `#(,point ,val ,usage))))))
+	     (profile-cache-info-init field table)))
+      (profile-cache-info-init obj table)))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-cache-info-init ...                                      */
@@ -751,11 +757,11 @@
 	     (when (pair? (cdr caches))
 		(vector-set! table (cadr caches) `#(,point "put" get))
 		(when (pair? (cddr caches))
-		   (vector-set! table (cadr caches) `#(,point "apply" get)))))))
-      (call-default-walker)))
+		   (vector-set! table (cadr caches) `#(,point "apply" get))))))))
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    profile-cache-info-init ::J2SOptInitSeq ...                      */
+;*    profile-cache-info-init ::J2SOPTInitSeq ...                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (profile-cache-info-init this::J2SOPTInitSeq table)
    (with-access::J2SOPTInitSeq this (cache loc ref)
