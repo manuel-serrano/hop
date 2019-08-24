@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Aug 14 13:46:53 2019 (serrano)                */
+;*    Last change :  Fri Aug 23 13:41:28 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -92,6 +92,7 @@
 			 (instantiate::JsPropertyCache
 			    (pctable (pragma::obj "(obj_t)(__bgl_pcache)"))
 			    (src ,src)))
+		      ,num
 		      ,(car profile-table-info))
 		    `($js-make-pcache-table (pragma::obj "(obj_t)(__bgl_pcache)")
 			,num ,src (current-thread)
