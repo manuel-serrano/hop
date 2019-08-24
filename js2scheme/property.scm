@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Jul 10 19:06:19 2019 (serrano)                */
+;*    Last change :  Sat Aug 24 16:39:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -165,7 +165,10 @@
 			       (set! cache (inc! count))))))
 		    ((not (memq (j2s-type field) '(integer number real)))
 		     (set! cache (inc! count))))
-		 (cons cache (call-default-walker)))
+		 (let ((nexts (call-default-walker)))
+		    (if cache
+			(cons cache nexts)
+			nexts)))
 	      (call-default-walker)))
        (call-default-walker)))
 
@@ -182,7 +185,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (property* this::J2SGlobalRef count env ccall assig infunloop shared-pcache)
    (if infunloop
-       (with-access::J2SGlobalRef this (cache)
+       (with-access::J2SGlobalRef this (cache loc)
 	  (set! cache (inc! count))
 	  (cons cache (call-default-walker)))
        (call-default-walker)))
@@ -210,7 +213,7 @@
 ;*    property* ::J2SCall ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (property* this::J2SCall count env ccall assig infunloop shared-pcache)
-   (with-access::J2SCall this (cache fun)
+   (with-access::J2SCall this (cache fun loc)
       (cond
 	 (cache
 	  (call-default-walker))
@@ -244,8 +247,7 @@
 		  (and (not vararg) (not generator)
 		       (=fx (length params) (length args))))))))
    
-   
-   (with-access::J2SNew this (clazz args caches)
+   (with-access::J2SNew this (clazz args caches loc)
       (cond
 	 ((is-builtin-ref? clazz 'Proxy)
 	  (let* ((gcache (inc! count))

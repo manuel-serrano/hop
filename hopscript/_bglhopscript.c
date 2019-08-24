@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Jun  5 08:00:27 2019 (serrano)                */
+/*    Last change :  Fri Aug 23 13:24:36 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -60,13 +60,14 @@ bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t thread, obj_t templa
    pcache_t *pcache = (pcache_t *)obj;
    int i;
 
+   fprintf( stderr, "bgl_make_pcache %p\n", obj );
    for( i = 0; i < len; i++ ) {
       memcpy( &(pcache[ i ]), COBJECT( template ), sizeof( pcache_t ) );
    }
 
    bgl_profile_pcache_tables = MAKE_PAIR( MAKE_PAIR( (obj_t)pcache, BINT( len ) ), bgl_profile_pcache_tables );
 
-   return BUNSPEC;
+   return obj;
 }
 
 /*---------------------------------------------------------------------*/

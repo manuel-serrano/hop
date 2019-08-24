@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Aug  7 08:55:26 2019 (serrano)                */
+;*    Last change :  Sat Aug 24 08:49:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2628,7 +2628,7 @@
 		 `(js-object-alloc-fast %this ,fun))
 	     `(js-object-alloc %this ,fun))))
       
-   (define (j2s-new-fast cache clazz args)
+   (define (j2s-new-fast clazz args)
       (with-access::J2SRef clazz (decl loc)
 	 (let* ((len (length args))
 		(fun (j2s-scheme clazz mode return conf))
@@ -2705,7 +2705,7 @@
 		   (map (lambda (a) (j2s-scheme a mode return conf)) args)))))
 	 ((and (=fx (bigloo-debug) 0) (pair? caches))
 	  (epairify loc
-	     (j2s-new-fast (car caches) clazz
+	     (j2s-new-fast clazz
 		(map (lambda (a)
 			(box (j2s-scheme a mode return conf) (j2s-vtype a) conf))
 		   args))))

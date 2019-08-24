@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Aug 13 08:45:09 2019 (serrano)                */
+;*    Last change :  Sat Aug 24 16:32:26 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -612,7 +612,7 @@
 		   =>
 		   (lambda (sexp) sexp))
 		  (else
-		   (let* ((tmp (gensym 'obj)))
+		   (let ((tmp (gensym 'obj)))
 		      `(let ((,tmp ,(box (j2s-scheme obj mode return conf)
 				       (j2s-vtype obj) conf)))
 			  ,(call-ref-method obj

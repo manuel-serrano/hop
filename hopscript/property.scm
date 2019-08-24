@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Aug 22 07:13:13 2019 (serrano)                */
+;*    Last change :  Fri Aug 23 13:27:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -51,7 +51,7 @@
 	   (js-debug-cmap ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
 	   (js-make-pcache-table ::int ::obj #!optional profile-info-table)
-	   (js-pcache-table-profile-init::vector ::vector ::obj)
+	   (js-pcache-table-profile-init::obj ::obj ::long ::obj)
 	   (js-validate-pmap-pcache! ::JsPropertyCache)
 	   (js-pcache-update-descriptor! ::JsPropertyCache ::long ::JsObject ::obj)
 	   (inline js-pcache-ref ::obj ::int)
@@ -574,23 +574,45 @@
       (if (vector? profile-info-table)
 	  ;; optional profile-info-table that is only provided when
 	  ;; the module is compiled in profile mode
-	  (js-pcache-table-profile-init pctable profile-info-table)
+	  (js-pcache-table-vector-profile-init pctable len profile-info-table)
 	  pctable)))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-table-vector-profile-init ...                          */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-table-vector-profile-init pctable len profile-info-table)
+   (when (vector? profile-info-table)
+      (js-init-names!)
+      (let loop ((i (-fx len 1)))
+	 (when (>=fx i 0)
+	    (let ((c (vector-ref pctable i))
+		  (e (vector-ref profile-info-table i)))
+	       (with-access::JsPropertyCache c (name point usage)
+		  (set! point (vector-ref e 0))
+		  (set! name (js-name->jsstring (vector-ref e 1)))
+		  (set! usage (vector-ref e 2)))
+	       (loop (-fx i 1))))))
+   pctable)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-table-profile-init ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-pcache-table-profile-init pctable profile-info-table)
+(define (js-pcache-table-profile-init pctable len profile-info-table)
+   
+   (define (pcache-ref pctable i::long)
+      (free-pragma::JsPropertyCache "(BgL_jspropertycachez00_bglt)BOBJECT(&(((struct BgL_jspropertycachez00_bgl *)$1)[ $2 ]))" pctable i))
+   
    (when (vector? profile-info-table)
-      (let loop ((i (-fx (vector-length pctable) 1)))
+      (js-init-names!)
+      (let loop ((i (-fx len 1)))
 	 (when (>=fx i 0)
-	    (let ((c (vector-ref pctable i))
+	    (let ((c (pcache-ref pctable i))
 		  (e (vector-ref profile-info-table i)))
-	       (with-access::JsPropertyCache e (name point usage)
+	       (with-access::JsPropertyCache c (name point usage)
 		  (set! point (vector-ref e 0))
 		  (set! name (js-name->jsstring (vector-ref e 1)))
 		  (set! usage (vector-ref e 2)))
-	       (loop (+fx i 1))))))
+	       (loop (-fx i 1))))))
    pctable)
 
 ;*---------------------------------------------------------------------*/
