@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Aug 23 13:09:22 2019 (serrano)                */
+;*    Last change :  Sun Aug 25 07:55:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2899,7 +2899,9 @@
 		(with-access::JsArray o (vec)
 		   (set! vec nvec))
 		(js-array-put! o p v throw %this)))
-	    ((and (js-object-mode-plain? o) (js-isname? p (& "length") %this))
+	    ((and (js-object-mode-plain? o)
+		  (js-isname? p (& "length") %this)
+		  (js-isindex? idx))
 	     (let ((vu (->uint32 v)))
 		(if (>=u32 vu length)
 		    (let ((nv (js-tonumber v %this)))
