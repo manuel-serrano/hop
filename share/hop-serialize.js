@@ -3,11 +3,16 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Jul 13 06:55:15 2019 (serrano)                */
+/*    Last change :  Mon Aug 26 10:39:31 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    defining                                                         */
+/*---------------------------------------------------------------------*/
+var defining = -1;
 
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_context ...                                        */
@@ -897,7 +902,6 @@ function hop_url_encoded_to_obj( s ) {
 function hop_bytearray_to_obj( s, extension ) {
    var pointer = 0;
    var definitions = [];
-   var defining = -1;
 
    function substring( s, beg, end ) {
       if( s instanceof Array ) {
@@ -979,7 +983,9 @@ function hop_bytearray_to_obj( s, extension ) {
    function read_string( s ) {
       var ulen = read_size( s );
       var sz = ((ulen + pointer) > s.length) ? s.length - pointer : ulen;
-      var res = utf8substring( s, pointer + sz );
+      //var res = utf8substring( s, pointer + sz );
+      var res = substring( s, pointer, pointer + sz );
+      pointer += sz;
 
       if( defining >= 0 ) {
 	 definitions[ defining ] = res;
@@ -1034,7 +1040,7 @@ function hop_bytearray_to_obj( s, extension ) {
       var res = sc_cons( null, null );
       var hd = res;
 
-      if( defining >=0 ) {
+      if( defining >= 0 ) {
 	 definitions[ defining ] = res;
 	 defining = -1;
       }
@@ -1126,6 +1132,9 @@ function hop_bytearray_to_obj( s, extension ) {
       } else {
 	 res = new Object();
 
+	 if( old_defining >= 0 )
+	    definitions[ old_defining ] = res;
+
 	 for( var i = 0; i < sz; i++ ) {
 	    res[ sc_keyword2jsstring( cinfo[ i ] ) ] = read_item();
 	 }
@@ -1134,10 +1143,12 @@ function hop_bytearray_to_obj( s, extension ) {
 	 read_item();
 	 
 	 if( key in hop_builtin_class_unserializer ) {
-	    return hop_builtin_class_unserializer[ key ]( res );
-	 } else {
-	    return res;
+	    res = hop_builtin_class_unserializer[ key ]( res );
+	    if( old_defining >= 0 )
+	       definitions[ old_defining ] = res;
 	 }
+	 
+	 return res;
       }
    }
 
@@ -1312,6 +1323,11 @@ function hop_dom_unserialize( obj ) {
    var el = document.createElement( sc_symbol2jsstring( obj.tag ) );
    var attrs = obj.attributes;
    
+   if( defining >= 0 ) {
+      definitions[ defining ] = el;
+      defining = -1;
+   }
+
    while( sc_isPair( attrs ) ) {
       var k = sc_symbol2jsstring( sc_car( attrs ) );
       var v = sc_cadr( attrs );
@@ -1354,7 +1370,14 @@ function hop_dom_unserialize( obj ) {
 /*    hop_tilde_unserialize ...                                        */
 /*---------------------------------------------------------------------*/
 function hop_tilde_unserialize( obj ) {
-   return new Function( 'event', obj[ "%js-statement" ] );
+   var el = new Function( 'event', obj[ "%js-statement" ] );
+   
+   if( defining >= 0 ) {
+      definitions[ defining ] = el;
+      defining = -1;
+   }
+
+   return el;
 }
    
 /*---------------------------------------------------------------------*/
