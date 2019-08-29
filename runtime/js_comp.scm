@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Thu Jul 18 06:27:57 2019 (serrano)                */
+;*    Last change :  Mon Aug 26 19:59:08 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -101,7 +101,6 @@
 ;*    hop->javascript ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (hop->javascript obj op::output-port compile isexpr _)
-       (tprint "hop->javascript" obj)
    (cond
       ((procedure? obj)
        (let ((attr (procedure-attr obj)))
