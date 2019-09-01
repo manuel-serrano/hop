@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Mon Aug 26 10:39:31 2019 (serrano)                */
+/*    Last change :  Sat Aug 31 09:33:54 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1132,6 +1132,8 @@ function hop_bytearray_to_obj( s, extension ) {
       } else {
 	 res = new Object();
 
+	 res.__class__ = key;
+	 
 	 if( old_defining >= 0 )
 	    definitions[ old_defining ] = res;
 
@@ -1344,7 +1346,7 @@ function hop_dom_unserialize( obj ) {
 	 default:
 	    if( k[ 0 ] !== "%" ) {
 	       var m = k.match( "^on(.*)" );
-	       if(  m ) {
+	       if( m ) {
 		  try {
 		     var fun = (typeof v === "string") 
 			? new Function( "event", v ) 
@@ -1370,16 +1372,16 @@ function hop_dom_unserialize( obj ) {
 /*    hop_tilde_unserialize ...                                        */
 /*---------------------------------------------------------------------*/
 function hop_tilde_unserialize( obj ) {
-   var el = new Function( 'event', obj[ "%js-statement" ] );
-   
-   if( defining >= 0 ) {
-      definitions[ defining ] = el;
-      defining = -1;
-   }
-
-   return el;
+   return new Function( 'event', obj[ "%js-statement" ] );
 }
-   
+
+/*---------------------------------------------------------------------*/
+/*    hop_service_unserialize ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_service_unserialize( obj ) {
+   return obj.path;
+}
+
 /*---------------------------------------------------------------------*/
 /*    hop_builtin_class_unserializer ...                               */
 /*---------------------------------------------------------------------*/
@@ -1395,6 +1397,8 @@ hop_builtin_class_register_unserializer(
    sc_jsstring2symbol( "xml-empty-element" ), hop_dom_unserialize );
 hop_builtin_class_register_unserializer( 
    sc_jsstring2symbol( "xml-tilde" ), hop_tilde_unserialize );
+hop_builtin_class_register_unserializer( 
+   sc_jsstring2symbol( "hop-service" ), hop_service_unserialize );
 
 /*---------------------------------------------------------------------*/
 /*    hop_custom_object_regexp ...                                     */
