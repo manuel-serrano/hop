@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Aug 31 09:33:54 2019 (serrano)                */
+/*    Last change :  Tue Sep  3 07:57:46 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -848,7 +848,7 @@ function hop_string_to_obj( s, extension ) {
       a[ i ] = (s.charCodeAt( i )) & 0xff;
    }
 
-   return hop_bytearray_to_obj( a, extension );
+   return hop_bytearray_to_obj( a, extension, "utf8" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -893,13 +893,13 @@ function hop_url_encoded_to_obj( s ) {
    }
 
    /* decode the object */
-   return hop_bytearray_to_obj( a );
+   return hop_bytearray_to_obj( a, undefined, "utf8" );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_bytearray_to_obj ...                                         */
 /*---------------------------------------------------------------------*/
-function hop_bytearray_to_obj( s, extension ) {
+function hop_bytearray_to_obj( s, extension, cset ) {
    var pointer = 0;
    var definitions = [];
 
@@ -944,6 +944,13 @@ function hop_bytearray_to_obj( s, extension ) {
       return res;
    }
 
+   function asciisubstring( s, end ) {
+      var res = substring( s, pointer, end );
+      pointer = end;
+      
+      return res;
+   }
+   
    function read_integer( s ) {
       return read_size( s );
    }
@@ -983,9 +990,9 @@ function hop_bytearray_to_obj( s, extension ) {
    function read_string( s ) {
       var ulen = read_size( s );
       var sz = ((ulen + pointer) > s.length) ? s.length - pointer : ulen;
-      //var res = utf8substring( s, pointer + sz );
-      var res = substring( s, pointer, pointer + sz );
-      pointer += sz;
+      var res = (cset === "utf8")
+	 ? utf8substring( s, pointer + sz )
+	 : asciisubstring( s, pointer + sz );
 
       if( defining >= 0 ) {
 	 definitions[ defining ] = res;

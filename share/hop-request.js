@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Jul 14 10:17:26 2019 (serrano)                */
+/*    Last change :  Tue Sep  3 07:52:46 2019 (serrano)                */
 /*    Copyright   :  2004-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -419,14 +419,30 @@ function ab2string( abuf ) {
 /*    unserialization method depends on the mime type of the response. */
 /*---------------------------------------------------------------------*/
 function hop_request_unserialize( xhr, svc ) {
-   var ctype = ("content_type" in xhr) ?
+   var content_type = ("content_type" in xhr) ?
        xhr[ "content_type" ] : hop_header_content_type( xhr );
+   var m = content_type.match( "([a-zA-Z/-]+)(?:;[ ]*charset=([a-zA-Z[0-9]-]+))?" );
+
+   var ctype = content_type;
+   var cset = "utf8";
+   
+   if( m ) {
+      ctype = m[ 1 ];
+      if( m[ 2 ] && m[ 2 ] !== "UTF-8" ) {
+	 cset = m[ 2 ];
+      } else {
+	 cset = "utf8";
+      }
+   }      
+   
+   console.log( "hop_request_unserialize", xhr );
+   console.log( "content_type=", ctype, cset, "rt=", xhr.responseType, "m=", m );
    
    if( ctype === "application/x-hop" ) {
       if( xhr.responseType === "arraybuffer" ) {
-	 return hop_bytearray_to_obj( new Uint8Array( xhr.response ) );
+	 return hop_bytearray_to_obj( new Uint8Array( xhr.response ), undefined, cset );
       } else {
-	 return hop_bytearray_to_obj( hexToUint8( xhr.responseText ) );
+	 return hop_bytearray_to_obj( hexToUint8( xhr.responseText ), undefined, cset );
       }
    } else {
       var rep = (xhr.responseType === "arraybuffer") ?
@@ -436,7 +452,7 @@ function hop_request_unserialize( xhr, svc ) {
       } else if( ctype === "application/x-url-hop" ) {
 	 return hop_url_encoded_to_obj( rep );
       } else if( ctype === "application/x-json-hop" ) {
-	 return hop_bytearray_to_obj( hop_json_parse( rep ) );
+	 return hop_bytearray_to_obj( hop_json_parse( rep ), undefined, cset );
       } else if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
 	 return hop_create_element( rep );
       } else if( ctype === "application/json" ) {
@@ -666,10 +682,10 @@ function onPostMessage( e ) {
 	 var ctype = String.fromCharCode.apply( null, buf.slice( i2 + 1, i3 ) ) 
 	 var msg = buf.slice( i3 + 1 );
 	 var val = (ctype === "application/x-frame-hop")
-	     ? hop_bytearray_to_obj( msg )
-	     : (ctype === "application/x-frame-json")
-	     ? hop_json_parse( String.fromCharCode.apply( null, msg ) )
-	     : String.fromCharCode.apply( null, msg );
+	    ? hop_bytearray_to_obj( msg, undefined, cset )
+	    : (ctype === "application/x-frame-json")
+	    ? hop_json_parse( String.fromCharCode.apply( null, msg ) )
+	    : String.fromCharCode.apply( null, msg );
 
 	 if( this.postHandlers[ id ] ) {
 	    if( status >= 100 && status <= 299 ) {

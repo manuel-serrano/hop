@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/etc/hop-autoconf.js.in            */
+/*    serrano/prgm/project/hop/hop/etc/hop-autoconf.js.in              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Apr 29 11:00:56 2016 (serrano)                */
-/*    Copyright   :  2006-16 Manuel Serrano                            */
+/*    Last change :  Tue Sep  3 08:06:22 2019 (serrano)                */
+/*    Copyright   :  2006-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -665,13 +665,7 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
       var h = http.getResponseHeader( "Content-Type" );
 
       if( h ) {
-	 var i = h.indexOf( ";" );
-
-	 if( i >= 0 ) {
-	    return h.substring( 0, i );
-	 } else {
-	    return h;
-	 }
+	 return h;
       } else {
 	 return "application/text";
       }
@@ -696,7 +690,7 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 
       var j = hds.indexOf( "\n", i + 1 );
       var s = (j >= 0) ? hds.substring( i, j ) : hds.substring( i, s.length );
-      var m = s.match( "[ \t:]+([^ \n;]*)" );
+      var m = s.match( "[ \t:]+([^\n]*)" );
 
       if( m )
 	 return m[ 1 ];
@@ -1176,7 +1170,25 @@ if( hop_config.uint8array ) {
 
    if( typeof s === "string" && s.charCodeAt( 0 ) === 111 ) {
       hop_uint8array_to_string = function hop_uint8array_to_string( o ) {
-	 return String.fromCharCode.apply( null, o );
+      	 if( o.length > 10000 ) {
+	    var res = String.fromCharCode.apply( null, o.subarray( o, 10000 ) );
+	    var i = 10000;
+	    
+	    // split the string creation as chromium suffer a stack overflow
+	    // on large strings
+	    while( true ) {
+	       var j = i + 10000;
+	       
+	       if( j < o.length ) {
+		  res += String.fromCharCode.apply( null, o.subarray( i, j ) );
+		  i = j;
+	       } else {
+		  return res + String.fromCharCode.apply( null, o.subarray( i, o.length ) );
+	       }
+	    }
+	 } else {
+	    return String.fromCharCode.apply( null, o );
+	 }
       }
    } else {
       hop_uint8array_to_string = function hop_uint8array_to_string( o ) {

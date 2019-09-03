@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri May  3 18:13:01 2019 (serrano)                */
+;*    Last change :  Tue Sep  3 08:11:52 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -173,6 +173,7 @@
 	       (http-write-line-string p start-line)
 	       (http-write-header p header)
 	       (http-write-line p "Cache-Control: no-cache")
+	       (tprint "ctype=" ctype " cset=" charset)
 	       (http-write-content-type p ctype charset)
 	       (http-write-line-string p "Server: " server)
 	       (when bodyp
