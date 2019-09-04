@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon May 13 18:56:37 2019 (serrano)                */
+;*    Last change :  Wed Sep  4 18:52:15 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -26,6 +26,7 @@
 	    __hop_password)
    
    (export  (users-close!)
+	    (users-closed?)
 	    (add-user! ::bstring . opt)
 	    (user-exists? ::bstring)
 	    (user-authentication-encrypt::bstring ::symbol ::bstring ::bstring)
@@ -81,6 +82,12 @@
 (define (users-close!)
    (set! *users-open* #f))
    (set! *basic-realm* (format "Basic realm=\"Basic ~a authentication\"" (hop-realm)))
+
+;*---------------------------------------------------------------------*/
+;*    users-closed? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (users-closed?)
+   (not *users-open*))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-user! ...                                                    */

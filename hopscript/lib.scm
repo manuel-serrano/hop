@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Jul 11 17:12:32 2019 (serrano)                */
+;*    Last change :  Wed Sep  4 15:42:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -235,7 +235,9 @@
    (define (alist? l)
       (when (list? l)
 	 (every (lambda (e)
-		   (and (pair? e) (or (keyword? (car e)) (symbol? (car e)))))
+		   (and (pair? e)
+			(or (keyword? (car e)) (symbol? (car e)))
+			(not (null? (cdr (last-pair e))))))
 	    l)))
 
    (cond
@@ -491,10 +493,9 @@
       (js-for-in obj
 	 (lambda (p %this)
 	    (let* ((n (js-jsstring->string p))
-		   (k (string->symbol n))
 		   (e (cons (string->keyword n)
 			 (js-jsobject->obj
-			    (js-get/cache obj k %this) %this))))
+			    (js-get/cache obj p %this) %this))))
 	       (set! args (cons e args))))
 	 %this)
       (reverse! args)))
