@@ -23,6 +23,12 @@ The `isServer` property is true for code executing on a server and false
 for code executing on a client.
 
 
+### hop.isWorker ###
+[:@glyphicon glyphicon-tag parameter]
+The `isWorker` property is true if and only if the expression is evaluated
+within a worker context.
+
+
 Server Information
 ------------------
 
@@ -52,6 +58,15 @@ The Hop version.
 
 ```hopscript
 console.log( "Hop version:", hop.version );
+```
+
+### hop.loginCookieCryptKey ###
+[:@glyphicon glyphicon-tag parameter]  
+An unique integer seed to for password encryption. This value is
+shared amongst all Hop workers.
+
+```hopscript
+console.log( "seed:", hop.loginCookieCryptKey );
 ```
 
 

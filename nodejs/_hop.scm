@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Aug 20 14:52:43 2019 (serrano)                */
+;*    Last change :  Thu Sep  5 07:45:21 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -281,10 +281,12 @@
 	       `(version . ,(hop-version))
 	       `(hostname . ,(js-string->jsstring (hostname)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
-	       `(buildid . ,(hop-build-id))
-	       `(buildtag . ,(hop-build-tag))
+;* 	       `(buildid . ,(hop-build-id))                            */
+;* 	       `(buildtag . ,(hop-build-tag))                          */
 	       `(standalone . ,hopjs-standalone)
 	       `(isServer . #t)
+	       `(isWorker . ,(not (js-main-worker? %worker)))
+	       `(loginCookieCryptKey . ,(hop-login-cookie-crypt-key))
 
 	       ;; server configuration
 	       (define-js httpAuthenticationMethodGet 0
