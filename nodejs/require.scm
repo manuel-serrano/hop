@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Jul  4 15:38:07 2019 (serrano)                */
+;*    Last change :  Thu Sep  5 08:52:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -985,13 +985,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    debug-compile-trace ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (debug-compile-trace tag filename)
+(define (debug-compile-trace tag filename #!optional target)
    (when (or (>=fx (bigloo-debug) 2)
 	     (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile"))
       (display "compiling (" (current-error-port))
       (display tag (current-error-port))
       (display "): " (current-error-port))
       (display filename (current-error-port))
+      (when target
+	 (display " -> " (current-error-port))
+	 (display target (current-error-port)))
       (newline (current-error-port))))
 
 ;*---------------------------------------------------------------------*/
@@ -1581,7 +1584,7 @@
 		      (trace-item "sopath=" sopath)
 		      (trace-item "sopathtmp=" sopathtmp)
 		      (trace-item "cmd=" cmd)
-		      (debug-compile-trace "nodejs-socompile:" filename)
+		      (debug-compile-trace "nodejs-socompile:" filename sopath)
 		      (hop-verb 3 (hop-color -2 -2 " COMPILE") " "
 			 (format "~( )\n"
 			    (map (lambda (s)
@@ -1654,7 +1657,8 @@
 			:lang lang :commonjs-export commonjs-export
 			:worker-slave worker-slave)))
 		((nte nte1 nte+)
-		 (nodejs-socompile-queue-push filename lang worker-slave)
+		 (when (hop-sofile-enable)
+		    (nodejs-socompile-queue-push filename lang worker-slave))
 		 (nodejs-compile src filename %ctxthis %ctxmodule
 		    :lang lang :commonjs-export commonjs-export
 		    :worker-slave worker-slave))
@@ -1757,12 +1761,14 @@
 		     (loop (nodejs-socompile src filename lang worker-slave))
 		     (hop-eval filename)))
 		((nte nte1 nte+)
-		 (nodejs-socompile-queue-push filename lang worker-slave)
+		 (when (hop-sofile-enable)
+		    (nodejs-socompile-queue-push filename lang worker-slave))
 		 (hop-eval filename))
 		(else
 		 (hop-eval filename))))
 	    (else
-	     (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
+	     (when (and (memq (hop-sofile-compile-policy) '(nte1 nte+))
+			(hop-sofile-enable))
 		(nodejs-socompile-queue-push filename lang worker-slave))
 	     (hop-eval filename)))))
    
