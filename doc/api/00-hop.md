@@ -44,6 +44,15 @@ protocol for the Hop server, see [config](config.html).
 console.log( "port:", hop.port );
 ```
 
+### hop.ports ###
+[:@glyphicon glyphicon-tag parameter]  
+Returns all the ports number of the running Hop server.
+
+
+```hopscript
+console.log( "port:", hop.ports );
+```
+
 ### hop.hostname ###
 [:@glyphicon glyphicon-tag parameter] 
 The host name of the running Hop server.  

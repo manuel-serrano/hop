@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Thu Sep  5 07:46:39 2019 (serrano)                */
+/*    Last change :  Fri Sep  6 16:22:40 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -20,6 +20,7 @@ exports.isWorker = hop.isWorker;
 exports.hostname = hop.hostname;
 exports.version = hop.version;
 exports.__defineGetter__( 'port', hop.port );
+exports.__defineGetter__( 'ports', hop.ports );
 exports.standalone = hop.standalone;
 exports.loginCookieCryptKey = hop.loginCookieCryptKey;
 

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon May  6 18:48:37 2019 (serrano)                */
+#*    Last change :  Fri Sep  6 16:13:25 2019 (serrano)                */
 #*    Copyright   :  2006-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -50,6 +50,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   lang/01-module.md lang/03-react.md lang/10-xml.md \
   lang/app.js lang/stateful.js lang/ui.js \
   dev/dev.json dev/00-command.md dev/01-rcfile.md dev/10-edit.md \
+  dev/30-https.md \
   intf/intf.json intf/01-nodejs.md intf/10-scheme.md intf/scheme.bnf \
   intf/20-language.md license.md _index.md \
   nodejs.md download.md \
@@ -65,7 +66,8 @@ LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 
-DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html 20-cross.html
+DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html 20-cross.html \
+  30-https.html
 
 INTF_TARGETS=intf.html 01-nodejs.html 10-scheme.html 20-language.html
 

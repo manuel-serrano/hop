@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Sep  5 07:45:21 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 16:15:26 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -281,8 +281,6 @@
 	       `(version . ,(hop-version))
 	       `(hostname . ,(js-string->jsstring (hostname)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
-;* 	       `(buildid . ,(hop-build-id))                            */
-;* 	       `(buildtag . ,(hop-build-tag))                          */
 	       `(standalone . ,hopjs-standalone)
 	       `(isServer . #t)
 	       `(isWorker . ,(not (js-main-worker? %worker)))
@@ -300,6 +298,14 @@
 
 	       ;; port
 	       (define-js port 0 (lambda (this) (hop-port)))
+	       
+	       (define-js ports 0
+		  (lambda (this)
+		     (js-alist->jsobject
+			(list
+			   `(http . ,(when (>=fx (hop-port) 0) (hop-port)))
+			   `(https . ,(when (>=fx (hop-ssl-port) 0) (hop-ssl-port))))
+			%this)))
 
 	       ;; services
 	       `(Service . ,(js-get %this (& "Service") %this))
