@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Aug 14 07:58:11 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 08:44:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -138,8 +138,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsHopFrame ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (js-tostring o::JsHopFrame %this)
-   (hopframe->string o %this))
+(define-method (js-tostring obj::JsHopFrame %this)
+   (hopframe->string obj %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsHopFrame ...                             */
@@ -1016,7 +1016,8 @@
    
    ;; register only if there is an implementation
    (when svc
-      (when (and register (>=fx (hop-port) 0)) (register-service! svc))
+      (when (and register (or (>=fx (hop-port) 0) (>=fx (hop-ssl-port) 0)))
+	 (register-service! svc))
       (unless import
 	 (with-access::WorkerHopThread worker (services)
 	    (set! services (cons svc services)))))

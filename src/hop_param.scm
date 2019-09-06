@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/src/hop_param.scm                 */
+;*    serrano/prgm/project/hop/hop/src/hop_param.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Feb  6 18:27:21 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Fri Sep  6 07:46:51 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -68,12 +68,6 @@
 	    (hop-https-pkey::bstring)
 	    (hop-https-pkey-set! ::bstring)
 	    
-	    (hop-fast-server-event-port::int)
-	    (hop-fast-server-event-port-set! ::int)
-	    
-	    (hop-enable-fast-server-event::bool)
-	    (hop-enable-fast-server-event-set! ::bool)
-	    
 	    (hop-enable-repl::symbol)
 	    (hop-enable-repl-set! ::symbol)
 	    
@@ -106,6 +100,9 @@
 	    
 	    (hop-server-socket::obj)
 	    (hop-server-socket-set! ::obj)
+	    
+	    (hop-server-ssl-socket::obj)
+	    (hop-server-ssl-socket-set! ::obj)
 	    
 	    (hop-client-output-port::output-port)
 	    (hop-client-output-port-set! ::output-port)
@@ -275,15 +272,6 @@
    "/etc/ssl/certs/hop.pem")
 
 ;*---------------------------------------------------------------------*/
-;*    hop-fast-server-event-port ...                                   */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-fast-server-event-port
-   (hop-port))
-
-(define-parameter hop-enable-fast-server-event
-   #f)
-
-;*---------------------------------------------------------------------*/
 ;*    hop-enable-repl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-repl
@@ -351,6 +339,12 @@
 ;*    hop-server-socket ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-server-socket
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-ssl-socket ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-ssl-socket
    #f)
 
 ;*---------------------------------------------------------------------*/

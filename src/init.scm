@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Jan 10 15:43:24 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 07:54:31 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -20,7 +20,7 @@
 
    (import  hop_param)
    
-   (export  (init-server-socket!)
+   (export  (init-server-socket! ::int ::bool)
 	    (init-http!)
 	    (init-webdav!)
 	    (init-flash!)
@@ -31,30 +31,27 @@
 ;*    -------------------------------------------------------------    */
 ;*    Create the Hop server socket according to user options.          */
 ;*---------------------------------------------------------------------*/
-(define (init-server-socket!)
-   (when (socket-server? (hop-server-socket))
-      (socket-close (hop-server-socket)))
+(define (init-server-socket! port ssl)
    (with-handler
       (lambda (e)
 	 (exception-notify e)
-	 (fprint (current-error-port) "Cannot start Hop server, exiting...")
+	 (fprintf (current-error-port)
+	    "Cannot start Hop (~a) server, exiting..." port)
 	 (exit 2))
-      (if (hop-enable-https)
+      (if ssl
 	  (cond-expand
 	     (enable-ssl
 	      (let ((cert (read-certificate (hop-https-cert)))
 		    (pkey (read-private-key (hop-https-pkey))))
-		 (hop-server-socket-set!
-		    (make-ssl-server-socket (hop-port)
-		       :name (hop-server-listen-addr)
-		       :protocol (hop-https-protocol)
-		       :cert cert :pkey pkey))))
+		 (make-ssl-server-socket port
+		    :name (hop-server-listen-addr)
+		    :protocol (hop-https-protocol)
+		    :cert cert :pkey pkey)))
 	     (else
 	      (error "hop" "SSL not supported by this version of Hop" #f)))
-	  (hop-server-socket-set!
-	     (make-server-socket (hop-port)
-		:name (hop-server-listen-addr)
-		:backlog (hop-somaxconn))))))
+	  (make-server-socket port
+	     :name (hop-server-listen-addr)
+	     :backlog (hop-somaxconn)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *http-method-handlers* ...                                       */

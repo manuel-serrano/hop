@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jul  8 11:45:41 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 07:49:46 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -88,6 +88,9 @@
 	    
 	    (hop-port::int)
 	    (hop-port-set! ::int)
+
+	    (hop-ssl-port::int)
+	    (hop-ssl-port-set! ::int)
 
 	    (hop-use-proxy::obj)
 	    (hop-use-proxy-set! ::obj)
@@ -1501,6 +1504,19 @@
 		(format "hop@~a:~a" (hop-server-hostname) v))
 	     v)
 	  (error "hop-port" "Illegal hop port" v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-ssl-port ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-ssl-port
+   -1
+   (lambda (v)
+      (if (integer? v)
+	  (begin
+	     (hop-login-cookie-id-set!
+		(format "hop@~a:~a" (hop-server-hostname) v))
+	     v)
+	  (error "hop-ssl-port" "Illegal hop ssl-port" v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-exepath ...                                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Sep  4 15:42:28 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 10:15:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -399,6 +399,10 @@
 	    :hidden-class #t)
 	 (js-bind! %this sock (& "port")
 	    :value (socket-port-number obj)
+	    :writable #f :configurable #f
+	    :hidden-class #t)
+	 (js-bind! %this sock (& "ssl")
+	    :value (ssl-socket? obj)
 	    :writable #f :configurable #f
 	    :hidden-class #t)
 	 sock)))

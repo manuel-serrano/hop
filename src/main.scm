@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May 14 08:03:28 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 07:37:09 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -95,7 +95,6 @@
 	 (hop-filter-add! service-filter)
 	 (hop-init args files exprs)
 	 ;; adjust the actual hop-port before executing client code
-;* 	 (hop-port-set! (socket-port-number (hop-server-socket)))      */
 	 ;; js rc load
 	 (if (hop-javascript)
 	     (set! jsworker (javascript-init args files exprsjs))
@@ -105,7 +104,6 @@
 	 ;; prepare the regular http handling
 	 (init-http!)
 	 (when (hop-enable-webdav) (init-webdav!))
-	 (when (hop-enable-fast-server-event) (init-flash!))
 	 ;; close filter installation
 	 (unless (hop-javascript)
 	    (hop-filters-close!))
@@ -125,19 +123,16 @@
 	       (fprint (current-error-port)
 		  "An error has occurred in the Hop main loop, exiting...")
 	       (exit 1))
-	    (let ((serv (hop-server-socket)))
+	    (let ((serv (hop-server-socket))
+		  (servs (hop-server-ssl-socket)))
 	       ;; ready to now say hello
 	       (hello-world)
 	       ;; when needed, start the HOP repl
 	       (when (eq? (hop-enable-repl) 'scm)
 		  (hop-repl (hop-scheduler)))
 	       ;; when needed, start a loop for server events
-	       (hop-event-server (hop-scheduler))
+	       (hop-event-init!)
 	       (when (hop-run-server)
-		  ;; tune the server socket
-		  (socket-option-set! serv :TCP_NODELAY #t)
-		  ;; fast server event socket
-		  (hop-fast-server-event-port-set! (socket-port-number serv))
 		  ;; preload all the forced services
 		  (for-each (lambda (svc)
 			       (let* ((path (string-append (hop-service-base)
@@ -164,7 +159,24 @@
 			   (users-close!)
 			   (hop-filters-close!))))
 		  ;; start the main loop
-		  (scheduler-accept-loop (hop-scheduler) serv #t))
+		  (cond
+		     ((and serv servs)
+		      (cond-expand
+			 (enable-threads 
+			  (thread-start!
+			     (instantiate::hopthread
+				(body (lambda ()
+					 (scheduler-accept-loop (hop-scheduler)
+					    servs #t)))))
+			  (scheduler-accept-loop (hop-scheduler) serv #t))
+			 (else
+			  (error "hop"
+			     "Thread support missing for running both http and https servers"
+			     servs))))
+		     (serv
+		      (scheduler-accept-loop (hop-scheduler) serv #t))
+		     (servs
+		      (scheduler-accept-loop (hop-scheduler) servs #t))))
 	       (if jsworker
 		   (if (thread-join! jsworker) 0 1)
 		   0))))))
@@ -471,16 +483,3 @@
       (debug-thread-info-set! thread "stage-repl")
       (hop-verb 1 "Entering repl...\n")
       (begin (repl) (exit 0))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-event-server ...                                             */
-;*---------------------------------------------------------------------*/
-(define (hop-event-server scd)
-   (hop-event-init!)
-   (when (and (hop-enable-fast-server-event)
-	      (not (=fx (hop-fast-server-event-port) (hop-port)))
-	      (>fx (with-access::scheduler scd (size) size) 1))
-      ;; run an event server socket in a separate thread
-      (let ((serv (make-server-socket (hop-fast-server-event-port)
-		     :name (hop-server-listen-addr))))
-	 (scheduler-accept-loop scd serv #f))))

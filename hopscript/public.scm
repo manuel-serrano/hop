@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jul 28 07:19:04 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 10:07:23 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1242,6 +1242,13 @@
 ;*    js-tojsstring ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-tojsstring::JsStringLiteral obj %this)
+
+   (define (primitive->jsstring obj)
+      (let ((p (js-toprimitive obj 'string %this)))
+	 (if (eq? p obj)
+	     (js-ascii->jsstring (format "#<~a>" (typeof p)))
+	     (js-tojsstring p %this))))
+      
    (cond
       ((js-jsstring? obj) obj)
       ((fixnum? obj) (js-integer->jsstring obj))
@@ -1252,7 +1259,7 @@
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
       ((string? obj) (js-string->jsstring obj))
-      (else (js-tojsstring (js-toprimitive obj 'string %this) %this))))
+      (else (primitive->jsstring obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject-failsafe ...                                         */
