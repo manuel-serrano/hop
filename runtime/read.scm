@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Apr 11 08:26:45 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 13:28:08 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -52,7 +52,8 @@
 		      (mode 'load)
 		      (charset (hop-locale))
 		      (abase #t)
-		      (afile #t))
+		      (afile #t)
+		      (worker-slave #f))
 
 	    (hop-load-once ::bstring
 			   #!key
@@ -943,10 +944,11 @@
 		  (mode 'load)
 		  (charset (hop-locale))
 		  (abase #t)
-		  (afile #t))
+		  (afile #t)
+		  (worker-slave #f))
    (if (hz-package-filename? file-name)
        (hop-load-from-hz file-name env menv mode charset abase)
-       (hop-load-file file-name env menv mode charset abase 'eval afile)))
+       (hop-load-file file-name env menv mode charset abase 'eval afile worker-slave)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-dir ...                                                       */
@@ -970,7 +972,7 @@
 	 ;; load the .hop source file
 	 (let ((base (basename dir)))
 	    (let ((fname (string-append (make-file-name dir base) ".hop")))
-	       (hop-load-file fname env menv mode charset abase 'eval #f))))))
+	       (hop-load-file fname env menv mode charset abase 'eval #f #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    so-arch-directory ...                                            */
@@ -1066,7 +1068,7 @@
 ;*    The C code generation imposes the variable traceid not to        */
 ;*    be inlined.                                                      */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-file fname env menv mode charset abase traceid::symbol afile)
+(define (hop-load-file fname env menv mode charset abase traceid::symbol afile ws)
 
    (define (hop-eval-path path)
       (let ((apath (cond
@@ -1164,8 +1166,9 @@
 	 (trace-item "path=" path)
 	 (trace-item "abase=" abase)
 	 (trace-item "afile=" afile)
-	 (if (or (eq? mode 'load) (eq? mode 'module))
-	     (let ((sopath (hop-find-sofile path)))
+	 (if (eq? mode 'load)
+	     (let ((sopath (hop-find-sofile path
+			      :suffix (if ws "_w" ""))))
 		(cond
 		   ((string? sopath)
 		    ;; a compiled file has been found, try to load that one

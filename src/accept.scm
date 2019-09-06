@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Fri Sep  6 08:05:00 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 11:49:45 2019 (serrano)                */
 ;*    Copyright   :  2008-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -126,8 +126,7 @@
    (define dummybuf (make-string 512))
    (define idmutex (make-mutex "pool-scheduler"))
    (define idcount 0)
-   (define nbthreads
-      (with-access::pool-scheduler scd (nfree) nfree))
+   (define nbthreads (with-access::pool-scheduler scd (nfree) nfree))
    
    (define (get-next-id)
       (if (=fx (hop-verbose) 0)

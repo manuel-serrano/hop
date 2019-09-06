@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Aug 14 07:58:46 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 13:07:28 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -289,21 +289,27 @@
 (define-method (j2s-scheme this::J2SDeclSvc mode return conf)
    (with-access::J2SDeclSvc this (loc id val scope)
       (let ((scmid (j2s-decl-scheme-id this))
-	    (fastid (j2s-fast-id id)))
+	    (fastid (j2s-fast-id id))
+	    (fun (if (isa? val J2SFun)
+		     val
+		     (with-access::J2SMethod val (function)
+			function))))
 	 (epairify-deep loc
 	    (if (and (memq scope '(global %scope))
 		     (js-need-global? this scope mode))
 		`(begin
 		    (define ,fastid
-		       ,(jssvc->scheme val id scmid mode return conf))
+		       ,(jssvc->scheme fun id scmid mode return conf))
 		    (define ,scmid
 		       (js-bind! %this ,scope ,(j2s-scheme-name id)
 			  :configurable #f
 			  :writable #f
 			  :value ,fastid)))
 		`(begin
-		    (define ,fastid ,(jssvc->scheme val id scmid mode return conf))
-		    (define ,scmid ,fastid)))))))
+		    (define ,fastid
+		       ,(jssvc->scheme fun id scmid mode return conf))
+		    (define ,scmid
+		       ,fastid)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsfun->lambda/body ...                                           */

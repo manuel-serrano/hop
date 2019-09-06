@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Sep  5 08:52:58 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 11:58:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1731,11 +1731,11 @@
 		  (trace-item "mod=" (typeof mod))
 		  mod)))))
 
-   (define (hop-eval filename)
+   (define (hop-eval filename ws)
       (let ((old (hashtable-get hop-load-cache filename)))
 	 (if old
 	     (values (car old) (cdr old))
-	     (let ((v (hop-load filename :mode 'module)))
+	     (let ((v (hop-load filename :mode 'module :worker-slave ws)))
 		(cond
 		   ((procedure? v)
 		    (hashtable-put! hop-load-cache filename (cons v #f))
@@ -1759,19 +1759,19 @@
 		((aot)
 		 (if (hop-sofile-enable)
 		     (loop (nodejs-socompile src filename lang worker-slave))
-		     (hop-eval filename)))
+		     (hop-eval filename worker-slave)))
 		((nte nte1 nte+)
 		 (when (hop-sofile-enable)
 		    (nodejs-socompile-queue-push filename lang worker-slave))
-		 (hop-eval filename))
+		 (hop-eval filename worker-slave))
 		(else
-		 (hop-eval filename))))
+		 (hop-eval filename worker-slave))))
 	    (else
 	     (when (and (memq (hop-sofile-compile-policy) '(nte1 nte+))
 			(hop-sofile-enable))
 		(nodejs-socompile-queue-push filename lang worker-slave))
-	     (hop-eval filename)))))
-   
+	     (hop-eval filename worker-slave)))))
+
    (define (load-module-hop)
       (with-access::WorkerHopThread worker (%this parent)
 	 (with-access::JsGlobalObject %this (js-object)

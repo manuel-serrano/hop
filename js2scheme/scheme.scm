@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Aug 24 08:49:33 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 10:59:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -118,14 +118,6 @@
 		     ((8) 'js-new8)
 		     (else 'js-new))))
 	  `(,new %this ,clazz ,@args))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-toobject ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (j2s-toobject loc arg)
-   (if (> (bigloo-debug) 0)
-       `(js-toobject/debug %this ',loc ,arg)
-       `(js-toobject %this ,arg)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-nodes* ...                                                   */

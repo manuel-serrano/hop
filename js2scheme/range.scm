@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Jun  5 15:57:16 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 13:04:05 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1158,7 +1158,9 @@
       (cond
 	 ((isa? this J2SDeclSvc)
 	  ;; services are as escaping function, the arguments are "any"
-	  (escape-fun val fix #t))
+	  (if (isa? val J2SFun)
+	      (escape-fun val fix #t)
+	      (escape-method val fix)))
 	 ((constructor-only? this)
 	  ;; a mere constructor
 	  (if (isa? val J2SFun)

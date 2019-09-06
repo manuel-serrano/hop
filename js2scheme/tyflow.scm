@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Jul 25 07:02:19 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 12:08:52 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -772,7 +772,9 @@
 	 ((or (isa? this J2SDeclSvc) (eq? scope 'export))
 	  ;; services and exported function are as escaping functions,
 	  ;; the arguments and return types are "any"
-	  (escape-fun val fix #f))
+	  (if (isa? val J2SFun)
+	      (escape-fun val fix #f)
+	      (escape-method val fix)))
 	 ((constructor-only? this)
 	  ;; a mere constructor
 	  (if (isa? val J2SFun)

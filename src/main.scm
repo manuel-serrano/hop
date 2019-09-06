@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Sep  6 07:37:09 2019 (serrano)                */
+;*    Last change :  Fri Sep  6 14:00:30 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -115,7 +115,7 @@
 	 (when (hop-enable-zeroconf) (init-zeroconf!))
 	 ;; create the scheduler (unless the rc file has already created one)
 	 (unless (isa? (hop-scheduler) scheduler)
-	    (set-scheduler!))
+	    (hop-scheduler-set! (make-hop-scheduler)))
 	 ;; start the hop scheduler loop (i.e. the hop main loop)
 	 (with-handler
 	    (lambda (e)
@@ -166,7 +166,8 @@
 			  (thread-start!
 			     (instantiate::hopthread
 				(body (lambda ()
-					 (scheduler-accept-loop (hop-scheduler)
+					 (scheduler-accept-loop
+					    (make-hop-scheduler)
 					    servs #t)))))
 			  (scheduler-accept-loop (hop-scheduler) serv #t))
 			 (else
@@ -341,39 +342,34 @@
 			(js-string->jsstring (input-port-name ip)) #f
 			%global)
 		     (%js-eval-hss ip %global %worker scope))))))))
-   
+
 ;*---------------------------------------------------------------------*/
-;*    set-scheduler! ...                                               */
+;*    make-hop-scheduler ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (set-scheduler!)
+(define (make-hop-scheduler)
    (cond-expand
       (enable-threads
        (case (hop-scheduling)
 	  ((nothread)
-	   (hop-scheduler-set!
-	      (instantiate::nothread-scheduler)))
+	   (instantiate::nothread-scheduler))
 	  ((queue)
-	   (hop-scheduler-set!
-	      (instantiate::queue-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::queue-scheduler
+	      (size (hop-max-threads))))
 	  ((one-to-one)
-	   (hop-scheduler-set!
-	      (instantiate::one-to-one-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::one-to-one-scheduler
+	      (size (hop-max-threads))))
 	  ((pool)
-	   (hop-scheduler-set!
-	      (instantiate::pool-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::pool-scheduler
+	      (size (hop-max-threads))))
 	  ((accept-many)
-	   (hop-scheduler-set!
-	      (instantiate::accept-many-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::accept-many-scheduler
+	      (size (hop-max-threads))))
 	  (else
 	   (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
       (else
        (unless (eq? (hop-scheduling) 'nothread)
 	  (warning "hop" "Threads disabled, forcing \"nothread\" scheduler."))
-       (hop-scheduler-set! (instantiate::nothread-scheduler)))))
+       (instantiate::nothread-scheduler))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-command-line-weblet ...                                     */
