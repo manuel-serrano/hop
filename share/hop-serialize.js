@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Tue Sep  3 07:57:46 2019 (serrano)                */
+/*    Last change :  Sat Sep  7 18:19:17 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -913,6 +913,7 @@ function hop_bytearray_to_obj( s, extension, cset ) {
 
    function utf8substring( s, end ) {
       var res = "";
+      let start = pointer;
 
       while( pointer < end ) {
 	 var code = s[ pointer++ ];
@@ -937,6 +938,21 @@ function hop_bytearray_to_obj( s, extension, cset ) {
 		     + (code4 - 128);
 		  res += String.fromCharCode( code4 );
 	       }
+	    }
+	 }
+      }
+      
+      // repair illegal utf8 strings by ignoring non ascii chars
+      if( pointer > end ) {
+	 pointer = start;
+	 res = "";
+	 
+	 while( pointer < end ) {
+	    var code = s[ pointer++ ];
+	    if( code < 128 ) {
+	       res += String.fromCharCode( code );
+	    } else {
+	       res += ".";
 	    }
 	 }
       }
