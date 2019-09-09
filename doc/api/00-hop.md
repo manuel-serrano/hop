@@ -343,7 +343,7 @@ ${ doc.include( doc.BUILDDIR + "/examples/image/image.js", 14 ) }
 
 Request Filtering
 -----------------
-[:filtering]
+[:request-filters]
 
 Hop [services](01-service.html) are associated to URL and the server
 automatically routes requests toward the corresponding service. This

@@ -75,3 +75,14 @@ ${ doc.include( doc.BUILDDIR + "/doc/dev/redirect.js" ) }
 
 #### Global redirection ####
 
+Using [request filters](./00-hop.html#request-filters) it is possible to
+intercept all incoming requests and redirecting them if there are not
+using the `https` protocol. Example:
+
+${ <span class="label label-info">redirect2.js</span> }
+
+```hopscript
+${ doc.include( doc.BUILDDIR + "/doc/dev/redirect2.js" ) }
+```
+
+
