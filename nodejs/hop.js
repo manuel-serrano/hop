@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Sep  6 16:22:40 2019 (serrano)                */
+/*    Last change :  Mon Sep  9 08:29:59 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -61,6 +61,13 @@ exports.HTTPResponseError = function( obj ) {
       header: { "Hop-Error": "true" }
    } );
 };
+
+/*---------------------------------------------------------------------*/
+/*    Request Filters                                                  */
+/*---------------------------------------------------------------------*/
+exports.addRequestFilter = hop.addRequestFilter;
+exports.addRequestFilterFirst = hop.addRequestFilterFirst;
+exports.addRequestFilterLast = hop.addRequestFilterLast;
 
 /*---------------------------------------------------------------------*/
 /*    Charset                                                          */

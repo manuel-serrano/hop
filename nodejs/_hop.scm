@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Sep  6 16:15:26 2019 (serrano)                */
+;*    Last change :  Mon Sep  9 08:29:05 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -354,6 +354,29 @@
 	       (define-js HTTPResponseAsync 2
 		  (lambda (this proc req)
 		     (hopjs-response-async this proc req %this %worker)))
+
+	       ;; filters
+	       (define-js addRequestFilter 1
+		  (lambda (this proc)
+		     (hop-filter-add!
+			(lambda (req)
+			   (js-worker-exec (js-current-worker) "request" #t
+			      (lambda ()
+				 (js-call1 %this proc this req)))))))
+	       (define-js addRequestFilterFirst 1
+		  (lambda (this proc)
+		     (hop-filter-add-always-first!
+			(lambda (req)
+			   (js-worker-exec (js-current-worker) "request" #t
+			      (lambda ()
+				 (js-call1 %this proc this req)))))))
+	       (define-js addRequestFilterLast 1
+		  (lambda (this proc)
+		     (hop-filter-add-always-last!
+			(lambda (req)
+			   (js-worker-exec (js-current-worker) "request" #t
+			      (lambda ()
+				 (js-call1 %this proc this req)))))))
 	       
 	       ;; events
 	       (define-js signal 2

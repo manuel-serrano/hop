@@ -5,9 +5,10 @@ ${var doc = require( "hopdoc" )}
 https
 =====
 
-${ <span class="label label-warning">Note:</span> } The https
-interface as been changed from Hop-3.2.0 and Hop-3.3.0 this document
+${ <span class="label label-warning">Note:</span> } 
+ The https interface as been changed from Hop-3.2.0 and Hop-3.3.0 this document
 only refers to the latter version.
+[:@warning]
 
 Hop can accept `http` connections, `https` connections, or both
 simultaneously. This is chosen on the command line, that is before
@@ -52,6 +53,13 @@ ${ doc.include( doc.BUILDDIR + "/doc/dev/selfsigned.sh" )}
 Automatic Redirections
 ----------------------
 
+As Hop can accepts both `http` and `https` connections, it might be
+useful to redirect one to the other either on a per service basis or
+globally. THis section shows how to implement these redirections.
+
+
+#### Per service redirection ####
+
 Hop introspection enables services to know about the protocols used to
 emit requests and the protocols that are available. This, for
 instance, enables services to automatically redirect `http` connections
@@ -63,3 +71,7 @@ ${ <span class="label label-info">redirect.js</span> }
 ```hopscript
 ${ doc.include( doc.BUILDDIR + "/doc/dev/redirect.js" ) }
 ```
+
+
+#### Global redirection ####
+

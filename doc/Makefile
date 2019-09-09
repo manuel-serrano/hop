@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Sep  7 07:43:22 2019 (serrano)                */
+#*    Last change :  Mon Sep  9 08:45:38 2019 (serrano)                */
 #*    Copyright   :  2006-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -41,6 +41,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   Makefile doc.js xml.js html.js ecma-262-60.js \
   doc.json.in \
   api/api.json api/00-hop.md api/10-dom.md api/20-websocket.md api/01-html.md \
+  api/reqfilter.js \
   widget/widget.json \
   lang/lang.json _lang.md \
   lang/html.bnf lang/service.bnf lang/iservice.bnf \
