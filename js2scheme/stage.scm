@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/stage.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/stage.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Mon Jan 28 11:36:38 2019 (serrano)                */
+;*    Last change :  Mon Sep  9 11:36:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -114,11 +114,18 @@
 	       (lambda (op)
 		  (ast->json ast op)))
 	    (with-url (string-append url "?hop-encoding=json")
-	       (lambda (ast) ast)
+	       (lambda (ast)
+		  ast)
 	       :method 'POST
-	       :header '((content-type: . "application/json"))
+	       :header '((content-type: . "application/json")
+			 (hop-serialize: . "json"))
 	       :connection 'close
-	       :json-parser (lambda (ip ctx) (json->ast ip))
+	       :json-parser (lambda (ip ctx)
+			       (json->ast ip))
+	       :x-javascript-parser (lambda (ip ctx)
+				       (error "url-stage"
+					  "Bad response mime-type (should be application/json)"
+					  #f))
 	       :body (call-with-output-string
 			(lambda (op)
 			   (ast->json ast op))))))))

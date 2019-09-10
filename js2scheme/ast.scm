@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jul 19 13:51:08 2019 (serrano)                */
+;*    Last change :  Mon Sep  9 11:06:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1149,7 +1149,14 @@
 			   ((and (pair? fi) (member "jsonref" fi)
 				 (isa? v J2SDecl))
 			    (with-access::J2SDecl v (key)
-			       (fprintf op "{\"__ref__\": ~a} " key)))
+			       (fprintf op "{\"__ref__\": ~a, "
+				  key)
+			       (fprintf op "\"__node__\": \"~a\", "
+				  (class-name clazz))
+			       (display "\"loc\": " op)
+			       (with-access::J2SNode this (loc)
+				  (j2s->json loc op)
+				  (display "}" op))))
 			   (else
 			    (j2s->json v op))))))
 	       (for (-fx i 1)))))
@@ -1309,20 +1316,23 @@
 				     (if (not (string? n))
 					 (error "json->ast" "Illegal node class" n)
 					 (alist->node (string->symbol n) alist)))))
+			      ((assq '__hopc_ast__ alist)
+			       =>
+			       (lambda (o) (tprint "HOPC_AST alist=" alist)))
 			      ((assq '__ast__ alist)
 			       =>
 			       (lambda (o) (json-resolve! (cdr o))))
 			      ((assq '__symbol__ alist)
 			       =>
 			       (lambda (a)
-				  (string->symbol (cdr a))))
+				  (cdr a)))
 			      ((assq '__ref__ alist)
 			       =>
 			       (lambda (r)
 				  (if (not (integer? (cdr r)))
 				      (error "json->ast"
 					 "Illegal reference node"
-					 o)
+					 alist)
 				      (instantiate::%JSONDecl
 					 (loc '(no-loc))
 					 (id 'jsondecl)
