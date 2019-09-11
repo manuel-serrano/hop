@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Sep  7 18:19:17 2019 (serrano)                */
+/*    Last change :  Wed Sep 11 13:16:58 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1370,13 +1370,15 @@ function hop_dom_unserialize( obj ) {
 	    if( k[ 0 ] !== "%" ) {
 	       var m = k.match( "^on(.*)" );
 	       if( m ) {
-		  try {
-		     var fun = (typeof v === "string") 
-			? new Function( "event", v ) 
-			: v;
-		     hop_add_event_listener( el, m[ 1 ], fun, true );
-		  } catch( e ) {
-		     alert( "hop_dom_unserialize error!" );
+		  if( v !== false && v !== undefined ) {
+		     try {
+		     	var fun = (typeof v === "string") 
+			   ? new Function( "event", v ) 
+			   : v;
+		     	hop_add_event_listener( el, m[ 1 ], fun, true );
+		     } catch( e ) {
+		     	alert( "hop_dom_unserialize error! \"" + k + ":" + v + "\"" );
+		     }
 		  }
 	       } else {
 		  el.setAttribute( k, v );
