@@ -6,7 +6,7 @@ https
 =====
 
 ${ <span class="label label-warning">Note:</span> } 
- The https interface as been changed from Hop-3.2.0 and Hop-3.3.0 this document
+The https interface as been changed from Hop-3.2.0 and Hop-3.3.0 this document
 only refers to the latter version.
 [:@warning]
 

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/js2http/js2http.js       */
+/*    serrano/prgm/project/hop/hop/examples/js2http/js2http.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun 25 08:36:20 2014                          */
-/*    Last change :  Wed Nov  4 14:02:57 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Wed Sep 11 11:50:31 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    This shows how to implement a JavaScript HTTP plugin to the      */
 /*    js2scheme compiler.                                              */
@@ -17,8 +17,8 @@
 var hopc = require( "hopc" );
 var ast = require( hopc.ast );
 
-service js2http( a ) {
-   var prg = hopc.intern( a );
+service js2http( { ast, config } ) {
+   var prg = hopc.intern( ast );
    var w = new hopc.HopcAstWalker();
 
    w.J2SDeclFun = function( node ) {

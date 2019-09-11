@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Sep 10 19:35:46 2019 (serrano)                */
+;*    Last change :  Wed Sep 11 10:34:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1301,8 +1301,6 @@
 	 (when (procedure? ctor) ctor inst)
 	 inst))
 
-   (define margin 0)
-
    (json-parse ip
       :expr #t
       :undefined #t
@@ -1313,11 +1311,8 @@
       :array-return (lambda (a i)
 		       (reverse! (cell-ref a)))
       :object-alloc (lambda ()
-		       (set! margin (+ margin 1))
 		       (make-cell '()))
       :object-set (lambda (o p val)
-		     (tprint (make-string margin #\space) p " "
-			(if (string? val) val (typeof val)))
 		     (when (and (member p '("loc" "endloc")) (string? val))
 			(let ((i (string-index-right val #\:)))
 			   (when i
@@ -1328,7 +1323,6 @@
 		     (cell-set! o
 			(cons (cons (string->symbol p) val) (cell-ref o))))
       :object-return (lambda (o)
-			(set! margin (- margin 1))
 			(let ((alist (cell-ref o)))
 			   (cond
 			      ((assq '__node__ alist)
@@ -1338,9 +1332,6 @@
 				     (if (not (string? n))
 					 (error "json->ast" "Illegal node class" n)
 					 (alist->node (string->symbol n) alist)))))
-			      ((assq '__hopc_ast__ alist)
-			       =>
-			       (lambda (o) (tprint "HOPC_AST alist=" alist)))
 			      ((assq '__ast__ alist)
 			       =>
 			       (lambda (o) (json-resolve! (cdr o))))
@@ -1359,6 +1350,8 @@
 					 (loc '(no-loc))
 					 (id 'jsondecl)
 					 (%id (cdr r))))))
+			      ((assq '__undefined__ alist)
+			       #unspecified)
 			      (else
 			       (tprint "UNKNWON: " o)
 			       o))))

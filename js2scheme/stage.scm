@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Mon Sep  9 11:36:48 2019 (serrano)                */
+;*    Last change :  Wed Sep 11 11:23:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -107,15 +107,20 @@
 ;*    stage-exec ::J2SStageUrl ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (stage-exec stage::J2SStageUrl ast::J2SProgram tmp::bstring count::int args::obj)
+   
+   (define (value->json-value v)
+      (cond
+	 ((eq? v #t) "true")
+	 ((eq? v #f) "false")
+	 ((number? v) v)
+	 ((string? v) (format "~s" v))
+	 ((symbol? v) (format "~s" (symbol->string v)))))
+	 
    (with-access::J2SStageUrl stage (url)
       (driver-debug-post stage tmp count ast args
 	 (lambda (ast args)
-	    (call-with-output-file "/tmp/AST" 
-	       (lambda (op)
-		  (ast->json ast op)))
 	    (with-url (string-append url "?hop-encoding=json")
-	       (lambda (ast)
-		  ast)
+	       (lambda (ast) ast)
 	       :method 'POST
 	       :header '((content-type: . "application/json")
 			 (hop-serialize: . "json"))
@@ -128,7 +133,18 @@
 					  #f))
 	       :body (call-with-output-string
 			(lambda (op)
-			   (ast->json ast op))))))))
+			   (display "{ \"ast\": " op)
+			   (ast->json ast op)
+			   (display ", \"config\": {" op)
+			   (let loop ((args args))
+			      (when (pair? args)
+				 (let ((v (value->json-value (cadr args))))
+				    (when v
+				       (fprintf op "\"~a\": ~a" (car args) v))
+				    (when (pair? (cddr args))
+				       (display ", " op)
+				       (loop (cddr args))))))
+			   (display "}}" op))))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    stage-exec ::J2SStageFile ...                                    */
