@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Sep 10 14:33:25 2019 (serrano)                */
+;*    Last change :  Tue Sep 10 19:35:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -483,7 +483,7 @@
 	      (id::symbol read-only)
 	      (alias::symbol read-only)
 	      (index::long (default -1))
-	      (decl (default #f))
+	      (decl (default #f) (info '("jsonref")))
 	      (from (default #f)))
 
 	   (final-class J2SExportVars::J2SStmt
@@ -1137,7 +1137,7 @@
 (define (j2s-decl->json this::J2SDecl clazz loc op::output-port)
    (with-access::J2SDecl this (key)
       (fprintf op "{\"__ref__\": ~a, " key)
-      (fprintf op "\"__node__\": \"~a\"" clazz)
+      (fprintf op "\"__nodeType__\": \"~a\"" clazz)
       (when loc
 	 (display ", \"loc\": " op)
 	 (j2s->json loc op))
@@ -1161,7 +1161,7 @@
 			   ((and (pair? fi) (member "jsonref" fi)
 				 (isa? v J2SDecl))
 			    (with-access::J2SNode this (loc)
-			       (j2s-decl->json v clazz loc op)))
+			       (j2s-decl->json v (class-name clazz) loc op)))
 			   (else
 			    (j2s->json v op))))))
 	       (for (-fx i 1)))))
@@ -1171,14 +1171,14 @@
 ;*    j2s->json ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SPragma op::output-port)
-   (with-access::J2SPragma this (expr loc lang vars vals)
+   (with-access::J2SPragma this (expr loc lang vars vals hint type)
       (display "{ \"__node__\": \"J2SPragma\", \"expr\": \"" op)
       (display (string-for-read
 		  (call-with-output-string
 		     (lambda (op) (write expr op))))
 	 op)
       (display "\", \"vars\": " op)
-      (display (format "\"(~(, ))\"" vars) op)
+      (display (format "[~(, )]" (map (lambda (s) (format "~s")) vars)) op)
       (display ", \"vals\": [" op)
       (if (null? vals)
 	  (display "]" op)
@@ -1192,9 +1192,11 @@
 		    (display ", " op)
 		    (loop (cdr vals))))))
       (display ", \"lang\": " op)
-      (display #\" op)
-      (display lang op)
-      (display #\" op)
+      (j2s->json lang op)
+      (display ", \"hint\": " op)
+      (j2s->json hint op)
+      (display ", \"type\": " op)
+      (j2s->json type op)
       (display ", \"loc\": " op)
       (j2s->json loc op)
       (display " }" op)))
@@ -1217,11 +1219,20 @@
 ;*    j2s->json ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SReturn op::output-port)
-   (with-access::J2SReturn this (from expr)
+   (with-access::J2SReturn this (from expr loc tail exit)
       (display "{ \"__node__\": \"J2SReturn\"," op)
+      (display "\"loc\": " op)
+      (j2s->json loc op)
+      (display ", " op)
+      (display "\"exit\": " op)
+      (j2s->json exit op)
+      (display ", " op)
+      (display "\"tail\": " op)
+      (j2s->json tail op)
+      (display ", " op)
       (when (isa? from J2SBindExit)
 	 (with-access::J2SBindExit from (lbl)
-	    (display "\"exit\": \"" op)
+	    (display "\"from\": \"" op)
 	    (display lbl op)
 	    (display "\"," op)))
       (display "\"expr\": " op)
@@ -1270,7 +1281,6 @@
 	     (ctor (class-constructor clazz))
 	     (inst ((class-allocator clazz)))
 	     (fields (class-all-fields clazz)))
-	 (tprint "A->N " cname " " l)
 	 ;; instance fields
 	 (let loop ((i (-fx (vector-length fields) 1)))
 	    (when (>=fx i 0)
@@ -1293,9 +1303,6 @@
 
    (define margin 0)
 
-   (let ((s (read-string ip)))
-      (tprint "JSON-PARSE " (read-string ip))
-      (set! ip (open-input-string s))
    (json-parse ip
       :expr #t
       :undefined #t
@@ -1309,7 +1316,8 @@
 		       (set! margin (+ margin 1))
 		       (make-cell '()))
       :object-set (lambda (o p val)
-		     (tprint (make-string margin #\space) p " " (typeof val))
+		     (tprint (make-string margin #\space) p " "
+			(if (string? val) val (typeof val)))
 		     (when (and (member p '("loc" "endloc")) (string? val))
 			(let ((i (string-index-right val #\:)))
 			   (when i
@@ -1356,7 +1364,6 @@
 			       o))))
       :parse-error (lambda (msg fname loc)
 		      (error "json->ast" "Wrong JSON file" msg))))
-   )
 
 ;*---------------------------------------------------------------------*/
 ;*    json-resolve! ...                                                */

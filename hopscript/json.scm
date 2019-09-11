@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Aug  9 09:55:22 2019 (serrano)                */
+;*    Last change :  Wed Sep 11 08:20:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -349,8 +349,8 @@
 	 (cond
 	    ((memq value stack)
 	     (js-raise-type-error %this
-		"Converting circular structure to JSON ~s"
-		(js-tostring value %this)))
+		"Converting circular structure to JSON ~a"
+		(format "[~a: ~a]" key (js-tostring value %this))))
 	    ((js-jsstring? value)
 	     (string-quote value))
 	    ((js-number? value)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Sep  6 10:07:23 2019 (serrano)                */
+;*    Last change :  Tue Sep 10 19:30:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -249,7 +249,7 @@
 		       obj))
 		   (else
 		    obj)))
-	     (js-raise-type-error %this "new: object is not a function ~s" p)))))
+	     (js-raise-type-error %this "new: constructor is not a function ~s" p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new ...                                                       */
@@ -263,7 +263,7 @@
       ((js-proxy? f)
        (js-new/proxy %this f args))
       (else
-       (js-raise-type-error %this "new: object is not a function ~s" f))))
+       (js-raise-type-error %this "new: constructor is not a function ~s" f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/debug ...                                                 */
@@ -277,7 +277,7 @@
       ((js-proxy? f)
        (js-new/proxy %this f args))
       (else
-       (js-raise-type-error/loc %this loc "new: object is not a function ~s" f))))
+       (js-raise-type-error/loc %this loc "new: constructor is not a function ~s" f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */

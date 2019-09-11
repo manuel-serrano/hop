@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Aug 13 08:44:13 2019 (serrano)                */
+;*    Last change :  Wed Sep 11 07:48:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1138,29 +1138,29 @@
       (let ((loc (token-loc token)))
 	 (cond
 	    (declaration?
-	     (instantiate::J2SDeclSvc
-		(loc loc)
-		(id (cdr id))
-		(val (instantiate::J2SSvc
-			(loc loc)
-			(register register)
-			(import import?)
-			(thisp (new-decl-this loc))
-			(params params)
-			(vararg (rest-params params))
-			(name (cdr id))
-			(init (J2SNop))
-			(mode mode)
-			(path (cdr id))
-			(body body)
-			(decl (instantiate::J2SDecl
-				 (loc loc)
-				 (id (cdr id))
-				 (writable #f)
-				 (ronly #t)
-				 (scope 'global)))))))
+	     (co-instantiate ((val (instantiate::J2SSvc
+				      (loc loc)
+				      (register register)
+				      (import import?)
+				      (thisp (new-decl-this loc))
+				      (params params)
+				      (vararg (rest-params params))
+				      (name (cdr id))
+				      (init (J2SNop))
+				      (mode mode)
+				      (path (cdr id))
+				      (body body)
+				      (decl decl)))
+			      (decl (instantiate::J2SDeclSvc
+				       (loc loc)
+				       (id (cdr id))
+				       (scope 'global)
+				       (writable #f)
+				       (ronly #t)
+				       (val val))))
+		decl))
 	    (id
-	     (co-instantiate ((fun (instantiate::J2SSvc
+	     (co-instantiate ((svc (instantiate::J2SSvc
 				      (loc (token-loc id))
 				      (register register)
 				      (import import?)
@@ -1180,8 +1180,8 @@
 				       (ronly #t)
 				       (expression #t)
 				       (scope  'global)
-				       (val fun))))
-		fun))
+				       (val svc))))
+		svc))
 	    (else
 	     (instantiate::J2SSvc
 		(loc loc)
