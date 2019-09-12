@@ -74,6 +74,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsFunction ...                                 */
 ;*---------------------------------------------------------------------*/
+(define-method (hop->javascript o::JsFunction op compile isexpr _)
+   (error "js" "Cannot compile function" o))
+
+;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsFunction ...                                 */
+;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsFunction op compile isexpr ctx)
    (error "js" "Cannot compile function" o))
 
