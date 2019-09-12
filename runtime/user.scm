@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/3.2.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Jul 28 15:25:03 2017 (serrano)                */
-;*    Copyright   :  2005-17 Manuel Serrano                            */
+;*    Last change :  Thu Sep 12 13:35:41 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -644,8 +644,7 @@
 		      (display message (current-output-port)))))
 	       ((isa? req http-request)
 		(with-access::http-request req (host port path)
-		   (format "Protected Area! Authentication required: ~a:~a:~a"
-		      host port path)))
+		   (format (hop-access-denied-format) host port path)))
 	       (else
 		"Protected Area! Authentication required.")))))
 
@@ -656,7 +655,7 @@
    (instantiate::http-response-authentication
       (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
-      (body (format "User \"~a\" is not allowed to execute service \"~a\"."
+      (body (format (hop-user-service-denied-format)
 	       (with-access::user user (name) name) svc))))
 
 ;*---------------------------------------------------------------------*/
@@ -672,11 +671,11 @@
    (instantiate::http-response-authentication
       (start-line "HTTP/1.0 407 Proxy Authentication Required")
       (header `((Proxy-Authenticate:
-		 .
-		 ,(format "Basic realm=\"Hop proxy (~a) authentication\""
-			  host))))
-      (body (format "Protected Area! Authentication required for user \"~a\"."
-		    (with-access::user user (name) name)))))
+		   .
+		   ,(format "Basic realm=\"Hop proxy (~a) authentication\""
+		       host))))
+      (body (format (hop-proxy-denied-format)
+	       (with-access::user user (name) name)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-add-authorized-files! ...                                   */
