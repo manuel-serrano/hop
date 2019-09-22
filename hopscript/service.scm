@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Sep  6 08:44:32 2019 (serrano)                */
+;*    Last change :  Wed Sep 18 12:50:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -915,7 +915,7 @@
 					     (js-undefined))))
 				(handler (lambda (svc req)
 					    (js-worker-exec worker
-					       (symbol->string! id) #t
+					       (symbol->string! id) #f
 					       (service-debug id
 						  (lambda ()
 						     (service-invoke svc req
