@@ -651,8 +651,7 @@
 		      (display message (current-output-port)))))
 	       ((isa? req http-request)
 		(with-access::http-request req (host port path)
-		   (format "Protected Area! Authentication required: ~a:~a:~a"
-		      host port path)))
+		   (format (hop-access-denied-format) host port path)))
 	       (else
 		"Protected Area! Authentication required.")))))
 
@@ -663,7 +662,7 @@
    (instantiate::http-response-authentication
       (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
-      (body (format "User \"~a\" is not allowed to execute service \"~a\"."
+      (body (format (hop-user-service-denied-format)
 	       (with-access::user user (name) name) svc))))
 
 ;*---------------------------------------------------------------------*/
@@ -679,11 +678,11 @@
    (instantiate::http-response-authentication
       (start-line "HTTP/1.0 407 Proxy Authentication Required")
       (header `((Proxy-Authenticate:
-		 .
-		 ,(format "Basic realm=\"Hop proxy (~a) authentication\""
-			  host))))
-      (body (format "Protected Area! Authentication required for user \"~a\"."
-		    (with-access::user user (name) name)))))
+		   .
+		   ,(format "Basic realm=\"Hop proxy (~a) authentication\""
+		       host))))
+      (body (format (hop-proxy-denied-format)
+	       (with-access::user user (name) name)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-add-authorized-files! ...                                   */

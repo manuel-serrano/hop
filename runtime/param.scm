@@ -363,6 +363,15 @@
 	    (hop-user-agent::bstring)
 	    (hop-user-agent-set! ::bstring)
 
+	    (hop-access-denied-format::bstring)
+	    (hop-access-denied-format-set! ::bstring)
+
+	    (hop-user-service-denied-format::bstring)
+	    (hop-user-service-denied-format-set! ::bstring)
+
+	    (hop-proxy-denied-format::bstring)
+	    (hop-proxy-denied-format-set! ::bstring)
+	    
 	    (hop-preferred-language::bstring)
 	    (hop-preferred-language-set! ::bstring)
 
@@ -1531,6 +1540,27 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-user-agent
    "Mozilla/5.0 (X11; Linux i686; rv:31.0) Gecko/20100101 Firefox/31.0 Iceweasel/31.5.3")
+
+;*---------------------------------------------------------------------*/
+;*    hop-access-denied-format ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-access-denied-format
+   ;; arguments are: host, port, path
+   "Protected Area! Authentication required: ~a:~a:~a")
+
+;*---------------------------------------------------------------------*/
+;*    hop-user-service-denied-format ...                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-user-service-denied-format
+   ;; arguments are: user name and service name
+   "User \"~a\" is not allowed to execute service \"~a\".")
+
+;*---------------------------------------------------------------------*/
+;*    hop-proxy-denied-format ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-proxy-denied-format
+   ;; argument is user name
+   "Protected Area! Authentication required for user \"~a\".")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-preferred-language ...                                       */
