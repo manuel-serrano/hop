@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/src/pool_scheduler.scm            */
+;*    serrano/prgm/project/hop/hop/src/pool_scheduler.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Tue May  6 08:18:09 2014 (serrano)                */
-;*    Copyright   :  2008-14 Manuel Serrano                            */
+;*    Last change :  Mon Sep 16 16:47:36 2019 (serrano)                */
+;*    Copyright   :  2008-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
 ;*    -------------------------------------------------------------    */
@@ -29,6 +29,8 @@
    (import  hop_scheduler
 	    hop_param)
 
+   (export  (class &stack-overflow::&error))
+   
    (export  (class pool-scheduler::row-scheduler
 	       (mutex::mutex read-only (default (make-mutex)))
 	       (condv::condvar read-only (default (make-condition-variable)))
@@ -115,6 +117,18 @@
 ;*---------------------------------------------------------------------*/
 (define (pool-thread-body t)
    (with-access::scdthread t (proc userdata mutex condv scheduler)
+      (signal sigsegv
+	 (lambda (n)
+	    (raise
+	       (if #t
+		   (instantiate::&stack-overflow
+		      (proc "hop")
+		      (msg "Stack overflow")
+		      (obj #f))
+		   (instantiate::&error
+		      (proc "hop")
+		      (msg "segmentation violation")
+		      (obj #f))))))
       (synchronize mutex
 	 (let loop ()
 	    (condition-variable-wait! condv mutex)
