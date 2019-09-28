@@ -1227,6 +1227,16 @@
 
    (define (js-or x y)
       (if (eq? x (js-undefined)) y x))
+
+   (define (js-put! o::JsObject p v throw %this)
+      (let ((newdesc (instantiate::JsValueDescriptor
+                          (name p)
+                          (value v)
+                          (writable #t)
+                          (enumerable #t)
+                          (configurable #t))))
+;          (js-invalidate-pcaches-pmap! %this p)
+         (js-define-own-property o p newdesc throw %this)))
    
    (define (from-object obj desc)
       ;; proxy getOwnPropertyDescriptor returns regular objects
