@@ -1723,8 +1723,7 @@
        (with-handler
 	  (lambda (e)
 	     (js-jsstring->string (js-typeof obj %this)))
-	  (js-jsstring->string
-	     (js-call0 %this (js-get obj (& "toString") %this) obj))))
+	  (js-jsstring->string (js-typeof obj))))
       ((eq? obj #unspecified)
        "undefined")
       ((eq? obj #f)
@@ -1736,7 +1735,7 @@
       ((or (js-number? obj) (int32? obj) (uint32? obj))
        (number->string obj))
       (else
-       (js-tostring obj %this))))
+       (js-jsstring->string (js-typeof obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error ...                                          */
