@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Wed May  8 10:45:27 2019 (serrano)                */
+/*    Last change :  Sat Oct  5 07:30:49 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
@@ -157,6 +157,22 @@ assert.ok( su4.length === 5, "unescape4.length" );
 assert.ok( su4.charCodeAt( 3 ) === 0xc3 , "unescape4.charCodeAt( 0 )" );
 assert.ok( su4.charCodeAt( 4 ) === 0xa0 , "unescape4.charCodeAt( 1 )" );
 assert.ok( se4 == "foo%C3%A0", "escape4" );
+
+var se5 = '\0162';
+assert.ok( se5.length === 2, "unescape5.length" );
+assert.ok( se5.charCodeAt( 0 ) === 14, "unescape5.charCodeAt( 0 )" );
+assert.ok( se5.charCodeAt( 1 ) === 50, "unescape5.charCodeAt( 1 )" );
+
+var se6 = '\0162abc';
+assert.ok( se6.length === 5, "unescape6.length" );
+assert.ok( se6.charCodeAt( 0 ) === 14, "unescape6.charCodeAt( 0 )" );
+assert.ok( se6.charCodeAt( 1 ) === 50, "unescape6.charCodeAt( 1 )" );
+
+var se7 = '\016a';
+assert.ok( se7.length === 2, "unescape7.length" );
+assert.ok( se7.charCodeAt( 0 ) === 14, "unescape7.charCodeAt( 0 )" );
+assert.ok( se7.charCodeAt( 1 ) === 97, "unescape7.charCodeAt( 1 )" );
+
 
 /*---------------------------------------------------------------------*/
 /*    replace                                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Thu Sep  5 07:51:28 2019 (serrano)                */
+;*    Last change :  Mon Sep 30 17:34:39 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -627,12 +627,6 @@
       (synchronize mutex
 	 (condition-variable-broadcast! condv)
 	 (tprint "THIS CODE SHOULD NOT BE EXECUTED")
-	 ;; install the signal handler for that thread
-	 (signal sigsegv
-	    (lambda (x)
-	       (js-raise-range-error %this
-		  "Maximum call stack size exceeded"
-		  #f)))
 	 ;; loop unless terminated
 	 (with-handler
 	    (lambda (exn)

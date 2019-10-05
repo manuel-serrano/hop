@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Sep  6 14:00:30 2019 (serrano)                */
+;*    Last change :  Mon Sep 30 17:35:27 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -46,13 +46,7 @@
    (signal sigterm
       (lambda (n)
 	 (unless (current-thread)
-	    ((hop-sigterm-handler) n))))
-   (when (<fx (bigloo-debug) 3)
-      (signal sigsegv
-	 (lambda (n)
-	    (fprint (current-error-port) "Segmentation violation")
-	    (display-trace-stack (get-trace-stack) (current-error-port))
-	    (exit 2)))))
+	    ((hop-sigterm-handler) n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js initialization ...                                            */

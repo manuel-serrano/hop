@@ -1008,9 +1008,13 @@
 	  ;; find the attribute (if any)
 	  (with-access::xml-element parent (tag id)
 	     (let ((attr (element-attribute parent)))
-		(if attr
-		    (format "~a#~a.~a" tag id (keyword->string attr))
-		    (format "~a#~a" tag id)))))
+		(cond
+		   ((eq? id #unspecified)
+		    (symbol->string tag))
+		   ((not attr)
+		    (format "~a#~a" tag id))
+		   (else
+		    (format "~a#~a.~a" tag id (keyword->string attr)))))))
 	 (else
 	  "")))
 

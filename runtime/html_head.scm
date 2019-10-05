@@ -57,8 +57,8 @@
 (define (head-runtime-system-packed idiom)
    (cond
       ((string=? idiom "scheme") head-runtime-system-packed-scheme)
-      ((string=? idiom "hopscript")  head-runtime-system-packed-javascript)
-      ((string=? idiom "javascript")  head-runtime-system-packed-javascript)
+      ((string=? idiom "hopscript") head-runtime-system-packed-javascript)
+      ((string=? idiom "javascript") head-runtime-system-packed-javascript)
       (else '())))
 
 ;*---------------------------------------------------------------------*/
