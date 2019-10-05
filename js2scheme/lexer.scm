@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Feb 14 17:44:27 2019 (serrano)                */
+;*    Last change :  Sat Oct  5 07:21:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -704,7 +704,7 @@
 			   (loop (+fx j 1) w octal)))
 		      ((#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7)
 		       (multiple-value-bind (n lo)
-			  (octal-val str (+fx j 1) len)
+			  (octal-val str (+fx j 1) (minfx len (+fx j 4)))
 			  (let* ((s (integer->utf8 n))
 				 (l (string-length s)))
 			     (blit-string! s 0 res w l)
