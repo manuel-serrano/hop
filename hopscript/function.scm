@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Jul 18 06:59:26 2019 (serrano)                */
+;*    Last change :  Mon Oct  7 08:54:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -383,13 +383,19 @@
 			  (cond
 			     ((js-object? prototype)
 			      js-function-cmap)
-			     ((eq? prototype '())
+			     ((or (eq? prototype '())
+				  (eq? prototype (js-undefined)))
 			      js-function-cmap-sans-prototype)
 			     (else
 			      js-function-writable-cmap))
-			  (if (js-object? prototype)
-			      js-function-strict-cmap
-			      js-function-writable-strict-cmap)))
+			  (cond
+			     ((js-object? prototype)
+			      js-function-strict-cmap)
+			     ((or (eq? prototype '())
+				  (eq? prototype (js-undefined)))
+			      js-function-cmap-sans-prototype)
+			     (else
+			      js-function-writable-strict-cmap))))
 		(fun (INSTANTIATE-JSFUNCTION
 			(procedure procedure)
 			(method (or method procedure))
@@ -443,7 +449,7 @@
 		      (set! %prototype prototype)
 		      prototype-property-ro)
 		     ((eq? prototype (js-undefined))
-		      (set! fprototype  prototype)
+		      (set! fprototype prototype)
 		      (set! %prototype %__proto__)
 		      prototype-property-undefined)
 		     ((null? prototype)
@@ -631,15 +637,25 @@
 	     (let* ((proc (lambda (_ . actuals)
 			     (js-apply %this this
 				thisarg (append args actuals))))
-		    (fun (js-make-function
-			    %this
-			    proc
-			    (maxfx 0 (-fx len (length args)))
-			    (js-tostring (js-get this 'name %this) %this)
-			    :strict 'strict
-			    :alloc alloc
-			    :construct proc)))
-		fun))))
+		    (ctor (lambda (_ . actuals)
+			     (js-apply %this this
+				this (append args actuals))))
+		    (proto (js-getprototypeof this %this "getPrototypeOf")))
+		(let ((fun (js-make-function
+			      %this
+			      proc
+			      (maxfx 0 (-fx len (length args)))
+			      (string-append "bound "
+				 (js-tostring (js-get this 'name %this) %this))
+			      :__proto__ proto
+			      :prototype (js-undefined)
+			      :strict 'strict
+			      :alloc alloc
+			      :construct construct)))
+		   (with-access::JsFunction fun ((%bprototype %prototype))
+		      (with-access::JsFunction this (%prototype)
+			 (set! %bprototype %prototype)))
+		   fun)))))
 
    (js-bind! %this obj 'bind
       :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))
