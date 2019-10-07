@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu May 23 08:43:41 2019 (serrano)                */
+;*    Last change :  Mon Sep 30 17:35:13 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -422,12 +422,6 @@
 	    (condition-variable-broadcast! condv)
 	    (with-access::JsLoop loop ((lasync async))
 	       (set! lasync async))
-	    (unless (>=fx (bigloo-debug) 2)
-	       (with-access::WorkerHopThread th (%this)
-		  (signal sigsegv
-		     (lambda (x)
-			(js-raise-range-error %this
-			   "Maximum call stack size exceeded" #f)))))
 	    (when (pair? tqueue)
 	       (uv-async-send async)))
 	 (unwind-protect
