@@ -120,7 +120,14 @@
 		       (with-access::JsGlobalObject %this (js-object)
 			  (js-new0 %this js-object)))
       :object-set (lambda (o p val)
-		     (js-put! o (js-toname p %this) val #f %this))
+		     (let* ((name (js-toname p %this))
+			    (desc (instantiate::JsValueDescriptor
+				    (name name)
+				    (value val)
+				    (enumerable #t)
+				    (configurable #t)
+				    (writable #t))))
+			 (js-define-own-property o name desc #f %this)))
       :object-return (lambda (o) o)
       :parse-error (lambda (msg fname loc)
 		      (js-raise-syntax-error %this msg #f
@@ -445,7 +452,14 @@
    (define (default)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((holder (js-new0 %this js-object)))
-	    (js-put! holder (& "") value #f %this)
+	    (let* ((name (js-toname (& "") %this))
+		   (desc (instantiate::JsValueDescriptor
+		   (name name)
+		   (value value)
+		   (enumerable #t)
+		   (configurable #t)
+		   (writable #t))))
+		(js-define-own-property holder name desc #f %this))
 	    (str (& "") holder '()))))
    
    (cond

@@ -616,6 +616,8 @@
       (define (getownpropertydescriptor this o p)
 	 (let* ((o (if (isa? o object)
 		       o
+		       ;; This is not compatible with the recent semantics.
+		       ;; https://www.ecma-international.org/ecma-262/#sec-object.getownpropertydescriptor
 		       (js-cast-object o %this "getOwnPropertyDescriptor")))
 		(desc (js-get-own-property o p %this)))
 	    (js-from-property-descriptor %this o desc o)))
