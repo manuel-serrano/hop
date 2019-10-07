@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Oct  7 08:54:07 2019 (serrano)                */
+;*    Last change :  Mon Oct  7 15:45:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -191,6 +191,14 @@
 (define js-function-strict-cmap
    (make-cmap
       `#(,(prop 'prototype (property-flags #f #f #f #f))
+	 ,(prop 'length (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #t #f))
+	 ,(prop 'arguments (property-flags #f #f #f #f))
+	 ,(prop 'caller (property-flags #f #f #f #f)))))
+
+(define js-function-strict-bind-cmap
+   (make-cmap
+      `#(,(prop '%bind (property-flags #f #f #f #f))
 	 ,(prop 'length (property-flags #f #f #f #f))
 	 ,(prop 'name (property-flags #f #f #t #f))
 	 ,(prop 'arguments (property-flags #f #f #f #f))
@@ -384,7 +392,8 @@
 			     ((js-object? prototype)
 			      js-function-cmap)
 			     ((or (eq? prototype '())
-				  (eq? prototype (js-undefined)))
+				  (eq? prototype (js-undefined))
+				  (eq? prototype 'bind))
 			      js-function-cmap-sans-prototype)
 			     (else
 			      js-function-writable-cmap))
@@ -394,6 +403,8 @@
 			     ((or (eq? prototype '())
 				  (eq? prototype (js-undefined)))
 			      js-function-cmap-sans-prototype)
+			     ((eq? prototype 'bind)
+			      js-function-strict-bind-cmap)
 			     (else
 			      js-function-writable-strict-cmap))))
 		(fun (INSTANTIATE-JSFUNCTION
@@ -456,6 +467,10 @@
 		      (set! fprototype  prototype)
 		      (set! %prototype prototype)
 		      prototype-property-null)
+		     ((eq? prototype 'bind)
+		      (set! fprototype (js-undefined))
+		      (set! %prototype %__proto__)
+		      prototype-property-undefined)
 		     (else
 		      (error "js-make-function" "Illegal :prototype"
 			 prototype)))))
@@ -648,7 +663,7 @@
 			      (string-append "bound "
 				 (js-tostring (js-get this 'name %this) %this))
 			      :__proto__ proto
-			      :prototype (js-undefined)
+			      :prototype 'bind
 			      :strict 'strict
 			      :alloc alloc
 			      :construct construct)))
