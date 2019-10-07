@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Sep 10 19:30:04 2019 (serrano)                */
+;*    Last change :  Mon Oct  7 11:16:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -883,8 +883,8 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (cmap elements prototype)
-      (let ((o prototype))
+   (with-access::JsFunction f (cmap elements %prototype)
+      (let ((o %prototype))
 	 (if (not (js-object? o))
 	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
 	     (let loop ((v v))
@@ -898,22 +898,6 @@
 			     (loop target))))
 		      (else
 		       (loop nv)))))))))
-
-(define (js-ordinary-instanceof/debug %this loc v f)
-   (let ((o (js-get f (& "prototype") %this)))
-      (if (not (js-object? o))
-          (js-raise-type-error/loc %this loc "instanceof: no prototype ~s" v)
-          (let loop ((v v))
-             (with-access::JsObject v ((nv __proto__))
-                (cond
-                   ((eq? o nv)
-		    #t)
-                   ((eq? nv (js-null))
-		    (when (js-proxy? v)
-		       (with-access::JsProxy v ((target __proto__))
-			  (loop target))))
-		   (else
-		    (loop nv))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-instanceof? ...                                               */
@@ -953,8 +937,8 @@
 		 (let ((h (js-get f js-symbol-hasinstance %this)))
 		    (if (js-function? h)
 			(js-call1 %this h f v)
-			(js-ordinary-instanceof/debug %this loc v f))))
-	      (js-ordinary-instanceof/debug %this loc v f)))))
+			(js-ordinary-instanceof? %this v f))))
+	      (js-ordinary-instanceof? %this v f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-in? ...                                                       */
