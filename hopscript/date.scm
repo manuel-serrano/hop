@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Oct  7 08:18:14 2019 (serrano)                */
+;*    Last change :  Mon Oct  7 08:41:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -1110,7 +1110,7 @@
 ;*    date->milliseconds ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (date->milliseconds dt::date)
-   (llong->flonum (/llong (date->nanoseconds dt) #l1000000)))
+   (roundfl (/fl (llong->flonum (date->nanoseconds dt)) 1000000.0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    date->utc-date ...                                               */
