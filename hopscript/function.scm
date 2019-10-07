@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Oct  7 15:45:55 2019 (serrano)                */
+;*    Last change :  Mon Oct  7 16:01:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -156,14 +156,6 @@
       (props props)))
 
 ;*---------------------------------------------------------------------*/
-(define js-function-strict-bind-cmap
-   (make-cmap
-      `#(,(prop '%bind (property-flags #f #f #f #f))
-	 ,(prop 'length (property-flags #f #f #f #f))
-	 ,(prop 'name (property-flags #f #f #t #f))
-	 ,(prop 'arguments (property-flags #f #f #f #f))
-	 ,(prop 'caller (property-flags #f #f #f #f)))))
-
 ;*    current-loc ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-expander current-loc
@@ -328,8 +320,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-function-cmap! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-function-cmap
-					 js-function-cmap-sans-prototype
+					 js-function-sans-prototype-cmap
 					 js-function-strict-cmap
+					 js-function-strict-bind-cmap
 					 js-function-writable-cmap
 					 js-function-writable-strict-cmap
 					 js-function-prototype-cmap)
@@ -339,12 +332,20 @@
 	       ,(prop (& "length") (property-flags #f #f #f #f))
 	       ,(prop (& "name") (property-flags #f #f #t #f)))))
       
-      (set! js-function-cmap-sans-prototype
+      (set! js-function-sans-prototype-cmap
 	 (make-cmap #f
 	    `#(,(prop (& "%null") (property-flags #f #f #f #f))
 	       ,(prop (& "length") (property-flags #f #f #f #f))
 	       ,(prop (& "name") (property-flags #f #f #t #f)))))
       
+      (set! js-function-strict-bind-cmap
+	 (make-cmap #f
+	    `#(,(prop (& "%bind") (property-flags #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f))
+	       ,(prop (& "arguments") (property-flags #f #f #f #f))
+	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
+
       (set! js-function-strict-cmap
 	 (make-cmap #f
 	    `#(,(prop (& "prototype") (property-flags #f #f #f #f))
@@ -440,7 +441,8 @@
 					 js-function-strict-cmap
 					 js-function-writable-cmap
 					 js-function-writable-strict-cmap
-					 js-function-cmap-sans-prototype
+					 js-function-strict-bind-cmap
+					 js-function-sans-prototype-cmap
 					 js-function-prototype-cmap
 					 js-function-prototype-property-rw 
 					 js-function-prototype-property-ro
@@ -455,7 +457,7 @@
 			     ((or (eq? prototype '())
 				  (eq? prototype (js-undefined))
 				  (eq? prototype 'bind))
-			      js-function-cmap-sans-prototype)
+			      js-function-sans-prototype-cmap)
 			     (else
 			      js-function-writable-cmap))
 			  (cond
@@ -463,7 +465,7 @@
 			      js-function-strict-cmap)
 			     ((or (eq? prototype '())
 				  (eq? prototype (js-undefined)))
-			      js-function-cmap-sans-prototype)
+			      js-function-sans-prototype-cmap)
 			     ((eq? prototype 'bind)
 			      js-function-strict-bind-cmap)
 			     (else
@@ -531,7 +533,7 @@
 		     ((eq? prototype 'bind)
 		      (set! fprototype (js-undefined))
 		      (set! %prototype %__proto__)
-		      prototype-property-undefined)
+		      js-function-prototype-property-undefined)
 		     (else
 		      (error "js-make-function" "Illegal :prototype"
 			 prototype)))))
@@ -729,7 +731,8 @@
 			      proc
 			      (maxfx 0 (-fx len (length args)))
 			      (string-append "bound "
-				 (js-tostring (js-get this 'name %this) %this))
+				 (js-tostring (js-get this (& "name") %this)
+				    %this))
 			      :__proto__ proto
 			      :prototype 'bind
 			      :strict 'strict
