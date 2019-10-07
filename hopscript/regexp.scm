@@ -535,6 +535,7 @@
 		     (js-raise-type-error %this "Not a regexp" this)))
 	      0 "ignoreCase"
 	      :prototype (js-undefined))
+      :set (js-undefined)
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -548,6 +549,7 @@
 		     (js-raise-type-error %this "Not a regexp" this)))
 	      0 "multiline"
 	      :prototype (js-undefined))
+      :set (js-undefined)
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -561,6 +563,7 @@
 		     (js-raise-type-error %this "Not a regexp" this)))
 	      0 "global"
 	      :prototype (js-undefined))
+      :set (js-undefined)
       :writable #f
       :enumerable #f
       :configurable #t)
@@ -574,6 +577,7 @@
 		     (js-raise-type-error %this "Not a regexp" this)))
 	      0 "source"
 	      :prototype (js-undefined))
+      :set (js-undefined)
       :writable #f
       :enumerable #f
       :configurable #t)
