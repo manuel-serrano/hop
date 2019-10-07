@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jul  9 08:47:09 2019 (serrano)                */
+;*    Last change :  Mon Oct  7 08:18:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -218,9 +218,8 @@
 			       (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
 				   +nan.0
 				   (nanoseconds->date
-				      (*llong
-					 #l1000000
-					 (flonum->llong (round v)))))
+				      (flonum->llong
+					 (*fl 1000000. (floorfl v)))))
 			       (let ((n (cond
 					   ((fixnum? v) (fixnum->llong v))
 					   ((llong? v) v)
