@@ -318,8 +318,8 @@
 ;*    Used by functions that are not allowed to be used in NEW expr.   */
 ;*---------------------------------------------------------------------*/
 (define (js-not-a-constructor-alloc %this ctor::JsFunction)
-   (let ((name (js-tostring (js-get ctor (& "name") %this) %this)))
-      (js-raise-type-error %this "~s not a constructor" name)))
+   (with-access::JsFunction ctor (procedure)
+      (js-raise-type-error %this "~s not a constructor" procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-set-constrmap! ...                                   */
@@ -1723,8 +1723,7 @@
        (with-handler
 	  (lambda (e)
 	     (js-jsstring->string (js-typeof obj %this)))
-	  (js-jsstring->string
-	     (js-call0 %this (js-get obj (& "toString") %this) obj))))
+	  (js-jsstring->string (js-typeof obj))))
       ((eq? obj #unspecified)
        "undefined")
       ((eq? obj #f)
@@ -1736,7 +1735,7 @@
       ((or (js-number? obj) (int32? obj) (uint32? obj))
        (number->string obj))
       (else
-       (js-tostring obj %this))))
+       (js-jsstring->string (js-typeof obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error ...                                          */

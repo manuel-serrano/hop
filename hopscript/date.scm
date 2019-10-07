@@ -253,8 +253,8 @@
 	 ;; create a HopScript object
 	 (define (%js-date this . args)
 	    (let ((dt (js-date-construct (js-date-alloc %this js-date))))
-	       (js-call0 %this (js-get dt (& "toString") %this) dt)))
-	 
+	       (js-call0 %this (js-tojsstring dt %this) dt)))
+
 	 (set! js-date
 	    (js-make-function %this %js-date 7 "Date"
 	       :__proto__ js-function-prototype
@@ -1089,7 +1089,21 @@
 				    :month (->fixnum-safe month)
 				    :day (->fixnum-safe date)))
 		       (date->milliseconds val))))
-	     val)))
+	     ;; 1. Let t be the result of LocalTime(this time value); but if this time value is NaN, let t be +0.
+	     (let ((year (js-tonumber year %this))
+		   (month (if (eq? month (js-undefined)) 1 (js-tonumber month %this)))
+		   (date (if (eq? date (js-undefined)) 1 (js-tonumber date %this))))
+		(if (and (flonum? year) (nanfl? year))
+		    (begin
+		       (set! val year)
+		       year)
+		    (begin
+		       (set! val (make-date
+				    :year (->fixnum-safe year)
+				    :month (->fixnum-safe month)
+				    :day (->fixnum-safe date)
+				    :hour 0 :min 0 :sec 0))
+		       (date->milliseconds val)))))))
 
    (js-bind! %this obj (& "setFullYear")
       :value (js-make-function %this date-prototype-setfullyear 3 "setFullYear")
