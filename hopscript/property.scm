@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jul  8 16:28:45 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 08:15:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1165,56 +1165,57 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.5       */
 ;*---------------------------------------------------------------------*/
 (define (js-to-property-descriptor %this::JsGlobalObject obj name::obj)
-   (let* ((obj (js-cast-object obj %this "ToPropertyDescriptor"))
-	  (enumerable (if (js-has-property obj 'enumerable %this)
-			  (js-toboolean (js-get obj 'enumerable %this))
-			  (js-undefined)))
-	  (configurable (if (js-has-property obj 'configurable %this)
-			    (js-toboolean (js-get obj 'configurable %this))
-			    (js-undefined)))
-	  (hasget (js-has-property obj 'get %this))
-	  (hasset (js-has-property obj 'set %this)))
-      (cond
-	 ((or hasget hasset)
-	  (let ((get (js-get obj 'get %this))
-		(set (js-get obj 'set %this)))
-	     (if (or (js-has-property obj 'writable %this)
-		     (js-has-property obj 'value %this)
-		     (and (not (isa? get JsFunction))
-			  (not (eq? get (js-undefined))))
-		     (and (not (isa? set JsFunction))
-			  (not (eq? set (js-undefined)))))
-		 (js-raise-type-error %this
-		    "Illegal property descriptor ~s" obj)
-		 (instantiate::JsAccessorDescriptor
+   (if (not (js-object? obj))
+       (js-raise-type-error %this "Property description must be an object: ~s" obj)
+       (let* ((enumerable (if (js-has-property obj 'enumerable %this)
+			      (js-toboolean (js-get obj 'enumerable %this))
+			      (js-undefined)))
+	      (configurable (if (js-has-property obj 'configurable %this)
+				(js-toboolean (js-get obj 'configurable %this))
+				(js-undefined)))
+	      (hasget (js-has-property obj 'get %this))
+	      (hasset (js-has-property obj 'set %this)))
+	  (cond
+	     ((or hasget hasset)
+	      (let ((get (js-get obj 'get %this))
+		    (set (js-get obj 'set %this)))
+		 (if (or (js-has-property obj 'writable %this)
+			 (js-has-property obj 'value %this)
+			 (and (not (isa? get JsFunction))
+			      (not (eq? get (js-undefined))))
+			 (and (not (isa? set JsFunction))
+			      (not (eq? set (js-undefined)))))
+		     (js-raise-type-error %this
+			"Illegal property descriptor ~s" obj)
+		     (instantiate::JsAccessorDescriptor
+			(name name)
+			(get (when hasget get))
+			(set (when hasset set))
+			(%get (function0->proc get %this))
+			(%set (function1->proc set %this))
+			(enumerable enumerable)
+			(configurable configurable)))))
+	     ((js-has-property obj 'value %this)
+	      (let ((writable (if (js-has-property obj 'writable %this)
+				  (js-toboolean (js-get obj 'writable %this))
+				  (js-undefined))))
+		 (instantiate::JsValueDescriptor
 		    (name name)
-		    (get (when hasget get))
-		    (set (when hasset set))
-		    (%get (function0->proc get %this))
-		    (%set (function1->proc set %this))
+		    (value (js-get obj 'value %this))
+		    (writable writable)
 		    (enumerable enumerable)
-		    (configurable configurable)))))
-	 ((js-has-property obj 'value %this)
-	  (let ((writable (if (js-has-property obj 'writable %this)
-			      (js-toboolean (js-get obj 'writable %this))
-			      (js-undefined))))
-	     (instantiate::JsValueDescriptor
-		(name name)
-		(value (js-get obj 'value %this))
-		(writable writable)
-		(enumerable enumerable)
-		(configurable configurable))))
-	 ((js-has-property obj 'writable %this)
-	  (instantiate::JsDataDescriptor
-	     (name name)
-	     (writable (js-toboolean (js-get obj 'writable %this)))
-	     (enumerable enumerable)
-	     (configurable configurable)))
-	 (else
-	  (instantiate::JsPropertyDescriptor
-	     (name name)
-	     (enumerable enumerable)
-	     (configurable configurable))))))
+		    (configurable configurable))))
+	     ((js-has-property obj 'writable %this)
+	      (instantiate::JsDataDescriptor
+		 (name name)
+		 (writable (js-toboolean (js-get obj 'writable %this)))
+		 (enumerable enumerable)
+		 (configurable configurable)))
+	     (else
+	      (instantiate::JsPropertyDescriptor
+		 (name name)
+		 (enumerable enumerable)
+		 (configurable configurable)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-property-value ...                                            */

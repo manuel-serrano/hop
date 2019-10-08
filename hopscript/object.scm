@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Apr 25 18:48:04 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 07:57:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -706,11 +706,12 @@
       ;; defineProperty
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.6
       (define (defineproperty this obj p attributes)
-	 (let* ((o (js-cast-object obj %this "defineProperty"))
-		(name (js-toname p %this))
-		(desc (js-to-property-descriptor %this attributes name)))
-	    (js-define-own-property o name desc #t %this)
-	    obj))
+	 (if (not (js-object? obj))
+	     (js-raise-type-error %this "Object.defineProperty called on non-object ~s" obj)
+	     (let* ((name (js-toname p %this))
+		    (desc (js-to-property-descriptor %this attributes name)))
+		(js-define-own-property obj name desc #t %this)
+		obj)))
       
       (js-bind! %this js-object 'defineProperty
 	 :value (js-make-function %this defineproperty 3 "defineProperty"
@@ -1135,7 +1136,7 @@
 	    (when (<fx i len)
 	       (proc (vector-ref vec i) i)
 	       (loop (+fx i 1))))))
-
+   
    (define (enumerable-mapped-property? obj i)
       (with-access::JsObject obj (elements)
 	 (let ((el (vector-ref elements i)))
@@ -1144,9 +1145,13 @@
 		#t))))
    
    (define (define-own-property obj name prop properties)
-      (let* ((descobj (if (isa? prop JsPropertyDescriptor)
-			  (js-property-value properties properties name prop %this)
-			  prop))
+      (let* ((descobj (cond
+			 ((isa? prop JsPropertyDescriptor)
+			  (js-property-value properties properties name prop %this))
+			 ((not (js-object? prop))
+			  (js-raise-type-error %this "Property description must be an object: ~s" prop))
+			 (else
+			  prop)))
 	     (desc (js-to-property-descriptor %this descobj name)))
 	 (js-define-own-property obj name desc #t %this)))
    
@@ -1167,15 +1172,17 @@
 			 (define-own-property obj name prop properties))))
 	 oprops))
    
-   (let* ((obj (js-cast-object _obj %this "defineProperties"))
-	  (properties (js-cast-object (js-toobject %this _properties) %this
-		    "defineProperties")))
-      (with-access::JsObject properties (cmap)
-	 (if (eq? cmap (js-not-a-cmap))
-	     (let ((oprops (js-object-properties properties)))
-		(defineproperties/properties oprops obj properties))
-	     (defineproperties/cmap cmap obj properties)))
-      obj))
+   (if (not (js-object? _obj))
+       (js-raise-type-error %this
+	  "Object.defineProperties called on non-object: ~s" _obj)
+       (let ((properties (js-cast-object (js-toobject %this _properties) %this
+			    "defineProperties")))
+	  (with-access::JsObject properties (cmap)
+	     (if (eq? cmap (js-not-a-cmap))
+		 (let ((oprops (js-object-properties properties)))
+		    (defineproperties/properties oprops _obj properties))
+		 (defineproperties/cmap cmap _obj properties)))
+	  _obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-seal ::JsObject ...                                           */
