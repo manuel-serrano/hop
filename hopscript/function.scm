@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Oct  7 16:01:31 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:49:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -722,9 +722,9 @@
 	     (let* ((proc (lambda (_ . actuals)
 			     (js-apply %this this
 				thisarg (append args actuals))))
-		    (ctor (lambda (_ . actuals)
+		    (ctor (lambda (self . actuals)
 			     (js-apply %this this
-				this (append args actuals))))
+				self (append args actuals))))
 		    (proto (js-getprototypeof this %this "getPrototypeOf")))
 		(let ((fun (js-make-function
 			      %this
@@ -737,7 +737,7 @@
 			      :prototype 'bind
 			      :strict 'strict
 			      :alloc alloc
-			      :construct construct)))
+			      :construct ctor)))
 		   (with-access::JsFunction fun ((%bprototype %prototype))
 		      (with-access::JsFunction this (%prototype)
 			 (set! %bprototype %prototype)))
