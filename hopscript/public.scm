@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Oct  7 11:16:09 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 17:42:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -883,8 +883,8 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (cmap elements %prototype)
-      (let ((o %prototype))
+   (with-access::JsFunction f (cmap elements prototype)
+      (let ((o prototype))
 	 (if (not (js-object? o))
 	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
 	     (let loop ((v v))

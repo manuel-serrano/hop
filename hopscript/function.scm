@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Oct  8 16:32:10 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 17:38:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -575,8 +575,7 @@
 		  (js-function-set-constrmap! owner))
 	       (with-access::JsGlobalObject %this (__proto__)
 		  (set! prototype v)
-		  ;;(set! %prototype (if (js-object? v) v __proto__))
-		  (set! %prototype v))))))
+		  (set! %prototype (if (js-object? v) v __proto__)))))))
    v)
 
 ;*---------------------------------------------------------------------*/
