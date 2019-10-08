@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun May 12 08:47:17 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 12:53:06 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -57,14 +57,14 @@
 	    (with-hop-remote path success failure
 	       #!key
 	       (host "localhost")
-	       (port (hop-port))
+	       (port (hop-default-port))
+	       (scheme #f)
 	       (abspath #f)
 	       (user #f)
 	       (password #f)
 	       (authorization #f)
 	       (header '())
 	       (anim #f)
-	       (scheme 'http)
 	       (ctx #f)
 	       (json-parser (lambda (ip ctx) (javascript->obj ip)))
 	       (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
@@ -494,14 +494,14 @@
 (define (with-hop-remote path success fail
 	   #!key
 	   (host "localhost")
-	   (port (hop-port))
+	   (port (hop-default-port))
+	   (scheme #f)
 	   (abspath #f)
 	   (user #f)
 	   (password #f)
 	   (header '())
 	   (authorization #f)
 	   (anim #f)
-	   (scheme 'http)
 	   (json-parser (lambda (ip ctx) (javascript->obj ip)))
 	   (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
 	   (ctx #f)
@@ -509,6 +509,8 @@
 	   (connection-timeout 0)
 	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
+   (unless scheme
+      (set! scheme (if (eq? port (hop-ssl-port)) 'https 'http)))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
       " " scheme "://" host ":" port
       (if (and (=fx (hop-verbose) 1) (>fx (string-length path) 80))

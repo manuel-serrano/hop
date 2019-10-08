@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Sep  6 11:58:31 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:16:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -66,7 +66,8 @@
       (set! __js_strings (&init!))
       (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
 	 (nodejs-compile-workers-inits!))
-      (unless (or (<=fx (hop-port) -1) *resolve-service*)
+      (unless (or (and (<=fx (hop-port) -1) (<=fx (hop-ssl-port) -1))
+		  *resolve-service*)
 	 (set! *resolve-service* (nodejs-make-resolve-service %this)))))
 
 ;*---------------------------------------------------------------------*/

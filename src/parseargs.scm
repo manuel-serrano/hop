@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Sep  6 07:43:28 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:20:04 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -484,7 +484,7 @@
 	 (make-file-name (hop-rc-directory) "weblets"))
       
       ;; init hss, scm compilers, and services
-      (init-hss-compiler! (hop-port))
+      (init-hss-compiler! (hop-default-port))
       
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
 	 :tmp-dir (os-tmp)
@@ -561,9 +561,9 @@
       (for-each (lambda (l) (eval `(library-load ',l))) libraries)
       
       ;; write the process key
-      (hop-process-key-write (hop-process-key) (hop-port))
+      (hop-process-key-write (hop-process-key) (hop-default-port))
       (register-exit-function! (lambda (ret)
-				  (hop-process-key-delete (hop-port))
+				  (hop-process-key-delete (hop-default-port))
 				  ret))
 
       (values (reverse files) (reverse! exprs) (reverse! exprsjs))))

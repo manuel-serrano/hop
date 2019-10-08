@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep 30 17:35:27 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:19:14 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -134,7 +134,7 @@
 				      (req (instantiate::http-server-request
 					      (path path)
 					      (abspath path)
-					      (port (hop-port))
+					      (port (hop-default-port))
 					      (connection 'close))))
 				  (with-handler
 				     (lambda (err)
@@ -184,7 +184,7 @@
    (when (pair? files)
       (let ((req (instantiate::http-server-request
 		    (host "localhost")
-		    (port (hop-port)))))
+		    (port (hop-default-port)))))
 	 ;; set a dummy request
 	 (thread-request-set! #unspecified req)
 	 ;; preload the user files
@@ -250,7 +250,7 @@
       (when (pair? files)
 	 (let ((req (instantiate::http-server-request
 		       (host "localhost")
-		       (port (hop-port)))))
+		       (port (hop-default-port)))))
 	    ;; set a dummy request
 	    (thread-request-set! #unspecified req)
 	    ;; preload the user files

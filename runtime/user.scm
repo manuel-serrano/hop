@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Wed Sep  4 18:52:15 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:18:29 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -600,7 +600,8 @@
 ;*    digest-opaque ...                                                */
 ;*---------------------------------------------------------------------*/
 (define digest-opaque
-   (base64-encode (format "~a:~a:~a" (hostname) (hop-port) (hop-session))))
+   (base64-encode
+      (format "~a:~a:~a" (hostname) (hop-default-port) (hop-session))))
 
 ;*---------------------------------------------------------------------*/
 ;*    digest-authenticate ...                                          */

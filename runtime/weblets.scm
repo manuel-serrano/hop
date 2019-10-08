@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/weblets.scm               */
+;*    serrano/prgm/project/hop/hop/runtime/weblets.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sun May 17 20:09:27 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Tue Oct  8 13:18:47 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/
@@ -508,7 +508,7 @@
    (let ((req (instantiate::http-server-request
 		 #;(user (anonymous-user))
 		 #;(localclientp #t)
-		 (port (hop-port))
+		 (port (hop-default-port))
 		 (path path)
 		 (abspath path))))
       (or (autoload-filter req) (autoload-loaded? req))))
@@ -541,12 +541,15 @@
 		       (match-case z
 			  (((and (? string?) ?type))
 			   (set! *weblets-zeroconf*
-			      (cons `(:name ,name :type ,type :port ,(hop-port))
+			      (cons `(:name ,name :type ,type
+					:port ,(hop-default-port))
 				 *weblets-zeroconf*)))
 			  (((and (? string?) ?type) ?port . ?rest)
 			   (set! *weblets-zeroconf*
 			      (cons `(:name ,name :type ,type
-					:port ,(if (integer? port) port (hop-port))
+					:port ,(if (integer? port)
+						   port
+						   (hop-default-port))
 					,@rest)
 				 *weblets-zeroconf*)))))
 	     zc))))

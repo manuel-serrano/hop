@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Sep  6 08:33:31 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:18:18 2019 (serrano)                */
 ;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -521,7 +521,7 @@
    
    (define (multipart-dir)
       (let ((dir (make-file-path (hop-cache-directory)
-		    (integer->string (hop-port))
+		    (integer->string (hop-default-port))
 		    (hop-upload-directory))))
 	 (unless (directory? dir) (make-directories dir))
 	 dir))

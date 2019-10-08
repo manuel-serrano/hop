@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Sep  6 07:49:46 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:10:02 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -85,6 +85,9 @@
 	    (hop-login-cookie-id::bstring)
 	    (hop-login-cookie-time::int)
 	    (hop-login-cookie-crypt-key::int)
+
+	    (inline hop-default-port::int)
+	    (inline hop-default-scheme::symbol)
 	    
 	    (hop-port::int)
 	    (hop-port-set! ::int)
@@ -1500,6 +1503,18 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-login-cookie-time
    (* 60 60 24))
+
+;*---------------------------------------------------------------------*/
+;*    hop-default-port ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-default-port)
+   (if (<fx (hop-port) 0) (hop-ssl-port) (hop-port)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-default-scheme ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-default-scheme)
+   (if (<fx (hop-port) 0) 'https 'http))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-port ...                                                     */

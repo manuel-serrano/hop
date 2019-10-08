@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Sep  6 07:54:31 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:18:59 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -177,7 +177,7 @@
 <!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">
 <cross-domain-policy>
  <allow-access-from domain=\"*\" />
-</cross-domain-policy>" (hop-port))))
+</cross-domain-policy>" (hop-default-port))))
 	     (instantiate::http-response-string
 		(timeout timeout)
 		(content-type "application/xml")
@@ -606,7 +606,7 @@
 	    ;; publish main Hop service
 	    (zeroconf-publish! :name name
 	       :type "_http._tcp"
-	       :port (hop-port)
+	       :port (hop-default-port)
 	       session
 	       (format "version=~a" (hop-version))
 	       (format "path=~a" (hop-service-base)))
@@ -614,7 +614,7 @@
 	    (when (hop-enable-webdav)
 	       (zeroconf-publish! :name name
 		  :type "_webdav._tcp"
-		  :port (hop-port)
+		  :port (hop-default-port)
 		  session))
 	    ;; publish hop available services
 	    (for-each (lambda (wi)

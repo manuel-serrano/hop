@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Sep  6 08:29:30 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:17:09 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -254,7 +254,7 @@
 	  (with-access::http-request request (socket)
 	     (<HEAD> :base (format "http://~a:~a"
 			      (socket-hostname socket)
-			      (hop-port))))
+			      (hop-default-port))))
 	  ;; this is a local request
 	  (<HEAD>))
       (<BODY> :data-hss-class "hop-exception"

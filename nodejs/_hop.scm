@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Sep  9 08:29:05 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:15:37 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -119,7 +119,7 @@
 					       "localhost"
 					       (js-tostring host %this)))
 				     (port (if (eq? port (js-undefined))
-					       (hop-port)
+					       (hop-default-port)
 					       (js-tointeger port %this)))
 				     (authorization (when (js-totest auth)
 						       (js-tostring auth %this)))))))))

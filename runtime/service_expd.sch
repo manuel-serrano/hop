@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Thu Apr 25 18:55:40 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:10:22 2019 (serrano)                */
 ;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -135,7 +135,7 @@
 				       (let ((,url ,mkurl))
 					  ;; a remote wrapper service
 					  (instantiate::http-response-remote
-					     (port (hop-port))
+					     (port (hop-default-port))
 					     (path ,url))))))))
 	      (,svc (instantiate::hop-service
 		       (ctx 'hop)

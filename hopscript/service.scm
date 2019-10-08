@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Sep 18 12:50:54 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:12:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -706,7 +706,7 @@
 	  (post-websocket this success fail-or-opt %this async srv))
 	 ((or (js-function? fail-or-opt) (not (js-object? fail-or-opt)))
 	  (post-server this success fail-or-opt %this async
-	     "localhost" (hop-port) #f 'http))
+	     "localhost" (hop-default-port) #f (hop-default-scheme)))
 	 (else
 	  (with-access::JsHopFrame this (path args)
 	     (post-options-deprecated path (map multipart-form-arg args)
@@ -727,7 +727,7 @@
 ;*---------------------------------------------------------------------*/
 (define (post-options-deprecated svc::bstring args success opt %this async)
    (let ((host "localhost")
-	 (port (hop-port))
+	 (port (hop-default-port))
 	 (user #f)
 	 (password #f)
 	 (authorization #f)
@@ -790,7 +790,6 @@
 		(set! header (js-jsobject->alist r %this))))))
 
       (define (scheme->js val)
-	 (tprint "SCHEME->JS.2 val=" (typeof val))
 	 (js-obj->jsobject val %this))
       
       (define (post-request callback)
@@ -1016,7 +1015,7 @@
    
    ;; register only if there is an implementation
    (when svc
-      (when (and register (or (>=fx (hop-port) 0) (>=fx (hop-ssl-port) 0)))
+      (when (and register (>=fx (hop-default-port) 0))
 	 (register-service! svc))
       (unless import
 	 (with-access::WorkerHopThread worker (services)

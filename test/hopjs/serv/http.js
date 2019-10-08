@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Sat May  4 17:23:50 2019 (serrano)                */
+/*    Last change :  Tue Oct  8 13:30:08 2019 (serrano)                */
 /*    Copyright   :  2015-19 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing services, webSockets and Broadcast over http and https   */
@@ -126,7 +126,9 @@ function goToWS() {
 	 WSFlag = true;
       };
    };
-   var ws = new WebSocket( wsScheme + '://localhost:' + hop.port + '/hop/server' );
+   var ws = new WebSocket( wsScheme + '://localhost:' 
+			   + (hop.ports.http || hop.ports.https) 
+			   + '/hop/server' );
    console.log( 'client: WS created' );
    ws.onopen = function() {
       console.log( 'client: ws url', ws.url );

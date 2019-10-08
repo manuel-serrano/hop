@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Jun 12 06:57:08 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:17:02 2019 (serrano)                */
 ;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -183,7 +183,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 (define (<HOP-SERVER>)
    (<SCRIPT> :type (hop-mime-type)
       (string-append "var hop_server = new HopServer(\""
-	 (hop-server-hostname) "\", " (integer->string (hop-port)) ", \""
+	 (hop-server-hostname) "\", " (integer->string (hop-default-port)) ", \""
 	 (hop-version)
 	 "\");var server = hop_server;")))
 
