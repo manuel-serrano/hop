@@ -121,11 +121,11 @@ arch/debian/makedeb.sh
 
 # testing
 test/hopjs/TEST
+.travis.yml
 
 # Mercurial/GIT compatibility
 .hg
 .hgtags
 README.hg
 .git.*.tgz
-
 

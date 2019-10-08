@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Sep  5 11:51:18 2019 (serrano)                */
+#*    Last change :  Tue Oct  8 08:04:20 2019 (serrano)                */
 #*    Copyright   :  2004-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -112,7 +112,7 @@ buildbindir=$PWD/bin
 buildspecific=
 installspecific=
 
-bigloorequired=4.3f
+bigloorequired=4.3g
 bigloourl=http://www-sop.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
@@ -1331,41 +1331,41 @@ done
 for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST; do
   rm -f $script 2> /dev/null
   cat $script.in \
-    | sed -e "s|@VERSION@|$version|" \
-          -e "s|@BIGLOOVERSION@|$bglversion|" \
-          -e "s|@BRANCH@|$branch|" \
-          -e "s|@BACKEND@|$backend|" \
-          -e "s|@LINK@|$link|" \
-          -e "s|@URL@|$url|" \
-          -e "s|@BINDIR@|$bindir|" \
-          -e "s|@LIBDIR@|$libdir|" \
-          -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir/$version|" \
-          -e "s|@ETCDIR@|$etcdir|" \
-          -e "s|@WEBLETSDIR@|$webletsdir|" \
-          -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@BUILDDIR@|$PWD|" \
-          -e "s|@BUILDLIBDIR@|$buildlibdir|" \
-          -e "s|@BUILDETCDIR@|$PWD/etc|" \
-          -e "s|@BUILDBINDIR@|$PWD/bin|" \
-          -e "s|@DOCDIR@|$docdir|" \
-          -e "s|@DOCURL@|$docurl|" \
-          -e "s|@MIMETYPES@|$mimetypes|" \
-          -e "s|@JSMIMETYPE@|$jsmimetype|" \
-          -e "s|@CSSMIMETYPE@|$cssmimetype|" \
-          -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
-          -e "s|@HOPJSFILES@|$hopjsfiles|" \
-          -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-          -e "s|@HOPZEROCONF@|$zeroconf|" \
-          -e "s|@HOPSRFIS@|$hopsrfis|" \
-          -e "s|@HOPMACH@|$mach|" \
-          -e "s|@HOPARCH@|$arch|" \
+    | sed -e "s|@VERSION@|$version|g" \
+          -e "s|@BIGLOOVERSION@|$bglversion|g" \
+          -e "s|@BRANCH@|$branch|g" \
+          -e "s|@BACKEND@|$backend|g" \
+          -e "s|@LINK@|$link|g" \
+          -e "s|@URL@|$url|g" \
+          -e "s|@BINDIR@|$bindir|g" \
+          -e "s|@LIBDIR@|$libdir|g" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|g" \
+          -e "s|@SHAREDIR@|$sharedir/$version|g" \
+          -e "s|@ETCDIR@|$etcdir|g" \
+          -e "s|@WEBLETSDIR@|$webletsdir|g" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|g" \
+          -e "s|@BUILDDIR@|$PWD|g" \
+          -e "s|@BUILDLIBDIR@|$buildlibdir|g" \
+          -e "s|@BUILDETCDIR@|$PWD/etc|g" \
+          -e "s|@BUILDBINDIR@|$PWD/bin|g" \
+          -e "s|@DOCDIR@|$docdir|g" \
+          -e "s|@DOCURL@|$docurl|g" \
+          -e "s|@MIMETYPES@|$mimetypes|g" \
+          -e "s|@JSMIMETYPE@|$jsmimetype|g" \
+          -e "s|@CSSMIMETYPE@|$cssmimetype|g" \
+          -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|g" \
+          -e "s|@HOPJSFILES@|$hopjsfiles|g" \
+          -e "s|@HOPSERVICEBASE@|$hopservicebase|g" \
+          -e "s|@HOPZEROCONF@|$zeroconf|g" \
+          -e "s|@HOPSRFIS@|$hopsrfis|g" \
+          -e "s|@HOPMACH@|$mach|g" \
+          -e "s|@HOPARCH@|$arch|g" \
 	  >> $script
   chmod a+x $script
 done
 
-# hopjs
-for file in etc/hopjs-config.el; do
+# misc files
+for file in etc/hopjs-config.el .travis.yml; do
   rm -f $file 2> /dev/null
   echo ";* Automatically generated file (don't edit) */" > $file
   cat $file.in \
