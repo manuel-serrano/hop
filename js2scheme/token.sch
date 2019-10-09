@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/token.sch               */
+;*    serrano/prgm/project/hop/hop/js2scheme/token.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 18:19:18 2015                          */
-;*    Last change :  Fri Apr 14 10:08:15 2017 (serrano)                */
-;*    Copyright   :  2015-17 Manuel Serrano                            */
+;*    Last change :  Wed Oct  9 13:09:07 2019 (serrano)                */
+;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Token tools                                                      */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
 ;*---------------------------------------------------------------------*/
 (define (the-coord input-port offset)
    `(at ,(if (input-string-port? input-port)
-	     (input-port-buffer input-port)
+	     (string-append "string://" (input-port-buffer input-port))
 	     (input-port-name input-port))
        ,(-fx (input-port-position input-port) offset)))
 

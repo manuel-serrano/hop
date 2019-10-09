@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Oct  8 13:19:14 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 12:19:33 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -210,6 +210,8 @@
 ;*    javascript-init ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init args files exprs)
+   ;; install the hopscript expanders
+   (hopscript-install-expanders!)
    (multiple-value-bind (%worker %global %module)
       (js-main-worker! "main"
 	 (make-file-name (pwd) (if (pair? files) (car files) "."))
@@ -259,8 +261,6 @@
 	       files)
 	    ;; unset the dummy request
 	    (thread-request-set! #unspecified #unspecified)))
-      ;; install the hopscript expanders
-      (hopscript-install-expanders!)
       ;; start the JS repl loop
       (when (eq? (hop-enable-repl) 'js)
 	 (js-worker-push-thunk! %worker "repl"

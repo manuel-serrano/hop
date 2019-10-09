@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Sep 11 07:48:14 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 11:13:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -468,7 +468,7 @@
    (define (var::pair in-for-init? constrinit constr)
       (let ((id (peek-token)))
 	 (case (token-tag id)
-	    ((ID static)
+	    ((ID)
 	     (consume-any!)
 	     (if (or (eq? (token-tag id) 'ID) (eq? current-mode 'normal))
 		 (case (peek-token-type)
@@ -1709,9 +1709,9 @@
 		      rev-ses)))))))
 
    (define (class-element super?)
-      (if (eq? (peek-token-type) 'static)
+      (if (peek-token-id? 'static)
 	  (begin
-	     (consume-token! 'static)
+	     (consume-token! 'ID)
 	     (class-method #t super?))
 	  (class-method #f super?)))
 

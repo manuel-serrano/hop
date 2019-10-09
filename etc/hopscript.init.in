@@ -35,6 +35,4 @@
 ;*    %%noinline ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-macro (%%noinline . expr)
-   (cond-expand
-      (bigloo4.3a `(begin ,@expr))
-      (else `(|#meta| (noinline) ,@expr))))
+   `(|#meta| (noinline) ,@expr))
