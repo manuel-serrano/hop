@@ -38,7 +38,7 @@ before_install:
   - sudo apt-get install -y libgmp10
   
 before_script:
-  - wget ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo-latest.tar.gz -O /tmp/bigloo4.3g.tar.gz
+  - wget ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo-unstable.tar.gz -O /tmp/bigloo4.3g.tar.gz
   - pushd /tmp && tar xvfz /tmp/bigloo4.3g.tar.gz && popd
   - pushd /tmp/bigloo4.3g && ./configure && make && sudo make install && popd
   
