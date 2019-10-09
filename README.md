@@ -1,6 +1,8 @@
 Hop -- Multitier JavaScript
 ===========================
 
+[![Travis](https://api.travis-ci.com/manuel-serrano/hop.svg)](https://travis-ci.com/manuel-serrano/hop/builds)
+
 ### To build:
 
 Prerequisites:
