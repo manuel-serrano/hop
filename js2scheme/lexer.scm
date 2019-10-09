@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Oct  5 07:21:59 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 11:09:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -43,6 +43,7 @@
        
 (define *JS-care-future-reserved* #t)
 
+;; https://www.ecma-international.org/ecma-262/10.0/index.html#sec-keywords
 (define *keyword-list*
    '("await"
      "break"
@@ -80,8 +81,7 @@
      ;; es2015 classes
      "class"
      "extends"
-     "super"
-     "static"))
+     "super"))
 
 (define *future-reserved-list*
    '("enum"
