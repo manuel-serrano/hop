@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct  9 07:10:22 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 08:25:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -252,7 +252,7 @@
 	 ;; create a HopScript object
 	 (define (%js-date this . args)
 	    (let ((dt (js-date-construct (js-date-alloc %this js-date))))
-	       (js-call0 %this (date-prototype-tostring dt) dt)))
+	       (date-prototype-tostring dt)))
 
 	 (set! js-date
 	    (js-make-function %this %js-date 7 "Date"

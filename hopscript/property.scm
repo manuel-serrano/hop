@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct  8 08:15:39 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 10:53:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -240,6 +240,7 @@
 ;*    js-cache-table ...                                               */
 ;*---------------------------------------------------------------------*/
 (define js-cache-table-lock (make-spinlock "js-cache-table"))
+(define js-cache-vtable-lock (make-spinlock "js-cache-vtable"))
 (define js-cache-table (make-vector 256))
 (define js-cache-index 0)
 
@@ -951,9 +952,10 @@
 ;*    reset-cmap-vtable! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (reset-cmap-vtable! omap::JsConstructMap)
-   (with-access::JsConstructMap omap (vtable vlen)
-      (set! vlen 0)
-      (set! vtable '#())))
+   (synchronize js-cache-vtable-lock
+      (with-access::JsConstructMap omap (vtable vlen)
+	 (set! vlen 0)
+	 (set! vtable '#()))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-cmap-vtable-add! ...                                          */
@@ -961,21 +963,22 @@
 (define (js-cmap-vtable-add! o::JsConstructMap idx::long obj cache::JsPropertyCache)
    (with-access::JsConstructMap o (vlen vcache vtable)
       (with-access::JsPropertyCache cache (pctable)
-	 (let ((l (vector-length vtable)))
-	    (cond
-	       ((=fx l 0)
-		(set! vlen (+fx idx 1))
-		(set! vtable (make-vector (+fx idx 1) #unspecified))
-		(log-vtable! idx vtable '#()))
-	       ((>=fx idx l)
-		(let ((old vtable))
+	 (synchronize js-cache-vtable-lock
+	    (let ((l vlen))
+	       (cond
+		  ((=fx l 0)
 		   (set! vlen (+fx idx 1))
-		   (set! vtable (copy-vector vtable (+fx idx 1)))
-		   (log-vtable! idx vtable old)
-		   (vector-fill! vtable #unspecified l))))
-	    (vector-set! vtable idx obj)
-	    (set! vcache pctable)
-	    obj))))
+		   (set! vtable (make-vector (+fx idx 1) #unspecified))
+		   (log-vtable! idx vtable '#()))
+		  ((>=fx idx l)
+		   (let ((old vtable))
+		      (set! vlen (+fx idx 1))
+		      (set! vtable (copy-vector vtable (+fx idx 1)))
+		      (log-vtable! idx vtable old)
+		      (vector-fill! vtable #unspecified l))))
+	       (vector-set! vtable idx obj)
+	       (set! vcache pctable)
+	       obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-vindex ...                                                */
