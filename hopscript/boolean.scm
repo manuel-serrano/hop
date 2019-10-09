@@ -129,8 +129,7 @@
 ;*    js-valueof ::JsBoolean ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-valueof this::JsBoolean %this)
-   (with-access::JsBoolean this (val)
-      val))
+   this)
    
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-boolean-prototype! ...                              */

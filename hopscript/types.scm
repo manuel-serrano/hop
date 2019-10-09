@@ -869,6 +869,19 @@
 	 enumerable)))
 
 ;*---------------------------------------------------------------------*/
+;*    object-print ::JsWrapperDescriptor ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (object-print p::JsWrapperDescriptor port pslot::procedure)
+   (with-access::JsWrapperDescriptor p (name configurable enumerable writable)
+      (fprintf port
+	 "#|~s name=~a configurable=~a enumerable=~a writable=~a|"
+	 (class-name (object-class p))
+	 name
+	 configurable
+	 enumerable
+	 writable)))
+
+;*---------------------------------------------------------------------*/
 ;*    object-print ::JsValueDescriptor ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (object-print p::JsValueDescriptor port pslot::procedure)

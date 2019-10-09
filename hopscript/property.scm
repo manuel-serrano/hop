@@ -1227,6 +1227,16 @@
 
    (define (js-or x y)
       (if (eq? x (js-undefined)) y x))
+
+   (define (js-put! o::JsObject p v throw %this)
+      (let ((newdesc (instantiate::JsValueDescriptor
+                          (name p)
+                          (value v)
+                          (writable #t)
+                          (enumerable #t)
+                          (configurable #t))))
+;          (js-invalidate-pcaches-pmap! %this p)
+         (js-define-own-property o p newdesc throw %this)))
    
    (define (from-object obj desc)
       ;; proxy getOwnPropertyDescriptor returns regular objects
@@ -3034,7 +3044,7 @@
 	  (cond
 	     ((not (js-object-mode-extensible? o))
 	      ;; 3
-	      (reject (format "\"~a\" not extensible" (js-tostring o %this))))
+	      (reject (format "\"~a\" not extensible" (js-typeof o %this))))
 	     (else
 	      ;; 4
 	      (let ((ndesc (cond
@@ -3098,13 +3108,13 @@
 		 ;; 7.a
 		 (reject
 		    (format "\"~a.~a\" configurability mismatch"
-		       (js-tostring o %this) name)))
+		       (js-typeof o %this) name)))
 		((and (boolean? (enumerable desc))
 		      (not (eq? (enumerable current) (enumerable desc))))
 		 ;; 7.b
 		 (reject
 		    (format "\"~a.~a\" enumerability mismatch"
-		       (js-tostring o %this) name)))))
+		       (js-typeof o %this) name)))))
 	  (unless rejected
 	     (cond
 		((js-is-generic-descriptor? desc)
@@ -3118,7 +3128,7 @@
 		     ;; 9.a
 		     (reject
 			(format "\"~a.~a\" configurability mismatch"
-			   (js-tostring o %this) name)))
+			   (js-typeof o %this) name)))
 		    ((isa? current JsDataDescriptor)
 		     ;; 9.b
 		     (when (isa? desc JsAccessorDescriptor)
@@ -3143,7 +3153,7 @@
 			 ;; 10.a.i
 			 (reject
 			    (format "\"~a.~a\" read-only"
-			       (js-tostring o %this) name)))
+			       (js-typeof o %this) name)))
 			((eq? (writable current) #f)
 			 ;; 10.a.ii
 			 (if (and (isa? desc JsValueDescriptor)
@@ -3151,7 +3161,7 @@
 				  (not (same-value (value desc) (value current))))
 			     (reject
 				(format "\"~a.~a\" value mismatch"
-				   (js-tostring o %this) name))
+				   (js-typeof o %this) name))
 			     #t))
 			(else
 			 (propagate-data-descriptor! current desc)))
@@ -3164,12 +3174,12 @@
 			((and (set desc) (not (equal? (set current) (set desc))))
 			 (reject
 			    (format "\"~a.~a\" setter mismatch"
-			       (js-tostring o %this) name)))
+			       (js-typeof o %this) name)))
 			((and (get desc)
 			      (not (equal? (get current) (get desc))))
 			 (reject
 			    (format "\"~a.~a\" getter mismatch"
-			       (js-tostring o %this) name)))
+			       (js-typeof o %this) name)))
 			(else
 			 (propagate-accessor-descriptor! current desc)))
 		     (propagate-accessor-descriptor! current desc)))
