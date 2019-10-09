@@ -8,7 +8,7 @@ Hop -- Multitier JavaScript
 Prerequisites:
 
  * GCC
- * Bigloo 4.2a or newer <http://www-sop.inria.fr/indes/fp/Bigloo>
+ * Bigloo 4.3f or newer <http://www-sop.inria.fr/indes/fp/Bigloo>
  * GNU Make 3.81 or newer
  * Autoconf/Automake/Libtool
  * OpenSSL 1.0.0 or newer
