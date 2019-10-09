@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Oct  8 13:16:20 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 12:08:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1004,7 +1004,7 @@
 (define (nodejs-compile src filename::bstring
 	   %ctxthis %ctxmodule
 	   #!key lang worker-slave commonjs-export)
-
+   
    (define (cache-path filename)
       (make-cache-name 
 	 (string-append (string-replace (prefix filename) #\/ #\_) ".scm")))
@@ -1017,7 +1017,7 @@
 			  (file-modification-time path)))
 	       (call-with-input-file path
 		  port->sexp-list)))))
-
+   
    (define (store-cache filename expr)
       (when (hop-cache-enable)
 	 (let ((path (cache-path filename)))
@@ -1139,13 +1139,19 @@
 		   (trace-item "thread=" (current-thread))
 		   (trace-item "expr=" (format "~s" expr))
 		   (unwind-protect
-		      (let ((nexpr (map (lambda (x) (eval `(expand ',x))) expr)))
-			 ;; the forms to be evaluated have to be expanded first
-			 ;; in order to resolve the &begin! ... &end! construct
-			 (for-each eval nexpr)
-			 (let ((hopscript (eval! 'hopscript)))
-			    (hashtable-put! compile-table key hopscript)
-			    hopscript))
+		      (begin
+			 ;; evaluate the module clause first
+			 (eval! (car expr))
+			 (let ((nexpr (map (lambda (x)
+					      (eval `(expand ',x)))
+					 (cdr expr))))
+			    ;; the forms to be evaluated have to be expanded
+			    ;; first in order to resolve the &begin! ... &end!
+			    ;; construct
+			    (for-each eval nexpr)
+			    (let ((hopscript (eval! 'hopscript)))
+			       (hashtable-put! compile-table key hopscript)
+			       hopscript)))
 		      (eval-module-set! evmod))))))))
 
 ;*---------------------------------------------------------------------*/
