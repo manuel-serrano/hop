@@ -121,7 +121,6 @@ arch/debian/makedeb.sh
 
 # testing
 test/hopjs/TEST
-.travis.yml
 
 # Mercurial/GIT compatibility
 .hg
