@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Oct  8 17:42:10 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 07:16:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -318,8 +318,8 @@
 ;*    Used by functions that are not allowed to be used in NEW expr.   */
 ;*---------------------------------------------------------------------*/
 (define (js-not-a-constructor-alloc %this ctor::JsFunction)
-   (with-access::JsFunction ctor (procedure)
-      (js-raise-type-error %this "~s not a constructor" procedure)))
+   (js-raise-type-error %this "~s not a constructor"
+      (js-function-debug-name ctor %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-set-constrmap! ...                                   */
@@ -1707,7 +1707,7 @@
        (with-handler
 	  (lambda (e)
 	     (js-jsstring->string (js-typeof obj %this)))
-	  (js-jsstring->string (js-typeof obj))))
+	  (js-jsstring->string (js-typeof obj %this))))
       ((eq? obj #unspecified)
        "undefined")
       ((eq? obj #f)
@@ -1719,7 +1719,7 @@
       ((or (js-number? obj) (int32? obj) (uint32? obj))
        (number->string obj))
       (else
-       (js-jsstring->string (js-typeof obj)))))
+       (js-jsstring->string (js-typeof obj %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error ...                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Oct  7 08:41:03 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 07:10:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -252,7 +252,7 @@
 	 ;; create a HopScript object
 	 (define (%js-date this . args)
 	    (let ((dt (js-date-construct (js-date-alloc %this js-date))))
-	       (js-call0 %this (js-tojsstring dt %this) dt)))
+	       (js-call0 %this (date-prototype-tostring dt) dt)))
 
 	 (set! js-date
 	    (js-make-function %this %js-date 7 "Date"
@@ -348,13 +348,6 @@
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2
-   (define (date-prototype-tostring this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (js-string->jsstring
-		(date->rfc2822-date (seconds->date (date->seconds val))))
-	     (js-string->jsstring "Invalid Date"))))
-   
    (js-bind! %this obj (& "toString")
       :value (js-make-function %this date-prototype-tostring 0 "toString")
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
@@ -1076,8 +1069,10 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (let ((year (js-tonumber year %this))
-		   (month (unless (eq? month (js-undefined)) (js-tonumber month %this)))
-		   (date (unless (eq? date (js-undefined)) (js-tonumber date %this))))
+		   (month (unless (eq? month (js-undefined))
+			     (js-tonumber month %this)))
+		   (date (unless (eq? date (js-undefined))
+			    (js-tonumber date %this))))
 		(if (and (flonum? year) (nanfl? year))
 		    (begin
 		       (set! val year)
@@ -1088,10 +1083,15 @@
 				    :month (->fixnum-safe month)
 				    :day (->fixnum-safe date)))
 		       (date->milliseconds val))))
-	     ;; 1. Let t be the result of LocalTime(this time value); but if this time value is NaN, let t be +0.
+	     ;; 1. Let t be the result of LocalTime(this time value)
+	     ;; but if this time value is NaN, let t be +0.
 	     (let ((year (js-tonumber year %this))
-		   (month (if (eq? month (js-undefined)) 1 (js-tonumber month %this)))
-		   (date (if (eq? date (js-undefined)) 1 (js-tonumber date %this))))
+		   (month (if (eq? month (js-undefined))
+			      1
+			      (js-tonumber month %this)))
+		   (date (if (eq? date (js-undefined))
+			     1
+			     (js-tonumber date %this))))
 		(if (and (flonum? year) (nanfl? year))
 		    (begin
 		       (set! val year)
@@ -1142,6 +1142,18 @@
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    obj)
+
+;*---------------------------------------------------------------------*/
+;*    date-prototype-tostring ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2     */
+;*---------------------------------------------------------------------*/
+(define (date-prototype-tostring this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (js-string->jsstring
+	     (date->rfc2822-date (seconds->date (date->seconds val))))
+	  (js-string->jsstring "Invalid Date"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    date->milliseconds ...                                           */

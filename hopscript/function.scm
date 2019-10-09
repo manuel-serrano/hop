@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Oct  8 17:38:30 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 07:23:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -402,12 +402,22 @@
 (define (js-function-debug-name::bstring obj::JsFunction %this)
    (with-access::JsFunction obj (src)
       (with-access::JsGlobalObject %this (js-function-pcache)
-	 (let ((name (js-object-get-name/cache obj (& "name") #f %this
-			(js-pcache-ref js-function-pcache 0) -1)))
+	 (let ((pname (js-get-property obj (& "name") %this)))
 	    (cond
-	       ((js-jsstring? name) (js-jsstring->string name))
-	       ((pair? src) (format "~a:~a" (cadr (car src)) (caddr (car src))))
-	       (else "function"))))))
+	       ((isa? pname JsValueDescriptor)
+		(let ((name (js-property-value obj obj (& "name") pname %this)))
+		   (cond
+		      ((js-jsstring? name)
+		       (js-jsstring->string name))
+		      ((number? name)
+		       name)
+		      ((pair? src)
+		       (format "~a:~a" (cadr (car src)) (caddr (car src))))
+		      (else "function"))))
+	       ((pair? src)
+		(format "~a:~a" (cadr (car src)) (caddr (car src))))
+	       (else
+		"function"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    INSTANTIATE-JSFUNCTION ...                                       */
