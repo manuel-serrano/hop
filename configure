@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Oct  8 08:04:20 2019 (serrano)                */
+#*    Last change :  Wed Oct  9 21:35:27 2019 (serrano)                */
 #*    Copyright   :  2004-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1365,7 +1365,7 @@ for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST; do
 done
 
 # misc files
-for file in etc/hopjs-config.el .travis.yml; do
+for file in etc/hopjs-config.el; do
   rm -f $file 2> /dev/null
   echo ";* Automatically generated file (don't edit) */" > $file
   cat $file.in \
@@ -1446,6 +1446,15 @@ cat $docker.in \
 	-e "s|@HOPMINORVERSION@|$minorversion|" \
 	-e "s|@BIGLOOVERSION@|$bglversion|" \
     >> $docker
+
+# travis.yml.in
+travis=.travis.yml
+rm -f $travis 2> /dev/null
+cat $travis.in \
+  | sed -e "s|@HOPVERSION@|$version|" \
+	-e "s|@HOPMINORVERSION@|$minorversion|" \
+	-e "s|@BIGLOOVERSION@|$bglversion|" \
+    >> $travis
 
 # lib/hop.init
 init=lib/hop/$version/hop.init
