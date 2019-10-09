@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Sep 11 10:29:19 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 08:36:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -122,12 +122,12 @@
       :object-set (lambda (o p val)
 		     (let* ((name (js-toname p %this))
 			    (desc (instantiate::JsValueDescriptor
-				    (name name)
-				    (value val)
-				    (enumerable #t)
-				    (configurable #t)
-				    (writable #t))))
-			 (js-define-own-property o name desc #f %this)))
+				     (name name)
+				     (value val)
+				     (enumerable #t)
+				     (configurable #t)
+				     (writable #t))))
+			(js-define-own-property o name desc #f %this)))
       :object-return (lambda (o) o)
       :parse-error (lambda (msg fname loc)
 		      (js-raise-syntax-error %this msg #f
@@ -452,16 +452,16 @@
    (define (default)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((holder (js-new0 %this js-object)))
-	    (let* ((name (js-toname (& "") %this))
+	    (let* ((name (& ""))
 		   (desc (instantiate::JsValueDescriptor
-		   (name name)
-		   (value value)
-		   (enumerable #t)
-		   (configurable #t)
-		   (writable #t))))
+			    (name name)
+			    (value value)
+			    (enumerable #t)
+			    (configurable #t)
+			    (writable #t))))
 		(js-define-own-property holder name desc #f %this))
 	    (str (& "") holder '()))))
-   
+
    (cond
       ((isa? replacer JsFunction)
        (default))
