@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Aug 14 10:45:44 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 07:23:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -70,6 +70,12 @@
    (lambda (o)
       (js-undefined))
    (lambda (o %this) o))
+
+;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsFunction ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (hop->javascript o::JsFunction op compile isexpr _)
+   (error "js" "Cannot compile function" o))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsFunction ...                                 */
@@ -314,8 +320,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-function-cmap! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-function-cmap
-					 js-function-cmap-sans-prototype
+					 js-function-sans-prototype-cmap
 					 js-function-strict-cmap
+					 js-function-strict-bind-cmap
 					 js-function-writable-cmap
 					 js-function-writable-strict-cmap
 					 js-function-prototype-cmap)
@@ -325,12 +332,20 @@
 	       ,(prop (& "length") (property-flags #f #f #f #f))
 	       ,(prop (& "name") (property-flags #f #f #t #f)))))
       
-      (set! js-function-cmap-sans-prototype
+      (set! js-function-sans-prototype-cmap
 	 (make-cmap #f
 	    `#(,(prop (& "%null") (property-flags #f #f #f #f))
 	       ,(prop (& "length") (property-flags #f #f #f #f))
 	       ,(prop (& "name") (property-flags #f #f #t #f)))))
       
+      (set! js-function-strict-bind-cmap
+	 (make-cmap #f
+	    `#(,(prop (& "%bind") (property-flags #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f))
+	       ,(prop (& "arguments") (property-flags #f #f #f #f))
+	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
+
       (set! js-function-strict-cmap
 	 (make-cmap #f
 	    `#(,(prop (& "prototype") (property-flags #f #f #f #f))
@@ -387,12 +402,22 @@
 (define (js-function-debug-name::bstring obj::JsFunction %this)
    (with-access::JsFunction obj (src)
       (with-access::JsGlobalObject %this (js-function-pcache)
-	 (let ((name (js-object-get-name/cache obj (& "name") #f %this
-			(js-pcache-ref js-function-pcache 0) -1)))
+	 (let ((pname (js-get-property obj (& "name") %this)))
 	    (cond
-	       ((js-jsstring? name) (js-jsstring->string name))
-	       ((pair? src) (format "~a:~a" (cadr (car src)) (caddr (car src))))
-	       (else "function"))))))
+	       ((isa? pname JsValueDescriptor)
+		(let ((name (js-property-value obj obj (& "name") pname %this)))
+		   (cond
+		      ((js-jsstring? name)
+		       (js-jsstring->string name))
+		      ((number? name)
+		       name)
+		      ((pair? src)
+		       (format "~a:~a" (cadr (car src)) (caddr (car src))))
+		      (else "function"))))
+	       ((pair? src)
+		(format "~a:~a" (cadr (car src)) (caddr (car src))))
+	       (else
+		"function"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    INSTANTIATE-JSFUNCTION ...                                       */
@@ -426,7 +451,8 @@
 					 js-function-strict-cmap
 					 js-function-writable-cmap
 					 js-function-writable-strict-cmap
-					 js-function-cmap-sans-prototype
+					 js-function-strict-bind-cmap
+					 js-function-sans-prototype-cmap
 					 js-function-prototype-cmap
 					 js-function-prototype-property-rw 
 					 js-function-prototype-property-ro
@@ -438,13 +464,22 @@
 			  (cond
 			     ((js-object? prototype)
 			      js-function-cmap)
-			     ((eq? prototype '())
-			      js-function-cmap-sans-prototype)
+			     ((or (eq? prototype '())
+				  (eq? prototype (js-undefined))
+				  (eq? prototype 'bind))
+			      js-function-sans-prototype-cmap)
 			     (else
 			      js-function-writable-cmap))
-			  (if (js-object? prototype)
-			      js-function-strict-cmap
-			      js-function-writable-strict-cmap)))
+			  (cond
+			     ((js-object? prototype)
+			      js-function-strict-cmap)
+			     ((or (eq? prototype '())
+				  (eq? prototype (js-undefined)))
+			      js-function-sans-prototype-cmap)
+			     ((eq? prototype 'bind)
+			      js-function-strict-bind-cmap)
+			     (else
+			      js-function-writable-strict-cmap))))
 		(fun (INSTANTIATE-JSFUNCTION
 			(procedure procedure)
 			(method (or method procedure))
@@ -498,13 +533,17 @@
 		      (set! %prototype prototype)
 		      js-function-prototype-property-ro)
 		     ((eq? prototype (js-undefined))
-		      (set! fprototype  prototype)
+		      (set! fprototype prototype)
 		      (set! %prototype %__proto__)
 		      js-function-prototype-property-undefined)
 		     ((null? prototype)
 		      (set! fprototype prototype)
 		      (set! %prototype prototype)
 		      js-function-prototype-property-null)
+		     ((eq? prototype 'bind)
+		      (set! fprototype (js-undefined))
+		      (set! %prototype %__proto__)
+		      js-function-prototype-property-undefined)
 		     (else
 		      (error "js-make-function" "Illegal :prototype"
 			 prototype)))))
@@ -693,15 +732,26 @@
 	     (let* ((proc (lambda (_ . actuals)
 			     (js-apply %this this
 				thisarg (append args actuals))))
-		    (fun (js-make-function
-			    %this
-			    proc
-			    (maxfx 0 (-fx len (length args)))
-			    (js-tostring (js-get this (& "name") %this) %this)
-			    :strict 'strict
-			    :alloc alloc
-			    :construct proc)))
-		fun))))
+		    (ctor (lambda (self . actuals)
+			     (js-apply %this this
+				self (append args actuals))))
+		    (proto (js-getprototypeof this %this "getPrototypeOf")))
+		(let ((fun (js-make-function
+			      %this
+			      proc
+			      (maxfx 0 (-fx len (length args)))
+			      (string-append "bound "
+				 (js-tostring (js-get this (& "name") %this)
+				    %this))
+			      :__proto__ proto
+			      :prototype 'bind
+			      :strict 'strict
+			      :alloc alloc
+			      :construct ctor)))
+		   (with-access::JsFunction fun ((%bprototype %prototype))
+		      (with-access::JsFunction this (%prototype)
+			 (set! %bprototype %prototype)))
+		   fun)))))
 
    (js-bind! %this obj (& "bind")
       :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))

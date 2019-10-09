@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Aug  9 07:58:21 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 07:57:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -616,6 +616,8 @@
       (define (getownpropertydescriptor this o p)
 	 (let* ((o (if (isa? o object)
 		       o
+		       ;; This is not compatible with the recent semantics.
+		       ;; https://www.ecma-international.org/ecma-262/#sec-object.getownpropertydescriptor
 		       (js-cast-object o %this "getOwnPropertyDescriptor")))
 		(desc (js-get-own-property o p %this)))
 	    (js-from-property-descriptor %this o desc o)))

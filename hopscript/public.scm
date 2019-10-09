@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jul 28 07:19:04 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 07:16:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -249,7 +249,7 @@
 		       obj))
 		   (else
 		    obj)))
-	     (js-raise-type-error %this "new: object is not a function ~s" p)))))
+	     (js-raise-type-error %this "new: constructor is not a function ~s" p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new ...                                                       */
@@ -263,7 +263,7 @@
       ((js-proxy? f)
        (js-new/proxy %this f args))
       (else
-       (js-raise-type-error %this "new: object is not a function ~s" f))))
+       (js-raise-type-error %this "new: constructor is not a function ~s" f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/debug ...                                                 */
@@ -277,7 +277,7 @@
       ((js-proxy? f)
        (js-new/proxy %this f args))
       (else
-       (js-raise-type-error/loc %this loc "new: object is not a function ~s" f))))
+       (js-raise-type-error/loc %this loc "new: constructor is not a function ~s" f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */
@@ -318,8 +318,8 @@
 ;*    Used by functions that are not allowed to be used in NEW expr.   */
 ;*---------------------------------------------------------------------*/
 (define (js-not-a-constructor-alloc %this ctor::JsFunction)
-   (let ((name (js-tostring (js-get ctor (& "name") %this) %this)))
-      (js-raise-type-error %this "~s not a constructor" name)))
+   (js-raise-type-error %this "~s not a constructor"
+      (js-function-debug-name ctor %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-set-constrmap! ...                                   */
@@ -899,22 +899,6 @@
 		      (else
 		       (loop nv)))))))))
 
-(define (js-ordinary-instanceof/debug %this loc v f)
-   (let ((o (js-get f (& "prototype") %this)))
-      (if (not (js-object? o))
-          (js-raise-type-error/loc %this loc "instanceof: no prototype ~s" v)
-          (let loop ((v v))
-             (with-access::JsObject v ((nv __proto__))
-                (cond
-                   ((eq? o nv)
-		    #t)
-                   ((eq? nv (js-null))
-		    (when (js-proxy? v)
-		       (with-access::JsProxy v ((target __proto__))
-			  (loop target))))
-		   (else
-		    (loop nv))))))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-instanceof? ...                                               */
 ;*    -------------------------------------------------------------    */
@@ -953,8 +937,8 @@
 		 (let ((h (js-get f js-symbol-hasinstance %this)))
 		    (if (js-function? h)
 			(js-call1 %this h f v)
-			(js-ordinary-instanceof/debug %this loc v f))))
-	      (js-ordinary-instanceof/debug %this loc v f)))))
+			(js-ordinary-instanceof? %this v f))))
+	      (js-ordinary-instanceof? %this v f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-in? ...                                                       */
@@ -1242,6 +1226,13 @@
 ;*    js-tojsstring ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-tojsstring::JsStringLiteral obj %this)
+
+   (define (primitive->jsstring obj)
+      (let ((p (js-toprimitive obj 'string %this)))
+	 (if (eq? p obj)
+	     (js-ascii->jsstring (format "#<~a>" (typeof p)))
+	     (js-tojsstring p %this))))
+      
    (cond
       ((js-jsstring? obj) obj)
       ((fixnum? obj) (js-integer->jsstring obj))
@@ -1252,7 +1243,7 @@
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
       ((string? obj) (js-string->jsstring obj))
-      (else (js-tojsstring (js-toprimitive obj 'string %this) %this))))
+      (else (primitive->jsstring obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject-failsafe ...                                         */
@@ -1716,8 +1707,7 @@
        (with-handler
 	  (lambda (e)
 	     (js-jsstring->string (js-typeof obj %this)))
-	  (js-jsstring->string
-	     (js-call0 %this (js-get obj (& "toString") %this) obj))))
+	  (js-jsstring->string (js-typeof obj %this))))
       ((eq? obj #unspecified)
        "undefined")
       ((eq? obj #f)
@@ -1729,7 +1719,7 @@
       ((or (js-number? obj) (int32? obj) (uint32? obj))
        (number->string obj))
       (else
-       (js-tostring obj %this))))
+       (js-jsstring->string (js-typeof obj %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error ...                                          */

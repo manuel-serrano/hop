@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/etc/hopjs-indent.el               */
+;*    serrano/prgm/project/hop/hop/etc/hopjs-indent.el                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Mon Feb 25 11:48:18 2019 (serrano)                */
+;*    Last change :  Mon Aug 26 08:33:27 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -392,7 +392,9 @@
 		0
 	      (hopjs-indent-column-token etok 0)))
 	   (t
-	    (hopjs-indent-column-token etok 0)))))
+	    (if (eq (hopjs-parse-token-type tok) 'ident)
+		(hopjs-indent-column-token etok 3)
+	      (hopjs-indent-column-token etok 0))))))
     (t
      '()))))
 
@@ -402,22 +404,23 @@
 (defun hopjs-indent-new-ident (tok)
   (with-debug
    "hopjs-indent-new-ident...%s" tok
-   (letn loop ((tok tok)
-	       (count 0))
-	 (let ((ntok (hopjs-parse-consume-token-any)))
-	   (hopjs-debug 0 "hopjs-indent-new-ident ntok=%s [%s]"
-			ntok (hopjs-parse-token-string ntok))
-	   (cond
-	    ((not (hopjs-parse-same-linep ntok tok))
-	     (if (>= count 2)
-		 0
-		 (hopjs-indent-column-token tok hopjs-indent-level)))
-	    ((eq (hopjs-parse-token-type ntok) 'ident)
-	     (funcall loop ntok (1+ count)))
-	    ((eq (hopjs-parse-token-type ntok) 'dot)
-	     (funcall loop ntok 0))
-	    (t
-	     (hopjs-indent-column-token tok hopjs-indent-level)))))))
+   (hopjs-indent-new-literal tok)))
+;*    (letn loop ((tok tok)                                            */
+;* 	       (count 0))                                              */
+;* 	 (let ((ntok (hopjs-parse-consume-token-any)))                 */
+;* 	   (hopjs-debug 0 "hopjs-indent-new-ident ntok=%s [%s]"        */
+;* 			ntok (hopjs-parse-token-string ntok))          */
+;* 	   (cond                                                       */
+;* 	    ((not (hopjs-parse-same-linep ntok tok))                   */
+;* 	     (if (>= count 2)                                          */
+;* 		 0                                                     */
+;* 		 (hopjs-indent-column-token tok hopjs-indent-level)))  */
+;* 	    ((eq (hopjs-parse-token-type ntok) 'ident)                 */
+;* 	     (funcall loop ntok (1+ count)))                           */
+;* 	    ((eq (hopjs-parse-token-type ntok) 'dot)                   */
+;* 	     (funcall loop ntok 0))                                    */
+;* 	    (t                                                         */
+;* 	     (hopjs-indent-column-token tok hopjs-indent-level)))))))  */
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-= ...                                           */

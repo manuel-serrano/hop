@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Thu Jul  4 15:46:07 2019 (serrano)                */
+;*    Last change :  Mon Sep 30 17:34:39 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -39,6 +39,7 @@
 	   
  	   (js-main-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure)
 	   (js-current-worker::WorkerHopThread)
+	   (js-main-worker?::bool ::WorkerHopThread)
 
 	   (js-worker-load::procedure)
 	   (js-worker-load-set! ::procedure)
@@ -495,6 +496,14 @@
 (define %global-constructor js-new-global-object)
 
 ;*---------------------------------------------------------------------*/
+;*    js-main-worker? ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Returns #t iff worker is the main worker.                        */
+;*---------------------------------------------------------------------*/
+(define (js-main-worker? w)
+   (eq? w %worker))
+
+;*---------------------------------------------------------------------*/
 ;*    js-current-worker ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-current-worker::WorkerHopThread)
@@ -540,6 +549,7 @@
 			   (js-worker-loop %worker)))))
 	    (thread-start-joinable! %worker)
 	    (condition-variable-wait! condv mutex))))
+   
    (values %worker %global %module))
 
 ;*---------------------------------------------------------------------*/
@@ -617,12 +627,6 @@
       (synchronize mutex
 	 (condition-variable-broadcast! condv)
 	 (tprint "THIS CODE SHOULD NOT BE EXECUTED")
-	 ;; install the signal handler for that thread
-	 (signal sigsegv
-	    (lambda (x)
-	       (js-raise-range-error %this
-		  "Maximum call stack size exceeded"
-		  #f)))
 	 ;; loop unless terminated
 	 (with-handler
 	    (lambda (exn)

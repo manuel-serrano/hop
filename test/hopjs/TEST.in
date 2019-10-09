@@ -21,7 +21,8 @@ basedir=$pwd
 hop=$BUILDBINDIR/hop.sh
 test=
 stoponfailure=no
-gflags="--sofile-policy nte+ -g --clear-libs"
+gflags="--sofile-policy none -g --clear-libs"
+rflags="--sofile-policy nte+ --clear-libs"
 oflags="--no-zeroconf"
 
 while : ; do
@@ -117,13 +118,17 @@ touch $TMP/TEST-HOPJS-ALL.out
 for path in noserv/*.js; do
   if [ "$test " = " " -o "$test " = "$path " ]; then
     if [ -f $path.rc.js ]; then
-      lbl=""
+      lbl="(debug)"
       run $path $gflags --no-server --rc-file $path.rc.js
+      lbl="(regular) "
+      run $path $rflags --no-server --rc-file $path.rc.js
       lbl="(opt) "
       run $path --no-server --rc-file $path.rc.js
     else
-      lbl=""
+      lbl="(debug)"
       run $path $gflags -q --no-server
+      lbl="(regular) "
+      run $path $rflags -q --no-server
       lbl="(opt) "
       run $path -q --no-server
     fi
@@ -134,25 +139,33 @@ for path in serv/*.js; do
   if [ "$test " = " " -o "$test " = "$path " ]; then
     if [ -f $path.rc.js ]; then
 	if [ -f $path.args ]; then
-	    lbl=""
+	    lbl="(debug)"
 	    run $path $gflags -p 0 `cat $path.args` --rc-file $path.rc.js
+            lbl="(regular) "
+	    run $path $rflags -p 0 `cat $path.args` --rc-file $path.rc.js
             lbl="(opt) "
 	    run $path -p 0 `cat $path.args` --rc-file $path.rc.js
 	else
-	    lbl=""
+	    lbl="(debug)"
 	    run $path $gflags -p 0 --rc-file $path.rc.js
+            lbl="(regular) "
+	    run $path $rflags -p 0 --rc-file $path.rc.js
             lbl="(opt) "
 	    run $path -p 0 --rc-file $path.rc.js
 	fi
     else       
 	if [ -f $path.args ]; then
-	    lbl=""
+	    lbl="(debug)"
 	    run $path $gflags -p 0 `cat $path.args` --rc-file passwd.hop
+            lbl="(regular) "
+	    run $path $rflags -p 0 `cat $path.args` --rc-file passwd.hop
             lbl="(opt) "
 	    run $path -p 0 `cat $path.args` --rc-file passwd.hop
 	else
-	    lbl=""
+	    lbl="(debug)"
 	    run $path $gflags -p 0 --rc-file passwd.hop
+            lbl="(regular) "
+	    run $path $rflags -p 0 --rc-file passwd.hop
             lbl="(opt) "
 	    run $path -p 0 --rc-file passwd.hop
 	fi

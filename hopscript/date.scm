@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jul  9 08:47:09 2019 (serrano)                */
+;*    Last change :  Wed Oct  9 07:10:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -218,9 +218,8 @@
 			       (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
 				   +nan.0
 				   (nanoseconds->date
-				      (*llong
-					 #l1000000
-					 (flonum->llong (round v)))))
+				      (flonum->llong
+					 (*fl 1000000. (floorfl v)))))
 			       (let ((n (cond
 					   ((fixnum? v) (fixnum->llong v))
 					   ((llong? v) v)
@@ -253,8 +252,8 @@
 	 ;; create a HopScript object
 	 (define (%js-date this . args)
 	    (let ((dt (js-date-construct (js-date-alloc %this js-date))))
-	       (js-call0 %this (js-get dt (& "toString") %this) dt)))
-	 
+	       (js-call0 %this (date-prototype-tostring dt) dt)))
+
 	 (set! js-date
 	    (js-make-function %this %js-date 7 "Date"
 	       :__proto__ js-function-prototype
@@ -349,13 +348,6 @@
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2
-   (define (date-prototype-tostring this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (js-string->jsstring
-		(date->rfc2822-date (seconds->date (date->seconds val))))
-	     (js-string->jsstring "Invalid Date"))))
-   
    (js-bind! %this obj (& "toString")
       :value (js-make-function %this date-prototype-tostring 0 "toString")
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
@@ -1077,8 +1069,10 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (let ((year (js-tonumber year %this))
-		   (month (unless (eq? month (js-undefined)) (js-tonumber month %this)))
-		   (date (unless (eq? date (js-undefined)) (js-tonumber date %this))))
+		   (month (unless (eq? month (js-undefined))
+			     (js-tonumber month %this)))
+		   (date (unless (eq? date (js-undefined))
+			    (js-tonumber date %this))))
 		(if (and (flonum? year) (nanfl? year))
 		    (begin
 		       (set! val year)
@@ -1089,7 +1083,26 @@
 				    :month (->fixnum-safe month)
 				    :day (->fixnum-safe date)))
 		       (date->milliseconds val))))
-	     val)))
+	     ;; 1. Let t be the result of LocalTime(this time value)
+	     ;; but if this time value is NaN, let t be +0.
+	     (let ((year (js-tonumber year %this))
+		   (month (if (eq? month (js-undefined))
+			      1
+			      (js-tonumber month %this)))
+		   (date (if (eq? date (js-undefined))
+			     1
+			     (js-tonumber date %this))))
+		(if (and (flonum? year) (nanfl? year))
+		    (begin
+		       (set! val year)
+		       year)
+		    (begin
+		       (set! val (make-date
+				    :year (->fixnum-safe year)
+				    :month (->fixnum-safe month)
+				    :day (->fixnum-safe date)
+				    :hour 0 :min 0 :sec 0))
+		       (date->milliseconds val)))))))
 
    (js-bind! %this obj (& "setFullYear")
       :value (js-make-function %this date-prototype-setfullyear 3 "setFullYear")
@@ -1131,10 +1144,22 @@
    obj)
 
 ;*---------------------------------------------------------------------*/
+;*    date-prototype-tostring ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2     */
+;*---------------------------------------------------------------------*/
+(define (date-prototype-tostring this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (js-string->jsstring
+	     (date->rfc2822-date (seconds->date (date->seconds val))))
+	  (js-string->jsstring "Invalid Date"))))
+
+;*---------------------------------------------------------------------*/
 ;*    date->milliseconds ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (date->milliseconds dt::date)
-   (llong->flonum (/llong (date->nanoseconds dt) #l1000000)))
+   (roundfl (/fl (llong->flonum (date->nanoseconds dt)) 1000000.0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    date->utc-date ...                                               */

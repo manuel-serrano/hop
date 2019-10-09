@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Jul 27 07:05:45 2019 (serrano)                */
+;*    Last change :  Mon Oct  7 16:01:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -393,8 +393,9 @@
 	      (js-strict-arguments-cmap (default (class-nil JsConstructMap)))
 	      (js-array-cmap (default (class-nil JsConstructMap)))
 	      (js-function-cmap (default (class-nil JsConstructMap)))
-	      (js-function-cmap-sans-prototype (default (class-nil JsConstructMap)))
+	      (js-function-sans-prototype-cmap (default (class-nil JsConstructMap)))
 	      (js-function-strict-cmap (default (class-nil JsConstructMap)))
+	      (js-function-strict-bind-cmap (default (class-nil JsConstructMap)))
 	      (js-function-writable-cmap (default (class-nil JsConstructMap)))
 	      (js-function-writable-strict-cmap (default (class-nil JsConstructMap)))
 	      (js-function-prototype-cmap (default (class-nil JsConstructMap)))
@@ -866,6 +867,19 @@
 	 name
 	 configurable
 	 enumerable)))
+
+;*---------------------------------------------------------------------*/
+;*    object-print ::JsWrapperDescriptor ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (object-print p::JsWrapperDescriptor port pslot::procedure)
+   (with-access::JsWrapperDescriptor p (name configurable enumerable writable)
+      (fprintf port
+	 "#|~s name=~a configurable=~a enumerable=~a writable=~a|"
+	 (class-name (object-class p))
+	 name
+	 configurable
+	 enumerable
+	 writable)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-print ::JsValueDescriptor ...                             */

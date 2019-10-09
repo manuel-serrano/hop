@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/etc/hopjs.el                      */
+;*    serrano/prgm/project/hop/hop/etc/hopjs.el                        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Dec 21 08:56:46 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Tue Sep 10 08:06:23 2019 (serrano)                */
+;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
 ;*=====================================================================*/
@@ -315,7 +315,6 @@
 (defun hopjs-pos-eolp (pos)
   (save-excursion
     (goto-char pos)
-;*     (looking-at "\\([^<>]*>\\)?[ \t]*$")                            */
     (looking-at "[ \t]*$")))
 
 ;*---------------------------------------------------------------------*/

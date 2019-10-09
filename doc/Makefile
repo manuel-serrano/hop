@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon May  6 18:48:37 2019 (serrano)                */
+#*    Last change :  Wed Sep 11 10:56:25 2019 (serrano)                */
 #*    Copyright   :  2006-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -41,6 +41,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   Makefile doc.js xml.js html.js ecma-262-60.js \
   doc.json.in \
   api/api.json api/00-hop.md api/10-dom.md api/20-websocket.md api/01-html.md \
+  api/reqfilter.js \
   widget/widget.json \
   lang/lang.json _lang.md \
   lang/html.bnf lang/service.bnf lang/iservice.bnf \
@@ -50,7 +51,9 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   lang/01-module.md lang/03-react.md lang/10-xml.md \
   lang/app.js lang/stateful.js lang/ui.js \
   dev/dev.json dev/00-command.md dev/01-rcfile.md dev/10-edit.md \
-  intf/intf.json intf/01-nodejs.md intf/10-scheme.md intf/scheme.bnf \
+  dev/30-https.md dev/90-hopc.md dev/selfsigned.sh self/redirect.js \
+  dev/js2json.js intf/intf.json intf/01-nodejs.md intf/10-scheme.md \
+  intf/scheme.bnf \
   intf/20-language.md license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
@@ -65,7 +68,8 @@ LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 
-DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html 20-cross.html
+DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html 20-cross.html \
+  30-https.html 90-hopc.html
 
 INTF_TARGETS=intf.html 01-nodejs.html 10-scheme.html 20-language.html
 

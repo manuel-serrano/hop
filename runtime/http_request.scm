@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/http_request.scm          */
+;*    serrano/prgm/project/hop/hop/runtime/http_request.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Jun  5 18:45:46 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Tue Oct  8 13:17:30 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -180,7 +180,7 @@
 				(and (string? userinfo)
 				     (find-authenticated-user userinfo abspath method ip))
 				(anonymous-user)))
-		      (port (or actual-port port (hop-port))))
+		      (port (or actual-port port (hop-default-port))))
 		  (cond
 		     ((not (fixnum? port))
 		      (parse-error "http-parse-method-request" "Illegal port"
@@ -239,7 +239,7 @@
 	  (path "<policy-file-request/>")
 	  (abspath "<policy-file-request/>")
 	  (header '())
-	  (port (hop-port))
+	  (port (hop-default-port))
 	  (host "localhost")
 	  (content-length 10))
        (raise (instantiate::&hop-method-error

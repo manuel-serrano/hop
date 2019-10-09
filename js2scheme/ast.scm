@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jul 19 13:51:08 2019 (serrano)                */
+;*    Last change :  Wed Sep 11 10:34:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -406,11 +406,11 @@
 	      (obj::J2SExpr (info '("ast"))))
 
 	   (final-class J2SCall::J2SExpr
-	      (profid::long (default -1) (info '("nojson" "notraverse")))
+	      (profid::long (default -1) (info '("notraverse")))
 	      (cache (default #f) (info '("nojson" "notraverse")))
 	      (cspecs (default '(pmap vtable)) (info '("nojson" "notraverse")))
 	      (fun::J2SExpr (info '("ast")))
-	      (protocol::symbol (default 'direct) (info '("nojson" "notraverse")))
+	      (protocol::symbol (default 'direct) (info '("notraverse")))
 	      (thisarg::pair-nil (info '("ast")))
 	      (args::pair-nil (default '()) (info '("ast"))))
 	   
@@ -423,7 +423,7 @@
 	   (final-class J2SNew::J2SExpr
 	      (caches (default '()))
 	      (clazz::J2SNode (info '("ast")))
-	      (protocol::symbol (default 'direct) (info '("nojson" "notraverse")))
+	      (protocol::symbol (default 'direct) (info '("notraverse")))
 	      (args::pair-nil (info '("ast"))))
 
 	   (abstract-class J2SPropertyInit::J2SNode
@@ -483,7 +483,7 @@
 	      (id::symbol read-only)
 	      (alias::symbol read-only)
 	      (index::long (default -1))
-	      (decl (default #f))
+	      (decl (default #f) (info '("jsonref")))
 	      (from (default #f)))
 
 	   (final-class J2SExportVars::J2SStmt
@@ -1132,6 +1132,18 @@
 (define *-inf.0* (negllong (exptllong #l2 54)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-decl->json ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-decl->json this::J2SDecl clazz loc op::output-port)
+   (with-access::J2SDecl this (key)
+      (fprintf op "{\"__ref__\": ~a, " key)
+      (fprintf op "\"__nodeType__\": \"~a\"" clazz)
+      (when loc
+	 (display ", \"loc\": " op)
+	 (j2s->json loc op))
+      (display "}" op)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s->json ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SNode op::output-port)
@@ -1148,8 +1160,8 @@
 			(cond
 			   ((and (pair? fi) (member "jsonref" fi)
 				 (isa? v J2SDecl))
-			    (with-access::J2SDecl v (key)
-			       (fprintf op "{\"__ref__\": ~a} " key)))
+			    (with-access::J2SNode this (loc)
+			       (j2s-decl->json v (class-name clazz) loc op)))
 			   (else
 			    (j2s->json v op))))))
 	       (for (-fx i 1)))))
@@ -1159,14 +1171,14 @@
 ;*    j2s->json ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SPragma op::output-port)
-   (with-access::J2SPragma this (expr loc lang vars vals)
+   (with-access::J2SPragma this (expr loc lang vars vals hint type)
       (display "{ \"__node__\": \"J2SPragma\", \"expr\": \"" op)
       (display (string-for-read
 		  (call-with-output-string
 		     (lambda (op) (write expr op))))
 	 op)
       (display "\", \"vars\": " op)
-      (display (format "\"(~(, ))\"" vars) op)
+      (display (format "[~(, )]" (map (lambda (s) (format "~s")) vars)) op)
       (display ", \"vals\": [" op)
       (if (null? vals)
 	  (display "]" op)
@@ -1180,9 +1192,11 @@
 		    (display ", " op)
 		    (loop (cdr vals))))))
       (display ", \"lang\": " op)
-      (display #\" op)
-      (display lang op)
-      (display #\" op)
+      (j2s->json lang op)
+      (display ", \"hint\": " op)
+      (j2s->json hint op)
+      (display ", \"type\": " op)
+      (j2s->json type op)
       (display ", \"loc\": " op)
       (j2s->json loc op)
       (display " }" op)))
@@ -1205,11 +1219,20 @@
 ;*    j2s->json ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SReturn op::output-port)
-   (with-access::J2SReturn this (from expr)
+   (with-access::J2SReturn this (from expr loc tail exit)
       (display "{ \"__node__\": \"J2SReturn\"," op)
+      (display "\"loc\": " op)
+      (j2s->json loc op)
+      (display ", " op)
+      (display "\"exit\": " op)
+      (j2s->json exit op)
+      (display ", " op)
+      (display "\"tail\": " op)
+      (j2s->json tail op)
+      (display ", " op)
       (when (isa? from J2SBindExit)
 	 (with-access::J2SBindExit from (lbl)
-	    (display "\"exit\": \"" op)
+	    (display "\"from\": \"" op)
 	    (display lbl op)
 	    (display "\"," op)))
       (display "\"expr\": " op)
@@ -1221,17 +1244,18 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SExport op::output-port)
    (with-access::J2SExport this (id alias index decl from)
-      (display "{ \"__node__\": \"J2SExport\", \"id\": \"" op)
-      (display id op)
-      (display "\"" op)
-      (unless (eq? alias id)
-	 (display ",\"alias\": \"" op)
-	 (display alias op)
-	 (display "\"" op))
-      (when from
-	 (display ",\"from\": " op)
-	 (display from op)
-	 (display "\"" op))
+      (display "{ \"__node__\": \"J2SExport\", \"id\": " op)
+      (j2s->json id op)
+      (display ", \"index\": " op)
+      (display index op)
+      (display ",\"alias\": " op)
+      (j2s->json alias op)
+      (display ",\"decl\": " op)
+      (if decl
+	  (j2s-decl->json decl "J2SExport" #f op)
+	  (display "false" op))
+      (display ",\"from\": " op)
+      (j2s->json from op)
       (display "}" op)))
 
 ;*---------------------------------------------------------------------*/
@@ -1280,14 +1304,6 @@
    (json-parse ip
       :expr #t
       :undefined #t
-      :reviver (lambda (obj key v)
-		   (if (and (string? v) (member key '("loc" "endloc")))
-		       (let ((i (string-index-right v #\:)))
-			  (if i
-			      `(at ,(substring v 0 i)
-				  ,(string->integer (substring v (+fx i 1))))
-			      v))
-		       v))
       :array-alloc (lambda ()
 		      (make-cell '()))
       :array-set (lambda (a i val)
@@ -1295,8 +1311,15 @@
       :array-return (lambda (a i)
 		       (reverse! (cell-ref a)))
       :object-alloc (lambda ()
-		       (make-cell #f))
+		       (make-cell '()))
       :object-set (lambda (o p val)
+		     (when (and (member p '("loc" "endloc")) (string? val))
+			(let ((i (string-index-right val #\:)))
+			   (when i
+			      (set! val
+				 `(at ,(substring val 0 1)
+				     ,(string->integer
+					 (substring val (+fx i 1))))))))
 		     (cell-set! o
 			(cons (cons (string->symbol p) val) (cell-ref o))))
       :object-return (lambda (o)
@@ -1322,11 +1345,13 @@
 				  (if (not (integer? (cdr r)))
 				      (error "json->ast"
 					 "Illegal reference node"
-					 o)
+					 alist)
 				      (instantiate::%JSONDecl
 					 (loc '(no-loc))
 					 (id 'jsondecl)
 					 (%id (cdr r))))))
+			      ((assq '__undefined__ alist)
+			       #unspecified)
 			      (else
 			       (tprint "UNKNWON: " o)
 			       o))))

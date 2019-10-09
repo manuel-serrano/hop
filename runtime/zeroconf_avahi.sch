@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/zeroconf_avahi.sch        */
+;*    serrano/prgm/project/hop/hop/runtime/zeroconf_avahi.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Fri Feb 21 13:49:28 2014 (serrano)                */
-;*    Copyright   :  2011-14 Manuel Serrano                            */
+;*    Last change :  Tue Oct  8 13:12:36 2019 (serrano)                */
+;*    Copyright   :  2011-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
 ;*=====================================================================*/
@@ -182,7 +182,7 @@
 			(apply avahi-entry-group-add-service! group
 			   :name name
 			   :type type
-			   :port (hop-port)
+			   :port (hop-default-port)
 			   opts)
 			;; tell the server to register the service
 			(avahi-entry-group-commit group)))))))))

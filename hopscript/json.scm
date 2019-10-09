@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Aug  9 09:55:22 2019 (serrano)                */
+;*    Last change :  Wed Sep 11 10:29:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -120,10 +120,19 @@
 		       (with-access::JsGlobalObject %this (js-object)
 			  (js-new0 %this js-object)))
       :object-set (lambda (o p val)
-		     (js-put! o (js-toname p %this) val #f %this))
+		     (let* ((name (js-toname p %this))
+			    (desc (instantiate::JsValueDescriptor
+				    (name name)
+				    (value val)
+				    (enumerable #t)
+				    (configurable #t)
+				    (writable #t))))
+			 (js-define-own-property o name desc #f %this)))
       :object-return (lambda (o) o)
       :parse-error (lambda (msg fname loc)
-		      (js-raise-syntax-error %this msg #f ip loc))
+		      (js-raise-syntax-error %this msg #f
+			 (if (string? fname) (js-string->jsstring fname) ip)
+			 loc))
       :reviver (when (js-function? reviver)
 		  (lambda (this key val)
 		     (let ((res (js-call2 %this reviver this key val)))
@@ -349,8 +358,8 @@
 	 (cond
 	    ((memq value stack)
 	     (js-raise-type-error %this
-		"Converting circular structure to JSON ~s"
-		(js-tostring value %this)))
+		"Converting circular structure to JSON ~a"
+		(format "[~a: ~a]" key (js-tostring value %this))))
 	    ((js-jsstring? value)
 	     (string-quote value))
 	    ((js-number? value)
@@ -443,7 +452,14 @@
    (define (default)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((holder (js-new0 %this js-object)))
-	    (js-put! holder (& "") value #f %this)
+	    (let* ((name (js-toname (& "") %this))
+		   (desc (instantiate::JsValueDescriptor
+		   (name name)
+		   (value value)
+		   (enumerable #t)
+		   (configurable #t)
+		   (writable #t))))
+		(js-define-own-property holder name desc #f %this))
 	    (str (& "") holder '()))))
    
    (cond

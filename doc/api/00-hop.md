@@ -23,6 +23,12 @@ The `isServer` property is true for code executing on a server and false
 for code executing on a client.
 
 
+### hop.isWorker ###
+[:@glyphicon glyphicon-tag parameter]
+The `isWorker` property is true if and only if the expression is evaluated
+within a worker context.
+
+
 Server Information
 ------------------
 
@@ -36,6 +42,15 @@ protocol for the Hop server, see [config](config.html).
 
 ```hopscript
 console.log( "port:", hop.port );
+```
+
+### hop.ports ###
+[:@glyphicon glyphicon-tag parameter]  
+Returns all the ports number of the running Hop server.
+
+
+```hopscript
+console.log( "port:", hop.ports );
 ```
 
 ### hop.hostname ###
@@ -52,6 +67,15 @@ The Hop version.
 
 ```hopscript
 console.log( "Hop version:", hop.version );
+```
+
+### hop.loginCookieCryptKey ###
+[:@glyphicon glyphicon-tag parameter]  
+An unique integer seed to for password encryption. This value is
+shared amongst all Hop workers.
+
+```hopscript
+console.log( "seed:", hop.loginCookieCryptKey );
 ```
 
 
@@ -103,7 +127,7 @@ service getObj() {
 ```
 
 ${ <span class="label label-warning">Note:</span> }
- In normal situation, it is not necessary to explicitly build the
+ In normal situations, it is not necessary to explicitly build the
 `HTTPResponseHop` object as the runtime system automatically constructs
 one when the response of a service is a compound JavaScript object.
 [:@warning]
@@ -135,11 +159,12 @@ The options list is:
   * `header`: the full response header, an object.
 
 ${ <span class="label label-warning">Note:</span> }
- In normal situation, it is not necessary to explicitly build the
+ In normal situations, it is not necessary to explicitly build the
 `HTTPResponseXml` object as the runtime system automatically constructs
 one when the response of a service is an XML fragment. It might be
 useful to construct an `HTTPResponseXML` explicitly when a header
 is to be associated with the response. Example:
+[:@warning]
 
 ```hopscript
 service foo() {
@@ -229,7 +254,6 @@ and passing a `startLine` value in the optional argument.
 [:@warning]
 
 
-
 #### Example ####
 
 ${ doc.include( doc.BUILDDIR + "/examples/authentication/README.md" ) }
@@ -316,7 +340,65 @@ ${ <span class="label label-info">image/image.js</span> }
 ${ doc.include( doc.BUILDDIR + "/examples/image/image.js", 14 ) }
 ```
 
-Server
+
+Request Filtering
+-----------------
+[:request-filters]
+
+Hop [services](01-service.html) are associated to URL and the server
+automatically routes requests toward the corresponding service. This
+mechanism constitutes the basis of Hop web programming and in most
+situtations, this high-level programming should be sufficient and
+low-level details such as the configuration of the underlying socket
+or the details of the `http` request attributes could be
+ignored. However, in some other situations a finer control over the
+connections and requests is needed.  If this only consists in
+obtaining an information about an `http` connection, the reification
+of the request the service receives as its `this` argument should be
+enough. If this consists in obtaining information independant of
+services or if this consists in answering a request that is not even
+associated with a service another programming level is needed. This is
+acheived by the request filters described in this section.
+
+${ <span class="label label-warning">Note:</span> }
+ Request filters can only be defined before the first request is received.
+Adding filter in the `hoprc.js` file is then recommended.
+[:@warning]
+
+### hop.addRequestFilter( filter ) ###
+[:@glyphicon glyphicon-tag function]  
+### hop.addRequestFilterFirst( filter ) ###
+[:@glyphicon glyphicon-tag function]  
+### hop.addRequestFilterLast( filter ) ###
+[:@glyphicon glyphicon-tag function]  
+
+The function `hop.addRequestFilter( filter )` adds a filter, a
+function of one argument, that will be invoked upon every request
+received by the server.  The function `hop.addRequestFilterFirst(
+filter )` adds a filter that is executed before the existing
+filter. The function `hop.addRequestFilterLast( filter )` adds a
+filter after the registered filters. All filters are executed in the
+main worker. Their execution should then be short.
+
+Request filters are chained together and this chaining drives the
+server behavior.  If the value returned from a filter is a response
+(e.g., `HTTPReponseHop`, `HTTPResponseString`, etc.), the server uses
+this value to respond to the request. If the value is not a response,
+then the next filter is executed.  This process repeats until the a
+filter returns a response.
+
+#### Example ####
+
+${ doc.include( doc.BUILDDIR + "/examples/image/README.md" ) }
+
+${ <span class="label label-info">reqfilter.js</span> }
+
+```hopscript
+${ doc.include( doc.BUILDDIR + "/doc/api/reqfilter.js" ) }
+```
+
+
+Server 
 ------
 
 Server objects denotes a remote server. They are used to attached

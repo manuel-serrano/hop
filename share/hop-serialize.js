@@ -3,11 +3,16 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Jul 13 06:55:15 2019 (serrano)                */
+/*    Last change :  Wed Sep 11 13:16:58 2019 (serrano)                */
 /*    Copyright   :  2007-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    defining                                                         */
+/*---------------------------------------------------------------------*/
+var defining = -1;
 
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_context ...                                        */
@@ -843,7 +848,7 @@ function hop_string_to_obj( s, extension ) {
       a[ i ] = (s.charCodeAt( i )) & 0xff;
    }
 
-   return hop_bytearray_to_obj( a, extension );
+   return hop_bytearray_to_obj( a, extension, "utf8" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -888,16 +893,15 @@ function hop_url_encoded_to_obj( s ) {
    }
 
    /* decode the object */
-   return hop_bytearray_to_obj( a );
+   return hop_bytearray_to_obj( a, undefined, "utf8" );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_bytearray_to_obj ...                                         */
 /*---------------------------------------------------------------------*/
-function hop_bytearray_to_obj( s, extension ) {
+function hop_bytearray_to_obj( s, extension, cset ) {
    var pointer = 0;
    var definitions = [];
-   var defining = -1;
 
    function substring( s, beg, end ) {
       if( s instanceof Array ) {
@@ -909,6 +913,7 @@ function hop_bytearray_to_obj( s, extension ) {
 
    function utf8substring( s, end ) {
       var res = "";
+      let start = pointer;
 
       while( pointer < end ) {
 	 var code = s[ pointer++ ];
@@ -937,9 +942,31 @@ function hop_bytearray_to_obj( s, extension ) {
 	 }
       }
       
+      // repair illegal utf8 strings by ignoring non ascii chars
+      if( pointer > end ) {
+	 pointer = start;
+	 res = "";
+	 
+	 while( pointer < end ) {
+	    var code = s[ pointer++ ];
+	    if( code < 128 ) {
+	       res += String.fromCharCode( code );
+	    } else {
+	       res += ".";
+	    }
+	 }
+      }
+      
       return res;
    }
 
+   function asciisubstring( s, end ) {
+      var res = substring( s, pointer, end );
+      pointer = end;
+      
+      return res;
+   }
+   
    function read_integer( s ) {
       return read_size( s );
    }
@@ -979,7 +1006,9 @@ function hop_bytearray_to_obj( s, extension ) {
    function read_string( s ) {
       var ulen = read_size( s );
       var sz = ((ulen + pointer) > s.length) ? s.length - pointer : ulen;
-      var res = utf8substring( s, pointer + sz );
+      var res = (cset === "utf8")
+	 ? utf8substring( s, pointer + sz )
+	 : asciisubstring( s, pointer + sz );
 
       if( defining >= 0 ) {
 	 definitions[ defining ] = res;
@@ -1034,7 +1063,7 @@ function hop_bytearray_to_obj( s, extension ) {
       var res = sc_cons( null, null );
       var hd = res;
 
-      if( defining >=0 ) {
+      if( defining >= 0 ) {
 	 definitions[ defining ] = res;
 	 defining = -1;
       }
@@ -1126,6 +1155,11 @@ function hop_bytearray_to_obj( s, extension ) {
       } else {
 	 res = new Object();
 
+	 res.__class__ = key;
+	 
+	 if( old_defining >= 0 )
+	    definitions[ old_defining ] = res;
+
 	 for( var i = 0; i < sz; i++ ) {
 	    res[ sc_keyword2jsstring( cinfo[ i ] ) ] = read_item();
 	 }
@@ -1134,10 +1168,12 @@ function hop_bytearray_to_obj( s, extension ) {
 	 read_item();
 	 
 	 if( key in hop_builtin_class_unserializer ) {
-	    return hop_builtin_class_unserializer[ key ]( res );
-	 } else {
-	    return res;
+	    res = hop_builtin_class_unserializer[ key ]( res );
+	    if( old_defining >= 0 )
+	       definitions[ old_defining ] = res;
 	 }
+	 
+	 return res;
       }
    }
 
@@ -1312,6 +1348,11 @@ function hop_dom_unserialize( obj ) {
    var el = document.createElement( sc_symbol2jsstring( obj.tag ) );
    var attrs = obj.attributes;
    
+   if( defining >= 0 ) {
+      definitions[ defining ] = el;
+      defining = -1;
+   }
+
    while( sc_isPair( attrs ) ) {
       var k = sc_symbol2jsstring( sc_car( attrs ) );
       var v = sc_cadr( attrs );
@@ -1328,14 +1369,16 @@ function hop_dom_unserialize( obj ) {
 	 default:
 	    if( k[ 0 ] !== "%" ) {
 	       var m = k.match( "^on(.*)" );
-	       if(  m ) {
-		  try {
-		     var fun = (typeof v === "string") 
-			? new Function( "event", v ) 
-			: v;
-		     hop_add_event_listener( el, m[ 1 ], fun, true );
-		  } catch( e ) {
-		     alert( "hop_dom_unserialize error!" );
+	       if( m ) {
+		  if( v !== false && v !== undefined ) {
+		     try {
+		     	var fun = (typeof v === "string") 
+			   ? new Function( "event", v ) 
+			   : v;
+		     	hop_add_event_listener( el, m[ 1 ], fun, true );
+		     } catch( e ) {
+		     	alert( "hop_dom_unserialize error! \"" + k + ":" + v + "\"" );
+		     }
 		  }
 	       } else {
 		  el.setAttribute( k, v );
@@ -1356,7 +1399,14 @@ function hop_dom_unserialize( obj ) {
 function hop_tilde_unserialize( obj ) {
    return new Function( 'event', obj[ "%js-statement" ] );
 }
-   
+
+/*---------------------------------------------------------------------*/
+/*    hop_service_unserialize ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_service_unserialize( obj ) {
+   return obj.path;
+}
+
 /*---------------------------------------------------------------------*/
 /*    hop_builtin_class_unserializer ...                               */
 /*---------------------------------------------------------------------*/
@@ -1372,6 +1422,8 @@ hop_builtin_class_register_unserializer(
    sc_jsstring2symbol( "xml-empty-element" ), hop_dom_unserialize );
 hop_builtin_class_register_unserializer( 
    sc_jsstring2symbol( "xml-tilde" ), hop_tilde_unserialize );
+hop_builtin_class_register_unserializer( 
+   sc_jsstring2symbol( "hop-service" ), hop_service_unserialize );
 
 /*---------------------------------------------------------------------*/
 /*    hop_custom_object_regexp ...                                     */

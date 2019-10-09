@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Sat Jan 26 09:06:40 2019 (serrano)                */
+/*    Last change :  Mon Sep  9 08:29:59 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -16,10 +16,13 @@ var hop = process.binding( "hop" );
 /*    info                                                             */
 /*---------------------------------------------------------------------*/
 exports.isServer = hop.isServer;
+exports.isWorker = hop.isWorker;
 exports.hostname = hop.hostname;
 exports.version = hop.version;
-exports.__defineGetter__( 'port', function() { return hop.port(); } );
+exports.__defineGetter__( 'port', hop.port );
+exports.__defineGetter__( 'ports', hop.ports );
 exports.standalone = hop.standalone;
+exports.loginCookieCryptKey = hop.loginCookieCryptKey;
 
 /*---------------------------------------------------------------------*/
 /*    Server configuration                                             */
@@ -58,6 +61,13 @@ exports.HTTPResponseError = function( obj ) {
       header: { "Hop-Error": "true" }
    } );
 };
+
+/*---------------------------------------------------------------------*/
+/*    Request Filters                                                  */
+/*---------------------------------------------------------------------*/
+exports.addRequestFilter = hop.addRequestFilter;
+exports.addRequestFilterFirst = hop.addRequestFilterFirst;
+exports.addRequestFilterLast = hop.addRequestFilterLast;
 
 /*---------------------------------------------------------------------*/
 /*    Charset                                                          */

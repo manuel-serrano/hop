@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/elisp/test.js                */
+/*    serrano/prgm/project/hop/hop/test/elisp/test.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Feb 27 18:25:47 2019 (serrano)                */
+/*    Last change :  Mon Aug 26 08:14:32 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopjs-mode indent tests                                          */
@@ -32,6 +32,13 @@ or
 /*---------------------------------------------------------------------*/
 /*    JavaScript                                                       */
 /*---------------------------------------------------------------------*/
+// regexp
+function foo() {
+   for (var i = 0; i < 17; i++) {
+      s15[i].match(/zfvr/gi);
+   }
+}
+
 // pok instanceof
 function kangaxa() {
    class C extends Boolean {}
@@ -52,7 +59,6 @@ function kangaxc() {
       return true;
    }
 }
-
 
 // else sans bracket
 function react( o ) {
@@ -1318,8 +1324,8 @@ function test() {
 	     z=${1+2}>
        <div>
 	 <span>
-	   ceci est un span
-on va voir ce quon va voir
+	   ceci est un spun
+			  on va voir ce quon va voir
 cest juste du texte...
 	 </span>
 	 <div>

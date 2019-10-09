@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri May  3 18:13:01 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:17:40 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -550,7 +550,7 @@
 		env: (format "REQUEST_METHOD=~a" method)
 		env: (format "SCRIPT_NAME=~a" path)
 		env: (format "SERVER_NAME=~a" (with-access::http-request request (host) host))
-		env: (format "SERVER_PORT=~a" (hop-port))
+		env: (format "SERVER_PORT=~a" (hop-default-port))
 		env: (format "SERVER_PROTOCOL=HTTP/1.1")
 		env: (format "SERVER_SOFTWARE=~a~a" (hop-name) (hop-version))
 		(apply append

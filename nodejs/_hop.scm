@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Aug 20 14:52:43 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:15:37 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -119,7 +119,7 @@
 					       "localhost"
 					       (js-tostring host %this)))
 				     (port (if (eq? port (js-undefined))
-					       (hop-port)
+					       (hop-default-port)
 					       (js-tointeger port %this)))
 				     (authorization (when (js-totest auth)
 						       (js-tostring auth %this)))))))))
@@ -281,10 +281,10 @@
 	       `(version . ,(hop-version))
 	       `(hostname . ,(js-string->jsstring (hostname)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
-	       `(buildid . ,(hop-build-id))
-	       `(buildtag . ,(hop-build-tag))
 	       `(standalone . ,hopjs-standalone)
 	       `(isServer . #t)
+	       `(isWorker . ,(not (js-main-worker? %worker)))
+	       `(loginCookieCryptKey . ,(hop-login-cookie-crypt-key))
 
 	       ;; server configuration
 	       (define-js httpAuthenticationMethodGet 0
@@ -298,6 +298,14 @@
 
 	       ;; port
 	       (define-js port 0 (lambda (this) (hop-port)))
+	       
+	       (define-js ports 0
+		  (lambda (this)
+		     (js-alist->jsobject
+			(list
+			   `(http . ,(when (>=fx (hop-port) 0) (hop-port)))
+			   `(https . ,(when (>=fx (hop-ssl-port) 0) (hop-ssl-port))))
+			%this)))
 
 	       ;; services
 	       `(Service . ,(js-get %this (& "Service") %this))
@@ -346,6 +354,29 @@
 	       (define-js HTTPResponseAsync 2
 		  (lambda (this proc req)
 		     (hopjs-response-async this proc req %this %worker)))
+
+	       ;; filters
+	       (define-js addRequestFilter 1
+		  (lambda (this proc)
+		     (hop-filter-add!
+			(lambda (req)
+			   (js-worker-exec (js-current-worker) "request" #t
+			      (lambda ()
+				 (js-call1 %this proc this req)))))))
+	       (define-js addRequestFilterFirst 1
+		  (lambda (this proc)
+		     (hop-filter-add-always-first!
+			(lambda (req)
+			   (js-worker-exec (js-current-worker) "request" #t
+			      (lambda ()
+				 (js-call1 %this proc this req)))))))
+	       (define-js addRequestFilterLast 1
+		  (lambda (this proc)
+		     (hop-filter-add-always-last!
+			(lambda (req)
+			   (js-worker-exec (js-current-worker) "request" #t
+			      (lambda ()
+				 (js-call1 %this proc this req)))))))
 	       
 	       ;; events
 	       (define-js signal 2

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May 14 08:03:28 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:19:14 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -46,13 +46,7 @@
    (signal sigterm
       (lambda (n)
 	 (unless (current-thread)
-	    ((hop-sigterm-handler) n))))
-   (when (<fx (bigloo-debug) 3)
-      (signal sigsegv
-	 (lambda (n)
-	    (fprint (current-error-port) "Segmentation violation")
-	    (display-trace-stack (get-trace-stack) (current-error-port))
-	    (exit 2)))))
+	    ((hop-sigterm-handler) n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js initialization ...                                            */
@@ -95,7 +89,6 @@
 	 (hop-filter-add! service-filter)
 	 (hop-init args files exprs)
 	 ;; adjust the actual hop-port before executing client code
-;* 	 (hop-port-set! (socket-port-number (hop-server-socket)))      */
 	 ;; js rc load
 	 (if (hop-javascript)
 	     (set! jsworker (javascript-init args files exprsjs))
@@ -105,7 +98,6 @@
 	 ;; prepare the regular http handling
 	 (init-http!)
 	 (when (hop-enable-webdav) (init-webdav!))
-	 (when (hop-enable-fast-server-event) (init-flash!))
 	 ;; close filter installation
 	 (unless (hop-javascript)
 	    (hop-filters-close!))
@@ -117,7 +109,7 @@
 	 (when (hop-enable-zeroconf) (init-zeroconf!))
 	 ;; create the scheduler (unless the rc file has already created one)
 	 (unless (isa? (hop-scheduler) scheduler)
-	    (set-scheduler!))
+	    (hop-scheduler-set! (make-hop-scheduler)))
 	 ;; start the hop scheduler loop (i.e. the hop main loop)
 	 (with-handler
 	    (lambda (e)
@@ -125,19 +117,16 @@
 	       (fprint (current-error-port)
 		  "An error has occurred in the Hop main loop, exiting...")
 	       (exit 1))
-	    (let ((serv (hop-server-socket)))
+	    (let ((serv (hop-server-socket))
+		  (servs (hop-server-ssl-socket)))
 	       ;; ready to now say hello
 	       (hello-world)
 	       ;; when needed, start the HOP repl
 	       (when (eq? (hop-enable-repl) 'scm)
 		  (hop-repl (hop-scheduler)))
 	       ;; when needed, start a loop for server events
-	       (hop-event-server (hop-scheduler))
+	       (hop-event-init!)
 	       (when (hop-run-server)
-		  ;; tune the server socket
-		  (socket-option-set! serv :TCP_NODELAY #t)
-		  ;; fast server event socket
-		  (hop-fast-server-event-port-set! (socket-port-number serv))
 		  ;; preload all the forced services
 		  (for-each (lambda (svc)
 			       (let* ((path (string-append (hop-service-base)
@@ -145,7 +134,7 @@
 				      (req (instantiate::http-server-request
 					      (path path)
 					      (abspath path)
-					      (port (hop-port))
+					      (port (hop-default-port))
 					      (connection 'close))))
 				  (with-handler
 				     (lambda (err)
@@ -164,7 +153,25 @@
 			   (users-close!)
 			   (hop-filters-close!))))
 		  ;; start the main loop
-		  (scheduler-accept-loop (hop-scheduler) serv #t))
+		  (cond
+		     ((and serv servs)
+		      (cond-expand
+			 (enable-threads 
+			  (thread-start!
+			     (instantiate::hopthread
+				(body (lambda ()
+					 (scheduler-accept-loop
+					    (make-hop-scheduler)
+					    servs #t)))))
+			  (scheduler-accept-loop (hop-scheduler) serv #t))
+			 (else
+			  (error "hop"
+			     "Thread support missing for running both http and https servers"
+			     servs))))
+		     (serv
+		      (scheduler-accept-loop (hop-scheduler) serv #t))
+		     (servs
+		      (scheduler-accept-loop (hop-scheduler) servs #t))))
 	       (if jsworker
 		   (if (thread-join! jsworker) 0 1)
 		   0))))))
@@ -177,7 +184,7 @@
    (when (pair? files)
       (let ((req (instantiate::http-server-request
 		    (host "localhost")
-		    (port (hop-port)))))
+		    (port (hop-default-port)))))
 	 ;; set a dummy request
 	 (thread-request-set! #unspecified req)
 	 ;; preload the user files
@@ -243,7 +250,7 @@
       (when (pair? files)
 	 (let ((req (instantiate::http-server-request
 		       (host "localhost")
-		       (port (hop-port)))))
+		       (port (hop-default-port)))))
 	    ;; set a dummy request
 	    (thread-request-set! #unspecified req)
 	    ;; preload the user files
@@ -329,39 +336,34 @@
 			(js-string->jsstring (input-port-name ip)) #f
 			%global)
 		     (%js-eval-hss ip %global %worker scope))))))))
-   
+
 ;*---------------------------------------------------------------------*/
-;*    set-scheduler! ...                                               */
+;*    make-hop-scheduler ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (set-scheduler!)
+(define (make-hop-scheduler)
    (cond-expand
       (enable-threads
        (case (hop-scheduling)
 	  ((nothread)
-	   (hop-scheduler-set!
-	      (instantiate::nothread-scheduler)))
+	   (instantiate::nothread-scheduler))
 	  ((queue)
-	   (hop-scheduler-set!
-	      (instantiate::queue-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::queue-scheduler
+	      (size (hop-max-threads))))
 	  ((one-to-one)
-	   (hop-scheduler-set!
-	      (instantiate::one-to-one-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::one-to-one-scheduler
+	      (size (hop-max-threads))))
 	  ((pool)
-	   (hop-scheduler-set!
-	      (instantiate::pool-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::pool-scheduler
+	      (size (hop-max-threads))))
 	  ((accept-many)
-	   (hop-scheduler-set!
-	      (instantiate::accept-many-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::accept-many-scheduler
+	      (size (hop-max-threads))))
 	  (else
 	   (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
       (else
        (unless (eq? (hop-scheduling) 'nothread)
 	  (warning "hop" "Threads disabled, forcing \"nothread\" scheduler."))
-       (hop-scheduler-set! (instantiate::nothread-scheduler)))))
+       (instantiate::nothread-scheduler))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-command-line-weblet ...                                     */
@@ -471,16 +473,3 @@
       (debug-thread-info-set! thread "stage-repl")
       (hop-verb 1 "Entering repl...\n")
       (begin (repl) (exit 0))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-event-server ...                                             */
-;*---------------------------------------------------------------------*/
-(define (hop-event-server scd)
-   (hop-event-init!)
-   (when (and (hop-enable-fast-server-event)
-	      (not (=fx (hop-fast-server-event-port) (hop-port)))
-	      (>fx (with-access::scheduler scd (size) size) 1))
-      ;; run an event server socket in a separate thread
-      (let ((serv (make-server-socket (hop-fast-server-event-port)
-		     :name (hop-server-listen-addr))))
-	 (scheduler-accept-loop scd serv #f))))

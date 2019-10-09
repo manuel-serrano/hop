@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jul  8 11:46:06 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:20:04 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -45,6 +45,7 @@
 	 (mimep #t)
 	 (autoloadp #t)
 	 (p #f)
+	 (ps #f)
 	 (ep #unspecified)
 	 (dp #unspecified)
 	 (rc-file #f)
@@ -244,10 +245,10 @@
 	    (section "Run")
 	    ((("-p" "--http-port") ?port (help (format "Port number [~s]" p)))
 	     (set! p (string->integer port)))
+	    (("--https-port" ?port (help (format "Port number [~s]" ps)))
+	     (set! ps (string->integer port)))
 	    (("--listen-addr" ?addr (help "Server listen hostname or IP"))
 	     (hop-server-listen-addr-set! addr))
-	    (("--fast-server-event-port" ?port (help (format "Fast Server event port number [~s]" ep)))
-	     (set! ep (string->integer port)))
 	    (("--https" (help (format "Enable HTTPS")))
 	     (hop-enable-https-set! #t))
 	    (("--no-https" (help (format "Disable HTTPS")))
@@ -256,10 +257,6 @@
 	     (hop-https-pkey-set! pem))
 	    (("--https-cert" ?pem (help "HTTPS certificate file"))
 	     (hop-https-cert-set! pem))
-	    (("--fast-server-event" (help "Enable fast Server events"))
-	     (hop-enable-fast-server-event-set! #t))
-	    (("--no-fast-server-event" (help "Disable fast server events"))
-	     (hop-enable-fast-server-event-set! #f))
 	    ((("-i" "--session-id") ?session (help "Set session identifier"))
 	     (hop-session-set! (string->integer session)))
 	    (("--no-job-restore" (help "Don't restore jobs"))
@@ -304,6 +301,7 @@
 	     (hop-run-server-set! #t))
 	    (("--no-server" (help "Exit after loading command line files"))
 	     (hop-port-set! -1)
+	     (hop-ssl-port-set! -1)
 	     (hop-run-server-set! #f)
 	     (set! p #f))
 	    (("--exepath" ?name (help "Set JavaScript executable path"))
@@ -405,8 +403,20 @@
 	    (else
 	     (set! files (cons else files)))))
 
-      ;; http port
-      (when p (hop-port-set! p))
+      ;; http and https port
+      (cond
+	 ((and p ps)
+	  (hop-port-set! p)
+	  (hop-ssl-port-set! ps))
+	 (p
+	  (if (hop-enable-https)
+	      (begin
+		 (hop-port-set! -1)
+		 (hop-ssl-port-set! p))
+	      (hop-port-set! p)))
+	 (ps
+	  (hop-port-set! -1)
+	  (hop-ssl-port-set! ps)))
       
       ;; Hop version
       (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
@@ -422,8 +432,12 @@
 
       ;; open the server socket before switching to a different process owner
       (when (>=fx (hop-port) 0)
-	 (init-server-socket!)
+	 (hop-server-socket-set! (init-server-socket! (hop-port) #f))
 	 (hop-port-set! (socket-port-number (hop-server-socket))))
+      
+      (when (>=fx (hop-ssl-port) 0)
+	 (hop-server-ssl-socket-set! (init-server-socket! (hop-ssl-port) #t))
+	 (hop-ssl-port-set! (socket-port-number (hop-server-ssl-socket))))
       
       ;; set the hop process owner
       (when setuser
@@ -470,7 +484,7 @@
 	 (make-file-name (hop-rc-directory) "weblets"))
       
       ;; init hss, scm compilers, and services
-      (init-hss-compiler! (hop-port))
+      (init-hss-compiler! (hop-default-port))
       
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
 	 :tmp-dir (os-tmp)
@@ -542,32 +556,16 @@
       ;; default backend
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
       
-      ;; server event port
-      (when (hop-enable-fast-server-event)
-	 (cond
-	    ((eq? ep #unspecified)
-	     (set! ep p))
-	    ((and (>fx ep 0) (<fx ep 1024))
-	     (error "fast-server-event-port"
-		"Server event port must be greater than 1023. (See `--fast-server-event-port' or `--no-fast-server-event' options.)"
-		ep))
-	    (else
-	     (hop-fast-server-event-port-set! ep))))
-      
       (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
       
       (for-each (lambda (l) (eval `(library-load ',l))) libraries)
       
       ;; write the process key
-      (hop-process-key-write (hop-process-key) (hop-port))
+      (hop-process-key-write (hop-process-key) (hop-default-port))
       (register-exit-function! (lambda (ret)
-				  (hop-process-key-delete (hop-port))
+				  (hop-process-key-delete (hop-default-port))
 				  ret))
 
-;*       ;; check if a new server socket must be opened                */
-;*       (when (and (integer? p) (not (=fx p (hop-port))))             */
-;* 	 (init-server-socket!))                                        */
-      
       (values (reverse files) (reverse! exprs) (reverse! exprsjs))))
 
 ;*---------------------------------------------------------------------*/
@@ -611,20 +609,21 @@
 ;*---------------------------------------------------------------------*/
 (define (hello-world)
    ;; ports and various configuration
-   (hop-verb 1
-      (if (hop-enable-https)
-	  (format "  https (~a): " (hop-https-protocol)) "  http: ")
-      (hop-color 2 "" (hop-port)) "\n")
+   (when (>=fx (hop-port) 0)
+      (hop-verb 1
+	 "  http: "
+	 (hop-color 2 "" (hop-port)) "\n"))
+   (when (>=fx (hop-ssl-port) 0)
+      (hop-verb 1
+	 (format "  https (~a): " (hop-https-protocol))
+	 (hop-color 2 "" (hop-ssl-port)) "\n"))
+   ;; host
    (hop-verb 1
       "  hostname: " (hop-color 2 "" (hop-server-hostname)) "\n")
    (hop-verb 1
       "  hostip: " (hop-color 2 "" (hop-server-hostip)) "\n")
+   ;; security
    (hop-verb 2
-      (if (and (hop-enable-fast-server-event)
-	       (not (=fx (hop-port) (hop-fast-server-event-port))))
-	  (format "  comet-port: ~a\n"
-	     (hop-color 2 "" (hop-fast-server-event-port)))
-	  "")
       "  security: "
       (with-access::security-manager (hop-security-manager) (name)
 	 (hop-color 2 "" name))

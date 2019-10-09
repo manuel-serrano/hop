@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jun  7 16:16:51 2019 (serrano)                */
+;*    Last change :  Wed Sep  4 07:27:21 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -284,6 +284,8 @@
 		     (loop (cddr a) (cons* v (car a) attr) body id ctx))
 		    ((symbol? v)
 		     (loop (cddr a) (cons* (symbol->string! v) (car a) attr) body id ctx))
+		    ((eq? v #unspecified)
+		     (loop (cddr a) attr body id ctx))
 		    ((isa? v xml-tilde)
 		     (loop (cddr a) (cons* (cadr a) (car a) attr) body id ctx))
 		    (else
@@ -1006,9 +1008,13 @@
 	  ;; find the attribute (if any)
 	  (with-access::xml-element parent (tag id)
 	     (let ((attr (element-attribute parent)))
-		(if attr
-		    (format "~a#~a.~a" tag id (keyword->string attr))
-		    (format "~a#~a" tag id)))))
+		(cond
+		   ((eq? id #unspecified)
+		    (symbol->string tag))
+		   ((not attr)
+		    (format "~a#~a" tag id))
+		   (else
+		    (format "~a#~a.~a" tag id (keyword->string attr)))))))
 	 (else
 	  "")))
 

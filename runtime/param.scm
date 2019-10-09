@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jul  8 11:45:41 2019 (serrano)                */
+;*    Last change :  Tue Oct  8 13:10:02 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -85,9 +85,15 @@
 	    (hop-login-cookie-id::bstring)
 	    (hop-login-cookie-time::int)
 	    (hop-login-cookie-crypt-key::int)
+
+	    (inline hop-default-port::int)
+	    (inline hop-default-scheme::symbol)
 	    
 	    (hop-port::int)
 	    (hop-port-set! ::int)
+
+	    (hop-ssl-port::int)
+	    (hop-ssl-port-set! ::int)
 
 	    (hop-use-proxy::obj)
 	    (hop-use-proxy-set! ::obj)
@@ -360,6 +366,15 @@
 	    (hop-user-agent::bstring)
 	    (hop-user-agent-set! ::bstring)
 
+	    (hop-access-denied-format::bstring)
+	    (hop-access-denied-format-set! ::bstring)
+
+	    (hop-user-service-denied-format::bstring)
+	    (hop-user-service-denied-format-set! ::bstring)
+
+	    (hop-proxy-denied-format::bstring)
+	    (hop-proxy-denied-format-set! ::bstring)
+	    
 	    (hop-preferred-language::bstring)
 	    (hop-preferred-language-set! ::bstring)
 
@@ -1490,6 +1505,18 @@
    (* 60 60 24))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-default-port ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-default-port)
+   (if (<fx (hop-port) 0) (hop-ssl-port) (hop-port)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-default-scheme ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-default-scheme)
+   (if (<fx (hop-port) 0) 'https 'http))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-port ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-port
@@ -1501,6 +1528,19 @@
 		(format "hop@~a:~a" (hop-server-hostname) v))
 	     v)
 	  (error "hop-port" "Illegal hop port" v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-ssl-port ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-ssl-port
+   -1
+   (lambda (v)
+      (if (integer? v)
+	  (begin
+	     (hop-login-cookie-id-set!
+		(format "hop@~a:~a" (hop-server-hostname) v))
+	     v)
+	  (error "hop-ssl-port" "Illegal hop ssl-port" v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-exepath ...                                                  */
@@ -1515,6 +1555,27 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-user-agent
    "Mozilla/5.0 (X11; Linux i686; rv:31.0) Gecko/20100101 Firefox/31.0 Iceweasel/31.5.3")
+
+;*---------------------------------------------------------------------*/
+;*    hop-access-denied-format ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-access-denied-format
+   ;; arguments are: host, port, path
+   "Protected Area! Authentication required: ~a:~a:~a")
+
+;*---------------------------------------------------------------------*/
+;*    hop-user-service-denied-format ...                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-user-service-denied-format
+   ;; arguments are: user name and service name
+   "User \"~a\" is not allowed to execute service \"~a\".")
+
+;*---------------------------------------------------------------------*/
+;*    hop-proxy-denied-format ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-proxy-denied-format
+   ;; argument is user name
+   "Protected Area! Authentication required for user \"~a\".")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-preferred-language ...                                       */

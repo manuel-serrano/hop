@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Feb 27 08:31:33 2019 (serrano)                */
+#*    Last change :  Mon Oct  7 15:39:05 2019 (serrano)                */
 #*    Copyright   :  2006-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -51,6 +51,7 @@ POPULATION = Makefile \
   hopjs/noserv/string.js \
   hopjs/noserv/date.js \
   hopjs/noserv/require.js \
+  hopjs/noserv/function.js \
   hopjs/noserv/es6-let.js \
   hopjs/noserv/es6-let-tl.js \
   hopjs/noserv/es6-sym.js \

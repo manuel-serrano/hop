@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Aug  4 07:10:08 2019 (serrano)                */
+;*    Last change :  Wed Sep  4 07:40:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -870,7 +870,7 @@
 	  ,@(dump-rtype fun)
 	  ,@(dump-info this)
 	  ,@(dump-range this)
-	  ,@(dump-protocol this)
+	  ,@(dump-protocol protocol)
 	  ,(j2s->list fun)
 	  ,@(dump-cache this)
 	  ,@(if (pair? thisarg) `(:thisarg ,@(map j2s->list thisarg)) '())
@@ -984,7 +984,7 @@
 (define-method (j2s->list this::J2SNew)
    (with-access::J2SNew this (clazz args cache protocol)
       `(,@(call-next-method) ,@(dump-type this)
-	  ,@(dump-protocol this)
+	  ,@(dump-protocol protocol)
 	  ,@(dump-cache this)
 	  ,(j2s->list clazz) ,@(map j2s->list args))))
 

@@ -1,0 +1,61 @@
+language: c
+sudo: required
+
+compiler:
+  - gcc
+  
+env:
+  global:
+  - NJOBS=2
+  
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y dh-make
+  - sudo apt-get install -y libssl1.0.0
+  - sudo apt-get install -y libssl0.9.8
+  - sudo apt-get install -y libssl-dev
+  - sudo apt-get install -y libsqlite3-0
+  - sudo apt-get install -y libsqlite3-dev
+  - sudo apt-get install -y libasound2
+  - sudo apt-get install -y libasound2-dev
+  - sudo apt-get install -y libflac8
+  - sudo apt-get install -y libflac-dev
+  - sudo apt-get install -y libmpg123-0
+  - sudo apt-get install -y libmpg123-dev
+  - sudo apt-get install -y libavahi-core7
+  - sudo apt-get install -y libavahi-core-dev
+  - sudo apt-get install -y libavahi-common-dev
+  - sudo apt-get install -y libavahi-common3
+  - sudo apt-get install -y libavahi-client3
+  - sudo apt-get install -y libavahi-client-dev
+  - sudo apt-get install -y libunistring0
+  - sudo apt-get install -y libunistring-dev
+  - sudo apt-get install -y libpulse-dev
+  - sudo apt-get install -y libpulse0
+  - sudo apt-get install -y automake
+  - sudo apt-get install -y libtool
+  - sudo apt-get install -y libgmp-dev
+  - sudo apt-get install -y libgmp3-dev
+  - sudo apt-get install -y libgmp10
+  
+before_script:
+  - wget ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo-latest.tar.gz -O /tmp/bigloo@BIGLOOVERSION@.tar.gz
+  - pushd /tmp && tar xvfz /tmp/bigloo@BIGLOOVERSION@.tar.gz && popd
+  - pushd /tmp/bigloo@BIGLOOVERSION@ && ./configure && make && sudo make install && popd
+  
+script:
+  - set -e
+  - echo -en 'travis_fold:start:hop.config\\r'
+  - ./configure
+  - echo -en 'travis_fold:end:hop.config\\r'
+
+  - echo -en 'travis_fold:start:hop.build\\r'
+  - make
+  - make install-sans-docs
+  - echo -en 'travis_fold:end:hop.build\\r'
+
+  - echo -en 'travis_fold:start:hop.test\\r'
+  - (cd test/hopjs; ./TEST)
+  - echo -en 'travis_fold:end:hop.test\\r'
+
+  - set +e

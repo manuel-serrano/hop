@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/etc/hopjs-parse.el                */
+;*    serrano/prgm/project/hop/hop/etc/hopjs-parse.el                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Wed Apr 24 11:17:56 2019 (serrano)                */
+;*    Last change :  Mon Aug 26 08:20:53 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -46,6 +46,8 @@
 	 (id_part_sans "[[:nonascii:]]")
 	 (id_part "[[:alnum:][:multibyte:][:nonascii:]$_]")
 	 (id_start "[[:alpha:][:multibyte:][:nonascii:]$_]")
+	 (scmid_part "[^ (){}\"]")
+	 (scmid_start "#[:]")
 	 (cssid_part "[[:alnum:][:multibyte:][:nonascii:]$_#-]")
 	 (cssid_start "[[:alpha:][:multibyte:][:nonascii:]$_#-]")
 	 (letter "[[:alpha:][:nonascii:]]")
@@ -70,6 +72,7 @@
      (cons (rxor "<" ">" (rxq "+") (rxq "-") (rxq "*") "%" "=" "|" "/"
 		 "<<" ">>" ">>>" "[&^]") 'binop)
      (cons (rxor "&&" "||" "in") 'binop)
+     (cons "instanceof" 'binop)
      (cons (rxor "<=" ">="  "!==*" "===*" "[+*%^&-]=" "<<=" ">>=" ">>>=") '=)
      ;; prefix
      (cons (rxor (rx: (rxq "+") (rxq "+")) "--") 'prefix)
@@ -80,14 +83,16 @@
      ;; strings
      (cons (rxor "\"\\([^\"\\]\\|\\\\.\\)*\"" "'[^']*'" "`[^`]*`") 'string)
      ;; regexp
-     (cons "/[^*/].*[^<]/[gimuy]?" 'regexp)
-     (cons "/[^*/]/[gimuy]?" 'regexp)
+     (cons "/[^*/].*[^<]/[gimuy]*" 'regexp)
+     (cons "/[^*/]/[gimuy]*" 'regexp)
      ;; tilde escape
      (cons "~{" 'tilde)
      ;; dollar escape
      (cons "[$]{" 'dollar)
      ;; ident
      (cons (rx: id_start (rx* id_part)) 'ident)
+     ;; scheme ident
+     (cons (rx: scmid_start (rx* scmid_part)) 'ident)
      ;; html-comment
      (cons "<!--\\(?:[^-]\\|-[^-]\\|--[^>]\\)[-]+->" 'html-comment)
      ;; otag
@@ -209,11 +214,11 @@
 		 (hopjs-parse-token-end tok))
 	  (aset tok 0 '>))))
      tok)
-    ((regexp)
-     (when (> (hopjs-parse-token-end tok) beg)
-       (aset tok 0 'string)
-       (aset tok 2 (- beg 1)))
-     tok)
+;*     ((regexp)                                                       */
+;*      (when (> (hopjs-parse-token-end tok) beg)                      */
+;*        (aset tok 0 'string)                                         */
+;*        (aset tok 2 (- beg 1)))                                      */
+;*      tok)                                                           */
     (t
      tok)))
     
@@ -255,8 +260,8 @@
 	(let ((tok (looking-at-token)))
 	  (cond
 	   (tok
-	    (hopjs-debug 0 "hopjs-parse-line pos=%s point=%s tok=%s"
-			    pos (point) tok)
+;* 	    (hopjs-debug 0 "hopjs-parse-line pos=%s point=%s tok=%s"   */
+;* 			    pos (point) tok)                           */
 	    (if (eq (hopjs-parse-token-type tok) 'ohtml)
 		;; ohtml must be split in two parts: the tag and the attr
 		(progn

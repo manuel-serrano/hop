@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/src/accept.scm                    */
+;*    serrano/prgm/project/hop/hop/src/accept.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sat Dec 12 13:13:39 2015 (serrano)                */
-;*    Copyright   :  2008-15 Manuel Serrano                            */
+;*    Last change :  Fri Sep  6 11:49:45 2019 (serrano)                */
+;*    Copyright   :  2008-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
 ;*=====================================================================*/
@@ -55,6 +55,7 @@
 ;*    scheduler-accept-loop ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (scheduler-accept-loop scd::scheduler serv::socket wait::bool)
+   (tune-socket! serv)
    (let loop ((id 1))
       (let ((sock (socket-accept serv)))
 	 (if (socket-reject sock)
@@ -89,6 +90,7 @@
 ;*    scheduler-accept-loop ::queue-scheduler ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::queue-scheduler serv::socket w::bool)
+   (tune-socket! serv)
    (let* ((acclen (min 50 (/fx (hop-max-threads) 2)))
 	  (socks (make-vector acclen)))
       (let loop ((id 1))
@@ -124,8 +126,7 @@
    (define dummybuf (make-string 512))
    (define idmutex (make-mutex "pool-scheduler"))
    (define idcount 0)
-   (define nbthreads
-      (with-access::pool-scheduler scd (nfree) nfree))
+   (define nbthreads (with-access::pool-scheduler scd (nfree) nfree))
    
    (define (get-next-id)
       (if (=fx (hop-verbose) 0)
@@ -190,6 +191,7 @@
 
    (when (<fx nbthreads 6)
       (error "hop" "scheduler-accept requires at least 6 threads" nbthreads))
+   (tune-socket! serv)
    (let loop ((i (if (>fx nbthreads 8) (- nbthreads 4) (/fx nbthreads 2))))
       (if (<=fx i 1)
 	  (let ((th (spawn scd connect-stage)))
@@ -225,7 +227,8 @@
 	    (output-port-buffer-set! (socket-output sock) outbuf)))
       ;; process the request
       (stage scd thread stage-request id sock timeout 'connect))
-   
+
+   (tune-socket! serv)
    (let loop ((id 1))
       (let ((n (socket-accept-many serv socks
 		  :inbufs dummybufs
@@ -233,10 +236,12 @@
 	 (let liip ((i 0))
 	    (if (=fx i n)
 		(loop (+fx id i))
-		(let ((sock (vector-ref socks i)))
+		(let ((s (vector-ref socks i)))
+		   ;; tune the socket
+		   (tune-socket! s)
 		   ;; process the request
-		   (spawn scd stage-accept (+fx id i)
-		      sock (hop-read-timeout) n)
+		   (spawn scd stage-accept (+fx id i) s
+		      (hop-read-timeout) n)
 		   (liip (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -268,6 +273,7 @@
 						   (hop-read-timeout) 'connect)
 						(loop (+fx id 1))))))))
 			     (loop))))))
+      (tune-socket! serv)
       (if w
 	  (thread-join! (thread-start-joinable! thread))
 	  (thread-start! thread))))

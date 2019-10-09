@@ -266,7 +266,7 @@
 
 
 (define (harr-for-each proc harr)
-  (vector-for-each proc (harr:elts harr)))
+  (maze-vector-for-each proc (harr:elts harr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hex.scm                                                          */
@@ -555,7 +555,7 @@
 
 ;;; Iterates in reverse order.
 
-(define (vector-for-each proc v)
+(define (maze-vector-for-each proc v)
   (let lp ((i (-fx (vector-length v) 1)))
     (cond ((>=fx i 0)
 	   (proc (vector-ref v i))
@@ -580,7 +580,7 @@
 (define (dig-maze walls nboxs)
   (bind-exit (quit)
     (begin
-      (vector-for-each
+      (maze-vector-for-each
        (lambda (wall)			; For each wall,
 	 (let* ((c1   (wall:owner wall)) ; find the boxs on
 		(set1 (box:reachable c1))
