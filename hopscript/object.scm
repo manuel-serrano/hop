@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Oct  8 07:57:35 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 18:44:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -137,7 +137,7 @@
 	    (js-for-in obj
 	       (lambda (k %this)
 		  (js-put! nobj (js-donate k worker %_this)
-		     (js-donate (js-get/cache obj k %_this) worker %_this)
+		     (js-donate (js-get/name-cache obj k %_this) worker %_this)
 		     #f %this))
 	       %this)
 	    nobj))))
@@ -242,7 +242,7 @@
 		  (display p op)
 		  (display "\":" op)
 		  (hop->javascript
-		     (js-get/cache o p %this)
+		     (js-get/name-cache o p %this)
 		     op compile isexpr ctx)
 		  (set! sep ","))
 	       ctx))

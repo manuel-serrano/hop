@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Aug 20 14:24:56 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 18:40:53 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -596,15 +596,15 @@
 	      (js-get obj (box prop typrop conf) '%this))
 	     ((and (maybe-string? prop typrop) (symbol? obj))
 	      `(,(if (eq? tyobj 'object)
-		     'js-jsobject-get/name-cache
-		     'js-get/cache)
+		     'js-object-get/name-cache
+		     'js-get/name-cache)
 		,obj ,prop %this))
 	     ((maybe-string? prop typrop)
 	      (let ((tmp (gensym '%tmp)))
 		 `(let ((,tmp ,obj))
 		     (,(if (eq? tyobj 'object)
-			 'js-jsobject-get/name-cache
-			 'js-get/cache)
+			 'js-object-get/name-cache
+			 'js-get/name-cache)
 		      ,tmp ,prop %this))))
 	     (else
 	      (js-get obj prop '%this))))

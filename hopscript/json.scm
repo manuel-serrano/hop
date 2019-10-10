@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct  9 08:36:59 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 18:48:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -349,7 +349,7 @@
 	  '#())))
    
    (define (str key holder stack #!optional (symbol (js-undefined)))
-      (let* ((value (js-jsobject-get/name-cache holder key %this))
+      (let* ((value (js-object-get/name-cache holder key %this))
 	     (value (toJSON value key))
 	     (value (if (js-function? rep)
 			(toVALUE (js-call2 %this rep holder key value))

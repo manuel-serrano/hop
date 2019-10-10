@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Aug 16 08:59:35 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 17:50:38 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -41,6 +41,7 @@
 	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
 	   (js-proxy-property-value ::JsObject ::JsProxy ::JsStringLiteral ::JsGlobalObject)
+	   (js-proxy-get ::JsProxy prop ::JsGlobalObject)
 	   (js-object-proxy-get-name/cache-miss ::JsObject
 	      ::JsStringLiteral ::bool ::JsGlobalObject ::JsPropertyCache)
 	   (js-object-proxy-put-name/cache-miss! ::JsObject ::JsStringLiteral
@@ -322,13 +323,13 @@
       (js-typeof target %this)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-proxy-get ...                                                 */
+;*    js-jsproxy-get ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    This function is called when an inline cache is armed for        */
 ;*    proxy (amap cache hit) and when the proxy wrapper accesor        */
 ;*    is called (see property_expd.sch).                               */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-proxy-get proxy::JsProxy prop %this::JsGlobalObject)
+(define-inline (js-jsproxy-get proxy::JsProxy prop %this::JsGlobalObject)
 
    (define (check o target v)
       (if (js-object-mode-plain? target)
@@ -356,6 +357,12 @@
 	     (js-raise-type-error %this "not a function" get))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-proxy-get ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-proxy-get proxy::JsProxy prop %this::JsGlobalObject)
+   (js-jsproxy-get proxy prop %this))
+
+;*---------------------------------------------------------------------*/
 ;*    js-get ::JsProxy ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    See JS-PROXY-PROPERTY-VALUE.                                     */
@@ -363,7 +370,7 @@
 (define-method (js-get o::JsProxy prop %this::JsGlobalObject)
    (let ((name (js-toname prop %this)))
       (js-profile-log-get name -1)
-      (js-proxy-get o name %this)))
+      (js-jsproxy-get o name %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-proxy-get-name/cache-miss ...                          */
@@ -377,7 +384,7 @@
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache)
    (if (js-proxy? o)
-       (js-proxy-get o name %this)
+       (js-jsproxy-get o name %this)
        (js-object-get-name/cache-miss o name throw %this cache)))
 
 ;*---------------------------------------------------------------------*/
@@ -387,7 +394,7 @@
 		  prop::JsStringLiteral
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
-   (js-proxy-get proxy prop %this))
+   (js-jsproxy-get proxy prop %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-put! ...                                                */
@@ -426,7 +433,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-put/cache! o::JsProxy prop v::obj throw::bool %this
 		  #!optional (point -1) (cspecs '()))
-   (js-put! o prop v throw %this))
+   (let ((name (js-toname prop %this)))
+      (cond-expand (profile (js-profile-log-put name -1)))
+      (js-proxy-put! o name v throw %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-proxy-put-name/cache-miss! ...                         */
