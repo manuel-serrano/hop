@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Oct  9 07:16:04 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 09:43:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1438,7 +1438,6 @@
 ;*    js-eqstring? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-eqstring?::bool x y)
-   ;; do not remove the eq? test or change is@object.scm
    (or (eq? x y)
        (and (js-jsstring? x) (js-jsstring? y)
 	    (string=? (js-jsstring->string x) (js-jsstring->string y)))))
@@ -1914,9 +1913,9 @@
 (define (js-parseint string radix %this)
    (if (and (isa? string JsStringLiteralIndex)
 	    (or (not radix) (and (fixnum? radix) (=fx radix 10))))
-       (with-access::JsStringLiteralIndex string (index)
-	  index)
-       (js-string-parseint (trim-whitespaces+ (js-tostring string %this) :plus #t)
+       (js-toindex string)
+       (js-string-parseint
+	  (trim-whitespaces+ (js-tostring string %this) :plus #t)
 	  (js-toint32 radix %this) #f)))
 
 ;*---------------------------------------------------------------------*/

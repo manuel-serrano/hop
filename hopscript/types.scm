@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Oct  7 16:01:52 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 09:34:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -140,8 +140,12 @@
 	      (pcachew (default #f)))
 	   
 	   (class JsStringLiteralASCII::JsStringLiteral)
-	   (final-class JsStringLiteralIndex::JsStringLiteralASCII
+	   
+	   (abstract-class JsStringLiteralIndex::JsStringLiteralASCII)
+	   (final-class JsStringLiteralIndex12::JsStringLiteralIndex)
+	   (final-class JsStringLiteralIndex32::JsStringLiteralIndex
 	      (index::uint32 read-only))
+	   
 	   (final-class JsStringLiteralUTF8::JsStringLiteral
 	      (%idxutf8::long (default 0))
 	      (%idxstr::long (default 0))
@@ -524,6 +528,8 @@
 	   
 	   (inline js-object-mode::uint32 ::object)
 	   (inline js-object-mode-set! ::object ::uint32)
+
+	   (inline jsindex12-max::uint32)
 	   
 	   (gencmapid::uint32))
    
@@ -598,37 +604,39 @@
 ;*---------------------------------------------------------------------*/
 ;*    Object header tag (max size 1<<15)                               */
 ;*---------------------------------------------------------------------*/
-(define-inline (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
-(define-inline (JS-OBJECT-MODE-SEALED) #u32:2)
-(define-inline (JS-OBJECT-MODE-FROZEN) #u32:4)
+;; JSSTRINGTAG, JSFUNCTIONTAG, and JSOBJECTTAG _must_ be
+;; the first 3 (see stringliteral.scm and name.scm)
+(define-inline (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
+(define-inline (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
+(define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4)
 (define-inline (JS-OBJECT-MODE-INLINE) #u32:8)
 (define-inline (JS-OBJECT-MODE-GETTER) #u32:16)
 (define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
 (define-inline (JS-OBJECT-MODE-ENUMERABLE) #u32:64)
 (define-inline (JS-OBJECT-MODE-PLAIN) #u32:128)
 (define-inline (JS-OBJECT-MODE-HASNUMERALPROP) #u32:256)
-(define-inline (JS-OBJECT-MODE-JSSTRINGTAG) #u32:512)
-(define-inline (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:1024)
-(define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:2048)
+(define-inline (JS-OBJECT-MODE-EXTENSIBLE) #u32:512)
+(define-inline (JS-OBJECT-MODE-SEALED) #u32:1024)
+(define-inline (JS-OBJECT-MODE-FROZEN) #u32:2048)
 (define-inline (JS-OBJECT-MODE-REVOKED) #u32:4096)
 ;; WARNING: music be the two last constants (see js-array?)
 (define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
 (define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
 
-(define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
-(define-macro (JS-OBJECT-MODE-SEALED) #u32:2)
-(define-macro (JS-OBJECT-MODE-FROZEN) #u32:4)
+(define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
+(define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
+(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4)
 (define-macro (JS-OBJECT-MODE-INLINE) #u32:8)
 (define-macro (JS-OBJECT-MODE-GETTER) #u32:16)
 (define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
 (define-macro (JS-OBJECT-MODE-ENUMERABLE) #u32:64)
 (define-macro (JS-OBJECT-MODE-PLAIN) #u32:128)
 (define-macro (JS-OBJECT-MODE-HASNUMERALPROP) #u32:256)
-(define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:512)
-(define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:1024)
-(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:2048)
+(define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:512)
+(define-macro (JS-OBJECT-MODE-SEALED) #u32:1024)
+(define-macro (JS-OBJECT-MODE-FROZEN) #u32:2048)
 (define-macro (JS-OBJECT-MODE-REVOKED) #u32:4096)
-;; WARNING: music be the two last constants (see js-array?)
+;; WARNING: must be the two last constants (see js-array?)
 (define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
 (define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
 
@@ -1210,3 +1218,9 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-mode-set! o p)
    (object-header-size-set! o (uint32->fixnum p)))
+
+;*---------------------------------------------------------------------*/
+;*    jsindex12-max ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (jsindex12-max::uint32)
+   #u32:4096)

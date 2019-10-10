@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Aug 20 10:36:48 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 08:25:03 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -272,13 +272,19 @@
 		(js-toindex num)))
 	  false))
 
-    (string->index (js-jsstring->string obj)))
+   (string->index (js-jsstring->string obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-toindex ::JsStringLiteralIndex ...                            */
+;*    js-toindex ::JsStringLiteralIndex12 ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-toindex obj::JsStringLiteralIndex)
-   (with-access::JsStringLiteralIndex obj (index)
+(define-method (js-toindex obj::JsStringLiteralIndex12)
+   (bit-rshu32 (js-object-mode obj) 3))
+
+;*---------------------------------------------------------------------*/
+;*    js-toindex ::JsStringLiteralIndex32 ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-toindex obj::JsStringLiteralIndex32)
+   (with-access::JsStringLiteralIndex32 obj (index)
       index))
 
 ;*---------------------------------------------------------------------*/
@@ -332,24 +338,6 @@
 (define-method (js-cast-object obj::JsStringLiteral %this name)
    (with-access::JsGlobalObject %this (js-string)
       (js-new1 %this js-string obj)))
-
-;*---------------------------------------------------------------------*/
-;*    indexes ...                                                      */
-;*---------------------------------------------------------------------*/
-(define indexes
-   (let ((v ($create-vector 356)))
-      (let loop ((i 0))
-	 (if (=fx i 356)
-	     v
-	     (let* ((str (fixnum->string (-fx i 100)))
-		    (o (instantiate::JsStringLiteralIndex
-			  (weight (fixnum->uint32 (string-length str)))
-			  (left str)
-			  (index (fixnum->uint32 (-fx i 100))))))
-		(js-object-mode-set! o (js-jsstring-default-mode))
-		(object-widening-set! o #f)
-		(vector-set! v i o)
-		(loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-substring ...                                                 */
@@ -451,15 +439,29 @@
 ;*---------------------------------------------------------------------*/
 (define (js-integer->jsstring::JsStringLiteralASCII num::long)
    (cond
-      ((and (>fx num -10) (<fx num 100))
-       (js-integer-name->jsstring num))
-      ((and (>fx num 0) (<fx num 65535))
+      ((js-integer-name num)
+       =>
+       (lambda (str) str))
+      ((<fx num 0)
+       (js-ascii->jsstring (integer->string num)))
+      ((<=u32 (fixnum->uint32 num) (jsindex12-max))
        (let ((str (fixnum->string num)))
-	  (let ((o (instantiate::JsStringLiteralIndex
+	  (let ((o (instantiate::JsStringLiteralIndex12
+		      (weight (string-length str))
+		      (left str)
+		      (right #f))))
+	     (js-object-mode-set! o
+		(+u32 (js-jsstring-default-mode)
+		   (bit-lshu32 (fixnum->uint32 num) 3)))
+	     (object-widening-set! o #f)
+	     o)))
+      ((<fx num 65535)
+       (let ((str (fixnum->string num)))
+	  (let ((o (instantiate::JsStringLiteralIndex32
 		      (weight (string-length str))
 		      (left str)
 		      (right #f)
-		      (index num))))
+		      (index (fixnum->uint32 num)))))
 	     (js-object-mode-set! o (js-jsstring-default-mode))
 	     (object-widening-set! o #f)
 	     o)))
@@ -510,10 +512,11 @@
 ;*    js-jsstring->number ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring->number::obj js::JsStringLiteral)
-   (if (isa? js JsStringLiteralIndex)
-       (with-access::JsStringLiteralIndex js (index)
-	  (uint32->fixnum index))
-       (string->number (js-jsstring->string js))))
+   (cond
+      ((isa? js JsStringLiteralIndex)
+       (uint32->fixnum (js-toindex js)))
+      (else
+       (string->number (js-jsstring->string js)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-ASCII! ...                                 */
@@ -530,6 +533,7 @@
       (cond
 	 ((not right)
 	  (unless (=u32 weight (fixnum->uint32 (string-length left)))
+	     (tprint "!!! ERROR SHOULD NOT BE HERE (2019-10-10) !!!")
 	     (set! left (substring left 0 (uint32->fixnum weight))))
 	  left)
 	 ((=uint32 weight 0)
@@ -1000,11 +1004,17 @@
    (js-tointeger (js-jsstring-tonumber this %this) %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-tointeger ::JsStringLiteralIndex ...                          */
+;*    js-tointeger ::JsStringLiteralIndex12 ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (js-tointeger this::JsStringLiteralIndex %this)
+(define-method (js-tointeger this::JsStringLiteralIndex12 %this)
+   (uint32->fixnum (bit-rshu32 (js-object-mode this) 3)))
+
+;*---------------------------------------------------------------------*/
+;*    js-tointeger ::JsStringLiteralIndex32 ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-tointeger this::JsStringLiteralIndex32 %this)
    (with-access::JsStringLiteralIndex this (index)
-      (js-uint32-tointeger index)))
+      (js-uint32-tointeger (js-toindex this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->bool ...                                              */
@@ -1680,8 +1690,6 @@
 		this index))
 	    (else
 	     (loop (js-toobject %this this)))))))
-
-
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-substring ...                                        */
