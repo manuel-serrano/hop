@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Oct  9 10:53:36 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 15:46:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1799,8 +1799,10 @@
 		    (js-object-get-name/cache o pname #f
 		       %this
 		       cache -1 '(imap emap cmap pmap amap vtable))))
-		((js-isindex? (js-toindex prop))
+		((isa? pname JsStringLiteralIndex)
 		 (js-get o prop %this))
+;* 		((js-isindex? (js-toindex prop))                       */
+;* 		 (js-get o prop %this))                                */
 		(else
 		 (let ((cache (instantiate::JsPropertyCache
 				 (usage 'dget)
@@ -2471,8 +2473,10 @@
 		       %this cache point '(imap emap cmap pmap amap))))
 		((eq? pname (& "length"))
 		 (js-put-length! o v throw #f %this))
-		((js-isindex? (js-toindex prop))
+		((isa? pname JsStringLiteralIndex)
 		 (js-put! o prop v throw %this))
+;* 		((js-isindex? (js-toindex prop))                       */
+;* 		 (js-put! o prop v throw %this))                       */
 		(else
 		 (let ((cache (instantiate::JsPropertyCache
 				 (usage 'dput)
