@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Oct 10 13:07:23 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 13:29:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -249,7 +249,6 @@
 	    (let ((ploader (config-get config :plugins-loader #f)))
 	       (when (procedure? ploader)
 		  (ploader lang config))))))
-
    
    (define (source-elements::J2SBlock)
       (let loop ((rev-ses '())
