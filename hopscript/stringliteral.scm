@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Oct 10 11:22:06 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 18:48:13 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1314,7 +1314,7 @@
 			 (eq? p (& "localeCompare"))
 			 (eq? p (& "trim")))
 		     (with-access::JsGlobalObject %this (js-string-prototype)
-			(js-jsobject-get/name-cache js-string-prototype prop %this)))
+			(js-object-get/name-cache js-string-prototype prop %this)))
 		    (else
 		     ;; see js-get-jsobject@property.scm
 		     ;; (tprint "JS_GET_STRING: " prop " " (typeof prop))
