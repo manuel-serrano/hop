@@ -50,7 +50,7 @@ script:
 
   - echo -en 'travis_fold:start:hop.build\\r'
   - make
-  - make install
+  - sudo make install
   - echo -en 'travis_fold:end:hop.build\\r'
 
   - echo -en 'travis_fold:start:hop.test\\r'
