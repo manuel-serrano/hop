@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Oct  9 11:13:55 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 13:29:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -249,7 +249,6 @@
 	    (let ((ploader (config-get config :plugins-loader #f)))
 	       (when (procedure? ploader)
 		  (ploader lang config))))))
-
    
    (define (source-elements::J2SBlock)
       (let loop ((rev-ses '())
@@ -3353,6 +3352,7 @@
 	 (disable-es6-arrow node))
       (unless (config-get conf :es6-rest-argument #f)
 	 (disable-es6-rest-argument node)))
+   (disable-reserved-ident node mode)
    node)
 
 ;*---------------------------------------------------------------------*/
@@ -3556,3 +3556,54 @@
 ;*---------------------------------------------------------------------*/
 (define (args-protocol args)
    (if (find (lambda (x) (isa? x J2SSpread)) args) 'spread 'direct))
+
+;*---------------------------------------------------------------------*/
+;*    disable-reserved-ident ::J2SNode ...                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-reserved-ident this::J2SNode mode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    disable-reserved-ident ::J2SDecl ...                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-reserved-ident this::J2SDecl mode)
+   (with-access::J2SDecl this (id loc)
+      (when (and (eq? id 'static) (memq mode '(strict hopscript)))
+	 (raise
+	    (instantiate::&io-parse-error
+	       (proc "js-parser")
+	       (msg "Unexpected strict mode reserved word")
+	       (obj id)
+	       (fname (cadr loc))
+	       (location (caddr loc)))))))
+
+;*---------------------------------------------------------------------*/
+;*    disable-reserved-ident ::J2SDeclInit ...                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-reserved-ident this::J2SDeclInit mode)
+   (call-next-method)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    disable-reserved-ident ::J2SUnresolvedRef ...                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-reserved-ident this::J2SUnresolvedRef mode)
+   (with-access::J2SUnresolvedRef this (id loc)
+      (when (and (eq? id 'static) (memq mode '(strict hopscript)))
+	 (raise
+	    (instantiate::&io-parse-error
+	       (proc "js-parser")
+	       (msg "Unexpected strict mode reserved word")
+	       (obj id)
+	       (fname (cadr loc))
+	       (location (caddr loc)))))))
+
+;*---------------------------------------------------------------------*/
+;*    disable-reserved-ident ::J2SFun ...                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-reserved-ident this::J2SFun mode)
+   (with-access::J2SFun this (mode body params)
+      (for-each (lambda (a) (disable-reserved-ident a mode)) params)
+      (disable-reserved-ident body mode)
+      this))
+      
