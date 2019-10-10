@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Tue Aug 20 10:43:39 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 10:02:36 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -41,6 +41,7 @@
 	   (js-ascii-name->jsstring::JsStringLiteralASCII ::bstring)
 	   (js-utf8-name->jsstring::JsStringLiteralUTF8 ::bstring)
 	   (js-integer-name->jsstring::JsStringLiteralASCII ::long)
+	   (js-integer-name::obj ::long)
 	   (js-name->jsstring::JsStringLiteral ::bstring))
 
    (export js-name-lock
@@ -76,7 +77,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    thresholds                                                       */
 ;*---------------------------------------------------------------------*/
-(define js-index-threshold #u32:1000000)
+(define-inline (jsindex-threshold::long)
+   (uint32->fixnum #u32:1000000))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-lock                                                     */
@@ -310,7 +312,7 @@
       (if (integer-string? str)
 	  (let ((num (string->integer str)))
 	     (if (or (<=fx num -10)
-		     (>=fx num (uint32->fixnum js-index-threshold)))
+		     (>=fx num (jsindex-threshold)))
 		 (string-name str)
 		 (js-integer-toname-unsafe num)))
 	  (string-name str))))
@@ -345,7 +347,7 @@
       (if (integer-string? str)
 	  (let ((num (string->integer str)))
 	     (if (or (<=fx num -10)
-		     (>=fx num (uint32->fixnum js-index-threshold)))
+		     (>=fx num (jsindex-threshold)))
 		 (js-ascii-toname-unsafe str)
 		 (js-integer-toname-unsafe num)))
 	  (js-ascii-toname-unsafe str))))
@@ -354,15 +356,24 @@
 ;*    js-index->name ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-index->name::JsStringLiteralIndex num::uint32)
-   (let* ((str (fixnum->string (uint32->fixnum num)))
-	  (o (instantiate::JsStringLiteralIndex
-		(weight (string-length str))
-		(left str)
-		(right #f)
-		(index num))))
-      (js-object-mode-set! o (js-jsstring-default-mode))
-      (js-jsstring-name-set! o o)
-      o))
+   (let ((str (fixnum->string (uint32->fixnum num))))
+      (if (<=u32 num (jsindex12-max))
+	  (let ((o (instantiate::JsStringLiteralIndex12
+		      (weight (string-length str))
+		      (left str)
+		      (right #f))))
+	     (js-object-mode-set! o
+		(+u32 (js-jsstring-default-mode) (bit-lshu32 num 3)))
+	     (js-jsstring-name-set! o o)
+	     o)
+	  (let ((o (instantiate::JsStringLiteralIndex32
+		      (weight (string-length str))
+		      (left str)
+		      (right #f)
+		      (index num))))
+	     (js-object-mode-set! o (js-jsstring-default-mode))
+	     (js-jsstring-name-set! o o)
+	     o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-integer->name ...                                             */
@@ -406,7 +417,7 @@
    (define (enlarge-vec! len)
       (let* ((nlen (minfx
 		      (if (>fx (*fx 2 len) num) (*fx 2 len) (+fx 16 num))
-		      (+fx (uint32->fixnum js-index-threshold) 10)))
+		      (+fx (jsindex-threshold) 10)))
 	     (nvec (copy-vector js-integer-names nlen)))
 	 (vector-fill! nvec #f len)
 	 ;; replace js-integer-names in the gc roots
@@ -419,7 +430,7 @@
    (cond
       ((and (>fx num -10) (<fx num js-integer-length))
        (vector-ref js-integer-names (+fx num 10)))
-      ((or (<=fx num -10) (>=fx num (uint32->fixnum js-index-threshold)))
+      ((or (<=fx num -10) (>=fx num (jsindex-threshold)))
        (js-ascii-toname-unsafe (fixnum->string num)))
       (else
        (let ((len (vector-length js-integer-names)))
@@ -438,3 +449,12 @@
 (define (js-integer-name->jsstring num::long)
    (synchronize-name
       (js-integer-toname-unsafe num)))
+
+;*---------------------------------------------------------------------*/
+;*    js-integer-name ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-integer-name num::long)
+   (synchronize-name
+      (when (and (>fx num -10) (<fx num js-integer-length))
+	 (vector-ref js-integer-names (+fx num 10)))))
+   
