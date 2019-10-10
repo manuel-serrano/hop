@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Oct 10 08:25:03 2019 (serrano)                */
+;*    Last change :  Thu Oct 10 11:22:06 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -499,7 +499,7 @@
 (define-inline (js-jsstring->string::bstring js::JsStringLiteral)
    (with-access::JsStringLiteral js (left right weight)
       (cond
-	 (right
+	 ((js-jsstring? right)
 	  (js-jsstring-normalize! js)
 	  left)
 	 ((=u32 weight (fixnum->uint32 (string-length left)))
@@ -531,9 +531,8 @@
    
    (with-access::JsStringLiteral js (left right weight)
       (cond
-	 ((not right)
+	 ((not (js-jsstring? right))
 	  (unless (=u32 weight (fixnum->uint32 (string-length left)))
-	     (tprint "!!! ERROR SHOULD NOT BE HERE (2019-10-10) !!!")
 	     (set! left (substring left 0 (uint32->fixnum weight))))
 	  left)
 	 ((=uint32 weight 0)
@@ -568,7 +567,7 @@
 		    (with-access::JsStringLiteral s (left right weight)
 		       (let ((len (uint32->fixnum weight)))
 			  (cond
-			     (right
+			     ((js-jsstring? right)
 			      (let* ((ni (+fx i len))
 				     (nstack (cons (cons ni right) stack)))
 				 (loop i left nstack)))
@@ -603,7 +602,9 @@
    
    (with-access::JsStringLiteralUTF8 js (left right weight %idxutf8 %idxstr)
       (cond
-	 ((not right)
+	 ((not (js-jsstring? right))
+	  (unless (=u32 weight (fixnum->uint32 (string-length left)))
+	     (set! left (substring left 0 (uint32->fixnum weight))))
 	  left)
 	 ((=uint32 weight 0)
 	  (if (isa? right JsStringLiteralASCII)
@@ -658,7 +659,7 @@
 				  (set! right #f)
 				  buffer)))
 			(with-access::JsStringLiteral s (left right weight)
-			   (if (not right)
+			   (if (not (js-jsstring? right))
 			       ;; plain left descent
 			       (loop i left stack)
 			       ;; full recursive call with pushed right
@@ -728,7 +729,7 @@
 (define (js-jsstring-character-length js)
    (if (isa? js JsStringLiteralASCII)
        (with-access::JsStringLiteralASCII js (right weight)
-	  (if (not right)
+	  (if (not (js-jsstring? right))
 	      weight
 	      (js-jsstring-length js)))
        (fixnum->uint32 (utf8-string-length (js-jsstring->string js)))))
@@ -746,7 +747,7 @@
 	     (set! %culen (utf8-codeunit-length (js-jsstring->string js))))
 	  %culen)
        (with-access::JsStringLiteralASCII js (right weight)
-	  (if (not right)
+	  (if (not (js-jsstring? right))
 	      weight
 	      (js-jsstring-length js)))))
 
@@ -766,7 +767,7 @@
 ;*    js-jsstring-toboolean ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-toboolean s::JsStringLiteral)
-   (with-access::JsStringLiteral s (weight right)
+   (with-access::JsStringLiteral s (weight)
       (or (>u32 weight #u32:0) (>u32 (js-jsstring-length s) #u32:0))))
    
 ;*---------------------------------------------------------------------*/
