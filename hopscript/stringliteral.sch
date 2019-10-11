@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Thu May  2 13:52:45 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 07:52:43 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JsStringLiteral Helper macros.                                   */
@@ -27,9 +27,10 @@
    (lambda (x e)
       (match-case x
 	 ((js-string->jsstring (and ?val (? string?)))
-	  (if (eq? (string-minimal-charset val) 'ascii)
-	      (evepairify `(js-ascii->jsstring ,val) x)
-	      (evepairify `(js-utf8->jsstring ,val) x)))
+	  (case (string-minimal-charset val)
+	     ((ascii) (evepairify `(js-ascii->jsstring ,val) x))
+	     ((latin1) (evepairify `(js-latin1->jsstring ,val) x))
+	     (else (evepairify `(js-utf8->jsstring ,val) x))))
 	 ((js-string->jsstring ?val)
 	  `(js-string->jsstring
 	      ,(e (evepairify val x) e)))

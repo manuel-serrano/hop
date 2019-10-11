@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Oct 10 09:34:44 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 14:12:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -136,14 +136,12 @@
 	      weight::uint32
 	      left::obj
 	      (right::obj (default #f))
-	      (pcacher (default #f))
-	      (pcachew (default #f)))
+	      (pcacher (default #f)))
+;* 	      (pcachew (default #f)))                                  */
 	   
 	   (class JsStringLiteralASCII::JsStringLiteral)
 	   
-	   (abstract-class JsStringLiteralIndex::JsStringLiteralASCII)
-	   (final-class JsStringLiteralIndex12::JsStringLiteralIndex)
-	   (final-class JsStringLiteralIndex32::JsStringLiteralIndex
+	   (final-class JsStringLiteralIndex::JsStringLiteralASCII
 	      (index::uint32 read-only))
 	   
 	   (final-class JsStringLiteralUTF8::JsStringLiteral
@@ -420,6 +418,7 @@
 	   (inline js-array-default-mode::uint32)
 	   (inline js-jsstring-default-mode::uint32)
 	   (inline js-function-default-mode::uint32)
+	   (inline js-jsstring-normalized-mode::uint32)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
@@ -456,6 +455,9 @@
 
 	   (js-object-elements-inline?::bool ::JsObject)
 	   
+	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSFUNCTIONTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-EXTENSIBLE::uint32)
 	   (inline JS-OBJECT-MODE-SEALED::uint32)
 	   (inline JS-OBJECT-MODE-FROZEN::uint32)
@@ -466,11 +468,9 @@
 	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
 	   (inline JS-OBJECT-MODE-HASNUMERALPROP::uint32)
 	   (inline JS-OBJECT-MODE-PLAIN::uint32)
-	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
-	   (inline JS-OBJECT-MODE-JSFUNCTIONTAG::uint32)
 	   (inline JS-OBJECT-MODE-REVOKED::uint32)
-	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
+	   (inline JS-OBJECT-MODE-JSSTRINGNORMALIZED::uint32)
 
 	   (inline JS-REGEXP-FLAG-IGNORECASE::uint32)
 	   (inline JS-REGEXP-FLAG-MULTILINE::uint32)
@@ -510,9 +510,11 @@
 	   (inline js-not-a-cmap::JsConstructMap)
 	   (inline js-not-a-index::long)
 	   
+	   (inline js-object?::bool ::obj)
 	   (inline js-number?::bool ::obj)
 	   (inline js-jsstring?::bool ::obj)
-	   (inline js-object?::bool ::obj)
+	   (inline js-jsstring-normalized?::bool ::JsStringLiteral)
+	   (inline js-jsstring-normalized! ::JsStringLiteral)
 	   (inline js-array?::bool ::obj)
 	   (inline js-function?::bool ::obj)
 	   (inline js-function-proxy?::bool ::obj)
@@ -592,6 +594,10 @@
 (define-inline (js-jsstring-default-mode)
    (JS-OBJECT-MODE-JSSTRINGTAG))
 
+(define-inline (js-jsstring-normalized-mode)
+   (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
+      (JS-OBJECT-MODE-JSSTRINGNORMALIZED)))
+
 (define-inline (js-function-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
       (bit-oru32 (JS-OBJECT-MODE-PLAIN)
@@ -622,6 +628,7 @@
 ;; WARNING: music be the two last constants (see js-array?)
 (define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
 (define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
+(define-inline (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:8)
 
 (define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
 (define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
@@ -639,6 +646,7 @@
 ;; WARNING: must be the two last constants (see js-array?)
 (define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
 (define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
+(define-macro (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:8)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -1111,6 +1119,18 @@
    (bit-lsh 1 28))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object? o)
+   (cond-expand
+      ((config nan-tagging #t)
+       ($nanobject? o))
+      (else
+       (and (%object? o)
+	    (=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-number? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-number? o)
@@ -1125,16 +1145,18 @@
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object? ...                                                   */
+;*    js-jsstring-normalized? ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-object? o)
-   (cond-expand
-      ((config nan-tagging #t)
-       ($nanobject? o))
-      (else
-       (and (%object? o)
-	    (=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
-	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))))
+(define-inline (js-jsstring-normalized?::bool o::JsStringLiteral)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGNORMALIZED) (js-object-mode o))
+      (JS-OBJECT-MODE-JSSTRINGNORMALIZED)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-normalized! ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-normalized! o::JsStringLiteral)
+   (js-object-mode-set! o
+      (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGNORMALIZED))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array? ...                                                    */

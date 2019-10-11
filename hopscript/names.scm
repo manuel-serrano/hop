@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Thu Oct 10 10:02:36 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 14:13:01 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -193,14 +193,14 @@
 ;*    js-name-pcachew ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcachew::obj o::JsStringLiteral)
-   (with-access::JsStringLiteral o (pcachew)
+   (with-access::JsStringLiteral o ((pcachew right))
       pcachew))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcachew-set! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcachew-set! o::JsStringLiteral c::JsPropertyCache)
-   (with-access::JsStringLiteral o (pcachew)
+   (with-access::JsStringLiteral o ((pcachew right))
       (set! pcachew c)))
 
 ;*---------------------------------------------------------------------*/
@@ -325,9 +325,8 @@
       (or n
 	  (let ((o (instantiate::JsStringLiteralASCII
 		      (weight (fixnum->uint32 (string-length str)))
-		      (left str)
-		      (right #f))))
-	     (js-object-mode-set! o (js-jsstring-default-mode))
+		      (left str))))
+	     (js-object-mode-set! o (js-jsstring-normalized-mode))
 	     (hashtable-put! js-names str o)
 	     (js-jsstring-name-set! o o)
 	     o))))
@@ -357,34 +356,26 @@
 ;*---------------------------------------------------------------------*/
 (define (js-index->name::JsStringLiteralIndex num::uint32)
    (let ((str (fixnum->string (uint32->fixnum num))))
-      (if (<=u32 num (jsindex12-max))
-	  (let ((o (instantiate::JsStringLiteralIndex12
-		      (weight (string-length str))
-		      (left str)
-		      (right #f))))
-	     (js-object-mode-set! o
-		(+u32 (js-jsstring-default-mode) (bit-lshu32 num 3)))
-	     (js-jsstring-name-set! o o)
-	     o)
-	  (let ((o (instantiate::JsStringLiteralIndex32
-		      (weight (string-length str))
-		      (left str)
-		      (right #f)
-		      (index num))))
-	     (js-object-mode-set! o (js-jsstring-default-mode))
-	     (js-jsstring-name-set! o o)
-	     o))))
+      (let ((o (instantiate::JsStringLiteralIndex
+		  (weight (string-length str))
+		  (left str)
+		  (index num))))
+	 (js-object-mode-set! o (js-jsstring-normalized-mode))
+	 (js-jsstring-name-set! o o)
+	 o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-integer->name ...                                             */
+;*    -------------------------------------------------------------    */
+;*    This function is called only in context where it is statically   */
+;*    known that num is not an index.                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-integer->name::JsStringLiteralASCII num::long)
    (let* ((str (fixnum->string num))
 	  (o (instantiate::JsStringLiteralASCII
 		(weight (string-length str))
-		(left str)
-		(right #f))))
-      (js-object-mode-set! o (js-jsstring-default-mode))
+		(left str))))
+      (js-object-mode-set! o (js-jsstring-normalized-mode))
       (js-jsstring-name-set! o o)
       o))
 
@@ -397,9 +388,8 @@
 	 (or n
 	     (let ((o (instantiate::JsStringLiteralUTF8
 			 (weight (fixnum->uint32 (string-length str)))
-			 (left str)
-			 (right #f))))
-		(js-object-mode-set! o (js-jsstring-default-mode))
+			 (left str))))
+		(js-object-mode-set! o (js-jsstring-normalized-mode))
 		(hashtable-put! js-names str o)
 		(js-jsstring-name-set! o o)
 		o)))))
