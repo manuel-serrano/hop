@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 24 02:21:25 2017                          */
-;*    Last change :  Fri Apr 26 11:49:49 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 07:54:17 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    string expanders                                                 */
@@ -20,7 +20,7 @@
 		       (weight (js-jsstring-length ,left))
 		       (left ,left)
 		       (right ,right))
-		    (instantiate::JsStringLiteralASCII
+		    (instantiate::JsStringLiteralLATIN1
 		       (weight (js-jsstring-length ,left))
 		       (left ,left)
 		       (right ,right)))))

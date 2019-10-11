@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jul 10 06:58:31 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 07:55:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -744,7 +744,7 @@
 		(cond
 		   ((string? val)
 		    (ascii-get-own-property val index))
-		   ((isa? val JsStringLiteralASCII)
+		   ((isa? val JsStringLiteralLATIN1)
 		    (ascii-get-own-property (js-jsstring->string val) index))
 		   (else
 		    (utf8-get-own-property val index)))))
@@ -780,7 +780,7 @@
 		(cond
 		   ((string? val)
 		    (ascii-get-property-value val index))
-		   ((isa? val JsStringLiteralASCII)
+		   ((isa? val JsStringLiteralLATIN1)
 		    (ascii-get-property-value (js-jsstring->string val) index))
 		   (else
 		    (utf8-get-property-value val index))))))))
