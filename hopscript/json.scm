@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Oct 10 18:48:06 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 07:45:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -147,12 +147,16 @@
 (define (js-json-stringify this value replacer space %this::JsGlobalObject)
    
    (define (toVALUE value)
-      (if (or (isa? value JsNumber)
+      (cond
+	 ((or (isa? value JsNumber)
 	      (isa? value JsString)
-	      (isa? value JsBoolean)
 	      (isa? value JsDate))
-	  (js-valueof value %this)
-	  value))
+	  (js-valueof value %this))
+	 ((isa? value JsBoolean)
+	  (with-access::JsBoolean value (val)
+	     val))
+	 (else
+	  value)))
    
    (define (toJSON value key)
       (with-access::JsGlobalObject %this (js-json-pcache)
