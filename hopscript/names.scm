@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri Oct 11 12:54:23 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 14:13:01 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -193,14 +193,14 @@
 ;*    js-name-pcachew ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcachew::obj o::JsStringLiteral)
-   (with-access::JsStringLiteral o (pcachew)
+   (with-access::JsStringLiteral o ((pcachew right))
       pcachew))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcachew-set! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcachew-set! o::JsStringLiteral c::JsPropertyCache)
-   (with-access::JsStringLiteral o (pcachew)
+   (with-access::JsStringLiteral o ((pcachew right))
       (set! pcachew c)))
 
 ;*---------------------------------------------------------------------*/

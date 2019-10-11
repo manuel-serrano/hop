@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Oct 11 12:50:14 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 14:12:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -136,8 +136,8 @@
 	      weight::uint32
 	      left::obj
 	      (right::obj (default #f))
-	      (pcacher (default #f))
-	      (pcachew (default #f)))
+	      (pcacher (default #f)))
+;* 	      (pcachew (default #f)))                                  */
 	   
 	   (class JsStringLiteralASCII::JsStringLiteral)
 	   
