@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Oct 11 07:51:11 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 12:51:11 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -33,18 +33,18 @@
 	   (js-jsstring-debug msg obj)
 	   (js-jsstring-for-in str ::procedure ::JsGlobalObject)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
-	   (inline js-ascii->jsstring::JsStringLiteralLATIN1 ::bstring)
+	   (inline js-ascii->jsstring::JsStringLiteralASCII ::bstring)
 	   (inline js-utf8->jsstring::JsStringLiteralUTF8 ::bstring)
 	   (js-string->jsstring::JsStringLiteral ::bstring)
 	   (js-symbol->jsstring::JsStringLiteral ::symbol)
 	   (js-keyword->jsstring::JsStringLiteral ::keyword)
-	   (js-integer->jsstring::JsStringLiteralLATIN1 ::long)
+	   (js-integer->jsstring::JsStringLiteralASCII ::long)
 	   (js-stringlist->jsstring ::pair-nil)
 	   (inline js-jsstring->string::bstring ::JsStringLiteral)
 	   (js-jsstring->number::obj ::JsStringLiteral) 
 	   (js-jsstring-character-ref ::obj ::uint32)
 	   (js-jsstring-ref ::obj ::uint32 ::JsGlobalObject)
-	   (js-ascii-ref ::JsStringLiteralLATIN1 ::uint32 ::JsGlobalObject)
+	   (js-ascii-ref ::JsStringLiteralASCII ::uint32 ::JsGlobalObject)
 	   (js-jsstring-length::uint32 ::JsStringLiteral)
 	   (js-string-ref ::obj ::obj ::JsGlobalObject)
 	   (js-string-ref-as-string ::obj ::obj ::JsGlobalObject)
@@ -65,7 +65,7 @@
 	   (js-jsstring->bool::bool ::JsStringLiteral)
 	   (generic js-jsstring-normalize!::JsStringLiteral ::JsStringLiteral)
 	   
-	   (js-jsstring-normalize-LATIN1!::bstring ::JsStringLiteral)
+	   (js-jsstring-normalize-ASCII!::bstring ::JsStringLiteral)
 	   (js-jsstring-normalize-UTF8!::bstring ::JsStringLiteral)
 	   (inline js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (utf8-codeunit-length::long ::bstring)
@@ -369,7 +369,7 @@
        ((eq? (object-class ,this) JsStringLiteralUTF8)
 	(,(symbol-append 'utf8- fun) (js-jsstring-normalize-UTF8! ,this) ,@args))
        (else
-	(,(symbol-append 'ascii- fun) (js-jsstring-normalize-LATIN1! ,this) ,@args))))
+	(,(symbol-append 'ascii- fun) (js-jsstring-normalize-ASCII! ,this) ,@args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-dispatch ...                                              */
@@ -384,8 +384,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii->jsstring ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-ascii->jsstring::JsStringLiteralLATIN1 val::bstring)
-   (let ((o (instantiate::JsStringLiteralLATIN1
+(define-inline (js-ascii->jsstring::JsStringLiteralASCII val::bstring)
+   (let ((o (instantiate::JsStringLiteralASCII
 	       (weight (fixnum->uint32 (string-length val)))
 	       (left val))))
       (js-object-mode-set! o (js-jsstring-normalized-mode))
@@ -430,7 +430,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-integer->jsstring ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-integer->jsstring::JsStringLiteralLATIN1 num::long)
+(define (js-integer->jsstring::JsStringLiteralASCII num::long)
    (cond
       ((js-integer-name num)
        =>
@@ -504,14 +504,14 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-mark-normalized! js::JsStringLiteral)
    (with-access::JsStringLiteral js (right)
-      (js-object-mode-jsstringnormalized-set! js #t)
+      (js-jsstring-normalized! js)
       (set! right #f)
       js))
    
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize-LATIN1! ...                                */
+;*    js-jsstring-normalize-ASCII! ...                                */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-normalize-LATIN1!::bstring js::JsStringLiteral)
+(define (js-jsstring-normalize-ASCII!::bstring js::JsStringLiteral)
    
    (define (blit-buffer!::long s::bstring buffer::bstring i::long len::long)
       (case len
@@ -526,7 +526,7 @@
 	     (set! left (substring left 0 (uint32->fixnum weight))))
 	  left)
 	 ((=uint32 weight 0)
-	  (let ((r (js-jsstring-normalize-LATIN1! right)))
+	  (let ((r (js-jsstring-normalize-ASCII! right)))
 	     (set! weight (fixnum->uint32 (string-length r)))
 	     (set! left r)
 	     (js-jsstring-mark-normalized! js)
@@ -597,8 +597,8 @@
 	     (set! left (substring left 0 (uint32->fixnum weight))))
 	  left)
 	 ((=uint32 weight 0)
-	  (if (isa? right JsStringLiteralLATIN1)
-	      (let ((r (js-jsstring-normalize-LATIN1! right)))
+	  (if (isa? right JsStringLiteralASCII)
+	      (let ((r (js-jsstring-normalize-ASCII! right)))
 		 (set! weight (fixnum->uint32 (string-length r)))
 		 (set! left r)
 		 (js-jsstring-mark-normalized! js)
@@ -665,10 +665,10 @@
 (define-generic (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteral))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize! ::JsStringLiteralLATIN1 ...                */
+;*    js-jsstring-normalize! ::JsStringLiteralASCII ...                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteralLATIN1)
-   (js-jsstring-normalize-LATIN1! js)
+(define-method (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteralASCII)
+   (js-jsstring-normalize-ASCII! js)
    js)
 
 ;*---------------------------------------------------------------------*/
@@ -699,8 +699,9 @@
       (cond
 	 ((string? js)
 	  (+u32 len (fixnum->uint32 (string-length js))))
-	 ((not js)
-	  len)
+	 ((js-jsstring-normalized? js)
+	  (with-access::JsStringLiteral js (weight right)
+	     (+u32 len weight)))
 	 (else
 	  (with-access::JsStringLiteral js (weight right)
 	     (loop (+u32 len weight) right))))))
@@ -717,8 +718,8 @@
 ;*    Returns the number of unicode characters of that strings.        */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-character-length js)
-   (if (isa? js JsStringLiteralLATIN1)
-       (with-access::JsStringLiteralLATIN1 js (weight)
+   (if (isa? js JsStringLiteralASCII)
+       (with-access::JsStringLiteralASCII js (weight)
 	  (if (js-jsstring-normalized? js)
 	      weight
 	      (js-jsstring-length js)))
@@ -736,7 +737,7 @@
 	  (when (=u32 %culen #u32:0)
 	     (set! %culen (utf8-codeunit-length (js-jsstring->string js))))
 	  %culen)
-       (with-access::JsStringLiteralLATIN1 js (weight)
+       (with-access::JsStringLiteralASCII js (weight)
 	  (if (js-jsstring-normalized? js)
 	      weight
 	      (js-jsstring-length js)))))
@@ -1031,7 +1032,7 @@
 		   (weight (js-jsstring-length left))
 		   (left left)
 		   (right right))
-		(instantiate::JsStringLiteralLATIN1
+		(instantiate::JsStringLiteralASCII
 		   (weight (js-jsstring-length left))
 		   (left left)
 		   (right right)))))
@@ -1212,8 +1213,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii-ref ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-ascii-ref o::JsStringLiteralLATIN1 index::uint32 %this)
-   (let ((str (js-jsstring-normalize-LATIN1! o)))
+(define (js-ascii-ref o::JsStringLiteralASCII index::uint32 %this)
+   (let ((str (js-jsstring-normalize-ASCII! o)))
       (if (>=u32 index (fixnum->uint32 (string-length str)))
 	  (js-undefined)
 	  (with-access::JsGlobalObject %this (char-table)
@@ -1315,9 +1316,9 @@
    (uint32->fixnum (js-jsstring-codeunit-length o)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-length ::JsStringLiteralLATIN1 ...                         */
+;*    js-get-length ::JsStringLiteralASCII ...                         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-length o::JsStringLiteralLATIN1 %this #!optional cache)
+(define-method (js-get-length o::JsStringLiteralASCII %this #!optional cache)
    (js-jsstring-lengthfx o))
 
 ;*---------------------------------------------------------------------*/
@@ -2977,7 +2978,7 @@
 	    ((>fx from 0)
 	     (js-ascii->jsstring (substring s from to)))
 	    ((<fx to (string-length s))
-	     (let ((o (instantiate::JsStringLiteralLATIN1
+	     (let ((o (instantiate::JsStringLiteralASCII
 			 (weight (fixnum->uint32 (-fx to from)))
 			 (left s))))
 		(js-object-mode-set! o (js-jsstring-normalized-mode))

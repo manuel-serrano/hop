@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Oct 11 07:48:34 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 12:50:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -99,7 +99,7 @@
 	      (owner::obj (default #f))
 	      (src::bstring read-only (default ""))
 	      (point::long (default -1))
-	      (name::JsStringLiteral (default (class-nil JsStringLiteralLATIN1)))
+	      (name::JsStringLiteral (default (class-nil JsStringLiteralASCII)))
 	      (method::obj (default #f))
 	      (function::obj (default #f))
 	      (pctable::obj (default #f))
@@ -139,9 +139,9 @@
 	      (pcacher (default #f))
 	      (pcachew (default #f)))
 	   
-	   (class JsStringLiteralLATIN1::JsStringLiteral)
+	   (class JsStringLiteralASCII::JsStringLiteral)
 	   
-	   (final-class JsStringLiteralIndex::JsStringLiteralLATIN1
+	   (final-class JsStringLiteralIndex::JsStringLiteralASCII
 	      (index::uint32 read-only))
 	   
 	   (final-class JsStringLiteralUTF8::JsStringLiteral
@@ -453,8 +453,6 @@
 	   (inline js-object-mode-revoked?::bool ::JsObject)
 	   (inline js-object-mode-revoked-set! ::JsObject ::bool)
 
-	   (inline js-object-mode-jsstringnormalized-set! ::JsStringLiteral ::bool)
-	   
 	   (js-object-elements-inline?::bool ::JsObject)
 	   
 	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
@@ -516,6 +514,7 @@
 	   (inline js-number?::bool ::obj)
 	   (inline js-jsstring?::bool ::obj)
 	   (inline js-jsstring-normalized?::bool ::JsStringLiteral)
+	   (inline js-jsstring-normalized! ::JsStringLiteral)
 	   (inline js-array?::bool ::obj)
 	   (inline js-function?::bool ::obj)
 	   (inline js-function-proxy?::bool ::obj)
@@ -762,14 +761,6 @@
 (define (js-object-elements-inline? o)
    ;; only used for debugging
    ($jsobject-elements-inline? o))
-
-(define-inline (js-object-mode-jsstringnormalized-set! o flag)
-   (js-object-mode-set! o
-      (if flag
-	  (bit-oru32 (js-object-mode o)
-	     (JS-OBJECT-MODE-JSSTRINGNORMALIZED))
-	  (bit-andu32 (js-object-mode o)
-	     (bit-notu32 (JS-OBJECT-MODE-JSSTRINGNORMALIZED))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    regexp                                                           */
@@ -1159,6 +1150,13 @@
 (define-inline (js-jsstring-normalized?::bool o::JsStringLiteral)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGNORMALIZED) (js-object-mode o))
       (JS-OBJECT-MODE-JSSTRINGNORMALIZED)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-normalized! ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-normalized! o::JsStringLiteral)
+   (js-object-mode-set! o
+      (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGNORMALIZED))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array? ...                                                    */

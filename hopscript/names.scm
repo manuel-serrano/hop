@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri Oct 11 07:55:01 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 12:54:23 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -38,9 +38,9 @@
 	   (js-toname::obj ::obj ::JsGlobalObject)
 	   (inline js-jsstring-name ::JsStringLiteral)
 	   (inline js-name->string::bstring ::JsStringLiteral)
-	   (js-ascii-name->jsstring::JsStringLiteralLATIN1 ::bstring)
+	   (js-ascii-name->jsstring::JsStringLiteralASCII ::bstring)
 	   (js-utf8-name->jsstring::JsStringLiteralUTF8 ::bstring)
-	   (js-integer-name->jsstring::JsStringLiteralLATIN1 ::long)
+	   (js-integer-name->jsstring::JsStringLiteralASCII ::long)
 	   (js-integer-name::obj ::long)
 	   (js-name->jsstring::JsStringLiteral ::bstring))
 
@@ -245,7 +245,7 @@
 (define (js-toname p %this)
    (cond
       ((and (object? p)
-	    (or (eq? (object-class p) JsStringLiteralLATIN1)
+	    (or (eq? (object-class p) JsStringLiteralASCII)
 		(js-jsstring? p)))
        (js-jsstring-toname p))
       ((fixnum? p)
@@ -320,10 +320,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii-toname-unsafe ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-ascii-toname-unsafe::JsStringLiteralLATIN1 str::bstring)
+(define (js-ascii-toname-unsafe::JsStringLiteralASCII str::bstring)
    (let ((n (hashtable-get js-names str)))
       (or n
-	  (let ((o (instantiate::JsStringLiteralLATIN1
+	  (let ((o (instantiate::JsStringLiteralASCII
 		      (weight (fixnum->uint32 (string-length str)))
 		      (left str))))
 	     (js-object-mode-set! o (js-jsstring-normalized-mode))
@@ -334,14 +334,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii-toname ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-ascii-toname::JsStringLiteralLATIN1 str::bstring)
+(define (js-ascii-toname::JsStringLiteralASCII str::bstring)
    (synchronize-name
       (js-ascii-toname-unsafe str)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii-name->jsstring ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-ascii-name->jsstring::JsStringLiteralLATIN1 str::bstring)
+(define (js-ascii-name->jsstring::JsStringLiteralASCII str::bstring)
    (synchronize-name
       (if (integer-string? str)
 	  (let ((num (string->integer str)))
@@ -370,9 +370,9 @@
 ;*    This function is called only in context where it is statically   */
 ;*    known that num is not an index.                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-integer->name::JsStringLiteralLATIN1 num::long)
+(define (js-integer->name::JsStringLiteralASCII num::long)
    (let* ((str (fixnum->string num))
-	  (o (instantiate::JsStringLiteralLATIN1
+	  (o (instantiate::JsStringLiteralASCII
 		(weight (string-length str))
 		(left str))))
       (js-object-mode-set! o (js-jsstring-normalized-mode))

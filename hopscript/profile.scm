@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Oct 11 07:55:06 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 12:54:29 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -368,7 +368,7 @@
 		((llong? o) (format-llong o))
 		((number? o) (format-number o))
 		((symbol? o) (symbol->string o))
-		((eq? o (class-nil JsStringLiteralLATIN1)) "")
+		((eq? o (class-nil JsStringLiteralASCII)) "")
 		(else (call-with-output-string (lambda (p) (display o p))))))
 	  (l (string-length s)))
       (if (> l sz)
