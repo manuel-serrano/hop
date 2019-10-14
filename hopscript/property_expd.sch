@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Aug 23 13:41:28 2019 (serrano)                */
+;*    Last change :  Sun Oct 13 07:25:50 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -411,6 +411,11 @@
 		    `((@ js-global-object-get-name/cache __hopscript_property)
 		      ,obj ,prop ,throw ,%this
 		      ,cache ,loc ',cspecs))
+		   ((omiss)
+		    ;; forced cache miss check
+		    ;; (only used in js-jsobject-get/name-cache)
+		    `((@ js-object-get-name/cache-miss __hopscript_property)
+		      ,obj ,prop ,throw ,%this ,cache))
 		   (else
 		    (error "js-object-get-name/cache" "bad cache spec"
 		       cs))))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Oct 11 12:54:35 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 18:48:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -432,7 +432,7 @@
 ;*    js-debug-cmap ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-debug-cmap cmap #!optional (msg ""))
-   (with-access::JsConstructMap cmap (%id props methods size transitions inline sibling)
+   (with-access::JsConstructMap cmap (%id props methods size transitions inline sibling vlen)
       (fprint (current-error-port) "~~~~ " msg (typeof cmap)
 	 " cmap.%id=" %id
 	 " size=" size
@@ -440,6 +440,7 @@
 	 " sibling=" (typeof sibling)
 	 " plength=" (vector-length props)
 	 " mlength=" (vector-length methods)
+	 " vlen=" vlen
 	 "\nprops.names=" (vector-map prop-name props)
 	 "\nprops=" props
 	 "\ntransitions="
@@ -1798,17 +1799,18 @@
 		 (lambda (cache)
 		    (js-object-get-name/cache o pname #f
 		       %this
-		       cache -1 '(imap emap cmap pmap amap vtable))))
+		       cache -1 '(imap emap cmap pmap amap vtable omiss))))
 		((isa? pname JsStringLiteralIndex)
 		 (js-get o prop %this))
 		(else
 		 (let ((cache (instantiate::JsPropertyCache
 				 (usage 'dget)
+				 (name pname)
 				 (src "js-object-get/name-cache"))))
 		    (js-name-pcacher-set! pname cache)
 		    (js-object-get-name/cache o pname #f
 		       %this
-		       cache -1 '(imap emap cmap pmap amap))))))))
+		       cache -1 '())))))))
       ((js-array? o)
        (js-array-ref o prop %this))
       (else
