@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Apr 17 07:17:41 2019 (serrano)                */
+;*    Last change :  Mon Oct 14 10:48:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1169,7 +1169,7 @@
 	 `(call-with-output-string
 	     (lambda (op)
 		(obj->javascript-attr
-		   ,(j2s-scheme node mode evalp conf) op))))))
+		   ,(j2s-scheme node mode evalp conf) op %this))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-client-dollar ...                                         */
