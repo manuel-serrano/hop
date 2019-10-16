@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct  8 08:15:39 2019 (serrano)                */
+;*    Last change :  Fri Oct 11 18:15:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -612,7 +612,7 @@
 	    (set! pmap omap)
 	    (set! emap #t)
 	    (set! amap #t)
-	    (set! owner obj)
+	    (unless (isa? obj JsProxy) (set! owner obj))
 	    (set! index i)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1709,7 +1709,6 @@
 	  (with-access::JsPropertyCache cache (name)
 	     (cond
 		((eq? name pname)
-		 (tprint "in cache.1")
 		 (js-object-get-name/cache o pname #f
 		    %this cache point cspecs))
 		((js-isindex? (js-toindex prop))
