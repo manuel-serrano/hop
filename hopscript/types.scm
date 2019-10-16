@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Oct 11 14:12:46 2019 (serrano)                */
+;*    Last change :  Tue Oct 15 13:26:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -419,6 +419,7 @@
 	   (inline js-jsstring-default-mode::uint32)
 	   (inline js-function-default-mode::uint32)
 	   (inline js-jsstring-normalized-mode::uint32)
+	   (inline js-jsstring-index-mode::uint32)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
@@ -471,6 +472,7 @@
 	   (inline JS-OBJECT-MODE-REVOKED::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGNORMALIZED::uint32)
+	   (inline JS-OBJECT-MODE-JSSTRINGINDEX::uint32)
 
 	   (inline JS-REGEXP-FLAG-IGNORECASE::uint32)
 	   (inline JS-REGEXP-FLAG-MULTILINE::uint32)
@@ -513,6 +515,7 @@
 	   (inline js-object?::bool ::obj)
 	   (inline js-number?::bool ::obj)
 	   (inline js-jsstring?::bool ::obj)
+	   (inline js-jsstring-index?::bool ::obj)
 	   (inline js-jsstring-normalized?::bool ::JsStringLiteral)
 	   (inline js-jsstring-normalized! ::JsStringLiteral)
 	   (inline js-array?::bool ::obj)
@@ -598,6 +601,11 @@
    (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
       (JS-OBJECT-MODE-JSSTRINGNORMALIZED)))
 
+(define-inline (js-jsstring-index-mode)
+   (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
+      (bit-oru32 (JS-OBJECT-MODE-JSSTRINGNORMALIZED)
+	 (JS-OBJECT-MODE-JSSTRINGINDEX))))
+
 (define-inline (js-function-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
       (bit-oru32 (JS-OBJECT-MODE-PLAIN)
@@ -629,6 +637,7 @@
 (define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
 (define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
 (define-inline (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:8)
+(define-inline (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:16)
 
 (define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
 (define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
@@ -647,6 +656,7 @@
 (define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
 (define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
 (define-macro (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:8)
+(define-macro (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:16)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -1143,6 +1153,13 @@
    (and (%object? o)
 	(=u32 (JS-OBJECT-MODE-JSSTRINGTAG)
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-index? ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-index? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGINDEX) (js-object-mode o))
+      (JS-OBJECT-MODE-JSSTRINGINDEX)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalized? ...                                      */

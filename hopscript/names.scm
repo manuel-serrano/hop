@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Oct 14 10:55:03 2019 (serrano)                */
+;*    Last change :  Tue Oct 15 13:53:14 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -362,7 +362,7 @@
 		  (weight (string-length str))
 		  (left str)
 		  (index num))))
-	 (js-object-mode-set! o (js-jsstring-normalized-mode))
+	 (js-object-mode-set! o (js-jsstring-index-mode))
 	 (js-jsstring-name-set! o o)
 	 o)))
 

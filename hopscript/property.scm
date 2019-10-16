@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Oct 11 18:48:38 2019 (serrano)                */
+;*    Last change :  Tue Oct 15 13:50:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1791,26 +1791,28 @@
 (define-inline (js-jsobject-get/name-cache o prop %this)
    (cond
       ((js-jsstring? prop)
-       (synchronize-name
-	  (let ((pname (js-jsstring-toname-unsafe prop)))
-	     (cond
-		((js-name-pcacher pname)
-		 =>
-		 (lambda (cache)
-		    (js-object-get-name/cache o pname #f
-		       %this
-		       cache -1 '(imap emap cmap pmap amap vtable omiss))))
-		((isa? pname JsStringLiteralIndex)
-		 (js-get o prop %this))
-		(else
-		 (let ((cache (instantiate::JsPropertyCache
-				 (usage 'dget)
-				 (name pname)
-				 (src "js-object-get/name-cache"))))
-		    (js-name-pcacher-set! pname cache)
-		    (js-object-get-name/cache o pname #f
-		       %this
-		       cache -1 '())))))))
+       (if (js-jsstring-index? prop)
+	   (js-get o prop %this)
+	   (synchronize-name
+	      (let ((pname (js-jsstring-toname-unsafe prop)))
+		 (cond
+		    ((js-name-pcacher pname)
+		     =>
+		     (lambda (cache)
+			(js-object-get-name/cache o pname #f
+			   %this
+			   cache -1 '(imap emap cmap pmap amap vtable omiss))))
+		    ((js-jsstring-index? pname)
+		     (js-get o prop %this))
+		    (else
+		     (let ((cache (instantiate::JsPropertyCache
+				     (usage 'dget)
+				     (name pname)
+				     (src "js-object-get/name-cache"))))
+			(js-name-pcacher-set! pname cache)
+			(js-object-get-name/cache o pname #f
+			   %this
+			   cache -1 '()))))))))
       ((js-array? o)
        (js-array-ref o prop %this))
       (else

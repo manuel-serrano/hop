@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Oct 11 12:51:11 2019 (serrano)                */
+;*    Last change :  Tue Oct 15 13:54:29 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -443,7 +443,7 @@
 		      (weight (string-length str))
 		      (left str)
 		      (index (fixnum->uint32 num)))))
-	     (js-object-mode-set! o (js-jsstring-normalized-mode))
+	     (js-object-mode-set! o (js-jsstring-index-mode))
 	     (object-widening-set! o #f)
 	     o)))
       (else
