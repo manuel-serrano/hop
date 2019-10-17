@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Oct 17 08:20:51 2019 (serrano)                */
+;*    Last change :  Thu Oct 17 09:01:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3175,7 +3175,6 @@
 	       r))))
    
    (define (define-own-property-length oldlendesc)
-      (tprint "define-own-property-length " oldlendesc)
       (with-access::JsValueDescriptor oldlendesc (value (owritable writable))
 	 (let ((oldlen value))
 	    (if (not (isa? desc JsValueDescriptor))
