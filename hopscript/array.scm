@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Oct 10 17:59:18 2019 (serrano)                */
+;*    Last change :  Thu Oct 17 08:20:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2767,7 +2767,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-put/cache! o::JsArray prop v::obj throw::bool %this
 		  #!optional (point -1) (cspecs '()) (src ""))
-   (js-array-set! o prop v throw %this))
+   (if (eq? prop (& "length"))
+       (js-put-length! o v throw #f %this)
+       (js-array-set! o prop v throw %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-put! ...                                                */
@@ -3173,6 +3175,7 @@
 	       r))))
    
    (define (define-own-property-length oldlendesc)
+      (tprint "define-own-property-length " oldlendesc)
       (with-access::JsValueDescriptor oldlendesc (value (owritable writable))
 	 (let ((oldlen value))
 	    (if (not (isa? desc JsValueDescriptor))

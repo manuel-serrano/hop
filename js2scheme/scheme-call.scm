@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Aug 24 16:32:26 2019 (serrano)                */
+;*    Last change :  Mon Oct 14 09:36:15 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -234,7 +234,7 @@
 	  ,(j2s-scheme (cadr args) mode return conf)
 	  ,(j2s-scheme (caddr args) mode return conf)
 	  ,(cadddr args)))
-   
+
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
@@ -246,7 +246,7 @@
 		   (decl-only-usage? decl '(get call new init instanceof)))
 	      (j2s-scheme (J2SMethodCall* obj
 			     (list (car args))
-			     (cdr args))
+			     (list (cadr args) (caddr args)))
 		 mode return conf))
 	     ((pair? (cddddr args))
 	      (def obj args mode return conf))

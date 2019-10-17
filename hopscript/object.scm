@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Oct 10 18:44:39 2019 (serrano)                */
+;*    Last change :  Sun Oct 13 09:34:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -74,11 +74,14 @@
    (lambda (o ctx)
       (if (isa? ctx JsGlobalObject)
 	  (js-jsobject->plist o ctx)
-	  (error "obj->string" "Not a JavaScript context" ctx)))
+	  (error "obj->string"
+	     (format "Not a JavaScript context (~a)" (typeof o))
+	     ctx)))
    (lambda (o ctx)
       (if (isa? ctx JsGlobalObject)
 	  (js-plist->jsobject o ctx)
-	  (error "obj->string" "Not a JavaScript context" ctx))))
+	  (error "obj->string"
+	     (format "Not a JavaScript context (~a)" (typeof o)) ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsResponse ...                               */
@@ -148,7 +151,9 @@
 (define-method (xml-primitive-value obj::JsObject ctx)
    (if (isa? ctx JsGlobalObject)
        (js-jsobject->plist obj ctx)
-       (error "xml-primitive-value ::JsObject" "Not a JavaScript context" ctx)))
+       (error "xml-primitive-value ::JsObject"
+	  (format "Not a JavaScript context (~a)" (typeof obj))
+	  ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */
@@ -159,7 +164,10 @@
 (define-method (xml-unpack o::JsObject ctx)
    (if (isa? ctx JsGlobalObject)
        (js-jsobject->keyword-plist o ctx)
-       (error "xml-unpack ::JsObject" "Not a JavaScript context" ctx)))
+       o))
+;*        (error "xml-unpack ::JsObject"                               */
+;* 	  (format "Not a JavaScript context (~a)" (typeof o))          */
+;* 	  ctx)))                                                       */
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->json ::JsObject ...                                         */
@@ -168,7 +176,9 @@
    (if (isa? ctx JsGlobalObject)
        (let ((str (js-json-stringify (js-undefined) obj (js-undefined) 1 ctx)))
 	  (display str op))
-       (error "obj->json" "Not a JavaScript context" ctx)))
+       (error "obj->json"
+	  (format "Not a JavaScript context (~a)" (typeof obj))
+	  ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsGlobalObject ...                                   */
