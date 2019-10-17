@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Oct 15 13:54:29 2019 (serrano)                */
+;*    Last change :  Wed Oct 16 08:38:43 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -509,7 +509,7 @@
       js))
    
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize-ASCII! ...                                */
+;*    js-jsstring-normalize-ASCII! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-normalize-ASCII!::bstring js::JsStringLiteral)
    
