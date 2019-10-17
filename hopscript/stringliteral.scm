@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Oct 16 08:38:43 2019 (serrano)                */
+;*    Last change :  Thu Oct 17 09:26:36 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -986,6 +986,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-tonumber this::JsStringLiteral %this)
    (js-jsstring-tonumber this %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-tonumber ::JsStringLiteral ...                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
+;*---------------------------------------------------------------------*/
+(define-method (js-tonumber this::JsStringLiteralIndex %this)
+   (with-access::JsStringLiteralIndex this (index)
+      (js-uint32-tointeger (js-toindex this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tointeger ::JsStringLiteral ...                               */
