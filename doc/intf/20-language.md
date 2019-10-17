@@ -23,7 +23,7 @@ Language implementation
 A language is any JavaScript object that implements a compilation
 function associated with the `Symbol.compiler` property. This function
 accepts two parameters, a resolved name of file to be compiled, and an
-optional `options` object. If the `options` is undefined or if the the
+optional `options` object. If the `options` is undefined or if the
 `options.target` property is undefined, it is to the compiler to
 decide where and how to communicate its result to the Hop runtime
 system. A compilation result must be an object with two properties:
@@ -99,3 +99,21 @@ The hopc parser can be extended with _plugins_ that can be used to extend
 the syntax it analyses. This feature is still experimental and will be
 described when stabiliez. In the meantime, an example can be found in
 the implementation of the HipHop language.
+
+
+Require extension
+=================
+
+Hop extends the `require` form as follows:
+
+```ebnf
+<require> -->
+  require( <ModuleExpr> )
+  | require( <ModuleExpr>, <LangExpr> )
+  | require( <ModuleExpr>, <LangExpr>, <CompLangExpr> )
+```
+
+The first form is the original `require` form. The second, loads 
+`<ModuleExpr>` defined in language `<LangExpr>`. The third, loads
+`<ModuleExpr>` defined in language `<LangExpr>`, passing `<CompLangexpr>`
+to the `<LangExpr>` compiler.

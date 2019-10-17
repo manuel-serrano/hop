@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/examples/lang/csv.hop             */
+;*    serrano/prgm/project/hop/hop/examples/lang/csv.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar  9 09:02:19 2018                          */
-;*    Last change :  Fri Mar  9 10:04:14 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Thu Oct 17 13:59:00 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The CSV parsing use the native Hop's parser                      */
 ;*=====================================================================*/
@@ -33,12 +33,12 @@
    
    (with-access::JsGlobalObject %this (js-object)
       (let ((exports (js-new0 %this js-object)))
-         (js-put! %module 'exports exports #f %this)
+         (js-put! %module (& "exports") exports #f %this)
          ;; bind the load function is the pseudo javascript module
-         (js-put! exports 'load
+         (js-put! exports (& "load")
             (js-make-function %this
                ;; wrap the Hop read-csv records function into a JS function
-               (lambda (this url)
+               (lambda (this url options)
 		  (call-with-input-file url
 		     (lambda (p)
 			(js-vector->jsarray
@@ -47,7 +47,11 @@
 				      (js-vector->jsarray
 					 (apply vector (map literal->js row))
 					 %this))
-				 (read-csv-records p)))
+				 (read-csv-records p
+				    (when (js-jsstring? options)
+				       (apply make-csv-lexer
+					  (string->list
+					     (js-jsstring->string options)))))))
 			   %this))))
-               1 "load")
+               2 "load")
 	    #f %this))))
