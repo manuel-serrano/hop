@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Oct 17 09:26:36 2019 (serrano)                */
+;*    Last change :  Fri Oct 18 09:45:44 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -412,7 +412,7 @@
    (let ((enc (string-minimal-charset val)))
       (case enc
 	 ((ascii) (js-ascii->jsstring val))
-	 ((latin1 utf8) (js-utf8->jsstring val))
+	 ((latin1) (js-utf8->jsstring val))
 	 (else (error "string->jsstring" "unsupported encoding" enc)))))
 
 ;*---------------------------------------------------------------------*/
