@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Oct  9 12:08:55 2019 (serrano)                */
+;*    Last change :  Thu Oct 17 14:08:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -531,7 +531,7 @@
    ;; require
    (define require
       (js-make-function this
-	 (lambda (_ name lang)
+	 (lambda (_ name lang opt)
 	    (nodejs-require-module (js-tostring name this)
 	       (js-current-worker) this %module
 	       (if (eq? lang (js-undefined))
@@ -561,8 +561,9 @@
 					this %module)))
 			 (loop langmod)))
 		     (else
-		      #f)))))
-	 2 "require" :size 4 :src "require.scm"))
+		      #f)))
+	       opt))
+	 3 "require" :size 4 :src "require.scm"))
 
    (js-init-require! this)
    
@@ -1869,7 +1870,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load-module path::bstring worker::WorkerHopThread
 	   %this %module
-	   #!key (lang "hopscript") compiler commonjs-export)
+	   #!key (lang "hopscript") compiler compiler-options commonjs-export)
    
    (define (load-json path)
       (let ((mod (nodejs-new-module path path worker %this))
@@ -1884,7 +1885,8 @@
 	 ((core-module? path)
 	  (nodejs-core-module path worker %this))
 	 ((js-function? compiler)
-	  (let ((obj (js-call1 %this compiler (js-undefined) path)))
+	  (let ((obj (js-call2 %this compiler (js-undefined)
+			path compiler-options)))
 	     (when (js-object? obj)
 		(let ((ty (js-tostring (js-get obj (& "type") %this) %this))
 		      (val (js-get obj (& "value") %this))
@@ -1948,11 +1950,11 @@
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-module name::bstring worker::WorkerHopThread
-	   %this %module #!optional (lang "hopscript") compiler)
+	   %this %module #!optional (lang "hopscript") compiler copts)
    (with-trace 'require (format "nodejs-require-module ~a" name)
       (let* ((path (nodejs-resolve name %this %module 'body))
 	     (mod (nodejs-load-module path worker %this %module
-		     :lang lang :compiler compiler))
+		     :lang lang :compiler compiler :compiler-options copts))
 	     (exports (js-get mod (& "exports") %this)))
 	 (trace-item "exports=" (typeof exports))
 	 exports)))
