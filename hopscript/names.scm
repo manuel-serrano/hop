@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Tue Oct 15 13:53:14 2019 (serrano)                */
+;*    Last change :  Sat Oct 19 07:37:03 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -42,6 +42,7 @@
 	   (js-utf8-name->jsstring::JsStringLiteralUTF8 ::bstring)
 	   (js-integer-name->jsstring::JsStringLiteralASCII ::long)
 	   (js-integer-name::obj ::long)
+	   (js-index-name::obj ::long)
 	   (js-name->jsstring::JsStringLiteral ::bstring))
 
    (export js-name-lock
@@ -448,5 +449,13 @@
 (define (js-integer-name num::long)
    (synchronize-name
       (when (and (>fx num -10) (<fx num js-integer-length))
+	 (vector-ref js-integer-names (+fx num 10)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-index-name ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-index-name num::long)
+   (synchronize-name
+      (when (<fx num js-integer-length)
 	 (vector-ref js-integer-names (+fx num 10)))))
    

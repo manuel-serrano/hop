@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Oct 17 09:01:54 2019 (serrano)                */
+;*    Last change :  Sat Oct 19 07:30:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3428,7 +3428,19 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in o::JsArray proc %this)
    (with-access::JsArray o (vec ilen)
-      (if (or (js-array-inlined? o) (js-object-mode-holey? o))
+      (cond
+	 ((js-array-inlined? o)
+	  (let ((len ilen))
+	     (let loop ((i #u32:0))
+		(cond
+		   ((<u32 i len)
+		    (let ((key (or (js-index-name (uint32->fixnum i))
+				   (js-integer->jsstring (uint32->fixnum i)))))
+		       (proc key %this))
+		    (loop (+u32 i #u32:1)))
+		   (else
+		    (call-next-method))))))
+	 ((js-object-mode-holey? o)
 	  (let ((len ilen)
 		(vlen (fixnum->uint32 (vector-length vec))))
 	     (let loop ((i #u32:0))
@@ -3443,8 +3455,9 @@
 		       (proc (js-integer->jsstring (uint32->fixnum i)) %this))
 		    (loop (+u32 i #u32:1)))
 		   (else
-		    (call-next-method)))))
-	  (call-next-method))))
+		    (call-next-method))))))
+	 (else
+	  (call-next-method)))))
   
 ;*---------------------------------------------------------------------*/
 ;*    js-for-of ::JsArray ...                                          */
