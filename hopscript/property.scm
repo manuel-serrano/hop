@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct 15 13:50:48 2019 (serrano)                */
+;*    Last change :  Tue Oct 22 13:29:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1269,8 +1269,8 @@
 	 ((isa? desc JsAccessorDescriptor)
 	  ;; 4
 	  (with-access::JsAccessorDescriptor desc (get set)
-	     (js-put! obj (& "get") get #f %this)
-	     (js-put! obj (& "set") set #f %this)))
+	     (js-put! obj (& "get") (or get (js-undefined)) #f %this)
+	     (js-put! obj (& "set") (or set (js-undefined)) #f %this)))
 	 ((isa? desc JsWrapperDescriptor)
 	  (with-access::JsWrapperDescriptor desc (%get writable)
 	     (js-put! obj (& "value") (%get owner owner propname %this) #f %this)
@@ -2952,16 +2952,17 @@
 	    (set! current ncurrent)))
       (propagate-property-descriptor! current desc)
       (with-access::JsDataDescriptor current (writable name)
-	 (with-access::JsDataDescriptor desc ((dwritable writable))
-	    (when (boolean? dwritable)
-	       (set! writable dwritable)))
-	 (when (isa? desc JsValueDescriptor)
+	 
+	 (if (isa? desc JsValueDescriptor)
 	    (with-access::JsValueDescriptor desc ((dvalue value))
 	       (when (js-function? dvalue)
 		  (js-invalidate-pmap-pcaches! %this
 		     "js-define-own-property%, both accessor" name))
 	       (cond
 		  ((isa? current JsValueDescriptor)
+		   (with-access::JsDataDescriptor desc ((dwritable writable))
+		      (when (boolean? dwritable)
+			 (set! writable dwritable)))
 		   (with-access::JsValueDescriptor current (value)
 		      (when (js-function? value)
 			 (js-invalidate-pmap-pcaches! %this
@@ -2969,7 +2970,10 @@
 		      (set! value dvalue)))
 		  ((isa? current JsWrapperDescriptor)
 		   (with-access::JsWrapperDescriptor current (%set)
-		      (js-property-amap-value-set! o o name current dvalue %this)))))))
+		      (js-property-amap-value-set! o o name current dvalue %this)))))
+	    (with-access::JsDataDescriptor desc ((dwritable writable))
+	       (when (boolean? dwritable)
+		  (set! writable dwritable)))))
       #t)
    
    (define (propagate-accessor-descriptor! current desc)
