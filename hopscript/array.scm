@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 25 18:47:30 2019 (serrano)                */
+;*    Last change :  Wed Oct 23 14:36:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1688,8 +1688,10 @@
 	     (relstart (js-tointeger start %this))
 	     (len (js-uint32-tointeger (js-get-lengthu32 o %this)))
 	     (actualstart (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
-	     (actualdeletecount (min (max (js-tointeger deletecount %this) 0)
-				   (- len actualstart))))
+	     (actualdeletecount (if (eq? deletecount (js-undefined))
+				    (-fx len (->fixnum actualstart))
+				    (min (max (js-tointeger deletecount %this) 0)
+				       (- len actualstart)))))
 	 (if (not (js-array? this))
 	     (array-splice this len actualstart actualdeletecount)
 	     (with-access::JsArray this (vec)
