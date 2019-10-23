@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Oct 18 09:45:44 2019 (serrano)                */
+;*    Last change :  Wed Oct 23 18:44:56 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -557,10 +557,6 @@
 		    (with-access::JsStringLiteral s (left right weight)
 		       (let ((len (uint32->fixnum weight)))
 			  (cond
-			     ((not (js-jsstring-normalized? s))
-			      (let* ((ni (+fx i len))
-				     (nstack (cons (cons ni right) stack)))
-				 (loop i left nstack)))
 			     ((string? left)
 			      (blit-buffer! left buffer i len)
 			      (if (pair? stack)
@@ -575,6 +571,22 @@
 				     (set! left buffer)
 				     (js-jsstring-mark-normalized! js)
 				     buffer)))
+			     ((js-jsstring-normalized? left)
+			      (with-access::JsStringLiteral left ((str left))
+				 (blit-buffer! str buffer i (string-length str))
+				 (loop (+fx i (string-length str)) right stack)))
+			     ((not (js-jsstring-normalized? s))
+			      (if (js-jsstring-normalized? right)
+				  (with-access::JsStringLiteral right ((str left))
+				     ;; write the rhs in advance
+				     (let ((len (string-length str)))
+					(blit-buffer! str buffer
+					   (+fx i (uint32->fixnum weight)) len)
+					(loop i left stack)))
+				  (let* ((ni (+fx i len))
+					 (nstack (cons (cons ni right) stack)))
+				     (loop i left nstack))))
+			     
 			     (else
 			      (loop i left stack))))))))))))
 

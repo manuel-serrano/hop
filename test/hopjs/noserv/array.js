@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Jun  3 08:01:48 2019 (serrano)                */
+/*    Last change :  Wed Oct 23 14:39:41 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -487,3 +487,15 @@ function testConstant() {
 }
 
 assert.ok( testConstant(), "testConstant" );
+
+/*---------------------------------------------------------------------*/
+/*    splice                                                           */
+/*---------------------------------------------------------------------*/
+function testSplice() {
+   var o = [ 34, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 8, 7 ];
+   var o2 = o.splice( 10 );
+   
+   return o.length == 10 && o2.length == 5;
+}
+
+assert.ok( testSplice(), "testSplice" );
