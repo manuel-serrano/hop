@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Oct  9 07:23:12 2019 (serrano)                */
+;*    Last change :  Wed Oct 23 12:10:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -650,7 +650,7 @@
 			      name
 			      (js-ascii->jsstring "]")))
 			(js-ascii->jsstring "[Function]")))))))
-	 ((js-function-proxy? this)
+	 ((js-proxy-function? this)
 	  (with-access::JsProxy this ((target __proto__))
 	     (tostring target)))
 	 (else
