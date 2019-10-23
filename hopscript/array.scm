@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Oct 19 07:30:17 2019 (serrano)                */
+;*    Last change :  Wed Oct 23 11:52:31 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -175,12 +175,18 @@
 	    (fixnum->uint32 ,p))
 	   ((uint32? ,p)
 	    ,p)
+	   ((and (js-jsstring? ,p) (js-jsstring-index? ,p))
+	    (with-access::JsStringLiteralIndex ,p (index)
+	       index))
 	   (else
 	    ((@ js-toindex  __hopscript_public) ,p))))
       ((or bint61 bint64)
        `(cond
 	   ((and (fixnum? ,p) (>=fx ,p 0) (<fx ,p (-fx (bit-lsh 1 32) 1)))
 	    (fixnum->uint32 ,p))
+	   ((and (js-jsstring? ,p) (js-jsstring-index? ,p))
+	    (with-access::JsStringLiteralIndex ,p (index)
+	       index))
 	   (else
 	    ((@ js-toindex  __hopscript_public) ,p))))
       (else
@@ -1525,8 +1531,10 @@
 	     (relstart (js-tointeger start %this))
 	     (len (js-uint32-tointeger (js-get-lengthu32 o %this)))
 	     (actualstart (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
-	     (actualdeletecount (min (max (js-tointeger deletecount %this) 0)
-				   (- len actualstart))))
+	     (actualdeletecount (if (eq? deletecount (js-undefined))
+				    (-fx len (->fixnum actualstart))
+				    (min (max (js-tointeger deletecount %this) 0)
+				       (- len actualstart)))))
 	 (if (not (js-array? this))
 	     (array-splice this len actualstart actualdeletecount)
 	     (with-access::JsArray this (vec)

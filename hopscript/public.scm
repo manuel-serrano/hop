@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Oct 10 09:43:28 2019 (serrano)                */
+;*    Last change :  Wed Oct 23 11:03:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -186,7 +186,7 @@
 	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
 	   (generic js-inspect ::obj ::int)
 
-	   (generic js-typeof ::obj ::JsGlobalObject)
+	   (js-typeof ::obj ::JsGlobalObject)
 
 	   (js-html-head ::JsGlobalObject)
 	   (js-html-script ::JsGlobalObject)
@@ -520,68 +520,83 @@
 (define-macro (gen-calln . args)
    (let ((n (+fx 1 (length args))))
       `(with-access::JsFunction fun (arity len rest minlen src)
-	  (case arity
-	     ((-1)
-	      (if (not rest)
-		  (proc this ,@args)
-		  (case len
-		     ((0)
-		      (proc this (js-vector->jsarray (vector ,@args) %this)))
-		     ,@(map (lambda (i)
-			       `((,i)
-				 ,(if (<=fx n i)
-				      `(if (and (<=fx ,n minlen) (>=fx minlen 0))
-					   (js-raise-arity-error %this fun ,(-fx n 1))
-					   (proc this ,@args ,@(make-list (-fx (+fx i 1) n) '(js-undefined))
-					      (js-vector->jsarray '#() %this)))
-				      `(proc this ,@(take args i)
-					  (js-vector->jsarray (vector ,@(drop args i)) %this)))))
-			(iota 10 1))
-		     (else
-		      (cond
-			 ((and (<=fx ,n minlen) (>=fx minlen 0))
-			  (js-raise-arity-error %this fun ,(-fx n 1)))
-			 ((<=fx ,(-fx n 1) len)
-			  (apply proc this ,@args
-			     (js-rest-args %this (-fx (+fx len 1) ,n))))
+	  (if (=fx ,n arity)
+	      (proc this ,@args)
+	      (case arity
+		 ((-1)
+		  (if (not rest)
+		      (proc this ,@args)
+		      (case len
+			 ((0)
+			  (proc this (js-vector->jsarray (vector ,@args) %this)))
+			 ,@(map (lambda (i)
+				   `((,i)
+				     ,(if (<=fx n i)
+					  `(if (and (<=fx ,n minlen) (>=fx minlen 0))
+					       (js-raise-arity-error %this fun ,(-fx n 1))
+					       (proc this ,@args ,@(make-list (-fx (+fx i 1) n) '(js-undefined))
+						  (js-vector->jsarray '#() %this)))
+					  `(proc this ,@(take args i)
+					      (js-vector->jsarray (vector ,@(drop args i)) %this)))))
+			    (iota 10 1))
 			 (else
-			  (let ((args (list ,@args)))
-			     (apply proc this
-				(append (take args len)
-				   (list
-				      (js-vector->jsarray
-					 (apply vector (drop args len)) %this)))))))))))
-	     ,@(map (lambda (i)
-		       `((,i) 
-			 ,(cond
-			     ((=fx i n)
-			      `(proc this ,@args))
-			     ((<fx i n)
-			      `(if (>=fx minlen 0)
-				   (js-raise-arity-error %this fun ,(-fx n 1))
-				   (proc this ,@(take args (-fx i 1)))))
+			  (cond
+			     ((and (<=fx ,n minlen) (>=fx minlen 0))
+			      (js-raise-arity-error %this fun ,(-fx n 1)))
+			     ((<=fx ,(-fx n 1) len)
+			      (apply proc this ,@args
+				 (js-rest-args %this (-fx (+fx len 1) ,n))))
 			     (else
-			      `(if (or (>fx ,n minlen) (<fx minlen 0))
-				   (proc this ,@args
-				      ,@(make-list (-fx i n) '(js-undefined)))
-				   (js-raise-arity-error %this fun ,(-fx n 1)))))))
-		(iota 10 1))
-	     (else
-	      (cond
-		 ((<fx arity 0)
-		  (let ((min (-fx (negfx arity) 1)))
-		     
-		     (if (>fx min ,n)
-			 (apply proc this ,@args 
-			    (make-list (-fx min ,n) (js-undefined)))
-			 (proc this ,@args))))
-		 ((=fx arity ,n)
-		  (proc this ,@args))
-		 ((>=fx minlen 0)
-		  (js-raise-arity-error %this fun ,(-fx n 1)))
+			      (let ((args (list ,@args)))
+				 (apply proc this
+				    (append (take args len)
+				       (list
+					  (js-vector->jsarray
+					     (apply vector (drop args len)) %this)))))))))))
+		 ,@(map (lambda (i)
+			   `((,i)
+			     (if (>=fx minlen 0)
+				 (js-raise-arity-error %this fun ,(-fx n 1))
+				 (proc this ,@(take args (-fx i 1))))))
+		    (iota (-fx n 1) 1))
+		 ,@(map (lambda (i)
+			   `((,i)
+			     (if (or (>fx ,n minlen) (<fx minlen 0))
+				 (proc this ,@args
+				    ,@(make-list (-fx i n) '(js-undefined)))
+				 (js-raise-arity-error %this fun ,(-fx n 1)))))
+		    (iota (-fx 10 n) (+fx n 1)))
+;* 		 ,@(map (lambda (i)                                    */
+;* 			   `((,i)                                      */
+;* 			     ,(cond                                    */
+;* 				 ((=fx i n)                            */
+;* 				  `(proc this ,@args))                 */
+;* 				 ((<fx i n)                            */
+;* 				  `(if (>=fx minlen 0)                 */
+;* 				       (js-raise-arity-error %this fun ,(-fx n 1)) */
+;* 				       (proc this ,@(take args (-fx i 1))))) */
+;* 				 (else                                 */
+;* 				  `(if (or (>fx ,n minlen) (<fx minlen 0)) */
+;* 				       (proc this ,@args               */
+;* 					  ,@(make-list (-fx i n) '(js-undefined))) */
+;* 				       (js-raise-arity-error %this fun ,(-fx n 1))))))) */
+;* 		    (iota 10 1))                                       */
 		 (else
-		  (apply proc this ,@args
-		     (make-list (-fx arity ,n) (js-undefined))))))))))
+		  (cond
+		     ((<fx arity 0)
+		      (let ((min (-fx (negfx arity) 1)))
+			 
+			 (if (>fx min ,n)
+			     (apply proc this ,@args 
+				(make-list (-fx min ,n) (js-undefined)))
+			     (proc this ,@args))))
+		     ((=fx arity ,n)
+		      (proc this ,@args))
+		     ((>=fx minlen 0)
+		      (js-raise-arity-error %this fun ,(-fx n 1)))
+		     (else
+		      (apply proc this ,@args
+			 (make-list (-fx arity ,n) (js-undefined)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-calln ...                                                     */
@@ -1008,24 +1023,21 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-tonumber obj %this::JsGlobalObject)
-   (let loop ((obj obj))
-      (cond
-	 ((js-number? obj)
-	  obj)
-	 ((eq? obj (js-undefined))
-	  +nan.0)
-	 ((eq? obj (js-null))
-	  0)
-	 ((eq? obj #t)
-	  1)
-	 ((eq? obj #f)
-	  0)
-	 ((string? obj)
-	  (js-string->number obj %this))
-	 ((symbol? obj)
-	  (loop (symbol->string! obj)))
-	 (else
-	  (bigloo-type-error "toNumber" "JsObject" obj)))))
+   (cond
+      ((js-number? obj)
+       obj)
+      ((eq? obj (js-undefined))
+       +nan.0)
+      ((eq? obj (js-null))
+       0)
+      ((eq? obj #t)
+       1)
+      ((eq? obj #f)
+       0)
+      ((string? obj)
+       (js-string->number obj %this))
+      (else
+       (bigloo-type-error "toNumber" "JsObject" obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tofixnum ...                                                  */
@@ -1185,6 +1197,7 @@
       ((js-jsstring? obj) obj)
       ((eq? obj #t) (& "true"))
       ((eq? obj #f) (& "false"))
+      ((fixnum? obj) (js-integer->jsstring obj))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
       (else (js-tojsstring (js-toobject %this obj) %this))))
@@ -1202,6 +1215,7 @@
 (define (js-toprimitive-for-string obj %this::JsGlobalObject)
    (cond
       ((js-jsstring? obj) obj)
+      ((fixnum? obj) (js-integer->jsstring obj))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((eq? obj #t) (& "true"))
       ((eq? obj #f) (& "false"))
@@ -1850,22 +1864,24 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-typeof obj %this)
+(define (js-typeof obj %this)
    (cond
-      ((js-function? obj)
-       (& "function"))
-      ((isa? obj JsSymbolLiteral)
-       (& "symbol"))
-      ((js-object? obj)
-       (& "object"))
-      ((or (real? obj) (integer? obj))
+      ((or (fixnum? obj) (real? obj))
        (& "number"))
-      ((boolean? obj)
-       (& "boolean"))
-      ((eq? obj (js-undefined))
-       (& "undefined"))
       ((js-jsstring? obj)
        (& "string"))
+      ((js-function? obj)
+       (& "function"))
+      ((eq? obj (js-undefined))
+       (& "undefined"))
+      ((isa? obj JsSymbolLiteral)
+       (& "symbol"))
+      ((js-proxy? obj)
+       (js-proxy-typeof obj %this))
+      ((js-object? obj)
+       (& "object"))
+      ((boolean? obj)
+       (& "boolean"))
       ((eq? obj (js-null))
        (& "object"))
       (else

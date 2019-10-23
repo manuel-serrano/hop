@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Sep  6 12:08:52 2019 (serrano)                */
+;*    Last change :  Wed Oct 23 10:00:20 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -704,6 +704,7 @@
 		  (if (isa? val J2SMethod)
 		      (escape-method val fix)
 		      (escape-fun val fix #f))))
+	    
 	    (if (memq utype '(unknown any))
 		(let ((ty (env-lookup env decl)))
 		   (expr-type-add! this nenv fix ty))
@@ -832,7 +833,7 @@
 			     ;; force utype to be in vtype (for instance, for
 			     ;; argumentsp)
 			     (decl-vtype-add! decl utype fix)
-			     (expr-type-add! this env fix utype
+			     (expr-type-add! this (extend-env env decl tyr) fix utype
 				(append lbk rbk)))
 			    (tyr
 			     (with-access::J2SRef lhs (decl loc)
@@ -2034,7 +2035,7 @@
 ;*    force-type! ::J2JRef ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SRef from to cell)
-   (with-access::J2SRef this (decl type)
+   (with-access::J2SRef this (decl type loc)
       (when (isa? decl J2SDeclArguments)
 	 (force-type! decl from to cell))
       (when (eq? type from)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Oct 15 13:26:18 2019 (serrano)                */
+;*    Last change :  Wed Oct 23 11:55:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -137,7 +137,6 @@
 	      left::obj
 	      (right::obj (default #f))
 	      (pcacher (default #f)))
-;* 	      (pcachew (default #f)))                                  */
 	   
 	   (class JsStringLiteralASCII::JsStringLiteral)
 	   
@@ -1195,7 +1194,7 @@
 ;*    js-function-proxy? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-proxy? o)
-   (or (js-function? o) (js-proxy-function? o)))
+   (and (%object? o) (or (js-function? o) (js-proxy-function? o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-symbol? ...                                                   */
@@ -1218,7 +1217,6 @@
       (with-access::JsProxy obj ((target __proto__))
 	 (or (js-array? target)
 	     (js-proxy-array? target)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-function? ...                                           */
 ;*---------------------------------------------------------------------*/

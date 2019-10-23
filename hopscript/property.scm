@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct 22 13:29:08 2019 (serrano)                */
+;*    Last change :  Wed Oct 23 10:28:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1539,7 +1539,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-has-upto-property ...                                         */
 ;*    -------------------------------------------------------------    */
-;*    This function search a property in a delimited subset of         */
+;*    This function searches a property in a delimited subset of       */
 ;*    the prototype chain. It is used by JS-FOR-IN.                    */
 ;*---------------------------------------------------------------------*/
 (define (js-has-upto-property o::JsObject proto::JsObject p::obj %this)
@@ -2578,7 +2578,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-bind! ...                                                     */
 ;*    -------------------------------------------------------------    */
-;*    This is a simplified version of DefineOwnProperty used to build  */
+;*    This is a simplified version of defineOwnProperty used to build  */
 ;*    the library objects. This function always binds the value in the */
 ;*    mentionned object. It does not follow the prototype chain. It    */
 ;*    does not check the extensibility flags.                          */

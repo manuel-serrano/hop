@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Tue Oct 15 08:52:01 2019 (serrano)                */
+;*    Last change :  Wed Oct 23 11:04:42 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -49,6 +49,7 @@
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1))
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
+	   (inline js-proxy-typeof ::JsProxy ::JsGlobalObject)
 	   (js-call-proxy/cache-miss0 ::JsGlobalObject
 	      ::JsProxy ::obj)
 	   (js-call-proxy/cache-miss1 ::JsGlobalObject
@@ -316,9 +317,9 @@
 	     (js-absent))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-typeof ...                                                    */
+;*    js-proxy-typeof ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (js-typeof o::JsProxy %this::JsGlobalObject)
+(define-inline (js-proxy-typeof o::JsProxy %this::JsGlobalObject)
    (with-access::JsProxy o ((target __proto__))
       (js-typeof target %this)))
 

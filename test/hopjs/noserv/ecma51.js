@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Mar 28 13:36:36 2019 (serrano)                */
+/*    Last change :  Wed Oct 23 08:36:50 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -577,3 +577,18 @@ function testforin() {
 
 assert.ok( testforin(), "for in" );
 
+/*---------------------------------------------------------------------*/
+/*    Global this                                                      */
+/*---------------------------------------------------------------------*/
+assert.ok( function() {
+   return function( _global_ ) {
+      return typeof( _global_ ) === "object";
+   }(this);
+}(), "non-strict global object" );
+
+assert.ok( function() {
+   "use strict"
+   return function( _global_ ) {
+      return typeof( _global_ ) === "undefined";
+   }(this);
+}(), "strict global object" );
