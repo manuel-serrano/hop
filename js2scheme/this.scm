@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/this.scm      */
+;*    serrano/prgm/project/hop/hop/js2scheme/this.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Sep  1 19:56:38 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Wed Oct 23 09:41:35 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Init the this variable of all functions in non-strict mode.      */
+;*    Init the this variable of all non-strict mode functions.         */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
