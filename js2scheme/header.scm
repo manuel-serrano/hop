@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Fri Jun  7 11:57:31 2019 (serrano)                */
+;*    Last change :  Thu Oct 24 07:57:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -149,7 +149,11 @@
 			(& "clearTimeout")
 			(& "setImmediate")
 			(& "setInterval")
-			(& "setTimeout")))))
+			(& "setTimeout")))
+		,(unless (string=? path "console")
+		    `(nodejs-bind-export! %this %this
+			%scope
+			(& "console")))))
 	 (instantiate::J2SUndefined
 	    (type 'undefined)
 	    (loc loc)))))

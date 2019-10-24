@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Oct 23 10:28:59 2019 (serrano)                */
+;*    Last change :  Wed Oct 23 19:19:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2952,7 +2952,6 @@
 	    (set! current ncurrent)))
       (propagate-property-descriptor! current desc)
       (with-access::JsDataDescriptor current (writable name)
-	 
 	 (if (isa? desc JsValueDescriptor)
 	    (with-access::JsValueDescriptor desc ((dvalue value))
 	       (when (js-function? dvalue)
