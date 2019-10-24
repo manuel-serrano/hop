@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Oct 24 08:04:18 2019 (serrano)                */
+;*    Last change :  Thu Oct 24 08:16:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1451,11 +1451,12 @@
 
    ;; splice
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.12
-   (define (array-prototype-splice this::obj start deletecount . items)
+   (define (array-prototype-splice this::obj start . opts)
 
       (define (vector-splice this len actualstart actualdeletecount)
 	 (with-access::JsArray this (vec ilen)
 	    (let* ((alen (vector-length vec))
+		   (items (if (pair? opts) (cdr opts) '()))
 		   (litems (length items))
 		   (rlen (+fx actualstart actualdeletecount))
 		   (nlen (+fx len (-fx litems actualdeletecount)))
@@ -1506,6 +1507,7 @@
       (define (array-splice arr len actualstart actualdeletecount)
 	 (let* ((els (array-get-elements arr actualstart
 			(+ actualstart actualdeletecount) %this))
+		(items (if (pair? opts) (cdr opts) '()))
 		(res (js-vector->jsarray (list->vector els) %this))
 		(rest (array-get-elements arr (+ actualstart actualdeletecount)
 			 len %this)))
@@ -1533,10 +1535,9 @@
 	     (actualstart (if (< relstart 0)
 			      (max (+ len relstart) 0)
 			      (min relstart len)))
-	     (actualdeletecount (if (and (eq? deletecount (js-undefined))
-					 (not (eq? start (js-undefined))))
+	     (actualdeletecount (if (null? opts)
 				    (-fx len (->fixnum actualstart))
-				    (min (max (js-tointeger deletecount %this) 0)
+				    (min (max (js-tointeger (car opts) %this) 0)
 				       (- len actualstart)))))
 	 (if (not (js-array? this))
 	     (array-splice this len actualstart actualdeletecount)
