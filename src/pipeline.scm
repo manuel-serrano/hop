@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/src/pipeline.scm                  */
+;*    serrano/prgm/project/hop/hop/src/pipeline.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Jul 28 15:20:54 2017 (serrano)                */
-;*    Copyright   :  2008-17 Manuel Serrano                            */
+;*    Last change :  Mon Oct 28 14:56:06 2019 (serrano)                */
+;*    Copyright   :  2008-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
