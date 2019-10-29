@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Fri May 17 11:48:40 2019 (serrano)                */
+;*    Last change :  Tue Oct 29 20:11:56 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -170,15 +170,18 @@
 (define (negjs expr %this)
    (let loop ((expr expr))
       (cond
-	 ((and (js-number? expr) (= expr 0))
-	  (if (flonum? expr)
+	 ((fixnum? expr)
+	  (if (=fx expr 0)
+	      -0.0
+	      (negfx expr)))
+	 ((flonum? expr)
+	  (if (=fl expr 0.0)
 	      (if (=fx (signbitfl expr) 0) -0.0 +0.0)
-	      -0.0))
+	      (negfl expr)))
 	 ((js-number? expr)
 	  (- expr))
 	 (else
 	  (loop (js-tonumber expr %this))))))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    %$$II ...                                                        */
