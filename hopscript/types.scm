@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Oct 23 11:55:42 2019 (serrano)                */
+;*    Last change :  Thu Oct 24 12:02:57 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -543,7 +543,7 @@
 	   (js-object-default-mode side-effect-free))
    
    (cond-expand
-      ((not bigloo4.3a)
+      ((not |bigloo4.3a|)
        (pragma (gencmapid default-inline)))))
 
 ;*---------------------------------------------------------------------*/

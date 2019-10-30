@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Jun  6 12:58:19 2019 (serrano)                */
+;*    Last change :  Mon Oct 28 14:17:25 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -28,7 +28,8 @@
 	   __hopscript_function
 	   __hopscript_private
 	   __hopscript_lib
-	   __hopscript_public)
+	   __hopscript_public
+	   __hopscript_worker)
 
    (static (class JsFrame::JsObject
 	      (file::bstring read-only)
@@ -54,15 +55,15 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsError
    (lambda (o ctx)
-      (if (isa? ctx JsGlobalObject)
-	  (let ((%this ctx))
-	     (with-access::JsError o (name msg stack fname location)
+      (with-access::JsError o (name msg stack fname location %this)
+	 (let ((%this (if (isa? ctx JsGlobalObject) ctx %this)))
+	    (if (isa? %this JsGlobalObject)
 		(vector (string-append "Server" (js-tostring name %this))
 		   (js-tostring msg %this)
 		   (obj->string stack %this)
 		   (js-tostring fname %this)
-		   (js-tonumber location %this))))
-	  (error "obj->string ::JsError" "Not a JavaScript context" ctx)))
+		   (js-tonumber location %this))
+		(error "obj->string ::JsError" "Not a JavaScript context" ctx)))))
    (lambda (o ctx)
       (if (and (vector? o) (=fx (vector-length o) 5))
 	  (if (isa? ctx JsGlobalObject)
@@ -113,38 +114,51 @@
 	  (with-handler
 	     (lambda (e)
 		(let ((port (current-error-port)))
-		   (display "*** ERROR: " port)
-		   (display (js-jsstring->string name) port)
-		   (display " -- " port)
-		   (display (js-tostring msg %this) port)
-		   (newline port)
-		   (display (js-tostring fname %this) port)
-		   (display " " port)
-		   (display location port)
-		   (newline port)))
-	     (let* ((name (js-jsstring->string name))
-		    (stk (js-get exc (& "stack") %this))
-		    (port (current-error-port)))
-		(cond
-		   ((js-jsstring? fname)
-		    (display-trace-stack-source
-		       (list `(,name (at ,(js-jsstring->string fname) ,location)))
-		       port))
-		   ((string? fname)
-		    (display-trace-stack-source
-		       (list `(,name (at ,fname ,location)))
-		       port)))
-		(if (js-jsstring? stk)
-		    (display (js-jsstring->string stk) port)
-		    (let ((stack (cond
-				    ((string=? name "ReferenceError")
-				     stack)
-				    ((string=? name "TypeError")
-				     stack)
-				    (else
-				     stack))))
-		       (fprint port name ": " msg "\n")
-		       (display-trace-stack stack port))))))))
+		   (
+		    (display "*** INTERNAL-ERROR: " port)
+		    (display "an error occurred while signaling an error!" port)
+		    (newline port)
+		    (display "The initial error was:" port)
+		    (newline port)
+		    (display "  " port)
+		    (display (js-jsstring->string name) port)
+		    (display " -- " port)
+		    (display (js-tostring msg %this) port)
+		    (newline port)
+		    (display "  " port)
+		    (display (js-tostring fname %this) port)
+		    (display ":" port)
+		    (display location port)
+		    (newline port)
+		    (display "The reraise error is:" port)
+		    (newline port)
+		    (exception-notify e))))
+	     (with-access::JsGlobalObject %this (worker)
+		(js-worker-exec worker "error" #t
+		   (lambda ()
+		      (let* ((name (js-jsstring->string name))
+			     (stk (js-get exc (& "stack") %this))
+			     (port (current-error-port)))
+			 (cond
+			    ((js-jsstring? fname)
+			     (display-trace-stack-source
+				(list `(,name (at ,(js-jsstring->string fname) ,location)))
+				port))
+			    ((string? fname)
+			     (display-trace-stack-source
+				(list `(,name (at ,fname ,location)))
+				port)))
+			 (if (js-jsstring? stk)
+			     (display (js-jsstring->string stk) port)
+			     (let ((stack (cond
+					     ((string=? name "ReferenceError")
+					      stack)
+					     ((string=? name "TypeError")
+					      stack)
+					     (else
+					      stack))))
+				(fprint port name ": " msg "\n")
+				(display-trace-stack stack port)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exception-notify ::obj ...                                       */

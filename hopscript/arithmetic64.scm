@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon May 13 10:35:59 2019 (serrano)                */
+;*    Last change :  Wed Oct 30 08:40:27 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -32,6 +32,8 @@
       ((or bint61 bint64)
        (export
 	  (js-number->jsnumber ::obj)
+
+	  (inline negjs-int::obj ::long)
 	  
 	  (inline overflowfx ::long)
 	  (inline overflow53::obj ::long)
@@ -122,6 +124,12 @@
        (bignum->flonum val))
       (else
        (bigloo-type-error "js-number->jsnumber" "number" val))))
+
+;*---------------------------------------------------------------------*/
+;*    negjs-int ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (negjs-int num)
+   (if (=fx num 0) -0.0 (negfx num)))
 
 ;*---------------------------------------------------------------------*/
 ;*    overflowfx ...                                                   */

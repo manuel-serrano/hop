@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/syncg.scm                  */
+;*    serrano/prgm/project/hop/hop/nodejs/syncg.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 20 08:04:06 2017                          */
-;*    Last change :  Sat Jun  9 10:56:07 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Thu Oct 24 12:03:05 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global inter-process synchronization                             */
 ;*=====================================================================*/
@@ -53,7 +53,8 @@
 			 (delete-file lockfile))))))))
    
    (cond-expand
-      (bigloo4.3a (synchronize-file lockfile proc))
+      (|bigloo4.3a|
+       (synchronize-file lockfile proc))
       (else
        (call-with-output-file lockfile
 	  (lambda (port)

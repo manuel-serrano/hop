@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Aug 13 08:45:34 2019 (serrano)                */
+;*    Last change :  Wed Oct 30 08:26:20 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -254,6 +254,8 @@
 		  (epairify loc `(negs32 ,(asint32 sexpr 'uint32))))
 		 ((memq typ '(int32 uint32))
 		  (epairify loc `(js-toint32 (negfx ,sexpr) %this)))
+		 ((memq typ '(int32 uint32))
+		  (epairify loc `(js-toint32 (negfx ,sexpr) %this)))
 		 (else
 		  (epairify loc `(js-toint32 (negjs ,sexpr %this) %this)))))
 	     ((uint32)
@@ -305,7 +307,9 @@
 			  -0.0
 			  (negfx ,sexpr)))
 		    (else
-		     `(negjs ,sexpr %this)))))
+		     (if (eq? typ 'integer)
+			 `(negjs-int ,sexpr)
+			 `(negjs ,sexpr %this))))))
 	     (else
 	      (epairify loc `(negjs ,sexpr %this))))))
       ((~)
@@ -1864,6 +1868,18 @@
 				lhs (number type) type conf)))
 		      (else
 		       (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
+				     ,(tonumber32 right trv conf))
+			  lhs (number type) type conf))))
+		  ((eq? type 'real)
+		   (cond
+		      ((and (eq? tlv 'real) (eq? trv 'real))
+		       `(%$$FF ,left ,right))
+		      ((eq? tlv 'real)
+		       `(%$$FN ,left ,(tonumber32 right trv conf)))
+		      ((eq? trv 'real)
+		       `(%$$NF ,(tonumber32 left tlv conf) ,right))
+		      (else
+		       (j2s-cast `(%$$NN ,(tonumber32 left tlv conf)
 				     ,(tonumber32 right trv conf))
 			  lhs (number type) type conf))))
 		  ((m64? conf)
