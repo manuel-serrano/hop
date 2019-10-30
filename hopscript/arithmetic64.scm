@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Wed Oct 30 08:30:26 2019 (serrano)                */
+;*    Last change :  Wed Oct 30 08:40:27 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -33,7 +33,7 @@
        (export
 	  (js-number->jsnumber ::obj)
 
-	  (inline negjs-int::long ::long)
+	  (inline negjs-int::obj ::long)
 	  
 	  (inline overflowfx ::long)
 	  (inline overflow53::obj ::long)
