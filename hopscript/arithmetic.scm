@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Tue Oct 29 20:11:56 2019 (serrano)                */
+;*    Last change :  Wed Oct 30 07:06:39 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -47,6 +47,9 @@
 	   (inline %$$II ::long ::long)
 	   (%$$NN ::obj ::obj)
 	   (%$$NZ ::obj ::obj)
+	   (%$$FF::double ::double ::double)
+	   (%$$NF::double ::obj ::double)
+	   (%$$FN::double ::double ::obj)
 	   
 	   (bit-lshjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-rshjs::obj ::obj ::obj ::JsGlobalObject)
@@ -236,6 +239,37 @@
 		     ;; MS: CARE 21 dec 2016, why returning a flonum?
                      ;; (if (= m 0) 0.0 m)
 		     m)))))))
+
+;*---------------------------------------------------------------------*/
+;*    %$$FF ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$FF lnum rnum)
+   (if (or (=fl rnum 0.0) (nanfl? rnum))
+       +nan.0
+       (let* ((alnum (absfl lnum))
+	      (arnum (absfl rnum))
+	      (m (remainderfl alnum arnum)))
+	  (if (or (<fl lnum 0.0)
+		  (and (=fl lnum 0.0)
+		       (not (=fx (signbitfl lnum) 0))))
+	      (if (=fl m 0.0) -0.0 (negfl m))
+	      (if (=fl m 0.0) +0.0 m)))))
+
+;*---------------------------------------------------------------------*/
+;*    %$$FN ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$FN lnum rnum)
+   (if (flonum? rnum)
+       (%$$FF lnum rnum)
+       (%$$FF lnum (fixnum->flonum rnum))))
+
+;*---------------------------------------------------------------------*/
+;*    %$$NF ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$NF lnum rnum)
+   (if (flonum? lnum)
+       (%$$FF lnum rnum)
+       (%$$FF (fixnum->flonum lnum) rnum)))
 
 ;*---------------------------------------------------------------------*/
 ;*    bit-lshjs ...                                                    */

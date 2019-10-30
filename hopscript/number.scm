@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jun 12 12:10:08 2019 (serrano)                */
+;*    Last change :  Wed Oct 30 06:39:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -565,7 +565,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js+ left right %this::JsGlobalObject)
    (if (and (js-number? left) (js-number? right))
-       (+js left right %this)
+       (+/overflow left right)
        (js-slow+ left right %this)))
 
 ;*---------------------------------------------------------------------*/

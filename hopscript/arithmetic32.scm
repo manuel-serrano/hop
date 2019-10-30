@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon May 13 10:35:50 2019 (serrano)                */
+;*    Last change :  Wed Oct 30 06:41:19 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -349,9 +349,9 @@
 (define (tolong x)
    (cond
       ((fixnum? x) x)
+      ((=fl x 0.0) 0)
       ((int32? x) (int32->fixnum x))
       ((uint32? x) (uint32->fixnum x))
-      ((=fl x 0.0) 0)
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
