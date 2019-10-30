@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Oct 30 07:00:38 2019 (serrano)                */
+;*    Last change :  Wed Oct 30 08:26:20 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -254,6 +254,8 @@
 		  (epairify loc `(negs32 ,(asint32 sexpr 'uint32))))
 		 ((memq typ '(int32 uint32))
 		  (epairify loc `(js-toint32 (negfx ,sexpr) %this)))
+		 ((memq typ '(int32 uint32))
+		  (epairify loc `(js-toint32 (negfx ,sexpr) %this)))
 		 (else
 		  (epairify loc `(js-toint32 (negjs ,sexpr %this) %this)))))
 	     ((uint32)
@@ -305,7 +307,9 @@
 			  -0.0
 			  (negfx ,sexpr)))
 		    (else
-		     `(negjs ,sexpr %this)))))
+		     (if (eq? typ 'integer)
+			 `(negjs-int ,sexpr)
+			 `(negjs ,sexpr %this))))))
 	     (else
 	      (epairify loc `(negjs ,sexpr %this))))))
       ((~)
