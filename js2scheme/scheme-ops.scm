@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Nov  1 06:40:12 2019 (serrano)                */
+;*    Last change :  Fri Nov  1 07:40:39 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1658,7 +1658,7 @@
 		 (if (=u32 (bit-andu32
 			      ,n ,(fixnum->uint32 (-fx (bit-lsh 1 k) 1)))
 			#u32:0)
-		     (uint32->fixnum (bit-rshu32 ,n ,k))
+		     (uint32->flonum (bit-rshu32 ,n ,k))
 		     (/fl (uint32->flonum ,n) (fixnum->flonum ,(bit-lsh 1 k))))))
 	    ((int32)
 	     `(let ((,n ,(j2s-scheme lhs mode return conf)))
@@ -1666,8 +1666,8 @@
 			      ,n ,(fixnum->int32 (-fx (bit-lsh 1 k) 1)))
 			#s32:0)
 		     ,(if (positive? lhs)
-			  `(int32->fixnum (bit-rshs32 ,n ,k))
-			  `(int32->fixnum (/pow2s32 ,n ,k)))
+			  `(int32->flonum (bit-rshs32 ,n ,k))
+			  `(int32->flonum (/pow2s32 ,n ,k)))
 		     (/fl (int32->flonum ,n) (fixnum->flonum ,(bit-lsh 1 k))))))
 	    (else
 	     `(let ((,n ,(j2s-scheme lhs mode return conf)))
@@ -1676,8 +1676,8 @@
 			  `(and (fixnum? ,n)
 				(=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0)))
 		     ,(if (positive? lhs)
-			  `(bit-rsh ,n ,k)
-			  `(/pow2fx ,n ,k))
+			  `(fixnum->flonum (bit-rsh ,n ,k))
+			  `(fixnum->flonum (/pow2fx ,n ,k)))
 		     (/js ,n ,(bit-lsh 1 k) %this)))))))
 
    (define (divs32 left right tl tr)
