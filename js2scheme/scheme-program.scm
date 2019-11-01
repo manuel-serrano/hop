@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat Aug 24 16:06:01 2019 (serrano)                */
+;*    Last change :  Thu Oct 31 22:16:31 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -144,6 +144,8 @@
 		      '())
 		(define (main args)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
+		   (hop-port-set! -1)
+		   (hop-ssl-port-set! -1)
 		   (hopscript-install-expanders!)
 		   (multiple-value-bind (%worker %this %module)
 		      (js-main-worker! ,name ,(absolute path) #f
@@ -276,6 +278,8 @@
 		   ,`(define __js_strings (&init!))
 		   ,(profilers conf)
 		   (hopscript-install-expanders!)
+		   (hop-port-set! -1)
+		   (hop-ssl-port-set! -1)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (set! !process (nodejs-process %worker %this))
 		   ,@(exit-body body conf))
