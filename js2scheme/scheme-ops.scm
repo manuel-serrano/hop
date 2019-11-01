@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Oct 30 08:26:20 2019 (serrano)                */
+;*    Last change :  Fri Nov  1 06:40:12 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1720,7 +1720,7 @@
 	  (if (eq? tr 'uint32)
 	      `(if (and (not (=u32 ,right #u32:0))
 			(=u32 (remainderu32 ,left ,right) #u32:0))
-		   (js-uint32-tointeger (/u32 ,left ,right))
+		   (uint32->flonum (/u32 ,left ,right))
 		   (/fl ,(asreal left tl)
 		      ,(asreal right tr)))
 	      `(/fl ,(asreal left tl) ,(todouble right tr conf))))
@@ -1728,7 +1728,7 @@
 	  (if (eq? tr 'int32)
 	      `(if (and (not (=s32 ,right #s32:0))
 			(=s32 (remainders32 ,left ,right) #s32:0))
-		   (js-int32-tointeger (/s32 ,left ,right))
+		   (int32->flonum (/s32 ,left ,right))
 		   (/fl ,(asreal left tl)
 		      ,(asreal right tr)))
 	      `(/fl ,(asreal left tl) ,(todouble right tr conf))))
@@ -1740,7 +1740,7 @@
 	  (if (eq? tr 'integer)
 	      `(if (and (not (=fx ,right 0))
 			(=fx (remainderfx ,left ,right) 0))
-		   (/fx ,left ,right)
+		   (fixnum->flonum (/fx ,left ,right))
 		   (/fl ,(todouble left tl conf) ,(todouble right tr conf)))
 	      `(/fl ,(todouble left tl conf) ,(todouble right tr conf))))
 	 ((or (eq? tl 'real) (eq? tr 'real))
