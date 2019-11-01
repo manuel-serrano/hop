@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct 17 14:08:12 2019 (serrano)                */
+;*    Last change :  Thu Oct 31 22:03:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1022,9 +1022,19 @@
    (define (store-cache filename expr)
       (when (hop-cache-enable)
 	 (let ((path (cache-path filename)))
-	    (call-with-output-file path
-	       (lambda (op)
-		  (for-each (lambda (e) (pp e op)) expr)))))
+	    (with-handler
+	       (lambda (e)
+		  (when (>=fx (bigloo-debug) 1)
+		     (exception-notify e)
+		     (with-output-to-port (current-error-port)
+			(lambda ()
+			   (print "\nThis error was raised because the JS compiler\n"
+			      "is enable to store the generated file into its cache.\n"
+			      "This error can be safely ignored but the file will have\n"
+			      "to be recompiled at each run.\n")))))
+	       (call-with-output-file path
+		  (lambda (op)
+		     (for-each (lambda (e) (pp e op)) expr))))))
       expr)
    
    (define (compile-file filename::bstring mod)
