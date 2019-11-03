@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Nov  1 07:40:39 2019 (serrano)                */
+;*    Last change :  Sat Nov  2 07:12:53 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1743,6 +1743,13 @@
 		   (fixnum->flonum (/fx ,left ,right))
 		   (/fl ,(todouble left tl conf) ,(todouble right tr conf)))
 	      `(/fl ,(todouble left tl conf) ,(todouble right tr conf))))
+	 ((and (eq? tl 'int53) (m64? conf))
+	  (if (eq? tr 'integer)
+	      `(if (and (not (=fx ,right 0))
+			(=fx (remainderfx ,left ,right) 0))
+		   (fixnum->flonum (/fx ,left ,right))
+		   (/fl ,(todouble left tl conf) ,(todouble right tr conf)))
+	      `(/fl ,(todouble left tl conf) ,(todouble right tr conf))))
 	 ((or (eq? tl 'real) (eq? tr 'real))
 	  `(/fl ,(todouble left tl conf) ,(todouble right tr conf)))
 	 ((eq? tr 'integer)
@@ -1851,13 +1858,9 @@
 			    ,(j2s-cast `(remainderfx ,left
 					   ,(asfixnum right trv))
 				lhs (number type) type conf)
-			    ,(if (m64? conf)
-				 (j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
-					       ,(tonumber64 right trv conf))
-				    lhs (number type) type conf)
-				 (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
-					       ,(tonumber32 right trv conf))
-				    lhs (number type) type conf))))
+			    (j2s-cast `(%$$NZ ,(tonumber left tlv conf)
+					  ,(tonumber right trv conf))
+			       lhs (number type) type conf)))
 		      ((m64? conf)
 		       `(if (fixnum? ,left)
 			    ,(j2s-cast `(remainderfx ,left
@@ -1875,41 +1878,49 @@
 		      ((and (eq? tlv 'real) (eq? trv 'real))
 		       `(%$$FF ,left ,right))
 		      ((eq? tlv 'real)
-		       `(%$$FN ,left ,(tonumber32 right trv conf)))
+		       (cond
+			  ((and (m64? conf) (eq? tr 'int53))
+			   `(%$$FF ,left (fixnum->flonum ,right)))
+			  (else
+			   `(%$$FN ,left ,(tonumber right tr conf)))))
 		      ((eq? trv 'real)
-		       `(%$$NF ,(tonumber32 left tlv conf) ,right))
+		       (cond
+			  ((and (m64? conf) (eq? tl 'int53))
+			   `(%$$FF (fixnum->flonum ,left) ,right))
+			  (else
+			   `(%$$NF ,(tonumber left tl conf) ,right))))
 		      (else
-		       (j2s-cast `(%$$NN ,(tonumber32 left tlv conf)
-				     ,(tonumber32 right trv conf))
+		       (j2s-cast `(%$$NN ,(tonumber left tl conf)
+				     ,(tonumber right tr conf))
 			  lhs (number type) type conf))))
 		  ((m64? conf)
 		   (cond
 		      ((and (number? right) (not (= right 0)))
-		       (j2s-cast `(%$$NZ ,(tonumber64 left tlv conf)
-				     ,(tonumber64 right trv conf))
+		       (j2s-cast `(%$$NZ ,(tonumber64 left tl conf)
+				     ,(tonumber64 right tr conf))
 			  lhs (number type) type conf))
 		      ((and (type-integer? tl) (type-integer? tr))
-		       (j2s-cast `(%$$II ,(tonumber64 left tlv conf)
-				     ,(tonumber64 right trv conf))
+		       (j2s-cast `(%$$II ,(tonumber64 left tl conf)
+				     ,(tonumber64 right tr conf))
 			  lhs (number type) type conf))
 		      (else
-		       (j2s-cast `(%$$NN ,(tonumber64 left tlv conf)
-				     ,(tonumber64 right trv conf))
+		       (j2s-cast `(%$$NN ,(tonumber64 left tl conf)
+				     ,(tonumber64 right tr conf))
 			  lhs (number type) type conf))))
 		  (else
 		   (cond
 		      ((and (number? right) (not (= right 0)))
-		       (j2s-cast `(%$$NZ ,(tonumber32 left tlv conf)
-				     ,(tonumber32 right trv conf))
+		       (j2s-cast `(%$$NZ ,(tonumber32 left tl conf)
+				     ,(tonumber32 right tr conf))
 			  lhs (number type) type conf))
 		      ((and (type-integer? tl) (type-integer? tr)
 			    (inrange-int32? lhs) (inrange-int32? rhs))
-		       (j2s-cast `(%$$II ,(tonumber32 left tlv conf)
-				     ,(tonumber32 right trv conf))
+		       (j2s-cast `(%$$II ,(tonumber32 left tl conf)
+				     ,(tonumber32 right tr conf))
 			  lhs (number type) type conf))
 		      (else
-		       (j2s-cast `(%$$NN ,(tonumber32 left tlv conf)
-				     ,(tonumber32 right trv conf))
+		       (j2s-cast `(%$$NN ,(tonumber32 left tl conf)
+				     ,(tonumber32 right tr conf))
 			  lhs (number type) type conf))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2173,6 +2184,8 @@
        val)
       ((number)
        `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))
+      ((int53)
+       (if (m64? conf) `(fixnum->flonum ,val) `(js-toflonum ,val %this)))
       (else
        `(if (flonum? ,val) ,val (js-toflonum (js-tonumber ,val %this))))))
 

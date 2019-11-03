@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Aug 20 14:30:55 2019 (serrano)                */
+;*    Last change :  Sun Nov  3 06:59:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -41,6 +41,7 @@
 	   __js2scheme_constant
 	   __js2scheme_tyflow
 	   __js2scheme_range
+	   __js2scheme_loopspec
 	   __js2scheme_cast
 	   __js2scheme_vector
 	   __js2scheme_array
@@ -204,6 +205,7 @@
 	  j2s-objinit-stage
 	  j2s-constant-stage
 	  j2s-varpreinit-stage
+	  j2s-loopspec-stage
 	  j2s-tyflow-stage
 	  j2s-sweep-stage
 	  j2s-hintnum-stage
@@ -469,6 +471,8 @@
 	    (set! o (cons* :optim-inline #t o)))
 	 (unless (memq :optim-globprop o)
 	    (set! o (cons* :optim-globprop #t o)))
+	 (unless (memq :optim-loopspec o)
+	    (set! o (cons* :optim-loopspec #t o)))
 	 )
       (when (>=fx l 3)
 	 (unless (memq :optim-literals o)
