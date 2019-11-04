@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Jun 12 13:39:33 2019 (serrano)                */
+;*    Last change :  Sun Nov  3 07:44:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -576,7 +576,7 @@
 ;*    decl-usage-add! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (decl-usage-add! decl key)
-   [assert (key) (memq key '(uninit init new ref assig get set call eval delete instanceof rest))]
+   [assert (key) (memq key '(uninit init new ref assig get set call eval delete instanceof rest escape))]
    (with-access::J2SDecl decl (usage)
       (unless (memq key usage)
 	 (set! usage (cons key usage)))))
@@ -587,7 +587,7 @@
 (define (decl-usage? decl keys)
    (with-access::J2SDecl decl (usage)
       (any (lambda (k)
-	      [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest))]
+	      [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest escape))]
 	      (memq k usage))
 	 keys)))
 

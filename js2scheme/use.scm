@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jun  7 14:37:31 2019 (serrano)                */
+;*    Last change :  Sun Nov  3 08:48:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -279,9 +279,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SRef ctx deval infun)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (%info useinfun id)
+      (with-access::J2SDecl decl (%info escape id)
 	 (unless (eq? infun %info)
-	    (set! useinfun #t))
+	    (set! escape #t))
 	 (when ctx
 	    (decl-usage-add! decl ctx))))
    this)

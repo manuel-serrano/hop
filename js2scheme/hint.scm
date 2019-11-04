@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Aug  3 06:59:41 2019 (serrano)                */
+;*    Last change :  Sat Nov  2 07:36:27 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -633,18 +633,35 @@
 	 (let ((val (j2sdeclinit-val-fun this)))
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (params vararg body)
-		  (and (not (isa? %info J2SDecl))
-		       (not (isa? hintinfo FunHintInfo))
-		       (not (isa? hintinfo J2SDeclFun))
-		       (not vararg)
-		       (not (isa? val J2SSvc))
-		       (any (lambda (p)
-			       (with-access::J2SDecl p (vtype itype)
-				  ;; at least one parameter is not precisely typed
-				  (and (memq vtype '(unknown number any))
-				       (memq itype '(unknown number any)))))
-			  params)
-		       (not (type-checker? val))))))))
+		  (let ((dup (and (not (isa? %info J2SDecl))
+				  (not (isa? hintinfo FunHintInfo))
+				  (not (isa? hintinfo J2SDeclFun))
+				  (not vararg)
+				  (not (isa? val J2SSvc))
+				  (any (lambda (p)
+					  (with-access::J2SDecl p (vtype itype)
+					     ;; at least one parameter is not precisely typed
+					     (and (memq vtype '(unknown number any))
+						  (memq itype '(unknown number any)))))
+				     params)
+				  (not (type-checker? val)))))
+		     (when (>=fx (config-get conf :verbose 0) 5)
+			(with-output-to-port (current-error-port)
+			   (lambda ()
+			      (display* " [" id 
+				 (if dup " dup " " no-dup ")
+				 (not (isa? %info J2SDecl)) " " 
+				 (not (isa? hintinfo FunHintInfo)) " " 
+				 (not (isa? hintinfo J2SDeclFun)) " " 
+				 (not vararg) " " 
+				 (not (isa? val J2SSvc)) " "
+				 (map (lambda (p)
+					 (with-access::J2SDecl p (vtype itype)
+					    (cons vtype itype)))
+				    params) " " 
+				 (not (type-checker? val))
+				 "]"))))
+		     dup))))))
    
    (define (typed? decl::J2SDeclFun)
       ;; return #t iff the function's arguments are all typed

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Sep  6 13:04:05 2019 (serrano)                */
+;*    Last change :  Sun Nov  3 08:48:37 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -2238,7 +2238,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SDecl tymap)
    (call-default-walker)
-   (with-access::J2SDecl this (vrange vtype id scope useinfun)
+   (with-access::J2SDecl this (vrange vtype id scope escape)
       (when (range-type? vtype)
 	 (let ((ity (interval->type vrange tymap vtype)))
 	    (unless (eq? ity 'unknown)
@@ -2249,7 +2249,7 @@
 				    (if (not (decl-usage? this '(assig)))
 					rty
 					(type->boxed-type rty)))
-				   (useinfun
+				   (escape
 				    (type->boxed-type rty))
 				   (else
 				    rty))))

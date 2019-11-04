@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Oct 23 11:03:02 2019 (serrano)                */
+;*    Last change :  Mon Nov  4 14:47:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1927,12 +1927,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
 ;*---------------------------------------------------------------------*/
 (define (js-parseint string radix %this)
-   (if (and (isa? string JsStringLiteralIndex)
-	    (or (not radix) (and (fixnum? radix) (=fx radix 10))))
-       (js-toindex string)
-       (js-string-parseint
-	  (trim-whitespaces+ (js-tostring string %this) :plus #t)
-	  (js-toint32 radix %this) #f)))
+   (js-string-parseint
+      (trim-whitespaces+ (js-tostring string %this) :plus #t)
+      (js-toint32 radix %this) #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint-string ...                                           */

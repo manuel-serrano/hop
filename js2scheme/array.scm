@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x-new-types/js2scheme/array.scm     */
+;*    serrano/prgm/project/hop/hop/js2scheme/array.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed May  9 15:52:44 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Sun Nov  3 09:25:55 2019 (serrano)                */
+;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
 ;*=====================================================================*/
@@ -86,7 +86,7 @@
 ;*---------------------------------------------------------------------*/
 (define (decl->adecl::J2SDeclInit decl::J2SDecl)
    (with-access::J2SDecl decl (id loc)
-      (J2SLetOptVtype 'vector '(read write)
+      (J2SLetOptVtype 'vector '(read assig)
 	 (symbol-append '%A id)
 	 (J2SCall (J2SHopRef 'js-array-vec) (J2SRef decl)))))
 
@@ -95,7 +95,7 @@
 ;*---------------------------------------------------------------------*/
 (define (decl->ldecl::J2SDeclInit adecl::J2SDecl decl::J2SDecl)
    (with-access::J2SDecl decl (id loc)
-      (J2SLetOptVtype 'uint32 '(read write)
+      (J2SLetOptVtype 'uint32 '(read assig)
 	 (symbol-append '%L id)
 	 (J2SCall (J2SHopRef 'js-array-ilen) (J2SRef decl)))))
 
@@ -103,7 +103,7 @@
 ;*    mark-decl ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (mark-decl::J2SDeclInit loc)
-   (J2SLetOptVtype 'integer '(read write)
+   (J2SLetOptVtype 'integer '(read assig)
       (gensym '%Marray-mark)
       (J2SCall (J2SHopRef 'js-array-mark))))
 

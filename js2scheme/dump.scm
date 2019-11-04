@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Sep  4 07:40:07 2019 (serrano)                */
+;*    Last change :  Sun Nov  3 08:48:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -298,12 +298,12 @@
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:access")
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:usage"))
-       (with-access::J2SDecl this (usecnt useinloop useinfun usage ronly writable scope)
+       (with-access::J2SDecl this (usecnt useinloop escape usage ronly writable scope)
 	  `((:ronly ,ronly)
 	    (:writable ,writable)
 	    (:usecnt ,usecnt)
 	    (:useinloop ,useinloop)
-	    (:useinfun ,useinfun)
+	    (:escape ,escape)
 	    (:usage ,usage)
 	    (:scope ,scope)))
        '()))

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/varpreinit.scm          */
+;*    serrano/prgm/project/hop/hop/js2scheme/varpreinit.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Tue May  1 06:51:38 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Sun Nov  3 08:48:49 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization consists in "pre-initializating" variables     */
 ;*    declarations in order to improve the variable typing.            */
@@ -153,8 +153,8 @@
       (if (isa? decl J2SDeclInit)
 	  env
 	  (if (memq decl env)
-	      (with-access::J2SDecl decl (%info useinfun)
-		 (if (and (preinit? %info) (not useinfun))
+	      (with-access::J2SDecl decl (%info escape)
+		 (if (and (preinit? %info) (not escape))
 		     env
 		     (begin
 			(invalidate-decl! decl)

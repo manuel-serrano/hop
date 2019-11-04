@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Sep 11 10:34:04 2019 (serrano)                */
+;*    Last change :  Sun Nov  3 07:45:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -66,10 +66,10 @@
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))
-	      (useinfun::bool (default #f) (info '("notraverse")))
+	      (escape::bool (default #f) (info '("notraverse")))
 	      ;; usage: init, new, ref, assig, get (field), set (field), call,
 	      ;; delete, instanceof, uninit (premature variable access),
-	      ;; rest (rest argument)
+	      ;; rest (rest argument), escape (free variable ref).
 	      (usage::pair-nil (default '()) (info '("notraverse")))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))

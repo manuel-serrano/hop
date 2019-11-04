@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/alpha.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/alpha.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Wed Jan  9 13:00:58 2019 (serrano)                */
+;*    Last change :  Sun Nov  3 09:41:07 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -225,14 +225,23 @@
 ;*    alpha ::J2SRef ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SRef)
-   (with-access::J2SRef this (decl)
+   
+   (define (min-type x y)
+      (cond
+	 ((memq x '(int32 uint32 int53 index indexof)) x)
+	 ((memq y '(int32 uint32 int53 index indexof)) y)
+	 (else x)))
+   
+   (with-access::J2SRef this (decl type)
       (with-access::J2SDecl decl (%info)
 	 (if (isa? %info AlphaInfo)
 	     (with-access::AlphaInfo %info (new)
 		(cond
 		   ((isa? new J2SDecl)
-		    (duplicate::J2SRef this
-		       (decl new)))
+		    (with-access::J2SDecl new (vtype)
+		       (duplicate::J2SRef this
+			  (type (min-type type vtype))
+			  (decl new))))
 		   ((isa? new J2SExpr)
 		    (alpha new))
 		   (else
