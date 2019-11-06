@@ -1,6 +1,19 @@
-#+FILETAGS: :hop:
+#+FILETAGS: hop
 
 Hop TODO stuff
 ==============
 
-*** TODO Fix hopimpress with hop-3.3.x
+** Misc [100%]
+  - [X] Fix hopimpress with hop-3.3.x
+
+** js2scheme [0%]
+  - [ ] integrate the new loopsec optimization
+  - [ ] move the glob prop property optim to optim level 3
+
+** hopscript [0%]
+  - [ ] move the TONAME conversion how of JS-PUT-JSOBJECT! (property.scm)
+  - [ ] improve DEFINE-PROPERTY to avoid unmapping data properties
+  - [ ] improve DEFINE-PROPERTY to avoid unmapping all properties
+  - [ ] verify that after PROXY-PUT value verif. change benchs are still ok
+
+

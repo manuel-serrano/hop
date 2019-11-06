@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Oct 13 09:34:15 2019 (serrano)                */
+;*    Last change :  Mon Nov  4 16:31:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1232,8 +1232,8 @@
    (for-each js-seal-property! (js-object-properties o))
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-sealed-set! o #t)
-   (with-access::JsObject o (cmap)
-      (unless (eq? cmap (js-not-a-cmap))
+   (when (js-object-mapped? o)
+      (with-access::JsObject o (cmap)
 	 (with-access::JsConstructMap cmap (props)
 	    (let ((ncmap (duplicate::JsConstructMap cmap
 			    (props (vector-map prop-seal props)))))
