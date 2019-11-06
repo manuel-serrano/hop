@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Nov  4 16:20:07 2019 (serrano)                */
+;*    Last change :  Wed Nov  6 17:33:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -128,7 +128,8 @@
 	      (vtable::vector (default '#()))
 	      (vcache::obj (default #f))
 	      (sibling (default #f))
-	      (inline::bool read-only (default #f)))
+	      (inline::bool read-only (default #f))
+	      (parent::JsConstructMap (default (class-nil JsConstructMap))))
 	   
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance

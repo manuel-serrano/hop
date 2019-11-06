@@ -14,6 +14,7 @@ Hop TODO stuff
   - [ ] move the TONAME conversion how of JS-PUT-JSOBJECT! (property.scm)
   - [ ] improve DEFINE-PROPERTY to avoid unmapping data properties
   - [ ] improve DEFINE-PROPERTY to avoid unmapping all properties
+  - [ ] improve DEFINE-PROPERTY to avoid unmapping replaced props
   - [ ] verify that after PROXY-PUT value verif. change benchs are still ok
 
 
