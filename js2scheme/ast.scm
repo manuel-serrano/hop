@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Nov  3 07:45:19 2019 (serrano)                */
+;*    Last change :  Thu Nov  7 08:58:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -377,10 +377,16 @@
 	   (final-class J2SFunBinding::J2SInit)
 	   
 	   (final-class J2SPrefix::J2SAssig
+	      (cache (default #f) (info '("nojson" "notraverse")))
+	      (cspecs (default '(imap emap cmap pmap amap vtable)) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   (final-class J2SPostfix::J2SAssig
+	      (cache (default #f) (info '("nojson" "notraverse")))
+	      (cspecs (default '(imap emap cmap pmap amap vtable)) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   (final-class J2SAssigOp::J2SAssig
+	      (cache (default #f) (info '("nojson" "notraverse")))
+	      (cspecs (default '(imap emap cmap pmap amap vtable)) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   
 	   (final-class J2SObjInit::J2SExpr

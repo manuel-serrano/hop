@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Oct 14 14:23:58 2019 (serrano)                */
+;*    Last change :  Thu Nov  7 09:12:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1875,26 +1875,6 @@
 				      (strict-mode? mode) conf
 				      cache #t cs)
 				  ,tmp))))))
-	       (cache-missp
-		`(let ((,tmp ,scmlhs))
-		    ,(let* ((tmp2 (gensym 'tmp))
-			    (tref (instantiate::J2SHopRef
-				     (loc loc)
-				     (id tmp2)
-				     (type 'number))))
-			`(let ((,tmp2 (js-tonumber ,tmp %this)))
-			    ,(new-or-old tmp2
-				(js-binop2 loc '+ 'any
-				   tref rhs mode return conf)
-				(lambda (val tmp)
-				   `(begin
-				       ,(j2s-put! loc otmp #f tyobj
-					   fexpr
-					   (j2s-vtype field)
-					   val 'number
-					   (strict-mode? mode) conf
-					   cache #t cs)
-				       ,tmp)))))))
 	       (else
 		`(let ((,tmp ,scmlhs))
 		    (if (fixnum? ,tmp)
@@ -1953,24 +1933,7 @@
 	     (warning "js2scheme" "no cache entry should have been generated" (j2s->list this))
 	     (aput-inc 'object otmp prop op lhs field cache inc '() #f))
 	    (else
-	     `(with-access::JsObject ,otmp (cmap)
-		 (let ((%cmap cmap))
-		    ,(let loop ((cs cspecs))
-			(cond
-			   ((null? cs)
-			    (aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc '() #t))
-			   ((or (eq? (car cs) 'imap) (eq? (car cs) 'imap-incache))
-			    `(if (eq? %cmap (js-pcache-imap (js-pcache-ref %pcache ,cache)))
-				 (js-pcache-prefetch-index (js-pcache-ref %pcache ,cache)
-				    ,(aput-inc 'object otmp prop op lhs field cache inc 'imap #f))
-				 ,(loop (cdr cs))))
-			   ((eq? (car cs) 'cmap)
-			    `(if (eq? %cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
-				 (js-pcache-prefetch-index (js-pcache-ref %pcache ,cache)
-				    ,(aput-inc 'object otmp prop op lhs field cache inc 'cmap #f))
-				 ,(loop (cdr cs))))
-			   (else
-			    (loop (cdr cs)))))))))))
+	     (aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc cspecs #t)))))
    
    (define (access-inc-sans-object otmp::symbol prop op::symbol lhs::J2SAccess rhs::J2SExpr inc::int)
       (with-access::J2SAccess lhs (field)
@@ -2078,9 +2041,9 @@
 	  #f)))
    
    (define (aput-assigop otmp::symbol pro prov op
-	      tl::symbol lhs::J2SAccess rhs::J2SExpr cslhs cs field)
-      (with-access::J2SAssigOp this ((typea type))
-	 (with-access::J2SAccess lhs (obj field loc cache cspecs (typel type))
+	      tl::symbol lhs::J2SAccess rhs::J2SExpr field cachep)
+      (with-access::J2SAssigOp this ((typea type) cache cspecs)
+	 (with-access::J2SAccess lhs (obj field loc (typel type))
 	    (with-access::J2SExpr obj ((typeo type) loc)
 	       (let* ((oref (instantiate::J2SHopRef
 			       (loc loc)
@@ -2088,7 +2051,6 @@
 			       (type typeo)))
 		      (lhs (J2SCast tl
 			      (duplicate::J2SAccess lhs
-				 (cspecs cslhs)
 				 (obj oref)
 				 (field (if pro
 					    (J2SHopRef/type pro
@@ -2102,7 +2064,7 @@
 			  (or pro prov) (j2s-vtype field)
 			  (j2s-cast vtmp #f typea typel conf) typel
 			  (strict-mode? mode) conf
-			  cache #t (if (mightbe-number? field) '() cs))
+			  (and cachep cache) #t (if (mightbe-number? field) '() cspecs))
 		      ,vtmp))))))
 
    (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
@@ -2118,45 +2080,19 @@
 		,(cond
 		    ((or (not cache) (is-integer? field))
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs '() '() field))
-		    ((and (or (equal? cspecs '(imap-incache))
-			      (equal? cspecs '(cmap-incache)))
-			  (eq? (j2s-type obj) 'object))
-		     ;; see the PCE optimization
-		     (aput-assigop otmp pro prov op
-			tl lhs rhs '(imap-incache) cspecs-safe field))
+			tl lhs rhs field #f))
 		    ((memq (typeof-this obj conf) '(object this global))
-		     `(with-access::JsObject ,otmp (cmap)
-			 (let ((%omap cmap))
-			    (if (eq? (js-pcache-cmap ,(js-pcache cache)) %omap)
-				,(aput-assigop otmp pro prov op
-				    tl lhs rhs '(cmap-incache)
-				    (if (nocall? rhs)
-					'(cmap-incache)
-					cspecs-safe)
-				    field)
-				,(aput-assigop otmp pro prov op
-				    tl lhs rhs '(cmap+) '(cmap+) field)))))
+		     (aput-assigop otmp pro prov op
+			tl lhs rhs field #t))
 		    (else
 		      `(if (js-object? ,otmp)
 			   ,(with-object obj
 			      (lambda ()
 				 `(with-access::JsObject ,otmp (cmap)
-				    (let ((%omap cmap))
-				       (if (eq? (js-pcache-cmap ,(js-pcache cache))
-					      %omap)
-					   ,(aput-assigop otmp pro prov op
-					       tl lhs rhs '(cmap-incache)
-					       (if (nocall? rhs)
-						   '(cmap-incache)
-						   cspecs-safe)
-					       field)
-					   ,(aput-assigop otmp pro prov op
-					       tl lhs rhs '(cmap+) '(cmap+)
-					       field))))))
-			  (let ((%omap (js-not-a-cmap)))
-			     ,(aput-assigop otmp pro prov op
-				 tl lhs rhs '() '() field)))))))))
+				     ,(aput-assigop otmp pro prov op
+					 tl lhs rhs field #t))))
+			   ,(aput-assigop otmp pro prov op
+			       tl lhs rhs field #f))))))))
 
    (define (access-assigop op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache)

@@ -44,16 +44,15 @@
 ;*    j2s-loopspec! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-loopspec! this conf)
-   (when #f
-      (when (isa? this J2SProgram)
-	 (j2s-loopspec-program! this conf)
-	 this))
+   (when (isa? this J2SProgram)
+      (j2s-loopspec-program! this conf))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    loopspec-threshold ...                                           */
 ;*---------------------------------------------------------------------*/
 (define loopspec-threshold 1000)
+(define loopspec-uint29 (-fx (exptfx 2 29) 1))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-loopspec-program! ...                                        */
@@ -212,6 +211,19 @@
 	     lhs))))
 
 ;*---------------------------------------------------------------------*/
+;*    test-rhs-decl ...                                                */
+;*---------------------------------------------------------------------*/
+(define (test-rhs-decl test::J2SExpr ref)
+   (with-access::J2SRef ref (decl)
+      (with-access::J2SBinary test (lhs rhs)
+	 (when (isa? lhs J2SRef)
+	    (with-access::J2SRef lhs ((lhsdecl decl))
+	       (if (eq? lhsdecl decl)
+		   (when (isa? rhs J2SRef)
+		      (with-access::J2SRef rhs (decl) decl))
+		   lhsdecl))))))
+
+;*---------------------------------------------------------------------*/
 ;*    for-decl ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (for-decl decl::J2SDecl loc type::symbol)
@@ -240,36 +252,79 @@
 	    ((not (incr-integer? incr))
 	     ;; ... 3) the incr is possibly integer
 	     (call-default-walker))
+	    ((memq (j2s-type ref) '(int32 uint32))
+	     ;; ... 4) already specifialized
+	     (call-default-walker))
 	    ((not (range-test? test ref))
-	     ;; ... 4) the test is a range test
+	     ;; ... 5) the test is a range test
 	     (call-default-walker))
 	    ((not (test-constant? test ref))
-	     ;; ... 5) the upper bound is not a constant
+	     ;; ... 6) the upper bound is not a constant
 	     (call-default-walker))
 	    ((>fx (node-size this) loopspec-threshold)
-	     ;; ... 6) body too large
+	     ;; ... 7) body too large
 	     (call-default-walker))
 	    (else
 	     (with-access::J2SRef ref (decl (refloc loc))
 		(with-access::J2SDecl decl (escape)
 		   (if escape
 		       (call-default-walker)
-		       (let ((fordecl (for-decl decl refloc 'int32)))
-			  (when (>=fx (config-get conf :verbose 0) 3)
-			     (display " [" (current-error-port))
-			     (display (cadr loc) (current-error-port))
-			     (display ":" (current-error-port))
-			     (display (caddr loc) (current-error-port))
-			     (display "]" (current-error-port)))
-			  (J2SIf (if (>fx (incr-sign incr) 0)
-				     (J2SBinary '<
-					(test-rhs test ref)
-					(J2SNumber 100000))
-				     (J2SBinary '>=
-					
-					(test-rhs test ref)
-					(J2SNumber 0)))
-			     (J2SLetRecBlock #f (list fordecl)
-				(j2s-alpha this
-				   (list decl) (list fordecl)))
-			     (J2SMeta 0 0 this)))))))))))
+		       (let ((testrhs (test-rhs test ref)))
+			  (if (memq (j2s-type testrhs) '(int32 uint32))
+			      (call-default-walker)
+			      (let ((fordecl (for-decl decl refloc 'int32))
+				    (tmp (gensym 'tmp)))
+				 (when (>=fx (config-get conf :verbose 0) 3)
+				    (display " [" (current-error-port))
+				    (display (cadr loc) (current-error-port))
+				    (display ":" (current-error-port))
+				    (display (caddr loc) (current-error-port))
+				    (display "]" (current-error-port)))
+				 (J2SIf (J2SBinary/type '&& 'bool
+					   (J2SPragma/bindings 'bool
+					      (list tmp) (list testrhs)
+					      `(fixnum? ,tmp))
+					   (if (>fx (incr-sign incr) 0)
+					       (J2SBinary/type '< 'bool
+						  testrhs
+						  (J2SNumber loopspec-uint29))
+					       (J2SBinary/type '>= 'bool
+						  testrhs
+						  (J2SNumber 0))))
+				    (J2SLetRecBlock #f (list fordecl)
+				       (force-type-bint!
+					  (j2s-alpha this
+					     (list decl) (list fordecl))
+					  (list (test-rhs-decl test ref) fordecl)))
+				    (J2SMeta 0 0 this)))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    force-type-bint! ::J2SNode ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type-bint! this::J2SNode env::pair-nil)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    force-type-bint! ::J2SRef ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type-bint! this::J2SRef env::pair-nil)
+   (with-access::J2SRef this (decl type)
+      (when (eq? type 'number)
+	 (when (memq decl env)
+	    (with-access::J2SDecl decl (vtype)
+	       (if (eq? vtype 'int32)
+		   (set! type 'int32)
+		   (set! type 'bint))))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    force-type-bint! ::J2SDeclInit ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type-bint! this::J2SDeclInit env::pair-nil)
+   (with-access::J2SDeclInit this (val vtype)
+      (when (and (isa? val J2SRef) (not (decl-usage? this '(assig))))
+	 (with-access::J2SRef val (decl)
+	    (when (memq decl env)
+	       (set-cdr! env (list this env))
+	       (set! vtype 'int32)))))
+   this)

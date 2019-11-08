@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Nov  3 06:59:24 2019 (serrano)                */
+;*    Last change :  Thu Nov  7 08:45:33 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -31,7 +31,7 @@
 	   __js2scheme_loopexit
 	   __js2scheme_ronly
 	   __js2scheme_use
-	   __js2scheme_property
+	   __js2scheme_propcache
 	   __js2scheme_instanceof
 	   __js2scheme_constrsize
 	   __js2scheme_ctor
@@ -205,14 +205,14 @@
 	  j2s-objinit-stage
 	  j2s-constant-stage
 	  j2s-varpreinit-stage
-	  j2s-loopspec-stage
 	  j2s-tyflow-stage
 	  j2s-sweep-stage
 	  j2s-hintnum-stage
-	  j2s-property-stage
+	  j2s-propcache-stage
 	  j2s-instanceof-stage
 	  j2s-propcce-stage
 	  j2s-range-stage
+	  j2s-loopspec-stage
 	  j2s-sweep-stage
 	  j2s-ctor-stage
 	  j2s-pce-stage

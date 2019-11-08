@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Aug 13 09:43:45 2019 (serrano)                */
+;*    Last change :  Fri Nov  8 10:00:13 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -47,6 +47,7 @@
 	 (scmstring number->string)
 	 (object ,js-int32->jsobject)
 	 (iterable error)
+	 (bint error)
 	 (any ,js-int32->integer)))
      (uint32
 	((uint29 nop)
@@ -61,6 +62,7 @@
 	 (scmstring number->string)
 	 (object ,js-uint32->jsobject)
 	 (iterable error)
+	 (bint error)
 	 (any ,js-uint32->integer)))
      (int53
 	((int30 nop)

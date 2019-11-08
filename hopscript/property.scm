@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Nov  6 17:34:34 2019 (serrano)                */
+;*    Last change :  Thu Nov  7 12:56:34 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2185,7 +2185,7 @@
 	    (with-access::JsConstructMap cmap (nextmap methods props)
 	       (let ((el-or-desc (vector-ref elements i)))
 		  (cond
-		     ((isa? el-or-desc JsAccessorDescriptor)
+		     ((and (not override) (isa? el-or-desc JsAccessorDescriptor))
 		      (with-trace 'prop "update-mapped-object.1"
 			 (trace-item "name=" name)
 			 ;; 8.12.5, step 5
@@ -2361,7 +2361,7 @@
    (define (update-properties-object! obj desc)
       (with-trace 'prop "update-properties-object!"
 	 (cond
-	    ((isa? desc JsAccessorDescriptor)
+	    ((and (not override) (isa? desc JsAccessorDescriptor))
 	     ;; 8.12.5, step 5
 	     (update-from-descriptor! o obj -1 v desc))
 	    ((eq? o obj)
