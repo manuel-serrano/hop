@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Nov  8 09:01:17 2019 (serrano)                */
+;*    Last change :  Fri Nov  8 13:05:46 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1796,8 +1796,8 @@
       (lambda (left right)
 	 (let ((tlv (j2s-vtype lhs))
 	       (trv (j2s-vtype rhs))
-	       (tl (j2s-type lhs))
-	       (tr (j2s-type rhs)))
+	       (tl (j2s-etype lhs conf))
+	       (tr (j2s-etype rhs conf)))
 	    (epairify loc
 	       (cond
 		  ((and (eq? tlv 'int32) (eq? trv 'int32))
