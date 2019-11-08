@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Nov  3 07:44:54 2019 (serrano)                */
+;*    Last change :  Fri Nov  8 09:01:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -51,6 +51,7 @@
 
 	   (j2s-type ::obj)
 	   (j2s-vtype ::obj)
+	   (j2s-etype ::obj conf)
 	   
 	   (class-of ::J2SExpr)
 
@@ -553,6 +554,24 @@
 	  type))
       (else
        'void)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-etype ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    The type of an expression.                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-etype node conf)
+   (let ((vtype (j2s-vtype node)))
+      (if (memq vtype '(int32 uint32))
+	  vtype
+	  ;; the variable type is unboxed, check for a more specific
+	  ;; expression type
+	  (let ((etype (j2s-type node)))
+	     (if (memq etype '(int32 uint32))
+		 (if (m64? conf)
+		     'int53
+		     vtype)
+		 etype)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    class-of ...                                                     */

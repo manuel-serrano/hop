@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Nov  3 20:11:31 2019 (serrano)                */
+;*    Last change :  Fri Nov  8 09:01:17 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -288,7 +288,7 @@
 			((m64? conf)
 			 `(if (=u32 ,sexpr #u32:0)
 			      -0.0
-			      `(negfx ,(uint32->fixnum sexpr)) vtyp conf))
+			      (negfx ,(uint32->fixnum sexpr))))
 			((inrange-int32? expr)
 			 `(if (=u32 ,sexpr #u32:0)
 			      -0.0
@@ -727,8 +727,8 @@
    
    (with-tmp lhs rhs mode return conf '*
       (lambda (left right)
-	 (let ((tl (j2s-vtype lhs))
-	       (tr (j2s-vtype rhs))
+	 (let ((tl (j2s-etype lhs conf))
+	       (tr (j2s-etype rhs conf))
 	       (op (case o
 		      ((!=) '==)
 		      ((!==) '===)

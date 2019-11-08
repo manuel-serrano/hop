@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Oct 23 08:36:50 2019 (serrano)                */
+/*    Last change :  Tue Nov  5 06:30:56 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -492,6 +492,19 @@ function testSealReadOnly() {
    return o2a + o2.a === 200;
 }
 
+function testReadOnly() {
+   var o1 = {};
+   
+   Object.defineProperty( o1, "a", { value: 100, writable: false } );
+   
+   var o2 = { __proto__: o1 };
+   const o2a = o2.a;
+   
+   o2.a = 50;
+
+   return o2a + o2.a === 200;
+}
+
 function testSealReadOnlyStrict() {
    "use strict";
    var o1 = {};
@@ -523,6 +536,7 @@ function testFreeze() {
 }
 
 assert.ok( testSeal(), "seal" );
+assert.ok( testReadOnly(), "readOnly" );
 assert.ok( testSealReadOnly(), "sealReadOnly" );
 assert.throws( testSealReadOnlyStrict, "sealReadOnlyStrict" );
 assert.ok( testFreeze(), "freeze" );

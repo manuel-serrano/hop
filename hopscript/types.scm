@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Oct 24 12:02:57 2019 (serrano)                */
+;*    Last change :  Wed Nov  6 17:33:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -128,7 +128,8 @@
 	      (vtable::vector (default '#()))
 	      (vcache::obj (default #f))
 	      (sibling (default #f))
-	      (inline::bool read-only (default #f)))
+	      (inline::bool read-only (default #f))
+	      (parent::JsConstructMap (default (class-nil JsConstructMap))))
 	   
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
@@ -512,6 +513,8 @@
 	   (inline js-not-a-index::long)
 	   
 	   (inline js-object?::bool ::obj)
+	   (inline js-object-mapped?::bool ::JsObject)
+	   
 	   (inline js-number?::bool ::obj)
 	   (inline js-jsstring?::bool ::obj)
 	   (inline js-jsstring-index?::bool ::obj)
@@ -1138,6 +1141,13 @@
        (and (%object? o)
 	    (=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
 	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-mapped? ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-mapped? o::JsObject)
+   (with-access::JsObject o (cmap)
+      (not (eq? cmap (js-not-a-cmap)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number? ...                                                   */

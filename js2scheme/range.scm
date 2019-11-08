@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Nov  3 08:48:37 2019 (serrano)                */
+;*    Last change :  Fri Nov  8 07:44:03 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -72,7 +72,6 @@
 		  ,(when (pair? (cdr args))
 		      `(debug ,pred ,@(reverse (cdr (reverse args)))))
 		  (let ((__r (__thunk)))
-;* 		     (range-debug -1 __lbl)                            */
 		     (range-debug -1 "")
 		     __r))
 	       (__thunk)))
@@ -522,13 +521,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    interval-lts ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (interval-lts left::struct right::struct shift::int)
+(define (interval-lts-TBR left::struct right::struct shift::int)
    (let ((ra (- (interval-max right) shift)))
       (if (< ra (interval-max left))
 	  (if (>= ra (interval-min left))
 	      (interval (min (interval-min left) ra) ra)
 	      (interval ra ra))
 	  left)))
+
+(define (interval-lts left::struct right::struct shift::int)
+   (let ((ra (- (interval-max right) shift)))
+      (cond
+	 ((< ra (interval-min left))
+	  (interval (interval-min left) (interval-min left)))
+	 ((>= ra (interval-max left))
+	  left)
+	 (else
+	  (interval (interval-min left) ra)))))
 
 (define (interval-lt left right)
    (interval-lts left right 1))
@@ -539,13 +548,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    interval-gts ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (interval-gts left::struct right::struct shift::int)
+(define (interval-gts-TBR-8NOV2019 left::struct right::struct shift::int)
    (let ((ri (+ (interval-min right) shift)))
       (if (> ri (interval-min left))
 	  (if (<= ri (interval-max left))
 	      (interval ri (max (interval-max left) ri))
 	      (interval ri ri))
 	  left)))
+
+(define (interval-gts left::struct right::struct shift::int)
+   (let ((ri (+ (interval-min right) shift)))
+      (cond
+	 ((> ri (interval-max right))
+	  (interval (interval-max left) (interval-max left)))
+	 ((<= ri (interval-min left))
+	  left)
+	 (else
+	  (interval ri (interval-max left))))))
 
 (define (interval-gt left right)
    (interval-gts left right 1))
@@ -1697,7 +1716,7 @@
 		    (let ((intrt (interval-lt intl intr))
 			  (intro (interval-gte intl intr)))
 		       (when *debug-range-test*
-			  (tprint "test-env-ref intro=" intro " intrt=" intrt))
+			  (tprint "test-env-ref intrt=" intrt " intro=" intro))
 		       (values (make-env decl intrt)
 			  (make-env decl intro))))
 		   ((<=)
@@ -2064,13 +2083,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SFor env::pair-nil conf mode::symbol fix::cell)
    (define (debug-for loc)
-      (if (and *debug-range-for* (equal? loc '(at "crypto-aes.js" 2062)))
-	  (begin
-	     (set! *indebug* #t)
-	     #t)
-	  (begin
-	     (set! *indebug* #f)
-	     #f)))
+      *debug-range-for*)
 
    (with-access::J2SFor this (init test incr body loc)
       (let ((ffix (cell-ref fix)))

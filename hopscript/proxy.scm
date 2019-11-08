@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Oct 23 11:04:42 2019 (serrano)                */
+;*    Last change :  Wed Nov  6 08:00:07 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -291,7 +291,7 @@
 	  (js-raise-type-error %this
 	     "Proxy \"set\" returns false on property \"~a\""
 	     prop))
-	 ((null? (js-object-properties target))
+	 ((js-object-mode-plain? target)
 	  r)
 	 (else
 	  (proxy-check-property-value target obj prop %this v (& "set")))))
@@ -601,7 +601,8 @@
 ;*---------------------------------------------------------------------*/
 (define (proxy-check-property-value target owner prop %this v get-or-set)
    (cond
-      ((null? (js-object-properties target))
+      ((and (not (js-object-mapped? target))
+	    (null? (js-object-properties target)))
        v)
       (else
        (let ((prop (js-get-own-property target prop %this)))
@@ -798,7 +799,8 @@
        (err))
       ((all-symbol-or-string? r)
        (err))
-      ((null? (js-object-properties target))
+      ((and (not (js-object-mapped? target))
+	    (null? (js-object-properties target)))
        (if (js-extensible? target %this)
 	   r
 	   (same-list (js-properties-name target #t %this) r)))

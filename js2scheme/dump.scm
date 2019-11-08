@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Nov  3 08:48:20 2019 (serrano)                */
+;*    Last change :  Thu Nov  7 08:56:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -287,6 +287,15 @@
 	  ((isa? this J2SNew)
 	   (with-access::J2SNew this (caches)
 	      (if (pair? caches) `(:caches ,@caches) '())))
+	  ((isa? this J2SAssigOp)
+	   (with-access::J2SAssigOp this (cache cspecs)
+	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
+	  ((isa? this J2SPrefix)
+	   (with-access::J2SPrefix this (cache cspecs)
+	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
+	  ((isa? this J2SPostfix)
+	   (with-access::J2SPostfix this (cache cspecs)
+	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
 	  (else
 	   '()))
        '()))
@@ -473,7 +482,6 @@
 	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-range this)
-	  ,@(dump-cache this)
 	  ,@(if (isa? lhs J2SRef)
 		(with-access::J2SRef lhs (decl)
 		   (dump-vtype decl))
@@ -487,21 +495,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SAssigOp)
    (with-access::J2SAssigOp this (lhs rhs loc op)
-      `(,@(call-next-method) ,op)))
+      `(,@(call-next-method) ,@(dump-cache this) ,op)))
   
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPrefix ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPrefix)
    (with-access::J2SPrefix this (lhs rhs loc op)
-      `(,@(call-next-method) ,op)))
+      `(,@(call-next-method) ,@(dump-cache this) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPostfix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPostfix)
    (with-access::J2SPostfix this (lhs rhs loc op)
-      `(,@(call-next-method) ,op)))
+      `(,@(call-next-method) ,@(dump-cache this) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SUnresolvedRef ...                                 */

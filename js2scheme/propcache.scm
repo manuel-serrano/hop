@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/property.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/propcache.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Aug 24 16:39:07 2019 (serrano)                */
+;*    Last change :  Thu Nov  7 09:10:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __js2scheme_property
+(module __js2scheme_propcache
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -20,22 +20,22 @@
 	   __js2scheme_stage
 	   __js2scheme_utils)
    
-   (export j2s-property-stage))
+   (export j2s-propcache-stage))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-property-stage ...                                           */
+;*    j2s-propcache-stage ...                                          */
 ;*---------------------------------------------------------------------*/
-(define j2s-property-stage
+(define j2s-propcache-stage
    (instantiate::J2SStageProc
-      (name "property")
-      (comment "Add a cache to each object property lookup")
-      (proc j2s-property)
+      (name "propcache")
+      (comment "Add a cache to each object propcache lookup")
+      (proc j2s-propcache)
       (optional 2)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-property ...                                                 */
+;*    j2s-propcache ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (j2s-property this::obj args)
+(define (j2s-propcache this::obj args)
 
    (define j2s-verbose (config-get args :verbose 0))
    (define j2s-ccall (config-get args :optim-ccall #f))
@@ -53,15 +53,15 @@
 		(env (cons '() '()))
 		(caches (append
 			   (append-map (lambda (s)
-					  (property* s count env j2s-ccall
+					  (propcache* s count env j2s-ccall
 					     #f #f j2s-shared-pcache))
 			      headers)
 			   (append-map (lambda (s)
-					  (property* s count env j2s-ccall
+					  (propcache* s count env j2s-ccall
 					     #f #f j2s-shared-pcache))
 			      decls)
 			   (append-map (lambda (s)
-					  (property* s count env j2s-ccall
+					  (propcache* s count env j2s-ccall
 					     #f #f j2s-shared-pcache))
 			      nodes))))
 	    (set! pcache-size (get count))))
@@ -118,31 +118,31 @@
 	     cache)))))
 	 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SNode ...                                          */
+;*    propcache* ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SNode count env ccall assig infunloop shared-pcache)
+(define-walk-method (propcache* this::J2SNode count env ccall assig infunloop shared-pcache)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SMeta ...                                          */
+;*    propcache* ::J2SMeta ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SMeta count env ccall assig infunloop shared-pcache)
+(define-walk-method (propcache* this::J2SMeta count env ccall assig infunloop shared-pcache)
    (with-access::J2SMeta this (optim)
       (if (=fx optim 0)
 	  '()
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SFun ...                                           */
+;*    propcache* ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SFun count env ccall assig infunloop shared-pcache)
+(define-walk-method (propcache* this::J2SFun count env ccall assig infunloop shared-pcache)
    (with-access::J2SFun this (body)
-      (property* body count env ccall assig #t shared-pcache)))
+      (propcache* body count env ccall assig #t shared-pcache)))
 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SAccess ...                                        */
+;*    propcache* ::J2SAccess ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SAccess count env ccall assig infunloop shared-pcache)
+(define-walk-method (propcache* this::J2SAccess count env ccall assig infunloop shared-pcache)
    
    (define (canbe-object? obj)
       (and (not (type-number? (j2s-type obj)))
@@ -173,17 +173,30 @@
        (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SAssig ...                                         */
+;*    propcache* ::J2SAssig ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SAssig count env ccall assig infunloop shared-pcache)
+(define-walk-method (propcache* this::J2SAssig count env ccall assig infunloop shared-pcache)
    (with-access::J2SAssig this (lhs rhs)
-      (append (property* lhs count env ccall #t infunloop shared-pcache)
-	 (property* rhs count env ccall #f infunloop shared-pcache))))
+      (append (propcache* lhs count env ccall #t infunloop shared-pcache)
+	 (propcache* rhs count env ccall #f infunloop shared-pcache))))
 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SUnresolvedRef ...                                 */
+;*    propcache* ::J2SAssigOp ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SGlobalRef count env ccall assig infunloop shared-pcache)
+(define-walk-method (propcache* this::J2SAssigOp count env ccall assig infunloop shared-pcache)
+   (if infunloop
+       (with-access::J2SAssigOp this (cache lhs)
+	  (if (isa? lhs J2SAccess)
+	      (begin
+		 (set! cache (inc! count))
+		 (cons cache (call-next-method)))
+	      (call-next-method)))
+       (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    propcache* ::J2SUnresolvedRef ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propcache* this::J2SGlobalRef count env ccall assig infunloop shared-pcache)
    (if infunloop
        (with-access::J2SGlobalRef this (cache loc)
 	  (set! cache (inc! count))
@@ -210,9 +223,9 @@
 	     #f)))))
 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SCall ...                                          */
+;*    propcache* ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SCall count env ccall assig infunloop shared-pcache)
+(define-walk-method (propcache* this::J2SCall count env ccall assig infunloop shared-pcache)
    (with-access::J2SCall this (cache fun loc)
       (cond
 	 (cache
@@ -235,9 +248,9 @@
 	  (cons cache (call-default-walker))))))
 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SNew ...                                           */
+;*    propcache* ::J2SNew ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SNew count env ccall assig infunloop shared-pcache)
+(define-walk-method (propcache* this::J2SNew count env ccall assig infunloop shared-pcache)
    
    (define (ctor-function? clazz args)
       (when (read-only-function? clazz)
@@ -263,27 +276,27 @@
 	  (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SFor ...                                           */
+;*    propcache* ::J2SFor ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SFor count env ccall assig inloopfunp shared-pcache)
+(define-walk-method (propcache* this::J2SFor count env ccall assig inloopfunp shared-pcache)
    (with-access::J2SFor this (init test incr body)
-      (append (property* init count env ccall assig inloopfunp shared-pcache)
-	 (property* test count env ccall assig inloopfunp shared-pcache)
-	 (property* incr count env ccall assig inloopfunp shared-pcache)
-	 (property* body count env ccall assig #t shared-pcache))))
+      (append (propcache* init count env ccall assig inloopfunp shared-pcache)
+	 (propcache* test count env ccall assig inloopfunp shared-pcache)
+	 (propcache* incr count env ccall assig inloopfunp shared-pcache)
+	 (propcache* body count env ccall assig #t shared-pcache))))
 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SWhile ...                                         */
+;*    propcache* ::J2SWhile ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SWhile count env ccall assig inloopfunp shared-pcache)
+(define-walk-method (propcache* this::J2SWhile count env ccall assig inloopfunp shared-pcache)
    (with-access::J2SWhile this (test body)
-      (append (property* test count env ccall assig inloopfunp shared-pcache)
-	 (property* body count env ccall assig #t shared-pcache))))
+      (append (propcache* test count env ccall assig inloopfunp shared-pcache)
+	 (propcache* body count env ccall assig #t shared-pcache))))
 
 ;*---------------------------------------------------------------------*/
-;*    property* ::J2SDo ...                                            */
+;*    propcache* ::J2SDo ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SDo count env ccall assig inloopfunp shared-pcache)
+(define-walk-method (propcache* this::J2SDo count env ccall assig inloopfunp shared-pcache)
    (with-access::J2SDo this (test body)
-      (append (property* test count env ccall assig inloopfunp shared-pcache)
-	 (property* body count env ccall assig #t shared-pcache))))
+      (append (propcache* test count env ccall assig inloopfunp shared-pcache)
+	 (propcache* body count env ccall assig #t shared-pcache))))
