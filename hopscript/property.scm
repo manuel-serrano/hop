@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Nov  7 12:56:34 2019 (serrano)                */
+;*    Last change :  Fri Nov  8 19:16:36 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2247,6 +2247,8 @@
 			   (not (js-object-mode-sealed? obj)))
 		      ;; special hop situation to handle hop-builtin object
 		      (extend-object! o))
+		     ((not (isa? el-or-desc JsDataDescriptor))
+		      (extend-object! o))
 		     (else
 		      (with-access::JsDataDescriptor el-or-desc (writable)
 			 (if writable
@@ -2395,6 +2397,8 @@
 	    ((not (js-object-mode-extensible? obj))
 	     ;; 8.12.9, step 3
 	     (reject "sealed object"))
+	    ((not (isa? desc JsDataDescriptor))
+	     (extend-object! o))
 	    (else
 	     (with-access::JsDataDescriptor desc (writable)
 		(if writable
