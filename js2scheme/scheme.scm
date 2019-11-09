@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Nov  7 09:12:01 2019 (serrano)                */
+;*    Last change :  Sat Nov  9 10:09:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1766,6 +1766,9 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-postpref this::J2SAssig mode return conf op retval)
 
+   (define (min-cspecs cs mincs)
+      (filter (lambda (c) (memq c mincs)) cs))
+   
    (define (new-or-old tmp val comp)
       (if (eq? retval 'new)
 	  (let ((aux (gensym 'res)))
@@ -1910,7 +1913,7 @@
 					       (j2s-vtype field)
 					       val 'number
 					       (strict-mode? mode) conf
-					       cache #t cs)
+					       cache #t (min-cspecs cs '(cmap)))
 					   ,tmp))))))))))))
 
    (define (rhs-cache rhs)

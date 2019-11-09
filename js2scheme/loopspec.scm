@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  3 07:00:40 2019                          */
-;*    Last change :  Fri Nov  8 10:34:44 2019 (serrano)                */
+;*    Last change :  Sat Nov  9 06:44:28 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Loop specialization                                              */
@@ -325,6 +325,6 @@
       (when (and (isa? val J2SRef) (not (decl-usage? this '(assig))))
 	 (with-access::J2SRef val (decl)
 	    (when (memq decl env)
-	       (set-cdr! env (list this env))
+	       (set-cdr! env (list decl))
 	       (set! vtype 'bint)))))
    this)
