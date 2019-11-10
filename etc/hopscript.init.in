@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 21 08:47:34 2008                          */
-;*    Last change :  Sun Nov 10 07:50:49 2019 (serrano)                */
+;*    Last change :  Sun Nov 10 08:12:37 2019 (serrano)                */
 ;*    Copyright   :  2008-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPSCRIPT init file.                                             */
@@ -65,6 +65,14 @@
 	   `(if (>=fx ,x 9007199254740989)
 		(fixnum->flonum (+fx ,x 4))
 		(+fx ,x 4)))
+	  ((eqv? y -1)
+	   `(-fx/overflow ,x 1))
+	  ((eqv? y -2)
+	   `(-fx/overflow ,x 2))
+	  ((eqv? y -3)
+	   `(-fx/overflow ,x 3))
+	  ((eqv? y -4)
+	   `(-fx/overflow ,x 4))
 	  (else
 	   `((@ +fx/overflow __hopscript_arithmetic64) ,x ,y))))
       (else
