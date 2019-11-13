@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Oct 24 08:16:17 2019 (serrano)                */
+;*    Last change :  Wed Nov 13 05:48:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3801,19 +3801,17 @@
    
    (define (vector-foreach o len::uint32 proc thisarg i::uint32)
       [%assert-array! o "vector-foreach"]
-      (if (js-object-mode-inline? o)
-	  (with-access::JsArray o (vec ilen)
-	     (let loop ((i i))
-		(cond
-		   ((>=u32 i ilen)
-		    (js-undefined))
-		   ((not (js-object-mode-inline? o))
-		    (array-foreach o len proc thisarg i))
-		   (else
-		    (let ((v (vector-ref vec (uint32->fixnum i))))
-		       (proc thisarg v (js-uint32-tointeger i) o %this)
-		       (loop (+u32 i 1)))))))
-	  (array-foreach o len proc thisarg i)))
+      (with-access::JsArray o (vec ilen)
+	 (let loop ((i i))
+	    (cond
+	       ((>=u32 i ilen)
+		(js-undefined))
+	       ((not (js-object-mode-inline? o))
+		(array-foreach o len proc thisarg i))
+	       (else
+		(let ((v (vector-ref vec (uint32->fixnum i))))
+		   (proc thisarg v (js-uint32-tointeger i) o %this)
+		   (loop (+u32 i 1))))))))
    
    (define (array-foreach o len proc thisarg i::uint32)
       (let loop ((i i))
