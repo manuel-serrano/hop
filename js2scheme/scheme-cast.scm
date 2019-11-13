@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Fri Nov  8 10:39:43 2019 (serrano)                */
+;*    Last change :  Wed Nov 13 10:09:37 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -34,7 +34,16 @@
 ;*---------------------------------------------------------------------*/
 (define cast-table
    ;; from x to -> conv
-   `((int32
+   `((int30
+	((int30 nop)
+	 (uint32 fixnum->uint32)
+	 (int32 fixnum->int32)
+	 (int53 nop)
+	 (integer nop)
+	 (number nop)
+	 (real fixnum->real)
+	 (bint nop)))
+     (int32
 	((int30 nop)
 	 (uint32 ,js-int32->uint32)
 	 (int53 int32->fixnum)

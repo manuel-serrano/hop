@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Nov  8 13:05:46 2019 (serrano)                */
+;*    Last change :  Wed Nov 13 08:53:05 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1854,13 +1854,31 @@
 		  ((and (eq? tr 'uint32) (inrange-positive? rhs))
 		   (cond
 		      ((inrange-int32? rhs)
-		       `(if (fixnum? ,left)
-			    ,(j2s-cast `(remainderfx ,left
-					   ,(asfixnum right trv))
-				lhs (number type) type conf)
-			    ,(j2s-cast `(%$$NZ ,(tonumber left tlv conf)
-					   ,(tonumber right trv conf))
-				lhs (number type) type conf)))
+		       (cond
+			  ((memq tr '(int32 uint32 bint))
+			   (if (or (inrange-int30? rhs) (inrange-int30? lhs))
+			       (j2s-cast
+				  `(remainderfx ,left ,(asfixnum right trv))
+				  lhs 'int30 type conf)
+			       (j2s-cast
+				  `(remainderfx ,left ,(asfixnum right trv))
+				  lhs 'bint type conf)))
+			  ((eq? (number type) 'integer)
+			   `(if (fixnum? ,left)
+				(j2s-cast
+				   `(remainderfx ,left ,(asfixnum right trv))
+				   lhs 'bint type conf)
+				,(j2s-cast `(%$$NZ ,(tonumber left tlv conf)
+					       ,(tonumber right trv conf))
+				    lhs (number type) type conf)))
+			  (else
+			   `(if (fixnum? ,left)
+				,(j2s-cast `(remainderfx ,left
+					       ,(asfixnum right trv))
+				    lhs 'bint type conf)
+				,(j2s-cast `(%$$NZ ,(tonumber left tlv conf)
+					       ,(tonumber right trv conf))
+				    lhs (number type) type conf)))))
 		      ((m64? conf)
 		       `(if (fixnum? ,left)
 			    ,(j2s-cast `(remainderfx ,left
