@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Oct 23 12:10:43 2019 (serrano)                */
+;*    Last change :  Wed Nov 13 08:27:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -550,7 +550,7 @@
 	    ;; length
 	    (vector-set! els 1 length)
 	    ;; name
-	    (vector-set! els 2 (js-string->jsstring name))
+	    (vector-set! els 2 (js-name->jsstring name))
 	    ;; strict properties
 	    (unless (eq? strict 'normal)
 	       (vector-set! els 3 strict-arguments-property)

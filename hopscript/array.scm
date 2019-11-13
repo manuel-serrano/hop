@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Nov 13 05:48:07 2019 (serrano)                */
+;*    Last change :  Wed Nov 13 08:07:35 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -413,7 +413,7 @@
 	 
 	 ;; array pcache
 	 (set! js-array-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 19 "array"))
+	    ((@ js-make-pcache-table __hopscript_property) 20 "array"))
 	 
 	 ;; default arrays cmap
 	 (set! js-array-cmap
@@ -3475,20 +3475,20 @@
 ;*    js-for-of ::JsArray ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-of o::JsArray proc close %this)
+
+   (define cmap-fast-forof #f)
    
    (define (vector-forof o len::uint32 proc i::uint32)
-      (if (js-object-mode-inline? o)
-	  (with-access::JsArray o (vec ilen)
-	     (let loop ((i i))
-		(cond
-		   ((>=u32 i ilen)
-		    (js-undefined))
-		   ((not (js-object-mode-inline? o))
-		    (array-forof o len proc i))
-		   (else
-		    (proc (vector-ref vec (uint32->fixnum i)) %this)
-		    (loop (+u32 i 1))))))
-	  (array-forof o len proc i)))
+      (with-access::JsArray o (vec ilen)
+	 (let loop ((i i))
+	    (cond
+	       ((>=u32 i ilen)
+		(js-undefined))
+	       ((not (js-object-mode-inline? o))
+		(array-forof o len proc i))
+	       (else
+		(proc (vector-ref vec (uint32->fixnum i)) %this)
+		(loop (+u32 i 1)))))))
    
    (define (array-forof o len proc i::uint32)
       (let loop ((i i))
@@ -3497,9 +3497,12 @@
 	       (proc (if (js-absent? pv) (js-undefined) pv) %this)
 	       (loop (+u32 i 1))))))
 
-   (with-access::JsGlobalObject %this (js-symbol-iterator)
-      (let ((fun (js-get o js-symbol-iterator %this)))
-	 (if (js-function? fun)
+   (with-access::JsGlobalObject %this (js-symbol-iterator js-array-pcache)
+      (let ((fun (js-get-name/cache o js-symbol-iterator #f %this
+		    (js-pcache-ref js-array-pcache 19))))
+	 (if (and (js-function? fun)
+		  (with-access::JsFunction fun (elements)
+		     (not (eq? (vector-ref elements 2) (& "@@iterator")))))
 	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
 	     (with-access::JsArray o (length vec ilen)
 		(if (js-array-inlined? o)
