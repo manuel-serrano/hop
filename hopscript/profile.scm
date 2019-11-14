@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Oct 11 12:54:29 2019 (serrano)                */
+;*    Last change :  Thu Nov 14 08:42:20 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -689,9 +689,11 @@
 ;*    profile-report-start ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (profile-report-start trc)
-   (when (or (string-contains trc "format:json")
-	     (string-contains trc "format:fprofile"))
-      (display "{\n" *profile-port*)))
+   (cond
+      ((string-contains trc "format:json")
+       (display "{\n\"format\": \"json\",\n" *profile-port*))
+      ((string-contains trc "format:fprofile")
+       (display "{\n\"format\": \"fprofile\",\n" *profile-port*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-report-end ...                                           */
