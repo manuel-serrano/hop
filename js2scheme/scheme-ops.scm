@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Nov 13 08:53:05 2019 (serrano)                */
+;*    Last change :  Fri Nov 15 18:30:20 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -483,7 +483,9 @@
 	    ((eq? tr 'int32)
 	     (strict-equal-int32 rhs lhs tl))
 	    ((or (type-cannot? tr '(string)) (type-cannot? tl '(string)))
-	     `(js-strict-equal-no-string? ,lhs ,rhs))
+	     (if (or (type-cannot? tr '(real)) (type-cannot? tl '(real)))
+		 `(eq? ,lhs ,rhs)
+		 `(js-strict-equal-no-string? ,lhs ,rhs)))
 	    (else
 	     `(js-strict-equal? ,lhs ,rhs)))))
 

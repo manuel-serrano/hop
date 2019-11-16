@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Nov  7 08:58:55 2019 (serrano)                */
+;*    Last change :  Sat Nov 16 05:41:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -69,7 +69,7 @@
 	      (escape::bool (default #f) (info '("notraverse")))
 	      ;; usage: init, new, ref, assig, get (field), set (field), call,
 	      ;; delete, instanceof, uninit (premature variable access),
-	      ;; rest (rest argument), escape (free variable ref).
+	      ;; rest (rest argument).
 	      (usage::pair-nil (default '()) (info '("notraverse")))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))

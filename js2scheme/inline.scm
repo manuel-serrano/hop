@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Aug 24 09:25:04 2019 (serrano)                */
+;*    Last change :  Fri Nov 15 08:23:55 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -65,9 +65,29 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-default-factor ...                                        */
 ;*---------------------------------------------------------------------*/
-(define inline-global-expansion 3)
-(define inline-max-function-size 80)
-(define inline-min-call-occurrence 100000)
+(define inline-global-expansion
+   ;; the overall program global expansion factor
+   3)
+
+(define inline-max-function-size
+   ;; the maximum body size of inlined candidates
+   80)
+
+(define inline-min-call-occurrence
+   ;; to be removed
+   100000)
+
+(define inline-min-dispatch-percentage
+   ;; the minimum percentage of call
+   0.33)
+
+(define inline-dispatch-function-test-size
+   ;; the test size approximation of function dispatch
+   8)
+
+(define inline-dispatch-closure-test-size
+   ;; the test size approximation of closure dispatch
+   12)
 
 ;*---------------------------------------------------------------------*/
 ;*    dev                                                              */
@@ -101,6 +121,25 @@
        #t)))
 
 ;*---------------------------------------------------------------------*/
+;*    iinfo                                                            */
+;*---------------------------------------------------------------------*/
+(define-struct inlinfo size)
+(define-struct protoinfo assig method svar)
+(define-struct targetinfo decl fun)
+(define-struct nodelink nodes owner)
+
+(define-struct callloginfo call counter targets)
+(define-struct callinfo parent owner)
+
+(define (callloginfo->list cli)
+   `(,(callloginfo-counter cli)
+     ,(with-access::J2SNode (callloginfo-call cli) (loc) loc)
+     ,(map (lambda (n)
+	      (with-access::J2SNode (cdr n) (loc)
+		 (cons (car n) loc)))
+	 (callloginfo-targets cli))))
+   
+;*---------------------------------------------------------------------*/
 ;*    j2s-inline! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-inline! this args)
@@ -119,106 +158,154 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-inline-profile ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Pofile based inlining is as follows:                             */
+;*      1- sort all calls by occurrence number                         */
+;*      2- filter out call to large functions                          */
+;*      3- filter out pure recursive calls                             */
+;*      4- inline until the global program expansion reaches the limit */
 ;*---------------------------------------------------------------------*/
 (define (j2s-inline-profile prgm::J2SProgram conf logfile)
+
+   (define (replace-call! parent old new)
+      (vector-for-each (lambda (f)
+			  (let ((info (class-field-info f)))
+			     (when (and (pair? info) (member "ast" info))
+				(let ((v ((class-field-accessor f) parent)))
+				   (cond
+				      ((eq? v old)
+				       ((class-field-mutator f) parent new))
+				      ((pair? v)
+				       (map! (lambda (n)
+						(if (eq? n old) new n))
+					  v)))))))
+	 (class-all-fields (object-class parent))))
    
-   (define (find-protoinfo loc pms::struct)
-      (bind-exit (return)
-	 (hashtable-for-each pms
-	    (lambda (k b)
-	       (for-each (lambda (pi)
-			    (with-access::J2SFun (protoinfo-method pi) ((mloc loc))
-			       (match-case mloc
-				  ((at ?- ?l)
-				   (when (eq? l loc) (return pi))))))
-		  b)))))
+   (define (inline-filter-dynamic-targets cli)
+      ;; select the function to be inlined on a dynamic call site.
+      ;; used to select the inline targets of method and closure calls.
+      (let* ((targets (callloginfo-targets cli))
+	     (targets (filter (lambda (t)
+				 ;; filter out targets larger than
+				 ;; INLINE-max-function-size
+				 (<fx (node-size (cdr t))
+				    inline-max-function-size))
+			 targets))
+	     (targets (filter (lambda (t)
+				 ;; TO BE IMPROVED:
+				 ;; only keeps global variables
+				 (when (isa? (cdr t) J2SDeclFun)
+				    (with-access::J2SDecl (cdr t) (scope)
+				       (tprint "S=" scope)
+				       (eq? scope '%scope))))
+			 targets))
+	     (targets (filter (lambda (t)
+				 ;; filter out targets that are called less than
+				 ;; INLINE-MIN-DISPATCH-PERCENTAGE times
+				 (> (/ (car t) (callloginfo-counter cli))
+				    inline-min-dispatch-percentage))
+			 targets)))
+	 targets))
+
+   (define (inline-target->fun t)
+      ;; TO BE IMPROVED
+      (with-access::J2SDeclFun (cdr t) (val)
+	 (if (isa? val J2SMethod)
+	     (with-access::J2SMethod val (method)
+		(cons (cdr t) method))
+	     (cons (cdr t) val))))
+
+   (define (inline-call-method!::long cli fuel)
+      ;; inline a method invokation, inline at most
+      (tprint "INL-MET: " (callloginfo->list cli))
+      (let ((targets (inline-filter-dynamic-targets cli)))
+	 (if (null? targets)
+	     fuel
+	     (let* ((callszs (map (lambda (t)
+				     (node-size (cdr t)))
+				targets))
+		    (dispatchsz (map (lambda (t)
+					(if (isa? (cdr t) J2SDeclFun)
+					    inline-dispatch-function-test-size
+					    inline-dispatch-closure-test-size))
+				   targets))
+		    (sz (+ (apply + callszs) (apply + dispatchsz))))
+		(cond
+		   ((or (>fx sz inline-max-function-size) (>fx sz fuel))
+		    fuel)
+		   (else
+		    (let* ((call (callloginfo-call cli))
+			   (node (inline-method-call-profile
+				    call
+				    (map inline-target->fun targets)
+				    prgm conf)))
+		       (tprint "INL=" (j2s->list node))
+		       (with-access::J2SCall call (%info loc)
+			  (replace-call! (callinfo-parent %info) call
+			     (inline-stmt->expr loc node)))
+		       (- fuel (node-size node)))))))))
    
-   (define (find-targets candidates funs pms::struct)
-      (let ((tgts (vector-map (lambda (v)
-				 (when (> (car v) inline-min-call-occurrence)
-				    (let ((loc (cdr v)))
-				       (cond
-					  ((assq loc funs)
-					   =>
-					   (lambda (tgt)
-					      (cons (car v) (cdr tgt))))
-					  ((find-protoinfo loc pms)
-					   =>
-					   (lambda (pi)
-					      (cons (car v) pi)))))))
-		     candidates)))
-	 (sort (lambda (x y) (> (car x) (car y)))
-	    (filter (lambda (x) x) (vector->list tgts)))))
+   (define (inline-call-closure!::long cli fuel)
+      (tprint "INL-CLOSURE: " (callloginfo->list cli))
+      fuel)
    
-   (define (call-targets this::J2SCall clog funs pms::struct)
-      (if (vector? (cddr clog))
-	  (map cdr (find-targets (cddr clog) funs pms))
-	  (>= (cadr clog) inline-min-call-occurrence)))
+   (define (inline-call-function!::long cli decl::J2SDecl fuel::long)
+      fuel)
    
-   (define (inline-profile!::long this::J2SCall clog leaf fuel owner pms funs)
-      (with-access::J2SCall this (%info loc)
-	 (let ((targets (call-targets this clog funs pms)))
-	    (if targets
-		(let ((parent %info)
-		      (sz (node-size this))
-		      (new (inline! this targets leaf inline-max-function-size
-			      (list owner) pms prgm conf)))
-		   (if (eq? new this)
-		       (values 0 '())
-		       (let ((nc (collect-calls-and-link* new parent owner)))
-			  (update-parent! parent this new)
-			  (values (-fx (node-size new) sz) nc))))
-		(values 0 '())))))
+   (define (inline-call!::long cli fuel::long)
+      (let ((call (callloginfo-call cli)))
+	 (with-access::J2SCall call (fun)
+	    (cond
+	       ((isa? fun J2SAccess)
+		(inline-call-method! cli fuel))
+	       ((not (isa? fun J2SRef))
+		fuel)
+	       (else
+		(with-access::J2SRef fun (decl)
+		   (if (isa? decl J2SDeclFun)
+		       (inline-call-function! cli decl fuel)
+		       (inline-call-closure! cli fuel))))))))
    
-   (define (inline-calls! nl::struct clog leaf::bool fuel pms::struct funs)
-      (let loop ((calls (nodelink-nodes nl))
-		 (sz 0)
-		 (nc '()))
-	 (if (null? calls)
-	     (values sz nc)
-	     (let ((call (car calls)))
-		(multiple-value-bind (z c)
-		   (inline-profile! call
-		      clog leaf fuel (nodelink-owner nl) pms funs)
-		   (loop (cdr calls) (+fx sz z) (append c nc)))))))
+   (define (find-node-by-loc loc::long nodes)
+      (let loop ((nodes nodes))
+	 (if (null? nodes)
+	     (error "find-node-by-loc" "Cannot find node" loc)
+	     (with-access::J2SNode (car nodes) ((nloc loc))
+		(cond
+		   ((=fx loc (caddr nloc))
+		    (car nodes))
+		   (else
+		    (loop (cdr nodes))))))))
+   
+   (define (cli log calls funs)
+      (when (and (> (cadr log) 0) (caddr log))
+	 (let ((call (find-node-by-loc (car log) calls)))
+	    (callloginfo call (cadr log)
+	       (map (lambda (target)
+		       (cons (car target)
+			  (find-node-by-loc (cdr target) funs)))
+		  (vector->list (caddr log)))))))
    
    (let ((log (call-profile-log prgm logfile conf)))
       (if log
 	  (with-access::J2SProgram prgm (nodes)
-	     (let* ((calls (collect-calls-and-link* prgm prgm #f))
+	     (tprint "LOG=" log)
+	     (let* ((calls (collect-calls* prgm prgm #f))
 		    (funs (collect-funs* prgm))
 		    (size (node-size prgm))
 		    (fuel (- (* size inline-global-expansion) size))
-		    (pms (ptable (append-map collect-proto-methods* nodes))))
-		(let loop ((i 0)
-			   (fuel fuel)
-			   (leaf #t))
-		   (cond
-		      ((<= fuel 0)
-		       (j2s-inline-profile-cleanup! prgm conf))
-		      ((=fx i (vector-length log))
-		       (if leaf
-			   (loop 0 fuel #f)
-			   (j2s-inline-profile-cleanup! prgm conf)))
-		      (else
-		       (let ((clog (vector-ref log i)))
-			  (if (and (>=fx (car clog) 0)
-				   (>= (cadr clog) inline-min-call-occurrence))
-			      (let ((nl (assq (car clog) calls)))
-				 (if (pair? nl)
-				     (multiple-value-bind (f c l)
-					(inline-calls! (cdr nl) clog
-					   leaf fuel pms funs)
-					(nodelink-nodes-set! (cdr nl)
-					   (append
-					      (append-map
-						 (lambda (c)
-						    (nodelink-nodes (cdr c)))
-						 c)
-					      (nodelink-nodes (cdr nl))))
-					(loop (+fx i 1) (- fuel f) leaf))
-				     (loop (+fx i 1) fuel leaf)))
-			      (loop (+fx i 1) fuel leaf))))))))
+		    (pms (ptable (append-map collect-proto-methods* nodes)))
+		    (clis (filter-map (lambda (log) (cli log calls funs)) (vector->list log))))
+		(let loop ((clis clis)
+			   (fuel fuel))
+		   (if (or (<= fuel 0) (null? clis))
+		       (j2s-inline-profile-cleanup! prgm conf)
+		       (let* ((cli (car clis))
+			      (call (callloginfo-call cli)))
+			  (with-access::J2SCall call (%info)
+			     (if (not (callinfo-parent %info))
+				 (loop (cdr clis) fuel)
+				 (loop (cdr clis) (inline-call! cli fuel)))))))))
 	  (j2s-inline-noprofile prgm conf))))
 
 ;*---------------------------------------------------------------------*/
@@ -279,14 +366,6 @@
 	    (with-access::J2SDeclFun decl (val)
 	       (set! val (dead-inner-decl! val))))
 	 #t)))
-
-;*---------------------------------------------------------------------*/
-;*    iinfo                                                            */
-;*---------------------------------------------------------------------*/
-(define-struct inlinfo size)
-(define-struct protoinfo assig method svar)
-(define-struct targetinfo decl fun)
-(define-struct nodelink nodes owner)
 
 ;*---------------------------------------------------------------------*/
 ;*    function-arity ...                                               */
@@ -655,6 +734,131 @@
 		       (loop (cdr targets))))
 		 (loop '()))))))
    
+;*---------------------------------------------------------------------*/
+;*    inline-method-call-profile ...                                   */
+;*---------------------------------------------------------------------*/
+(define (inline-method-call-profile node::J2SCall callees::pair prgm conf)
+   
+   (define (get-cache prgm::J2SProgram)
+      (with-access::J2SProgram prgm (pcache-size)
+	 (let ((n pcache-size))
+	    (set! pcache-size (+fx pcache-size 1))
+	    n)))
+
+   (define (cache-check c loc obj field kont inline::J2SStmt)
+      (J2SIf (J2SCacheCheck 'proto-method c obj field)
+	 inline
+	 (kont)))
+
+   (define (get-svar callee)
+      (if (protoinfo-svar callee)
+	  (protoinfo-svar callee)
+	  (let ((fun (gensym '%met)))
+	     (protoinfo-svar-set! callee fun)
+	     (with-access::J2SProgram prgm (globals)
+		(set! globals (cons `(define ,fun #unspecified) globals))
+		(with-access::J2SAssig (protoinfo-assig callee) (rhs loc)
+		   (set! rhs
+		      (J2SSequence
+			 (J2SAssig (J2SHopRef fun) rhs)
+			 (J2SHopRef fun)))))
+	     fun)))
+
+   (define (inline-method-args args)
+      (map (lambda (a)
+	      (if (isa? a J2SLiteral)
+		  a
+		  (let ((id (gensym 'a)))
+		     (with-access::J2SNode a (loc)
+			(J2SLetOpt '(ref) id a)))))
+	 args))
+
+   (define (inline-method obj::J2SRef field callee args cache loc kont)
+      (with-access::J2SFun (cdr callee) (body thisp params (floc loc))
+	 (with-access::J2SRef obj (decl)
+	    (cache-check cache loc obj field kont
+	       (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) args)
+		  (j2s-alpha body
+		     (cons thisp params) (cons decl args)))))))
+   
+   (define (inline-object-method-call fun obj args loc)
+      (with-access::J2SAccess fun (field cspecs)
+	 (let loop ((callees callees)
+		    (funcaches '()))
+	    (if (null? callees)
+		(let* ((c (get-cache prgm))
+		       (f (duplicate::J2SAccess fun
+			     (obj obj)))
+		       (r (J2SLetOpt '(call) (gensym 'r)
+			     (J2SMethodCall/cache* f (list obj) args
+				'(pmap-inline vtable-inline) c))))
+		   (J2SLetRecBlock #f (list r)
+		      (let loop ((cs funcaches))
+			 (if (null? cs)
+			     (J2SSeq*
+				(map (lambda (c)
+					(J2SStmtExpr
+					   (J2SCacheUpdate 'proto-reset
+					      (car c) obj)))
+				   funcaches))
+			     (let* ((callee (cdar cs))
+				    (v (car callee)))
+				;; cs: cache x callee
+				;; callee: decl-or-id x fun
+				(J2SIf
+				   (J2SCacheCheck 'method
+				      c (if (isa? v J2SDecl)
+					    (J2SRef v)
+					    (J2SHopRef v)))
+				   (J2SSeq*
+				      (map (lambda (c)
+					      (J2SStmtExpr
+						 (if (eq? c (car cs))
+						     (J2SCacheUpdate 'proto-method
+							(car c) obj)
+						     (J2SCacheUpdate 'proto-reset
+							(car c) obj))))
+					 funcaches))
+				   (loop (cdr cs))))))
+		      (J2SReturn #t (J2SRef r))))
+		(let ((cache (get-cache prgm)))
+		   (inline-method obj field (car callees) args cache loc
+		      (lambda ()
+			 (loop (cdr callees)
+			    (cons (cons cache (car callees)) funcaches)))))))))
+
+   (with-access::J2SCall node (fun args loc)
+      (with-access::J2SAccess fun (obj field)
+	 ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
+	 ;; shape of the test that suits the tyflow analysis
+	 (let* ((vals (inline-method-args args))
+		(t (filter (lambda (b) (isa? b J2SDecl)) vals))
+		(args (map (lambda (v)
+			      (if (isa? v J2SDecl)
+				  (with-access::J2SDecl v (loc)
+				     (J2SRef v))
+				  v))
+			 vals)))
+	    (cond
+	       ((not (eq? (j2s-type obj) 'object))
+		(let* ((id (gensym 'this))
+		       (d (J2SLetOpt '(get) id obj)))
+		   (LetBlock loc (cons d t)
+		      (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
+				(J2SRef d))
+			 (inline-object-method-call fun (J2SRef d) args loc)
+			 (J2SMeta 0 0
+			    (J2SStmtExpr
+			       (J2SCall* (J2SAccess (J2SRef d) field)
+				  args)))))))
+	       ((not (isa? obj J2SRef))
+		(let* ((id (gensym 'this))
+		       (d (J2SLetOpt '(get) id obj)))
+		   (LetBlock loc (cons d t)
+		      (inline-object-method-call fun (J2SRef d) args loc))))
+	       (else
+		(inline-object-method-call fun obj args loc)))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    inline-method-call ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -1292,27 +1496,31 @@
 ;*    collect-funs* ::J2SDeclFun ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-funs* this::J2SDeclFun)
-   (with-access::J2SDeclFun this (val)
-      (with-access::J2SFun val (loc)
-	 (if (pair? loc)
-	     (list (cons (caddr loc) (targetinfo this val)))
-	     '()))))
-   
+   (let ((val (j2sdeclinit-val-fun this)))
+      (with-access::J2SFun val (body)
+	 (cons this (collect-funs* body)))))
+
 ;*---------------------------------------------------------------------*/
-;*    collect-calls-and-link* ::J2SNode ...                            */
+;*    collect-funs* ::J2SFun ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-funs* this::J2SFun)
+   (cons this (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    collect-calls* ::J2SNode ...                                     */
 ;*    -------------------------------------------------------------    */
 ;*    Link the call nodes to their parents and return the list of      */
 ;*    all calls.                                                       */
 ;*---------------------------------------------------------------------*/
-(define-generic (collect-calls-and-link*::pair-nil this parent::J2SNode owner)
+(define-generic (collect-calls*::pair-nil this parent::J2SNode owner)
    (if (pair? this)
-       (append-map (lambda (n) (collect-calls-and-link* n parent owner)) this)
+       (append-map (lambda (n) (collect-calls* n parent owner)) this)
        '()))
 
 ;*---------------------------------------------------------------------*/
-;*    collect-calls-and-link* ::J2SNode ...                            */
+;*    collect-calls* ::J2SNode ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (collect-calls-and-link* this::J2SNode parent::J2SNode owner)
+(define-method (collect-calls* this::J2SNode parent::J2SNode owner)
    (let ((fields (class-all-fields (object-class this))))
       (let loop ((i (-fx (vector-length fields) 1))
 		 (c '()))
@@ -1323,32 +1531,33 @@
 		(if (and (pair? info) (member "ast" info))
 		    (loop (-fx i 1)
 		       (append
-			  (collect-calls-and-link*
+			  (collect-calls*
 			     ((class-field-accessor f) this) this owner)
 			  c))
 		    (loop (-fx i 1)
 		       c)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    collect-calls-and-link* ::J2SFun ...                             */
+;*    collect-calls* ::J2SFun ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (collect-calls-and-link* this::J2SFun parent owner)
+(define-method (collect-calls* this::J2SFun parent owner)
    (set! owner this)
    (set! parent this)
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
-;*    collect-calls-and-link* ::J2SCall ...                            */
+;*    collect-calls* ::J2SCall ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-calls-and-link* this::J2SCall parent::J2SNode owner)
+(define-method (collect-calls* this::J2SCall parent::J2SNode owner)
    (with-access::J2SCall this (fun thisarg args %info loc)
-      (set! %info parent)
       (let ((next (append
-		     (collect-calls-and-link* fun this owner)
-		     (collect-calls-and-link* thisarg this owner)
-		     (collect-calls-and-link* args this owner))))
+		     (collect-calls* fun this owner)
+		     (collect-calls* thisarg this owner)
+		     (collect-calls* args this owner))))
 	 (if loc
-	     (cons (cons (caddr loc) (nodelink (list this) owner)) next)
+	     (begin
+		(set! %info (callinfo parent owner))
+		(cons this next))
 	     next))))
 
 ;*---------------------------------------------------------------------*/

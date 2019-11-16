@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu Nov 14 08:42:20 2019 (serrano)                */
+;*    Last change :  Fri Nov 15 16:48:03 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -1283,7 +1283,7 @@
    (define (print-call-counts counts locations)
       (let ((sep "\n      "))
 	 (for-each (lambda (l n)
-		      (when (>=fx l 0)
+		      (when (and (>=fx l 0) (or (not (number? n)) (> n 0)))
 			 (display sep)
 			 (set! sep ",\n      ")
 			 (if (number? n)
