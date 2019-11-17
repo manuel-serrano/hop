@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Nov 15 16:48:03 2019 (serrano)                */
+;*    Last change :  Sun Nov 17 08:47:43 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -978,7 +978,8 @@
 
    (cond
       ((string-contains trc "format:fprofile")
-       (when (pair? filecaches)
+       (when (and #f (pair? filecaches))
+	  ;; TODO...
 	  (with-output-to-port *profile-port*
 	     (lambda ()
 		(print "\"format\": \"fprofile\",")
