@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Nov 15 18:30:20 2019 (serrano)                */
+;*    Last change :  Mon Nov 18 18:59:52 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1181,14 +1181,10 @@
 		    (if (memq (j2s-vtype lhs) '(undefined null))
 			`(js-null-or-undefined? ,right)
 			`(js-null-or-undefined? ,left)))
-;* 			`(or (eq? (js-undefined) ,right) (eq? (js-null) ,right)) */
-;* 			`(or (eq? ,left (js-undefined)) (eq? ,left (js-null))))) */
 		   ((!=)
 		    (if (memq (j2s-vtype lhs) '(undefined null))
 			`(not (js-null-or-undefined? ,right))
 			`(not (js-null-or-undefined? ,left))))
-;* 			`(not (or (eq? (js-undefined) ,right) (eq? (js-null) ,right))) */
-;* 			`(not (or (eq? ,left (js-undefined)) (eq? ,left (js-null)))))) */
 		   (else
 		    (js-binop loc op left lhs right rhs conf))))))
 	 (else
@@ -1359,10 +1355,6 @@
 		  (js-integer->jsstring ,right)
 		  (js-real->jsstring ,right))))
 	 (else
-	  ;; MS: 7jun2019
-;* 	  (str-append flip                                             */
-;* 	     left                                                      */
-;* 	     `(js-tojsstring (js-toprimitive ,right 'any %this) %this)) */
 	  (str-append flip left `(js-toprimitive-for-string ,right %this)))))
    
    (define (add loc type lhs rhs mode return conf)
@@ -1371,15 +1363,15 @@
 	    (let ((tl (j2s-vtype lhs))
 		  (tr (j2s-vtype rhs)))
 	       (cond
-		  ((and (eq? type 'any)
-			(or (and (eq? tl 'number) (memq tr '(int32 uint32)))
-			    (and (memq tl '(int32 uint32)) (eq? tr 'number))))
-		   ;; type is forced to any on prefix/suffix generic increments
-		   ;; this case is used to generate smaller codes
-		   (binop-any-any '+ type
-		      (box left tl conf)
-		      (box right tr conf)
-		      #f))
+;* 		  ((and (eq? type 'any)                                */
+;* 			(or (and (eq? tl 'number) (memq tr '(int32 uint32))) */
+;* 			    (and (memq tl '(int32 uint32)) (eq? tr 'number)))) */
+;* 		   ;; type is forced to any on prefix/suffix generic increments */
+;* 		   ;; this case is used to generate smaller codes      */
+;* 		   (binop-any-any '+ type                              */
+;* 		      (box left tl conf)                               */
+;* 		      (box right tr conf)                              */
+;* 		      #f))                                             */
 		  ((eq? tl 'string)
 		   (add-string loc type left tl lhs right tr rhs
 		      mode return conf #f))
@@ -1425,7 +1417,7 @@
 			    (box left tl conf)
 			    (box right tr conf)
 			    #f)))))))))
-
+   
    (if (type-number? type)
        (js-arithmetic-addsub loc '+ type lhs rhs mode return conf)
        (add loc type lhs rhs mode return conf)))

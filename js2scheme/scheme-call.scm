@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Oct 14 09:36:15 2019 (serrano)                */
+;*    Last change :  Mon Nov 18 19:21:32 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -482,6 +482,9 @@
    
    (define (Json? self)
       (is-builtin-ref? self 'JSON))
+
+   (define (mincspecs x y)
+      (filter (lambda (c) (memq c y)) x))
    
    (define (call-ref-method self ccache ocache ccspecs fun::J2SAccess obj::J2SExpr args)
 
@@ -519,14 +522,13 @@
 			       ,(js-pcache ocache)
 			       ,(loc->point loc)
 			       ',ccspecs
-			       ;;ocspecs
 			       ',(cond
 				    ((>=fx (config-get conf :optim 0) 4)
-				     '(imap amap vtable))
+				     (mincspecs ocspecs '(imap amap amap+ vtable)))
 				    ((>=fx (config-get conf :optim 0) 3)
-				     '(imap amap+))
+				     (mincspecs ocspecs '(imap amap+)))
 				    (else
-				     '(imap+)))
+				     (mincspecs ocspecs '(imap+))))
 			       ,@(map (lambda (arg)
 					 (j2s-scheme arg mode return conf))
 				    args))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Nov 15 08:23:55 2019 (serrano)                */
+;*    Last change :  Mon Nov 18 18:21:53 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -249,8 +249,24 @@
       (tprint "INL-CLOSURE: " (callloginfo->list cli))
       fuel)
    
-   (define (inline-call-function!::long cli decl::J2SDecl fuel::long)
-      fuel)
+   (define (inline-call-function!::long cli fuel::long)
+      (tprint "INL-FUN: " (callloginfo->list cli))
+      (let ((call (callloginfo-call cli)))
+	 (with-access::J2SCall call (fun)
+	    (with-access::J2SRef fun (decl)
+	       (with-access::J2SDeclFun decl (val)
+		  (with-access::J2SFun val (body)
+		     (let ((sz (node-size body)))
+			(if (or (>fx sz inline-max-function-size) (>fx sz fuel))
+			    fuel
+			    (let* ((node (inline-function-call-profile
+					    call val
+					    prgm conf)))
+			       (tprint "INL=" (j2s->list node))
+			       (with-access::J2SCall call (%info loc)
+				  (replace-call! (callinfo-parent %info) call
+				     (inline-stmt->expr loc node)))
+			       (- fuel (node-size node)))))))))))
    
    (define (inline-call!::long cli fuel::long)
       (let ((call (callloginfo-call cli)))
@@ -263,7 +279,7 @@
 	       (else
 		(with-access::J2SRef fun (decl)
 		   (if (isa? decl J2SDeclFun)
-		       (inline-call-function! cli decl fuel)
+		       (inline-call-function! cli fuel)
 		       (inline-call-closure! cli fuel))))))))
    
    (define (find-node-by-loc loc::long nodes)
@@ -714,6 +730,27 @@
 		   nbody))))))
 
 ;*---------------------------------------------------------------------*/
+;*    inline-function-call-profile ...                                 */
+;*---------------------------------------------------------------------*/
+(define (inline-function-call-profile node::J2SCall target::J2SFun prgm conf)
+
+   (define (inline-function-args args)
+      (map (lambda (a)
+	      (if (isa? a J2SLiteral)
+		  a
+		  (let ((id (gensym 'a)))
+		     (with-access::J2SNode a (loc)
+			(J2SLetOpt '(ref) id a)))))
+	 args))
+   
+   (with-access::J2SCall node (thisargs args loc)
+      (with-access::J2SFun target (body thisp params (floc loc))
+	 (let* ((vals (inline-function-args args))
+		(nbody (j2s-alpha body (cons thisp params) vals)))
+	    (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)
+	       nbody)))))
+   
+;*---------------------------------------------------------------------*/
 ;*    inline-unknown-call ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (inline-unknown-call ref::J2SRef thisarg args::pair-nil loc
@@ -828,7 +865,8 @@
 			    (cons (cons cache (car callees)) funcaches)))))))))
 
    (with-access::J2SCall node (fun args loc)
-      (with-access::J2SAccess fun (obj field)
+      (with-access::J2SAccess fun (obj field cspecs)
+	 (tprint "INL cspecs=" cspecs)
 	 ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
 	 ;; shape of the test that suits the tyflow analysis
 	 (let* ((vals (inline-method-args args))
