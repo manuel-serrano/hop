@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sun Nov 17 08:47:43 2019 (serrano)                */
+;*    Last change :  Mon Nov 18 08:13:00 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -945,6 +945,30 @@
 	 (print "    }")
 	 (print "  },")))
 
+   (define (show-fprofile-pcaches fc::vector)
+      (let ((vpc (collapse
+		    (sort (lambda (x y)
+			     (with-access::JsPropertyCache x ((xpoint point))
+				(with-access::JsPropertyCache y ((ypoint point))
+				   (<= xpoint ypoint))))
+		       fc))))
+	 (vfor-each (lambda (i pc)
+		       (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+			  (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
+			     (display* "      { \"point\": " point)
+			     (display* ", \"usage\": \"" usage "\"")
+			     (when (> cntmiss 1) (display* ", \"miss\": " cntmiss))
+			     (when (> cntimap 0) (display* ", \"imap\": " cntimap))
+			     (when (> cntemap 0) (display* ", \"emap\": " cntemap))
+			     (when (> cntcmap 0) (display* ", \"cmap\": " cntcmap))
+			     (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
+			     (when (> cntamap 0) (display* ", \"amap\": " cntamap))
+			     (when (> cntvtable 0) (display* ", \"vtable\": " cntvtable))
+			     (if (>fx i 0)
+				 (print " }, ")
+				 (print " } ")))))
+	    vpc)))
+
    (define (collapse vec)
       (let ((len (vector-length vec)))
 	 (when (>fx len 1)
@@ -978,41 +1002,27 @@
 
    (cond
       ((string-contains trc "format:fprofile")
-       (when (and #f (pair? filecaches))
-	  ;; TODO...
+       (when (pair? filecaches)
 	  (with-output-to-port *profile-port*
 	     (lambda ()
-		(print "\"format\": \"fprofile\",")
 		(print "\"sources\": [")
-		(for-each (lambda (fc)
-			     (when (any (lambda (pc)
-					   (with-access::JsPropertyCache pc (cntmiss)
-					      (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))))
-				      fc)
-				(print "  { \"filename\": \"" (with-access::JsPropertyCache fc (src) src) "\",")
-				(print "    \"caches\": [")
-				(vfor-each (lambda (i pc)
-					      (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
-						 (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
-						    (display* "      { \"point\": " point)
-						    (display* ", \"usage\": \"" usage "\"")
-						    (when (> cntmiss 1) (display* ", \"miss\": " cntmiss))
-						    (when (> cntimap 0) (display* ", \"imap\": " cntimap))
-						    (when (> cntemap 0) (display* ", \"emap\": " cntemap))
-						    (when (> cntcmap 0) (display* ", \"cmap\": " cntcmap))
-						    (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
-						    (when (> cntamap 0) (display* ", \"amap\": " cntamap))
-						    (when (> cntvtable 0) (display* ", \"vtable\": " cntvtable))
-						    (print " }, "))))
-				   (collapse
-				      (sort (lambda (x y)
-					       (with-access::JsPropertyCache x ((xpoint point))
-						  (with-access::JsPropertyCache y ((ypoint point))
-						     (<= xpoint ypoint))))
-					 fc)))
-				(print "      { \"point\": -1 } ]")
-				(print "  },")))
-		   filecaches)
+		(let ((srcs (delete-duplicates!
+			       (map (lambda (pc)
+				       (with-access::JsPropertyCache pc (src) src))
+				  filecaches))))
+		   (for-each (lambda (s)
+				(let ((pcs (filter (lambda (pc)
+						      (with-access::JsPropertyCache pc (src cntmiss)
+							 (and (string=? src s)
+							      (or (or (> (pcache-hits pc) 0)
+								      (> cntmiss *log-miss-threshold*))))))
+					      filecaches)))
+				   (when (pair? pcs)
+				      (print "  { \"filename\": \"" s "\",")
+				      (print "    \"caches\": [")
+				      (show-fprofile-pcaches (list->vector pcs))
+				      (print "   ] },"))))
+		      srcs))
 		(print "  { \"filename\": \"\", \"caches\": [] }")
 		(print "],")))))
       ((string-contains trc "format:json")

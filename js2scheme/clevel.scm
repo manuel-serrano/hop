@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/clevel.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/clevel.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Thu Jan 24 15:00:15 2019 (serrano)                */
+;*    Last change :  Mon Nov 18 11:36:38 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -56,6 +56,7 @@
 	 ((config-get args :profile-log #f)
 	  =>
 	  (lambda (log)
+	     (cache-profile-log this log args)
 	     (with-access::J2SProgram this (nodes headers decls)
 		(let ((ptable (create-hashtable)))
 		   (propcollect* decls ptable)
