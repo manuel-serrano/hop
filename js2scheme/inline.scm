@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Nov 19 05:28:05 2019 (serrano)                */
+;*    Last change :  Tue Nov 19 11:11:14 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -786,7 +786,7 @@
 ;*    inline-method-call-profile ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (inline-method-call-profile node::J2SCall guard callees::pair prgm conf)
-
+   
    (define (j2sref-ronly? obj)
       (when (isa? obj J2SRef)
 	 (with-access::J2SRef obj (decl)
@@ -798,12 +798,12 @@
 	 (let ((n pcache-size))
 	    (set! pcache-size (+fx pcache-size 1))
 	    n)))
-
+   
    (define (cache-check c loc obj field kont inline::J2SStmt)
       (J2SIf (J2SCacheCheck 'proto-method c obj field)
 	 inline
 	 (kont)))
-
+   
    (define (get-svar callee)
       (if (protoinfo-svar callee)
 	  (protoinfo-svar callee)
@@ -817,7 +817,7 @@
 			 (J2SAssig (J2SHopRef fun) rhs)
 			 (J2SHopRef fun)))))
 	     fun)))
-
+   
    (define (inline-method-args args)
       (map (lambda (a)
 	      (cond
@@ -830,7 +830,7 @@
 		     (with-access::J2SNode a (loc)
 			(J2SLetOpt '(ref) id a))))))
 	 args))
-
+   
    (define (inline-method obj::J2SRef field callee args cache loc kont)
       (with-access::J2SFun (cdr callee) (body thisp params (floc loc))
 	 (with-access::J2SRef obj (decl)
@@ -839,16 +839,16 @@
 		  (j2s-alpha body
 		     (cons thisp params) (cons decl args)))))))
    
-   (define (inline-object-method-call fun obj args loc)
+   (define (inline-object-method-call-pmap fun obj::J2SDecl args loc)
       (with-access::J2SAccess fun (field cspecs)
 	 (let loop ((callees callees)
 		    (funcaches '()))
 	    (if (null? callees)
 		(let* ((c (get-cache prgm))
 		       (f (duplicate::J2SAccess fun
-			     (obj obj)))
+			     (obj (J2SRef obj))))
 		       (r (J2SLetOpt '(call) (gensym 'r)
-			     (J2SMethodCall/cache* f (list obj) args
+			     (J2SMethodCall/cache* f (list (J2SRef obj)) args
 				'(pmap-inline vtable-inline) c))))
 		   (J2SLetRecBlock #f (list r)
 		      (let loop ((cs funcaches))
@@ -857,7 +857,7 @@
 				(map (lambda (c)
 					(J2SStmtExpr
 					   (J2SCacheUpdate 'proto-reset
-					      (car c) obj)))
+					      (car c) (J2SRef obj))))
 				   funcaches))
 			     (let* ((callee (cdar cs))
 				    (v (car callee)))
@@ -873,21 +873,39 @@
 					      (J2SStmtExpr
 						 (if (eq? c (car cs))
 						     (J2SCacheUpdate 'proto-method
-							(car c) obj)
+							(car c) (J2SRef obj))
 						     (J2SCacheUpdate 'proto-reset
-							(car c) obj))))
+							(car c) (J2SRef obj)))))
 					 funcaches))
 				   (loop (cdr cs))))))
 		      (J2SReturn #t (J2SRef r))))
 		(let ((cache (get-cache prgm)))
-		   (inline-method obj field (car callees) args cache loc
+		   (inline-method (J2SRef obj) field (car callees) args cache loc
 		      (lambda ()
 			 (loop (cdr callees)
 			    (cons (cons cache (car callees)) funcaches)))))))))
-
+   
+   (define (inline-object-method-call-function fun obj::J2SDecl args loc)
+      (with-access::J2SAccess fun (field cspecs loc)
+	 (tprint "loc=" loc " cs=" cspecs)
+	 (let ((met (J2SLetOpt '(ref) (gensym 'met)
+		       (duplicate::J2SAccess fun
+			  (obj (J2SRef obj))))))
+	    (J2SLetBlock (list met)
+	       (let loop ((callees callees))
+		  (if (null? callees)
+		      (J2SMethodCall* (J2SRef met) (list (J2SRef obj)) args)
+		      (loop (cdr callees))))))))
+   
+   (define (inline-object-method-call fun::J2SAccess obj::J2SDecl args loc guard)
+      (case guard
+	 ((pmap) (inline-object-method-call-pmap fun obj args loc))
+	 ((function) (inline-object-method-call-function fun obj args loc))
+	 (else (inline-object-method-call-pmap fun obj args loc))))
+   
    (with-access::J2SCall node (fun args loc)
-      (with-access::J2SAccess fun (obj field cspecs)
-	 (tprint "INL cspecs=" cspecs)
+      (with-access::J2SAccess fun (obj field)
+	 (tprint "INL guard=" guard)
 	 ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
 	 ;; shape of the test that suits the tyflow analysis
 	 (let* ((vals (inline-method-args args))
@@ -905,8 +923,7 @@
 		       (LetBlock loc t
 			  (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
 				    (J2SRef decl))
-			     (inline-object-method-call fun (J2SRef decl)
-				args loc)
+			     (inline-object-method-call fun decl args loc guard)
 			     (J2SMeta 0 0
 				(J2SStmtExpr
 				   (J2SCall* (J2SAccess (J2SRef decl) field)
@@ -916,19 +933,19 @@
 		       (LetBlock loc (cons decl t)
 			  (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
 				    (J2SRef decl))
-			     (inline-object-method-call fun (J2SRef decl)
-				args loc)
+			     (inline-object-method-call fun decl args loc guard)
 			     (J2SMeta 0 0
 				(J2SStmtExpr
 				   (J2SCall* (J2SAccess (J2SRef decl) field)
 				      args))))))))
 	       ((not (j2sref-ronly? obj))
 		(let* ((id (gensym 'this))
-		       (d (J2SLetOpt '(get) id obj)))
-		   (LetBlock loc (cons d t)
-		      (inline-object-method-call fun (J2SRef d) args loc))))
+		       (decl (J2SLetOpt '(get) id obj)))
+		   (LetBlock loc (cons decl t)
+		      (inline-object-method-call fun decl args loc guard))))
 	       (else
-		(inline-object-method-call fun obj args loc)))))))
+		(with-access::J2SRef obj (decl)
+		   (inline-object-method-call fun decl args loc guard))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-method-call ...                                           */
