@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Nov 18 18:21:53 2019 (serrano)                */
+;*    Last change :  Tue Nov 19 05:28:05 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -189,14 +189,13 @@
 				 ;; filter out targets larger than
 				 ;; INLINE-max-function-size
 				 (<fx (node-size (cdr t))
-				    inline-max-function-size))
+				    inline-max-function-size)) 
 			 targets))
 	     (targets (filter (lambda (t)
 				 ;; TO BE IMPROVED:
 				 ;; only keeps global variables
 				 (when (isa? (cdr t) J2SDeclFun)
 				    (with-access::J2SDecl (cdr t) (scope)
-				       (tprint "S=" scope)
 				       (eq? scope '%scope))))
 			 targets))
 	     (targets (filter (lambda (t)
@@ -215,31 +214,43 @@
 		(cons (cdr t) method))
 	     (cons (cdr t) val))))
 
+   (define (inline-call-guard-kind cli)
+      ;; the kind of guard to protect the inlined code
+      (let ((call (callloginfo-call cli)))
+	 (with-access::J2SCall call (fun)
+	    (with-access::J2SAccess fun (cspecs)
+	       (if (>fx (length cspecs) 1)
+		   'function
+		   'pmap)))))
+   
    (define (inline-call-method!::long cli fuel)
-      ;; inline a method invokation, inline at most
+      ;; inline a method invocation
       (tprint "INL-MET: " (callloginfo->list cli))
       (let ((targets (inline-filter-dynamic-targets cli)))
 	 (if (null? targets)
 	     fuel
-	     (let* ((callszs (map (lambda (t)
-				     (node-size (cdr t)))
-				targets))
+	     (let* ((callszs (map (lambda (t) (node-size (cdr t))) targets))
 		    (dispatchsz (map (lambda (t)
 					(if (isa? (cdr t) J2SDeclFun)
 					    inline-dispatch-function-test-size
 					    inline-dispatch-closure-test-size))
 				   targets))
-		    (sz (+ (apply + callszs) (apply + dispatchsz))))
+		    (sz (+ (apply + callszs) (apply + dispatchsz)))
+		    (guard (inline-call-guard-kind cli))
+		    (funsz (case guard
+			      ((pmap) inline-max-function-size)
+			      ((function) (/fx inline-max-function-size 2))
+			      (else (/fx inline-max-function-size 3)))))
 		(cond
-		   ((or (>fx sz inline-max-function-size) (>fx sz fuel))
+		   ((or (>fx sz funsz) (>fx sz fuel))
 		    fuel)
 		   (else
 		    (let* ((call (callloginfo-call cli))
 			   (node (inline-method-call-profile
-				    call
+				    call guard
 				    (map inline-target->fun targets)
 				    prgm conf)))
-		       (tprint "INL=" (j2s->list node))
+		       (tprint "INL=" (j2s->list node) " guard=" guard)
 		       (with-access::J2SCall call (%info loc)
 			  (replace-call! (callinfo-parent %info) call
 			     (inline-stmt->expr loc node)))
@@ -774,7 +785,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-method-call-profile ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (inline-method-call-profile node::J2SCall callees::pair prgm conf)
+(define (inline-method-call-profile node::J2SCall guard callees::pair prgm conf)
+
+   (define (j2sref-ronly? obj)
+      (when (isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (with-access::J2SDecl decl (ronly)
+	       ronly))))
    
    (define (get-cache prgm::J2SProgram)
       (with-access::J2SProgram prgm (pcache-size)
@@ -803,11 +820,15 @@
 
    (define (inline-method-args args)
       (map (lambda (a)
-	      (if (isa? a J2SLiteral)
-		  a
+	      (cond
+		 ((isa? a J2SLiteral)
+		  a)
+		 ((j2sref-ronly? a)
+		  a)
+		 (else
 		  (let ((id (gensym 'a)))
 		     (with-access::J2SNode a (loc)
-			(J2SLetOpt '(ref) id a)))))
+			(J2SLetOpt '(ref) id a))))))
 	 args))
 
    (define (inline-method obj::J2SRef field callee args cache loc kont)
@@ -879,17 +900,29 @@
 			 vals)))
 	    (cond
 	       ((not (eq? (j2s-type obj) 'object))
-		(let* ((id (gensym 'this))
-		       (d (J2SLetOpt '(get) id obj)))
-		   (LetBlock loc (cons d t)
-		      (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
-				(J2SRef d))
-			 (inline-object-method-call fun (J2SRef d) args loc)
-			 (J2SMeta 0 0
-			    (J2SStmtExpr
-			       (J2SCall* (J2SAccess (J2SRef d) field)
-				  args)))))))
-	       ((not (isa? obj J2SRef))
+		(if (j2sref-ronly? obj)
+		    (with-access::J2SRef obj (decl)
+		       (LetBlock loc t
+			  (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
+				    (J2SRef decl))
+			     (inline-object-method-call fun (J2SRef decl)
+				args loc)
+			     (J2SMeta 0 0
+				(J2SStmtExpr
+				   (J2SCall* (J2SAccess (J2SRef decl) field)
+				      args))))))
+		    (let* ((id (gensym 'this))
+			   (decl (J2SLetOpt '(get) id obj)))
+		       (LetBlock loc (cons decl t)
+			  (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
+				    (J2SRef decl))
+			     (inline-object-method-call fun (J2SRef decl)
+				args loc)
+			     (J2SMeta 0 0
+				(J2SStmtExpr
+				   (J2SCall* (J2SAccess (J2SRef decl) field)
+				      args))))))))
+	       ((not (j2sref-ronly? obj))
 		(let* ((id (gensym 'this))
 		       (d (J2SLetOpt '(get) id obj)))
 		   (LetBlock loc (cons d t)
