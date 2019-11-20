@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Nov 19 20:13:17 2019 (serrano)                */
+;*    Last change :  Wed Nov 20 16:43:21 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1849,7 +1849,7 @@
 		   (cond
 		      ((inrange-int32? rhs)
 		       (cond
-			  ((memq tr '(int32 uint32 bint))
+			  ((memq tl '(int32 uint32 bint))
 			   (if (or (inrange-int30? rhs) (inrange-int30? lhs))
 			       (j2s-cast
 				  `(remainderfx ,left ,(asfixnum right trv))
