@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Thu May 23 08:50:36 2019 (serrano)                */
+;*    Last change :  Wed Nov 20 13:33:31 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -173,10 +173,15 @@
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise-constructor
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.3.1
-   (define (js-promise-construct o::JsPromise executor)
-      (if (not (js-function? executor))
+   (define (js-promise-construct o executor)
+      (cond
+	 ((not (js-function? executor))
 	  (js-raise-type-error %this "argument not a procedure ~a"
-	     (typeof executor))
+	     (typeof executor)))
+	 ((not (isa? o JsPromise))
+	  (js-raise-type-error %this "not a promise ~a"
+	     (typeof o)))
+	 (else
 	  (with-access::JsPromise o (state resolver rejecter thens catches)
 	     ;; promise .5
 	     (set! state 'pending)
@@ -198,7 +203,7 @@
 		   (begin
 		      (js-call2 %this executor (js-undefined) resolve reject)
 		      ;; promise .11
-		      o))))))
+		      o)))))))
    
    ;; promise allocation
    (define (js-promise-alloc::JsPromise %this constructor::JsFunction)
