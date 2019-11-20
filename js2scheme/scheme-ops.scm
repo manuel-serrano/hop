@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Nov 20 16:51:47 2019 (serrano)                */
+;*    Last change :  Wed Nov 20 16:53:40 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1845,17 +1845,19 @@
 				     ,(asuint32 left tlv)
 				     ,(asuint32 right trv))
 			  lhs 'uint32 type conf))))
-		  ((and (eq? tr 'uint32) (inrange-positive? rhs))
+		  ((and (eq? tr 'uint32) (inrange-positive? lhs))
 		   (cond
 		      ((inrange-int32? rhs)
 		       (cond
 			  ((memq tl '(int32 uint32 bint))
 			   (if (or (inrange-int30? rhs) (inrange-int30? lhs))
 			       (j2s-cast
-				  `(remainderfx ,left ,(asfixnum right trv))
+				  `(remainderfx ,(asfixnum left tlv)
+				      ,(asfixnum right trv))
 				  lhs 'int30 type conf)
 			       (j2s-cast
-				  `(remainderfx ,left ,(asfixnum right trv))
+				  `(remainderfx ,(asfixnum left tlv)
+				      ,(asfixnum right trv))
 				  lhs 'bint type conf)))
 			  ((eq? (number type) 'integer)
 			   `(if (fixnum? ,left)
