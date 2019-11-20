@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jul 10 07:12:05 2019 (serrano)                */
+;*    Last change :  Wed Nov 20 07:10:59 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -48,6 +48,7 @@
    (print "      hopscript:cache[num] (*), hopscript:hint[num] (*),")
    (print "      hopscript:alloc[num], hopscript:uncache, hopscript:call")
    (print "      hopscript:function[num]")
+   (print "      hopscript:fprofile (alias of \"hopscript:cache hopscript:call format:fprofile\")")
    (print "      format:json, format:fprofile, srcfile=path, logfile=path")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print " (*) Need both compile and runtime variable and need to be compiled")

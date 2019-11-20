@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Mon Nov 18 08:13:00 2019 (serrano)                */
+;*    Last change :  Wed Nov 20 07:09:59 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -95,6 +95,8 @@
 	       (when m
 		  (set! *profile-port* (open-output-file (cadr m)))))
 	    (profile-cache-start! trc)
+	    (when (string-contains trc "hopscript:fprofile")
+	       (set! trc (string-append "hopscript:cache hopscript:call format:fprofile " trc)))
 	    (when (string-contains trc "hopscript:cache")
 	       (log-cache-miss!))
 	    (when (string-contains trc "hopscript:function")
@@ -971,34 +973,35 @@
 
    (define (collapse vec)
       (let ((len (vector-length vec)))
-	 (when (>fx len 1)
-	    (let loop ((i 1)
-		       (old (vector-ref vec 0))
-		       (res '()))
-	       (if (=fx i len)
-		   (list->vector (cons old res))
-		   (let ((x (vector-ref vec i)))
-		      (with-access::JsPropertyCache x ((xpoint point)
-						       (xusage usage)
-						       (xcntmiss cntmiss)
-						       (xcntimap cntimap)
-						       (xcntemap cntemap)
-						       (xcntcmap cntcmap)
-						       (xcntpmap cntpmap)
-						       (xcntamap cntamap)
-						       (xcntvtable cntvtable))
-			 (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
-			    (if (and (= point xpoint) (eq? xusage usage))
-				(begin
-				   (set! cntmiss (+u32 cntmiss xcntmiss))
-				   (set! cntimap (+u32 cntimap xcntimap))
-				   (set! cntemap (+u32 cntemap xcntemap))
-				   (set! cntcmap (+u32 cntcmap xcntcmap))
-				   (set! cntpmap (+u32 cntpmap xcntpmap))
-				   (set! cntamap (+u32 cntamap xcntamap))
-				   (set! cntvtable (+u32 cntvtable xcntvtable))
-				   (loop (+fx i 1) old res))
-				(loop (+fx i 1) x (cons old res)))))))))))
+	 (if (>fx len 1)
+	     (let loop ((i 1)
+			(old (vector-ref vec 0))
+			(res '()))
+		(if (=fx i len)
+		    (list->vector (cons old res))
+		    (let ((x (vector-ref vec i)))
+		       (with-access::JsPropertyCache x ((xpoint point)
+							(xusage usage)
+							(xcntmiss cntmiss)
+							(xcntimap cntimap)
+							(xcntemap cntemap)
+							(xcntcmap cntcmap)
+							(xcntpmap cntpmap)
+							(xcntamap cntamap)
+							(xcntvtable cntvtable))
+			  (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+			     (if (and (= point xpoint) (eq? xusage usage))
+				 (begin
+				    (set! cntmiss (+u32 cntmiss xcntmiss))
+				    (set! cntimap (+u32 cntimap xcntimap))
+				    (set! cntemap (+u32 cntemap xcntemap))
+				    (set! cntcmap (+u32 cntcmap xcntcmap))
+				    (set! cntpmap (+u32 cntpmap xcntpmap))
+				    (set! cntamap (+u32 cntamap xcntamap))
+				    (set! cntvtable (+u32 cntvtable xcntvtable))
+				    (loop (+fx i 1) old res))
+				 (loop (+fx i 1) x (cons old res))))))))
+	     vec)))
 
    (cond
       ((string-contains trc "format:fprofile")

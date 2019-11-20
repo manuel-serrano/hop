@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Nov 18 18:59:52 2019 (serrano)                */
+;*    Last change :  Tue Nov 19 20:13:17 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -288,7 +288,7 @@
 			((m64? conf)
 			 `(if (=u32 ,sexpr #u32:0)
 			      -0.0
-			      (negfx ,(uint32->fixnum sexpr))))
+			      (negfx (uint32->fixnum ,sexpr))))
 			((inrange-int32? expr)
 			 `(if (=u32 ,sexpr #u32:0)
 			      -0.0

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Nov 19 11:11:14 2019 (serrano)                */
+;*    Last change :  Tue Nov 19 18:24:34 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -893,9 +893,26 @@
 			  (obj (J2SRef obj))))))
 	    (J2SLetBlock (list met)
 	       (let loop ((callees callees))
-		  (if (null? callees)
-		      (J2SMethodCall* (J2SRef met) (list (J2SRef obj)) args)
-		      (loop (cdr callees))))))))
+		  (cond
+		     ((null? callees)
+		      (J2SStmtExpr
+			 (J2SMethodCall* (J2SRef met) (list (J2SRef obj)) args)))
+		     ((and (isa? (caar callees) J2SDecl)
+			   (with-access::J2SDecl (caar callees) (scope)
+			      (eq? scope '%scope)))
+		      (let ((callee (car callees)))
+			 (J2SIf (J2SBinary 'eq?
+				   (J2SRef met) (J2SRef (car callee)))
+			    (with-access::J2SFun (cdr callee) (body thisp params (floc loc))
+			       (LetBlock floc (filter (lambda (b)
+							 (isa? b J2SDecl))
+						 args)
+				  (j2s-alpha body
+				     (cons thisp params) (cons obj args))))
+			    (loop (cdr callees)))))
+		     (else
+		      (tprint "CCAR=" (typeof (caar callees)))
+		      (loop (cdr callees)))))))))
    
    (define (inline-object-method-call fun::J2SAccess obj::J2SDecl args loc guard)
       (case guard
