@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Nov 20 16:43:21 2019 (serrano)                */
+;*    Last change :  Wed Nov 20 16:51:47 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1859,9 +1859,9 @@
 				  lhs 'bint type conf)))
 			  ((eq? (number type) 'integer)
 			   `(if (fixnum? ,left)
-				(j2s-cast
-				   `(remainderfx ,left ,(asfixnum right trv))
-				   lhs 'bint type conf)
+				,(j2s-cast
+				    `(remainderfx ,left ,(asfixnum right trv))
+				    lhs 'bint type conf)
 				,(j2s-cast `(%$$NZ ,(tonumber left tlv conf)
 					       ,(tonumber right trv conf))
 				    lhs (number type) type conf)))
