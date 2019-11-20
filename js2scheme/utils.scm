@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Nov  8 09:01:08 2019 (serrano)                */
+;*    Last change :  Wed Nov 20 15:57:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -280,6 +280,9 @@
    (cond
       ((memq type '(any unknown)) #t)
       ((memq type types) #t)
+      ((eq? type 'number)
+       (any (lambda (t) (type-maybe? t types))
+	  '(real int30 int32 uint32 int53 bint fixnum ufixnum integer)))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
