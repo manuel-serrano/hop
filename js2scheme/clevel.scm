@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Mon Nov 18 18:45:43 2019 (serrano)                */
+;*    Last change :  Thu Nov 21 07:37:10 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -214,7 +214,7 @@
 	    ((eq? ctx 'put)
 	     (set! cspecs '(pmap cmap+)))
 	    (else
-	     (set! cspecs '(imap+))))))
+	     (set! cspecs '())))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/

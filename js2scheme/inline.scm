@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Nov 19 18:24:34 2019 (serrano)                */
+;*    Last change :  Thu Nov 21 07:32:41 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -218,10 +218,11 @@
       ;; the kind of guard to protect the inlined code
       (let ((call (callloginfo-call cli)))
 	 (with-access::J2SCall call (fun)
-	    (with-access::J2SAccess fun (cspecs)
-	       (if (>fx (length cspecs) 1)
-		   'function
-		   'pmap)))))
+	    (with-access::J2SAccess fun (cspecs loc)
+	       (case (length cspecs)
+		  ((0) 'array)
+		  ((1) 'pmap)
+		  (else 'function))))))
    
    (define (inline-call-method!::long cli fuel)
       ;; inline a method invocation
@@ -917,12 +918,11 @@
    (define (inline-object-method-call fun::J2SAccess obj::J2SDecl args loc guard)
       (case guard
 	 ((pmap) (inline-object-method-call-pmap fun obj args loc))
-	 ((function) (inline-object-method-call-function fun obj args loc))
+	 ((function array) (inline-object-method-call-function fun obj args loc))
 	 (else (inline-object-method-call-pmap fun obj args loc))))
    
    (with-access::J2SCall node (fun args loc)
       (with-access::J2SAccess fun (obj field)
-	 (tprint "INL guard=" guard)
 	 ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
 	 ;; shape of the test that suits the tyflow analysis
 	 (let* ((vals (inline-method-args args))
@@ -938,7 +938,10 @@
 		(if (j2sref-ronly? obj)
 		    (with-access::J2SRef obj (decl)
 		       (LetBlock loc t
-			  (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
+			  (J2SIf (J2SHopCall
+				    (if (eq? guard 'array)
+					(J2SHopRef/rtype 'js-array? 'bool)
+					(J2SHopRef/rtype 'js-object? 'bool))
 				    (J2SRef decl))
 			     (inline-object-method-call fun decl args loc guard)
 			     (J2SMeta 0 0
@@ -948,7 +951,10 @@
 		    (let* ((id (gensym 'this))
 			   (decl (J2SLetOpt '(get) id obj)))
 		       (LetBlock loc (cons decl t)
-			  (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
+			  (J2SIf (J2SHopCall
+				    (if (eq? guard 'array)
+					(J2SHopRef/rtype 'js-array? 'bool)
+					(J2SHopRef/rtype 'js-object? 'bool))
 				    (J2SRef decl))
 			     (inline-object-method-call fun decl args loc guard)
 			     (J2SMeta 0 0
