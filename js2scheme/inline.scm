@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Nov 25 05:11:55 2019 (serrano)                */
+;*    Last change :  Mon Nov 25 08:02:49 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -204,14 +204,16 @@
       ;; the kind of guard to protect the inlined code
       (let ((call (callloginfo-call cli)))
 	 (with-access::J2SCall call (fun)
-	    (with-access::J2SAccess fun (cspecs loc)
-	       (case (length cspecs)
-		  ((0)
-		   (values 'array (/fx inline-max-function-size 3)))
-		  ((1)
-		   (values 'pmap inline-max-function-size))
-		  (else
-		   (values 'function (/fx inline-max-function-size 2))))))))
+	    (if (isa? fun J2SAccess)
+		(with-access::J2SAccess fun (cspecs loc)
+		   (case (length cspecs)
+		      ((0)
+		       (values 'array (/fx inline-max-function-size 3)))
+		      ((1)
+		       (values 'pmap inline-max-function-size))
+		      (else
+		       (values 'function (/fx inline-max-function-size 2)))))
+		(values 'function inline-max-function-size)))))
 
    (define (inline-call-unknown::long cli fuel inliner)
       ;; generic inline of unknown calls
@@ -919,28 +921,26 @@
 			 (loop (cdr targets)
 			    (cons (cons cache (car targets)) funcaches)))))))))
    
-   (define (inline-closure-call fun::J2SExpr args loc)
+   (define (inline-closure-call fun::J2SExpr args::pair-nil loc)
       (let ((fun (J2SLetOpt '(ref) (gensym 'fun) fun)))
 	 (J2SLetBlock (list fun)
 	    (let loop ((targets targets))
-	       (cond
-		  ((null? targets)
-		   (J2SStmtExpr (J2SCall* (J2SRef fun) args)))
-		  ((and (isa? (caar targets) J2SDecl)
-			(with-access::J2SDecl (caar targets) (scope)
-			   (eq? scope '%scope)))
-		   (let ((callee (car targets)))
-		      (J2SIf (J2SBinary 'eq?
-				(J2SRef fun) (J2SRef (car callee)))
-			 (with-access::J2SFun (cdr callee) (body thisp params (floc loc))
+	       (if (null? targets)
+		   (J2SStmtExpr (J2SCall* (J2SRef fun) args))
+		   (let* ((target (car targets))
+			  (v (function-glodecl (cdr target) prgm)))
+		      (J2SIf (J2SBinary 'eq? (J2SRef fun) (J2SRef v))
+			 (with-access::J2SFun (cdr target) (mode body thisp params (floc loc))
 			    (LetBlock floc (filter (lambda (b)
 						      (isa? b J2SDecl))
 					      args)
 			       (j2s-alpha body
-				  (cons thisp params) (cons obj args))))
-			 (loop (cdr targets)))))
-		  (else
-		   (loop (cdr targets))))))))
+				  (cons thisp params)
+				  (cons (if (eq? mode 'strict)
+					    (J2SUndefined)
+					    (J2SHopRef '%this))
+				     args))))
+			 (loop (cdr targets)))))))))
    
    (with-access::J2SCall node (fun args loc)
       ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
@@ -953,7 +953,7 @@
 				  (J2SRef v))
 			       v))
 		      vals)))
-	 (inline-closure-call fun args log))))
+	 (inline-closure-call fun args loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-method-call-profile ...                                   */
