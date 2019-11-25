@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Nov 25 08:02:49 2019 (serrano)                */
+;*    Last change :  Mon Nov 25 16:09:42 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -71,7 +71,7 @@
 
 (define inline-max-function-size
    ;; the maximum body size of inlined candidates
-   80)
+   160)
 
 (define inline-min-call-occurrence
    ;; to be removed
@@ -220,7 +220,7 @@
       (let ((targets (inline-filter-dynamic-targets cli)))
 	 (if (null? targets)
 	     fuel
-	     (let* ((callszs (map (lambda (t) (node-size (cdr t))) targets))
+	     (let* ((callszs (map (lambda (t) (function-size (cdr t))) targets))
 		    (dispatchsz (map (lambda (t)
 					(if (isa? (cdr t) J2SDeclFun)
 					    inline-dispatch-function-test-size
@@ -1066,26 +1066,24 @@
 			  (obj (J2SRef obj))))))
 	    (J2SLetBlock (list met)
 	       (let loop ((targets targets))
-		  (cond
-		     ((null? targets)
+		  (if (null? targets)
 		      (J2SStmtExpr
 			 (J2SMethodCall* (J2SRef met)
-			    (list (J2SRef obj)) args)))
-		     ((and (isa? (caar targets) J2SDecl)
-			   (with-access::J2SDecl (caar targets) (scope)
-			      (eq? scope '%scope)))
-		      (let ((callee (car targets)))
+			    (list (J2SRef obj)) args))
+		      (let* ((target (car targets))
+			     (v (function-glodecl (cdr target) prgm)))
 			 (J2SIf (J2SBinary 'eq?
-				   (J2SRef met) (J2SRef (car callee)))
-			    (with-access::J2SFun (cdr callee) (body thisp params (floc loc))
+				   (J2SRef met)
+				   (if (isa? v J2SDecl)
+				       (J2SRef v)
+				       (J2SHopRef v)))
+			    (with-access::J2SFun (cdr target) (body thisp params (floc loc))
 			       (LetBlock floc (filter (lambda (b)
 							 (isa? b J2SDecl))
 						 args)
 				  (j2s-alpha body
 				     (cons thisp params) (cons obj args))))
-			    (loop (cdr targets)))))
-		     (else
-		      (loop (cdr targets)))))))))
+			    (loop (cdr targets))))))))))
    
    (define (inline-object-method-call fun::J2SAccess obj::J2SDecl args loc guard)
       (case guard
