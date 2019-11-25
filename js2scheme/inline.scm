@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Nov 25 16:09:42 2019 (serrano)                */
+;*    Last change :  Mon Nov 25 17:29:41 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -437,7 +437,7 @@
 ;*    function-freevars? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (function-freevars? this::J2SFun)
-   (with-access::J2SFun this (%info body)
+   (with-access::J2SFun this (%info body loc)
       (cond
 	 ((not (funinfo? %info))
 	  (set! %info (funinfo #unspecified (free-vars? this '()) #f #f)))
@@ -1904,9 +1904,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (free-vars? this::J2SRef env)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (scope)
-	 (when (and (not (eq? scope '%scope)) (not (memq decl env))) (memq decl env)
-	    (tprint "FREE " loc))
+      (with-access::J2SDecl decl (scope id)
 	 (and (not (eq? scope '%scope)) (not (memq decl env))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1914,7 +1912,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (free-vars? this::J2SFun env)
    (with-access::J2SFun this (decl params thisp body)
-      (free-vars? body (cons* decl thisp params env))))
+      (free-vars? body (cons* decl thisp (append params env)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    free-vars? ::J2SLetBlock ...                                     */
@@ -1942,7 +1940,7 @@
 	    ((isa? (car nodes) J2SDecl)
 	     (loop (cons (car nodes) env) (cdr nodes)))
 	    (else
-	     (any (lambda (n) (free-vars? n env) nodes)))))))
+	     (any (lambda (n) (free-vars? n env)) nodes))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    update-parent! ...                                               */
