@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Nov  8 19:16:36 2019 (serrano)                */
+;*    Last change :  Tue Nov 26 08:15:47 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3582,7 +3582,7 @@
        (apply js-object-method-call-name/cache %this obj name
 	  ccache ocache point ccspecs ocspecs args)
        (let ((o (js-toobject %this obj)))
-	  (js-apply %this (js-get o name %this) o args))))
+	  (js-apply %this (js-get/name-cache o name %this) o args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-method-call-name/cache ...                             */
@@ -3602,7 +3602,7 @@
 	     (apply method obj args))
 	    ((not omap)
 	     ;; uncachable
-	     (let ((f (js-get obj name %this)))
+	     (let ((f (js-get/name-cache obj name %this)))
 		(js-apply %this f obj args)))
 	    (else
 	     ;; cache miss
@@ -3637,12 +3637,6 @@
 		 (=fx (procedure-arity method) (+fx 1 (length args))))
 	 (when (=fx vindex (js-not-a-index))
 	    (set! vindex (js-get-vindex %this)))
-	 (when (eq? (js-toname name %this) (& "call"))
-	    (tprint "ADDING VTABLE call vindex=" vindex
-	       " " method
-	       " pmap="
-	       (with-access::JsConstructMap pmap (%id)
-		  %id)))
 	 (js-cmap-vtable-add! pmap vindex method ccache))
       (js-object-method-call/cache-fill %this o name args
 	 ccache ocache point ccspecs ocspecs)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Oct 31 22:16:31 2019 (serrano)                */
+;*    Last change :  Wed Nov 27 06:32:11 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -722,9 +722,9 @@
    (with-access::J2SCall this (fun args thisarg cache loc)
       (if (isa? fun J2SAccess)
 	  (begin
+	     (profile-access fun table 'get)
 	     (when cache
-		(profile-access fun table 'get cache))
-	     (profile-access fun table 'call))
+		(profile-access fun table 'call cache)))
 	  (profile-cache-info-init fun table))
       (for-each (lambda (a) (profile-cache-info-init a table)) args)
       (for-each (lambda (a) (profile-cache-info-init a table)) thisarg)))

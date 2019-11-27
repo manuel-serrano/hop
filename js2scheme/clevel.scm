@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Thu Nov 21 07:37:10 2019 (serrano)                */
+;*    Last change :  Tue Nov 26 07:22:43 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -204,13 +204,12 @@
       (let ((entry (logtable-find logtable (loc->point loc) ctx)))
 	 (cond
 	    (entry
-	     (let ((policy (pcache->cspecs entry)))
-		(when policy
-		   (when (>=fx (config-get conf :verbose 0) 4)
-		      (display* "\n        " (loc->string loc)
-			 " (" (pcache-usage entry) ") -> " policy))
-		   (cell-set! verb (+fx (cell-ref verb) 1))
-		   (set! cspecs policy))))
+	     (let ((policy (or (pcache->cspecs entry) '())))
+		(when (>=fx (config-get conf :verbose 0) 4)
+		   (display* "\n        " (loc->string loc)
+		      " (" (pcache-usage entry) ") -> " policy))
+		(cell-set! verb (+fx (cell-ref verb) 1))
+		(set! cspecs policy)))
 	    ((eq? ctx 'put)
 	     (set! cspecs '(pmap cmap+)))
 	    (else
@@ -229,17 +228,27 @@
 ;*    profile-clevel ::J2SCall ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (profile-clevel this::J2SCall logtable ctx verb conf)
-   (with-access::J2SCall this (cspecs fun)
+   (with-access::J2SCall this (fun)
       (when (isa? fun J2SAccess)
 	 (with-access::J2SAccess fun (loc)
-	    (let ((entry (logtable-find logtable (loc->point loc) 'call)))
-	       (when entry
-		  (let ((policy (pcache->cspecs entry)))
+	    (let ((entryc (logtable-find logtable (loc->point loc) 'call))
+		  (entrya (logtable-find logtable (loc->point loc) 'get)))
+	       (when entryc
+		  (let ((policy (pcache->cspecs entryc)))
 		     (when policy
 			(when (>=fx (config-get conf :verbose 0) 4)
 			   (display* "\n        " (loc->string loc)
-			      " (" (pcache-usage entry) ") -> " policy))
+			      " (" (pcache-usage entryc) ") -> " policy))
 			(cell-set! verb (+fx (cell-ref verb) 1))
+			(with-access::J2SCall this (cspecs)
+			   (set! cspecs policy)))))
+	       (when entrya
+		  (let ((policy (or (pcache->cspecs entrya) '(cmap+))))
+		     (when (>=fx (config-get conf :verbose 0) 4)
+			(display* "\n        " (loc->string loc)
+			   " (" (pcache-usage entrya) ") -> " policy))
+		     (cell-set! verb (+fx (cell-ref verb) 1))
+		     (with-access::J2SAccess fun (cspecs)
 			(set! cspecs policy))))))))
    (call-default-walker))
    

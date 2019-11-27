@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Nov 18 19:21:32 2019 (serrano)                */
+;*    Last change :  Wed Nov 27 08:06:34 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -574,7 +574,7 @@
 		      #f)))))))
    
    (define (call-method this ccache ccspecs fun::J2SAccess args)
-      (with-access::J2SCall this (profid)
+      (with-access::J2SCall this (profid cache)
 	 (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
 	    (let loop ((obj obj))
 	       (cond
@@ -591,16 +591,22 @@
 				  ccspecs fun (J2SHopRef tmp) args)))))
 		  ((and (config-get conf :profile-call #f) (>=fx profid 0))
 		   (with-access::J2SAccess fun (obj loc)
+		      ;; when profile method call, inverse the call cache
+		      ;; and object cache to improve profiling precision
 		      (if (isa? obj J2SSuper)
 			  (let* ((self (j2s-scheme obj mode return conf))
 				 (s (gensym '%obj-profile))
 				 (f (duplicate::J2SAccess fun
+				       (cspecs '(pmap vtable))
+				       (cache cache)
 				       (obj (J2SHopRef s)))))
 			     `(let ((,s ,self))
 				 ,(call-unknown-function f (list 'this) args)))
 			  (let* ((self (j2s-scheme obj mode return conf))
 				 (s (gensym '%obj-profile))
 				 (f (duplicate::J2SAccess fun
+				       (cspecs '(pmap vtable-dummy-profile))
+				       (cache cache)
 				       (obj (J2SHopRef s)))))
 			     `(let ((,s ,self))
 				 ,(call-unknown-function f (list s) args))))))

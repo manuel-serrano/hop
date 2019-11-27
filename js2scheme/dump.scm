@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Nov  7 08:56:03 2019 (serrano)                */
+;*    Last change :  Tue Nov 26 07:28:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -283,7 +283,7 @@
 	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
 	  ((isa? this J2SCall)
 	   (with-access::J2SCall this (cache cspecs)
-	      (if cache `(:cache ,cache :cspecs ,cspecs) '())))
+	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
 	  ((isa? this J2SNew)
 	   (with-access::J2SNew this (caches)
 	      (if (pair? caches) `(:caches ,@caches) '())))

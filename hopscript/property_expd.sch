@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Oct 13 07:25:50 2019 (serrano)                */
+;*    Last change :  Wed Nov 27 08:00:45 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -390,6 +390,12 @@
 		    `(if (eq? %cmap (js-pcache-amap ,cache))
 			 ,(loop 'amap)
 			 ,(loop (cdr cs))))
+		   ((vtable-dummy-profile)
+		    `(begin
+			;; this fake entry is used when profiling
+			;; method calls
+			(js-profile-log-cache ,cache :vtable #t)
+			,(loop (cdr cs))))
 		   ((vtable)
 		    ;; vtable property get
 		    (cond-expand
