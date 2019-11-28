@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Nov 26 07:28:30 2019 (serrano)                */
+;*    Last change :  Thu Nov 28 07:31:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -679,8 +679,9 @@
 ;*    j2s->list ::J2SMethod ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SMethod)
-   (with-access::J2SMethod this (function method)
+   (with-access::J2SMethod this (function method loc)
       `(,@(call-next-method)
+	  ,@(dump-loc loc)
 	:function ,(j2s->list function)
 	:method ,(j2s->list method))))
 
@@ -688,9 +689,10 @@
 ;*    j2s->list ::J2SBindExit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SBindExit)
-   (with-access::J2SBindExit this (lbl stmt)
+   (with-access::J2SBindExit this (lbl stmt loc)
       `(,@(call-next-method)
 	  ,@(dump-type this)
+	  ,@(dump-loc loc)
 	  (,lbl) ,(j2s->list stmt))))
 
 ;*---------------------------------------------------------------------*/
