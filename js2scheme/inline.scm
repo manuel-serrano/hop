@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Nov 25 18:00:15 2019 (serrano)                */
+;*    Last change :  Thu Nov 28 18:14:04 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -313,15 +313,26 @@
 	 nodes))
    
    (define (clis::pair-nil log calls funs)
-      (if (and (> (cadr log) 0) (caddr log))
+      (cond
+	 ((and (> (cadr log) 0) (caddr log))
 	  (map (lambda (call)
 		  (callloginfo call (cadr log)
 		     (map (lambda (target)
 			     (cons (car target)
 				(find-node-by-loc (cdr target) funs)))
 			(vector->list (caddr log)))))
-	     (find-nodes-by-loc (car log) calls))
-	  '()))
+	     (find-nodes-by-loc (car log) calls)))
+	 ((> (cadr log) 0)
+	  (map (lambda (call)
+		  (with-access::J2SCall call (fun)
+		     (with-access::J2SRef fun (decl)
+			(with-access::J2SDeclInit decl (val)
+			   (callloginfo call (cadr log)
+			      (list
+				 (cons (cadr log) (list val))))))))
+	     (find-nodes-by-loc (car log) calls)))
+	 (else
+	  '())))
    
    (define (inline-program::long prgm funs fuel logs)
       ;; returns the remaining fuel
@@ -834,10 +845,10 @@
 		     (with-access::J2SNode a (loc)
 			(J2SLetOpt '(ref) id a)))))
 	 args))
-   
+
    (with-access::J2SCall node (thisargs args loc)
       (with-access::J2SFun target (body thisp params (floc loc))
-	 (let* ((vals (inline-function-args args))
+	 (let* ((vals (cons (J2SUndefined) (inline-function-args args)))
 		(nbody (j2s-alpha body (cons thisp params) vals)))
 	    (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)
 	       nbody)))))
