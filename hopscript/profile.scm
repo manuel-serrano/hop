@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Nov 20 07:09:59 2019 (serrano)                */
+;*    Last change :  Fri Nov 29 08:55:05 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -1296,20 +1296,24 @@
 
    (define (print-call-counts counts locations)
       (let ((sep "\n      "))
-	 (for-each (lambda (l n)
-		      (when (and (>=fx l 0) (or (not (number? n)) (> n 0)))
-			 (display sep)
-			 (set! sep ",\n      ")
-			 (if (number? n)
-			     ;; direct call
-			     (printf "{ \"point\": ~a, \"cnt\": ~a }" l n) 
-			     ;; unknown call
-			     (printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l
-				(map (lambda (n)
-					(format "{ \"point\": ~a, \"cnt\": ~a }"
-					   (car n) (cdr n)))
-				   n)))))
-	    locations counts)))
+	 (for-each (lambda (nl)
+		      (let ((n (car nl))
+			    (l (cdr nl)))
+			 (when (and (>=fx l 0) (or (not (number? n)) (> n 0)))
+			    (display sep)
+			    (set! sep ",\n      ")
+			    (if (number? n)
+				;; direct call
+				(printf "{ \"point\": ~a, \"cnt\": ~a }" l n) 
+				;; unknown call
+				(printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l
+				   (map (lambda (n)
+					   (format "{ \"point\": ~a, \"cnt\": ~a }"
+					      (car n) (cdr n)))
+				      n))))))
+	    (sort (lambda (x y)
+		     (< (cdr x) (cdr y)))
+	       (map cons counts locations)))))
    
    (when (string-contains trc "format:fprofile")
       (with-output-to-port *profile-port*

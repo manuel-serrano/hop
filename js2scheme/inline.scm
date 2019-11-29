@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 28 20:03:15 2019 (serrano)                */
+;*    Last change :  Fri Nov 29 08:13:05 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -190,21 +190,24 @@
    (define (inline-filter-dynamic-targets cli)
       ;; select the function to be inlined on a dynamic call site.
       ;; used to select the inline targets of method and closure calls.
-      (let* ((targets (callloginfo-targets cli))
-	     (targets (filter (lambda (t)
-				 ;; filter out targets larger than
-				 ;; INLINE-max-function-size
-				 (and (<fx (function-size (cdr t))
-					 inline-max-function-size)
-				      (not (function-freevars? (cdr t)))))
-			 targets))
-	     (targets (filter (lambda (t)
-				 ;; filter out targets that are called less than
-				 ;; INLINE-MIN-DISPATCH-PERCENTAGE times
-				 (> (/ (car t) (callloginfo-counter cli))
-				    inline-min-dispatch-percentage))
-			 targets)))
-	 targets))
+      (let ((l (let ((call (callloginfo-call cli)))
+		  (with-access::J2SCall call (loc)
+		     (caddr loc)))))
+	 (let* ((targets (callloginfo-targets cli))
+		(targets (filter (lambda (t)
+				    ;; filter out targets larger than
+				    ;; INLINE-max-function-size
+				    (and (<fx (function-size (cdr t))
+					    inline-max-function-size)
+					 (not (function-freevars? (cdr t)))))
+			    targets))
+		(targets (filter (lambda (t)
+				    ;; filter out targets that are called less than
+				    ;; INLINE-MIN-DISPATCH-PERCENTAGE times
+				    (> (/ (car t) (callloginfo-counter cli))
+				       inline-min-dispatch-percentage))
+			    targets)))
+	    targets)))
    
    (define (inline-call-guard-kind cli)
       ;; the kind of guard to protect the inlined code
@@ -221,12 +224,13 @@
 		       (values 'function (/fx inline-max-function-size 2)))))
 		(values 'function inline-max-function-size)))))
    
-   (define (inline-call-unknown::long cli fuel inliner)
+   (define (inline-call-unknown::long cli fuel allcnt inliner)
       ;; generic inline of unknown calls
       (let ((targets (inline-filter-dynamic-targets cli)))
 	 (if (null? targets)
 	     0
-	     (let* ((callszs (map (lambda (t) (function-size (cdr t))) targets))
+	     (let* ((call (callloginfo-call cli))
+		    (callszs (map (lambda (t) (function-size (cdr t))) targets))
 		    (dispatchsz (map (lambda (t)
 					(if (isa? (cdr t) J2SDeclFun)
 					    inline-dispatch-function-test-size
@@ -238,60 +242,65 @@
 		   (cond
 		      ((or (>fx sz maxfunsz) (>fx sz fuel))
 		       0)
+		      ((and (< (callloginfo-counter cli) (* allcnt 0.001))
+			    (>fx sz (node-size call)))
+		       0)
 		      (else
-		       (let* ((call (callloginfo-call cli))
-			      (node (inliner call guard targets prgm conf)))
+		       (let ((node (inliner call guard targets prgm conf)))
 			  (with-access::J2SCall call (%info loc fun)
-			     (inline-verb loc fun (map car targets) sz fuel conf)
+			     (inline-verb loc fun (map car targets) sz fuel
+				allcnt conf)
 			     (replace-call! (callinfo-parent %info) call
 				(inline-stmt->expr loc node))
 			     (function-size-reset! (callinfo-owner %info)))
 			  (node-size node)))))))))
    
-   (define (inline-call-method!::long cli fuel)
+   (define (inline-call-method!::long cli fuel allcnt)
       ;; inline a method invocation
-      (inline-call-unknown cli fuel inline-method-call-profile))
+      (inline-call-unknown cli fuel allcnt inline-method-call-profile))
    
-   (define (inline-call-closure!::long cli fuel)
+   (define (inline-call-closure!::long cli fuel allcnt)
       ;; inline a closure invocation
-      (inline-call-unknown cli fuel inline-closure-call-profile))
+      (inline-call-unknown cli fuel allcnt inline-closure-call-profile))
    
-   (define (inline-call-function!::long cli fuel::long)
-      (let ((call (callloginfo-call cli))
-	    (cnt (callloginf-counter cli)))
-	 (if (<fx cnt (* TODO-TOTAL_NUMBER_OF_CALL 0.01))
-	     0
-	     (with-access::J2SCall call (fun loc)
-		(with-access::J2SRef fun (decl)
-		   (with-access::J2SDeclFun decl (val)
-		      (with-access::J2SFun val (body)
-			 (let ((sz (node-size body)))
-			    (if (or (>fx sz inline-max-function-size) (>fx sz fuel))
-				0
-				(let* ((node (inline-function-call-profile
-						call val
-						prgm conf)))
-				   (inline-verb loc fun
-				      (list (callloginfo-counter cli))
-				      sz fuel conf)
-				   (with-access::J2SCall call (%info)
-				      (replace-call! (callinfo-parent %info) call
-					 (inline-stmt->expr loc node)))
-				   (node-size node)))))))))))
+   (define (inline-call-function!::long cli fuel::long allcnt)
+      (let ((call (callloginfo-call cli)))
+	 (with-access::J2SCall call (fun loc)
+	    (with-access::J2SRef fun (decl)
+	       (with-access::J2SDeclFun decl (val)
+		  (let ((sz (function-size val)))
+		     (cond
+			((or (>fx sz inline-max-function-size)
+			     (>fx sz fuel))
+			 0)
+			((and (< (callloginfo-counter cli) (* allcnt 0.001))
+			      (>fx sz (node-size call)))
+			 0)
+			(else
+			 (let* ((node (inline-function-call-profile
+					 call val
+					 prgm conf)))
+			    (inline-verb loc fun
+			       (list (callloginfo-counter cli))
+			       sz fuel allcnt conf)
+			    (with-access::J2SCall call (%info)
+			       (replace-call! (callinfo-parent %info) call
+				  (inline-stmt->expr loc node)))
+			    (node-size node))))))))))
    
-   (define (inline-profile-call!::long cli fuel::long)
+   (define (inline-profile-call!::long cli fuel::long allcnt::llong)
       (let ((call (callloginfo-call cli)))
 	 (with-access::J2SCall call (fun loc)
 	    (cond
 	       ((isa? fun J2SAccess)
-		(inline-call-method! cli fuel))
+		(inline-call-method! cli fuel allcnt))
 	       ((not (isa? fun J2SRef))
 		0)
 	       (else
 		(with-access::J2SRef fun (decl)
 		   (if (isa? decl J2SDeclFun)
-		       (inline-call-function! cli fuel)
-		       (inline-call-closure! cli fuel))))))))
+		       (inline-call-function! cli fuel allcnt)
+		       (inline-call-closure! cli fuel allcnt))))))))
    
    (define (find-node-by-loc loc::long nodes)
       (let loop ((nodes nodes))
@@ -335,9 +344,22 @@
 	 (else
 	  '())))
    
-   (define (inline-program::long prgm funs fuel logs)
+   (define (inline-program::long prgm funs fuel log::vector)
       ;; returns the remaining fuel
-      (let* ((calls (collect-calls* prgm prgm #f)))
+      (let* ((calls (collect-calls* prgm prgm #f))
+	     (logs (vector->list log))
+	     (allcnt (apply +
+			(map (lambda (n)
+				(cond
+				   ((fixnum? (cadr n))
+				    (fixnum->llong (cadr n)))
+				   ((elong? (cadr n))
+				    (elong->llong (cadr n)))
+				   ((real? (cadr n))
+				    (flonum->llong (cadr n)))
+				   (else
+				    (cadr n))))
+			   logs))))
 	 (let loop ((logs logs)
 		    (fuel fuel))
 	    (if (and (>fx fuel 0) (pair? logs))
@@ -350,24 +372,24 @@
 			      (loop (cdr logs) fuel)
 			      (let* ((cli (car clis))
 				     (call (callloginfo-call cli)))
-				 (with-access::J2SCall call (%info)
+				 (with-access::J2SCall call (%info loc)
 				    (if (not (callinfo-parent %info))
 					(liip (cdr clis)
 					   fuel)
 					(liip (cdr clis)
 					   (-fx fuel
-					      (inline-profile-call! cli fuel))))))))))
+					      (inline-profile-call!
+						 cli fuel allcnt))))))))))
 		fuel))))
    
    (let ((log (call-profile-log prgm logfile conf)))
       (if log
 	  (with-access::J2SProgram prgm (nodes)
-	     (let ((size (node-size prgm))
-		   (funs (collect-funs* prgm prgm))
-		   (logs (vector->list log)))
+	     (let* ((size (node-size prgm))
+		    (funs (collect-funs* prgm prgm)))
 		(let loop ((fuel (- (* size inline-global-expansion) size)))
 		   (if (>fx fuel 0)
-		       (let ((nfuel (inline-program prgm funs fuel logs)))
+		       (let ((nfuel (inline-program prgm funs fuel log)))
 			  (if (<fx nfuel fuel)
 			      (begin
 				 (when (>=fx (config-get conf :verbose 0) 3)
@@ -758,7 +780,7 @@
 			     mets))
 		   (vals (map protoinfo-method mets))
 		   (sz (apply + (map function-size vals))))
-	       (inline-verb loc fun (map (lambda (x) '-) mets) sz limit conf)
+	       (inline-verb loc fun (map (lambda (x) '-) mets) sz limit 0 conf)
 	       (when (pair? stack) 
 		  (invalidate-function-size! (car stack)))
 	       (let ((e (inline-method-call fun mets args loc
@@ -772,7 +794,7 @@
 	 ((find-inline-decl-function this fun (length args) limit stack)
 	  =>
 	  (lambda (target)
-	     (inline-verb loc fun '(-) (function-size target) limit conf)
+	     (inline-verb loc fun '(-) (function-size target) limit 0 conf)
 	     (when (pair? stack)
 		(invalidate-function-size! (car stack)))
 	     (inline-stmt->expr loc
@@ -864,7 +886,7 @@
 		 (fun (targetinfo-fun target)))
 	     (if (< (function-size fun) limit)
 		 (begin
-		    (inline-verb loc fun '(-) (function-size fun) limit conf)
+		    (inline-verb loc fun '(-) (function-size fun) limit 0 conf)
 		    (J2SIf (J2SHopCall (J2SHopRef/rtype 'eq? 'bool)
 			      (J2SRef (with-access::J2SRef ref (decl) decl))
 			      (J2SRef (targetinfo-decl target)))
@@ -1705,7 +1727,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-verb ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (inline-verb loc fun targets-cnt fsize limit conf)
+(define (inline-verb loc fun targets-cnt fsize limit allcnt conf)
    
    (define (loc->string loc)
       (match-case loc
@@ -1742,10 +1764,17 @@
 		      (display val)))))
 	    (display "() ")
 	    (display (loc->string loc))
-	    (display " [size=")
-	    (display fsize)
-	    (display "] ")
-	    (display targets-cnt)))))
+	    (when (>=fx (config-get conf :verbose 0) 4)
+	       (display " size: ")
+	       (display fsize)
+	       (display " cnt: ")
+	       (when (> allcnt 0)
+		  (display (format "~(, )"
+			      (map (lambda (c)
+				      (format "~a ~a%" c
+					 (inexact->exact
+					    (round (* 100 (/ c allcnt))))))
+				 targets-cnt)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dead-inner-decl! ::J2SNode ...                                   */
@@ -1936,54 +1965,69 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    free-vars? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (free-vars? this::J2SNode env)
+   (let ((res (make-cell #f)))
+      (free-vars this env res)
+      (cell-ref res)))
+
+;*---------------------------------------------------------------------*/
+;*    free-vars ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    A predicate that is true IFF the ast uses free variables.        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (free-vars? this::J2SNode env)
-   (call-default-walker))
+(define-walk-method (free-vars this::J2SNode env res::cell)
+   (unless (cell-ref res)
+      (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
-;*    free-vars? ::J2SRef ...                                          */
+;*    free-vars ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (free-vars? this::J2SRef env)
+(define-walk-method (free-vars this::J2SRef env res::cell)
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (scope id)
-	 (and (not (eq? scope '%scope)) (not (memq decl env))))))
+	 (when (and (not (isa? decl J2SDeclExtern))
+		    (not (eq? scope '%scope))
+		    (not (memq decl env)))
+	    (cell-set! res #t)))))
 
 ;*---------------------------------------------------------------------*/
-;*    free-vars? ::J2SFun ...                                          */
+;*    free-vars ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (free-vars? this::J2SFun env)
-   (with-access::J2SFun this (decl params thisp body)
-      (free-vars? body (cons* decl thisp (append params env)))))
+(define-walk-method (free-vars this::J2SFun env res)
+   (unless (cell-ref res)
+      (with-access::J2SFun this (decl params thisp body)
+	 (free-vars body (cons* decl thisp (append params env)) res))))
 
 ;*---------------------------------------------------------------------*/
-;*    free-vars? ::J2SLetBlock ...                                     */
+;*    free-vars ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (free-vars? this::J2SLetBlock env)
-   (with-access::J2SLetBlock this (decls nodes)
-      (let ((env (append decls env)))
-	 (any (lambda (n) (free-vars? n env)) nodes))))
+(define-walk-method (free-vars this::J2SLetBlock env res)
+   (unless (cell-ref res)
+      (with-access::J2SLetBlock this (decls nodes)
+	 (let ((env (append decls env)))
+	    (find (lambda (n) (free-vars n env res)) nodes)))))
    
 ;*---------------------------------------------------------------------*/
-;*    free-vars? ::J2SBlock ...                                        */
+;*    free-vars ::J2SBlock ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (free-vars? this::J2SBlock env)
-   (with-access::J2SBlock this (decls nodes)
-      (let loop ((env env)
-		 (nodes nodes))
-	 (cond
-	    ((null? nodes)
-	     #f)
-	    ((isa? (car nodes) J2SDeclInit)
-	     (with-access::J2SDeclInit (car nodes) (val)
-		(let ((env (cons (car nodes) env)))
-		   (or (free-vars? val (cons (car nodes) env))
-		       (loop env (cdr nodes))))))
-	    ((isa? (car nodes) J2SDecl)
-	     (loop (cons (car nodes) env) (cdr nodes)))
-	    (else
-	     (any (lambda (n) (free-vars? n env)) nodes))))))
+(define-walk-method (free-vars this::J2SBlock env res)
+   (unless (cell-ref res)
+      (with-access::J2SBlock this (decls nodes)
+	 (let loop ((env env)
+		    (nodes nodes))
+	    (cond
+	       ((null? nodes)
+		#f)
+	       ((isa? (car nodes) J2SDeclInit)
+		(with-access::J2SDeclInit (car nodes) (val)
+		   (let ((env (cons (car nodes) env)))
+		      (unless (free-vars val (cons (car nodes) env) res)
+			 (loop env (cdr nodes))))))
+	       ((isa? (car nodes) J2SDecl)
+		(loop (cons (car nodes) env) (cdr nodes)))
+	       (else
+		(find (lambda (n) (free-vars n env res)) nodes)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    update-parent! ...                                               */
