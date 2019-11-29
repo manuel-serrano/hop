@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 28 18:14:04 2019 (serrano)                */
+;*    Last change :  Thu Nov 28 20:03:15 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -72,10 +72,6 @@
 (define inline-max-function-size
    ;; the maximum body size of inlined candidates
    160)
-
-(define inline-min-call-occurrence
-   ;; to be removed
-   100000)
 
 (define inline-min-dispatch-percentage
    ;; the minimum percentage of call
@@ -246,7 +242,7 @@
 		       (let* ((call (callloginfo-call cli))
 			      (node (inliner call guard targets prgm conf)))
 			  (with-access::J2SCall call (%info loc fun)
-			     (inline-verb loc fun (length targets) sz fuel conf)
+			     (inline-verb loc fun (map car targets) sz fuel conf)
 			     (replace-call! (callinfo-parent %info) call
 				(inline-stmt->expr loc node))
 			     (function-size-reset! (callinfo-owner %info)))
@@ -261,22 +257,27 @@
       (inline-call-unknown cli fuel inline-closure-call-profile))
    
    (define (inline-call-function!::long cli fuel::long)
-      (let ((call (callloginfo-call cli)))
-	 (with-access::J2SCall call (fun loc)
-	    (with-access::J2SRef fun (decl)
-	       (with-access::J2SDeclFun decl (val)
-		  (with-access::J2SFun val (body)
-		     (let ((sz (node-size body)))
-			(if (or (>fx sz inline-max-function-size) (>fx sz fuel))
-			    0
-			    (let* ((node (inline-function-call-profile
-					    call val
-					    prgm conf)))
-			       (inline-verb loc fun 1 sz fuel conf)
-			       (with-access::J2SCall call (%info)
-				  (replace-call! (callinfo-parent %info) call
-				     (inline-stmt->expr loc node)))
-			       (node-size node))))))))))
+      (let ((call (callloginfo-call cli))
+	    (cnt (callloginf-counter cli)))
+	 (if (<fx cnt (* TODO-TOTAL_NUMBER_OF_CALL 0.01))
+	     0
+	     (with-access::J2SCall call (fun loc)
+		(with-access::J2SRef fun (decl)
+		   (with-access::J2SDeclFun decl (val)
+		      (with-access::J2SFun val (body)
+			 (let ((sz (node-size body)))
+			    (if (or (>fx sz inline-max-function-size) (>fx sz fuel))
+				0
+				(let* ((node (inline-function-call-profile
+						call val
+						prgm conf)))
+				   (inline-verb loc fun
+				      (list (callloginfo-counter cli))
+				      sz fuel conf)
+				   (with-access::J2SCall call (%info)
+				      (replace-call! (callinfo-parent %info) call
+					 (inline-stmt->expr loc node)))
+				   (node-size node)))))))))))
    
    (define (inline-profile-call!::long cli fuel::long)
       (let ((call (callloginfo-call cli)))
@@ -294,14 +295,13 @@
    
    (define (find-node-by-loc loc::long nodes)
       (let loop ((nodes nodes))
-	 (if (null? nodes)
-	     (error "find-node-by-loc" "Cannot find node" loc)
-	     (with-access::J2SNode (car nodes) ((nloc loc))
-		(cond
-		   ((=fx loc (caddr nloc))
-		    (car nodes))
-		   (else
-		    (loop (cdr nodes))))))))
+	 (unless (null? nodes)
+	    (with-access::J2SNode (car nodes) ((nloc loc))
+	       (cond
+		  ((=fx loc (caddr nloc))
+		   (car nodes))
+		  (else
+		   (loop (cdr nodes))))))))
    
    (define (find-nodes-by-loc::pair-nil loc::long nodes)
       ;; because of inlining, it might be that a node is duplicatec
@@ -317,9 +317,10 @@
 	 ((and (> (cadr log) 0) (caddr log))
 	  (map (lambda (call)
 		  (callloginfo call (cadr log)
-		     (map (lambda (target)
-			     (cons (car target)
-				(find-node-by-loc (cdr target) funs)))
+		     (filter-map (lambda (target)
+				    (let ((node (find-node-by-loc (cdr target) funs)))
+				       (when node
+					  (cons (car target) node))))
 			(vector->list (caddr log)))))
 	     (find-nodes-by-loc (car log) calls)))
 	 ((> (cadr log) 0)
@@ -373,7 +374,7 @@
 				    (with-output-to-port (current-error-port)
 				       (lambda ()
 					  (display "\n     ")
-					  (display* "fuel " nfuel "/" fuel))))
+					  (display* "fuel " nfuel " (" fuel ")"))))
 				 (loop nfuel))
 			      (loop 0)))
 		       (j2s-inline-profile-cleanup! prgm conf)))))
@@ -757,7 +758,7 @@
 			     mets))
 		   (vals (map protoinfo-method mets))
 		   (sz (apply + (map function-size vals))))
-	       (inline-verb loc fun (length mets) sz limit conf)
+	       (inline-verb loc fun (map (lambda (x) '-) mets) sz limit conf)
 	       (when (pair? stack) 
 		  (invalidate-function-size! (car stack)))
 	       (let ((e (inline-method-call fun mets args loc
@@ -771,7 +772,7 @@
 	 ((find-inline-decl-function this fun (length args) limit stack)
 	  =>
 	  (lambda (target)
-	     (inline-verb loc fun 0 (function-size target) limit conf)
+	     (inline-verb loc fun '(-) (function-size target) limit conf)
 	     (when (pair? stack)
 		(invalidate-function-size! (car stack)))
 	     (inline-stmt->expr loc
@@ -839,18 +840,16 @@
 
    (define (inline-function-args args)
       (map (lambda (a)
-	      (if (isa? a J2SLiteral)
-		  a
-		  (let ((id (gensym 'a)))
-		     (with-access::J2SNode a (loc)
-			(J2SLetOpt '(ref) id a)))))
+	      (let ((id (gensym 'a)))
+		 (with-access::J2SNode a (loc)
+		    (J2SLetOpt '(ref) id a))))
 	 args))
 
    (with-access::J2SCall node (thisargs args loc)
       (with-access::J2SFun target (body thisp params (floc loc))
 	 (let* ((vals (cons (J2SUndefined) (inline-function-args args)))
 		(nbody (j2s-alpha body (cons thisp params) vals)))
-	    (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)
+	    (LetBlock loc (filter (lambda (a) (isa? a J2SDecl)) vals)
 	       nbody)))))
    
 ;*---------------------------------------------------------------------*/
@@ -865,7 +864,7 @@
 		 (fun (targetinfo-fun target)))
 	     (if (< (function-size fun) limit)
 		 (begin
-		    (inline-verb loc fun 0 (function-size fun) limit conf)
+		    (inline-verb loc fun '(-) (function-size fun) limit conf)
 		    (J2SIf (J2SHopCall (J2SHopRef/rtype 'eq? 'bool)
 			      (J2SRef (with-access::J2SRef ref (decl) decl))
 			      (J2SRef (targetinfo-decl target)))
@@ -912,15 +911,9 @@
    
    (define (inline-closure-args args)
       (map (lambda (a)
-	      (cond
-		 ((isa? a J2SLiteral)
-		  a)
-		 ((j2sref-ronly? a)
-		  a)
-		 (else
-		  (let ((id (gensym 'a)))
-		     (with-access::J2SNode a (loc)
-			(J2SLetOpt '(ref) id a))))))
+	      (let ((id (gensym 'a)))
+		 (with-access::J2SNode a (loc)
+		    (J2SLetOpt '(ref) id a))))
 	 args))
    
    (define (inline-method obj::J2SRef field target::pair args cache loc kont)
@@ -982,36 +975,27 @@
    (define (inline-closure-call fun::J2SExpr args::pair-nil loc)
       (let ((fun (J2SLetOpt '(ref) (gensym 'fun) fun)))
 	 (J2SLetBlock (list fun)
-	    (let loop ((targets targets))
-	       (if (null? targets)
-		   (J2SStmtExpr (J2SCall* (J2SRef fun) args))
-		   (let* ((target (car targets))
-			  (v (function-glodecl (cdr target) prgm)))
-		      (J2SIf (J2SBinary 'eq? (J2SRef fun) (J2SRef v))
-			 (with-access::J2SFun (cdr target) (mode body thisp params (floc loc))
-			    (LetBlock floc (filter (lambda (b)
-						      (isa? b J2SDecl))
-					      args)
+	    (LetBlock loc args
+	       (let loop ((targets targets))
+		  (if (null? targets)
+		      (J2SMetaInl '() 0
+			 (J2SStmtExpr
+			    (J2SCall* (J2SRef fun)
+			       (map (lambda (d) (J2SRef d)) args))))
+		      (let* ((target (car targets))
+			     (v (function-glodecl (cdr target) prgm)))
+			 (J2SIf (J2SBinary 'eq? (J2SRef fun) (J2SRef v))
+			    (with-access::J2SFun (cdr target) (mode body thisp params (floc loc))
 			       (j2s-alpha body
 				  (cons thisp params)
-				  (cons (if (eq? mode 'strict)
-					    (J2SUndefined)
-					    (J2SHopRef '%this))
-				     args))))
-			 (loop (cdr targets)))))))))
+				  args))
+			    (loop (cdr targets))))))))))
    
-   (with-access::J2SCall node (fun args loc)
+   (with-access::J2SCall node (fun thisarg args loc)
       ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
       ;; shape of the test that suits the tyflow analysis
-      (let* ((vals (inline-closure-args args))
-	     (t (filter (lambda (b) (isa? b J2SDecl)) vals))
-	     (args (map (lambda (v)
-			   (if (isa? v J2SDecl)
-			       (with-access::J2SDecl v (loc)
-				  (J2SRef v))
-			       v))
-		      vals)))
-	 (inline-closure-call fun args loc))))
+      (let ((vals (inline-closure-args (append thisarg args))))
+	 (inline-closure-call fun vals loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-method-call-profile ...                                   */
@@ -1721,7 +1705,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-verb ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (inline-verb loc fun targets fsize limit conf)
+(define (inline-verb loc fun targets-cnt fsize limit conf)
    
    (define (loc->string loc)
       (match-case loc
@@ -1758,16 +1742,10 @@
 		      (display val)))))
 	    (display "() ")
 	    (display (loc->string loc))
-	    (display " (")
+	    (display " [size=")
 	    (display fsize)
-	    (display "/")
-	    (display limit)
-	    (display ")")
-	    (when (>=fx targets 1)
-	       (display " [")
-	       (display targets)
-	       (display "]"))))))
-
+	    (display "] ")
+	    (display targets-cnt)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dead-inner-decl! ::J2SNode ...                                   */
@@ -1883,12 +1861,6 @@
 	 (else
 	  (call-next-method)))))
    
-;* {*---------------------------------------------------------------------*} */
-;* {*    collect-funs* ::J2SFun ...                                       *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (collect-funs* this::J2SFun)                    */
-;*    (cons (cons this #f) (call-default-walker)))                     */
-
 ;*---------------------------------------------------------------------*/
 ;*    collect-calls* ::J2SNode ...                                     */
 ;*    -------------------------------------------------------------    */
