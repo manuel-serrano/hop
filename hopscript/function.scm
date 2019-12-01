@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Nov 13 08:27:01 2019 (serrano)                */
+;*    Last change :  Sun Dec  1 16:11:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -53,10 +53,13 @@
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
-	   (js-function-call ::JsGlobalObject ::obj ::obj ::obj ::obj)
+	   (js-function-call0 ::JsGlobalObject ::obj ::obj ::obj)
+	   (js-function-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
-	   (js-function-maybe-call ::JsGlobalObject ::obj ::obj ::obj ::obj)
-	   (js-function-maybe-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)))
+	   (js-function-maybe-call0 ::JsGlobalObject ::obj ::obj ::obj)
+	   (js-function-maybe-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
+	   (js-function-maybe-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
+	   (js-function-maybe-call3 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -905,9 +908,21 @@
 	  (loop (js-toobject %this this))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-call ...                                             */
+;*    js-function-call0 ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-function-call %this this thisarg arg cache)
+(define (js-function-call0 %this this thisarg cache)
+   (if (js-object-mode-plain? this)
+       (js-call0 %this this thisarg)
+       (with-access::JsGlobalObject %this (js-function-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "call") #f %this
+		(or cache (js-pcache-ref js-function-pcache 4)))
+	     this thisarg))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-call1 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-function-call1 %this this thisarg arg cache)
    (if (js-object-mode-plain? this)
        (js-call1 %this this thisarg arg)
        (with-access::JsGlobalObject %this (js-function-pcache)
@@ -929,13 +944,42 @@
 	     this thisarg arg0 arg1))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-maybe-call ...                                       */
+;*    js-function-call3 ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-function-maybe-call %this this thisarg arg cache)
+(define (js-function-call3 %this this thisarg arg0 arg1 arg2 cache)
+   (if (js-object-mode-plain? this)
+       (js-call3 %this this thisarg arg0 arg1 arg2)
+       (with-access::JsGlobalObject %this (js-function-pcache)
+	  (js-call4 %this
+	     (js-get-name/cache this (& "call") #f %this
+		(or cache (js-pcache-ref js-function-pcache 4)))
+	     this thisarg arg0 arg1 arg2))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-call0 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-call0 %this this thisarg cache)
    (let loop ((this this))
       (cond
 	 ((js-function? this)
-	  (js-function-call %this this thisarg arg cache))
+	  (js-function-call0 %this this thisarg cache))
+	 ((js-object? this)
+	  (with-access::JsGlobalObject %this (js-function-pcache)
+	     (js-call1 %this
+		(js-get-name/cache this (& "call") #f %this
+		   (or cache (js-pcache-ref js-function-pcache 5)))
+		this thisarg)))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-call1 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-call1 %this this thisarg arg cache)
+   (let loop ((this this))
+      (cond
+	 ((js-function? this)
+	  (js-function-call1 %this this thisarg arg cache))
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
 	     (js-call2 %this
@@ -959,6 +1003,23 @@
 		(js-get-name/cache this (& "call") #f %this
 		   (or cache (js-pcache-ref js-function-pcache 5)))
 		this thisarg arg0 arg1)))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-call3 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-call3 %this this thisarg arg0 arg1 arg2 cache)
+   (let loop ((this this))
+      (cond
+	 ((js-function? this)
+	  (js-function-call3 %this this thisarg arg0 arg1 arg2 cache))
+	 ((js-object? this)
+	  (with-access::JsGlobalObject %this (js-function-pcache)
+	     (js-call4 %this
+		(js-get-name/cache this (& "call") #f %this
+		   (or cache (js-pcache-ref js-function-pcache 5)))
+		this thisarg arg0 arg1 arg2)))
 	 (else
 	  (loop (js-toobject %this this))))))
 

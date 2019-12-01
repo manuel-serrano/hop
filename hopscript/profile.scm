@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Nov 29 08:55:05 2019 (serrano)                */
+;*    Last change :  Sun Dec  1 08:01:22 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -1008,7 +1008,7 @@
        (when (pair? filecaches)
 	  (with-output-to-port *profile-port*
 	     (lambda ()
-		(print "\"sources\": [")
+		(print "\"caches\": [")
 		(let ((srcs (delete-duplicates!
 			       (map (lambda (pc)
 				       (with-access::JsPropertyCache pc (src) src))

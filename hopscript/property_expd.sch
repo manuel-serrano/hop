@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Nov 27 08:00:45 2019 (serrano)                */
+;*    Last change :  Sun Dec  1 06:00:35 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -413,6 +413,21 @@
 				      (with-access::JsObject ,obj (elements)
 					 (vector-ref elements idx)))
 				   ,(loop (cdr cs))))))))
+		   ((mvtable)
+		    ;; vtable property get
+		    (cond-expand
+		       ((or no-vtable-cache no-vtable-cache-get)
+			(loop (cdr cs)))
+		       (else
+			`(with-access::JsConstructMap %cmap (vlen vtable %id)
+			    (let ((vidx (js-pcache-vindex ,cache)))
+			       (if (and (<fx vidx vlen)
+					(js-function? (vector-ref vtable vidx)))
+				   (let ((fun (vector-ref vtable vidx)))
+				      (js-profile-log-cache ,cache
+					 :vtable #t)
+				      fun)
+				   ,(loop (cdr cs))))))))
 		   ((global)
 		    `((@ js-global-object-get-name/cache __hopscript_property)
 		      ,obj ,prop ,throw ,%this
@@ -421,6 +436,11 @@
 		    ;; forced cache miss check
 		    ;; (only used in js-jsobject-get/name-cache)
 		    `((@ js-object-get-name/cache-miss __hopscript_property)
+		      ,obj ,prop ,throw ,%this ,cache))
+		   ((mmiss)
+		    ;; method lookup miss check
+		    ;; used by call profiling and inline method dispatch
+		    `((@ js-object-method-get-name/cache-miss __hopscript_property)
 		      ,obj ,prop ,throw ,%this ,cache))
 		   (else
 		    (error "js-object-get-name/cache" "bad cache spec"

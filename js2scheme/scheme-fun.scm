@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Sep  6 13:07:28 2019 (serrano)                */
+;*    Last change :  Sun Dec  1 07:49:39 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -28,7 +28,7 @@
 
    (export (j2s-scheme-closure ::J2SDecl mode return conf)
 	   (jsfun->lambda ::J2SFun mode return conf proto ::bool)
-	   (j2sfun->scheme ::J2SFun tmp mode return conf)
+	   (j2sfun->scheme ::J2SFun tmp tmpm mode return conf)
 	   (j2s-fun-prototype ::J2SFun)))
 
 ;*---------------------------------------------------------------------*/
@@ -511,7 +511,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun->scheme ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (j2sfun->scheme this::J2SFun tmp mode return conf)
+(define (j2sfun->scheme this::J2SFun tmp tmpm mode return conf)
    (with-access::J2SFun this (loc name params mode vararg mode generator
 				constrsize method new-target)
       (let* ((id (j2sfun-id this))
@@ -539,8 +539,7 @@
 			       (new-target 'js-object-alloc/new-target)
 			       (else 'js-object-alloc))
 		    :constrsize ,constrsize
-		    :method ,(when method
-				(jsfun->lambda method mode return conf #f #f))))
+		    :method ,(or tmpm (and method (jsfun->lambda method mode return conf #f #f)))))
 	       ((eq? vararg 'arguments)
 		`(js-make-function %this ,tmp ,len
 		    ,(symbol->string! name)
@@ -568,17 +567,24 @@
 		      (gensym (format "~a:~a-"
 				 (basename (cadr loc)) (caddr loc)))
 		      name))
+	     (tmpm (when method (symbol-append name '&)))
 	     (arity (if vararg -1 (+fx 1 (length params))))
 	     (fundef (if generator
 			 (let ((tmp2 (gensym id)))
-			    `(letrec* ((,tmp ,(jsfun->lambda this mode return conf
-						 `(js-get ,tmp2 (& "prototype") %this)
-						 #f))
-				       (,tmp2 ,(j2sfun->scheme this tmp mode return conf)))
+			    `(letrec* (,@(if method
+					     `((,tmpm ,(jsfun->lambda method mode return conf #f #f)))
+					     '())
+					 (,tmp ,(jsfun->lambda this mode return conf
+						   `(js-get ,tmp2 (& "prototype") %this)
+						   #f))
+				       (,tmp2 ,(j2sfun->scheme this tmp tmpm mode return conf)))
 				,tmp2))
-			 `(let ((,tmp ,(jsfun->lambda this mode return conf
-					  (j2s-fun-prototype this) #f)))
-			     ,(j2sfun->scheme this tmp mode return conf)))))
+			 `(let (,@(if method
+				      `((,tmpm ,(jsfun->lambda method mode return conf #f #f)))
+				      '())
+				  (,tmp ,(jsfun->lambda this mode return conf
+					    (j2s-fun-prototype this) #f)))
+			     ,(j2sfun->scheme this tmp tmpm mode return conf)))))
 	 (epairify-deep loc
 	    (if id
 		(let ((scmid (j2s-scheme-id id '^)))
@@ -750,13 +756,13 @@
 	       ((labels (and ?bindings ((?id . ?-))) ?id)
 		`(labels ,bindings
 		    (js-create-service %this
-		       ,(j2sfun->scheme this id mode return conf)
+		       ,(j2sfun->scheme this id #f mode return conf)
 		       ,(when (symbol? path) (symbol->string path))
 		       ',loc
 		       ,register ,import (js-current-worker))))
 	       (else
 		`(js-create-service %this
-		   ,(j2sfun->scheme this lam mode return conf)
+		   ,(j2sfun->scheme this lam #f mode return conf)
 		   ,(when (symbol? path) (symbol->string path))
 		   ',loc
 		   ,register ,import (js-current-worker)))))))

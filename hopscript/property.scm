@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Nov 26 08:15:47 2019 (serrano)                */
+;*    Last change :  Sat Nov 30 20:41:21 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -114,6 +114,8 @@
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
 	   (generic js-object-get-name/cache-miss ::JsObject ::JsStringLiteral
+	      ::bool ::JsGlobalObject ::JsPropertyCache)
+	   (generic js-object-method-get-name/cache-miss ::JsObject ::JsStringLiteral
 	      ::bool ::JsGlobalObject ::JsPropertyCache)
 	   
 	   (js-object-get-name/cache-imap+ ::JsObject ::obj ::bool
@@ -407,7 +409,7 @@
 	     ((isa? pmap JsConstructMap)
 	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
 		 (fprint (current-error-port) "--- " msg (typeof pcache)
-		    " index=" index " vindex=" vindex
+		    " index=" index " vindex=" vindex 
 		    "\n  pmap.%id=" %pid
 		    " pmap.props=" pprops)))
 	     ((isa? amap JsConstructMap)
@@ -1877,6 +1879,15 @@
 	    (else
 	     (js-object-get-name/cache-miss o name throw %this cache))))))
 
+;* (register-exit-function! (lambda (ret)                              */
+;* 			    (tprint "CACHE MISSES=" cnt)               */
+;* 			    (tprint "names="                           */
+;* 			       (sort (lambda (x y)                     */
+;* 					(< (cdr x) (cdr y)))           */
+;* 				  names))))                            */
+;* (define cnt 0)                                                      */
+;* (define names '())                                                  */
+
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ...                                */
 ;*    -------------------------------------------------------------    */
@@ -1895,9 +1906,15 @@
             (set! vindex (js-get-vindex %this)))
          (js-cmap-vtable-add! omap vindex i cache)))
    
-   (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage)
+   (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
+;*    (set! cnt (+fx cnt 1))                                           */
+;*    (let ((c (assq name names)))                                     */
+;*       (if (pair? c)                                                 */
+;* 	  (set-cdr! c (+fx (cdr c) 1))                                 */
+;* 	  (set! names (cons (cons name 1) names))))                    */
+   
    (let loop ((obj o))
       (jsobject-find obj o name
          ;; map search
@@ -1937,6 +1954,93 @@
             (js-get-notfound name throw %this))
          ;; loop
          loop)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-method-get-name/cache-miss ...                         */
+;*    -------------------------------------------------------------    */
+;*    This function is a mix of JS-OBJECT-GET-NAME/CACHE-MISS and      */
+;*    JS-OBJECT-METHOD-CALL/CACHE-MISS. It because has the latter      */
+;*    regarding caches and misses but it returns the value as the      */
+;*    former.                                                          */
+;*---------------------------------------------------------------------*/
+(define-generic (js-object-method-get-name/cache-miss o::JsObject
+		   name::JsStringLiteral
+		   throw::bool %this::JsGlobalObject
+		   cache::JsPropertyCache)
+
+   (define (funval obj el-or-desc)
+      (with-access::JsGlobalObject %this (js-call)
+	 (let loop ((el-or-desc el-or-desc))
+	    (cond
+	       ((isa? el-or-desc JsPropertyDescriptor)
+		(loop (js-property-value o obj name el-or-desc %this)))
+	       (else
+		el-or-desc)))))
+   
+   (define (js-pcache-vtable! omap cache f)
+      (with-access::JsPropertyCache cache (cntmiss vindex)
+         (when (=fx vindex (js-not-a-index))
+            (set! vindex (js-get-vindex %this)))
+         (js-cmap-vtable-add! omap vindex f cache)))
+
+   (define (invalidate-pcache! cache)
+      (with-access::JsPropertyCache cache (pmap emap cmap)
+	 (set! pmap #t)
+	 (set! emap #t)
+	 (set! cmap #t)))
+   
+   (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
+      (set! cntmiss (+u32 #u32:1 cntmiss)))
+
+;*    (tprint "--------------------------- MMISS.1 name=" name)        */
+;*    (js-debug-pcache cache)                                          */
+;*    (js-debug-object o)                                              */
+;*    (with-access::JsObject o (cmap)                                  */
+;*       (js-debug-cmap cmap))                                         */
+   
+   (let loop ((obj o))
+      (jsobject-find obj o name
+	 ;; map search
+	 (lambda (obj i)
+	    (with-access::JsObject o ((omap cmap) __proto__)
+	       (with-access::JsObject obj ((wmap cmap) elements)
+		  (with-access::JsConstructMap wmap (methods)
+		     (let ((el-or-desc (vector-ref elements i)))
+			(cond
+			   ((or (isa? el-or-desc JsAccessorDescriptor)
+				(isa? el-or-desc JsWrapperDescriptor))
+			    (invalidate-pcache! cache)
+			    (js-property-value o obj name el-or-desc %this))
+			   ((js-function? (vector-ref methods i))
+			    (let ((f (funval obj el-or-desc)))
+			       (when (js-function? f)
+				  (with-access::JsFunction f (len method arity)
+				     (if (<fx arity 0)
+					 ;; varargs functions, currently not cached...
+					 (invalidate-pcache! cache)
+					 (with-access::JsPropertyCache cache (cntmiss)
+					    ;; correct arity, put in cache
+					    (js-validate-pmap-pcache! cache)
+					    ;; vtable
+					    (cond
+					       ((<u32 cntmiss (vtable-threshold))
+						(js-pcache-update-owner! cache i o obj))
+					       (else
+						(js-pcache-vtable! omap cache f)))))))
+			       f))
+			   (else
+			    (invalidate-pcache! cache)
+			    (funval obj el-or-desc))))))))
+	 ;; property search
+	 (lambda (obj v)
+	    (invalidate-pcache! cache)
+	    (js-property-value o obj name v %this))
+	 ;; not found
+	 (lambda (o)
+	    (js-raise-type-error %this "call: not a function ~s"
+	       (js-undefined)))
+	 ;; loop
+	 loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-cmap+ ...                               */
@@ -3661,13 +3765,12 @@
 	  (apply js-calln %this method o args)))
 
    (define (funval obj el-or-desc)
-      (with-access::JsGlobalObject %this (js-call)
-	 (let loop ((el-or-desc el-or-desc))
-	    (cond
-	       ((isa? el-or-desc JsPropertyDescriptor)
-		(loop (js-property-value o obj name el-or-desc %this)))
-	       (else
-		el-or-desc)))))
+      (let loop ((el-or-desc el-or-desc))
+	 (cond
+	    ((isa? el-or-desc JsPropertyDescriptor)
+	     (loop (js-property-value o obj name el-or-desc %this)))
+	    (else
+	     el-or-desc))))
    
    (define (method->procedure f)
       (case (procedure-arity f)
@@ -3762,6 +3865,7 @@
 				  (let ((f (funval obj el-or-desc)))
 				     (cond
 					((procedure? f)
+					 (error "js-object-method-call/cache-fill" "should not be here" f)
 					 (with-access::JsGlobalObject %this (js-apply)
 					    (unless (eq? el-or-desc js-apply)
 					       (with-access::JsPropertyCache ccache (pmap emap cmap index method function)
@@ -3811,8 +3915,7 @@
 						 (with-access::JsPropertyCache ccache (pmap emap cmap)
 						    (set! pmap #t)
 						    (set! emap #t)
-						    (set! cmap #t))
-						 )))))
+						    (set! cmap #t)))))))
 					(jsapply f)))
 			      (else
 			       (with-access::JsPropertyCache ccache (pmap cmap emap)

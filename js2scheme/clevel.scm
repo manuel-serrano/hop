@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Fri Nov 29 09:12:26 2019 (serrano)                */
+;*    Last change :  Sun Dec  1 07:19:15 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -52,26 +52,26 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-clevel this::obj args)
    (when (isa? this J2SProgram)
-      (cond
-	 ((config-get args :profile-log #f)
-	  =>
-	  (lambda (log)
-	     (cache-profile-log this log args)
-	     (with-access::J2SProgram this (nodes headers decls)
-		(let ((ptable (create-hashtable)))
-		   (propcollect* decls ptable)
-		   (propcollect* nodes ptable)
-		   (propclevel* decls ptable)
-		   (propclevel* nodes ptable)))))
-	 ((config-get args :cspecs #f)
-	  =>
-	  (lambda (cspecs)
-	     (let ((cs (cond
-			  ((pair? cspecs)  cspecs)
-			  ((symbol? cspecs) (list cspecs))
-			  (else (error "j2s-clevel" "Illegal cspecs" cspecs)))))
-		(cspecs-update this cs args))))))
-   this)
+      (let loop ((log (config-get args :profile-log #f)))
+	 (cond
+	    (log
+	     (if (cache-profile-log this log args)
+		 (with-access::J2SProgram this (nodes headers decls)
+		    (let ((ptable (create-hashtable)))
+		       (propcollect* decls ptable)
+		       (propcollect* nodes ptable)
+		       (propclevel* decls ptable)
+		       (propclevel* nodes ptable)))
+		 (loop #f)))
+	    ((config-get args :cspecs #f)
+	     =>
+	     (lambda (cspecs)
+		(let ((cs (cond
+			     ((pair? cspecs)  cspecs)
+			     ((symbol? cspecs) (list cspecs))
+			     (else (error "j2s-clevel" "Illegal cspecs" cspecs)))))
+		   (cspecs-update this cs args))))))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-verb ...                                                   */
@@ -95,19 +95,24 @@
    (cache-verb conf "loading log file " (string-append "\"" logfile "\""))
    
    (let* ((log (load-profile-log logfile))
-	  (srcs (get 'sources log))
+	  (srcs (get 'caches log))
 	  (file (config-get conf :filename)))
       (when (vector? srcs)
-	 (let loop ((i (-fx (vector-length srcs) 1)))
-	    (when (>=fx i 0)
-	       (let ((filename (get 'filename (vector-ref srcs i))))
-		  (if (string=? file filename)
-		      (let ((verb (make-cell 0))
-			    (logtable (get 'caches (vector-ref srcs i))))
-			 (profile-clevel this logtable 'get verb conf)
-			 (cache-verb conf "cspecs " (cell-ref verb)))
-		      (loop (-fx i 1))))))))
-   this)
+	 (let loop ((i (-fx (vector-length srcs) 1))
+		    (r #f))
+	    (if (>=fx i 0)
+		(let ((filename (get 'filename (vector-ref srcs i))))
+		   (if (string=? file filename)
+		       (let ((verb (make-cell 0))
+			     (caches (get 'caches (vector-ref srcs i))))
+			  (if caches
+			      (let ((logtable (val->logtable caches)))
+				 (profile-clevel this logtable 'get verb conf)
+				 (cache-verb conf "cspecs " (cell-ref verb))
+				 (loop (-fx i 1) #t))
+			      (loop (-fx i 1) r)))
+		       (loop (-fx i 1) #f)))
+		r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cspecs-update ...                                                */
@@ -122,9 +127,9 @@
 (define-struct pcache point usage imap cmap emap pmap amap vtable)
 
 ;*---------------------------------------------------------------------*/
-;*    load-profile-log ...                                             */
+;*    val->logtable ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (load-profile-log logfile)
+(define (val->logtable vals::vector)
    
    (define (alist->pcache l)
       (let ((p (pcache -1 '- 0 0 0 0 0 0)))
@@ -149,11 +154,14 @@
 	    l)
 	 p))
    
-   (define (val->caches vals::vector)
-      (sort (lambda (x y)
-	       (<=fx (pcache-point x) (pcache-point y)))
-	 (vector-map! alist->pcache vals)))
+   (sort (lambda (x y)
+	    (<=fx (pcache-point x) (pcache-point y)))
+      (vector-map! alist->pcache vals)))
 
+;*---------------------------------------------------------------------*/
+;*    load-profile-log ...                                             */
+;*---------------------------------------------------------------------*/
+(define (load-profile-log logfile)
    (call-with-input-file logfile
       (lambda (ip)
 	 (let ((fprofile #f))
@@ -169,9 +177,10 @@
 			      (cond
 				 ((string=? p "caches")
 				  (unless fprofile
-				     (error "fprofile" "Wrong log format" logfile))
+				     (error "fprofile" "Wrong log format"
+					logfile))
 				  (cell-set! o
-				     (cons (cons 'caches (val->caches val))
+				     (cons (cons 'caches val)
 					(cell-ref o))))
 				 ((string=? p "format")
 				  (set! fprofile (equal? val "fprofile")))
@@ -344,7 +353,7 @@
 ;*---------------------------------------------------------------------*/
 (define (pcache->cspecs pc)
 
-   (define threshold 1000)
+   (define threshold 100)
    
    (cond
       ((and (> (pcache-imap pc) threshold)

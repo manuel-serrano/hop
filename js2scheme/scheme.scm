@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Nov  9 10:09:08 2019 (serrano)                */
+;*    Last change :  Sun Dec  1 07:52:42 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -816,7 +816,7 @@
 		`(begin
 		    (define ,tmp ,fun)
 		    (define ,ident
-		       ,(j2sfun->scheme val tmp mode return conf))
+		       ,(j2sfun->scheme val tmp #f mode return conf))
 		    ,@(if (usage? '(eval) usage)
 			  `((js-define %this ,scope ,(j2s-scheme-name id)
 			       (lambda (%) ,ident)
@@ -858,14 +858,14 @@
 				     `(js-get ,ident (& "prototype") %this) #f)))
 			  `((,^tmp #unspecified)
 			    (,tmp ,fun)
-			    (,var (let ((,proc ,(j2sfun->scheme val tmp mode return conf)))
+			    (,var (let ((,proc ,(j2sfun->scheme val tmp #f mode return conf)))
 				     (set! ,^tmp ,proc)
 				     ,proc))))
 		       (let ((fun (jsfun->lambda val mode return conf
 				     `(js-get ,ident (& "prototype") %this) #f))
 			     (tmp (j2s-fast-id id)))
 			  `((,tmp ,fun)
-			    (,var ,(j2sfun->scheme val tmp mode return conf)))))))
+			    (,var ,(j2sfun->scheme val tmp #f mode return conf)))))))
 	       ((usage? '(call) usage)
 		`((,(j2s-fast-id id)
 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f))))

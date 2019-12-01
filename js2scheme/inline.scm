@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Nov 29 08:13:05 2019 (serrano)                */
+;*    Last change :  Sun Dec  1 06:03:34 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Method inlining optimization                                     */
+;*    Function/Method inlining optimization                            */
 ;*    -------------------------------------------------------------    */
 ;*    The method inlining proceeds as follows:                         */
 ;*      1- the AST is traversed to find all toplevel methods assigned  */
@@ -199,6 +199,7 @@
 				    ;; INLINE-max-function-size
 				    (and (<fx (function-size (cdr t))
 					    inline-max-function-size)
+					 (not (function-arguments? (cdr t)))
 					 (not (function-freevars? (cdr t)))))
 			    targets))
 		(targets (filter (lambda (t)
@@ -275,6 +276,8 @@
 			 0)
 			((and (< (callloginfo-counter cli) (* allcnt 0.001))
 			      (>fx sz (node-size call)))
+			 0)
+			((function-arguments? val)
 			 0)
 			(else
 			 (let* ((node (inline-function-call-profile
@@ -524,6 +527,13 @@
 	 ((eq? (funinfo-freevars %info) #unspecified)
 	  (funinfo-freevars-set! %info (free-vars? this '()))))
       (funinfo-freevars %info)))
+
+;*---------------------------------------------------------------------*/
+;*    function-arguments? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (function-arguments? this::J2SFun)
+   (with-access::J2SFun this (argumentsp)
+      argumentsp))
 
 ;*---------------------------------------------------------------------*/
 ;*    function-glodecl ...                                             */
@@ -864,7 +874,7 @@
       (map (lambda (a)
 	      (let ((id (gensym 'a)))
 		 (with-access::J2SNode a (loc)
-		    (J2SLetOpt '(ref) id a))))
+		    (J2SLetOpt '(ref assig) id a))))
 	 args))
 
    (with-access::J2SCall node (thisargs args loc)
@@ -935,64 +945,8 @@
       (map (lambda (a)
 	      (let ((id (gensym 'a)))
 		 (with-access::J2SNode a (loc)
-		    (J2SLetOpt '(ref) id a))))
+		    (J2SLetOpt '(ref assig) id a))))
 	 args))
-   
-   (define (inline-method obj::J2SRef field target::pair args cache loc kont)
-      (with-access::J2SFun (cdr target) (body thisp params (floc loc))
-	 (with-access::J2SRef obj (decl)
-	    (cache-check cache loc obj field kont
-	       (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) args)
-		  (j2s-alpha body
-		     (cons thisp params) (cons decl args)))))))
-   
-   (define (inline-object-method-call-pmap fun obj::J2SDecl args loc)
-      (with-access::J2SAccess fun (field cspecs)
-	 (let loop ((targets targets)
-		    (funcaches '()))
-	    (if (null? targets)
-		(let* ((c (get-cache prgm))
-		       (f (duplicate::J2SAccess fun
-			     (obj (J2SRef obj))))
-		       (r (J2SLetOpt '(call) (gensym 'r)
-			     (J2SMethodCall/cache* f (list (J2SRef obj)) args
-				'(pmap-inline vtable-inline) c))))
-		   (J2SMeta 0 0
-		      (J2SLetRecBlock #f (list r)
-			 (let loop ((cs funcaches))
-			    (if (null? cs)
-				(J2SSeq*
-				   (map (lambda (c)
-					   (J2SStmtExpr
-					      (J2SCacheUpdate 'proto-reset
-						 (car c) (J2SRef obj))))
-				      funcaches))
-				(let* ((target (cdar cs))
-				       (v (function-glodecl (cdr target) prgm)))
-				   ;; cs: cache x callee
-				   ;; callee: decl-or-id x fun
-				   (J2SIf
-				      (J2SCacheCheck 'method
-					 c (if (isa? v J2SDecl)
-					       (J2SRef v)
-					       (J2SHopRef v)))
-				      (J2SSeq*
-					 (map (lambda (c)
-						 (J2SStmtExpr
-						    (if (eq? c (car cs))
-							(J2SCacheUpdate 'proto-method
-							   (car c) (J2SRef obj))
-							(J2SCacheUpdate 'proto-reset
-							   (car c) (J2SRef obj)))))
-					    funcaches))
-				      (loop (cdr cs))))))
-			 (J2SReturn #t (J2SRef r)))))
-		(let ((cache (get-cache prgm)))
-		   (inline-method (J2SRef obj)
-		      field (car targets) args cache loc
-		      (lambda ()
-			 (loop (cdr targets)
-			    (cons (cons cache (car targets)) funcaches)))))))))
    
    (define (inline-closure-call fun::J2SExpr args::pair-nil loc)
       (let ((fun (J2SLetOpt '(ref) (gensym 'fun) fun)))
@@ -1065,7 +1019,7 @@
 		 (else
 		  (let ((id (gensym 'a)))
 		     (with-access::J2SNode a (loc)
-			(J2SLetOpt '(ref) id a))))))
+			(J2SLetOpt '(ref assig) id a))))))
 	 args))
    
    (define (inline-method obj::J2SRef field target::pair args cache loc kont)
@@ -1075,6 +1029,9 @@
 	       (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) args)
 		  (j2s-alpha body
 		     (cons thisp params) (cons decl args)))))))
+
+   (define (inline-cspecs cspecs)
+      (append (replace cspecs 'vtable 'mvtable) '(mmiss)))
    
    (define (inline-object-method-call-pmap fun obj::J2SDecl args loc)
       (with-access::J2SAccess fun (field cspecs)
@@ -1083,6 +1040,7 @@
 	    (if (null? targets)
 		(let* ((c (get-cache prgm))
 		       (f (duplicate::J2SAccess fun
+			     (cspecs (inline-cspecs cspecs))
 			     (obj (J2SRef obj))))
 		       (r (J2SLetOpt '(call) (gensym 'r)
 			     (J2SMethodCall/cache* f (list (J2SRef obj)) args
@@ -1123,11 +1081,19 @@
 		      (lambda ()
 			 (loop (cdr targets)
 			    (cons (cons cache (car targets)) funcaches)))))))))
-   
+
+   (define (replace lst from to)
+      (let loop ((lst lst))
+	 (cond
+	    ((null? lst) '())
+	    ((eq? (car lst) from) (cons to (cdr lst)))
+	    (else (cons (car lst) (loop (cdr lst)))))))
+	  
    (define (inline-object-method-call-function fun obj::J2SDecl args loc)
       (with-access::J2SAccess fun (field cspecs loc)
 	 (let ((met (J2SLetOpt '(ref) (gensym 'met)
 		       (duplicate::J2SAccess fun
+			  (cspecs (inline-cspecs cspecs))
 			  (obj (J2SRef obj))))))
 	    (J2SLetBlock (list met)
 	       (let loop ((targets targets))
@@ -1245,7 +1211,7 @@
 		  a
 		  (let ((id (gensym 'a)))
 		     (with-access::J2SNode a (loc)
-			(J2SLetOpt '(ref) id
+			(J2SLetOpt '(ref assig) id
 			   (inline! a
 			      #f leaf limit stack pmethods prgm conf))))))
 	 args))
@@ -1351,7 +1317,7 @@
 		 (else
 		  (with-access::J2SDecl p (usage id writable)
 		     (with-access::J2SNode a (loc)
-			(let ((d (J2SLetOptRo usage (gensym id)
+			(let ((d (J2SLetOpt usage (gensym id)
 				    (inline! a
 				       targets leaf limit stack pmethods prgm conf))))
 			   (with-access::J2SDecl d ((w writable))
@@ -1376,6 +1342,15 @@
 	 ((isa? node J2SStmtExpr)
 	  (with-access::J2SStmtExpr node (expr)
 	     expr))
+	 ((isa? node J2SReturn)
+	  (with-access::J2SReturn node (expr)
+	     expr))
+	 ((and (isa? node J2SBindExit)
+	       (with-access::J2SBindExit node (stmt)
+		  (isa? stmt J2SReturn)))
+	  (with-access::J2SBindExit node (stmt)
+	     (with-access::J2SReturn stmt (expr)
+		expr)))
 	 ((isa? node J2SLetBlock)
 	  (with-access::J2SLetBlock node (loc decls nodes)
 	     (when (and (null? decls) (pair? nodes) (null? (cdr nodes)))
@@ -2098,47 +2073,29 @@
 		  (if (string=? file filename)
 		      (let ((verb (make-cell 0))
 			    (cvec (get 'calls (vector-ref srcs i))))
-			 (vector-map! (lambda (c)
-					 (let ((cnt (get 'cnt c)))
-					    (list (get 'point c)
-					       (if (vector? cnt)
-						   (sum-method-count cnt)
-						   cnt)
-					       (if (vector? cnt)
-						   (vector-map! (lambda (c)
-								   (cons (get 'cnt c)
-								      (get 'point c)))
-						      cnt)
-						   #f))))
-			    cvec)
-			 (sort (lambda (x y) (>= (cadr x) (cadr y))) cvec))
+			 (when (vector? cvec)
+			    (vector-map!
+			       (lambda (c)
+				  (let ((cnt (get 'cnt c)))
+				     (list (get 'point c)
+					(if (vector? cnt)
+					    (sum-method-count cnt)
+					    cnt)
+					(if (vector? cnt)
+					    (vector-map!
+					       (lambda (c)
+						  (cons (get 'cnt c)
+						     (get 'point c)))
+					       cnt)
+					    #f))))
+			       cvec)
+			    (sort (lambda (x y) (>= (cadr x) (cadr y))) cvec)))
 		      (loop (-fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-profile-log ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (load-profile-log logfile)
-
-   (define (counts-val val)
-      (vector-map! (lambda (v)
-		      (cond
-			 ((vector? v)
-			  (vector-map! (lambda (c)
-					  (match-case c
-					     (((loc . ?loc) (cnt . ?cnt))
-					      (cons cnt loc))
-					     (((cnt . ?cnt) (loc . ?loc))
-					      (cons cnt loc))
-					     (else
-					      (error "load-profile-log"
-						 "bad count value" c))))
-			     v))
-			 ((number? v)
-			  v)
-			 (else
-			  (error "load-profile-log" "bad count value" v))))
-	 val))
-
    (call-with-input-file logfile
       (lambda (ip)
 	 (let ((fprofile #f))
@@ -2154,16 +2111,13 @@
 			      (cond
 				 ((string=? p "calls")
 				  (unless fprofile
-				     (error "fprofile" "Wrong log format" logfile))
+				     (error "fprofile" "Wrong log format"
+					logfile))
 				  (cell-set! o
 				     (cons (cons 'calls val)
 					(cell-ref o))))
 				 ((string=? p "format")
 				  (set! fprofile (equal? val "fprofile")))
-				 ((string=? p "counts")
-				  (cell-set! o
-				     (cons (cons 'counts (counts-val val))
-					(cell-ref o))))
 				 (else
 				  (cell-set! o
 				     (cons (cons (string->symbol p) val)

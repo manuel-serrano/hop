@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Nov 27 08:06:34 2019 (serrano)                */
+;*    Last change :  Sun Dec  1 16:07:19 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -132,9 +132,10 @@
 	("slice" js-array-maybe-slice0 any () %this #t)
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)
-	("call" ,j2s-call any (any) %this #t)
-	("call" ,j2s-call any (any any) %this #t)
+	("call" ,j2s-call0 any (any) %this #t)
+	("call" ,j2s-call1 any (any any) %this #t)
 	("call" ,j2s-call2 any (any any any) %this #t)
+	("call" ,j2s-call3 any (any any any any) %this #t)
 	;; math
 	("toFixed" js-maybe-tofixed any (any) %this #t)
 	)))
@@ -186,16 +187,52 @@
        (def obj args mode return conf))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-call ...                                                     */
+;*    j2s-call0 ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-call obj args mode return conf)
+(define (j2s-call0 obj args mode return conf)
 
    (define (def obj args mode return conf)
-      `(js-function-maybe-call ,(caddr args)
+      `(js-function-maybe-call0 ,(cadr args)
+	  ,(j2s-scheme obj mode return conf)
+	  ,(j2s-scheme (car args) mode return conf)
+	  ,(cadr args)))
+
+   (cond
+      ((isa? obj J2SRef)
+       (with-access::J2SRef obj (loc decl)
+	  (cond
+	     ((and (or (isa? decl J2SDeclFun)
+		       (and (isa? decl J2SDeclInit)
+			    (with-access::J2SDeclInit decl (val ronly)
+			       (and (isa? val J2SFun) ronly))))
+		   (decl-only-usage? decl '(get call new init instanceof))
+		   (and (pair? args) (<=fx (length args) 2)))
+	      (j2s-scheme (J2SMethodCall* obj
+			     (list (car args))
+			     (if (pair? (cdr args))
+				 (cdr args)
+				 (list (J2SUndefined))))
+		 mode return conf))
+	     ((pair? (cddr args))
+	      (def obj args mode return conf))
+	     (else
+	      #f))))
+      ((pair? (cddr args))
+       (def obj args mode return conf))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-call1 ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-call1 obj args mode return conf)
+
+   (define (def obj args mode return conf)
+      `(js-function-maybe-call1 ,(caddr args)
 	  ,(j2s-scheme obj mode return conf)
 	  ,(j2s-scheme (car args) mode return conf)
 	  ,(j2s-scheme (cadr args) mode return conf)
-	  ,(cadddr args)))
+	  ,(caddr args)))
       
    (cond
       ((isa? obj J2SRef)
@@ -253,6 +290,42 @@
 	     (else
 	      #f))))
       ((pair? (cddddr args))
+       (def obj args mode return conf))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-call3 ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-call3 obj args mode return conf)
+   
+   (define (def obj args mode return conf)
+      `(js-function-maybe-call3 ,(car (cddddr args))
+	  ,(j2s-scheme obj mode return conf)
+	  ,(j2s-scheme (car args) mode return conf)
+	  ,(j2s-scheme (cadr args) mode return conf)
+	  ,(j2s-scheme (caddr args) mode return conf)
+	  ,(j2s-scheme (cadddr args) mode return conf)
+	  ,(car (cddddr args))))
+
+   (cond
+      ((isa? obj J2SRef)
+       (with-access::J2SRef obj (loc decl)
+	  (cond
+	     ((and (or (isa? decl J2SDeclFun)
+		       (and (isa? decl J2SDeclInit)
+			    (with-access::J2SDeclInit decl (val ronly)
+			       (and (isa? val J2SFun) ronly))))
+		   (decl-only-usage? decl '(get call new init instanceof)))
+	      (j2s-scheme (J2SMethodCall* obj
+			     (list (car args))
+			     (list (cadr args) (caddr args) (cadddr args)))
+		 mode return conf))
+	     ((pair? (cdr (cddddr args)))
+	      (def obj args mode return conf))
+	     (else
+	      #f))))
+      ((pair? (cdr (cddddr args)))
        (def obj args mode return conf))
       (else
        #f)))
