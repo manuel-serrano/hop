@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Dec  1 06:03:34 2019 (serrano)                */
+;*    Last change :  Mon Dec  2 06:23:28 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1011,15 +1011,9 @@
    
    (define (inline-method-args args)
       (map (lambda (a)
-	      (cond
-		 ((isa? a J2SLiteral)
-		  a)
-		 ((j2sref-ronly? a)
-		  a)
-		 (else
-		  (let ((id (gensym 'a)))
-		     (with-access::J2SNode a (loc)
-			(J2SLetOpt '(ref assig) id a))))))
+	      (let ((id (gensym 'a)))
+		 (with-access::J2SNode a (loc)
+		    (J2SLetOpt '(ref assig) id a))))
 	 args))
    
    (define (inline-method obj::J2SRef field target::pair args cache loc kont)
