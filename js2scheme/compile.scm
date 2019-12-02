@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Nov  7 08:45:33 2019 (serrano)                */
+;*    Last change :  Mon Dec  2 08:28:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -462,7 +462,9 @@
 	 (unless (memq :profile-hint o)
 	    (set! o (cons* :profile-hint #t o)))
 	 (unless (memq :profile-method o)
-	    (set! o (cons* :profile-method #t o))))
+	    (set! o (cons* :profile-method #t o)))
+	 (unless (memq :profile-cmap o)
+	    (set! o (cons* :profile-cmap #t o))))
       ;; optimization
       (when (>=fx l 900)
 	 (unless (memq :optim-integer o)

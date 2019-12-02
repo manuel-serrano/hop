@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sun Dec  1 08:01:22 2019 (serrano)                */
+;*    Last change :  Mon Dec  2 07:53:45 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -43,6 +43,7 @@
 
 	   (inline js-profile-log-call ::vector ::long)
 	   (js-profile-log-funcall ::vector ::long ::obj ::obj)
+	   (js-profile-log-cmap ::vector ::long ::obj)
 
 	   (js-profile-log-method-function ::JsStringLiteral ::obj)
 	   (js-profile-log-method-method ::JsStringLiteral ::obj)
@@ -96,7 +97,7 @@
 		  (set! *profile-port* (open-output-file (cadr m)))))
 	    (profile-cache-start! trc)
 	    (when (string-contains trc "hopscript:fprofile")
-	       (set! trc (string-append "hopscript:cache hopscript:call format:fprofile " trc)))
+	       (set! trc (string-append "hopscript:cache hopscript:call hopscript:cmap format:fprofile " trc)))
 	    (when (string-contains trc "hopscript:cache")
 	       (log-cache-miss!))
 	    (when (string-contains trc "hopscript:function")
@@ -105,7 +106,8 @@
 	       (set! *profile-gets-props* '())
 	       (set! *profile-puts-props* '())
 	       (set! *profile-methods-props* '()))
-	    (when (string-contains trc "hopscript:call")
+	    (when (or (string-contains trc "hopscript:call")
+		      (string-contains trc "hopscript:cmap"))
 	       (when calltable
 		  (set! *profile-call-tables*
 		     (cons calltable *profile-call-tables*))))
@@ -125,6 +127,8 @@
 			   (profile-allocs trc))
 			(when (string-contains trc "hopscript:call")
 			   (profile-calls trc))
+			(when (string-contains trc "hopscript:cmap")
+			   (profile-cmaps trc))
 			(profile-report-end trc conf)
 			(unless (eq? *profile-port* (current-error-port))
 			   (close-output-port *profile-port*))))))))))
@@ -239,6 +243,20 @@
 			  (set-cdr! c (+llong (cdr c) #l1))
 			  (vector-set! table idx (cons (cons id #l1) bucket))))
 		   (vector-set! table idx (list (cons id #l1)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-log-cmap ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-profile-log-cmap table idx obj)
+   (when (js-object? obj)
+      (with-access::JsObject obj (cmap)
+	 (let ((bucket (vector-ref table idx)))
+	    (if (pair? bucket)
+		(let ((c (assq cmap bucket)))
+		   (if (pair? c)
+		       (set-cdr! c (+llong (cdr c) #l1))
+		       (vector-set! table idx (cons (cons cmap #l1) bucket))))
+		(vector-set! table idx (list (cons cmap #l1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-method-method ...                                 */
@@ -1329,7 +1347,45 @@
 			    (display "    \"calls\": [")
 			    (print-call-counts
 			       (vector->list (vector-ref t 1))
-			       (vector->list (vector-ref t 2)))
+			       (vector->list (vector-ref t 3)))
+			    (print " ] }"))
+		  *profile-call-tables*))
+	    (print "],")))))
+
+;*---------------------------------------------------------------------*/
+;*    profile-cmaps ...                                                */
+;*---------------------------------------------------------------------*/
+(define (profile-cmaps trc)
+
+   (define (print-call-counts counts locations)
+      (let ((sep "\n      "))
+	 (for-each (lambda (nl)
+		      (let ((n (car nl))
+			    (l (cdr nl)))
+			 (when (>=fx l 0) 
+			    (display sep)
+			    (set! sep ",\n      ")
+			    (printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l
+			       (map cdr n)))))
+	    (sort (lambda (x y)
+		     (< (cdr x) (cdr y)))
+	       (map cons counts locations)))))
+   
+   (when (string-contains trc "format:fprofile")
+      (with-output-to-port *profile-port*
+	 (lambda ()
+	    (print "\"cmaps\": [")
+	    (let ((first #f))
+	       (for-each (lambda (t)
+			    (when first
+			       (set! first #f)
+			       (print ","))
+			    (print "  { \"filename\": \""
+			       (vector-ref t 0) "\",")
+			    (display "    \"cmaps\": [")
+			    (print-call-counts
+			       (vector->list (vector-ref t 2))
+			       (vector->list (vector-ref t 3)))
 			    (print " ] }"))
 		  *profile-call-tables*))
 	    (print "],")))))

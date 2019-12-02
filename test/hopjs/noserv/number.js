@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/number.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/number.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Fri Apr 19 14:37:27 2019 (serrano)                */
+/*    Last change :  Mon Dec  2 10:52:26 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -111,6 +111,7 @@ assert.equal( Math.pow(2, 32), 4294967296, "Math.pow(2" );
 assert.equal( Math.pow(2, 32) + 123, 4294967419, "Math.pow(2" );
 assert.equal( Math.pow(2, 33), 8589934592, "Math.pow(2" );
 assert.equal( ((1<<29) + 123) << 2, -2147483156, "((1<<29) + 123) << 2" );
+assert.ok( Math.pow(10, 2.5) > 316, "Math.pow" );
 
 /*---------------------------------------------------------------------*/
 /*    maxint parsing                                                   */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Dec  1 16:07:19 2019 (serrano)                */
+;*    Last change :  Mon Dec  2 07:52:26 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -407,6 +407,9 @@
       `(begin
 	  (js-profile-log-funcall %call-log ,profid ,fun %source)
 	  ,call))
+
+   (define (cmap-profile profid obj)
+      `(js-profile-log-cmap %cmap-log ,profid ,obj))
    
    (define (array-push obj arg)
       (let ((scmobj (j2s-scheme obj mode return conf))
@@ -859,13 +862,17 @@
 		  ,@self
 		  ,@(j2s-scheme args mode return conf)))
 	       ((and (config-get conf :profile-call #f) (>=fx profid 0))
-		(let ((f (gensym '%fun-profile)))
+		(let* ((f (gensym '%fun-profile))
+		       (call `(,call ,j2s-unresolved-call-workspace
+				 ,f
+				 ,@self
+				 ,@(j2s-scheme args mode return conf))))
 		   `(let ((,f ,(j2s-scheme fun mode return conf)))
-		       ,(funcall-profile profid f
-			   `(,call ,j2s-unresolved-call-workspace
-			       ,f
-			       ,@self
-			       ,@(j2s-scheme args mode return conf))))))
+		       ,(when (isa? fun J2SAccess)
+			   (with-access::J2SAccess fun (obj)
+			      (let ((o (j2s-scheme obj mode return conf)))
+				 (cmap-profile profid o))))
+		       ,(funcall-profile profid f call))))
 	       (cache
 		`(js-call/cache
 		    ,j2s-unresolved-call-workspace

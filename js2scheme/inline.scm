@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Dec  2 06:23:28 2019 (serrano)                */
+;*    Last change :  Mon Dec  2 08:52:27 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -248,13 +248,15 @@
 		       0)
 		      (else
 		       (let ((node (inliner call guard targets prgm conf)))
-			  (with-access::J2SCall call (%info loc fun)
-			     (inline-verb loc fun (map car targets) sz fuel
-				allcnt conf)
-			     (replace-call! (callinfo-parent %info) call
-				(inline-stmt->expr loc node))
-			     (function-size-reset! (callinfo-owner %info)))
-			  (node-size node)))))))))
+			  (if (isa? node J2SNode)
+			      (with-access::J2SCall call (%info loc fun)
+				 (inline-verb loc fun (map car targets) sz fuel
+				    allcnt conf)
+				 (replace-call! (callinfo-parent %info) call
+				    (inline-stmt->expr loc node))
+				 (function-size-reset! (callinfo-owner %info))
+				 (node-size node))
+			      0)))))))))
    
    (define (inline-call-method!::long cli fuel allcnt)
       ;; inline a method invocation
@@ -1114,7 +1116,9 @@
       (case guard
 	 ((pmap)
 	  (inline-object-method-call-pmap fun obj args loc))
-	 ((function array)
+	 ((array)
+	  (inline-object-method-call-function fun obj args loc))
+	 ((function)
 	  (inline-object-method-call-function fun obj args loc))
 	 (else
 	  (inline-object-method-call-pmap fun obj args loc))))

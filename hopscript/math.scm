@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 12 15:41:28 2019 (serrano)                */
+;*    Last change :  Mon Dec  2 10:54:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -301,16 +301,14 @@
 		(expt n1 n2))
 	       ((and (< n2 0) (exact? n2))
 		(expt n1 (exact->inexact n2)))
-	       ((and (flonum? n2) (or (= n2 +inf.0) (nanfl? n2)))
-		+nan.0)
-	       ((= n2 +inf.0)
+	       ((and (flonum? n2) (or (=fl n2 +inf.0) (nanfl? n2)))
 		+nan.0)
 	       ((= n2 -inf.0)
 		(if (= (abs n1) 1)
 		    +nan.0
 		    0))
-	       ((not (integer? y))
-		(if (> y 0) (* x 0) (if (< x 0) -inf.0 +inf.0)))
+	       ((flonum? n2)
+		(exptfl (fixnum->flonum n1) n2))
 	       (else
 		(let loop ((x n1)
 			   (y (inexact->exact n2)))

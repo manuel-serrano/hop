@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Nov 27 06:32:11 2019 (serrano)                */
+;*    Last change :  Mon Dec  2 08:02:53 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -49,6 +49,8 @@
 	    '(define %resource (dirname %source))
 	    (when (config-get conf :profile-call #f)
 	       `(define %call-log (make-vector ,call-size #l0)))
+	    (when (config-get conf :profile-cmap #f)
+	       `(define %cmap-log (make-vector ,call-size #l0)))
 	    (when (config-get conf :profile-call #f)
 	       `(define %call-locations ',(call-locations this)))
 	    (epairify-deep loc
@@ -87,6 +89,9 @@
 		   ,@(if (config-get conf :profile-call #f)
 			 `((define %call-log (make-vector ,call-size #l0))
 			   (define %call-locations ',(call-locations this)))
+			 '())
+		   ,@(if (config-get conf :profile-cmap #f)
+			 `((define %cmap-log (make-vector ,call-size #l0)))
 			 '())
 		   (define %worker (js-current-worker))
 		   (define %cnst-table ,cnsttable)
@@ -132,6 +137,9 @@
 			    '())))
 		,@(if (config-get conf :profile-call #f)
 		      `((define %call-log (make-vector ,call-size #l0)))
+		      '())
+		,@(if (config-get conf :profile-cmap #f)
+		      `((define %cmap-log (make-vector ,call-size #l0)))
 		      '())
 		,@(if (config-get conf :profile-call #f)
 		      `((define %call-locations ',(call-locations this)))
@@ -210,6 +218,9 @@
 				    `((define %call-log (make-vector ,call-size #l0))
 				      (define %call-locations ',(call-locations this)))
 				    '())
+			      ,@(if (config-get conf :profile-cmap #f)
+				    `((define %cmap-log (make-vector ,call-size #l0)))
+				    '())
 			      (define %worker (js-current-worker))
 			      (define %source (or (the-loading-file) "/"))
 			      (define %resource (dirname %source))
@@ -250,6 +261,9 @@
 		,@(if (config-get conf :profile-call #f)
 		      `((define %call-log (make-vector ,call-size #l0))
 			(define %call-locations ',(call-locations this)))
+		      '())
+		,@(if (config-get conf :profile-cmap #f)
+		      `((define %cmap-log (make-vector ,call-size #l0)))
 		      '())
 		(hop-sofile-compile-policy-set! 'static)
 		(hopjs-standalone-set! #t)
@@ -506,12 +520,13 @@
 ;*---------------------------------------------------------------------*/
 (define (profilers conf)
    (when (or (config-get conf :profile-call #f)
+	     (config-get conf :profile-cmap #f)
 	     (config-get conf :profile-cache #f)
 	     (config-get conf :profile-hint #f)
 	     (config-get conf :profile-alloc #f))
       `(js-profile-init ',(filter-config conf)
 	  ,(if (config-get conf :profile-call #f)
-	       '(vector %source %call-log %call-locations)
+	       '(vector %source %call-log %cmap-log %call-locations)
 	       #f))))
 
 ;*---------------------------------------------------------------------*/
@@ -650,7 +665,7 @@
 (define (j2s-profile-cache this::J2SProgram conf)
    (with-access::J2SProgram this (pcache-size)
       (let ((profile-info-table (make-vector pcache-size '#(-1 "" get))))
-	 (let loop ((i pcache-size))
+	 (let loop ((i (-fx pcache-size 1)))
 	    (when (>=fx i 0)
 	       (vector-set! profile-info-table i
 		  `#(,(- i) "" get))
