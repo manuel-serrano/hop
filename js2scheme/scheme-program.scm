@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Dec  2 08:02:53 2019 (serrano)                */
+;*    Last change :  Mon Dec  2 11:13:15 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -50,7 +50,7 @@
 	    (when (config-get conf :profile-call #f)
 	       `(define %call-log (make-vector ,call-size #l0)))
 	    (when (config-get conf :profile-cmap #f)
-	       `(define %cmap-log (make-vector ,call-size #l0)))
+	       `(define %cmap-log (make-vector ,call-size '())))
 	    (when (config-get conf :profile-call #f)
 	       `(define %call-locations ',(call-locations this)))
 	    (epairify-deep loc
@@ -91,7 +91,7 @@
 			   (define %call-locations ',(call-locations this)))
 			 '())
 		   ,@(if (config-get conf :profile-cmap #f)
-			 `((define %cmap-log (make-vector ,call-size #l0)))
+			 `((define %cmap-log (make-vector ,call-size '())))
 			 '())
 		   (define %worker (js-current-worker))
 		   (define %cnst-table ,cnsttable)
@@ -139,7 +139,7 @@
 		      `((define %call-log (make-vector ,call-size #l0)))
 		      '())
 		,@(if (config-get conf :profile-cmap #f)
-		      `((define %cmap-log (make-vector ,call-size #l0)))
+		      `((define %cmap-log (make-vector ,call-size '())))
 		      '())
 		,@(if (config-get conf :profile-call #f)
 		      `((define %call-locations ',(call-locations this)))
@@ -219,7 +219,7 @@
 				      (define %call-locations ',(call-locations this)))
 				    '())
 			      ,@(if (config-get conf :profile-cmap #f)
-				    `((define %cmap-log (make-vector ,call-size #l0)))
+				    `((define %cmap-log (make-vector ,call-size '())))
 				    '())
 			      (define %worker (js-current-worker))
 			      (define %source (or (the-loading-file) "/"))
@@ -263,7 +263,7 @@
 			(define %call-locations ',(call-locations this)))
 		      '())
 		,@(if (config-get conf :profile-cmap #f)
-		      `((define %cmap-log (make-vector ,call-size #l0)))
+		      `((define %cmap-log (make-vector ,call-size '())))
 		      '())
 		(hop-sofile-compile-policy-set! 'static)
 		(hopjs-standalone-set! #t)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Mon Dec  2 07:53:45 2019 (serrano)                */
+;*    Last change :  Mon Dec  2 11:11:26 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -1362,7 +1362,7 @@
 	 (for-each (lambda (nl)
 		      (let ((n (car nl))
 			    (l (cdr nl)))
-			 (when (>=fx l 0) 
+			 (when (and (>=fx l 0) (pair? n))
 			    (display sep)
 			    (set! sep ",\n      ")
 			    (printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l
@@ -1370,7 +1370,7 @@
 	    (sort (lambda (x y)
 		     (< (cdr x) (cdr y)))
 	       (map cons counts locations)))))
-   
+
    (when (string-contains trc "format:fprofile")
       (with-output-to-port *profile-port*
 	 (lambda ()
