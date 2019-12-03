@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Dec  1 16:11:29 2019 (serrano)                */
+;*    Last change :  Tue Dec  3 08:33:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -29,7 +29,8 @@
 	   __hopscript_public
 	   __hopscript_lib
 	   __hopscript_worker
-	   __hopscript_array)
+	   __hopscript_array
+	   __hopscript_arguments)
    
    (export (js-init-function! ::JsGlobalObject)
 	   
@@ -781,6 +782,65 @@
 	     (if (=fx i -1)
 		 acc
 		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
+
+   (define (js-apply-vec this vec ilen)
+      (cond
+	 ((js-function? this)
+	  (with-access::JsFunction this (arity procedure)
+	     (let ((n (uint32->fixnum ilen)))
+		(if (=fx arity (+fx 1 n))
+		    (case arity
+		       ((1)
+			(procedure thisarg))
+		       ((2)
+			(procedure thisarg (vector-ref vec 0)))
+		       ((3)
+			(procedure thisarg (vector-ref vec 0)
+			   (vector-ref vec 1)))
+		       ((4)
+			(procedure thisarg (vector-ref vec 0)
+			   (vector-ref vec 1)
+			   (vector-ref vec 2)))
+		       ((5)
+			(procedure thisarg (vector-ref vec 0)
+			   (vector-ref vec 1)
+			   (vector-ref vec 2)
+			   (vector-ref vec 3)))
+		       ((6)
+			(procedure thisarg (vector-ref vec 0)
+			   (vector-ref vec 1)
+			   (vector-ref vec 2)
+			   (vector-ref vec 3)
+			   (vector-ref vec 4)))
+		       ((7)
+			(procedure thisarg (vector-ref vec 0)
+			   (vector-ref vec 1)
+			   (vector-ref vec 2)
+			   (vector-ref vec 3)
+			   (vector-ref vec 4)
+			   (vector-ref vec 5)))
+		       ((8)
+			(procedure thisarg (vector-ref vec 0)
+			   (vector-ref vec 1)
+			   (vector-ref vec 2)
+			   (vector-ref vec 3)
+			   (vector-ref vec 4)
+			   (vector-ref vec 5)
+			   (vector-ref vec 6)))
+		       (else
+			(let ((len (js-get argarray (& "length") %this)))
+			   (js-apply %this this thisarg
+			      (vector->sublist vec len)))))
+		    (let ((len (js-get argarray (& "length") %this)))
+		       (js-apply %this this thisarg
+			  (vector->sublist vec len)))))))
+	 ((js-function-proxy? this)
+	  (let ((len (js-get argarray (& "length") %this)))
+	     (js-apply %this this thisarg
+		(vector->sublist vec len))))
+	 (else
+	  (js-raise-type-error %this
+	     "apply: argument not a function ~s" this))))
    
    (cond
       ((js-array? argarray)
@@ -788,63 +848,7 @@
 	  (cond
 	     ((js-object-mode-inline? argarray)
 	      ;; fast path
-	      (cond
-		 ((js-function? this)
-		  (with-access::JsFunction this (arity procedure)
-		     (let ((n (uint32->fixnum ilen)))
-			(if (=fx arity (+fx 1 n))
-			    (case arity
-			       ((1)
-				(procedure thisarg))
-			       ((2)
-				(procedure thisarg (vector-ref vec 0)))
-			       ((3)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)))
-			       ((4)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)
-				   (vector-ref vec 2)))
-			       ((5)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)
-				   (vector-ref vec 2)
-				   (vector-ref vec 3)))
-			       ((6)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)
-				   (vector-ref vec 2)
-				   (vector-ref vec 3)
-				   (vector-ref vec 4)))
-			       ((7)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)
-				   (vector-ref vec 2)
-				   (vector-ref vec 3)
-				   (vector-ref vec 4)
-				   (vector-ref vec 5)))
-			       ((8)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)
-				   (vector-ref vec 2)
-				   (vector-ref vec 3)
-				   (vector-ref vec 4)
-				   (vector-ref vec 5)
-				   (vector-ref vec 6)))
-			       (else
-				(let ((len (js-get argarray (& "length") %this)))
-				   (js-apply %this this thisarg
-				      (vector->sublist vec len)))))
-			    (let ((len (js-get argarray (& "length") %this)))
-			       (js-apply %this this thisarg
-				  (vector->sublist vec len)))))))
-		 ((js-function-proxy? this)
-		  (let ((len (js-get argarray (& "length") %this)))
-		     (js-apply %this this thisarg
-			(vector->sublist vec len))))
-		 (else
-		  (js-raise-type-error %this
-		     "apply: argument not a function ~s" this))))
+	      (js-apply-vec this vec ilen))
 	     ((js-object-mode-holey? argarray)
 	      ;; fast path
 	      (let ((len (js-get argarray (& "length") %this)))
@@ -860,6 +864,64 @@
 		    (map! (lambda (idx)
 			     (js-array-fixnum-ref argarray idx %this))
 		       (iota len))))))))
+      ((and (isa? argarray JsArguments) (js-function? this))
+       (let ((len (js-arguments-length argarray %this)))
+	  (with-access::JsFunction this (arity procedure)
+	     (if (=fx arity (+fx 1 len))
+		 (case arity
+		    ((1)
+		     (procedure thisarg))
+		    ((2)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)))
+		    ((3)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)))
+		    ((4)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)
+			(js-arguments-ref argarray 2 %this)))
+		    ((5)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)
+			(js-arguments-ref argarray 2 %this)
+			(js-arguments-ref argarray 3 %this)))
+		    ((6)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)
+			(js-arguments-ref argarray 2 %this)
+			(js-arguments-ref argarray 3 %this)
+			(js-arguments-ref argarray 4 %this)))
+		    ((7)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)
+			(js-arguments-ref argarray 2 %this)
+			(js-arguments-ref argarray 3 %this)
+			(js-arguments-ref argarray 4 %this)
+			(js-arguments-ref argarray 5 %this)))
+		    ((8)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)
+			(js-arguments-ref argarray 2 %this)
+			(js-arguments-ref argarray 3 %this)
+			(js-arguments-ref argarray 4 %this)
+			(js-arguments-ref argarray 5 %this)
+			(js-arguments-ref argarray 6 %this)))
+		    (else
+		     (js-apply %this this thisarg
+			(map! (lambda (idx)
+				 (js-arguments-ref argarray idx %this))
+			   (iota len)))))
+		 (js-apply %this this thisarg
+		    (map! (lambda (idx)
+			     (js-arguments-ref argarray idx %this))
+		       (iota len)))))))
       ((or (eq? argarray (js-null)) (eq? argarray (js-undefined)))
        (js-call0 %this this thisarg))
       ((not (js-object? argarray))
@@ -867,6 +929,8 @@
 	  "apply: argument not an object ~s" argarray))
       (else
        ;; slow path
+       (tprint "JS-ARRAY-APPLY.slow "
+	  (typeof argarray) " " (js-object-mode-inline? argarray))
        (let ((len (uint32->fixnum
 		     (js-touint32
 			(js-get argarray (& "length") %this)

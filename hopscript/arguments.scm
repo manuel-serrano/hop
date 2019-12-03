@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Aug 14 10:45:38 2019 (serrano)                */
+;*    Last change :  Tue Dec  3 08:43:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -242,6 +242,7 @@
 	 (cond
 	    ((not (js-isindex? i))
 	     (when (eq? (js-toname p %this) (& "length"))
+		(tprint "unline.2")
 		(js-object-mode-inline-set! o #f))
 	     (call-next-method))
 	    ((<uint32 i (vector-length vec))
@@ -279,6 +280,7 @@
 	     (with-access::JsPropertyDescriptor (u32vref vec i) (configurable)
 		(if configurable
 		    (begin
+		       (tprint "unline.3")
 		       (js-object-mode-inline-set! o #f)
 		       (u32vset! vec i (js-absent))
 		       #t)
@@ -379,6 +381,7 @@
 			  ;; has replace the property)
 			  #unspecified))))))
 	 ((eq? p (& "length"))
+      (tprint "unline.4")
 	  (js-object-mode-inline-set! o #f)
 	  (call-next-method))
 	 (else
