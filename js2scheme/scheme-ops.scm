@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Nov 28 08:31:03 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 17:43:30 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -533,17 +533,17 @@
 	   ,(box rhs (j2s-vtype r) conf)
 	   %this))
       ((<)
-       `(<js ,lhs ,rhs %this))
+       `(<js ,(box lhs (j2s-vtype l) conf) ,(box rhs (j2s-vtype r) conf) %this))
       ((<=)
-       `(<=js ,lhs ,rhs %this))
+       `(<=js ,(box lhs (j2s-vtype l) conf) ,(box rhs (j2s-vtype r) conf) %this))
       ((>)
-       `(>js ,lhs ,rhs %this))
+       `(>js ,(box lhs (j2s-vtype l) conf) ,(box rhs (j2s-vtype r) conf) %this))
       ((>=)
-       `(>=js ,lhs ,rhs %this))
+       `(>=js ,(box lhs (j2s-vtype l) conf) ,(box rhs (j2s-vtype r) conf) %this))
       ((- * / % & ^ >> >>> << OR &&)
        (error "js-binop" "should not be here" op))
       (else
-       `(,op ,lhs ,rhs %this))))
+       `(,op ,(box lhs (j2s-vtype l) conf) ,(box rhs (j2s-vtype r) conf) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-instanceof? ...                                              */
@@ -1712,7 +1712,7 @@
 	     `(fixnum->uint32 (/fx ,left ,right))
 	     `(js-touint32 (/js ,left ,right %this) %this)))))
 
-   (define (divjs left right tl tr)
+   (define (divfl left right tl tr)
       (cond
 	 ((eq? tl 'uint32)
 	  (if (eq? tr 'uint32)
@@ -1766,6 +1766,54 @@
 	     (if-flonums? left tl right tr
 		`(/fl ,left ,right)
 		`(/js ,left ,right %this))))))
+
+   (define (divjs left right tl tr)
+      (cond
+	 ((eq? tl 'uint32)
+	  (if (eq? tr 'uint32)
+	      `(if (and (not (=u32 ,right #u32:0))
+			(=u32 (remainderu32 ,left ,right) #u32:0))
+		   (js-uint32-tointeger (/u32 ,left ,right))
+		   (/fl ,(asreal left tl)
+		      ,(asreal right tr)))
+	      `(/fl ,(asreal left tl) ,(todouble right tr conf))))
+	 ((eq? tl 'int32)
+	  (if (eq? tr 'int32)
+	      `(if (and (not (=s32 ,right #s32:0))
+			(=s32 (remainders32 ,left ,right) #s32:0))
+		   (js-int32-tointeger (/s32 ,left ,right))
+		   (/fl ,(asreal left tl)
+		      ,(asreal right tr)))
+	      `(/fl ,(asreal left tl) ,(todouble right tr conf))))
+	 ((eq? tr 'uint32)
+	  `(/fl ,(todouble left tl conf) ,(asreal right tr)))
+	 ((eq? tr 'int32)
+	  `(/fl ,(todouble left tl conf) ,(asreal right tr)))
+	 ((eq? tl 'integer)
+	  (if (eq? tr 'integer)
+	      `(if (and (not (=fx ,right 0))
+			(=fx (remainderfx ,left ,right) 0))
+		   (/fx ,left ,right)
+		   (/fl ,(todouble left tl conf) ,(todouble right tr conf)))
+	      `(/fl ,(todouble left tl conf) ,(todouble right tr conf))))
+	 ((or (eq? tl 'real) (eq? tr 'real))
+	  `(/fl ,(todouble left tl conf) ,(todouble right tr conf)))
+	 ((eq? tr 'integer)
+	  `(/js ,(todouble left tl conf) ,(asreal right tr)))
+	 ((eq? type 'real)
+	  (if-flonums? left tl right tr
+	     `(/fl ,left ,right)
+	     `(/js ,left ,right %this)))
+	 (else
+	  (if-fixnums? left tl right tr
+	     `(if (and (not (=fx ,right 0))
+		       (=fx (remainderfx ,left ,right) 0))
+		  (/fx ,left ,right)
+		  (/fl ,(asreal left 'bint)
+		     ,(asreal right 'bint)))
+	     (if-flonums? left tl right tr
+		`(/fl ,left ,right)
+		`(/js ,left ,right %this))))))
    
    (let ((k (power2 rhs)))
       (if (and k (not (memq type '(int32 uint32))))
@@ -1778,6 +1826,7 @@
 		      (case type
 			 ((int32) (divs32 left right tl tr))
 			 ((uint32) (divu32 left right tl tr))
+			 ((real) (divfl left right tl tr))
 			 (else (divjs left right tl tr))))))))))
 
 ;*---------------------------------------------------------------------*/

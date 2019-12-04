@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec  2 10:54:22 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 18:09:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -32,6 +32,7 @@
    
    (export (js-init-math! ::JsObject)
 	   (js-math-ceil ::obj)
+	   (js-math-ceil-as-integer ::obj)
 	   (js-math-sqrt ::obj ::JsGlobalObject)
 	   (inline js-math-sqrtfl ::double)
 	   (js-math-floor ::obj ::JsGlobalObject)
@@ -406,6 +407,19 @@
       ((=fl x +inf.0) x)
       ((=fl x -inf.0) x)
       (else (ceilingfl x))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-ceil ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.6     */
+;*---------------------------------------------------------------------*/
+(define (js-math-ceil-as-integer x)
+   (cond
+      ((not (flonum? x)) x)
+      ((nanfl? x) x)
+      ((=fl x +inf.0) x)
+      ((=fl x -inf.0) x)
+      (else (flonum->fixnum (ceilingfl x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math-sqrt ...                                                 */

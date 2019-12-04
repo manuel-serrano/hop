@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Dec  1 07:49:39 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 11:53:11 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -151,6 +151,19 @@
 	  (with-access::J2SMethod val (function) function))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-function-arity ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-function-arity this::J2SFun conf)
+   (with-access::J2SFun this (vararg params)
+      (cond
+	 ((not vararg)
+	  (+fx 1 (length params)))
+	 ((eq? vararg 'arguments)
+	  (if (config-get conf :optim-arguments) -2048 -1))
+	 (else
+	  -1))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-make-function ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-make-function this::J2SDeclFun mode return conf)
@@ -162,7 +175,7 @@
 					constrsize method new-target)
 	       (let* ((fastid (j2s-fast-id id))
 		      (lparams (length params))
-		      (arity (if vararg -1 (+fx 1 lparams)))
+		      (arity (j2s-function-arity val conf))
 		      (minlen (if (eq? mode 'hopscript) (j2s-minlen val) -1))
 		      (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
 		      (src (j2s-function-src loc val conf)))
@@ -359,19 +372,27 @@
       ;; normal mode: arguments is an alias
       (let ((id (or id (gensym 'fun)))
 	    (rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idgen idthis thisp rtype)
+	 (with-access::J2SFun fun (idgen idthis thisp rtype vararg)
 	    (lambda-or-labels rtype idgen
 	       (type-this idthis thisp)
-	       (unless (isa? fun J2SArrow) id) rest
+	       (unless (isa? fun J2SArrow) id)
+	       (if (and (eq? vararg 'arguments)
+			(config-get conf :optim-arguments))
+		   (list rest)
+		   rest)
 	       (jsfun-normal-vararg-body fun body id rest)))))
    
    (define (strict-vararg-lambda fun id body)
       ;; strict mode: arguments is initialized on entrance
       (let ((rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idgen idthis thisp rtype)
+	 (with-access::J2SFun fun (idgen idthis thisp rtype vararg)
 	    (lambda-or-labels rtype idgen (type-this idthis thisp)
-	       (unless (isa? fun J2SArrow) id) rest
-	       (jsfun-strict-vararg-body fun body id rest)))))
+	       (unless (isa? fun J2SArrow) id)
+	       (if (and (eq? vararg 'arguments)
+			(config-get conf :optim-arguments))
+		   (list rest)
+		   rest)
+	       (jsfun-strict-vararg-body fun body id rest conf)))))
 
    (with-access::J2SFun this (loc vararg mode params generator name ismethodof)
       (let* ((id (or (j2sfun-id this)
@@ -484,9 +505,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    jsfun-strict-vararg-body ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (jsfun-strict-vararg-body this::J2SFun body id rest)
+(define (jsfun-strict-vararg-body this::J2SFun body id rest conf)
    (with-access::J2SFun this (params)
-      `(let ((arguments (js-strict-arguments %this ,rest)))
+      `(let ((arguments (,(if (config-get conf :optim-arguments)
+			      'js-strict-arguments-vector
+			      'js-strict-arguments)
+			 %this ,rest)))
 	  ,@(if (pair? params)
 		(map (lambda (param)
 			(with-access::J2SDecl param (loc)
@@ -517,7 +541,7 @@
       (let* ((id (j2sfun-id this))
 	     (lparams (length params))
 	     (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
-	     (arity (if vararg -1 (+fx 1 (length params))))
+	     (arity (j2s-function-arity this conf))
 	     (minlen (if (eq? mode 'hopscript) (j2s-minlen this) -1))
 	     (src (j2s-function-src loc this conf))
 	     (prototype (j2s-fun-prototype this))
@@ -845,16 +869,6 @@
 	     :value (js-make-function %this
 		       ,(j2s-fast-id id) 0 ,(symbol->string! id))
 	     :enumerable #f)
-;* 	  (js-define-own-property arguments (& "callee")               */
-;* 	     (instantiate::JsValueDescriptor                           */
-;* 		(name (& "callee"))                                    */
-;* 		(value (js-make-function %this                         */
-;* 			  ,(j2s-fast-id id) 0 ,(symbol->string! id)))  */
-;* 		(writable #t)                                          */
-;* 		(configurable #t)                                      */
-;* 		(enumerable #f))                                       */
-;* 	     #f                                                        */
-;* 	     %this)                                                    */
 	  ,body)))
 
 ;*---------------------------------------------------------------------*/

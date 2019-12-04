@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Nov  4 14:47:33 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 10:54:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -553,6 +553,8 @@
 				       (list
 					  (js-vector->jsarray
 					     (apply vector (drop args len)) %this)))))))))))
+		 ((-2048)
+		  (proc this (vector ,@args)))
 		 ,@(map (lambda (i)
 			   `((,i)
 			     (if (>=fx minlen 0)
@@ -566,26 +568,10 @@
 				    ,@(make-list (-fx i n) '(js-undefined)))
 				 (js-raise-arity-error %this fun ,(-fx n 1)))))
 		    (iota (-fx 10 n) (+fx n 1)))
-;* 		 ,@(map (lambda (i)                                    */
-;* 			   `((,i)                                      */
-;* 			     ,(cond                                    */
-;* 				 ((=fx i n)                            */
-;* 				  `(proc this ,@args))                 */
-;* 				 ((<fx i n)                            */
-;* 				  `(if (>=fx minlen 0)                 */
-;* 				       (js-raise-arity-error %this fun ,(-fx n 1)) */
-;* 				       (proc this ,@(take args (-fx i 1))))) */
-;* 				 (else                                 */
-;* 				  `(if (or (>fx ,n minlen) (<fx minlen 0)) */
-;* 				       (proc this ,@args               */
-;* 					  ,@(make-list (-fx i n) '(js-undefined))) */
-;* 				       (js-raise-arity-error %this fun ,(-fx n 1))))))) */
-;* 		    (iota 10 1))                                       */
 		 (else
 		  (cond
 		     ((<fx arity 0)
 		      (let ((min (-fx (negfx arity) 1)))
-			 
 			 (if (>fx min ,n)
 			     (apply proc this ,@args 
 				(make-list (-fx min ,n) (js-undefined)))
@@ -692,6 +678,8 @@
 		 (js-raise-type-error %this
 		    "wrong number of arguments" (cons (length args) minlen))
 		 (apply proc this (take args (-fx arity 1)))))
+	    ((=fx arity -2048)
+	     (proc this (apply vector args)))
 	    (else
 	     (cond
 		((and (<=fx (-fx n 1) minlen) (>fx minlen 0))

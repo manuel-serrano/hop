@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Nov 28 07:26:32 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 17:36:23 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1375,7 +1375,15 @@
 			   (else
 			    'number)))
 		       ((/)
-			'real)
+			(cond
+			   ((eq? typr 'real)
+			    'real)
+			   ((eq? typr 'integer)
+			    'number)
+			   ((eq? typr 'unknown)
+			    'unknown)
+			   (else
+			    'real)))
 		       ((%)
 			(cond
 			   ((or (eq? typl 'real) (eq? typr 'real))

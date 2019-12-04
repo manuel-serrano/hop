@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Tue Dec  3 08:43:24 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 12:05:54 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -36,6 +36,7 @@
 	   (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
 	   (js-arguments ::JsGlobalObject ::vector)
 	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
+	   (js-strict-arguments-vector ::JsGlobalObject ::vector)
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)
 	   (js-arguments->jsarray ::JsArguments ::JsGlobalObject)
 	   (js-arguments-ref ::JsArguments ::obj ::JsGlobalObject)
@@ -242,7 +243,6 @@
 	 (cond
 	    ((not (js-isindex? i))
 	     (when (eq? (js-toname p %this) (& "length"))
-		(tprint "unline.2")
 		(js-object-mode-inline-set! o #f))
 	     (call-next-method))
 	    ((<uint32 i (vector-length vec))
@@ -280,7 +280,6 @@
 	     (with-access::JsPropertyDescriptor (u32vref vec i) (configurable)
 		(if configurable
 		    (begin
-		       (tprint "unline.3")
 		       (js-object-mode-inline-set! o #f)
 		       (u32vset! vec i (js-absent))
 		       #t)
@@ -381,7 +380,6 @@
 			  ;; has replace the property)
 			  #unspecified))))))
 	 ((eq? p (& "length"))
-      (tprint "unline.4")
 	  (js-object-mode-inline-set! o #f)
 	  (call-next-method))
 	 (else
@@ -509,6 +507,37 @@
 	 (when (pair? lst)
 	    (vector-set! vec i (value->descriptor (car lst) i))
 	    (loop (+fx i 1) (cdr lst))))
+      ;; build the arguments object
+      (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
+	 (with-access::JsObject %this (__proto__)
+	    (let ((obj (instantiateJsArguments
+			  (vec vec)
+			  (cmap js-strict-arguments-cmap)
+			  (elements (vector (vector-length vec)
+				       strict-callee-property
+				       strict-caller-property))
+			  (__proto__ __proto__))))
+	       obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-strict-arguments-vector ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-strict-arguments-vector %this::JsGlobalObject vec::vector)
+   
+   (define (value->descriptor v i)
+      (instantiate::JsValueDescriptor
+	 (name (js-integer->jsstring i))
+	 (value v)
+	 (writable #t)
+	 (configurable #t)
+	 (enumerable #t)))
+
+   (let* ((len (vector-length vec)))
+      ;; initialize the vector of descriptors
+      (let loop ((i (-fx (vector-length vec) 1)))
+	 (when (>=fx i 0)
+	    (vector-set! vec i (value->descriptor (vector-ref vec i) i))
+	    (loop (-fx i 1))))
       ;; build the arguments object
       (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
 	 (with-access::JsObject %this (__proto__)
