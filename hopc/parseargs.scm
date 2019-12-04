@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Nov 20 07:10:59 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 10:20:32 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -45,8 +45,8 @@
    (print "      j2s:stage, j2s:type, j2s:type+, j2s:hint, j2s:range, j2s:usage, j2s:key,")
    (print "      j2s:loc, j2s:cache, j2s:dump, j2s:info, j2s:size")
    (print "      nodejs:compile,")
-   (print "      hopscript:cache[num] (*), hopscript:hint[num] (*),")
-   (print "      hopscript:alloc[num], hopscript:uncache, hopscript:call")
+   (print "      hopscript:cache[num] (*), hopscript:uncache,")
+   (print "      hopscript:alloc[num], hopscript:call, hopscript:hint[num] (*)")
    (print "      hopscript:function[num]")
    (print "      hopscript:fprofile (alias of \"hopscript:cache hopscript:call format:fprofile\")")
    (print "      format:json, format:fprofile, srcfile=path, logfile=path")
