@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Dec  2 08:52:27 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 08:47:09 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -200,6 +200,7 @@
 				    (and (<fx (function-size (cdr t))
 					    inline-max-function-size)
 					 (not (function-arguments? (cdr t)))
+					 (not (function-varargs? (cdr t)))
 					 (not (function-freevars? (cdr t)))))
 			    targets))
 		(targets (filter (lambda (t)
@@ -280,6 +281,8 @@
 			      (>fx sz (node-size call)))
 			 0)
 			((function-arguments? val)
+			 0)
+			((function-varargs? val)
 			 0)
 			(else
 			 (let* ((node (inline-function-call-profile
@@ -536,6 +539,13 @@
 (define (function-arguments? this::J2SFun)
    (with-access::J2SFun this (argumentsp)
       argumentsp))
+
+;*---------------------------------------------------------------------*/
+;*    function-varargs? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (function-varargs? this::J2SFun)
+   (with-access::J2SFun this (vararg)
+      vararg))
 
 ;*---------------------------------------------------------------------*/
 ;*    function-glodecl ...                                             */
