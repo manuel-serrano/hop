@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Dec  4 17:43:30 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 07:07:29 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -335,7 +335,9 @@
        (if (=fx (config-get conf :optim 0) 0)
 	   (with-tmp lhs rhs mode return conf 'any
 	      (lambda (left right)
-		 (js-binop loc op left lhs right rhs conf)))
+		 (j2s-cast
+		    (js-binop loc op left lhs right rhs conf)
+		    #f 'any type conf)))
 	   (js-binop-add loc type lhs rhs mode return conf)))
       ((-)
        (if (=fx (config-get conf :optim 0) 0)
@@ -1642,13 +1644,42 @@
 	       ((uint32? val) (find-power2 bit-lshu32 #u32:1 val))
 	       ((int32? val) (find-power2 bit-lshs32 #s32:1 val))
 	       ((flonum? val) (find-power2fl val))))))
+
+   (define (positive? n)
+      (with-access::J2SExpr n (range)
+	 (and (interval? range) (>= (interval-min range) #l0))))
    
    (define (div-power2 k)
-      
-      (define (positive? n)
-	 (with-access::J2SExpr n (range)
-	    (and (interval? range) (>= (interval-min range) #l0))))
-      
+      (let ((n (gensym 'n)))
+	 (case (j2s-vtype lhs)
+	    ((uint32)
+	     `(let ((,n ,(j2s-scheme lhs mode return conf)))
+		 (if (=u32 (bit-andu32
+			      ,n ,(fixnum->uint32 (-fx (bit-lsh 1 k) 1)))
+			#u32:0)
+		     (js-uint32-tointeger (bit-rshu32 ,n ,k))
+		     (/fl (uint32->flonum ,n) (fixnum->flonum ,(bit-lsh 1 k))))))
+	    ((int32)
+	     `(let ((,n ,(j2s-scheme lhs mode return conf)))
+		 (if (=s32 (bit-ands32
+			      ,n ,(fixnum->int32 (-fx (bit-lsh 1 k) 1)))
+			#s32:0)
+		     ,(if (positive? lhs)
+			  `(int32->integer (bit-rshs32 ,n ,k))
+			  `(int32->integer (/pow2s32 ,n ,k)))
+		     (/fl (int32->flonum ,n) (fixnum->flonum ,(bit-lsh 1 k))))))
+	    (else
+	     `(let ((,n ,(j2s-scheme lhs mode return conf)))
+		 (if ,(if (memq (j2s-type lhs) '(int32 uint32))
+			  `(=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0)
+			  `(and (fixnum? ,n)
+				(=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0)))
+		     ,(if (positive? lhs)
+			  `(bit-rsh ,n ,k)
+			  `(/pow2fx ,n ,k))
+		     (/js ,n ,(bit-lsh 1 k) %this)))))))
+
+   (define (div-power2fl k)
       (let ((n (gensym 'n)))
 	 (case (j2s-vtype lhs)
 	    ((uint32)
@@ -1817,7 +1848,9 @@
    
    (let ((k (power2 rhs)))
       (if (and k (not (memq type '(int32 uint32))))
-	  (div-power2 k)
+	  (case type
+	     ((real) (div-power2fl k))
+	     (else (div-power2 k)))
 	  (with-tmp lhs rhs mode return conf '/
 	     (lambda (left right)
 		(let ((tl (j2s-vtype lhs))
