@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Dec  4 11:53:11 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 18:05:37 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -506,31 +506,34 @@
 ;*    jsfun-strict-vararg-body ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (jsfun-strict-vararg-body this::J2SFun body id rest conf)
-   (with-access::J2SFun this (params)
-      `(let ((arguments (,(if (config-get conf :optim-arguments)
-			      'js-strict-arguments-vector
-			      'js-strict-arguments)
-			 %this ,rest)))
-	  ,@(if (pair? params)
-		(map (lambda (param)
-			(with-access::J2SDecl param (loc)
-			   (epairify loc
-			      `(define ,(j2s-decl-scheme-id param)
-				  (js-undefined)))))
-		   params)
-		'())
-	  ,(when (pair? params)
-	      `(when (pair? ,rest)
-		  (set! ,(j2s-decl-scheme-id (car params)) (car ,rest))
-		  ,(let loop ((params (cdr params)))
-		      (if (null? params)
-			  #unspecified
-			  `(when (pair? (cdr ,rest))
-			      (set! ,rest (cdr ,rest))
-			      (set! ,(j2s-decl-scheme-id (car params))
-				 (car ,rest))
-			      ,(loop (cdr params)))))))
-	  ,body)))
+   (with-access::J2SFun this (params argumentsp)
+      (with-access::J2SDeclArguments argumentsp (alloc-policy)
+	 `(let ((arguments (,(if (config-get conf :optim-arguments)
+				 (if (eq? alloc-policy 'stack)
+				     'js-strict-arguments-vector-stack
+				     'js-strict-arguments-vector)
+				 'js-strict-arguments)
+			    %this ,rest)))
+	     ,@(if (pair? params)
+		   (map (lambda (param)
+			   (with-access::J2SDecl param (loc)
+			      (epairify loc
+				 `(define ,(j2s-decl-scheme-id param)
+				     (js-undefined)))))
+		      params)
+		   '())
+	     ,(when (pair? params)
+		 `(when (pair? ,rest)
+		     (set! ,(j2s-decl-scheme-id (car params)) (car ,rest))
+		     ,(let loop ((params (cdr params)))
+			 (if (null? params)
+			     #unspecified
+			     `(when (pair? (cdr ,rest))
+				 (set! ,rest (cdr ,rest))
+				 (set! ,(j2s-decl-scheme-id (car params))
+				    (car ,rest))
+				 ,(loop (cdr params)))))))
+	     ,body))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun->scheme ...                                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Dec  3 08:33:55 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 18:52:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -867,7 +867,8 @@
       ((and (isa? argarray JsArguments) (js-function? this))
        (let ((len (js-arguments-length argarray %this)))
 	  (with-access::JsFunction this (arity procedure)
-	     (if (=fx arity (+fx 1 len))
+	     (cond
+		((=fx arity (+fx 1 len))
 		 (case arity
 		    ((1)
 		     (procedure thisarg))
@@ -917,11 +918,14 @@
 		     (js-apply %this this thisarg
 			(map! (lambda (idx)
 				 (js-arguments-ref argarray idx %this))
-			   (iota len)))))
+			   (iota len))))))
+		((=fx arity -2048)
+		 (procedure thisarg (js-arguments->vector argarray %this)))
+		(else
 		 (js-apply %this this thisarg
 		    (map! (lambda (idx)
 			     (js-arguments-ref argarray idx %this))
-		       (iota len)))))))
+		       (iota len))))))))
       ((or (eq? argarray (js-null)) (eq? argarray (js-undefined)))
        (js-call0 %this this thisarg))
       ((not (js-object? argarray))

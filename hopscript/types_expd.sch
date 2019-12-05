@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sat Jun 22 06:25:34 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 18:45:20 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -33,7 +33,7 @@
 			   (list (list nobj
 				    (cons id
 				       (append
-					  (if (or #t (pair? (assq 'cmap (cdr x))))
+					  (if (pair? (assq 'cmap (cdr x)))
 					      '()
 					      '((cmap (instantiate::JsConstructMap))))
 					  (filter (lambda (f)

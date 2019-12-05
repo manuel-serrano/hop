@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Nov 16 05:41:39 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 17:56:11 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -88,7 +88,8 @@
 	      ;; es module export
 	      (exports::pair-nil (default '()) (info '("notraverse"))))
 
-	   (class J2SDeclArguments::J2SDecl)
+	   (class J2SDeclArguments::J2SDecl
+	      (alloc-policy::symbol (default 'heap) (info '("notraverse"))))
 	   
 	   (class J2SDeclInit::J2SDecl
 	      (val::J2SExpr (info '("ast"))))

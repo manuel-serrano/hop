@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Dec  4 10:54:39 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 18:56:26 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -454,6 +454,8 @@
 		 (apply proc obj (take args (-fx arity 1)))))
 	    (rest
 	     (js-apply-rest% %this proc obj args len n))
+	    ((=fx arity -2048)
+	     (proc obj (apply vector args)))
 	    (else
 	     (let ((-arity (-fx (negfx arity) 1)))
 		(if (<=fx -arity n)

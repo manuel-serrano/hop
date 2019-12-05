@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Nov 13 08:07:35 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 18:35:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -29,6 +29,8 @@
 	      "bgl_vector_bytesize")
 	   ($js-init-vector::vector (::void* ::long ::obj)
               "bgl_init_vector")
+	   ($js-init-vector-sans-fill::vector (::void* ::long)
+              "bgl_init_vector_sans_fill")
 	   ($alloca::void* (::long)
               "alloca"))
    
@@ -54,6 +56,7 @@
    
    (export (js-init-array! ::JsGlobalObject)
 	   (inline js-make-vector ::long ::obj)
+	   (inline js-vector-stack . args)
 	   (inline js-array-mark::long)
 	   *JS-ARRAY-MARK*
 	   (inline js-array-length::uint32 ::JsArray)
@@ -202,6 +205,17 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-make-vector len init)
    (make-vector len init))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector-stack ...                                              */
+;*    -------------------------------------------------------------    */
+;*    This function is overriden by a macro in array.sch. The          */
+;*    overriden macro allocates the vector in the stack as the         */
+;*    hopc compiler generates JS-VECTOR only for vectors that          */
+;*    never escapes their dynamic scope.                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-vector-stack . args)
+   (apply vector args))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-create-vector ...                                             */

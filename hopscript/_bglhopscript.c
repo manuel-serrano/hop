@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sat Aug 24 16:43:09 2019 (serrano)                */
+/*    Last change :  Thu Dec  5 18:37:11 2019 (serrano)                */
 /*    Copyright   :  2016-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -252,6 +252,28 @@ bgl_init_vector( obj_t vector, long len, obj_t init ) {
       vector->vector.length = len;
 
       bgl_fill_vector( BVECTOR( vector ), 0, len, init );
+      return BVECTOR( vector );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_init_vector_sans_fill ...                                    */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_init_vector_sans_fill( obj_t vector, long len ) {
+#if(  VECTOR_SIZE_TAG_NB_BIT != 0 )
+   if( len & ~(VECTOR_LENGTH_MASK) ) {
+      C_FAILURE( "create_vector", "vector too large", BINT( len ) );
+      return BUNSPEC;
+   } else
+#endif
+   {
+#if( !defined( TAG_VECTOR ) )
+      vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
+#endif
+      vector->vector.length = len;
+
       return BVECTOR( vector );
    }
 }

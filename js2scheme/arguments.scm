@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Thu Dec  5 09:44:23 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 17:57:17 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -73,12 +73,9 @@
 (define-method (annotate-arguments this::J2SFun parent)
    (with-access::J2SFun this (body argumentsp)
       (when argumentsp
-	 (with-access::J2SDeclArguments argumentsp (%info)
-	    (set! %info '())))
-      (annotate-arguments body parent)
-      (when argumentsp
-	 (with-access::J2SDeclArguments argumentsp (%info)
-	    (tprint "arg %info=" %info)))))
+	 (with-access::J2SDeclArguments argumentsp (alloc-policy)
+	    (set! alloc-policy 'stack)))
+      (annotate-arguments body parent)))
       
 ;*---------------------------------------------------------------------*/
 ;*    annotate-arguments ...                                           */
@@ -86,13 +83,8 @@
 (define-method (annotate-arguments this::J2SRef parent)
    
    (define (arguments-invalidate! decl)
-      (with-access::J2SDecl decl (%info)
-	 (set! %info #f)))
-   
-   (define (arguments-mark-usage! decl use)
-      (with-access::J2SDecl decl (%info)
-	 (when (and %info (not (memq use %info)))
-	    (set! %info (cons use %info)))))
+      (with-access::J2SDeclArguments decl (alloc-policy)
+	 (set! alloc-policy 'heap)))
    
    (define (get-length? node::J2SAccess)
       (with-access::J2SAccess node (field)
@@ -113,17 +105,12 @@
 	 (cond
 	    ((isa? parent J2SAccess)
 	     (with-access::J2SAccess parent (field)
-		(cond
-		   ((memq (j2s-type field) '(integer uint32 int32 fixnum))
-		    (arguments-mark-usage! decl 'getint))
-		   ((get-length? parent)
-		    (arguments-mark-usage! decl 'getlength))
-		   (else
-		    (arguments-invalidate! decl)))))
+		(unless (or (memq (j2s-type field) '(integer uint32 int32 fixnum))
+			    (get-length? parent))
+		   (arguments-invalidate! decl))))
 	    ((isa? parent J2SCall)
-	     (if (apply? parent)
-		 (arguments-mark-usage! decl 'apply)
-		 (arguments-invalidate! decl)))
+	     (unless (apply? parent)
+		(arguments-invalidate! decl)))
 	    (else
 	     (arguments-invalidate! decl))))))
    
