@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Dec  4 11:43:43 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 09:15:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -42,6 +42,7 @@
 	   __js2scheme_tyflow
 	   __js2scheme_range
 	   __js2scheme_loopspec
+	   __js2scheme_arguments
 	   __js2scheme_cast
 	   __js2scheme_vector
 	   __js2scheme_array
@@ -222,6 +223,7 @@
 	  j2s-dead-stage
 	  j2s-constrsize-stage
 	  j2s-unthis-stage
+	  j2s-arguments-stage
 	  j2s-newtarget-stage
 	  j2s-scheme-stage))
       (else
