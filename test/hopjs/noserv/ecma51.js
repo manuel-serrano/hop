@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Dec  6 10:27:54 2019 (serrano)                */
+/*    Last change :  Fri Dec  6 18:00:14 2019 (serrano)                */
 /*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -196,7 +196,7 @@ function bar5() {
 function bar6() {
    function setProto() {
       Object.defineProperty( arguments.__proto__, "2",
-      	 { get: function( el ) { this[ 1 ] = 23; } } );
+      	 { get: function( el ) { this[ 1 ] = 23; return 0;} } );
    }
       
    function bar( a, b, c ) {
@@ -215,7 +215,7 @@ assert.equal( bar2( 10 ), 55, "bar2" );
 assert.strictEqual( bar3( 1, 2, 3, 4, 5, 6 ), true, "arguments.length" );
 assert.strictEqual( bar4( 10 ), 3, "arguments overriding" );
 assert.strictEqual( bar5(), true, "arguments length" );
-assert.strictEqual( bar6(), 46, "arguments.__proto__" );
+assert.strictEqual( bar6( 1, 2 ), 23, "arguments.__proto__" );
 
 /*---------------------------------------------------------------------*/
 /*    undefined                                                        */
@@ -276,7 +276,7 @@ assert.equal( foo6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 
 
 function bar11(a,b,c,d,e,f,g,h,i,j,k) { if( arguments.length >= 0 ) return a; };
 function bar8(a,b,c,d,e,f,g,h) { if( arguments.length >= 0 ) return a; };
-function bar6(a,b,c,d,e,f) { if( arguments.length >= 0 ) return a; };
+function bar7(a,b,c,d,e,f) { if( arguments.length >= 0 ) return a; };
 
 assert.equal( bar11( 1 ), 1, "arguments.length" );
 assert.equal( bar11( 1, 2, 3, 4, 5, 6 ), 1 );
@@ -296,11 +296,11 @@ assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
 assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
 assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
 
-assert.equal( bar6.apply( this, [1]), 1 );
-assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
-assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
-assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
-assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
+assert.equal( bar7.apply( this, [1]), 1 );
+assert.equal( bar7.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
+assert.equal( bar7.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
+assert.equal( bar7.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
+assert.equal( bar7.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
 
 /*---------------------------------------------------------------------*/
 /*    function call                                                    */
