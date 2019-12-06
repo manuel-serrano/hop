@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Nov 28 07:31:28 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 10:46:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -947,7 +947,7 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid usage scope cache)
+   (with-access::J2SDecl this (id key binder _scmid usage scope)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(dump-dump this)
@@ -959,6 +959,21 @@
 	,@(if _scmid `(:_scmid ,_scmid) '())
 	,@(dump-info this)
 	,@(dump-scope scope))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SDeclArguments ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SDeclArguments)
+   (with-access::J2SDeclArguments this (id key _scmid usage alloc-policy argid)
+      `(,(string->symbol (typeof this))
+	,id
+	,@(dump-dump this)
+	,@(dump-key key)
+	,@(dump-access this)
+	,@(dump-vtype this)
+	,@(if _scmid `(:_scmid ,_scmid) '())
+	:argid ,argid :alloc-policy ,alloc-policy
+	,@(dump-info this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclInit ...                                      */

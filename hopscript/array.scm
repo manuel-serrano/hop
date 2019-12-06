@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Dec  5 18:35:01 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 12:05:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2992,22 +2992,6 @@
 	     (js-array-put-length! o (->uint32 v))
 	     (js-array-put! o (& "length") v throw %this)))))
 
-;*    (with-access::JsArray o (length ilen)                            */
-;*       (let ((len (->uint32 v)))                                     */
-;* 	 (set! length len)                                             */
-;* 	 (when (<u32 len ilen)                                         */
-;* 	    (js-array-mark-invalidate!)                                */
-;* 	    (set! ilen len))                                           */
-;* 	 (%assert-array! o "js-put-length!"))))                        */
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-put-length! ...                                               *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-put-length! o::JsArray v::obj throw::bool cache %this) */
-;*    (unless (js-object-mode-plain? o)                                */
-;*       (js-array-put! o (& "length") v throw %this))                 */
-;*    (js-array-put-length! o (->uint32 v)))                           */
-
 ;*---------------------------------------------------------------------*/
 ;*    js-array-put-length! ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -3187,17 +3171,15 @@
 			newlendesc throw %this)))
 	       (when r
 		  (with-access::JsValueDescriptor (car properties) (value)
-		     (with-handler
-			exception-notify
-			(let ((ulen (->uint32 value)))
-			   (set! length ulen)
-			   (cond
-			      ((<u32 ulen ilen)
-			       (set! ilen ulen))
-			      ((>u32 ulen ilen)
-			       (when (js-object-mode-inline? a)
-				  (js-object-mode-holey-set! a #t)
-				  (js-object-mode-inline-set! a #f))))))))
+		     (let ((ulen (->uint32 value)))
+			(set! length ulen)
+			(cond
+			   ((<u32 ulen ilen)
+			    (set! ilen ulen))
+			   ((>u32 ulen ilen)
+			    (when (js-object-mode-inline? a)
+			       (js-object-mode-holey-set! a #t)
+			       (js-object-mode-inline-set! a #f)))))))
 	       r))))
    
    (define (define-own-property-length oldlendesc)
@@ -3329,7 +3311,7 @@
 
    (if (js-isname? p (& "length") %this)
        ;; 3
-       (define-own-property-length (js-get-own-property a (& "length") %this))
+       (define-own-property-length (js-get-own-property a p %this))
        (let ((index::uint32 (js-toindex p)))
 	  (if (js-isindex? index)
 	      ;; 4
@@ -3357,7 +3339,6 @@
 					(let* ((olen (vector-length vec))
 					       (nlen (uint32->fixnum len))
 					       (nvec (copy-vector-fill! vec nlen (js-absent))))
-;* 					   (tprint "expand olen=" olen " nlen=" nlen) */
 					   (cond-expand
 					      (profile (profile-vector-extension
 							  nlen olen)))

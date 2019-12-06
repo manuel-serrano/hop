@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Dec  5 18:52:08 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 08:03:03 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -53,7 +53,9 @@
 	   
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
+	   (js-function-apply-arguments ::JsGlobalObject ::obj ::obj ::vector ::cell ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
+	   (js-function-maybe-apply-arguments ::JsGlobalObject ::obj ::obj ::vector ::cell ::obj)
 	   (js-function-call0 ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
@@ -783,12 +785,13 @@
 		 acc
 		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
 
-   (define (js-apply-vec this vec ilen)
+   (define (js-apply-vec this vec::vector ilen::uint32)
       (cond
 	 ((js-function? this)
 	  (with-access::JsFunction this (arity procedure)
 	     (let ((n (uint32->fixnum ilen)))
-		(if (=fx arity (+fx 1 n))
+		(cond
+		   ((=fx arity (+fx 1 n))
 		    (case arity
 		       ((1)
 			(procedure thisarg))
@@ -830,10 +833,15 @@
 		       (else
 			(let ((len (js-get argarray (& "length") %this)))
 			   (js-apply %this this thisarg
-			      (vector->sublist vec len)))))
+			      (vector->sublist vec len))))))
+		   ((=fx arity -2048)
+		    (procedure thisarg vec))
+		   ((vector? argarray)
+		    (js-apply %this this thisarg (vector->list vec)))
+		   (else
 		    (let ((len (js-get argarray (& "length") %this)))
 		       (js-apply %this this thisarg
-			  (vector->sublist vec len)))))))
+			  (vector->sublist vec len))))))))
 	 ((js-function-proxy? this)
 	  (let ((len (js-get argarray (& "length") %this)))
 	     (js-apply %this this thisarg
@@ -864,6 +872,8 @@
 		    (map! (lambda (idx)
 			     (js-array-fixnum-ref argarray idx %this))
 		       (iota len))))))))
+      ((vector? argarray)
+       (js-apply-vec this argarray (fixnum->uint32 (vector-length argarray))))
       ((and (isa? argarray JsArguments) (js-function? this))
        (let ((len (js-arguments-length argarray %this)))
 	  (with-access::JsFunction this (arity procedure)
@@ -933,8 +943,6 @@
 	  "apply: argument not an object ~s" argarray))
       (else
        ;; slow path
-       (tprint "JS-ARRAY-APPLY.slow "
-	  (typeof argarray) " " (js-object-mode-inline? argarray))
        (let ((len (uint32->fixnum
 		     (js-touint32
 			(js-get argarray (& "length") %this)
@@ -959,6 +967,23 @@
 	     this thisarg argarray))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-function-apply-arguments ...                                  */
+;*---------------------------------------------------------------------*/
+(define (js-function-apply-arguments %this this thisarg vec cell cache)
+   (if (and (js-object-mode-plain? this) (not (cell-ref cell)))
+       (js-apply-array %this this thisarg vec)
+       (with-access::JsGlobalObject %this (js-function-pcache)
+	  (unless (cell-ref cell)
+	     (let ((arr (js-strict-arguments-vector %this
+			   (copy-vector vec (vector-length vec)))))
+		(vector-shrink! vec 0)
+		(cell-set! cell arr)))
+	  (js-call2 %this
+	     (js-get-name/cache this (& "apply") #f %this
+		(or cache (js-pcache-ref js-function-pcache 2)))
+	     this thisarg (cell-ref cell)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-function-maybe-apply %this this thisarg argarray cache)
@@ -972,6 +997,28 @@
 		(js-get-name/cache this (& "apply") #f %this
 		   (or cache (js-pcache-ref js-function-pcache 3)))
 		this thisarg argarray)))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-apply-arguments ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-apply-arguments %this this thisarg vec cell cache)
+   (let loop ((this this))
+      (cond
+	 ((js-function? this)
+	  (js-function-apply-arguments %this this thisarg vec cell cache))
+	 ((js-object? this)
+	  (unless (cell-ref cell)
+	     (let ((arr (js-strict-arguments-vector %this
+			   (copy-vector vec (vector-length vec)))))
+		(vector-shrink! vec 0)
+		(cell-set! cell arr)))
+	  (with-access::JsGlobalObject %this (js-function-pcache)
+	     (js-call2 %this
+		(js-get-name/cache this (& "apply") #f %this
+		   (or cache (js-pcache-ref js-function-pcache 3)))
+		this thisarg (cell-ref cell))))
 	 (else
 	  (loop (js-toobject %this this))))))
 

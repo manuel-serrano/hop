@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Dec  4 10:20:32 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 11:36:08 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -277,10 +277,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-hint #t (hopc-j2s-flags))))
 	    (("-fno-hint" (help "Disable hint typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hint #f (hopc-j2s-flags))))
-	    (("-fhint-loop" (help "Enable loop hint typing"))
-	     (hopc-j2s-flags-set! (cons* :optim-hint-loop #t (hopc-j2s-flags))))
-	    (("-fno-hint-loop" (help "Disable loop hint typing"))
-	     (hopc-j2s-flags-set! (cons* :optim-hint-loop #f (hopc-j2s-flags))))
+	    (("-floop-spec" (help "Enable loop specialization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-loopspec #t (hopc-j2s-flags))))
+	    (("-fno-loop-spec" (help "Disable loop specialization"))
+	     (hopc-j2s-flags-set! (cons* :optim-loopspec #f (hopc-j2s-flags))))
 	    (("-fhintnum" (help "Enable hintnum typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hintnum #t (hopc-j2s-flags))))
 	    (("-fno-hintnum" (help "Disable hintnum typing"))
@@ -313,6 +313,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-ctor #t (hopc-j2s-flags))))
 	    (("-fno-ctor" (help "Disable fast constructor init sequences"))
 	     (hopc-j2s-flags-set! (cons* :optim-ctor #f (hopc-j2s-flags))))
+	    (("-farguments" (help "Enable arguments optimization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-arguments #t (hopc-j2s-flags))))
+	    (("-fno-arguments" (help "Disable arguments optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-arguments #f (hopc-j2s-flags))))
 	    (("-fcce" (help "Enable common inline caching (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-cce #t (hopc-j2s-flags))))
 	    (("-fno-cce" (help "Disable common inline caching"))

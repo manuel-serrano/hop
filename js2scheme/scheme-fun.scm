@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Dec  6 05:18:28 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 07:37:06 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -370,22 +370,28 @@
    
    (define (normal-vararg-lambda fun id body)
       ;; normal mode: arguments is an alias
-      (let ((id (or id (gensym 'fun)))
-	    (rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idgen idthis thisp rtype vararg)
-	    (lambda-or-labels rtype idgen
-	       (type-this idthis thisp)
-	       (unless (isa? fun J2SArrow) id)
-	       (if (and (eq? vararg 'arguments)
-			(config-get conf :optim-arguments))
-		   (list rest)
-		   rest)
-	       (jsfun-normal-vararg-body fun body id rest)))))
+      (let ((id (or id (gensym 'fun))))
+	 (with-access::J2SFun fun (idgen idthis thisp rtype vararg argumentsp)
+	    (let ((rest (if (isa? argumentsp J2SDeclArguments)
+			    (with-access::J2SDeclArguments argumentsp (argid)
+			       argid)
+			    (gensym 'arguments))))
+	       (lambda-or-labels rtype idgen
+		  (type-this idthis thisp)
+		  (unless (isa? fun J2SArrow) id)
+		  (if (and (eq? vararg 'arguments)
+			   (config-get conf :optim-arguments))
+		      (list rest)
+		      rest)
+		  (jsfun-normal-vararg-body fun body id rest conf))))))
    
    (define (strict-vararg-lambda fun id body)
       ;; strict mode: arguments is initialized on entrance
-      (let ((rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idgen idthis thisp rtype vararg)
+      (with-access::J2SFun fun (idgen idthis thisp rtype vararg argumentsp)
+	 (let ((rest (if (isa? argumentsp J2SDeclArguments)
+			 (with-access::J2SDeclArguments argumentsp (argid)
+			    argid)
+			 (gensym 'arguments))))
 	    (lambda-or-labels rtype idgen (type-this idthis thisp)
 	       (unless (isa? fun J2SArrow) id)
 	       (if (and (eq? vararg 'arguments)
@@ -506,36 +512,49 @@
 ;*    jsfun-strict-vararg-body ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (jsfun-strict-vararg-body this::J2SFun body id rest conf)
+   
+   (define (optim-arguments-prelude argumentsp params body)
+      (with-access::J2SDeclArguments argumentsp (alloc-policy argid)
+	 `(let ((arguments ,(if (eq? alloc-policy 'lazy)
+				`(make-stack-cell #f)
+				`(js-strict-arguments-vector %this ,rest))))
+	     (let* ((%len (vector-length ,argid))
+		    ,@(map (lambda (p i)
+			      (list (j2s-decl-scheme-id p)
+				 `(if (<fx ,i %len)
+				      (vector-ref ,argid ,i)
+				      (js-undefined))))
+			 params (iota (length params))))
+		,body))))
+   
+   (define (regular-arguments-prelude argumentsp params body)
+      `(let ((arguments (js-strict-arguments %this ,rest)))
+	  ,@(if (pair? params)
+		(map (lambda (param)
+			(with-access::J2SDecl param (loc)
+			   (epairify loc
+			      `(define ,(j2s-decl-scheme-id param)
+				  (js-undefined)))))
+		   params)
+		'())
+	  ,@(if (pair? params)
+		`((when (pair? ,rest)
+		     (set! ,(j2s-decl-scheme-id (car params)) (car ,rest))
+		     ,(let loop ((params (cdr params)))
+			 (if (null? params)
+			     #unspecified
+			     `(when (pair? (cdr ,rest))
+				 (set! ,rest (cdr ,rest))
+				 (set! ,(j2s-decl-scheme-id (car params))
+				    (car ,rest))
+				 ,(loop (cdr params)))))))
+		'())
+	  ,body))
+   
    (with-access::J2SFun this (params argumentsp)
-      (with-access::J2SDeclArguments argumentsp (alloc-policy)
-	 `(let ((arguments ,(cond
-			       ((not (config-get conf :optim-arguments))
-				`(js-strict-arguments %this ,rest))
-			       ((eq? alloc-policy 'lazy)
-				#t)
-			       (else
-				`(js-strict-arguments-vector %this ,rest)))))
-	     ,@(if (pair? params)
-		   (map (lambda (param)
-			   (with-access::J2SDecl param (loc)
-			      (epairify loc
-				 `(define ,(j2s-decl-scheme-id param)
-				     (js-undefined)))))
-		      params)
-		   '())
-	     ,@(if (pair? params)
-		 `((when (pair? ,rest)
-		      (set! ,(j2s-decl-scheme-id (car params)) (car ,rest))
-		      ,(let loop ((params (cdr params)))
-			  (if (null? params)
-			      #unspecified
-			      `(when (pair? (cdr ,rest))
-				  (set! ,rest (cdr ,rest))
-				  (set! ,(j2s-decl-scheme-id (car params))
-				     (car ,rest))
-				  ,(loop (cdr params)))))))
-		 '())
-	     ,body))))
+      (if (config-get conf :optim-arguments)
+	  (optim-arguments-prelude argumentsp params body)
+	  (regular-arguments-prelude argumentsp params body))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun->scheme ...                                               */
@@ -812,8 +831,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    jsfun-normal-vararg-body ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (jsfun-normal-vararg-body this::J2SFun body id rest)
-
+(define (jsfun-normal-vararg-body this::J2SFun body id rest conf)
+   
    (define (init-argument val indx)
       `(js-arguments-define-own-property arguments ,indx
 	  (instantiate::JsValueDescriptor
@@ -822,11 +841,11 @@
 	     (writable #t)
 	     (configurable #t)
 	     (enumerable #t))))
-
-   (define (init-alias-argument argument rest indx)
+   
+   (define (init-alias-argument argument init indx)
       (let ((id (j2s-decl-scheme-id argument)))
 	 `(begin
-	     (set! ,id (car ,rest))
+	     ,@(if init `((set! ,id ,init)) '())
 	     (js-arguments-define-own-property arguments ,indx
 		(instantiate::JsAccessorDescriptor
 		   (name (js-integer-name->jsstring ,indx))
@@ -839,7 +858,42 @@
 		   (configurable #t)
 		   (enumerable #t))))))
    
-   (with-access::J2SFun this (params)
+   (define (optim-arguments-prelude argumentsp params body)
+      (with-access::J2SDeclArguments argumentsp (argid alloc-policy)
+	 (if (eq? alloc-policy 'lazy)
+	     `(let* ((%len (vector-length ,argid))
+		     (arguments (make-cell #f))
+		     ,@(map (lambda (p i)
+			       (list (j2s-decl-scheme-id p)
+				  `(if (<fx ,i %len)
+				       (vector-ref ,argid ,i)
+				       (js-undefined))))
+			  params (iota (length params))))
+		 ,body)
+	     `(let* ((%len (vector-length ,argid))
+		     (arguments (js-arguments %this ,argid))
+		     ,@(map (lambda (p i)
+			       (list (j2s-decl-scheme-id p)
+				  `(if (<fx ,i %len)
+				       (vector-ref ,argid ,i)
+				       (js-undefined))))
+			  params (iota (length params))))
+		 ,@(map (lambda (param i)
+			   `(when (<fx ,i %len)
+			       ,(init-alias-argument param #f i)))
+		      params (iota (length params)))
+		 (let loop ((,rest ,rest)
+			    (%i ,(length params)))
+		    (when (pair? ,rest)
+		       ,(init-argument `(car ,rest) '%i)
+		       (loop (cdr ,rest) (+fx %i 1))))
+		 (js-bind! %this arguments (& "callee")
+		    :value (js-make-function %this
+			      ,(j2s-fast-id id) 0 ,(symbol->string! id))
+		    :enumerable #f)
+		 ,body))))
+	     
+   (define (regular-arguments-prelude argumentsp params body)
       `(let ((arguments
 		(js-arguments %this
 		   (make-vector (length ,rest) (js-absent)))))
@@ -853,28 +907,32 @@
 		'())
 	  ,(when (pair? params)
 	      `(when (pair? ,rest)
-		  ,(init-alias-argument (car params) rest 0)
+		  ,(init-alias-argument (car params) `(car ,rest) 0)
 		  (set! ,rest (cdr ,rest))
 		  ,(let loop ((params (cdr params))
 			      (i 1))
 		      (if (null? params)
 			  #unspecified
 			  `(when (pair? ,rest)
-			      ,(init-alias-argument (car params) rest i)
+			      ,(init-alias-argument (car params)
+				  `(car ,rest) i)
 			      (set! ,rest (cdr ,rest))
 			      ,(loop (cdr params) (+fx i 1)))))))
 	  (let loop ((,rest ,rest)
-		     (i ,(length params)))
+		     (%i ,(length params)))
 	     (when (pair? ,rest)
-		,(init-argument `(car ,rest) 'i)
-		(loop (cdr ,rest) (+fx i 1))))
-	  ;; MS: 4jul19, replace JS-DEFINE-OWN-PROPERTY with JS-BIND!
-	  ;; mostly to avoid pcache invalidation
+		,(init-argument `(car ,rest) '%i)
+		(loop (cdr ,rest) (+fx %i 1))))
 	  (js-bind! %this arguments (& "callee")
 	     :value (js-make-function %this
 		       ,(j2s-fast-id id) 0 ,(symbol->string! id))
 	     :enumerable #f)
-	  ,body)))
+	  ,body))
+   
+   (with-access::J2SFun this (params argumentsp)
+      (if (config-get conf :optim-arguments)
+	  (optim-arguments-prelude argumentsp params body)
+	  (regular-arguments-prelude argumentsp params body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-function-src ...                                             */

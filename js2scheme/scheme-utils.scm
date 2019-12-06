@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Dec  6 05:41:54 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 07:29:34 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -23,7 +23,8 @@
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_scheme-cast)
+	   __js2scheme_scheme-cast
+	   __js2scheme_scheme)
    
    (export j2s-unresolved-put-workspace
            j2s-unresolved-del-workspace

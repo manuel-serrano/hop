@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Fri Dec  6 05:18:50 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 09:11:55 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -71,8 +71,9 @@
 ;*    annotate-arguments ::J2SFun ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (annotate-arguments this::J2SFun parent)
-   (with-access::J2SFun this (body argumentsp)
-      (when argumentsp
+   (with-access::J2SFun this (body argumentsp mode params loc)
+      (when (and argumentsp
+		 (or (memq mode '(strict hopscript)) (null? params)))
 	 (with-access::J2SDeclArguments argumentsp (alloc-policy)
 	    (set! alloc-policy 'lazy)))
       (annotate-arguments body parent)))
