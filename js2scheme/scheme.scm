@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Dec  1 07:52:42 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 05:29:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2229,7 +2229,7 @@
 		      (& "prototype") %this))
 		(else
 		 #f)))))
-		 
+
    (with-access::J2SAccess this (loc obj field cache cspecs type)
       (epairify-deep loc 
 	 (cond

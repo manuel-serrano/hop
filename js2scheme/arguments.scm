@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Thu Dec  5 17:57:17 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 05:18:50 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -74,7 +74,7 @@
    (with-access::J2SFun this (body argumentsp)
       (when argumentsp
 	 (with-access::J2SDeclArguments argumentsp (alloc-policy)
-	    (set! alloc-policy 'stack)))
+	    (set! alloc-policy 'lazy)))
       (annotate-arguments body parent)))
       
 ;*---------------------------------------------------------------------*/
@@ -84,7 +84,7 @@
    
    (define (arguments-invalidate! decl)
       (with-access::J2SDeclArguments decl (alloc-policy)
-	 (set! alloc-policy 'heap)))
+	 (set! alloc-policy 'eager)))
    
    (define (get-length? node::J2SAccess)
       (with-access::J2SAccess node (field)
