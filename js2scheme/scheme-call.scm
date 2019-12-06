@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Dec  4 11:46:28 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 18:12:22 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -795,13 +795,17 @@
 			    (format "~a provided" la))))))))))
 
    (define (call-fun-function profid fun::J2SFun thisarg::pair-nil protocol f %gen::pair-nil args::pair-nil)
-      (with-access::J2SFun fun (params vararg idthis loc)
+      (with-access::J2SFun fun (params vararg idthis loc argumentsp)
 	 (case (if (eq? protocol 'bounce) 'bounce vararg)
 	    ((arguments)
 	     (call-profile profid
 		`(,f ,@%gen ,@(if idthis (j2s-self thisarg) '())
 		    ,@(if (config-get conf :optim-arguments)
-			  `((vector ,@(j2s-scheme args mode return conf)))
+			  (with-access::J2SDeclArguments argumentsp (alloc-policy)
+			     `((,(if (eq? alloc-policy 'stack)
+				     'js-vector-stack
+				     'vector)
+				,@(j2s-scheme args mode return conf))))
 			  (j2s-scheme args mode return conf)))))
 	    ((rest)
 	     (call-profile profid

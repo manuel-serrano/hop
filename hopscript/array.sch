@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/array.sch               */
+;*    serrano/prgm/project/hop/hop/hopscript/array.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Tue Nov 20 17:34:32 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Thu Dec  5 18:33:52 2019 (serrano)                */
+;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
 ;*=====================================================================*/
@@ -213,3 +213,16 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-make-vector len init)
    `($js-init-vector ($alloca ($js-vector-bytesize ,len)) ,len ,init))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector-stack ...                                              */
+;*---------------------------------------------------------------------*/
+(define-macro (js-vector-stack . args)
+   (let ((v (gensym 'v))
+	 (len (length args)))
+      `(let ((,v ($js-init-vector-sans-fill
+		    ($alloca ($js-vector-bytesize ,len)) ,len)))
+	  ,@(map (lambda (i o)
+		    `(vector-set-ur! ,v ,i ,o))
+	       (iota len) args)
+	  ,v)))

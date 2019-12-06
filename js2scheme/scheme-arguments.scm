@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x/js2scheme/scheme-arguments.scm        */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-arguments.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue May  1 15:33:34 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Fri Dec  6 05:31:15 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
 ;*=====================================================================*/
@@ -40,12 +40,29 @@
       (cond
 	 ((maybe-number? field)
 	  (if (eq? (j2s-vtype field) 'uint32)
-	      `(js-arguments-index-ref ,(j2s-scheme obj mode return conf)
-		  ,(j2s-scheme field mode return conf)
-		  %this)
-	      `(js-arguments-ref ,(j2s-scheme obj mode return conf)
-		  ,(j2s-scheme field mode return conf)
-		  %this)))
+	      (if (arguments-lazy? obj)
+		  (with-tmp obj field mode return conf
+		     (lambda (o f)
+			`(if (<u32 ,f (fixnum->uint32 (vector-length o)))
+			     (vector-ref-ur ,o ,f)
+			     (begin
+				(set! arguments (js-vector->arguments ,f))
+				(js-arguments-index-ref ,o ,f %this)))))
+		  `(js-arguments-index-ref ,(j2s-scheme obj mode return conf)
+		      ,(j2s-scheme field mode return conf)
+		      %this))
+	      (if (arguments-lazy? obj)
+		  (with-tmp obj field mode return conf
+		     (lambda (o f)
+			;; TODO FIXNU...
+			`(if (<u32 ,f (fixnum->uint32 (vector-length o)))
+			     (vector-ref-ur ,o ,f)
+			     (begin
+				(set! arguments (js-vector->arguments ,f))
+				(js-arguments-ref ,o ,f %this)))))
+		  `(js-arguments-ref ,(j2s-scheme obj mode return conf)
+		      ,(j2s-scheme field mode return conf)
+		      %this))))
 	 ((j2s-field-length? field)
 	  `(js-arguments-length
 	      ,(j2s-scheme obj mode return conf) %this))
@@ -58,3 +75,24 @@
 (define (j2s-arguments-set! this::J2SAssig mode return conf)
    (tprint "NOT IMPLEMENTED YET"))
 
+;*---------------------------------------------------------------------*/
+;*    with-tmp ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (with-tmp expr::J2SExpr mode return conf kont)
+   (if (or (isa? expr J2SRef)
+	   (isa? expr J2SGlobalRef)
+	   (isa? expr J2SLiteral))
+       (kont (j2s-scheme expr mode return conf))
+       (let ((tmp (gensym '%tmp)))
+	  `(let ((,tmp (j2s-scheme expr mode return conf)))
+	      ,(kont tmp)))))
+
+;*---------------------------------------------------------------------*/
+;*    arguments-lazy? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (arguments-lazy? obj)
+   (with-access::J2SRef obj (decl)
+      (when (isa? decl J2SDeclArguments)
+	  (with-access::J2SDeclArguments decl (alloc-policy)
+	     (eq? alloc-policy 'lazy)))))
+		 

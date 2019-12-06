@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Dec  4 12:05:54 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 18:10:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -37,7 +37,9 @@
 	   (js-arguments ::JsGlobalObject ::vector)
 	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
 	   (js-strict-arguments-vector ::JsGlobalObject ::vector)
+	   (js-strict-arguments-vector-stack ::JsGlobalObject ::vector)
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)
+	   (js-arguments->vector ::JsArguments ::JsGlobalObject)
 	   (js-arguments->jsarray ::JsArguments ::JsGlobalObject)
 	   (js-arguments-ref ::JsArguments ::obj ::JsGlobalObject)
 	   (js-arguments-index-ref ::JsArguments ::uint32 ::JsGlobalObject)
@@ -206,6 +208,7 @@
       (if (and (js-object-mode-inline? arr)
 	       (and (fixnum? idx) (>=fx idx 0) (<fx idx (vector-length vec))))
 	  (let ((v (vector-ref vec idx)))
+	     (tprint "js-arguments-ref idx=" idx " " (typeof v))
 	     (if (and (object? v) (eq? (object-class v) JsValueDescriptor))
 		 (with-access::JsValueDescriptor v (value)
 		    value)
@@ -551,13 +554,31 @@
 	       obj)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-strict-arguments-vector-stack ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-strict-arguments-vector-stack %this::JsGlobalObject vec::vector)
+   ;; build the arguments object
+   (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
+      (with-access::JsObject %this (__proto__)
+	 (let ((obj (instantiateJsArguments
+		       (vec vec)
+		       (cmap js-strict-arguments-cmap)
+		       (elements (vector (vector-length vec)
+				    strict-callee-property
+				    strict-caller-property))
+		       (__proto__ __proto__))))
+	    obj))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-arguments->vector..                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-arguments->vector obj::JsArguments %this)
    (with-access::JsArguments obj (vec)
       (vector-map (lambda (d)
-		     (with-access::JsPropertyDescriptor d (name)
-			(js-property-value obj obj name d %this)))
+		     (if (isa? d JsPropertyDescriptor)
+			 (with-access::JsPropertyDescriptor d (name)
+			    (js-property-value obj obj name d %this))
+			 d))
 	 vec)))
 
 ;*---------------------------------------------------------------------*/
@@ -566,8 +587,10 @@
 (define (js-arguments->list obj::JsArguments %this)
    (with-access::JsArguments obj (vec)
       (map! (lambda (d)
-	       (with-access::JsPropertyDescriptor d (name)
-		  (js-property-value obj obj name d %this)))
+		     (if (isa? d JsPropertyDescriptor)
+			 (with-access::JsPropertyDescriptor d (name)
+			    (js-property-value obj obj name d %this))
+			 d))
 	 (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/
@@ -577,8 +600,10 @@
    (with-access::JsArguments obj (vec)
       (js-vector->jsarray
 	 (vector-map (lambda (d)
-			(with-access::JsPropertyDescriptor d (name)
-			   (js-property-value obj obj name d %this)))
+			(if (isa? d JsPropertyDescriptor)
+			    (with-access::JsPropertyDescriptor d (name)
+			       (js-property-value obj obj name d %this))
+			    d))
 	    vec)
 	 %this)))
 
