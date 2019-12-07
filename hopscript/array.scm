@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Dec  6 12:05:06 2019 (serrano)                */
+;*    Last change :  Sat Dec  7 19:03:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -131,7 +131,8 @@
 	   (js-array-maybe-slice0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-sort ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-sort ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-iterator-to-array ::obj ::long ::JsGlobalObject))
+	   (js-iterator-to-array ::obj ::long ::JsGlobalObject)
+	   (js-call-with-stack-vector ::vector ::procedure))
    
    (cond-expand
       (bigloo-c
@@ -4523,7 +4524,14 @@
 (define-method (js-jsobject->jsarray o::JsArray %this)
    o)
 
-
+;*---------------------------------------------------------------------*/
+;*    js-call-with-stack-vector ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Overriden by a macro in array.sch                                */
+;*---------------------------------------------------------------------*/
+(define (js-call-with-stack-vector vec proc)
+   (proc vec))
+   
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

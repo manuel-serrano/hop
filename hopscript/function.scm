@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Dec  7 06:47:05 2019 (serrano)                */
+;*    Last change :  Sat Dec  7 19:37:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -937,6 +937,7 @@
       ((or (eq? argarray (js-null)) (eq? argarray (js-undefined)))
        (js-call0 %this this thisarg))
       ((not (js-object? argarray))
+       (tprint "argarrray=" argarray)
        (js-raise-type-error %this
 	  "apply: argument not an object ~s" argarray))
       (else
