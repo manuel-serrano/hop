@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Dec  6 07:37:06 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 19:30:53 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -514,9 +514,9 @@
 (define (jsfun-strict-vararg-body this::J2SFun body id rest conf)
    
    (define (optim-arguments-prelude argumentsp params body)
-      (with-access::J2SDeclArguments argumentsp (alloc-policy argid)
+      (with-access::J2SDeclArguments argumentsp (alloc-policy argid mode)
 	 `(let ((arguments ,(if (eq? alloc-policy 'lazy)
-				`(make-stack-cell #f)
+				`',mode
 				`(js-strict-arguments-vector %this ,rest))))
 	     (let* ((%len (vector-length ,argid))
 		    ,@(map (lambda (p i)
@@ -859,10 +859,10 @@
 		   (enumerable #t))))))
    
    (define (optim-arguments-prelude argumentsp params body)
-      (with-access::J2SDeclArguments argumentsp (argid alloc-policy)
+      (with-access::J2SDeclArguments argumentsp (argid alloc-policy mode)
 	 (if (eq? alloc-policy 'lazy)
 	     `(let* ((%len (vector-length ,argid))
-		     (arguments (make-cell #f))
+		     (arguments `',mode)
 		     ,@(map (lambda (p i)
 			       (list (j2s-decl-scheme-id p)
 				  `(if (<fx ,i %len)

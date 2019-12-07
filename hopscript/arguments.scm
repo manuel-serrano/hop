@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Dec  6 07:47:58 2019 (serrano)                */
+;*    Last change :  Sat Dec  7 06:29:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -34,6 +34,7 @@
 
    (export (js-init-arguments! ::JsGlobalObject)
 	   (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
+	   (js-materialize-arguments ::JsGlobalObject ::vector ::obj)
 	   (js-arguments ::JsGlobalObject ::vector)
 	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
 	   (js-strict-arguments-vector ::JsGlobalObject ::vector)
@@ -41,11 +42,11 @@
 	   (js-arguments->vector ::JsArguments ::JsGlobalObject)
 	   (js-arguments->jsarray ::JsArguments ::JsGlobalObject)
 	   (js-arguments-ref ::JsArguments ::obj ::JsGlobalObject)
-	   (js-arguments-vector-ref ::vector ::cell ::obj ::JsGlobalObject)
-	   (js-arguments-strict-vector-ref ::vector ::cell ::obj ::JsGlobalObject)
+;* 	   (js-arguments-vector-ref ::vector ::cell ::obj ::JsGlobalObject) */
+;* 	   (js-arguments-strict-vector-ref ::vector ::cell ::obj ::JsGlobalObject) */
 	   (js-arguments-index-ref ::JsArguments ::uint32 ::JsGlobalObject)
-	   (js-arguments-vector-index-ref ::vector ::cell ::uint32 ::JsGlobalObject)
-	   (js-arguments-strict-vector-index-ref ::vector ::cell ::uint32 ::JsGlobalObject)
+;* 	   (js-arguments-vector-index-ref ::vector ::cell ::uint32 ::JsGlobalObject) */
+;* 	   (js-arguments-strict-vector-index-ref ::vector ::cell ::uint32 ::JsGlobalObject) */
 	   (js-arguments-length::obj ::JsArguments ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -220,16 +221,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-vector-ref ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-arguments-vector-ref vec::vector cell::cell idx %this)
-   (if (and (>=fx idx 0) (<fx idx (vector-length vec)))
-       (vector-ref-ur vec idx)
-       (begin
-	  (unless (cell-ref cell)
-	     (let ((arr (js-arguments %this
-			   (copy-vector vec (vector-length vec)))))
-		(vector-shrink! vec 0)
-		(cell-set! cell arr)))
-	  (js-arguments-ref (cell-ref cell) idx %this))))
+;* (define (js-arguments-vector-ref vec::vector cell::cell idx %this)  */
+;*    (if (and (>=fx idx 0) (<fx idx (vector-length vec)))             */
+;*        (vector-ref-ur vec idx)                                      */
+;*        (begin                                                       */
+;* 	  (unless (cell-ref cell)                                      */
+;* 	     (let ((arr (js-arguments %this                            */
+;* 			   (copy-vector vec (vector-length vec)))))    */
+;* 		(vector-shrink! vec 0)                                 */
+;* 		(cell-set! cell arr)))                                 */
+;* 	  (js-arguments-ref (cell-ref cell) idx %this))))              */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-strict-vector-ref ...                               */
@@ -259,33 +260,33 @@
 		 v))
 	  (js-get arr idx %this))))
 
-;*---------------------------------------------------------------------*/
-;*    js-arguments--vector-index-ref ...                               */
-;*---------------------------------------------------------------------*/
-(define (js-arguments-vector-index-ref vec::vector cell::cell idx::uint32 %this)
-   (if (<u32 idx (fixnum->uint32 (vector-length vec)))
-       (vector-ref-ur vec (uint32->fixnum idx))
-       (begin
-	  (unless (cell-ref cell)
-	     (let ((arr (js-arguments %this
-			   (copy-vector vec (vector-length vec)))))
-		(vector-shrink! vec 0)
-		(cell-set! cell arr)))
-	  (js-arguments-index-ref (cell-ref cell) idx %this))))
-
-;*---------------------------------------------------------------------*/
-;*    js-arguments-strict-vector-index-ref ...                         */
-;*---------------------------------------------------------------------*/
-(define (js-arguments-strict-vector-index-ref vec::vector cell::cell idx::uint32 %this)
-   (if (<u32 idx (fixnum->uint32 (vector-length vec)))
-       (vector-ref-ur vec (uint32->fixnum idx))
-       (begin
-	  (unless (cell-ref cell)
-	     (let ((arr (js-strict-arguments-vector %this
-			   (copy-vector vec (vector-length vec)))))
-		(vector-shrink! vec 0)
-		(cell-set! cell arr)))
-	  (js-arguments-index-ref (cell-ref cell) idx %this))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-arguments-vector-index-ref ...                                *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (js-arguments-vector-index-ref vec::vector cell::cell idx::uint32 %this) */
+;*    (if (<u32 idx (fixnum->uint32 (vector-length vec)))              */
+;*        (vector-ref-ur vec (uint32->fixnum idx))                     */
+;*        (begin                                                       */
+;* 	  (unless (cell-ref cell)                                      */
+;* 	     (let ((arr (js-arguments %this                            */
+;* 			   (copy-vector vec (vector-length vec)))))    */
+;* 		(vector-shrink! vec 0)                                 */
+;* 		(cell-set! cell arr)))                                 */
+;* 	  (js-arguments-index-ref (cell-ref cell) idx %this))))        */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-arguments-strict-vector-index-ref ...                         *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (js-arguments-strict-vector-index-ref vec::vector cell::cell idx::uint32 %this) */
+;*    (if (<u32 idx (fixnum->uint32 (vector-length vec)))              */
+;*        (vector-ref-ur vec (uint32->fixnum idx))                     */
+;*        (begin                                                       */
+;* 	  (unless (cell-ref cell)                                      */
+;* 	     (let ((arr (js-strict-arguments-vector %this              */
+;* 			   (copy-vector vec (vector-length vec)))))    */
+;* 		(vector-shrink! vec 0)                                 */
+;* 		(cell-set! cell arr)))                                 */
+;* 	  (js-arguments-index-ref (cell-ref cell) idx %this))))        */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-length! ...                                               */
@@ -532,6 +533,19 @@
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
    (js-get o p %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-materialize-arguments ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-materialize-arguments %this::JsGlobalObject vec::vector target)
+   (if (object? target)
+       target
+       (let* ((nv (copy-vector vec (vector-length vec)))
+	      (arg (if (eq? target 'strict)
+		       (js-strict-arguments-vector %this vec)
+		       (js-arguments %this vec))))
+	  (vector-shrink! vec 0)
+	  target)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments ...                                                 */

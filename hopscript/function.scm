@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Dec  6 08:03:03 2019 (serrano)                */
+;*    Last change :  Sat Dec  7 06:47:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -53,9 +53,7 @@
 	   
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
-	   (js-function-apply-arguments ::JsGlobalObject ::obj ::obj ::vector ::cell ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
-	   (js-function-maybe-apply-arguments ::JsGlobalObject ::obj ::obj ::vector ::cell ::obj)
 	   (js-function-call0 ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
@@ -969,19 +967,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-apply-arguments ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-function-apply-arguments %this this thisarg vec cell cache)
-   (if (and (js-object-mode-plain? this) (not (cell-ref cell)))
-       (js-apply-array %this this thisarg vec)
-       (with-access::JsGlobalObject %this (js-function-pcache)
-	  (unless (cell-ref cell)
-	     (let ((arr (js-strict-arguments-vector %this
-			   (copy-vector vec (vector-length vec)))))
-		(vector-shrink! vec 0)
-		(cell-set! cell arr)))
-	  (js-call2 %this
-	     (js-get-name/cache this (& "apply") #f %this
-		(or cache (js-pcache-ref js-function-pcache 2)))
-	     this thisarg (cell-ref cell)))))
+;* (define (js-function-apply-arguments %this this thisarg vec cell cache) */
+;*    (if (and (js-object-mode-plain? this) (not (cell-ref cell)))     */
+;*        (js-apply-array %this this thisarg vec)                      */
+;*        (with-access::JsGlobalObject %this (js-function-pcache)      */
+;* 	  (unless (cell-ref cell)                                      */
+;* 	     (let ((arr (js-strict-arguments-vector %this              */
+;* 			   (copy-vector vec (vector-length vec)))))    */
+;* 		(vector-shrink! vec 0)                                 */
+;* 		(cell-set! cell arr)))                                 */
+;* 	  (js-call2 %this                                              */
+;* 	     (js-get-name/cache this (& "apply") #f %this              */
+;* 		(or cache (js-pcache-ref js-function-pcache 2)))       */
+;* 	     this thisarg (cell-ref cell)))))                          */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply ...                                      */
@@ -1003,24 +1001,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply-arguments ...                            */
 ;*---------------------------------------------------------------------*/
-(define (js-function-maybe-apply-arguments %this this thisarg vec cell cache)
-   (let loop ((this this))
-      (cond
-	 ((js-function? this)
-	  (js-function-apply-arguments %this this thisarg vec cell cache))
-	 ((js-object? this)
-	  (unless (cell-ref cell)
-	     (let ((arr (js-strict-arguments-vector %this
-			   (copy-vector vec (vector-length vec)))))
-		(vector-shrink! vec 0)
-		(cell-set! cell arr)))
-	  (with-access::JsGlobalObject %this (js-function-pcache)
-	     (js-call2 %this
-		(js-get-name/cache this (& "apply") #f %this
-		   (or cache (js-pcache-ref js-function-pcache 3)))
-		this thisarg (cell-ref cell))))
-	 (else
-	  (loop (js-toobject %this this))))))
+;* (define (js-function-maybe-apply-arguments %this this thisarg vec cell cache) */
+;*    (let loop ((this this))                                          */
+;*       (cond                                                         */
+;* 	 ((js-function? this)                                          */
+;* 	  (js-function-apply-arguments %this this thisarg vec cell cache)) */
+;* 	 ((js-object? this)                                            */
+;* 	  (unless (cell-ref cell)                                      */
+;* 	     (let ((arr (js-strict-arguments-vector %this              */
+;* 			   (copy-vector vec (vector-length vec)))))    */
+;* 		(vector-shrink! vec 0)                                 */
+;* 		(cell-set! cell arr)))                                 */
+;* 	  (with-access::JsGlobalObject %this (js-function-pcache)      */
+;* 	     (js-call2 %this                                           */
+;* 		(js-get-name/cache this (& "apply") #f %this           */
+;* 		   (or cache (js-pcache-ref js-function-pcache 3)))    */
+;* 		this thisarg (cell-ref cell))))                        */
+;* 	 (else                                                         */
+;* 	  (loop (js-toobject %this this))))))                          */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-call0 ...                                            */

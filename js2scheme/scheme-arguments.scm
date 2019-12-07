@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Dec  6 07:31:40 2019 (serrano)                */
+;*    Last change :  Sat Dec  7 07:01:00 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -46,10 +46,7 @@
 	     ((eq? (j2s-vtype field) 'uint32)
 	      (if (and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
 		  (let ((argid (j2s-ref-arguments-argid obj)))
-		     `(,(if (eq? (j2s-ref-arguments-mode obj) 'normal)
-			    'js-arguments-vector-index-ref
-			    'js-arguments-strict-vector-index-ref)
-		       ,argid
+		     `(js-arguments-vector-index-ref ,argid
 		       ,(j2s-scheme obj mode return conf)
 		       ,(j2s-scheme field mode return conf)
 		       %this))
@@ -58,10 +55,7 @@
 		      %this)))
 	     ((and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
 	      (let ((argid (j2s-ref-arguments-argid obj)))
-		 `(,(if (eq? (j2s-ref-arguments-mode obj) 'normal)
-			'js-arguments-vector-ref
-			'js-arguments-strict-vector-ref)
-		   ,argid
+		 `(js-arguments-vector-ref ,argid
 		   ,(j2s-scheme obj mode return conf)
 		   ,(j2s-scheme field mode return conf)
 		   %this)))
@@ -71,9 +65,9 @@
 		  %this))))
 	 ((j2s-field-length? field)
 	  (if (and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
-	      `(if (cell-ref ,(j2s-scheme obj mode return conf))
+	      `(if (object? ,(j2s-scheme obj mode return conf))
 		   (js-arguments-length
-		      (cell-ref ,(j2s-scheme obj mode return conf)) %this)
+		      ,(j2s-scheme obj mode return conf) %this)
 		   (vector-length ,(j2s-ref-arguments-argid obj)))
 	      `(js-arguments-length
 		  ,(j2s-scheme obj mode return conf) %this)))
@@ -84,7 +78,21 @@
 ;*    j2s-arguments-set! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-arguments-set! this::J2SAssig mode return conf)
-   (tprint "NOT IMPLEMENTED YET"))
+   (with-access::J2SAssig this (lhs rhs)
+      (with-access::J2SAccess lhs (obj field cache cspecs loc)
+	 (if (config-get conf :optim-arguments)
+	     (tprint "NOT IMPLEMENTED YET")
+	     (j2s-put! loc (j2s-scheme obj mode return conf) field
+		(typeof-this obj conf)
+		(j2s-scheme field mode return conf)
+		(j2s-vtype field)
+		(j2s-scheme rhs mode return conf)
+		(j2s-vtype rhs)
+		(strict-mode? mode)
+		conf
+		cache
+		#f
+		cspecs)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ref-arguments-lazy? ...                                      */

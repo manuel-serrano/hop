@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Dec  6 07:29:34 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 18:31:45 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -688,6 +688,8 @@
 		      ,(strict-mode? mode) %this)
 		  `(js-array-noindex-set! ,obj ,prop ,(box val tyval conf)
 		      ,(strict-mode? mode) %this)))))
+	 ((eq? tyobj 'arguments)
+	  `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))
 	 ((and cache cspecs)
 	  (cond
 	     ((string? propstr)

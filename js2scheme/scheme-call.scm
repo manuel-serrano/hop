@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Dec  6 07:59:13 2019 (serrano)                */
+;*    Last change :  Sat Dec  7 07:30:40 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -819,15 +819,22 @@
       (with-access::J2SFun fun (params vararg idthis loc argumentsp)
 	 (case (if (eq? protocol 'bounce) 'bounce vararg)
 	    ((arguments)
-	     (call-profile profid
-		`(,f ,@%gen ,@(if idthis (j2s-self thisarg) '())
-		    ,@(if (config-get conf :optim-arguments)
-			  (with-access::J2SDeclArguments argumentsp (alloc-policy)
-			     `((,(if (eq? alloc-policy 'stack)
-				     'js-vector-stack
-				     'vector)
-				,@(j2s-scheme args mode return conf))))
-			  (j2s-scheme args mode return conf)))))
+	     (let ((self (if idthis (j2s-self thisarg) '())))
+		(if (config-get conf :optim-arguments)
+		    (with-access::J2SDeclArguments argumentsp (alloc-policy)
+		       (if (eq? alloc-policy 'lazy)
+			   (let ((v (gensym 'vec)))
+			      (call-profile profid
+				 `(js-call-with-stack-vector
+				     (vector ,@(j2s-scheme args mode return conf))
+				     (lambda (,v)
+					(,f ,@%gen ,@self ,v)))))
+			   (call-profile profid
+			      `(,f ,@%gen ,@self
+				  (vector ,@(j2s-scheme args mode return conf))))))
+		    (call-profile profid
+		       `(,f ,@%gen ,@self
+			   ,@(j2s-scheme args mode return conf))))))
 	    ((rest)
 	     (call-profile profid
 		(call-rest-function fun (if idthis thisarg '()) f %gen args)))

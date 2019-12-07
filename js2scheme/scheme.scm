@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Dec  6 05:29:04 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 18:42:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1673,7 +1673,11 @@
 		    (j2s-array-set! this mode return conf)
 		    `(let ((,tmp ,(j2s-scheme obj mode return conf)))
 			(if (js-array? ,tmp)
-			    ,(j2s-array-set! this mode return conf)
+			    ,(j2s-array-set!
+				(duplicate::J2SAssig this
+				   (lhs (duplicate::J2SAccess lhs
+					   (obj (J2SHopRef tmp)))))
+				mode return conf)
 			    ,(j2s-put! loc tmp
 				field
 				(typeof-this obj conf)
@@ -1697,8 +1701,10 @@
 		       (j2s-vector-set! this mode return conf))
 		      ((and (eq? (j2s-vtype obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return conf))
-		      ((mightbe-number? field)
+		      ((and (mightbe-number? field) (eq? (j2s-vtype obj) 'any))
 		       (maybe-array-set lhs rhs))
+		      ((eq? (j2s-vtype obj) 'arguments)
+		       (j2s-arguments-set! this mode return conf))
 		      (else
 		       (j2s-put! loca (j2s-scheme obj mode return conf)
 			  field
