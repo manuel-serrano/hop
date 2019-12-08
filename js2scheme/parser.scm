@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Oct 10 13:29:17 2019 (serrano)                */
+;*    Last change :  Thu Nov 28 20:02:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2788,7 +2788,6 @@
 	    (cond
 	       ((memq name '(get set))
 		(case (peek-token-type)
-;* 		   ((ID RESERVED service)                              */
 		   ((ID RESERVED)
 		    (property-accessor (consume-any!) tokname name props))
 		   ((STRING ESTRING OSTRING)

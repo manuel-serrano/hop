@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/symbol.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/symbol.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Jul 19 07:58:47 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 07:42:19 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -342,7 +342,9 @@
 			  (collect* body)))
 		(arguments (instantiate::J2SDeclArguments
 			      (id 'arguments)
+			      (argid (gensym 'arguments))
 			      (utype (if (eq? fmode 'normal) 'any 'arguments))
+			      (mode mode)
 			      (loc loc)))
 		(envl (append decls params))
 		(env1 (append envl env0))

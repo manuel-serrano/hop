@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Nov  8 09:01:08 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 09:05:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -280,6 +280,9 @@
    (cond
       ((memq type '(any unknown)) #t)
       ((memq type types) #t)
+      ((eq? type 'number)
+       (any (lambda (t) (type-maybe? t types))
+	  '(real int30 int32 uint32 int53 bint fixnum ufixnum integer)))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -601,34 +604,6 @@
 	 (set! usage (cons key usage)))))
    
 ;*---------------------------------------------------------------------*/
-;*    decl-usage? ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (decl-usage? decl keys)
-   (with-access::J2SDecl decl (usage)
-      (any (lambda (k)
-	      [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest escape))]
-	      (memq k usage))
-	 keys)))
-
-;*---------------------------------------------------------------------*/
-;*    decl-only-usage? ...                                             */
-;*---------------------------------------------------------------------*/
-(define (decl-only-usage? decl keys)
-   (with-access::J2SDecl decl (usage)
-      (every (lambda (u)
-		[assert (u) (memq u '(uninit init new ref assig get set call eval delete instanceof rest))]
-		(memq u keys))
-	 usage)))
-
-;*---------------------------------------------------------------------*/
-;*    decl-strict-usage? ...                                           */
-;*---------------------------------------------------------------------*/
-(define (decl-strict-usage? decl keys)
-   (with-access::J2SDecl decl (usage)
-      (and (=fx (length keys) (length usage))
-	   (only-usage? keys usage))))
-	
-;*---------------------------------------------------------------------*/
 ;*    usage? ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (usage? keys usage)
@@ -636,6 +611,13 @@
 	   [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest))]
 	   (memq k usage))
       keys))
+
+;*---------------------------------------------------------------------*/
+;*    decl-usage? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (decl-usage? decl keys)
+   (with-access::J2SDecl decl (usage)
+      (usage? keys usage)))
 
 ;*---------------------------------------------------------------------*/
 ;*    only-usage? ...                                                  */
@@ -647,11 +629,25 @@
       usage))
 
 ;*---------------------------------------------------------------------*/
+;*    decl-only-usage? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (decl-only-usage? decl keys)
+   (with-access::J2SDecl decl (usage)
+      (only-usage? keys usage)))
+
+;*---------------------------------------------------------------------*/
 ;*    strict-usage? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (strict-usage? keys usage)
    (and (=fx (length keys) (length usage))
 	(only-usage? keys usage)))
+	
+;*---------------------------------------------------------------------*/
+;*    decl-strict-usage? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (decl-strict-usage? decl keys)
+   (with-access::J2SDecl decl (usage)
+      (strict-usage? keys usage)))
 	
 ;*---------------------------------------------------------------------*/
 ;*    is-hint? ...                                                     */

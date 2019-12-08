@@ -1,10 +1,11 @@
+;; -*- mode: bee -*-
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/etc/hopscript.init.in             */
+;*    serrano/prgm/project/hop/hop/etc/hopscript.init.in               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 21 08:47:34 2008                          */
-;*    Last change :  Sat May  6 09:11:52 2017 (serrano)                */
-;*    Copyright   :  2008-17 Manuel Serrano                            */
+;*    Last change :  Sun Nov 10 08:14:51 2019 (serrano)                */
+;*    Copyright   :  2008-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPSCRIPT init file.                                             */
 ;*=====================================================================*/
@@ -36,3 +37,71 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (%%noinline . expr)
    `(|#meta| (noinline) ,@expr))
+
+;*---------------------------------------------------------------------*/
+;*    +fx/overflow                                                     */
+;*---------------------------------------------------------------------*/
+(define-macro (+fx/overflow x y)
+   (cond-expand
+      ((or bint61 bint64)
+       (cond
+	  ((eqv? y 1)
+	   `(if (=fx ,x 9007199254740992)
+		9007199254740992
+		(+fx ,x 1)))
+	  ((eqv? x 1)
+	   `(if (=fx ,y 9007199254740992)
+		9007199254740992
+		(+fx 1 ,y)))
+	  ((eqv? y 2)
+	   `(if (>=fx ,x 9007199254740991)
+		(fixnum->flonum (+fx ,x 2))
+		(+fx ,x 2)))
+	  ((eqv? y 3)
+	   `(if (>=fx ,x 9007199254740990)
+		(fixnum->flonum (+fx ,x 3))
+		(+fx ,x 3)))
+	  ((eqv? y 4)
+	   `(if (>=fx ,x 9007199254740989)
+		(fixnum->flonum (+fx ,x 4))
+		(+fx ,x 4)))
+	  ((eqv? y -1)
+	   `(-fx/overflow ,x 1))
+	  ((eqv? y -2)
+	   `(-fx/overflow ,x 2))
+	  ((eqv? y -3)
+	   `(-fx/overflow ,x 3))
+	  ((eqv? y -4)
+	   `(-fx/overflow ,x 4))
+	  (else
+	   `((@ +fx/overflow __hopscript_arithmetic64) ,x ,y))))
+      (else
+       `((@ +fx/overflow __hopscript_arithmetic32) ,x ,y))))
+
+;*---------------------------------------------------------------------*/
+;*    -fx/overflow                                                     */
+;*---------------------------------------------------------------------*/
+(define-macro (-fx/overflow x y)
+   (cond-expand
+      ((or bint61 bint64)
+       (cond
+	  ((eqv? y 1)
+	   `(if (>fx ,x -9007199254740994)
+		(-fx ,x 1)
+		(fixnum->flonum (-fx ,x 1))))
+	  ((eqv? y 2)
+	   `(if (>fx ,x -9007199254740993)
+		(-fx ,x 2)
+		(fixnum->flonum (-fx ,x 2))))
+	  ((eqv? y 3)
+	   `(if (>=fx ,x -9007199254740992)
+		(-fx ,x 3)
+		(fixnum->flonum (-fx ,x 3))))
+	  ((eqv? y 4)
+	   `(if (>=fx ,x -9007199254740991)
+		(-fx ,x 4)
+		(fixnum->flonum (-fx ,x 4))))
+	  (else
+	   `((@ -fx/overflow __hopscript_arithmetic64) ,x ,y))))
+      (else
+       `((@ -fx/overflow __hopscript_arithmetic32) ,x ,y))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Nov  7 08:56:03 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 10:46:06 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -283,7 +283,7 @@
 	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
 	  ((isa? this J2SCall)
 	   (with-access::J2SCall this (cache cspecs)
-	      (if cache `(:cache ,cache :cspecs ,cspecs) '())))
+	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
 	  ((isa? this J2SNew)
 	   (with-access::J2SNew this (caches)
 	      (if (pair? caches) `(:caches ,@caches) '())))
@@ -679,8 +679,9 @@
 ;*    j2s->list ::J2SMethod ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SMethod)
-   (with-access::J2SMethod this (function method)
+   (with-access::J2SMethod this (function method loc)
       `(,@(call-next-method)
+	  ,@(dump-loc loc)
 	:function ,(j2s->list function)
 	:method ,(j2s->list method))))
 
@@ -688,9 +689,10 @@
 ;*    j2s->list ::J2SBindExit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SBindExit)
-   (with-access::J2SBindExit this (lbl stmt)
+   (with-access::J2SBindExit this (lbl stmt loc)
       `(,@(call-next-method)
 	  ,@(dump-type this)
+	  ,@(dump-loc loc)
 	  (,lbl) ,(j2s->list stmt))))
 
 ;*---------------------------------------------------------------------*/
@@ -945,7 +947,7 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid usage scope cache)
+   (with-access::J2SDecl this (id key binder _scmid usage scope)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(dump-dump this)
@@ -957,6 +959,21 @@
 	,@(if _scmid `(:_scmid ,_scmid) '())
 	,@(dump-info this)
 	,@(dump-scope scope))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SDeclArguments ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SDeclArguments)
+   (with-access::J2SDeclArguments this (id key _scmid usage alloc-policy argid)
+      `(,(string->symbol (typeof this))
+	,id
+	,@(dump-dump this)
+	,@(dump-key key)
+	,@(dump-access this)
+	,@(dump-vtype this)
+	,@(if _scmid `(:_scmid ,_scmid) '())
+	:argid ,argid :alloc-policy ,alloc-policy
+	,@(dump-info this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclInit ...                                      */

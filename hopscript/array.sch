@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/array.sch               */
+;*    serrano/prgm/project/hop/hop/hopscript/array.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Tue Nov 20 17:34:32 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Sat Dec  7 18:59:46 2019 (serrano)                */
+;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
 ;*=====================================================================*/
@@ -213,3 +213,32 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-make-vector len init)
    `($js-init-vector ($alloca ($js-vector-bytesize ,len)) ,len ,init))
+
+;*---------------------------------------------------------------------*/
+;*    js-call-with-with-stack-vector ...                               */
+;*---------------------------------------------------------------------*/
+(define-macro (js-call-with-stack-vector vec proc)
+   (match-case vec
+      ((vector . ?args)
+       (match-case proc
+	  ((lambda (?v) . ?body)
+	   (cond-expand
+	      ((and bigloo-c (config have-c99-stack-alloc #t))
+	       (let ((p (gensym 'p))
+		     (len (length args)))
+		  `(let ()
+		      (pragma
+			 ,(format "extern obj_t bgl_init_vector_sans_fill(); extern long bgl_vector_bytesize(); char ~a[ bgl_vector_bytesize( ~a ) ]"
+			     p (length args)))
+		      (let ((,v (pragma::vector ,(format "bgl_init_vector_sans_fill( &(~a), ~a )" p (length args)))))
+			 ,@(map (lambda (i o)
+				   `(vector-set-ur! ,v ,i ,o))
+			      (iota len) args)
+			 ,@body))))
+	      (else
+	       (,proc ,vec))))
+	  (else
+	   (error "js-call-with-stack-vector" "bad form"
+	      `(js-call-with-stack-vector ,vec ,proc)))))
+      (else
+       `((@ js-call-with-stack-vector ...) ,vec ,proc))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Nov  6 08:00:07 2019 (serrano)                */
+;*    Last change :  Wed Nov 20 13:47:03 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -805,7 +805,8 @@
 	   r
 	   (same-list (js-properties-name target #t %this) r)))
       (else
-       (let ((names (js-properties-name target #t %this)))
+       (let ((names (js-properties-name target #t %this))
+	     (vec (jsarray->vector r %this)))
 	  (let loop ((i (-fx (vector-length names) 1)))
 	     (if (=fx i -1)
 		 (if (js-extensible? target %this)
@@ -819,7 +820,7 @@
 			   (cond
 			      (configurable
 			       (loop (-fx i 1)))
-			      ((find-in? name r)
+			      ((find-in? name vec)
 			       (loop (-fx i 1)))
 			      (else
 			       (err))))))))))))

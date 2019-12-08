@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Nov  7 08:45:33 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 09:15:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -42,6 +42,7 @@
 	   __js2scheme_tyflow
 	   __js2scheme_range
 	   __js2scheme_loopspec
+	   __js2scheme_arguments
 	   __js2scheme_cast
 	   __js2scheme_vector
 	   __js2scheme_array
@@ -222,6 +223,7 @@
 	  j2s-dead-stage
 	  j2s-constrsize-stage
 	  j2s-unthis-stage
+	  j2s-arguments-stage
 	  j2s-newtarget-stage
 	  j2s-scheme-stage))
       (else
@@ -462,7 +464,9 @@
 	 (unless (memq :profile-hint o)
 	    (set! o (cons* :profile-hint #t o)))
 	 (unless (memq :profile-method o)
-	    (set! o (cons* :profile-method #t o))))
+	    (set! o (cons* :profile-method #t o)))
+	 (unless (memq :profile-cmap o)
+	    (set! o (cons* :profile-cmap #t o))))
       ;; optimization
       (when (>=fx l 900)
 	 (unless (memq :optim-integer o)
@@ -473,6 +477,8 @@
 	    (set! o (cons* :optim-globprop #t o)))
 	 (unless (memq :optim-loopspec o)
 	    (set! o (cons* :optim-loopspec #t o)))
+	 (unless (memq :optim-arguments o)
+	    (set! o (cons* :optim-arguments #t o)))
 	 )
       (when (>=fx l 3)
 	 (unless (memq :optim-literals o)

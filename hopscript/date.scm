@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct  9 08:25:08 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 17:50:46 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -30,6 +30,12 @@
 	   __hopscript_lib
 	   __hopscript_error
 	   __hopscript_names)
+
+   (cond-expand
+      ((or bint30 bint32)
+       (import __hopscript_arithmetic32))
+      (else
+       (import __hopscript_arithmetic64)))
    
    (export (js-init-date! ::JsObject)
 	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)))
@@ -283,17 +289,19 @@
 		0)
 	       ((?year)
 		(let ((d (parse-date-arguments (list (js-tonumber year %this)))))
-		   (*fl 1000.
-		      (elong->flonum
-			 (- (date->seconds d) (date-timezone d))))))
+		   (js-flonum->integer
+		      (*fl 1000.
+			 (elong->flonum
+			    (- (date->seconds d) (date-timezone d)))))))
 	       (else
 		(let* ((dt (parse-date-arguments args))
 		       (ctz (date-timezone dt)))
-		   (llong->flonum 
-		      (/llong (+ (date->nanoseconds dt)
-				 (*llong (fixnum->llong ctz)
-				    #l1000000000))
-			 #l1000000))))))
+		   (js-flonum->integer
+		      (llong->flonum 
+			 (/llong (+ (date->nanoseconds dt)
+				    (*llong (fixnum->llong ctz)
+				       #l1000000000))
+			    #l1000000)))))))
 	 
 	 (js-bind! %this js-date (& "UTC")
 	    :value (js-make-function %this js-date-utc 7 "UTC")
@@ -1159,7 +1167,8 @@
 ;*    date->milliseconds ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (date->milliseconds dt::date)
-   (roundfl (/fl (llong->flonum (date->nanoseconds dt)) 1000000.0)))
+   (js-flonum->integer
+      (roundfl (/fl (llong->flonum (date->nanoseconds dt)) 1000000.0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    date->utc-date ...                                               */

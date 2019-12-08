@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.sch                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/ast.sch                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Fri Feb 22 16:42:34 2019 (serrano)                */
+;*    Last change :  Sun Dec  1 16:56:27 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -433,8 +433,8 @@
 (define-macro (J2SLetOpt usage id val)
    `(instantiate::J2SDeclInit
        (loc loc)
-       (writable ,(if (memq 'assig (cadr usage)) #t #f))
-       (ronly ,(if (memq 'assig (cadr usage)) #f #t))
+       (writable ,(if (or (not (pair? usage)) (memq 'assig (cadr usage))) #t #f))
+       (ronly ,(if (or (not (pair? usage)) (memq 'assig (cadr usage))) #f #t))
        (usecnt 1)
        (binder 'let-opt)
        (usage ,usage)

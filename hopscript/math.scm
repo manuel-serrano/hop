@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 12 15:41:28 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 18:09:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -32,6 +32,7 @@
    
    (export (js-init-math! ::JsObject)
 	   (js-math-ceil ::obj)
+	   (js-math-ceil-as-integer ::obj)
 	   (js-math-sqrt ::obj ::JsGlobalObject)
 	   (inline js-math-sqrtfl ::double)
 	   (js-math-floor ::obj ::JsGlobalObject)
@@ -301,16 +302,14 @@
 		(expt n1 n2))
 	       ((and (< n2 0) (exact? n2))
 		(expt n1 (exact->inexact n2)))
-	       ((and (flonum? n2) (or (= n2 +inf.0) (nanfl? n2)))
-		+nan.0)
-	       ((= n2 +inf.0)
+	       ((and (flonum? n2) (or (=fl n2 +inf.0) (nanfl? n2)))
 		+nan.0)
 	       ((= n2 -inf.0)
 		(if (= (abs n1) 1)
 		    +nan.0
 		    0))
-	       ((not (integer? y))
-		(if (> y 0) (* x 0) (if (< x 0) -inf.0 +inf.0)))
+	       ((flonum? n2)
+		(exptfl (fixnum->flonum n1) n2))
 	       (else
 		(let loop ((x n1)
 			   (y (inexact->exact n2)))
@@ -408,6 +407,19 @@
       ((=fl x +inf.0) x)
       ((=fl x -inf.0) x)
       (else (ceilingfl x))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-ceil ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.6     */
+;*---------------------------------------------------------------------*/
+(define (js-math-ceil-as-integer x)
+   (cond
+      ((not (flonum? x)) x)
+      ((nanfl? x) x)
+      ((=fl x +inf.0) x)
+      ((=fl x -inf.0) x)
+      (else (flonum->fixnum (ceilingfl x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math-sqrt ...                                                 */

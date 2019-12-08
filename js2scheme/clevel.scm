@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/clevel.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/clevel.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Thu Jan 24 15:00:15 2019 (serrano)                */
+;*    Last change :  Sun Dec  1 07:19:15 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -52,25 +52,26 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-clevel this::obj args)
    (when (isa? this J2SProgram)
-      (cond
-	 ((config-get args :profile-log #f)
-	  =>
-	  (lambda (log)
-	     (with-access::J2SProgram this (nodes headers decls)
-		(let ((ptable (create-hashtable)))
-		   (propcollect* decls ptable)
-		   (propcollect* nodes ptable)
-		   (propclevel* decls ptable)
-		   (propclevel* nodes ptable)))))
-	 ((config-get args :cspecs #f)
-	  =>
-	  (lambda (cspecs)
-	     (let ((cs (cond
-			  ((pair? cspecs)  cspecs)
-			  ((symbol? cspecs) (list cspecs))
-			  (else (error "j2s-clevel" "Illegal cspecs" cspecs)))))
-		(cspecs-update this cs args))))))
-   this)
+      (let loop ((log (config-get args :profile-log #f)))
+	 (cond
+	    (log
+	     (if (cache-profile-log this log args)
+		 (with-access::J2SProgram this (nodes headers decls)
+		    (let ((ptable (create-hashtable)))
+		       (propcollect* decls ptable)
+		       (propcollect* nodes ptable)
+		       (propclevel* decls ptable)
+		       (propclevel* nodes ptable)))
+		 (loop #f)))
+	    ((config-get args :cspecs #f)
+	     =>
+	     (lambda (cspecs)
+		(let ((cs (cond
+			     ((pair? cspecs)  cspecs)
+			     ((symbol? cspecs) (list cspecs))
+			     (else (error "j2s-clevel" "Illegal cspecs" cspecs)))))
+		   (cspecs-update this cs args))))))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-verb ...                                                   */
@@ -94,19 +95,24 @@
    (cache-verb conf "loading log file " (string-append "\"" logfile "\""))
    
    (let* ((log (load-profile-log logfile))
-	  (srcs (get 'sources log))
+	  (srcs (get 'caches log))
 	  (file (config-get conf :filename)))
       (when (vector? srcs)
-	 (let loop ((i (-fx (vector-length srcs) 1)))
-	    (when (>=fx i 0)
-	       (let ((filename (get 'filename (vector-ref srcs i))))
-		  (if (string=? file filename)
-		      (let ((verb (make-cell 0))
-			    (logtable (get 'caches (vector-ref srcs i))))
-			 (profile-clevel this logtable 'get verb conf)
-			 (cache-verb conf "cspecs " (cell-ref verb)))
-		      (loop (-fx i 1))))))))
-   this)
+	 (let loop ((i (-fx (vector-length srcs) 1))
+		    (r #f))
+	    (if (>=fx i 0)
+		(let ((filename (get 'filename (vector-ref srcs i))))
+		   (if (string=? file filename)
+		       (let ((verb (make-cell 0))
+			     (caches (get 'caches (vector-ref srcs i))))
+			  (if caches
+			      (let ((logtable (val->logtable caches)))
+				 (profile-clevel this logtable 'get verb conf)
+				 (cache-verb conf "cspecs " (cell-ref verb))
+				 (loop (-fx i 1) #t))
+			      (loop (-fx i 1) r)))
+		       (loop (-fx i 1) #f)))
+		r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cspecs-update ...                                                */
@@ -121,9 +127,9 @@
 (define-struct pcache point usage imap cmap emap pmap amap vtable)
 
 ;*---------------------------------------------------------------------*/
-;*    load-profile-log ...                                             */
+;*    val->logtable ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (load-profile-log logfile)
+(define (val->logtable vals::vector)
    
    (define (alist->pcache l)
       (let ((p (pcache -1 '- 0 0 0 0 0 0)))
@@ -148,11 +154,14 @@
 	    l)
 	 p))
    
-   (define (val->caches vals::vector)
-      (sort (lambda (x y)
-	       (<=fx (pcache-point x) (pcache-point y)))
-	 (vector-map! alist->pcache vals)))
+   (sort (lambda (x y)
+	    (<=fx (pcache-point x) (pcache-point y)))
+      (vector-map! alist->pcache vals)))
 
+;*---------------------------------------------------------------------*/
+;*    load-profile-log ...                                             */
+;*---------------------------------------------------------------------*/
+(define (load-profile-log logfile)
    (call-with-input-file logfile
       (lambda (ip)
 	 (let ((fprofile #f))
@@ -168,9 +177,10 @@
 			      (cond
 				 ((string=? p "caches")
 				  (unless fprofile
-				     (error "fprofile" "Wrong log format" logfile))
+				     (error "fprofile" "Wrong log format"
+					logfile))
 				  (cell-set! o
-				     (cons (cons 'caches (val->caches val))
+				     (cons (cons 'caches val)
 					(cell-ref o))))
 				 ((string=? p "format")
 				  (set! fprofile (equal? val "fprofile")))
@@ -203,17 +213,18 @@
       (let ((entry (logtable-find logtable (loc->point loc) ctx)))
 	 (cond
 	    (entry
-	     (let ((policy (pcache->cspecs entry)))
-		(when policy
-		   (when (>=fx (config-get conf :verbose 0) 4)
-		      (display* "\n        " (loc->string loc)
-			 " (" (pcache-usage entry) ") -> " policy))
-		   (cell-set! verb (+fx (cell-ref verb) 1))
-		   (set! cspecs policy))))
+	     (let ((policy (or (pcache->cspecs entry) '())))
+		(when (>=fx (config-get conf :verbose 0) 4)
+		   (with-output-to-port (current-error-port)
+		      (lambda ()
+			 (display* "\n        " (loc->string loc)
+			    " (" (pcache-usage entry) ") -> " policy))))
+		(cell-set! verb (+fx (cell-ref verb) 1))
+		(set! cspecs policy)))
 	    ((eq? ctx 'put)
 	     (set! cspecs '(pmap cmap+)))
 	    (else
-	     (set! cspecs '(imap+))))))
+	     (set! cspecs '())))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -228,17 +239,32 @@
 ;*    profile-clevel ::J2SCall ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (profile-clevel this::J2SCall logtable ctx verb conf)
-   (with-access::J2SCall this (cspecs fun)
+   (with-access::J2SCall this (fun)
       (when (isa? fun J2SAccess)
 	 (with-access::J2SAccess fun (loc)
-	    (let ((entry (logtable-find logtable (loc->point loc) 'call)))
-	       (when entry
-		  (let ((policy (pcache->cspecs entry)))
+	    (let ((entryc (logtable-find logtable (loc->point loc) 'call))
+		  (entrya (logtable-find logtable (loc->point loc) 'get)))
+	       (when entryc
+		  (let ((policy (pcache->cspecs entryc)))
 		     (when policy
 			(when (>=fx (config-get conf :verbose 0) 4)
-			   (display* "\n        " (loc->string loc)
-			      " (" (pcache-usage entry) ") -> " policy))
+			   (with-output-to-port (current-error-port)
+			      (lambda ()
+				 (display* "\n        " (loc->string loc)
+				    " (" (pcache-usage entryc) ") -> "
+				    policy))))
 			(cell-set! verb (+fx (cell-ref verb) 1))
+			(with-access::J2SCall this (cspecs)
+			   (set! cspecs policy)))))
+	       (when entrya
+		  (let ((policy (or (pcache->cspecs entrya) '(cmap+))))
+		     (when (>=fx (config-get conf :verbose 0) 4)
+			(with-output-to-port (current-error-port)
+			   (lambda ()
+			      (display* "\n        " (loc->string loc)
+				 " (" (pcache-usage entrya) ") -> " policy))))
+		     (cell-set! verb (+fx (cell-ref verb) 1))
+		     (with-access::J2SAccess fun (cspecs)
 			(set! cspecs policy))))))))
    (call-default-walker))
    
@@ -262,6 +288,28 @@
 ;*    logtable-find ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (logtable-find table::vector point #!optional usage)
+   (let ((len (vector-length table)))
+      (when (>fx len 0)
+	 (let loop ((start 0)
+		    (end (-fx len 1))
+		    (pivot (/fx len 2)))
+	    (let* ((pi (vector-ref table pivot))
+		   (po (pcache-point pi)))
+	       (cond
+		  ((=fx po point)
+		   pi)
+		  ((=fx start end)
+		   #f)
+		  ((>fx po point)
+		   (unless (=fx start pivot)
+		      (loop start pivot
+			 (+fx start (/fx (-fx pivot start) 2)))))
+		  (else
+		   (unless (=fx end pivot)
+		      (loop (+fx pivot 1) end
+			 (+fx pivot (+fx 1 (/fx (-fx end (+fx pivot 1)) 2))))))))))))
+
+(define (logtable-find-TBR-18nov1029 table::vector point #!optional usage)
 
    (define (find-left pivot)
       (let loop ((i pivot))
@@ -305,7 +353,7 @@
 ;*---------------------------------------------------------------------*/
 (define (pcache->cspecs pc)
 
-   (define threshold 1000)
+   (define threshold 100)
    
    (cond
       ((and (> (pcache-imap pc) threshold)

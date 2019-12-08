@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Nov  2 07:11:50 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 18:31:45 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -23,7 +23,8 @@
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_scheme-cast)
+	   __js2scheme_scheme-cast
+	   __js2scheme_scheme)
    
    (export j2s-unresolved-put-workspace
            j2s-unresolved-del-workspace
@@ -101,7 +102,10 @@
 	   (uncast::J2SExpr ::J2SExpr)
 
 	   (cancall?::bool ::J2SNode)
-	   (optimized-ctor ::J2SNode)))
+	   (optimized-ctor ::J2SNode)
+
+	   (with-tmp-flip flip lhs rhs mode return conf gen::procedure)
+	   (with-tmp lhs rhs mode return conf gen::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -684,6 +688,8 @@
 		      ,(strict-mode? mode) %this)
 		  `(js-array-noindex-set! ,obj ,prop ,(box val tyval conf)
 		      ,(strict-mode? mode) %this)))))
+	 ((eq? tyobj 'arguments)
+	  `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))
 	 ((and cache cspecs)
 	  (cond
 	     ((string? propstr)
@@ -1052,3 +1058,108 @@
 			 this))))))
 	 (else
 	  #f))))
+
+;*---------------------------------------------------------------------*/
+;*    with-tmp-flip ...                                                */
+;*---------------------------------------------------------------------*/
+(define (with-tmp-flip flip lhs rhs mode return conf gen::procedure)
+
+   (define (ultrasimple? expr)
+      (cond
+	 ((isa? expr J2SRef)
+	  (with-access::J2SRef expr (decl)
+	     (not (decl-usage? decl '(assig)))))
+	 ((isa? expr J2SGlobalRef)
+	  (with-access::J2SGlobalRef expr (decl)
+	     (not (decl-usage? decl '(assig)))))
+	 ((isa? expr J2SLiteral)
+	  #t)
+	 ((isa? expr J2SParen)
+	  (with-access::J2SParen expr (expr)
+	     (ultrasimple? expr)))
+	 ((isa? expr J2SCast)
+	  (with-access::J2SCast expr (expr)
+	     (ultrasimple? expr)))
+	 (else
+	  #f)))
+   
+   (define (simple? expr)
+      (cond
+	 ((isa? expr J2SRef)
+	  #t)
+	 ((isa? expr J2SGlobalRef)
+	  #f)
+	 ((isa? expr J2SLiteral)
+	  #t)
+	 ((isa? expr J2SBinary)
+	  (with-access::J2SBinary expr (lhs rhs)
+	     (and (simple? lhs) (simple? rhs))))
+	 ((isa? expr J2SUnary)
+	  (with-access::J2SUnary expr (expr)
+	     (simple? expr)))
+	 ((isa? expr J2SParen)
+	  (with-access::J2SParen expr (expr)
+	     (simple? expr)))
+	 ((isa? expr J2SCast)
+	  (with-access::J2SCast expr (expr)
+	     (simple? expr)))
+	 (else
+	  #f)))
+   
+   (define (atom? expr)
+      (or (number? expr)
+	  (string? expr)
+	  (boolean? expr)
+	  (equal? expr '(js-undefined))
+	  (equal? expr '(js-null))
+	  (match-case expr
+	     ((js-ascii->jsstring (? string?)) #t)
+	     ((js-utf8->jsstring (? string?)) #t)
+	     (else #f))))
+   
+   (let* ((scmlhs (j2s-scheme lhs mode return conf))
+	  (scmrhs (j2s-scheme rhs mode return conf))
+	  (ultrasimplelhs (ultrasimple? lhs))
+	  (ultrasimplerhs (ultrasimple? rhs))
+	  (simplelhs (simple? lhs))
+	  (simplerhs (simple? rhs))
+	  (testl (or (atom? scmlhs) (and (symbol? scmlhs) simplerhs)))
+	  (testr (or (atom? scmrhs) (and (symbol? scmrhs) simplelhs))))
+      (cond
+	 ((and ultrasimplelhs ultrasimplerhs)
+	  (gen scmlhs scmrhs))
+	 ((and testl testr)
+	  (gen scmlhs scmrhs))
+	 ((ultrasimple? lhs)
+	  (let ((right (gensym 'rhs)))
+	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+		 ,(gen scmlhs right))))
+	 ((ultrasimple? rhs)
+	  (let ((left (gensym 'lhs)))
+	     `(let ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+		 ,(gen left scmrhs))))
+	 (testl
+	  (let ((right (gensym 'rhs)))
+	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+		 ,(gen scmlhs right))))
+	 (testr
+	  (let ((left (gensym 'lhs)))
+	     `(let ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+		 ,(gen left scmrhs))))
+	 (else
+	  (let ((left (gensym 'lhs))
+		(right (gensym 'rhs)))
+	     (if flip 
+		 `(let* ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs)
+			 (,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+		     ,(gen left right))
+		 `(let* ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs)
+			 (,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+		     ,(gen left right))))))))
+
+;*---------------------------------------------------------------------*/
+;*    with-tmp ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (with-tmp lhs rhs mode return conf gen::procedure)
+   (with-tmp-flip #f lhs rhs mode return conf gen))
+

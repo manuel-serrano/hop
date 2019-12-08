@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 08:18:53 2017                          */
-;*    Last change :  Mon Apr  8 13:29:23 2019 (serrano)                */
+;*    Last change :  Sat Dec  7 06:30:58 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders                                              */
@@ -21,6 +21,8 @@
 	    "array.sch"
 	    "number.sch"
 	    "call.sch"
+	    "function.sch"
+	    "arguments.sch"
 	    "public_expd.sch"
 	    "stringliteral_expd.sch"
 	    "types_expd.sch"

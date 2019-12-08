@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Nov  7 08:58:55 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 07:36:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -69,7 +69,7 @@
 	      (escape::bool (default #f) (info '("notraverse")))
 	      ;; usage: init, new, ref, assig, get (field), set (field), call,
 	      ;; delete, instanceof, uninit (premature variable access),
-	      ;; rest (rest argument), escape (free variable ref).
+	      ;; rest (rest argument).
 	      (usage::pair-nil (default '()) (info '("notraverse")))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))
@@ -88,7 +88,10 @@
 	      ;; es module export
 	      (exports::pair-nil (default '()) (info '("notraverse"))))
 
-	   (class J2SDeclArguments::J2SDecl)
+	   (class J2SDeclArguments::J2SDecl
+	      (alloc-policy::symbol (default 'heap) (info '("notraverse")))
+	      (argid::symbol read-only (info '("notraverse")))
+	      (mode::symbol read-only (info '("notraverse"))))
 	   
 	   (class J2SDeclInit::J2SDecl
 	      (val::J2SExpr (info '("ast"))))

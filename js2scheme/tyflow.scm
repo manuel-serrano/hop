@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Oct 30 06:54:11 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 17:36:23 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -638,7 +638,7 @@
 ;*    node-type ::J2SBindExit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SBindExit env::pair-nil fix::cell)
-   (with-access::J2SBindExit this (stmt type)
+   (with-access::J2SBindExit this (stmt type loc)
       (multiple-value-bind (typ env bk)
 	 (node-type stmt env fix)
 	 (return type env bk))))
@@ -1375,7 +1375,15 @@
 			   (else
 			    'number)))
 		       ((/)
-			'real)
+			(cond
+			   ((eq? typr 'real)
+			    'real)
+			   ((eq? typr 'integer)
+			    'number)
+			   ((eq? typr 'unknown)
+			    'unknown)
+			   (else
+			    'real)))
 		       ((%)
 			(cond
 			   ((or (eq? typl 'real) (eq? typr 'real))
@@ -1569,6 +1577,14 @@
 			 (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr rtype))
 		      (set! rtype tyr)))
 		(values 'void enve (list this))))
+	    ((isa? from J2SBindExit)
+	     (with-access::J2SBindExit from (type loc)
+		(let ((tyr (merge-types type tye)))
+		   (unless (eq? tyr type)
+		      (unfix! fix
+			 (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr rtype))
+		      (set! type tyr))))
+	     (values 'void enve (list this)))
 	    ((isa? from J2SExpr)
 	     (expr-type-add! from env fix tye)
 	     (values 'void enve (list this)))

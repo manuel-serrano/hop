@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Jun 12 15:33:26 2019 (serrano)                */
+;*    Last change :  Wed Dec  4 18:10:27 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -41,6 +41,13 @@
       (with-access::J2SCall expr (args)
 	 (j2s-cast sexp expr (j2s-type (car args)) (j2s-type expr) conf)))
 
+   (define (integer-division? exp)
+      (when (isa? exp J2SBinary)
+	 (with-access::J2SBinary exp (op lhs rhs)
+	    (when (eq? op '/)
+	       (and (type-integer? (j2s-type lhs))
+		    (type-integer? (j2s-type rhs)))))))
+   
    (with-access::J2SAccess fun (loc obj field)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
@@ -59,7 +66,9 @@
 	       ((string=? val "ceil")
 		(when (=fx (length args) 1)
 		   (cast-math
-		      `(js-math-ceil
+		      `(,(if (integer-division? (car args))
+			     'js-math-ceil-as-integer
+			     'js-math-ceil)
 			  ,(j2s-scheme (car args) mode return conf)))))
 	       ((string=? val "round")
 		(when (=fx (length args) 1)

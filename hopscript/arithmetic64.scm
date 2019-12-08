@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Wed Oct 30 08:40:27 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 17:46:02 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -33,6 +33,7 @@
        (export
 	  (js-number->jsnumber ::obj)
 
+	  (inline js-flonum->integer::long ::double)
 	  (inline negjs-int::obj ::long)
 	  
 	  (inline overflowfx ::long)
@@ -126,6 +127,12 @@
        (bigloo-type-error "js-number->jsnumber" "number" val))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-flonum->integer ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-flonum->integer num)
+   (flonum->fixnum num))
+
+;*---------------------------------------------------------------------*/
 ;*    negjs-int ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-inline (negjs-int num)
@@ -146,12 +153,20 @@
 ;*    Chapter 4, section 4.1, page 68                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (overflow53 v::long)
-   (let* ((a (-fx 0 (bit-lsh 1 53)))
-	  (b (-fx (bit-lsh 1 53) 1))
-	  (b-a (-fx b a)))
-      (if (<=u64 (fixnum->uint64 (-fx v a)) (fixnum->uint64 b-a))
-	  v
-	  (fixnum->flonum v))))
+   ;; (let* ((a (-fx 0 (bit-lsh 1 53)))
+   ;; 	  (b (-fx (bit-lsh 1 53) 1))
+   ;;	  (b-a (-fx b a)))
+   ;;  (if (<=u64 (fixnum->uint64 (-fx v a)) (fixnum->uint64 b-a))
+   ;;	  v
+   ;;	  (fixnum->flonum v)))
+   ;;
+   ;; use expanded constant and test to minimize code size generation
+   (if (pragma::bool "(uint64_t)($1 - -9007199254740992) <= (uint64_t)18014398509481983" v)
+       v
+       (fixnum->flonum v)))
+;*    (if (<=u64 (fixnum->uint64 (-fx v -9007199254740992)) #u64:)     */
+;*        v                                                            */
+;*        (fixnum->flonum v)))                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */

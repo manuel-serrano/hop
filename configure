@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Oct  9 21:35:27 2019 (serrano)                */
+#*    Last change :  Sat Dec  7 06:31:50 2019 (serrano)                */
 #*    Copyright   :  2004-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1588,6 +1588,10 @@ echo "" >> $init
 cat hopscript/arithmetic.sch >> $init
 echo "" >> $init
 cat hopscript/array.sch >> $init
+echo "" >> $init
+cat hopscript/function.sch >> $init
+echo "" >> $init
+cat hopscript/arguments.sch >> $init
 echo "" >> $init
 cat hopscript/number.sch >> $init
 echo "" >> $init

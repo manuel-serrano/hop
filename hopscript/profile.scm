@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Oct 11 12:54:29 2019 (serrano)                */
+;*    Last change :  Mon Dec  2 11:11:26 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -43,6 +43,7 @@
 
 	   (inline js-profile-log-call ::vector ::long)
 	   (js-profile-log-funcall ::vector ::long ::obj ::obj)
+	   (js-profile-log-cmap ::vector ::long ::obj)
 
 	   (js-profile-log-method-function ::JsStringLiteral ::obj)
 	   (js-profile-log-method-method ::JsStringLiteral ::obj)
@@ -95,6 +96,8 @@
 	       (when m
 		  (set! *profile-port* (open-output-file (cadr m)))))
 	    (profile-cache-start! trc)
+	    (when (string-contains trc "hopscript:fprofile")
+	       (set! trc (string-append "hopscript:cache hopscript:call hopscript:cmap format:fprofile " trc)))
 	    (when (string-contains trc "hopscript:cache")
 	       (log-cache-miss!))
 	    (when (string-contains trc "hopscript:function")
@@ -103,7 +106,8 @@
 	       (set! *profile-gets-props* '())
 	       (set! *profile-puts-props* '())
 	       (set! *profile-methods-props* '()))
-	    (when (string-contains trc "hopscript:call")
+	    (when (or (string-contains trc "hopscript:call")
+		      (string-contains trc "hopscript:cmap"))
 	       (when calltable
 		  (set! *profile-call-tables*
 		     (cons calltable *profile-call-tables*))))
@@ -123,6 +127,8 @@
 			   (profile-allocs trc))
 			(when (string-contains trc "hopscript:call")
 			   (profile-calls trc))
+			(when (string-contains trc "hopscript:cmap")
+			   (profile-cmaps trc))
 			(profile-report-end trc conf)
 			(unless (eq? *profile-port* (current-error-port))
 			   (close-output-port *profile-port*))))))))))
@@ -237,6 +243,20 @@
 			  (set-cdr! c (+llong (cdr c) #l1))
 			  (vector-set! table idx (cons (cons id #l1) bucket))))
 		   (vector-set! table idx (list (cons id #l1)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-log-cmap ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-profile-log-cmap table idx obj)
+   (when (js-object? obj)
+      (with-access::JsObject obj (cmap)
+	 (let ((bucket (vector-ref table idx)))
+	    (if (pair? bucket)
+		(let ((c (assq cmap bucket)))
+		   (if (pair? c)
+		       (set-cdr! c (+llong (cdr c) #l1))
+		       (vector-set! table idx (cons (cons cmap #l1) bucket))))
+		(vector-set! table idx (list (cons cmap #l1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-method-method ...                                 */
@@ -689,9 +709,11 @@
 ;*    profile-report-start ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (profile-report-start trc)
-   (when (or (string-contains trc "format:json")
-	     (string-contains trc "format:fprofile"))
-      (display "{\n" *profile-port*)))
+   (cond
+      ((string-contains trc "format:json")
+       (display "{\n\"format\": \"json\",\n" *profile-port*))
+      ((string-contains trc "format:fprofile")
+       (display "{\n\"format\": \"fprofile\",\n" *profile-port*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-report-end ...                                           */
@@ -943,73 +965,85 @@
 	 (print "    }")
 	 (print "  },")))
 
+   (define (show-fprofile-pcaches fc::vector)
+      (let ((vpc (collapse
+		    (sort (lambda (x y)
+			     (with-access::JsPropertyCache x ((xpoint point))
+				(with-access::JsPropertyCache y ((ypoint point))
+				   (<= xpoint ypoint))))
+		       fc))))
+	 (vfor-each (lambda (i pc)
+		       (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+			  (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
+			     (display* "      { \"point\": " point)
+			     (display* ", \"usage\": \"" usage "\"")
+			     (when (> cntmiss 1) (display* ", \"miss\": " cntmiss))
+			     (when (> cntimap 0) (display* ", \"imap\": " cntimap))
+			     (when (> cntemap 0) (display* ", \"emap\": " cntemap))
+			     (when (> cntcmap 0) (display* ", \"cmap\": " cntcmap))
+			     (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
+			     (when (> cntamap 0) (display* ", \"amap\": " cntamap))
+			     (when (> cntvtable 0) (display* ", \"vtable\": " cntvtable))
+			     (if (>fx i 0)
+				 (print " }, ")
+				 (print " } ")))))
+	    vpc)))
+
    (define (collapse vec)
       (let ((len (vector-length vec)))
-	 (when (>fx len 1)
-	    (let loop ((i 1)
-		       (old (vector-ref vec 0))
-		       (res '()))
-	       (if (=fx i len)
-		   (list->vector (cons old res))
-		   (let ((x (vector-ref vec i)))
-		      (with-access::JsPropertyCache x ((xpoint point)
-						       (xusage usage)
-						       (xcntmiss cntmiss)
-						       (xcntimap cntimap)
-						       (xcntemap cntemap)
-						       (xcntcmap cntcmap)
-						       (xcntpmap cntpmap)
-						       (xcntamap cntamap)
-						       (xcntvtable cntvtable))
-			 (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
-			    (if (and (= point xpoint) (eq? xusage usage))
-				(begin
-				   (set! cntmiss (+u32 cntmiss xcntmiss))
-				   (set! cntimap (+u32 cntimap xcntimap))
-				   (set! cntemap (+u32 cntemap xcntemap))
-				   (set! cntcmap (+u32 cntcmap xcntcmap))
-				   (set! cntpmap (+u32 cntpmap xcntpmap))
-				   (set! cntamap (+u32 cntamap xcntamap))
-				   (set! cntvtable (+u32 cntvtable xcntvtable))
-				   (loop (+fx i 1) old res))
-				(loop (+fx i 1) x (cons old res)))))))))))
+	 (if (>fx len 1)
+	     (let loop ((i 1)
+			(old (vector-ref vec 0))
+			(res '()))
+		(if (=fx i len)
+		    (list->vector (cons old res))
+		    (let ((x (vector-ref vec i)))
+		       (with-access::JsPropertyCache x ((xpoint point)
+							(xusage usage)
+							(xcntmiss cntmiss)
+							(xcntimap cntimap)
+							(xcntemap cntemap)
+							(xcntcmap cntcmap)
+							(xcntpmap cntpmap)
+							(xcntamap cntamap)
+							(xcntvtable cntvtable))
+			  (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+			     (if (and (= point xpoint) (eq? xusage usage))
+				 (begin
+				    (set! cntmiss (+u32 cntmiss xcntmiss))
+				    (set! cntimap (+u32 cntimap xcntimap))
+				    (set! cntemap (+u32 cntemap xcntemap))
+				    (set! cntcmap (+u32 cntcmap xcntcmap))
+				    (set! cntpmap (+u32 cntpmap xcntpmap))
+				    (set! cntamap (+u32 cntamap xcntamap))
+				    (set! cntvtable (+u32 cntvtable xcntvtable))
+				    (loop (+fx i 1) old res))
+				 (loop (+fx i 1) x (cons old res))))))))
+	     vec)))
 
    (cond
       ((string-contains trc "format:fprofile")
        (when (pair? filecaches)
 	  (with-output-to-port *profile-port*
 	     (lambda ()
-		(print "\"format\": \"fprofile\",")
-		(print "\"sources\": [")
-		(for-each (lambda (fc)
-			     (when (any (lambda (pc)
-					   (with-access::JsPropertyCache pc (cntmiss)
-					      (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))))
-				      fc)
-				(print "  { \"filename\": \"" (with-access::JsPropertyCache fc (src) src) "\",")
-				(print "    \"caches\": [")
-				(vfor-each (lambda (i pc)
-					      (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
-						 (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
-						    (display* "      { \"point\": " point)
-						    (display* ", \"usage\": \"" usage "\"")
-						    (when (> cntmiss 1) (display* ", \"miss\": " cntmiss))
-						    (when (> cntimap 0) (display* ", \"imap\": " cntimap))
-						    (when (> cntemap 0) (display* ", \"emap\": " cntemap))
-						    (when (> cntcmap 0) (display* ", \"cmap\": " cntcmap))
-						    (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
-						    (when (> cntamap 0) (display* ", \"amap\": " cntamap))
-						    (when (> cntvtable 0) (display* ", \"vtable\": " cntvtable))
-						    (print " }, "))))
-				   (collapse
-				      (sort (lambda (x y)
-					       (with-access::JsPropertyCache x ((xpoint point))
-						  (with-access::JsPropertyCache y ((ypoint point))
-						     (<= xpoint ypoint))))
-					 fc)))
-				(print "      { \"point\": -1 } ]")
-				(print "  },")))
-		   filecaches)
+		(print "\"caches\": [")
+		(let ((srcs (delete-duplicates!
+			       (map (lambda (pc)
+				       (with-access::JsPropertyCache pc (src) src))
+				  filecaches))))
+		   (for-each (lambda (s)
+				(let ((pcs (filter (lambda (pc)
+						      (with-access::JsPropertyCache pc (src cntmiss)
+							 (and (string=? src s)
+							      (or (or (> (pcache-hits pc) 0)
+								      (> cntmiss *log-miss-threshold*))))))
+					      filecaches)))
+				   (when (pair? pcs)
+				      (print "  { \"filename\": \"" s "\",")
+				      (print "    \"caches\": [")
+				      (show-fprofile-pcaches (list->vector pcs))
+				      (print "   ] },"))))
+		      srcs))
 		(print "  { \"filename\": \"\", \"caches\": [] }")
 		(print "],")))))
       ((string-contains trc "format:json")
@@ -1280,20 +1314,24 @@
 
    (define (print-call-counts counts locations)
       (let ((sep "\n      "))
-	 (for-each (lambda (l n)
-		      (when (>=fx l 0)
-			 (display sep)
-			 (set! sep ",\n      ")
-			 (if (number? n)
-			     ;; direct call
-			     (printf "{ \"point\": ~a, \"cnt\": ~a }" l n) 
-			     ;; unknown call
-			     (printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l
-				(map (lambda (n)
-					(format "{ \"point\": ~a, \"cnt\": ~a }"
-					   (car n) (cdr n)))
-				   n)))))
-	    locations counts)))
+	 (for-each (lambda (nl)
+		      (let ((n (car nl))
+			    (l (cdr nl)))
+			 (when (and (>=fx l 0) (or (not (number? n)) (> n 0)))
+			    (display sep)
+			    (set! sep ",\n      ")
+			    (if (number? n)
+				;; direct call
+				(printf "{ \"point\": ~a, \"cnt\": ~a }" l n) 
+				;; unknown call
+				(printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l
+				   (map (lambda (n)
+					   (format "{ \"point\": ~a, \"cnt\": ~a }"
+					      (car n) (cdr n)))
+				      n))))))
+	    (sort (lambda (x y)
+		     (< (cdr x) (cdr y)))
+	       (map cons counts locations)))))
    
    (when (string-contains trc "format:fprofile")
       (with-output-to-port *profile-port*
@@ -1309,7 +1347,45 @@
 			    (display "    \"calls\": [")
 			    (print-call-counts
 			       (vector->list (vector-ref t 1))
-			       (vector->list (vector-ref t 2)))
+			       (vector->list (vector-ref t 3)))
+			    (print " ] }"))
+		  *profile-call-tables*))
+	    (print "],")))))
+
+;*---------------------------------------------------------------------*/
+;*    profile-cmaps ...                                                */
+;*---------------------------------------------------------------------*/
+(define (profile-cmaps trc)
+
+   (define (print-call-counts counts locations)
+      (let ((sep "\n      "))
+	 (for-each (lambda (nl)
+		      (let ((n (car nl))
+			    (l (cdr nl)))
+			 (when (and (>=fx l 0) (pair? n))
+			    (display sep)
+			    (set! sep ",\n      ")
+			    (printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l
+			       (map cdr n)))))
+	    (sort (lambda (x y)
+		     (< (cdr x) (cdr y)))
+	       (map cons counts locations)))))
+
+   (when (string-contains trc "format:fprofile")
+      (with-output-to-port *profile-port*
+	 (lambda ()
+	    (print "\"cmaps\": [")
+	    (let ((first #f))
+	       (for-each (lambda (t)
+			    (when first
+			       (set! first #f)
+			       (print ","))
+			    (print "  { \"filename\": \""
+			       (vector-ref t 0) "\",")
+			    (display "    \"cmaps\": [")
+			    (print-call-counts
+			       (vector->list (vector-ref t 2))
+			       (vector->list (vector-ref t 3)))
 			    (print " ] }"))
 		  *profile-call-tables*))
 	    (print "],")))))

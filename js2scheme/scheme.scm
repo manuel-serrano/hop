@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Nov  7 09:12:01 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 18:42:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -816,7 +816,7 @@
 		`(begin
 		    (define ,tmp ,fun)
 		    (define ,ident
-		       ,(j2sfun->scheme val tmp mode return conf))
+		       ,(j2sfun->scheme val tmp #f mode return conf))
 		    ,@(if (usage? '(eval) usage)
 			  `((js-define %this ,scope ,(j2s-scheme-name id)
 			       (lambda (%) ,ident)
@@ -858,14 +858,14 @@
 				     `(js-get ,ident (& "prototype") %this) #f)))
 			  `((,^tmp #unspecified)
 			    (,tmp ,fun)
-			    (,var (let ((,proc ,(j2sfun->scheme val tmp mode return conf)))
+			    (,var (let ((,proc ,(j2sfun->scheme val tmp #f mode return conf)))
 				     (set! ,^tmp ,proc)
 				     ,proc))))
 		       (let ((fun (jsfun->lambda val mode return conf
 				     `(js-get ,ident (& "prototype") %this) #f))
 			     (tmp (j2s-fast-id id)))
 			  `((,tmp ,fun)
-			    (,var ,(j2sfun->scheme val tmp mode return conf)))))))
+			    (,var ,(j2sfun->scheme val tmp #f mode return conf)))))))
 	       ((usage? '(call) usage)
 		`((,(j2s-fast-id id)
 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f))))
@@ -1673,7 +1673,11 @@
 		    (j2s-array-set! this mode return conf)
 		    `(let ((,tmp ,(j2s-scheme obj mode return conf)))
 			(if (js-array? ,tmp)
-			    ,(j2s-array-set! this mode return conf)
+			    ,(j2s-array-set!
+				(duplicate::J2SAssig this
+				   (lhs (duplicate::J2SAccess lhs
+					   (obj (J2SHopRef tmp)))))
+				mode return conf)
 			    ,(j2s-put! loc tmp
 				field
 				(typeof-this obj conf)
@@ -1697,8 +1701,10 @@
 		       (j2s-vector-set! this mode return conf))
 		      ((and (eq? (j2s-vtype obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return conf))
-		      ((mightbe-number? field)
+		      ((and (mightbe-number? field) (eq? (j2s-vtype obj) 'any))
 		       (maybe-array-set lhs rhs))
+		      ((eq? (j2s-vtype obj) 'arguments)
+		       (j2s-arguments-set! this mode return conf))
 		      (else
 		       (j2s-put! loca (j2s-scheme obj mode return conf)
 			  field
@@ -1766,6 +1772,9 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-postpref this::J2SAssig mode return conf op retval)
 
+   (define (min-cspecs cs mincs)
+      (filter (lambda (c) (memq c mincs)) cs))
+   
    (define (new-or-old tmp val comp)
       (if (eq? retval 'new)
 	  (let ((aux (gensym 'res)))
@@ -1910,7 +1919,7 @@
 					       (j2s-vtype field)
 					       val 'number
 					       (strict-mode? mode) conf
-					       cache #t cs)
+					       cache #t (min-cspecs cs '(cmap)))
 					   ,tmp))))))))))))
 
    (define (rhs-cache rhs)
@@ -2226,7 +2235,7 @@
 		      (& "prototype") %this))
 		(else
 		 #f)))))
-		 
+
    (with-access::J2SAccess this (loc obj field cache cspecs type)
       (epairify-deep loc 
 	 (cond

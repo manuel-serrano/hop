@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Oct 10 18:41:10 2019 (serrano)                */
+;*    Last change :  Fri Dec  6 08:12:22 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -35,6 +35,8 @@
 	   __hopscript_arraybuffer
 	   __hopscript_arraybufferview)
 
+   (extern (macro $make-stack-cell::cell (::obj) "MAKE_STACK_CELL"))
+   
    (export 
 	   (js-constant-init ::obj ::obj ::JsGlobalObject)
 	   (js-with-context ::obj ::bstring ::procedure)
@@ -50,7 +52,8 @@
 	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)
 	   (js-iterable->list::pair-nil ::obj ::JsGlobalObject)
 	   (generic js-jsobject->jsarray ::obj ::JsGlobalObject)
-	   (inline fixnums?::bool ::obj ::obj)))
+	   (inline fixnums?::bool ::obj ::obj)
+	   (inline make-stack-cell::cell ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -515,6 +518,13 @@
        (and (fixnum? a) (fixnum? b)))))
 
 ;*---------------------------------------------------------------------*/
+;*    make-stack-cell ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (make-stack-cell v)
+   ($make-stack-cell v))
+
+;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/
 (&end!)
+

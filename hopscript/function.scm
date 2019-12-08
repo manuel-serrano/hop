@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Oct 23 12:10:43 2019 (serrano)                */
+;*    Last change :  Sun Dec  8 05:33:59 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -29,7 +29,8 @@
 	   __hopscript_public
 	   __hopscript_lib
 	   __hopscript_worker
-	   __hopscript_array)
+	   __hopscript_array
+	   __hopscript_arguments)
    
    (export (js-init-function! ::JsGlobalObject)
 	   
@@ -51,12 +52,17 @@
 	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
 	   
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
+	   (js-apply-vec ::JsGlobalObject ::obj ::obj ::vector ::uint32)
+	   (js-function-apply-vec ::JsGlobalObject ::JsFunction ::obj ::vector ::uint32)
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
-	   (js-function-call ::JsGlobalObject ::obj ::obj ::obj ::obj)
+	   (js-function-call0 ::JsGlobalObject ::obj ::obj ::obj)
+	   (js-function-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
-	   (js-function-maybe-call ::JsGlobalObject ::obj ::obj ::obj ::obj)
-	   (js-function-maybe-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)))
+	   (js-function-maybe-call0 ::JsGlobalObject ::obj ::obj ::obj)
+	   (js-function-maybe-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
+	   (js-function-maybe-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
+	   (js-function-maybe-call3 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -550,7 +556,7 @@
 	    ;; length
 	    (vector-set! els 1 length)
 	    ;; name
-	    (vector-set! els 2 (js-string->jsstring name))
+	    (vector-set! els 2 (js-name->jsstring name))
 	    ;; strict properties
 	    (unless (eq? strict 'normal)
 	       (vector-set! els 3 strict-arguments-property)
@@ -766,82 +772,28 @@
       :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
+;*    vector->sublist ...                                              */
+;*---------------------------------------------------------------------*/
+(define (vector->sublist vec len)
+   (if (=fx (vector-length vec) len)
+       (vector->list vec)
+       (let loop ((i (-fx len 1))
+		  (acc '()))
+	  (if (=fx i -1)
+	      acc
+	      (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-apply-array ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-apply-array %this::JsGlobalObject this thisarg argarray)
-   
-   (define (vector->sublist vec len)
-      (if (=fx (vector-length vec) len)
-	  (vector->list vec)
-	  (let loop ((i (-fx len 1))
-		     (acc '()))
-	     (if (=fx i -1)
-		 acc
-		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
-   
    (cond
       ((js-array? argarray)
        (with-access::JsArray argarray (vec ilen)
 	  (cond
 	     ((js-object-mode-inline? argarray)
 	      ;; fast path
-	      (cond
-		 ((js-function? this)
-		  (with-access::JsFunction this (arity procedure)
-		     (let ((n (uint32->fixnum ilen)))
-			(if (=fx arity (+fx 1 n))
-			    (case arity
-			       ((1)
-				(procedure thisarg))
-			       ((2)
-				(procedure thisarg (vector-ref vec 0)))
-			       ((3)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)))
-			       ((4)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)
-				   (vector-ref vec 2)))
-			       ((5)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)
-				   (vector-ref vec 2)
-				   (vector-ref vec 3)))
-			       ((6)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)
-				   (vector-ref vec 2)
-				   (vector-ref vec 3)
-				   (vector-ref vec 4)))
-			       ((7)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)
-				   (vector-ref vec 2)
-				   (vector-ref vec 3)
-				   (vector-ref vec 4)
-				   (vector-ref vec 5)))
-			       ((8)
-				(procedure thisarg (vector-ref vec 0)
-				   (vector-ref vec 1)
-				   (vector-ref vec 2)
-				   (vector-ref vec 3)
-				   (vector-ref vec 4)
-				   (vector-ref vec 5)
-				   (vector-ref vec 6)))
-			       (else
-				(let ((len (js-get argarray (& "length") %this)))
-				   (js-apply %this this thisarg
-				      (vector->sublist vec len)))))
-			    (let ((len (js-get argarray (& "length") %this)))
-			       (js-apply %this this thisarg
-				  (vector->sublist vec len)))))))
-		 ((js-function-proxy? this)
-		  (let ((len (js-get argarray (& "length") %this)))
-		     (js-apply %this this thisarg
-			(vector->sublist vec len))))
-		 (else
-		  (js-raise-type-error %this
-		     "apply: argument not a function ~s" this))))
+	      (js-apply-vec %this this thisarg vec ilen))
 	     ((js-object-mode-holey? argarray)
 	      ;; fast path
 	      (let ((len (js-get argarray (& "length") %this)))
@@ -856,6 +808,71 @@
 		 (js-apply %this this thisarg
 		    (map! (lambda (idx)
 			     (js-array-fixnum-ref argarray idx %this))
+		       (iota len))))))))
+      ((vector? argarray)
+       (js-apply-vec %this this thisarg
+	  argarray (fixnum->uint32 (vector-length argarray))))
+      ((and (isa? argarray JsArguments) (js-function? this))
+       (let ((len (js-arguments-length argarray %this)))
+	  (with-access::JsFunction this (arity procedure)
+	     (cond
+		((=fx arity (+fx 1 len))
+		 (case arity
+		    ((1)
+		     (procedure thisarg))
+		    ((2)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)))
+		    ((3)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)))
+		    ((4)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)
+			(js-arguments-ref argarray 2 %this)))
+		    ((5)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)
+			(js-arguments-ref argarray 2 %this)
+			(js-arguments-ref argarray 3 %this)))
+		    ((6)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)
+			(js-arguments-ref argarray 2 %this)
+			(js-arguments-ref argarray 3 %this)
+			(js-arguments-ref argarray 4 %this)))
+		    ((7)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)
+			(js-arguments-ref argarray 2 %this)
+			(js-arguments-ref argarray 3 %this)
+			(js-arguments-ref argarray 4 %this)
+			(js-arguments-ref argarray 5 %this)))
+		    ((8)
+		     (procedure thisarg
+			(js-arguments-ref argarray 0 %this)
+			(js-arguments-ref argarray 1 %this)
+			(js-arguments-ref argarray 2 %this)
+			(js-arguments-ref argarray 3 %this)
+			(js-arguments-ref argarray 4 %this)
+			(js-arguments-ref argarray 5 %this)
+			(js-arguments-ref argarray 6 %this)))
+		    (else
+		     (js-apply %this this thisarg
+			(map! (lambda (idx)
+				 (js-arguments-ref argarray idx %this))
+			   (iota len))))))
+		((=fx arity -2048)
+		 (procedure thisarg (js-arguments->vector argarray %this)))
+		(else
+		 (js-apply %this this thisarg
+		    (map! (lambda (idx)
+			     (js-arguments-ref argarray idx %this))
 		       (iota len))))))))
       ((or (eq? argarray (js-null)) (eq? argarray (js-undefined)))
        (js-call0 %this this thisarg))
@@ -874,6 +891,73 @@
 	     (map! (lambda (idx)
 		      (js-get argarray idx %this))
 		(iota len)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-apply-vec ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-apply-vec %this this thisarg vec::vector ilen::uint32)
+   (cond
+      ((js-function? this)
+       (js-function-apply-vec %this this thisarg vec ilen))
+      ((js-function-proxy? this)
+       (js-apply %this this thisarg
+	  (vector->sublist vec (uint32->fixnum ilen))))
+      (else
+       (js-raise-type-error %this
+	  "apply: argument not a function ~s" this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-apply-vec ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-function-apply-vec %this this thisarg vec::vector ilen::uint32)
+   (with-access::JsFunction this (arity procedure)
+      (let ((n (uint32->fixnum ilen)))
+	 (cond
+	    ((=fx arity (+fx 1 n))
+	     (case arity
+		((1)
+		 (procedure thisarg))
+		((2)
+		 (procedure thisarg (vector-ref vec 0)))
+		((3)
+		 (procedure thisarg (vector-ref vec 0)
+		    (vector-ref vec 1)))
+		((4)
+		 (procedure thisarg (vector-ref vec 0)
+		    (vector-ref vec 1)
+		    (vector-ref vec 2)))
+		((5)
+		 (procedure thisarg (vector-ref vec 0)
+		    (vector-ref vec 1)
+		    (vector-ref vec 2)
+		    (vector-ref vec 3)))
+		((6)
+		 (procedure thisarg (vector-ref vec 0)
+		    (vector-ref vec 1)
+		    (vector-ref vec 2)
+		    (vector-ref vec 3)
+		    (vector-ref vec 4)))
+		((7)
+		 (procedure thisarg (vector-ref vec 0)
+		    (vector-ref vec 1)
+		    (vector-ref vec 2)
+		    (vector-ref vec 3)
+		    (vector-ref vec 4)
+		    (vector-ref vec 5)))
+		((8)
+		 (procedure thisarg (vector-ref vec 0)
+		    (vector-ref vec 1)
+		    (vector-ref vec 2)
+		    (vector-ref vec 3)
+		    (vector-ref vec 4)
+		    (vector-ref vec 5)
+		    (vector-ref vec 6)))
+		(else
+		 (js-apply %this this thisarg (vector->sublist vec n)))))
+	    ((=fx arity -2048)
+	     (procedure thisarg vec))
+	    (else
+	     (js-apply %this this thisarg (vector->sublist vec n)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-apply ...                                            */
@@ -905,9 +989,21 @@
 	  (loop (js-toobject %this this))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-call ...                                             */
+;*    js-function-call0 ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-function-call %this this thisarg arg cache)
+(define (js-function-call0 %this this thisarg cache)
+   (if (js-object-mode-plain? this)
+       (js-call0 %this this thisarg)
+       (with-access::JsGlobalObject %this (js-function-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "call") #f %this
+		(or cache (js-pcache-ref js-function-pcache 4)))
+	     this thisarg))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-call1 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-function-call1 %this this thisarg arg cache)
    (if (js-object-mode-plain? this)
        (js-call1 %this this thisarg arg)
        (with-access::JsGlobalObject %this (js-function-pcache)
@@ -929,13 +1025,42 @@
 	     this thisarg arg0 arg1))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-maybe-call ...                                       */
+;*    js-function-call3 ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-function-maybe-call %this this thisarg arg cache)
+(define (js-function-call3 %this this thisarg arg0 arg1 arg2 cache)
+   (if (js-object-mode-plain? this)
+       (js-call3 %this this thisarg arg0 arg1 arg2)
+       (with-access::JsGlobalObject %this (js-function-pcache)
+	  (js-call4 %this
+	     (js-get-name/cache this (& "call") #f %this
+		(or cache (js-pcache-ref js-function-pcache 4)))
+	     this thisarg arg0 arg1 arg2))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-call0 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-call0 %this this thisarg cache)
    (let loop ((this this))
       (cond
 	 ((js-function? this)
-	  (js-function-call %this this thisarg arg cache))
+	  (js-function-call0 %this this thisarg cache))
+	 ((js-object? this)
+	  (with-access::JsGlobalObject %this (js-function-pcache)
+	     (js-call1 %this
+		(js-get-name/cache this (& "call") #f %this
+		   (or cache (js-pcache-ref js-function-pcache 5)))
+		this thisarg)))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-call1 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-call1 %this this thisarg arg cache)
+   (let loop ((this this))
+      (cond
+	 ((js-function? this)
+	  (js-function-call1 %this this thisarg arg cache))
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
 	     (js-call2 %this
@@ -959,6 +1084,23 @@
 		(js-get-name/cache this (& "call") #f %this
 		   (or cache (js-pcache-ref js-function-pcache 5)))
 		this thisarg arg0 arg1)))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-call3 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-call3 %this this thisarg arg0 arg1 arg2 cache)
+   (let loop ((this this))
+      (cond
+	 ((js-function? this)
+	  (js-function-call3 %this this thisarg arg0 arg1 arg2 cache))
+	 ((js-object? this)
+	  (with-access::JsGlobalObject %this (js-function-pcache)
+	     (js-call4 %this
+		(js-get-name/cache this (& "call") #f %this
+		   (or cache (js-pcache-ref js-function-pcache 5)))
+		this thisarg arg0 arg1 arg2)))
 	 (else
 	  (loop (js-toobject %this this))))))
 

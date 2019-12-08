@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  3 07:00:40 2019                          */
-;*    Last change :  Fri Nov  8 10:34:44 2019 (serrano)                */
+;*    Last change :  Wed Nov 20 21:16:21 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Loop specialization                                              */
@@ -309,7 +309,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type-bint! this::J2SRef env::pair-nil)
    (with-access::J2SRef this (decl type)
-      (when (memq type '(number any))
+      (when (memq type '(integer number any))
 	 (when (memq decl env)
 	    (with-access::J2SDecl decl (vtype)
 	       (if (eq? vtype 'int32)
@@ -325,6 +325,15 @@
       (when (and (isa? val J2SRef) (not (decl-usage? this '(assig))))
 	 (with-access::J2SRef val (decl)
 	    (when (memq decl env)
-	       (set-cdr! env (list this env))
+	       (set-cdr! (last-pair env) (list this))
 	       (set! vtype 'bint)))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    force-type-bint! ::J2SLetBlock ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type-bint! this::J2SLetBlock env::pair-nil)
+   (with-access::J2SLetBlock this (decls nodes)
+      (for-each (lambda (d) (force-type-bint! d env)) decls)
+      (for-each (lambda (n) (force-type-bint! n env)) nodes)
+      this))

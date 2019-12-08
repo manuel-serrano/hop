@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Aug  9 08:32:27 2019 (serrano)                */
+;*    Last change :  Thu Dec  5 09:43:11 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -80,7 +80,7 @@
 		(and (eq? totype 'any) (memq type *any-types*))))))
 
 (define *any-types*
-   '(undefined null bool integer number object function string real array regexp))
+   '(undefined null bool integer number object function string real array regexp arguments))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-expr ...                                                    */
