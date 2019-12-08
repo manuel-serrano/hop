@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Sat Dec  7 19:41:58 2019 (serrano)                */
+;*    Last change :  Sun Dec  8 05:35:28 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
@@ -15,7 +15,7 @@
 (define-macro (js-function-apply-arguments %this this thisarg vec arguments cache)
    `(if (and (or (not (js-object? ,this)) (js-object-mode-plain? ,this))
 	     (not (object? ,arguments)))
-	(js-apply-array ,%this ,this ,thisarg ,vec)
+	(js-function-apply-vec ,%this ,this ,thisarg ,vec (fixnum->uint32 (vector-length ,vec)))
 	(begin
 	   (set! ,arguments (js-materialize-arguments ,%this ,vec ,arguments))
 	   (js-function-apply %this ,this ,thisarg ,arguments ,cache))))
