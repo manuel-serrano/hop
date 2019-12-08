@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  3 07:00:40 2019                          */
-;*    Last change :  Wed Nov 20 21:16:21 2019 (serrano)                */
+;*    Last change :  Sun Dec  8 06:09:28 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Loop specialization                                              */
@@ -69,6 +69,15 @@
 (define-walk-method (loopspec! this::J2SNode conf)
    (call-default-walker))
 
+;*---------------------------------------------------------------------*/
+;*    loopspec! ::J2SMeta ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (loopspec! this::J2SMeta conf)
+   (with-access::J2SMeta this (optim)
+      (if (>=fx optim 2)
+	  (call-default-walker)
+	  this)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    incr-index ...                                                   */
 ;*---------------------------------------------------------------------*/

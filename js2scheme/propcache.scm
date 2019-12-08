@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Nov  7 09:10:08 2019 (serrano)                */
+;*    Last change :  Sun Dec  8 06:54:27 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -151,7 +151,8 @@
    (if infunloop
        (with-access::J2SAccess this (cache obj field loc)
 	  (unless (canbe-object? obj)
-	     (tprint "CANNOT BE OBJECT " (j2s->list this)))
+	     (tprint "CANNOT BE OBJECT " loc " " (j2s-type obj)
+		" " (j2s->list this)))
 	  (if (canbe-object? obj)
 	      (begin
 		 (cond

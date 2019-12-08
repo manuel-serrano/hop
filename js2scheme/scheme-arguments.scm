@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Dec  7 07:01:00 2019 (serrano)                */
+;*    Last change :  Sun Dec  8 06:23:40 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -53,6 +53,12 @@
 		  `(js-arguments-index-ref ,(j2s-scheme obj mode return conf)
 		      ,(j2s-scheme field mode return conf)
 		      %this)))
+	     ((eq? (j2s-vtype field) 'int32)
+	      (let ((argid (j2s-ref-arguments-argid obj)))
+		 `(js-arguments-vector-ref ,argid
+		   ,(j2s-scheme obj mode return conf)
+		   (int32->fixnum ,(j2s-scheme field mode return conf))
+		   %this)))
 	     ((and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
 	      (let ((argid (j2s-ref-arguments-argid obj)))
 		 `(js-arguments-vector-ref ,argid
@@ -81,7 +87,18 @@
    (with-access::J2SAssig this (lhs rhs)
       (with-access::J2SAccess lhs (obj field cache cspecs loc)
 	 (if (config-get conf :optim-arguments)
-	     (tprint "NOT IMPLEMENTED YET")
+	     (if (eq? (j2s-vtype field) 'uint32)
+		 (if (and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
+		     (let ((argid (j2s-ref-arguments-argid obj)))
+			`(js-arguments-vector-index-set! ,argid
+			    ,(j2s-scheme obj mode return conf)
+			    ,(j2s-scheme field mode return conf)
+			    ,(j2s-scheme rhs mode return conf)
+			    %this))
+		     `(js-arguments-index-ref ,(j2s-scheme obj mode return conf)
+			 ,(j2s-scheme field mode return conf)
+			 ,(j2s-scheme rhs mode return conf)
+			 %this)))
 	     (j2s-put! loc (j2s-scheme obj mode return conf) field
 		(typeof-this obj conf)
 		(j2s-scheme field mode return conf)
