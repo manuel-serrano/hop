@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Nov  2 07:36:27 2019 (serrano)                */
+;*    Last change :  Sun Dec  8 06:08:09 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -913,28 +913,31 @@
    (with-access::J2SDeclFun fun (id)
       (let ((val (j2sdeclinit-val-fun fun)))
 	 (with-access::J2SFun val (params body name generator idthis loc)
-	    (let ((nfun (duplicate::J2SDeclFun fun
-			   (parent fun)
-			   (key (ast-decl-key))
-			   (id (symbol-append id '%%))
-			   (ronly #t)
-			   (writable #f)
-			   (binder 'let)
-			   ;;(scope 'none)
-			   (usecnt 1)
-			   (utype 'function)
-			   (%info fun)
-			   (hintinfo fun)
-			   (val (duplicate::J2SFun val
-				   (generator #f)
-				   (optimize #f)
-				   (idgen generator)
-				   (idthis (if (this? body) idthis #f))
-				   (name (when (symbol? name)
-					    (symbol-append name '%%)))
-				   (params params)
-				   (body (duplicate::J2SBlock body
-					    (nodes (list body)))))))))
+	    (let* ((nbody (duplicate::J2SBlock body
+			     (nodes (list (J2SMeta
+					     0 1
+					     (J2SSeq body))))))
+		   (nfun (duplicate::J2SDeclFun fun
+			    (parent fun)
+			    (key (ast-decl-key))
+			    (id (symbol-append id '%%))
+			    (ronly #t)
+			    (writable #f)
+			    (binder 'let)
+			    ;;(scope 'none)
+			    (usecnt 1)
+			    (utype 'function)
+			    (%info fun)
+			    (hintinfo fun)
+			    (val (duplicate::J2SFun val
+				    (generator #f)
+				    (optimize #f)
+				    (idgen generator)
+				    (idthis (if (this? body) idthis #f))
+				    (name (when (symbol? name)
+					     (symbol-append name '%%)))
+				    (params params)
+				    (body nbody))))))
 	       (with-access::J2SDeclFun nfun ((nval val))
 		  (with-access::J2SFun nval (body)
 		     ;; force a copy of the three to avoid sharing with the
