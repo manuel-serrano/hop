@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  3 07:00:40 2019                          */
-;*    Last change :  Sun Dec  8 06:09:28 2019 (serrano)                */
+;*    Last change :  Sun Dec  8 07:04:13 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Loop specialization                                              */
@@ -305,7 +305,8 @@
 					  (j2s-alpha this
 					     (list decl) (list fordecl))
 					  (list (test-rhs-decl test ref) fordecl)))
-				    (J2SMeta 0 0 this)))))))))))))
+				    (J2SMeta 0 0
+				       (uncache! this))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type-bint! ::J2SNode ...                                   */
@@ -346,3 +347,66 @@
       (for-each (lambda (d) (force-type-bint! d env)) decls)
       (for-each (lambda (n) (force-type-bint! n env)) nodes)
       this))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SNode ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Remove property cache to save code size.                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SNode)
+   (call-default-walker)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SPrefix ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SPrefix)
+   (call-default-walker)
+   (with-access::J2SPrefix this (cache)
+      (set! cache #f))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SPostfix ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SPostfix)
+   (call-default-walker)
+   (with-access::J2SPostfix this (cache)
+      (set! cache #f))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SAssigOp ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SAssigOp)
+   (call-default-walker)
+   (with-access::J2SAssigOp this (cache)
+      (set! cache #f))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SAccess ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SAccess)
+   (call-default-walker)
+   (with-access::J2SAccess this (cache)
+      (set! cache #f))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SCall ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SCall)
+   (call-default-walker)
+   (with-access::J2SCall this (cache)
+      (set! cache #f))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SOPTInitSeq ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SOPTInitSeq)
+   (call-default-walker)
+   (with-access::J2SOPTInitSeq this (cache)
+      (set! cache #f))
+   this)

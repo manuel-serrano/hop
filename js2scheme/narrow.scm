@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/narrow.scm        */
+;*    serrano/prgm/project/hop/hop/js2scheme/narrow.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Wed Sep  5 16:39:41 2018 (serrano)                */
-;*    Copyright   :  2015-18 Manuel Serrano                            */
+;*    Last change :  Sun Dec  8 18:35:58 2019 (serrano)                */
+;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
 ;*    -------------------------------------------------------------    */
@@ -115,6 +115,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-blockify! ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Force a block before each variable initialization.               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-blockify! this::J2SNode)
    (call-default-walker))
@@ -193,7 +195,10 @@
       ;; find the declaring block of all declarations
       (j2s-find-init-blocks body body o)
       ;; find the variables used but not initialized
-      (when (and #f (j2s-narrow-fun/w-init! o))
+      (when #f 
+	 (j2s-narrow-fun/w-init! o))
+      ;; create block for all variable initialization
+      (when #t
 	 (set! body (j2s-blockify! body)))
       ;; get the set of narrowable declarations
       (j2s-mark-narrowable body '() #f o (make-cell #f))
@@ -363,7 +368,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow-body! this::J2SDecl)
    (call-default-walker)
-   (with-access::J2SDecl this (loc %info)
+   (with-access::J2SDecl this (loc %info loc id)
       (or (when (isa? %info J2SNarrowInfo)
 	     (with-access::J2SNarrowInfo %info (defblock narrowable)
 		(when narrowable
@@ -475,7 +480,7 @@
 (define-walk-method (j2s-lift-inits! this::J2SLetBlock)
    
    (define (lift? node::J2SNode decls)
-      ;; lift everything that is not an initialization of one decls
+      ;; lift everything init that is not an initialization of one decls
       (or (not (isa? node J2SStmtExpr))
 	  (with-access::J2SStmtExpr node (expr)
 	     (or (not (isa? expr J2SInit))
