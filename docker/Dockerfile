@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM debian:buster
 
 RUN apt-get update && apt-get install -y \
     bash \
@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libtool \
     libgmp-dev libgmp3-dev libgmp10 \
-    libssl1.0.0 libssl-dev \
+    libssl1.1 libssl-dev \
     libsqlite3-0 libsqlite3-dev \
     libasound2 libasound2-dev \
     libpulse0 libpulse-dev \
