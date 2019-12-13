@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Dec  6 10:46:06 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 14:56:58 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -71,7 +71,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s-info->list this)
    (cond
-      ((and (pair? this) (null? (cdr this)))
+      ((and (pair? this) (not (or (null? (cdr this)) (pair? (cdr this)))))
        (cons (j2s-info->list (car this)) (j2s-info->list (cdr this))))
       ((list? this)
        (map j2s-info->list this))

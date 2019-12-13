@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Dec  8 06:08:09 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 14:43:04 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -706,19 +706,28 @@
 	 (cond
 	    (dup
 	     (with-access::J2SFun (j2sdeclinit-val-fun this) (params body)
-		(let ((besthints (map (lambda (p)
-					 (param-best-hint-type p))
-				    params)))
+		(let ((besthints (map param-best-hint-type params)))
 		   (if (<fx (apply max (map cdr besthints)) 10)
 		       ;; no benefit in duplicating this function
 		       (loop #f)
 		       (let ((htypes (map (lambda (bh p)
-					     (if (>=fx (cdr bh) 3)
-						 (car bh)
+					     (cond
+						((< (cdr bh) 3)
 						 (with-access::J2SDecl p (vtype)
-						    vtype)))
+						    vtype))
+						((and (or (eq? (car bh) 'null)
+							  (eq? (car bh) 'undefined))
+						      (< (cdr bh) 12))
+						 ;; only specialize on NULL
+						 ;; and UNDEFINED if it is
+						 ;; tested intensively
+						 (with-access::J2SDecl p (vtype)
+						    vtype))
+						(else
+						 (car bh))))
 					besthints params)))
-			  (if (or (not (every (lambda (t) (eq? t 'object)) htypes))
+			  (if (or (not (every (lambda (t)
+						 (eq? t 'object)) htypes))
 				  (not (self-recursive? this)))
 			      ;; only hints non-recursive or
 			      ;; non-object functions
