@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Dec  6 07:42:19 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 18:45:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -704,7 +704,7 @@
 		       (decl decl)))))
 	    (else
 	     (let ((decl (instantiate::J2SDecl
-			    (ronly #t)
+			    (usage '())
 			    (utype 'any)
 			    (scope 'unbound)
 			    (loc loc)

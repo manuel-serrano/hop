@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Sun Jun  2 06:40:35 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 19:06:49 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization removes the THIS argument of functions that    */
@@ -56,8 +56,8 @@
 ;*    unthis ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unthis this::J2SDeclInit)
-   (with-access::J2SDeclInit this (ronly val)
-      (when (and ronly (isa? val J2SFun) (not (isa? val J2SSvc)))
+   (with-access::J2SDeclInit this (val)
+      (when (and (decl-ronly? this) (isa? val J2SFun) (not (isa? val J2SSvc)))
 	 (with-access::J2SFun val (generator idthis thisp)
 	    (when (and (not generator) (decl-strict-usage? this '(init call)))
 	       (when (isa? thisp J2SDecl)

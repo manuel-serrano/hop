@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Dec  6 19:30:53 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 19:10:54 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -37,16 +37,16 @@
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
 
    (define (no-closure? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (ronly val)
-	 (when ronly
+      (with-access::J2SDeclFun this (val)
+	 (when (decl-ronly? this)
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
 		     (not (decl-usage? this '(new ref get set instanceof)))))))))
 
    (define (constructor-only? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (ronly val)
-	 (when ronly
+      (with-access::J2SDeclFun this (val)
+	 (when (decl-ronly? this)
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
@@ -108,7 +108,7 @@
 		   `((define ,scmid 
 			,(j2s-make-function this mode return conf)))))))
    
-   (with-access::J2SDeclFun this (loc id scope val ronly exports)
+   (with-access::J2SDeclFun this (loc id scope val exports)
       (let ((val (declfun-fun this)))
 	 (with-access::J2SFun val (params mode vararg body name generator)
 	    (let* ((scmid (j2s-decl-scheme-id this))
@@ -169,7 +169,7 @@
 (define (j2s-make-function this::J2SDeclFun mode return conf)
    
    (define (make-function-sans-alloc this::J2SDeclFun)
-      (with-access::J2SDeclFun this (loc id scope val ronly)
+      (with-access::J2SDeclFun this (loc id scope val)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator
 					constrsize method new-target)
@@ -264,15 +264,15 @@
 (define (j2s-scheme-closure this::J2SDecl mode return conf)
 
    (define (no-closure? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (ronly val)
-	 (when ronly
+      (with-access::J2SDeclFun this (val)
+	 (when (decl-ronly? this)
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
 		     (not (decl-usage? this '(new ref get set instanceof)))))))))
    
    (when (and (isa? this J2SDeclFun) (not (isa? this J2SDeclSvc)))
-      (with-access::J2SDeclFun this (loc id scope val ronly)
+      (with-access::J2SDeclFun this (loc id scope val)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator)
 	       (let* ((scmid (j2s-decl-scheme-id this))

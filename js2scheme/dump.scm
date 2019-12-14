@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Dec 13 14:56:58 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 18:46:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -307,9 +307,8 @@
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:access")
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:usage"))
-       (with-access::J2SDecl this (usecnt useinloop escape usage ronly writable scope)
-	  `((:ronly ,ronly)
-	    (:writable ,writable)
+       (with-access::J2SDecl this (usecnt useinloop escape usage writable scope)
+	  `((:writable ,writable)
 	    (:usecnt ,usecnt)
 	    (:useinloop ,useinloop)
 	    (:escape ,escape)
@@ -979,11 +978,9 @@
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
-   (with-access::J2SDeclInit this (val ronly writable val scope id)
+   (with-access::J2SDeclInit this (val)
       `(,@(call-next-method)
-	  ,@(if (> (bigloo-debug) 2) `(:ronly ,ronly) '())
-	  ,@(if (> (bigloo-debug) 2) `(:writable ,writable) '())
-	  ,@(if (> (bigloo-debug) 3) `(:scope ,scope) '())
+	  ,@(dump-access this)
 	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1077,13 +1074,11 @@
 ;*    j2s->list ::J2SDeclClass ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclClass)
-   (with-access::J2SDeclClass this (val key ronly writable val scope id)
+   (with-access::J2SDeclClass this (val key)
       `(,@(call-next-method)
 	  ,@(dump-key key)
 	  ,@(dump-vtype this)
-	  ,@(if (> (bigloo-debug) 2) `(:ronly ,ronly) '())
-	  ,@(if (> (bigloo-debug) 2) `(:writable ,writable) '())
-	  ,@(if (> (bigloo-debug) 3) `(:scope ,scope) '())
+	  ,@(dump-access this)
 	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/

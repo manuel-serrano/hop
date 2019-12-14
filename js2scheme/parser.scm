@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Nov 28 20:02:24 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 18:44:17 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1096,7 +1096,9 @@
 				       (decl (instantiate::J2SDeclFun
 						(loc loc)
 						(writable (not (eq? mode 'hopscript)))
-						(ronly (eq? mode 'hopscript))
+						(usage (if (eq? mode 'hopscript)
+							   '()
+							   '(assig)))
 						(id (cdr id))
 						(val val))))
 			 decl))
@@ -1116,7 +1118,7 @@
 						(loc (token-loc id))
 						(id (cdr id))
 						(writable #f)
-						(ronly #t)
+						(usage '())
 						(expression #t)
 						(scope 'global)
 						(val fun))))
@@ -1155,7 +1157,7 @@
 				       (id (cdr id))
 				       (scope 'global)
 				       (writable #f)
-				       (ronly #t)
+				       (usage '())
 				       (val val))))
 		decl))
 	    (id
@@ -1176,7 +1178,7 @@
 				       (loc (token-loc id))
 				       (id (cdr id))
 				       (writable #f)
-				       (ronly #t)
+				       (usage '())
 				       (expression #t)
 				       (scope  'global)
 				       (val svc))))
@@ -1676,7 +1678,7 @@
 					  (loc (token-loc id))
 					  (id (token-value id))
 					  (writable #f)
-					  (ronly #t)
+					  (usage '())
 					  (scope 'global)
 					  (binder 'let)
 					  (val clazz))))
@@ -1690,7 +1692,7 @@
 					  (loc (token-loc id))
 					  (id (token-value id))
 					  (writable #f)
-					  (ronly #t)
+					  (usage '())
 					  (scope 'global)
 					  (binder 'let)
 					  (val clazz))))
@@ -3396,11 +3398,11 @@
 ;*    hopscript-cnst-fun! ::J2SDeclFun ...                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hopscript-cnst-fun! this::J2SDeclFun)
-   (with-access::J2SDeclFun this (val mode ronly writable writable)
+   (with-access::J2SDeclFun this (val mode writable usage)
       (with-access::J2SFun val (mode)
 	 (when (eq? mode 'hopscript)
 	    (set! writable #f)
-	    (set! ronly #t)))
+	    (set! usage (remq! 'assig usage))))
       (if writable
 	  (call-default-walker)
 	  this)))

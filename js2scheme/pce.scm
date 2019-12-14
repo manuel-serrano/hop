@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/pce.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/pce.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Sat Jan 19 14:04:14 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 19:07:19 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -546,16 +546,14 @@
 		(let* ((ndecls (map (lambda (d)
 				       (with-access::J2SDeclInit d (vtype loc usage)
 					  (duplicate::J2SDeclInit d
-					     (ronly #f)
 					     (writable #t)
 					     (usage (cons 'assig usage))
 					     (val (neutral vtype loc)))))
 				  decls))
 		       (assig+ (map (lambda (d)
-				       (with-access::J2SDeclInit d (vtype loc val writable usage ronly)
+				       (with-access::J2SDeclInit d (vtype loc val writable usage)
 					  (set! usage (cons 'assig usage))
 					  (set! writable #t)
-					  (set! ronly #f)
 					  (J2SStmtExpr
 					     (J2SAssig/type vtype
 						(J2SRef d :type vtype) val))))

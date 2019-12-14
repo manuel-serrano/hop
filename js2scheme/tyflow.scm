@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Dec  4 17:36:23 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 18:57:06 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -168,7 +168,7 @@
    (with-access::J2SAssig this (lhs rhs)
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (scope ronly %info)
+	     (with-access::J2SDecl decl (scope %info)
 		(unless (memq decl env)
 		   (set! %info 'capture))))
 	  (mark-capture lhs env))
@@ -682,7 +682,7 @@
 	    ((not (eq? utype 'unknown))
 	     (decl-vtype-add! decl utype fix)
 	     (expr-type-add! this env fix utype))
-	    ((decl-usage? decl '(assig))
+	    ((not (decl-ronly? decl))
 	     (multiple-value-bind (tyv env bk)
 		(call-next-method)
 		(decl-vtype-add! decl tyv fix)
@@ -765,8 +765,8 @@
 	 (when (isa? thisp J2SDecl)
 	    (decl-itype-add! thisp 'object fix))))
    
-   (with-access::J2SDeclFun this (val ronly scope id)
-      (if ronly
+   (with-access::J2SDeclFun this (val scope id)
+      (if (decl-ronly? this)
 	  (decl-vtype-set! this 'function fix)
 	  (decl-vtype-add! this 'function fix))
       (cond
@@ -793,8 +793,8 @@
 ;*    node-type ::J2SDeclClass ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclClass env::pair-nil fix::cell)
-   (with-access::J2SDeclClass this (val ronly)
-      (if ronly
+   (with-access::J2SDeclClass this (val)
+      (if (decl-ronly? this)
 	  (decl-vtype-set! this 'class fix)
 	  (decl-vtype-add! this 'class fix))
       (multiple-value-bind (tyf env bk)
@@ -1036,8 +1036,10 @@
       (filter-map (lambda (c)
 		     (let ((d (car c))
 			   (t (cdr c)))
-			(with-access::J2SDecl d (ronly vtype)
-			   (if ronly c (cons d vtype)))))
+			(with-access::J2SDecl d (vtype)
+			   (if (decl-ronly? d)
+			       c
+			       (cons d vtype)))))
 	 env)))
 
 ;*---------------------------------------------------------------------*/
@@ -1116,8 +1118,8 @@
       ;; compute a new node-type environment where all mutated globals
       ;; and all mutated captured locals are removed
       (filter (lambda (e)
-		 (with-access::J2SDecl (car e) (ronly writable scope %info id)
-		    (or ronly
+		 (with-access::J2SDecl (car e) (writable scope %info id)
+		    (or (decl-ronly? (car e))
 			(not writable)
 			(and (eq? scope 'local) (eq? %info 'nocapture)))))
 	 env))
@@ -1175,8 +1177,8 @@
       (with-access::J2SRef callee (decl)
 	 (cond
 	    ((isa? decl J2SDeclFun)
-	     (with-access::J2SDeclFun decl (ronly val)
-		(if ronly
+	     (with-access::J2SDeclFun decl (val)
+		(if (decl-ronly? decl)
 		    (if (isa? val J2SMethod)
 			(with-access::J2SMethod val (function method)
 			   (if (eq? tty 'object)
@@ -1185,11 +1187,11 @@
 			(type-known-call callee val args env bk))
 		    (type-unknown-call callee env bk))))
 	    ((isa? decl J2SDeclInit)
-	     (with-access::J2SDeclInit decl (ronly val)
+	     (with-access::J2SDeclInit decl (val)
 		(cond
-		   ((and ronly (isa? val J2SFun))
+		   ((and (decl-ronly? decl) (isa? val J2SFun))
 		    (type-known-call callee val args env bk))
-		   ((and ronly (isa? val J2SMethod))
+		   ((and (decl-ronly? decl) (isa? val J2SMethod))
 		    (with-access::J2SMethod val (function method)
 		       (if (eq? tty 'object)
 			   (type-known-call callee method args env bk)
@@ -1204,14 +1206,13 @@
 	 ((isa? obj J2SGlobalRef)
 	  (with-access::J2SGlobalRef obj (id decl)
 	     (when (eq? id ident)
-		(with-access::J2SDecl decl (ronly)
-		   ronly))))
+		(decl-ronly? decl))))
 	 ((isa? obj J2SRef)
 	  (with-access::J2SRef obj (decl)
 	     (when (isa? decl J2SDeclExtern)
 		(with-access::J2SDeclExtern decl (id)
 		   (when (eq? id ident)
-		      (not (decl-usage? decl '(assig))))))))))
+		      (decl-ronly? decl))))))))
    
    (define (type-method-call callee args env bk)
       ;; type a method call: O.m( ... )
@@ -1299,7 +1300,7 @@
 	  (with-access::J2SRef clazz (decl)
 	     (when (isa? decl J2SDeclExtern)
 		(with-access::J2SDeclExtern decl (id)
-		   (when (not (decl-usage? decl '(assig)))
+		   (when (decl-ronly? decl)
 		      (case id
 			 ((Array) 'array)
 			 ((Date) 'date)

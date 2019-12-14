@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Dec  7 07:30:40 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 19:12:21 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -181,8 +181,8 @@
        (with-access::J2SRef obj (loc decl)
 	  (if (and (or (isa? decl J2SDeclFun)
 		       (and (isa? decl J2SDeclInit)
-			    (with-access::J2SDeclInit decl (val ronly)
-			       (and (isa? val J2SFun) ronly))))
+			    (with-access::J2SDeclInit decl (val)
+			       (and (isa? val J2SFun) (decl-ronly? decl)))))
 		   (decl-only-usage? decl '(get call new init instanceof))
 		   (and (pair? args) (=fx (length args) 4)))
 	      (if (and (isa? (cadr args) J2SRef)
@@ -224,8 +224,8 @@
 	  (cond
 	     ((and (or (isa? decl J2SDeclFun)
 		       (and (isa? decl J2SDeclInit)
-			    (with-access::J2SDeclInit decl (val ronly)
-			       (and (isa? val J2SFun) ronly))))
+			    (with-access::J2SDeclInit decl (val)
+			       (and (isa? val J2SFun) (decl-ronly? decl)))))
 		   (decl-only-usage? decl '(get call new init instanceof))
 		   (and (pair? args) (<=fx (length args) 2)))
 	      (j2s-scheme (J2SMethodCall* obj
@@ -261,8 +261,8 @@
 	  (cond
 	     ((and (or (isa? decl J2SDeclFun)
 		       (and (isa? decl J2SDeclInit)
-			    (with-access::J2SDeclInit decl (val ronly)
-			       (and (isa? val J2SFun) ronly))))
+			    (with-access::J2SDeclInit decl (val)
+			       (and (isa? val J2SFun) (decl-ronly? decl)))))
 		   (decl-only-usage? decl '(get call new init instanceof))
 		   (and (pair? args) (<=fx (length args) 2)))
 	      (j2s-scheme (J2SMethodCall* obj
@@ -299,8 +299,8 @@
 	  (cond
 	     ((and (or (isa? decl J2SDeclFun)
 		       (and (isa? decl J2SDeclInit)
-			    (with-access::J2SDeclInit decl (val ronly)
-			       (and (isa? val J2SFun) ronly))))
+			    (with-access::J2SDeclInit decl (val)
+			       (and (isa? val J2SFun) (decl-ronly? decl)))))
 		   (decl-only-usage? decl '(get call new init instanceof)))
 	      (j2s-scheme (J2SMethodCall* obj
 			     (list (car args))
@@ -335,8 +335,8 @@
 	  (cond
 	     ((and (or (isa? decl J2SDeclFun)
 		       (and (isa? decl J2SDeclInit)
-			    (with-access::J2SDeclInit decl (val ronly)
-			       (and (isa? val J2SFun) ronly))))
+			    (with-access::J2SDeclInit decl (val)
+			       (and (isa? val J2SFun) (decl-ronly? decl)))))
 		   (decl-only-usage? decl '(get call new init instanceof)))
 	      (j2s-scheme (J2SMethodCall* obj
 			     (list (car args))
@@ -367,11 +367,10 @@
 	 ((isa? decl J2SDeclSvc)
 	  #f)
 	 ((isa? decl J2SDeclFun)
-	  (with-access::J2SDecl decl (ronly)
-	     (when ronly decl)))
+	  (when (decl-ronly? decl) decl))
 	 ((j2s-let-opt? decl)
-	  (with-access::J2SDeclInit decl (val ronly)
-	     (when (and (isa? val J2SFun) ronly)
+	  (with-access::J2SDeclInit decl (val)
+	     (when (and (isa? val J2SFun) (decl-ronly? decl))
 		decl)))
 	 (else
 	  #f))))
@@ -967,9 +966,9 @@
 		   args))
 	       ((isa? fun J2SGlobalRef)
 		(with-access::J2SGlobalRef fun (decl)
-		   (with-access::J2SDecl decl (id ronly scope)
+		   (with-access::J2SDecl decl (id scope)
 		      (cond
-			 ((not ronly)
+			 ((not (decl-ronly? decl))
 			  (call-unresolved-function fun thisarg args))
 			 ((find-builtin-function id args)
 			  =>

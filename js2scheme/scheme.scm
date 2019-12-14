@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Dec  6 18:42:30 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 19:09:04 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -189,7 +189,7 @@
 	    (when (not hidden-class)
 	       `(:hidden-class #f)))))
 
-   (with-access::J2SDecl this (loc scope id vtype ronly)
+   (with-access::J2SDecl this (loc scope id vtype)
       (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
 	    (cond
@@ -210,7 +210,7 @@
 				  %%tmp))
 			   `(define ,ident ,value)))))
 	       ((memq scope '(letblock letvar))
-		(if ronly
+		(if (decl-ronly? this)
 		    `(,(vtype-ident ident vtype conf) ,value)
 		    `(,ident ,value)))
 	       ((eq? scope 'unbound)
@@ -232,7 +232,7 @@
 	 (j2s-scheme-decl this '(js-undefined) writable mode return conf)))
    
    (define (j2s-scheme-let this)
-      (with-access::J2SDecl this (loc scope id utype ronly)
+      (with-access::J2SDecl this (loc scope id utype)
 	 (epairify loc
 	    (if (memq scope '(global))
 		`(define ,(j2s-decl-scheme-id this) (js-make-let))
@@ -391,14 +391,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SRef mode return conf)
    (with-access::J2SRef this (decl loc type)
-      (with-access::J2SDecl decl (scope id vtype exports ronly)
+      (with-access::J2SDecl decl (scope id vtype exports)
 	 (cond
 	    ((isa? decl J2SDeclImport)
 	     (with-access::J2SDeclImport decl (export import scope)
 		(with-access::J2SExport export (index)
 		   (with-access::J2SImport import (ivar mvar)
 		      `(vector-ref ,ivar ,index)))))
-	    ((and (pair? exports) (or (not ronly) (not (isa? decl J2SDeclFun))))
+	    ((and (pair? exports)
+		  (or (not (decl-ronly? decl)) (not (isa? decl J2SDeclFun))))
 	     (with-access::J2SExport (car exports) (index decl)
 		`(vector-ref %evars ,index)))
 	    ((j2s-let-opt? decl)
@@ -838,16 +839,16 @@
    
    (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return conf singledecl
 	      typed)
-      (with-access::J2SDeclInit d (usage id vtype ronly)
+      (with-access::J2SDeclInit d (id vtype)
 	 (let* ((ident (j2s-decl-scheme-id d))
 		(var (if typed (type-ident ident vtype conf) ident))
 		(val (j2sdeclinit-val-fun d)))
 	    (cond
 	       ((or (not (isa? val J2SFun))
 		    (isa? val J2SSvc)
-		    (usage? '(assig) usage))
+		    (not (decl-ronly? d)))
 		`((,var ,(j2s-scheme val mode return conf))))
-	       ((or (not ronly) (usage? '(ref get new set) usage))
+	       ((decl-usage? d '(ref get new set))
 		(with-access::J2SFun val (decl)
 		   (if (isa? decl J2SDecl)
 		       (let ((id (j2sfun-id val))
@@ -866,7 +867,7 @@
 			     (tmp (j2s-fast-id id)))
 			  `((,tmp ,fun)
 			    (,var ,(j2sfun->scheme val tmp #f mode return conf)))))))
-	       ((usage? '(call) usage)
+	       ((decl-usage? d '(call))
 		`((,(j2s-fast-id id)
 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f))))
 	       (else
@@ -2220,8 +2221,8 @@
    (define (builtin-object? obj)
       (when (isa? obj J2SGlobalRef)
 	 (with-access::J2SGlobalRef obj (decl)
-	    (with-access::J2SDecl decl (id ronly)
-	       (when ronly
+	    (with-access::J2SDecl decl (id)
+	       (when (decl-ronly? decl)
 		  (memq id '(Object Function Math Array Boolean RegExp String Number)))))))
 
    (define (get-builtin-object obj field mode return conf)
@@ -2966,8 +2967,8 @@
       (let ((otype type))
 	 (if (isa? expr J2SRef)
 	     (with-access::J2SRef expr (decl)
-		(with-access::J2SDecl decl (vtype usage ronly)
-		   (if ronly
+		(with-access::J2SDecl decl (vtype usage)
+		   (if (decl-ronly? decl)
 		       (let ((ovtype vtype))
 			  (set! vtype 'object)
 			  (set! type 'object)

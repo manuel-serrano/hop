@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Dec  5 09:05:44 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 18:48:00 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -59,6 +59,7 @@
 	   (decl-usage?::bool ::J2SDecl ::pair-nil)
 	   (decl-only-usage?::bool ::J2SDecl ::pair-nil)
 	   (decl-strict-usage?::bool ::J2SDecl ::pair-nil)
+	   (decl-ronly?::bool ::J2SDecl)
 	   (usage?::bool ::pair-nil ::pair-nil)
 	   (only-usage?::bool ::pair-nil ::pair-nil)
 	   (strict-usage?::bool ::pair-nil ::pair-nil)
@@ -648,7 +649,13 @@
 (define (decl-strict-usage? decl keys)
    (with-access::J2SDecl decl (usage)
       (strict-usage? keys usage)))
-	
+
+;*---------------------------------------------------------------------*/
+;*    decl-ronly? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (decl-ronly? decl)
+   (not (decl-usage? decl '(assig))))
+
 ;*---------------------------------------------------------------------*/
 ;*    is-hint? ...                                                     */
 ;*    -------------------------------------------------------------    */
@@ -785,8 +792,7 @@
 	  (when (isa? obj J2SGlobalRef)
 	     (with-access::J2SGlobalRef obj (id decl)
 		(when (eq? id ident)
-		   (with-access::J2SDecl decl (ronly)
-		      ronly))))))
+		   (not (decl-usage? decl '(assig))))))))
    
    (define (String? obj)
       (is-global? obj 'String))
@@ -815,8 +821,7 @@
       (when (isa? obj J2SGlobalRef)
 	 (with-access::J2SGlobalRef obj (id decl)
 	    (when (eq? id ident)
-	       (with-access::J2SDecl decl (ronly)
-		  ronly)))))
+	       (not (decl-usage? decl '(assig)))))))
    
    (define (String? obj)
       (is-global? obj 'String))

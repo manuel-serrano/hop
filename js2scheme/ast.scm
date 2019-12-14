@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Dec  6 07:36:48 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 18:43:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -62,7 +62,6 @@
 	      (key (default (ast-decl-key)) (info '("notraverse")))
 	      ;; writable=#f iff decl is const
 	      (writable (default #t) (info '("notraverse")))
-	      (ronly (default #f) (info '("notraverse")))
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))
@@ -70,7 +69,7 @@
 	      ;; usage: init, new, ref, assig, get (field), set (field), call,
 	      ;; delete, instanceof, uninit (premature variable access),
 	      ;; rest (rest argument).
-	      (usage::pair-nil (default '()) (info '("notraverse")))
+	      (usage::pair-nil (default '(assig)) (info '("notraverse")))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))
 	      ;; user declared type, if set, assign will be guarded

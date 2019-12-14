@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Sun Jun  2 06:22:13 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 19:07:37 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
@@ -113,12 +113,12 @@
 ;*    newtarget! ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SDeclFun fun)
-   (with-access::J2SDeclFun this (ronly val)
+   (with-access::J2SDeclFun this (val)
       (let ((fun (if (isa? val J2SFun)
 		     val
 		     (with-access::J2SMethod val (function)
 			function))))
-	 (if (and ronly (not (decl-usage? this '(new ref get set))))
+	 (if (not (decl-usage? this '(assig new ref get set)))
 	     (with-access::J2SFun fun (body)
 		(set! body (newtarget! body #f)))
 	     (newtarget! fun fun))))

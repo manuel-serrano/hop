@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Dec 13 14:43:04 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 18:59:54 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -429,13 +429,13 @@
       (with-access::J2SRef callee (decl)
 	 (cond
 	    ((isa? decl J2SDeclFun)
-	     (with-access::J2SDeclFun decl (ronly val)
-		(if (and ronly (isa? val J2SFun))
+	     (with-access::J2SDeclFun decl (val)
+		(if (and (not (decl-usage? decl '(assig))) (isa? val J2SFun))
 		    (hint-known-call val args)
 		    (hint-unknown-call callee args))))
 	    ((isa? decl J2SDeclInit)
-	     (with-access::J2SDeclInit decl (ronly val)
-		(if (and ronly (isa? val J2SFun))
+	     (with-access::J2SDeclInit decl (val)
+		(if (and (not (decl-usage? decl '(assig))) (isa? val J2SFun))
 		    (hint-known-call val args)
 		    (hint-unknown-call callee args))))
 	    (else
@@ -775,11 +775,11 @@
 	     (loop (cdr l) (cons (car l) r))))))
    
    (define (return decl t c)
-      (with-access::J2SDecl decl (ronly hint)
+      (with-access::J2SDecl decl (hint)
 	 (cond
 	    ((eq? t 'object)
 	     (cond
-		(ronly (values 'object c))
+		((not (decl-usage? decl '(assig))) (values 'object c))
 		((or (assq 'undefined hint) (assq 'null hint)) (values 'any 0))
 		(else (values 'object c))))
 	    ((not (eq? t 'num)) (values t c))
@@ -930,7 +930,7 @@
 			    (parent fun)
 			    (key (ast-decl-key))
 			    (id (symbol-append id '%%))
-			    (ronly #t)
+			    (usage '())
 			    (writable #f)
 			    (binder 'let)
 			    ;;(scope 'none)
@@ -1001,7 +1001,7 @@
 			       (parent fun)
 			       (key (ast-decl-key))
 			       (id (symbol-append id '%% typeid))
-			       (ronly #t)
+			       (usage '())
 			       (writable #f)
 			       (binder 'let)
 			       ;;(scope 'none)

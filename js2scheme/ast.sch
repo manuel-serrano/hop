@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sun Dec  1 16:56:27 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 18:50:01 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -434,7 +434,6 @@
    `(instantiate::J2SDeclInit
        (loc loc)
        (writable ,(if (or (not (pair? usage)) (memq 'assig (cadr usage))) #t #f))
-       (ronly ,(if (or (not (pair? usage)) (memq 'assig (cadr usage))) #f #t))
        (usecnt 1)
        (binder 'let-opt)
        (usage ,usage)
@@ -445,10 +444,9 @@
    `(instantiate::J2SDeclInit
        (loc loc)
        (writable #f)
-       (ronly #t)
        (usecnt 1)
        (binder 'let-opt)
-       (usage ,usage)
+       (usage ,(delete 'assig usage))
        (val ,val)
        (id ,id)))
 
@@ -457,10 +455,9 @@
        (loc loc)
        (writable #f)
        (scope 'global)
-       (ronly #t)
        (usecnt 1)
        (binder 'let-opt)
-       (usage ,usage)
+       (usage ,(delete 'assig usage))
        (val ,val)
        (id ,id)))
 
@@ -471,7 +468,6 @@
    `(instantiate::J2SDeclInit
        (loc loc)
        (writable ,(if (memq 'assig (cadr usage)) #t #f))
-       (ronly ,(if (not (memq 'assig (cadr usage))) #f #t))
        (vtype ,typ)
        (usecnt 1)
        (binder 'let-opt)
@@ -483,7 +479,6 @@
    `(instantiate::J2SDeclInit
        (loc loc)
        (writable ,(if (memq 'assig (cadr usage)) #t #f))
-       (ronly ,(if (not (memq 'assig (cadr usage))) #f #t))
        (vtype ,typ)
        (utype ,typ)
        (usecnt 1)

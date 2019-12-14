@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Dec  4 08:47:09 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 19:06:28 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -593,11 +593,9 @@
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (decl)
-	  (with-access::J2SDecl decl (ronly)
-	     (or ronly (not (decl-usage? decl '(assig)))))))
+	  (decl-ronly? decl)))
       ((isa? obj J2SDecl)
-       (with-access::J2SDecl obj (ronly)
-	  (or ronly (not (decl-usage? obj '(assig))))))
+       (decl-ronly? obj))
       (else
        #f)))
 
@@ -608,11 +606,9 @@
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (decl)
-	  (with-access::J2SDecl decl (ronly)
-	     (or ronly (decl-only-usage? decl '(ref))))))
+	  (or (decl-ronly? decl) (decl-only-usage? decl '(ref)))))
       ((isa? obj J2SDecl)
-       (with-access::J2SDecl obj (ronly)
-	  (or ronly (decl-only-usage? obj '(ref)))))
+       (or (decl-ronly? obj) (decl-only-usage? obj '(ref))))
       (else
        #f)))
 
@@ -925,8 +921,7 @@
    (define (j2sref-ronly? obj)
       (when (isa? obj J2SRef)
 	 (with-access::J2SRef obj (decl)
-	    (with-access::J2SDecl decl (ronly)
-	       ronly))))
+	    (decl-ronly? decl))))
    
    (define (get-cache prgm::J2SProgram)
       (with-access::J2SProgram prgm (pcache-size)
@@ -993,8 +988,7 @@
    (define (j2sref-ronly? obj)
       (when (isa? obj J2SRef)
 	 (with-access::J2SRef obj (decl)
-	    (with-access::J2SDecl decl (ronly)
-	       ronly))))
+	    (decl-ronly? decl))))
    
    (define (get-cache prgm::J2SProgram)
       (with-access::J2SProgram prgm (pcache-size)

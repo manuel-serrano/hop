@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Jun  2 06:17:37 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 18:49:24 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -178,7 +178,7 @@
 ;*    collect-globconst* ::J2SDeclInit ...                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-globconst* this::J2SDeclInit)
-   (with-access::J2SDeclInit this (ronly val %info)
+   (with-access::J2SDeclInit this (val %info)
       (if (and (not (decl-usage? this '(assig))) (constant-object? val))
 	  (begin
 	     (set! %info (propinfo val '() #f))

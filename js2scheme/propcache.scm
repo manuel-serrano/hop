@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Dec  8 06:54:27 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 18:56:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -158,12 +158,11 @@
 		 (cond
 		    ((and (isa? obj J2SRef) (isa? field J2SString))
 		     (with-access::J2SRef obj (decl)
-			(with-access::J2SDecl decl (ronly)
-			   (if ronly
-			       (with-access::J2SString field (val)
-				  (set! cache
-				     (decl-cache decl val count env assig shared-pcache)))
-			       (set! cache (inc! count))))))
+			(if (not (decl-usage? decl '(assig)))
+			    (with-access::J2SString field (val)
+			       (set! cache
+				  (decl-cache decl val count env assig shared-pcache)))
+			    (set! cache (inc! count)))))
 		    ((not (memq (j2s-type field) '(integer number real)))
 		     (set! cache (inc! count))))
 		 (let ((nexts (call-default-walker)))
@@ -214,8 +213,7 @@
 	    ((isa? decl J2SDeclSvc)
 	     #f)
 	    ((isa? decl J2SDeclFun)
-	     (with-access::J2SDecl decl (ronly)
-		(when ronly decl)))
+	     (not (decl-usage? decl '(assig))))
 	    ((j2s-let-opt? decl)
 	     (with-access::J2SDeclInit decl (val)
 		(when (isa? val J2SFun)
