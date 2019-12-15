@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Dec 14 17:52:40 2019 (serrano)                */
+;*    Last change :  Sun Dec 15 17:51:09 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -69,7 +69,7 @@
 	 (use-nodes nodes)
 	 (if (cell-ref deval)
 	     (for-each (lambda (d::J2SDecl)
-			  (decl-usage-add! d 'eval))
+ 			  (decl-usage-add! d 'eval))
 		decls)
 	     (begin
 		;; it might be valuable to count the number of direct

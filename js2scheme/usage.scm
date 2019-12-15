@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Sun Dec 15 07:16:36 2019 (serrano)                */
+;*    Last change :  Sun Dec 15 17:53:12 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
@@ -59,7 +59,7 @@
 (define (usage->keys usage)
    (let loop ((i #u32:1))
       (cond
-	 ((>u32 i#u32:2048)
+	 ((>u32 i#u32:4096)
 	  '())
 	 ((=u32 (bit-andu32 i usage) i)
 	  (cons (usage-bit->key i) (loop (bit-lshu32 i 1))))
@@ -127,5 +127,5 @@
 ;*    decl-ronly? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (decl-ronly? decl)
-   (not (decl-usage-has? decl '(assig))))
+   (not (decl-usage-has? decl '(assig eval))))
 
