@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Sat Dec 14 17:51:20 2019 (serrano)                */
+;*    Last change :  Sun Dec 15 09:33:02 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -47,7 +47,7 @@
 (define (j2s-ronly-program this::J2SProgram args)
    (with-access::J2SProgram this (nodes headers decls mode)
       (let ((deval (direct-eval? this)))
-	 (when (and (not deval) (eq? mode 'hopscript))
+	 (when (not deval)
 	    (init-decls-ronly! decls))
 	 (for-each (lambda (o) (ronly! o mode deval)) headers)
 	 (for-each (lambda (o) (ronly! o mode deval)) decls)
@@ -154,12 +154,40 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SBlock ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SBlock mode::symbol deval::bool)
+   (with-access::J2SBlock this (nodes)
+      (for-each (lambda (n::J2SNode)
+		   (when (isa? n J2SDecl)
+		      (decl-usage-rem! n 'assig)))
+	 nodes)
+      (call-default-walker)))
+      
+;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SLetBlock ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SLetBlock mode::symbol deval::bool)
+   (with-access::J2SLetBlock this (decls)
+      (for-each (lambda (d::J2SDecl) (decl-usage-rem! d 'assig)) decls)
+      (call-next-method)))
+		   
+;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SVarDecls ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SVarDecls mode::symbol deval::bool)
+   (with-access::J2SVarDecls this (decls)
+      (for-each (lambda (d::J2SDecl) (decl-usage-rem! d 'assig)) decls)
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SFun ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ronly! this::J2SFun mode::symbol deval::bool)
    (with-access::J2SFun this (params thisp mode body)
       (when thisp
 	 (decl-usage-rem! thisp 'assig))
+      (for-each (lambda (d::J2SDecl) (decl-usage-rem! d 'assig)) params)
       (set! body (ronly! body mode deval))
       this))
 
