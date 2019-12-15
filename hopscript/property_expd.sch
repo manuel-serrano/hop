@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Dec 13 13:23:42 2019 (serrano)                */
+;*    Last change :  Sun Dec 15 08:48:18 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -908,31 +908,31 @@
       (let ((len (length args)))
 	 `(if (object? ,fun)
 	      ,(case len
-		  ((1)
+		  ((0)
 		   `(if (eq? (object-class ,fun) JsFunction1)
+			(with-access::JsFunction ,fun (procedure)
+			   (procedure ,this ,@args))
+			(js-call0 ,%this ,fun ,this ,@args)))
+		  ((1)
+		   `(if (eq? (object-class ,fun) JsFunction2)
 			(with-access::JsFunction ,fun (procedure)
 			   (procedure ,this ,@args))
 			(js-call1 ,%this ,fun ,this ,@args)))
 		  ((2)
-		   `(if (eq? (object-class ,fun) JsFunction2)
+		   `(if (eq? (object-class ,fun) JsFunction3)
 			(with-access::JsFunction ,fun (procedure)
 			   (procedure ,this ,@args))
 			(js-call2 ,%this ,fun ,this ,@args)))
 		  ((3)
-		   `(if (eq? (object-class ,fun) JsFunction3)
+		   `(if (eq? (object-class ,fun) JsFunction4)
 			(with-access::JsFunction ,fun (procedure)
 			   (procedure ,this ,@args))
 			(js-call3 ,%this ,fun ,this ,@args)))
 		  ((4)
-		   `(if (eq? (object-class ,fun) JsFunction4)
-			(with-access::JsFunction ,fun (procedure)
-			   (procedure ,this ,@args))
-			(js-call4 ,%this ,fun ,this ,@args)))
-		  ((5)
 		   `(if (eq? (object-class ,fun) JsFunction5)
 			(with-access::JsFunction ,fun (procedure)
 			   (procedure ,this ,@args))
-			(js-call5 ,%this ,fun ,this ,@args)))
+			(js-call4 ,%this ,fun ,this ,@args)))
 		  ((6)
 		   `(js-call6 ,%this ,fun ,this ,@args))
 		  ((7)
