@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Dec  8 06:23:40 2019 (serrano)                */
+;*    Last change :  Sun Dec 15 19:31:11 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -98,7 +98,18 @@
 		     `(js-arguments-index-ref ,(j2s-scheme obj mode return conf)
 			 ,(j2s-scheme field mode return conf)
 			 ,(j2s-scheme rhs mode return conf)
-			 %this)))
+			 %this))
+		 (j2s-put! loc (j2s-scheme obj mode return conf) field
+		    (typeof-this obj conf)
+		    (j2s-scheme field mode return conf)
+		    (j2s-vtype field)
+		    (j2s-scheme rhs mode return conf)
+		    (j2s-vtype rhs)
+		    (strict-mode? mode)
+		    conf
+		    cache
+		    #f
+		    cspecs))
 	     (j2s-put! loc (j2s-scheme obj mode return conf) field
 		(typeof-this obj conf)
 		(j2s-scheme field mode return conf)
