@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Jun  2 06:21:07 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:03:57 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -19,7 +19,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_letopt
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -645,11 +646,11 @@
 	  (with-access::J2SRef expr (decl)
 	     (with-access::J2SDecl decl (binder writable)
 		(when (eq? binder 'let-opt)
-		   (or (not writable) (not (decl-usage? decl '(assig))))))))
+		   (or (not writable) (not (decl-usage-has? decl '(assig))))))))
 	 ((isa? expr J2SGlobalRef)
 	  (with-access::J2SGlobalRef expr (decl)
 	     (with-access::J2SDecl decl (writable id)
-		(when (or (not writable) (not (decl-usage? decl '(assig))))
+		(when (or (not writable) (not (decl-usage-has? decl '(assig))))
 		   (memq id '(Array Function Number Boolean Promise))))))
 	 ((isa? expr J2SNew)
 	  (with-access::J2SNew expr (clazz args)

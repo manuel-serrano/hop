@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Sun Jun  2 06:41:20 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:43:53 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
@@ -19,7 +19,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_vector
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -221,7 +222,9 @@
    (with-access::J2SDeclInit this (vtype id %info val hint loc)
       
       (when (and (eq? vtype 'array)
-		 (decl-only-usage? this '(init get set))
+		 (not (decl-usage-has? this
+			 '(assig new ref assig call delete
+			   instanceof uninit rest eval)))
 		 (range? %info)
 		 (or (pair? (range-intervals %info))
 		     (null? (range-intervals %info))))
@@ -263,7 +266,7 @@
 	     (when (isa? decl J2SDeclExtern)
 		(with-access::J2SDeclExtern decl (id)
 		   (when (eq? id 'Array)
-		      (not (decl-usage? decl '(assig))))))))))
+		      (not (decl-usage-has? decl '(assig))))))))))
       
    (with-access::J2SNew this (clazz args)
       (when (and (is-array? clazz) (pair? args) (null? (cdr args)))

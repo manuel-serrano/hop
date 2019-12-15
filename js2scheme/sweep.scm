@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Jun  2 06:36:19 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:48:11 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_sweep
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -193,7 +194,7 @@
 	 (with-access::J2SRef lhs (decl)
 	    (with-access::J2SDecl decl (usecnt)
 	       (and (=fx usecnt 0)
-		    (not (decl-usage? decl '(eval)))
+		    (not (decl-usage-has? decl '(eval)))
 		    (dead-expr? rhs)))))))
 
 ;*---------------------------------------------------------------------*/

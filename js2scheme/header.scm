@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Thu Oct 24 07:57:41 2019 (serrano)                */
+;*    Last change :  Sun Dec 15 05:58:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_header
 
+   (include "usage.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
@@ -57,6 +59,7 @@
 	 (loc loc)
 	 (id js)
 	 (writable writable)
+	 (_usage (if (not writable) (usage '()) (usage '(assig))))
 	 (scope scope)
 	 (bind bind)
 	 (itype type)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Aug 13 08:46:50 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:06:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -15,7 +15,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_constant
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import  __js2scheme_ast
 	    __js2scheme_dump

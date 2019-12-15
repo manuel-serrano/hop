@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Nov  8 07:44:03 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:08:01 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_range
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -1151,7 +1152,7 @@
 	 (when *indebug*
 	    (tprint "\\\\\\ J2SDeclInit.2 " id " env=" (dump-env env)))
 	 (cond
-	    ((decl-usage? this '(eval))
+	    ((decl-usage-has? this '(eval))
 	     (decl-vrange-add! this *infinity-intv* fix)
 	     (return #f (extend-env env this intv)))
 	    ((not intv)
@@ -1172,7 +1173,7 @@
 	 (when (isa? thisp J2SDecl)
 	    (decl-irange-add! thisp *infinity-intv* fix))))
    
-   (with-access::J2SDeclFun this (val ronly vrange)
+   (with-access::J2SDeclFun this (val vrange)
       (decl-vrange-add! this *infinity-intv* fix)
       (cond
 	 ((isa? this J2SDeclSvc)
@@ -1197,7 +1198,7 @@
 ;*    node-range ::J2SDeclClass ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SDeclClass env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SDeclClass this (val ronly)
+   (with-access::J2SDeclClass this (val)
       (decl-vrange-add! this *infinity-intv* fix)
       (multiple-value-bind (intf env)
 	 (node-range val env conf mode fix)
@@ -1288,7 +1289,7 @@
 	 (let ((envp (map (lambda (p::J2SDecl)
 			     (with-access::J2SDecl p (irange)
 				(cond
-				   ((decl-strict-usage? p '(rest))
+				   ((decl-usage-has? p '(rest))
 				    (decl-vrange-add! p *infinity-intv* fix)
 				    (cons p *infinity-intv*))
 				   (vararg
@@ -1318,8 +1319,7 @@
 		  (node-range body fenv conf mode fix)
 		  (set! %info
 		     (env-filter
-			(lambda (d)
-			   (decl-usage? d '(assig)))
+			(lambda (d) (not (decl-ronly? d)))
 			(env-remove envf params)))
 		  (debug *debug-range-function* "%info=" (dump-env envf))))
 	    (expr-range-add! this env fix #f)))))
@@ -1334,8 +1334,10 @@
       (filter-map (lambda (c)
 		     (let ((d (car c))
 			   (t (cdr c)))
-			(with-access::J2SDecl d (ronly vrange)
-			   (if ronly c (cons d vrange)))))
+			(with-access::J2SDecl d (vrange)
+			   (if (decl-ronly? d)
+			       c
+			       (cons d vrange)))))
 	 env)))
 
 ;*---------------------------------------------------------------------*/
@@ -1407,8 +1409,8 @@
       ;; compute a new node-range environment where all mutated globals
       ;; and all mutated captured locals are removed
       (filter (lambda (e)
-		 (with-access::J2SDecl (car e) (ronly scope %info id)
-		    (or ronly
+		 (with-access::J2SDecl (car e) (scope %info id)
+		    (or (decl-ronly? (car e))
 			(and (eq? scope 'local) (eq? %info 'nocapture)))))
 	 env))
    
@@ -1422,7 +1424,7 @@
 		  (cond
 		     (vararg
 		      (decl-irange-add! (car params) *infinity-intv* fix))
-		     ((and (null? (cdr params)) (decl-usage? (car params) '(rest)))
+		     ((and (null? (cdr params)) (decl-usage-has? (car params) '(rest)))
 		      (decl-irange-add! (car params) *infinity-intv* fix))
 		     ((null? iargs)
 		      (decl-irange-add! (car params) *infinity-intv* fix)
@@ -1465,8 +1467,8 @@
       (with-access::J2SRef callee (decl)
 	 (cond
 	    ((isa? decl J2SDeclFun)
-	     (with-access::J2SDeclFun decl (ronly val)
-		(if ronly
+	     (with-access::J2SDeclFun decl (val)
+		(if (decl-ronly? decl)
 		    (if (isa? val J2SMethod)
 			(with-access::J2SMethod val (function method)
 			   (range-known-call callee function iargs env)
@@ -1474,11 +1476,11 @@
 			(range-known-call callee val iargs env))
 		    (range-unknown-call callee env))))
 	    ((isa? decl J2SDeclInit)
-	     (with-access::J2SDeclInit decl (ronly val)
+	     (with-access::J2SDeclInit decl (val)
 		(cond
-		   ((and ronly (isa? val J2SFun))
+		   ((and (decl-ronly? decl) (isa? val J2SFun))
 		    (range-known-call callee val iargs env))
-		   ((and ronly (isa? val J2SMethod))
+		   ((and (decl-ronly? decl) (isa? val J2SMethod))
 		    (with-access::J2SMethod val (function method)
 		       (range-known-call callee function iargs env)
 		       (range-known-call callee method iargs env)))
@@ -1491,8 +1493,7 @@
       (when (isa? obj J2SGlobalRef)
 	 (with-access::J2SGlobalRef obj (id decl)
 	    (when (eq? id ident)
-	       (with-access::J2SDecl decl (ronly)
-		  ronly)))))
+	       (decl-ronly? decl)))))
    
    (define (range-method-call callee iargs env)
       ;; type a method call: O.m( ... )
@@ -2259,7 +2260,7 @@
 		  (unless (eq? rty vtype)
 		     (let ((aty (cond
 				   ((memq scope '(%scope global))
-				    (if (not (decl-usage? this '(assig)))
+				    (if (decl-ronly? this)
 					rty
 					(type->boxed-type rty)))
 				   (escape
@@ -2342,8 +2343,8 @@
 	 (with-access::J2SRef fun (decl)
 	    (cond
 	       ((isa? decl J2SDeclFun)
-		(with-access::J2SDeclFun decl (ronly val)
-		   (when ronly
+		(with-access::J2SDeclFun decl (val)
+		   (when (decl-ronly? decl)
 		      (cond
 			 ((isa? val J2SFun)
 			  (with-access::J2SFun val (rtype %info)
@@ -2357,8 +2358,8 @@
 				   (map-types function tmap))
 				(set! type rtype))))))))
 	       ((isa? decl J2SDeclInit)
-		(with-access::J2SDeclInit decl (ronly val)
-		   (if (and ronly (isa? val J2SFun))
+		(with-access::J2SDeclInit decl (val)
+		   (if (and (decl-ronly? decl) (isa? val J2SFun))
 		       (with-access::J2SFun val (rtype %info)
 			  (unless (eq? %info 'map-types)
 			     (map-types val tmap))

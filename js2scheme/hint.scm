@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Dec  8 06:08:09 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:07:20 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_type-hint
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -429,13 +430,13 @@
       (with-access::J2SRef callee (decl)
 	 (cond
 	    ((isa? decl J2SDeclFun)
-	     (with-access::J2SDeclFun decl (ronly val)
-		(if (and ronly (isa? val J2SFun))
+	     (with-access::J2SDeclFun decl (val)
+		(if (and (not (decl-usage-has? decl '(assig))) (isa? val J2SFun))
 		    (hint-known-call val args)
 		    (hint-unknown-call callee args))))
 	    ((isa? decl J2SDeclInit)
-	     (with-access::J2SDeclInit decl (ronly val)
-		(if (and ronly (isa? val J2SFun))
+	     (with-access::J2SDeclInit decl (val)
+		(if (and (not (decl-usage-has? decl '(assig))) (isa? val J2SFun))
 		    (hint-known-call val args)
 		    (hint-unknown-call callee args))))
 	    (else
@@ -706,19 +707,28 @@
 	 (cond
 	    (dup
 	     (with-access::J2SFun (j2sdeclinit-val-fun this) (params body)
-		(let ((besthints (map (lambda (p)
-					 (param-best-hint-type p))
-				    params)))
+		(let ((besthints (map param-best-hint-type params)))
 		   (if (<fx (apply max (map cdr besthints)) 10)
 		       ;; no benefit in duplicating this function
 		       (loop #f)
 		       (let ((htypes (map (lambda (bh p)
-					     (if (>=fx (cdr bh) 3)
-						 (car bh)
+					     (cond
+						((< (cdr bh) 3)
 						 (with-access::J2SDecl p (vtype)
-						    vtype)))
+						    vtype))
+						((and (or (eq? (car bh) 'null)
+							  (eq? (car bh) 'undefined))
+						      (< (cdr bh) 12))
+						 ;; only specialize on NULL
+						 ;; and UNDEFINED if it is
+						 ;; tested intensively
+						 (with-access::J2SDecl p (vtype)
+						    vtype))
+						(else
+						 (car bh))))
 					besthints params)))
-			  (if (or (not (every (lambda (t) (eq? t 'object)) htypes))
+			  (if (or (not (every (lambda (t)
+						 (eq? t 'object)) htypes))
 				  (not (self-recursive? this)))
 			      ;; only hints non-recursive or
 			      ;; non-object functions
@@ -766,11 +776,11 @@
 	     (loop (cdr l) (cons (car l) r))))))
    
    (define (return decl t c)
-      (with-access::J2SDecl decl (ronly hint)
+      (with-access::J2SDecl decl (hint)
 	 (cond
 	    ((eq? t 'object)
 	     (cond
-		(ronly (values 'object c))
+		((not (decl-usage-has? decl '(assig))) (values 'object c))
 		((or (assq 'undefined hint) (assq 'null hint)) (values 'any 0))
 		(else (values 'object c))))
 	    ((not (eq? t 'num)) (values t c))
@@ -921,7 +931,7 @@
 			    (parent fun)
 			    (key (ast-decl-key))
 			    (id (symbol-append id '%%))
-			    (ronly #t)
+			    (_usage (usage '()))
 			    (writable #f)
 			    (binder 'let)
 			    ;;(scope 'none)
@@ -992,7 +1002,7 @@
 			       (parent fun)
 			       (key (ast-decl-key))
 			       (id (symbol-append id '%% typeid))
-			       (ronly #t)
+			       (_usage (usage '()))
 			       (writable #f)
 			       (binder 'let)
 			       ;;(scope 'none)

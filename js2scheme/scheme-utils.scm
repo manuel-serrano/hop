@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Dec  6 18:31:45 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 19:25:34 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-utils
    
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -201,7 +202,7 @@
 (define (js-need-global? decl::J2SDecl scope mode)
    (with-access::J2SDecl decl (usage)
       (or (not (j2s-let-opt? decl))
-	  (decl-usage? decl '(eval))
+	  (decl-usage-has? decl '(eval))
 	  (not (and (eq? scope '%scope) (eq? mode 'hopscript))))))
 
 ;*---------------------------------------------------------------------*/
@@ -259,7 +260,7 @@
 (define (j2s-this-cache? this::J2SDecl)
    (with-access::J2SDecl this (usecnt)
       (and (>=fx usecnt 3)
-	   (not (decl-usage? this '(ref call new instanceof))))))
+	   (not (decl-usage-has? this '(ref call new instanceof))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-minlen ...                                                   */
@@ -1051,8 +1052,8 @@
 	 ((isa? this J2SDeclFun)
 	  (with-access::J2SDeclFun this (scope val)
 	     (unless (memq scope '(none letblock))
-		(when (and (decl-usage? this '(new))
-			   (not (decl-usage? this '(call assig))))
+		(when (and (decl-usage-has? this '(new))
+			   (not (decl-usage-has? this '(call assig))))
 		   (with-access::J2SFun val (rtype vararg)
 		      (when (and (eq? rtype 'undefined) (not vararg))
 			 this))))))
@@ -1068,10 +1069,10 @@
       (cond
 	 ((isa? expr J2SRef)
 	  (with-access::J2SRef expr (decl)
-	     (not (decl-usage? decl '(assig)))))
+	     (not (decl-usage-has? decl '(assig)))))
 	 ((isa? expr J2SGlobalRef)
 	  (with-access::J2SGlobalRef expr (decl)
-	     (not (decl-usage? decl '(assig)))))
+	     (not (decl-usage-has? decl '(assig)))))
 	 ((isa? expr J2SLiteral)
 	  #t)
 	 ((isa? expr J2SParen)

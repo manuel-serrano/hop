@@ -59,6 +59,7 @@ required to get full functionality or enhanced compatibility with Node.js):
 Important notice: the openssl version shiped with OSX is too old and
 deprecated by Apple, please install openssl 1.0.2 or a newer version.
 
+
 ##### Macports #####
 
 Tools and libs installed using macports are located in
@@ -79,6 +80,7 @@ autocofiguration tool work as expected.
 
     export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/usr/lib/pkgconfig
 
+
 ##### Brew #####
 
 The setting for brew is
@@ -92,6 +94,7 @@ The setting for brew is
 If you use another package manager such fink, or if you install
 libraries from sources, please change above paths and install commands
 accordingly.
+
 
 ### Install bigloo ###
 

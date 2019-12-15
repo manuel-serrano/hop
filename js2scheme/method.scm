@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sat Jun 22 05:54:08 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 17:47:59 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -19,7 +19,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_method
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -101,12 +102,13 @@
       (with-access::J2SFun val (thisp loc body generator)
 	 (with-access::J2SDecl thisp (usecnt)
 	    (cond
-	       ((and (decl-only-usage? this '(new init))
+	       ((and (not (decl-usage-has? this
+			     '(assig ref assig get set call delete instanceof uninit rest eval)))
 		     (not (isa? this J2SDeclSvc)))
 		(with-access::J2SDecl thisp (utype)
 		   (set! utype 'object)))
-	       ((and (decl-usage? this '(ref get))
-		     (not (decl-usage? this '(new)))
+	       ((and (decl-usage-has? this '(ref get))
+		     (not (decl-usage-has? this '(new)))
 		     (>=fx usecnt this-occurrence-threshold)
 		     (<fx (node-size body) body-size-threshold)
 		     (not generator))

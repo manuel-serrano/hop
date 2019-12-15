@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jul 10 14:08:36 2019                          */
-;*    Last change :  Thu Jul 11 06:49:21 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 19:03:36 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    An optimization that annotated read-only literal objects         */
@@ -18,7 +18,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_objinit
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -84,5 +85,7 @@
 ;*    get-only-decl? ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (get-only-decl? decl)
-   (decl-only-usage? decl '(get init assig)))
+   (not (decl-usage-has? decl
+	   '(new ref assig set call delete
+	     instanceof uninit rest eval))))
 

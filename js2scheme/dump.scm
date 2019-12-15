@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Dec  6 10:46:06 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 17:38:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_dump
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_utils
@@ -71,7 +72,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s-info->list this)
    (cond
-      ((and (pair? this) (null? (cdr this)))
+      ((and (pair? this) (not (or (null? (cdr this)) (pair? (cdr this)))))
        (cons (j2s-info->list (car this)) (j2s-info->list (cdr this))))
       ((list? this)
        (map j2s-info->list this))
@@ -307,13 +308,12 @@
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:access")
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:usage"))
-       (with-access::J2SDecl this (usecnt useinloop escape usage ronly writable scope)
-	  `((:ronly ,ronly)
-	    (:writable ,writable)
+       (with-access::J2SDecl this (usecnt useinloop escape _usage writable scope)
+	  `((:writable ,writable)
 	    (:usecnt ,usecnt)
 	    (:useinloop ,useinloop)
 	    (:escape ,escape)
-	    (:usage ,usage)
+	    (:usage ,(usage->keys _usage))
 	    (:scope ,scope)))
        '()))
 
@@ -979,11 +979,8 @@
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
-   (with-access::J2SDeclInit this (val ronly writable val scope id)
+   (with-access::J2SDeclInit this (val)
       `(,@(call-next-method)
-	  ,@(if (> (bigloo-debug) 2) `(:ronly ,ronly) '())
-	  ,@(if (> (bigloo-debug) 2) `(:writable ,writable) '())
-	  ,@(if (> (bigloo-debug) 3) `(:scope ,scope) '())
 	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1077,13 +1074,10 @@
 ;*    j2s->list ::J2SDeclClass ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclClass)
-   (with-access::J2SDeclClass this (val key ronly writable val scope id)
+   (with-access::J2SDeclClass this (val key)
       `(,@(call-next-method)
 	  ,@(dump-key key)
 	  ,@(dump-vtype this)
-	  ,@(if (> (bigloo-debug) 2) `(:ronly ,ronly) '())
-	  ,@(if (> (bigloo-debug) 2) `(:writable ,writable) '())
-	  ,@(if (> (bigloo-debug) 3) `(:scope ,scope) '())
 	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/

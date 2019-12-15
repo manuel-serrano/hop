@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Sun Jun  2 06:39:49 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 17:45:03 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_uninit
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -66,11 +67,12 @@
 				    (set! %info 'unknown))))
 		   decls)
 		;; mark single decl init initialization
-		(for-each invalidate-double-decl nodes)
+		(for-each invalidate-overridden-decl nodes)
 		;; mark global declinit single init
 		(for-each (lambda (decl)
 			     (with-access::J2SDecl decl (%info)
-				(when (and (isa? decl J2SDeclInit) (eq? %info 'init0))
+				(when (and (isa? decl J2SDeclInit)
+					   (eq? %info 'init0))
 				   (set! %info 'init))))
 		   decls)
 		;; mark variables used before initialized
@@ -78,47 +80,47 @@
 		;; mark all variables not initialized for sure
 		(for-each (lambda (decl)
 			     (with-access::J2SDecl decl (%info id)
-				(when (memq %info '(init0 unknown double))
+				(when (memq %info '(init0 uninit unknown overridden))
 				   (decl-usage-add! decl 'uninit))))
 		   decls)))))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    invalidate-double-decl ::J2SNode ...                             */
+;*    invalidate-overridden-decl ::J2SNode ...                         */
 ;*    -------------------------------------------------------------    */
 ;*    Scan the whole program and invalidate all global variables       */
 ;*    that are initialized several times.                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-double-decl this::J2SNode)
+(define-walk-method (invalidate-overridden-decl this::J2SNode)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    invalidate-double-decl ::J2SInit ...                             */
+;*    invalidate-overridden-decl ::J2SInit ...                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-double-decl this::J2SInit)
+(define-walk-method (invalidate-overridden-decl this::J2SInit)
    (with-access::J2SInit this (lhs rhs)
-      (invalidate-double-decl rhs)
+      (invalidate-overridden-decl rhs)
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (%info)
 		(case %info
 		   ((unknown)
-		    (set! %info 'init0))
-		   ((init0)
-		    (set! %info 'double)))))
-	  (invalidate-double-decl lhs))))
+		    (set! %info 'init1))
+		   ((init1)
+		    (set! %info 'overridden)))))
+	  (invalidate-overridden-decl lhs))))
 
 ;*---------------------------------------------------------------------*/
-;*    invalidate-double-decl ::J2SDeclInit ...                         */
+;*    invalidate-overridden-decl ::J2SDeclInit ...                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (invalidate-double-decl this::J2SDeclInit)
+(define-walk-method (invalidate-overridden-decl this::J2SDeclInit)
    (with-access::J2SDeclInit this (%info val)
-      (invalidate-double-decl val)
+      (invalidate-overridden-decl val)
       (case %info
 	 ((unknown)
 	  (set! %info 'init0))
 	 ((init0)
-	  (set! %info 'double)))))
+	  (set! %info 'overridden)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SNode ...                              */
@@ -135,7 +137,7 @@
 (define-walk-method (invalidate-early-decl this::J2SRef initp)
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (%info id key)
-	 (when (memq %info '(unknown init0 double))
+	 (when (memq %info '(unknown init0 overridden))
 	    (if (isa? decl J2SDeclFun)
 		(begin
 		   (set! %info 'init)

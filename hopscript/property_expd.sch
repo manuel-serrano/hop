@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Dec  1 06:00:35 2019 (serrano)                */
+;*    Last change :  Fri Dec 13 13:23:42 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -906,27 +906,70 @@
 
    (define (call/tmp %this ccache fun this args)
       (let ((len (length args)))
-	 `(if (eq? (js-pcache-owner ,ccache) ,fun)
-	      ((js-pcache-method ,ccache) ,this ,@args)
+	 `(if (object? ,fun)
 	      ,(case len
-		  ((0 1 2 3 4 5 6 7 8)
-		   (let ((caller (symbol-append 'js-call/cache-miss
-				    (string->symbol (integer->string len)))))
-		      `(,caller ,%this ,ccache ,fun ,this ,@args)))
+		  ((1)
+		   `(if (eq? (object-class ,fun) JsFunction1)
+			(with-access::JsFunction ,fun (procedure)
+			   (procedure ,this ,@args))
+			(js-call1 ,%this ,fun ,this ,@args)))
+		  ((2)
+		   `(if (eq? (object-class ,fun) JsFunction2)
+			(with-access::JsFunction ,fun (procedure)
+			   (procedure ,this ,@args))
+			(js-call2 ,%this ,fun ,this ,@args)))
+		  ((3)
+		   `(if (eq? (object-class ,fun) JsFunction3)
+			(with-access::JsFunction ,fun (procedure)
+			   (procedure ,this ,@args))
+			(js-call3 ,%this ,fun ,this ,@args)))
+		  ((4)
+		   `(if (eq? (object-class ,fun) JsFunction4)
+			(with-access::JsFunction ,fun (procedure)
+			   (procedure ,this ,@args))
+			(js-call4 ,%this ,fun ,this ,@args)))
+		  ((5)
+		   `(if (eq? (object-class ,fun) JsFunction5)
+			(with-access::JsFunction ,fun (procedure)
+			   (procedure ,this ,@args))
+			(js-call5 ,%this ,fun ,this ,@args)))
+		  ((6)
+		   `(js-call6 ,%this ,fun ,this ,@args))
+		  ((7)
+		   `(js-call7 ,%this ,fun ,this ,@args))
+		  ((8)
+		   `(js-call8 ,%this ,fun ,this ,@args))
+		  ((9)
+		   `(js-call9 ,%this ,fun ,this ,@args))
+		  ((10)
+		   `(js-call10 ,%this ,fun ,this ,@args))
 		  (else
-		   `(if (and (js-function? ,fun)
-			     (with-access::JsFunction ,fun (procedure arity)
-				(and (>=fx arity 0)
-				     (correct-arity? procedure ,(+fx len 1)))))
-			(with-access::JsPropertyCache ,ccache (method owner)
-			   (with-access::JsFunction ,fun (procedure)
-			      (set! owner ,fun)
-			      (set! method procedure)
-			      (procedure ,this ,@args)))
-			,(if (>=fx len 11)
-			     `(js-calln ,%this ,fun ,this ,@args)
-			     `(,(string->symbol (format "js-call~a" len))
-			       ,%this ,fun ,this ,@args))))))))
+		   `(js-calln ,%this ,fun ,this ,@args)))
+	      (js-calln ,%this ,fun ,this ,@args))))
+
+   (define (call/tmp-TOBEREMOVED-13dec2019 %this ccache fun this args)
+      (let ((len (length args)))
+         `(if (eq? (js-pcache-owner ,ccache) ,fun)
+              ((js-pcache-method ,ccache) ,this ,@args)
+              ,(case len
+                  ((0 1 2 3 4 5 6 7 8)
+                   (let ((caller (symbol-append 'js-call/cache-miss
+                                    (string->symbol (integer->string len)))))
+                      `(,caller ,%this ,ccache ,fun ,this ,@args)))
+                  (else
+                   `(if (and (js-function? ,fun)
+                             (with-access::JsFunction ,fun (procedure arity)
+                                (and (>=fx arity 0)
+                                     (correct-arity? procedure ,(+fx len 1)))))
+                        (with-access::JsPropertyCache ,ccache (method owner)
+                           (with-access::JsFunction ,fun (procedure)
+                              (set! owner ,fun)
+                              (set! method procedure)
+                              (procedure ,this ,@args)))
+                        ,(if (>=fx len 11)
+                             `(js-calln ,%this ,fun ,this ,@args)
+                             `(,(string->symbol (format "js-call~a" len))
+			      ,%this ,fun ,this ,@args)))))))) 
    
    (cond-expand
       ((or no-macro-cache no-macro-cache-call)
