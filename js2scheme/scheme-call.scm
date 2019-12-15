@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Dec 13 19:12:21 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 19:26:49 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-call
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -183,7 +184,7 @@
 		       (and (isa? decl J2SDeclInit)
 			    (with-access::J2SDeclInit decl (val)
 			       (and (isa? val J2SFun) (decl-ronly? decl)))))
-		   (decl-only-usage? decl '(get call new init instanceof))
+		   (decl-only-call? decl)
 		   (and (pair? args) (=fx (length args) 4)))
 	      (if (and (isa? (cadr args) J2SRef)
 		       (j2s-ref-arguments-lazy? (cadr args)))
@@ -226,7 +227,7 @@
 		       (and (isa? decl J2SDeclInit)
 			    (with-access::J2SDeclInit decl (val)
 			       (and (isa? val J2SFun) (decl-ronly? decl)))))
-		   (decl-only-usage? decl '(get call new init instanceof))
+		   (decl-only-call? decl)
 		   (and (pair? args) (<=fx (length args) 2)))
 	      (j2s-scheme (J2SMethodCall* obj
 			     (list (car args))
@@ -263,7 +264,7 @@
 		       (and (isa? decl J2SDeclInit)
 			    (with-access::J2SDeclInit decl (val)
 			       (and (isa? val J2SFun) (decl-ronly? decl)))))
-		   (decl-only-usage? decl '(get call new init instanceof))
+		   (decl-only-call? decl)
 		   (and (pair? args) (<=fx (length args) 2)))
 	      (j2s-scheme (J2SMethodCall* obj
 			     (list (car args))
@@ -301,7 +302,7 @@
 		       (and (isa? decl J2SDeclInit)
 			    (with-access::J2SDeclInit decl (val)
 			       (and (isa? val J2SFun) (decl-ronly? decl)))))
-		   (decl-only-usage? decl '(get call new init instanceof)))
+		   (decl-only-call? decl))
 	      (j2s-scheme (J2SMethodCall* obj
 			     (list (car args))
 			     (list (cadr args) (caddr args)))
@@ -337,7 +338,7 @@
 		       (and (isa? decl J2SDeclInit)
 			    (with-access::J2SDeclInit decl (val)
 			       (and (isa? val J2SFun) (decl-ronly? decl)))))
-		   (decl-only-usage? decl '(get call new init instanceof)))
+		   (decl-only-call? decl))
 	      (j2s-scheme (J2SMethodCall* obj
 			     (list (car args))
 			     (list (cadr args) (caddr args) (cadddr args)))
@@ -381,7 +382,7 @@
 (define (j2s-array-plain? mode return conf)
    (let ((array (config-get conf :array)))
       (if (isa? array J2SDeclExtern)
-	  (decl-only-usage? array '(new init call get instanceof))
+	  (decl-only-call? array)
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -390,7 +391,7 @@
 (define (j2s-string-plain? mode return conf)
    (let ((string (config-get conf :string)))
       (if (isa? string J2SDeclExtern)
-	  (decl-only-usage? string '(new init call get instanceof))
+	  (decl-only-call? string)
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -399,7 +400,7 @@
 (define (j2s-regexp-plain? mode return conf)
    (let ((regexp (config-get conf :regexp)))
       (if (isa? regexp J2SDeclExtern)
-	  (decl-only-usage? regexp '(new init call get instanceof))
+	  (decl-only-call? regexp)
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -408,7 +409,7 @@
 (define (j2s-math-plain? mode return conf)
    (let ((math (config-get conf :math)))
       (if (isa? math J2SDeclExtern)
-	  (decl-only-usage? math '(new init call get instanceof))
+	  (decl-only-call? math)
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -470,7 +471,7 @@
 		(when (isa? decl J2SDeclExtern)
 		   (with-access::J2SDeclExtern decl (id)
 		      (when (eq? id ty)
-			 (not (decl-usage? decl '(assig))))))))))
+			 (not (decl-usage-has? decl '(assig))))))))))
 
       (when (and (isa? field J2SString) (= (config-get conf debug: 0) 0))
 	 (with-access::J2SString field (val)
@@ -641,7 +642,7 @@
 
    (define (call-globalref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
       (with-access::J2SGlobalRef self (id decl)
-	 (unless (decl-usage? decl '(assig))
+	 (unless (decl-usage-has? decl '(assig))
 	    (case id
 	       ((Math)
 		(j2s-math-builtin-method fun args
@@ -661,7 +662,7 @@
       (with-access::J2SNew obj (clazz)
 	 (when (isa? clazz J2SGlobalRef)
 	    (with-access::J2SGlobalRef clazz (id decl)
-	       (unless (decl-usage? decl '(assig))
+	       (unless (decl-usage-has? decl '(assig))
 		  (case id
 		     ((Date)
 		      (j2s-date-new-method obj field args mode return
@@ -1045,7 +1046,7 @@
 	 (cond
 	    ((and (isa? fun J2SRef)
 		  (with-access::J2SRef fun (decl)
-		     (decl-only-usage? decl '(call new init get instanceof))))
+		     (decl-only-call? decl)))
 	     (if (isa? expr J2SArray)
 		 ;; fun(...[x,y,z])
 		 (with-access::J2SArray expr (exprs)
@@ -1090,3 +1091,9 @@
 			     (args (list (J2SNull) expr)))))
 		(j2s-scheme ncall mode return conf)))))))
 						      
+;*---------------------------------------------------------------------*/
+;*    decl-only-call? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (decl-only-call? decl::J2SDecl)
+   (and (decl-usage-has? decl '(get call new init instanceof))
+	(not (decl-usage-has? decl '(assig ref set uninit rest eval)))))

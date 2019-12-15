@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Dec 13 18:49:24 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 17:45:49 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -54,7 +54,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_globprop
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -166,7 +167,7 @@
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (%info)
-		(if (and (not (decl-usage? decl '(assig uninit)))
+		(if (and (not (decl-usage-has? decl '(assig uninit)))
 			 (constant-object? rhs))
 		    (begin
 		       (set! %info (propinfo rhs '() #t))
@@ -179,7 +180,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-globconst* this::J2SDeclInit)
    (with-access::J2SDeclInit this (val %info)
-      (if (and (not (decl-usage? this '(assig))) (constant-object? val))
+      (if (and (not (decl-usage-has? this '(assig))) (constant-object? val))
 	  (begin
 	     (set! %info (propinfo val '() #f))
 	     (list this))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Dec 13 19:10:54 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 19:25:57 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-fun
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -42,7 +43,7 @@
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
-		     (not (decl-usage? this '(new ref get set instanceof)))))))))
+		     (not (decl-usage-has? this '(new ref get set instanceof)))))))))
 
    (define (constructor-only? this::J2SDeclFun)
       (with-access::J2SDeclFun this (val)
@@ -50,8 +51,8 @@
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
-		     (and (decl-usage? this '(new))
-			  (not (decl-usage? this '(ref get call instanceof))))))))))
+		     (and (decl-usage-has? this '(new))
+			  (not (decl-usage-has? this '(ref get call instanceof))))))))))
 
    (define (lambda? id)
       (or (memq id '(lambda lambda::obj))
@@ -80,7 +81,7 @@
 		 `(define ,fastid
 		     ,(jsfun->lambda val mode return conf
 			 (j2s-declfun-prototype this)
-			 (decl-usage? this '(new)))))
+			 (decl-usage-has? this '(new)))))
 	     ,@(if (optimized-ctor this)
 		   `(,(beautiful-define
 			 `(define ,(j2s-fast-constructor-id id)
@@ -97,7 +98,7 @@
 		 `(define ,fastid
 		     ,(jsfun->lambda val mode return conf
 			 (j2s-declfun-prototype this)
-			 (decl-usage? this '(new)))))
+			 (decl-usage-has? this '(new)))))
 	     ,@(if (optimized-ctor this)
 		   `(,(beautiful-define
 			 `(define ,(j2s-fast-constructor-id id)
@@ -120,11 +121,11 @@
 			 `(define ,fastid
 			     ,(jsfun->lambda val mode return conf
 				 (j2s-declfun-prototype this)
-				 (decl-usage? this '(new))))))
+				 (decl-usage-has? this '(new))))))
 		     ((letblock)
 		      (let ((def `(,fastid ,(jsfun->lambda val mode return conf
 					       (j2s-declfun-prototype this)
-					       (decl-usage? this '(new))))))
+					       (decl-usage-has? this '(new))))))
 			 
 			 (if (no-closure? this)
 			     (list def)
@@ -231,7 +232,7 @@
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
-		     ((or (decl-usage? this '(new ref)) new-target)
+		     ((or (decl-usage-has? this '(new ref)) new-target)
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
 			  :rest ,(eq? vararg 'rest)
@@ -250,7 +251,7 @@
 
    (with-access::J2SDeclFun this (val)
       (let ((fun (make-function-sans-alloc this)))
-	 (if (decl-usage? this '(new ref))
+	 (if (decl-usage-has? this '(new ref))
 	     (with-access::J2SFun (declfun-fun this) (body loc)
 		(if (cancall? this)
 		    fun
@@ -269,7 +270,7 @@
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
 		  (unless generator
-		     (not (decl-usage? this '(new ref get set instanceof)))))))))
+		     (not (decl-usage-has? this '(new ref get set instanceof)))))))))
    
    (when (and (isa? this J2SDeclFun) (not (isa? this J2SDeclSvc)))
       (with-access::J2SDeclFun this (loc id scope val)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Fri Dec 13 18:51:37 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 17:51:20 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_ronly
+
+   (include "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -27,7 +29,7 @@
 ;*---------------------------------------------------------------------*/
 (define j2s-ronly-stage
    (instantiate::J2SStageProc
-      (name "read-only")
+      (name "ronly")
       (comment "Mark read-only variables")
       (proc j2s-ronly)))
 
@@ -57,8 +59,7 @@
 ;*---------------------------------------------------------------------*/
 (define (init-decls-ronly! decls)
    (for-each (lambda (d::J2SDecl)
-		(with-access::J2SDecl d (usage)
-		   (set! usage (delete 'assig usage))))
+		(decl-usage-rem! d 'assig))
       decls))
 
 ;*---------------------------------------------------------------------*/
@@ -158,8 +159,7 @@
 (define-walk-method (ronly! this::J2SFun mode::symbol deval::bool)
    (with-access::J2SFun this (params thisp mode body)
       (when thisp
-	 (with-access::J2SDecl thisp (usage)
-	    (set! usage (delete 'assig usage))))
+	 (decl-usage-rem! thisp 'assig))
       (set! body (ronly! body mode deval))
       this))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Dec  5 09:43:11 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:43:40 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -26,7 +26,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_cast
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump

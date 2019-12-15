@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Dec 13 18:56:29 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:03:18 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_propcache
+
+   (include "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -158,7 +160,7 @@
 		 (cond
 		    ((and (isa? obj J2SRef) (isa? field J2SString))
 		     (with-access::J2SRef obj (decl)
-			(if (not (decl-usage? decl '(assig)))
+			(if (not (decl-usage-has? decl '(assig)))
 			    (with-access::J2SString field (val)
 			       (set! cache
 				  (decl-cache decl val count env assig shared-pcache)))
@@ -213,11 +215,11 @@
 	    ((isa? decl J2SDeclSvc)
 	     #f)
 	    ((isa? decl J2SDeclFun)
-	     (not (decl-usage? decl '(assig))))
+	     (not (decl-usage-has? decl '(assig))))
 	    ((j2s-let-opt? decl)
 	     (with-access::J2SDeclInit decl (val)
 		(when (isa? val J2SFun)
-		   (unless (decl-usage? decl '(assig init)) decl))))
+		   (unless (decl-usage-has? decl '(assig init)) decl))))
 	    (else
 	     #f)))))
 

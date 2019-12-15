@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Dec 13 19:06:28 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:48:38 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -23,7 +23,8 @@
 
    (library web)
    
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -201,6 +202,8 @@
 					    inline-max-function-size)
 					 (not (function-arguments? (cdr t)))
 					 (not (function-varargs? (cdr t)))
+					 (not (function-newtarget? (cdr t)))
+					 (not (function-generator? (cdr t)))
 					 (not (function-freevars? (cdr t)))))
 			    targets))
 		(targets (filter (lambda (t)
@@ -280,9 +283,10 @@
 			((and (< (callloginfo-counter cli) (* allcnt 0.001))
 			      (>fx sz (node-size call)))
 			 0)
-			((function-arguments? val)
-			 0)
-			((function-varargs? val)
+			((or (function-arguments? val)
+			     (function-varargs? val)
+			     (function-newtarget? val)
+			     (function-generator? val))
 			 0)
 			(else
 			 (let* ((node (inline-function-call-profile
@@ -463,7 +467,7 @@
    (with-access::J2SDecl decl (usecnt)
       (when (or (>fx usecnt 0)
 		(not (isa? decl J2SDeclFun))
-		(decl-usage? decl '(eval)))
+		(decl-usage-has? decl '(eval)))
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val)
 	       (set! val (dead-inner-decl! val))))
@@ -541,11 +545,18 @@
       argumentsp))
 
 ;*---------------------------------------------------------------------*/
-;*    function-varargs? ...                                             */
+;*    function-varargs? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (function-varargs? this::J2SFun)
    (with-access::J2SFun this (vararg)
       vararg))
+
+;*---------------------------------------------------------------------*/
+;*    function-newtarget? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (function-newtarget? this::J2SFun)
+   (with-access::J2SFun this (new-target)
+      new-target))
 
 ;*---------------------------------------------------------------------*/
 ;*    function-glodecl ...                                             */
@@ -606,9 +617,12 @@
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (decl)
-	  (or (decl-ronly? decl) (decl-only-usage? decl '(ref)))))
+	  (refonly-variable? decl)))
       ((isa? obj J2SDecl)
-       (or (decl-ronly? obj) (decl-only-usage? obj '(ref))))
+       (or (decl-ronly? obj)
+	   (not (decl-usage-has? obj
+		   '(assig init new get set call delete
+		     instanceof uninit rest eval)))))
       (else
        #f)))
 
@@ -759,6 +773,7 @@
 		  (when (and (>=fx (function-arity val) arity)
 			     (function-fxarg? val)
 			     (not (function-generator? val))
+			     (not (function-newtarget? val))
 			     (or (not leaf) (function-leaf? val))
 			     (not (memq val stack))
 			     (<=fx (function-size val) limit)
@@ -1317,9 +1332,9 @@
 		 ((and (ronly-variable? p) (isa? a J2SLiteral))
 		  a)
 		 (else
-		  (with-access::J2SDecl p (usage id writable)
+		  (with-access::J2SDecl p (_usage id writable)
 		     (with-access::J2SNode a (loc)
-			(let ((d (J2SLetOpt usage (gensym id)
+			(let ((d (J2SLetOpt _usage (gensym id)
 				    (inline! a
 				       targets leaf limit stack pmethods prgm conf))))
 			   (with-access::J2SDecl d ((w writable))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Dec 13 18:48:00 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 07:01:24 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_utils
+
+   (include "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump)
@@ -54,15 +56,6 @@
 	   (j2s-etype ::obj conf)
 	   
 	   (class-of ::J2SExpr)
-
-	   (decl-usage-add! ::J2SDecl ::symbol)
-	   (decl-usage?::bool ::J2SDecl ::pair-nil)
-	   (decl-only-usage?::bool ::J2SDecl ::pair-nil)
-	   (decl-strict-usage?::bool ::J2SDecl ::pair-nil)
-	   (decl-ronly?::bool ::J2SDecl)
-	   (usage?::bool ::pair-nil ::pair-nil)
-	   (only-usage?::bool ::pair-nil ::pair-nil)
-	   (strict-usage?::bool ::pair-nil ::pair-nil)
 
 	   (is-hint?::bool ::J2SExpr ::symbol)
 
@@ -596,67 +589,6 @@
 	    (else 'unknown)))))
 
 ;*---------------------------------------------------------------------*/
-;*    decl-usage-add! ...                                              */
-;*---------------------------------------------------------------------*/
-(define (decl-usage-add! decl key)
-   [assert (key) (memq key '(uninit init new ref assig get set call eval delete instanceof rest escape))]
-   (with-access::J2SDecl decl (usage)
-      (unless (memq key usage)
-	 (set! usage (cons key usage)))))
-   
-;*---------------------------------------------------------------------*/
-;*    usage? ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (usage? keys usage)
-   (any (lambda (k)
-	   [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest))]
-	   (memq k usage))
-      keys))
-
-;*---------------------------------------------------------------------*/
-;*    decl-usage? ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (decl-usage? decl keys)
-   (with-access::J2SDecl decl (usage)
-      (usage? keys usage)))
-
-;*---------------------------------------------------------------------*/
-;*    only-usage? ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (only-usage? keys usage)
-   (every (lambda (u)
-	     [assert (u) (memq u '(uninit init new ref assig get set call eval delete instanceof rest))]
-	     (memq u keys))
-      usage))
-
-;*---------------------------------------------------------------------*/
-;*    decl-only-usage? ...                                             */
-;*---------------------------------------------------------------------*/
-(define (decl-only-usage? decl keys)
-   (with-access::J2SDecl decl (usage)
-      (only-usage? keys usage)))
-
-;*---------------------------------------------------------------------*/
-;*    strict-usage? ...                                                */
-;*---------------------------------------------------------------------*/
-(define (strict-usage? keys usage)
-   (and (=fx (length keys) (length usage))
-	(only-usage? keys usage)))
-	
-;*---------------------------------------------------------------------*/
-;*    decl-strict-usage? ...                                           */
-;*---------------------------------------------------------------------*/
-(define (decl-strict-usage? decl keys)
-   (with-access::J2SDecl decl (usage)
-      (strict-usage? keys usage)))
-
-;*---------------------------------------------------------------------*/
-;*    decl-ronly? ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (decl-ronly? decl)
-   (not (decl-usage? decl '(assig))))
-
-;*---------------------------------------------------------------------*/
 ;*    is-hint? ...                                                     */
 ;*    -------------------------------------------------------------    */
 ;*    Is the most likely hint of type TYPE?                            */
@@ -792,7 +724,7 @@
 	  (when (isa? obj J2SGlobalRef)
 	     (with-access::J2SGlobalRef obj (id decl)
 		(when (eq? id ident)
-		   (not (decl-usage? decl '(assig))))))))
+		   (not (decl-usage-has? decl '(assig))))))))
    
    (define (String? obj)
       (is-global? obj 'String))
@@ -821,7 +753,7 @@
       (when (isa? obj J2SGlobalRef)
 	 (with-access::J2SGlobalRef obj (id decl)
 	    (when (eq? id ident)
-	       (not (decl-usage? decl '(assig)))))))
+	       (not (decl-usage-has? decl '(assig)))))))
    
    (define (String? obj)
       (is-global? obj 'String))
@@ -906,13 +838,13 @@
       ((isa? expr J2SGlobalRef)
        (with-access::J2SGlobalRef expr (decl)
 	  (with-access::J2SDecl decl (id)
-	     (and (eq? id clazz) (not (decl-usage? decl '(assig)))))))
+	     (and (eq? id clazz) (not (decl-usage-has? decl '(assig)))))))
       ((isa? expr J2SRef)
        (with-access::J2SRef expr (decl)
 	  (with-access::J2SDecl decl (id scope)
 	     (and (eq? id clazz)
 		  (eq? scope '%scope)
-		  (decl-only-usage? decl '(new init call get instanceof))))))
+		  (not (decl-usage-has? decl '(assig ref assig set delete uninit rest eval)))))))
       (else
        #f)))
 
@@ -923,8 +855,8 @@
 ;*    constructor.                                                     */
 ;*---------------------------------------------------------------------*/
 (define (constructor-only?::bool decl::J2SDeclFun)
-   (and (decl-usage? decl '(new))
-	(not (decl-usage? decl '(ref assig call eval instanceof)))))
+   (and (decl-usage-has? decl '(new))
+	(not (decl-usage-has? decl '(ref assig call eval instanceof)))))
 
 
 ;*---------------------------------------------------------------------*/

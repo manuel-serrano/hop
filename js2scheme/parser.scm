@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec 13 18:44:17 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 07:05:48 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -15,7 +15,8 @@
 (module __js2scheme_parser
 
    (include "token.sch"
-	    "ast.sch")
+	    "ast.sch"
+	    "usage.sch")
 
    (import __js2scheme_lexer
 	   __js2scheme_html
@@ -1059,14 +1060,9 @@
 
    (define (rest-params params)
       (when (pair? params)
-	 (when (decl-strict-usage? (car (last-pair params)) '(rest))
+	 (when (decl-usage-has? (car (last-pair params)) '(rest))
 	    'rest)))
    
-   (define (rest-params params)
-      (when (pair? params)
-	 (with-access::J2SDecl (car (last-pair params)) (usage)
-	    (when (equal? usage '(rest)) 'rest))))
-
    (define (loc->funname pref loc)
       (string->symbol (format "~a@~a:~a" pref (cadr loc) (caddr loc))))
    
@@ -1096,9 +1092,9 @@
 				       (decl (instantiate::J2SDeclFun
 						(loc loc)
 						(writable (not (eq? mode 'hopscript)))
-						(usage (if (eq? mode 'hopscript)
-							   '()
-							   '(assig)))
+						(_usage (if (eq? mode 'hopscript)
+							   (usage '())
+							   (usage '(assig))))
 						(id (cdr id))
 						(val val))))
 			 decl))
@@ -1118,7 +1114,7 @@
 						(loc (token-loc id))
 						(id (cdr id))
 						(writable #f)
-						(usage '())
+						(_usage (usage '()))
 						(expression #t)
 						(scope 'global)
 						(val fun))))
@@ -1157,7 +1153,7 @@
 				       (id (cdr id))
 				       (scope 'global)
 				       (writable #f)
-				       (usage '())
+				       (_usage (usage '()))
 				       (val val))))
 		decl))
 	    (id
@@ -1178,7 +1174,7 @@
 				       (loc (token-loc id))
 				       (id (cdr id))
 				       (writable #f)
-				       (usage '())
+				       (_usage (usage '()))
 				       (expression #t)
 				       (scope  'global)
 				       (val svc))))
@@ -1539,7 +1535,7 @@
 	 (instantiate::J2SDecl
 	    (binder 'param)
 	    (loc loc)
-	    (usage '(rest))
+	    (_usage (usage '(rest)))
 	    (id (token-value token)))))
       
    (define (function-params maybe-expr?)
@@ -1678,7 +1674,7 @@
 					  (loc (token-loc id))
 					  (id (token-value id))
 					  (writable #f)
-					  (usage '())
+					  (_usage (usage '()))
 					  (scope 'global)
 					  (binder 'let)
 					  (val clazz))))
@@ -1692,7 +1688,7 @@
 					  (loc (token-loc id))
 					  (id (token-value id))
 					  (writable #f)
-					  (usage '())
+					  (_usage (usage '()))
 					  (scope 'global)
 					  (binder 'let)
 					  (val clazz))))
@@ -1843,7 +1839,8 @@
 			(let* ((loc (token-loc op))
 			       (endloc loc)
 			       (objectp (isa? lhs J2SObjInit))
-			       (decl (J2SDeclInit '(init ref get) (gensym '%obj)
+			       (decl (J2SDeclInit (usage '(init ref get))
+					(gensym '%obj)
 					(J2SUndefined)))
 			       (inits (j2s-destructure lhs decl #f))
 			       (bindings (filter (lambda (i)
@@ -3398,11 +3395,11 @@
 ;*    hopscript-cnst-fun! ::J2SDeclFun ...                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hopscript-cnst-fun! this::J2SDeclFun)
-   (with-access::J2SDeclFun this (val mode writable usage)
+   (with-access::J2SDeclFun this (val mode writable)
       (with-access::J2SFun val (mode)
 	 (when (eq? mode 'hopscript)
 	    (set! writable #f)
-	    (set! usage (remq! 'assig usage))))
+	    (decl-usage-rem! this 'assig)))
       (if writable
 	  (call-default-walker)
 	  this)))

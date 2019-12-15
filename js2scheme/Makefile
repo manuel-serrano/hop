@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Dec  5 09:15:49 2019 (serrano)                */
+#*    Last change :  Sat Dec 14 07:07:42 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -36,7 +36,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = lexer header parser html ast dump utils \
+_OBJECTS = lexer header parser html ast usage dump utils \
   stage compile js uninit globprop globvar varpreinit method nodesize \
   syntax return loopexit symbol ronly resolve this any letfun \
   use propcache bestpractice sourcemap debug stmtassign letopt unletrec \
@@ -56,7 +56,7 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm) ecmascript5.js
 
-INCLUDES = ast.sch
+INCLUDES = ast.sch usage.sch usage-bit.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */

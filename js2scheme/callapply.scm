@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Sun Jun  2 06:11:07 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 19:01:46 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Turns indirect CALL and APPLY method calls into direction        */
@@ -20,7 +20,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_callapply
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -82,7 +83,7 @@
 	  (with-access::J2SAccess fun (obj field)
 	     (if (and (isa? field J2SString) (isa? obj J2SRef))
 		 (with-access::J2SRef obj (decl)
-		    (if (not (decl-usage? decl '(ref set get)))
+		    (if (not (decl-usage-has? decl '(ref set get)))
 			(with-access::J2SString field (val)
 			   (cond
 			      ((string=? val "call")

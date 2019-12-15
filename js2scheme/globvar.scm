@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Dec 13 18:51:10 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 17:47:14 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (constant propagation).            */
@@ -14,14 +14,16 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_globvar
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_utils
-	   __js2scheme_alpha)
+	   __js2scheme_alpha
+	   __js2scheme_use)
 
    (export j2s-globvar-stage))
 
@@ -45,7 +47,8 @@
 	    (let ((gcnsts (collect-gloconst* this)))
 	       (when (pair? gcnsts)
 		  ;; propagate the constants
-		  (propagate-constant! this))
+		  (propagate-constant! this)
+		  (reinit-use-count! this))
 	       (when (>=fx (config-get args :verbose 0) 3)
 		  (display " " (current-error-port))
 		  (fprintf (current-error-port) "(~(, ))"
@@ -73,7 +76,7 @@
       ((isa? expr J2SRef)
        (with-access::J2SRef expr (decl)
 	  (with-access::J2SDecl decl (writable)
-	     (or (not writable) (not (decl-usage? decl '(assig uninit)))))))
+	     (or (not writable) (not (decl-usage-has? decl '(assig uninit)))))))
       ((isa? expr J2SUnary)
        (with-access::J2SUnary expr (expr)
 	  (constant? expr)))
@@ -107,7 +110,7 @@
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (val %info id)
-		(if (and (not (decl-usage? decl '(assig uninit)))
+		(if (and (not (decl-usage-has? decl '(assig uninit)))
 			 (constant? rhs))
 		    (begin
 		       (set! %info (cons 'init rhs))
@@ -120,7 +123,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-gloconst* this::J2SDeclInit)
    (with-access::J2SDeclInit this (val %info %%dump id)
-      (if (and (not (decl-usage? this '(assig))) (constant? val))
+      (if (and (not (decl-usage-has? this '(assig))) (constant? val))
 	  (begin
 	     (set! %info (cons 'init this))
 	     (list this))
@@ -150,11 +153,9 @@
 	    ((isa? (cdr %info) J2SExpr)
 	     (j2s-alpha (propagate-constant! (cdr %info)) '() '()))
 	    ((isa? decl J2SDeclInit)
-	     (with-access::J2SDeclInit decl (val usecnt)
-		(set! usecnt (-fx usecnt 1))
+	     (with-access::J2SDeclInit decl (val)
 		;; copy the value
 		(j2s-alpha (propagate-constant! val) '() '())))
-	    
 	    (else
 	     (call-default-walker))))))
 

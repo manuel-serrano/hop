@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Fri Dec 13 19:07:37 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 19:02:08 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_newtarget
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -118,7 +119,7 @@
 		     val
 		     (with-access::J2SMethod val (function)
 			function))))
-	 (if (not (decl-usage? this '(assig new ref get set)))
+	 (if (not (decl-usage-has? this '(assig new ref get set)))
 	     (with-access::J2SFun fun (body)
 		(set! body (newtarget! body #f)))
 	     (newtarget! fun fun))))

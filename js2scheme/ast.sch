@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Fri Dec 13 18:50:01 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 07:42:09 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -393,26 +393,26 @@
        (loc loc)
        (expr ,expr)))
 
-(define-macro (J2SDecl binder usage id)
+(define-macro (J2SDecl binder _usage id)
    `(instantiate::J2SDecl
        (loc loc)
        (binder ,binder)
-       (usage ,usage)
+       (_usage (usage ,_usage))
        (id ,id)))
 
-(define-macro (J2SDeclGlobal binder usage id)
+(define-macro (J2SDeclGlobal binder _usage id)
    `(instantiate::J2SDecl
        (loc loc)
        (binder ,binder)
        (scope 'global)
-       (usage ,usage)
+       (_usage (usage ,_usage))
        (id ,id)))
 
-(define-macro (J2SParam usage id . opts)
+(define-macro (J2SParam _usage id . opts)
    `(instantiate::J2SDecl
        (loc loc)
        (binder 'param)
-       (usage ,usage)
+       (_usage (usage ,_usage))
        (itype ,(let ((c (memq :type opts)))
 		  (if (pair? c)
 		      (cadr c)
@@ -422,68 +422,68 @@
 		  (if (pair? c) (cadr c) ''unknown)))
        (id ,id)))
 
-(define-macro (J2SDeclInit usage id val)
+(define-macro (J2SDeclInit _usage id val)
    `(instantiate::J2SDeclInit
        (loc loc)
        (binder 'var)
-       (usage ,usage)
+       (_usage (usage ,_usage))
        (val ,val)
        (id ,id)))
 
-(define-macro (J2SLetOpt usage id val)
+(define-macro (J2SLetOpt _usage id val)
    `(instantiate::J2SDeclInit
        (loc loc)
-       (writable ,(if (or (not (pair? usage)) (memq 'assig (cadr usage))) #t #f))
+       (writable (usage-has? (usage ,_usage) '(assig)))
        (usecnt 1)
        (binder 'let-opt)
-       (usage ,usage)
+       (_usage (usage ,_usage))
        (val ,val)
        (id ,id)))
 
-(define-macro (J2SLetOptRo usage id val)
+(define-macro (J2SLetOptRo _usage id val)
    `(instantiate::J2SDeclInit
        (loc loc)
        (writable #f)
        (usecnt 1)
        (binder 'let-opt)
-       (usage ,(delete 'assig usage))
+       (_usage (usage-rem (usage ,_usage) 'assig))
        (val ,val)
        (id ,id)))
 
-(define-macro (J2SLetOptRoGlobal usage id val)
+(define-macro (J2SLetOptRoGlobal _usage id val)
    `(instantiate::J2SDeclInit
        (loc loc)
        (writable #f)
        (scope 'global)
        (usecnt 1)
        (binder 'let-opt)
-       (usage ,(delete 'assig usage))
+       (_usage (usage-rem (usage ,_usage) 'assig))
        (val ,val)
        (id ,id)))
 
 (define-macro (J2SLetOpt/vtype typ usage id val)
    `(J2SLetOptVtype ,typ ,usage ,id ,val))
 
-(define-macro (J2SLetOptVtype typ usage id val)
+(define-macro (J2SLetOptVtype typ _usage id val)
    `(instantiate::J2SDeclInit
        (loc loc)
-       (writable ,(if (memq 'assig (cadr usage)) #t #f))
+       (writable (usage-has? (usage ,_usage) '(assig)))
        (vtype ,typ)
        (usecnt 1)
        (binder 'let-opt)
-       (usage ,usage)
+       (_usage (usage ,_usage))
        (val ,val)
        (id ,id)))
 
-(define-macro (J2SLetOptVUtype typ usage id val)
+(define-macro (J2SLetOptVUtype typ _usage id val)
    `(instantiate::J2SDeclInit
        (loc loc)
-       (writable ,(if (memq 'assig (cadr usage)) #t #f))
+       (writable (usage-has? (usage ,_usage) '(assig)))
        (vtype ,typ)
        (utype ,typ)
        (usecnt 1)
        (binder 'let-opt)
-       (usage ,usage)
+       (_usage (usage ,_usage))
        (val ,val)
        (id ,id)))
 

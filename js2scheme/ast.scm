@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Dec 13 18:43:24 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 06:23:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -19,6 +19,8 @@
    (include "walk.sch"
 	    "ast.sch")
 
+   (import  __js2scheme_usage)
+   
    (export (abstract-class J2SNode
 	      (loc::pair read-only (info '("notraverse")))
 	      (%info (default #unspecified) (info '("nojson" "notraverse")))
@@ -66,10 +68,9 @@
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))
 	      (escape::bool (default #f) (info '("notraverse")))
-	      ;; usage: init, new, ref, assig, get (field), set (field), call,
-	      ;; delete, instanceof, uninit (premature variable access),
-	      ;; rest (rest argument).
-	      (usage::pair-nil (default '(assig)) (info '("notraverse")))
+	      ;; see usage-bit.sch
+	      (_usage::uint32 (default (usage '(assig))))
+	      ;;(usage::pair-nil (default '(assig)) (info '("notraverse")))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))
 	      ;; user declared type, if set, assign will be guarded

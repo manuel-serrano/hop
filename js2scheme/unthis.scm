@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Fri Dec 13 19:06:49 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:54:16 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization removes the THIS argument of functions that    */
@@ -15,7 +15,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_unthis
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -59,7 +60,7 @@
    (with-access::J2SDeclInit this (val)
       (when (and (decl-ronly? this) (isa? val J2SFun) (not (isa? val J2SSvc)))
 	 (with-access::J2SFun val (generator idthis thisp)
-	    (when (and (not generator) (decl-strict-usage? this '(init call)))
+	    (when (and (not generator) (decl-usage-strict? this '(init call)))
 	       (when (isa? thisp J2SDecl)
 		  (with-access::J2SDecl thisp (usecnt)
 		     (when (=fx usecnt 0)

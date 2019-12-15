@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Dec 13 19:09:04 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 19:23:28 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -795,13 +796,13 @@
 ;*    j2s-let-decl-toplevel ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (j2s-let-decl-toplevel::pair-nil d::J2SDeclInit mode return conf)
-   (with-access::J2SDeclInit d (val usage id hint scope loc)
+   (with-access::J2SDeclInit d (val id hint scope loc)
       (let ((ident (j2s-decl-scheme-id d)))
 	 (cond
 	    ((or (not (isa? val J2SFun))
 		 (isa? val J2SSvc)
-		 (usage? '(assig) usage))
-	     (if (usage? '(eval) usage)
+		 (decl-usage-has? d '(assig)))
+	     (if (decl-usage-has? d '(eval))
 		 `(begin
 		     (define ,ident ,(j2s-scheme val mode return conf))
 		     (js-define %this ,scope ,(j2s-scheme-name id)
@@ -810,7 +811,7 @@
 			%source
 			,(caddr loc)))
 		 `(define ,ident ,(j2s-scheme val mode return conf))))
-	    ((usage? '(ref get new set eval) usage)
+	    ((decl-usage-has? d '(ref get new set eval))
 	     (let ((fun (jsfun->lambda val mode return conf
 			   `(js-get ,ident (& "prototype") %this) #f))
 		   (tmp (j2s-fast-id id)))
@@ -818,14 +819,14 @@
 		    (define ,tmp ,fun)
 		    (define ,ident
 		       ,(j2sfun->scheme val tmp #f mode return conf))
-		    ,@(if (usage? '(eval) usage)
+		    ,@(if (decl-usage-has? d '(eval))
 			  `((js-define %this ,scope ,(j2s-scheme-name id)
 			       (lambda (%) ,ident)
 			       (lambda (% %v) (set! ,ident %v))
 			       %source
 			       ,(caddr loc)))
 			  '()))))
-	    ((usage? '(call) usage)
+	    ((decl-usage-has? d '(call))
 	     `(define ,(j2s-fast-id id)
 		 ,(jsfun->lambda val mode return conf
 		     `(js-get ,(j2s-fast-id id) (& "prototype") %this) #f)))
@@ -848,7 +849,7 @@
 		    (isa? val J2SSvc)
 		    (not (decl-ronly? d)))
 		`((,var ,(j2s-scheme val mode return conf))))
-	       ((decl-usage? d '(ref get new set))
+	       ((decl-usage-has? d '(ref get new set))
 		(with-access::J2SFun val (decl)
 		   (if (isa? decl J2SDecl)
 		       (let ((id (j2sfun-id val))
@@ -867,7 +868,7 @@
 			     (tmp (j2s-fast-id id)))
 			  `((,tmp ,fun)
 			    (,var ,(j2sfun->scheme val tmp #f mode return conf)))))))
-	       ((decl-usage? d '(call))
+	       ((decl-usage-has? d '(call))
 		`((,(j2s-fast-id id)
 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f))))
 	       (else
@@ -2530,9 +2531,9 @@
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
 	     (when (isa? decl J2SDeclExtern)
-		(with-access::J2SDeclExtern decl (id usage)
+		(with-access::J2SDeclExtern decl (id)
 		   (when (and (eq? id builtin)
-			      (not (usage? usage '(assig)))))))))))
+			      (not (decl-usage-has? decl '(assig)))))))))))
    
    (define (new-builtin? clazz builtin)
       (cond
@@ -2967,7 +2968,7 @@
       (let ((otype type))
 	 (if (isa? expr J2SRef)
 	     (with-access::J2SRef expr (decl)
-		(with-access::J2SDecl decl (vtype usage)
+		(with-access::J2SDecl decl (vtype)
 		   (if (decl-ronly? decl)
 		       (let ((ovtype vtype))
 			  (set! vtype 'object)

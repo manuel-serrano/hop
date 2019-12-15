@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Dec 13 18:59:54 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:07:20 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_type-hint
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -430,12 +431,12 @@
 	 (cond
 	    ((isa? decl J2SDeclFun)
 	     (with-access::J2SDeclFun decl (val)
-		(if (and (not (decl-usage? decl '(assig))) (isa? val J2SFun))
+		(if (and (not (decl-usage-has? decl '(assig))) (isa? val J2SFun))
 		    (hint-known-call val args)
 		    (hint-unknown-call callee args))))
 	    ((isa? decl J2SDeclInit)
 	     (with-access::J2SDeclInit decl (val)
-		(if (and (not (decl-usage? decl '(assig))) (isa? val J2SFun))
+		(if (and (not (decl-usage-has? decl '(assig))) (isa? val J2SFun))
 		    (hint-known-call val args)
 		    (hint-unknown-call callee args))))
 	    (else
@@ -779,7 +780,7 @@
 	 (cond
 	    ((eq? t 'object)
 	     (cond
-		((not (decl-usage? decl '(assig))) (values 'object c))
+		((not (decl-usage-has? decl '(assig))) (values 'object c))
 		((or (assq 'undefined hint) (assq 'null hint)) (values 'any 0))
 		(else (values 'object c))))
 	    ((not (eq? t 'num)) (values t c))
@@ -930,7 +931,7 @@
 			    (parent fun)
 			    (key (ast-decl-key))
 			    (id (symbol-append id '%%))
-			    (usage '())
+			    (_usage (usage '()))
 			    (writable #f)
 			    (binder 'let)
 			    ;;(scope 'none)
@@ -1001,7 +1002,7 @@
 			       (parent fun)
 			       (key (ast-decl-key))
 			       (id (symbol-append id '%% typeid))
-			       (usage '())
+			       (_usage (usage '()))
 			       (writable #f)
 			       (binder 'let)
 			       ;;(scope 'none)

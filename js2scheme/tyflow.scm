@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Dec 13 18:57:06 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:06:47 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -29,7 +29,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_tyflow
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -737,14 +738,14 @@
 ;*    node-type ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclInit env::pair-nil fix::cell)
-   (with-access::J2SDeclInit this (val utype id loc)
+   (with-access::J2SDeclInit this (val utype id loc _usage)
       (multiple-value-bind (ty env bk)
 	 (node-type val env fix)
 	 (cond
 	    ((not (eq? utype 'unknown))
 	     (decl-vtype-set! this utype fix)
 	     (return 'void (extend-env env this utype) bk))
-	    ((decl-usage? this '(eval))
+	    ((decl-usage-has? this '(eval))
 	     (decl-vtype-add! this 'any fix)
 	     (return 'void (extend-env env this ty) bk))
 	    ((or (eq? ty 'unknown) (not ty))
@@ -986,7 +987,7 @@
 				((not (eq? utype 'unknown))
 				 (set! itype utype)
 				 (cond
-				    ((not (decl-usage? p '(rest)))
+				    ((not (decl-usage-has? p '(rest)))
 				     (decl-vtype-add! p utype fix)
 				     (cons p utype))
 				    ((eq? utype 'array)
@@ -996,7 +997,7 @@
 				     (error "js2scheme"
 					"Illegal parameter type"
 					p))))
-				((decl-usage? p '(rest))
+				((decl-usage-has? p '(rest))
 				 (decl-vtype-add! p 'array fix)
 				 (cons p 'array))
 				(vararg
@@ -1140,7 +1141,7 @@
 		  (cond
 		     (vararg
 		      (decl-itype-add! (car params) 'any fix))
-		     ((and (null? (cdr params)) (decl-usage? (car params) '(rest)))
+		     ((and (null? (cdr params)) (decl-usage-has? (car params) '(rest)))
 		      (decl-itype-add! (car params) 'array fix))
 		     ((null? args)
 		      (decl-itype-add! (car params) 'undefined fix)

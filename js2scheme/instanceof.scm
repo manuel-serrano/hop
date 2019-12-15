@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Fri Dec 13 19:07:02 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:57:06 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_instanceof
    
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -64,7 +65,7 @@
 	 (with-access::J2SRef expr (decl)
 	    (or (decl-ronly? decl)
 		(with-access::J2SProgram prgm (mode)
-		   (and (not (decl-usage? decl '(assig)))
+		   (and (not (decl-usage-has? decl '(assig)))
 			(memq mode '(strict hopscript))))))))
    
    (define (object-instanceof/cache obj rhs be loc)

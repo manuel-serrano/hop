@@ -17,4 +17,5 @@ Hop TODO stuff
   - [ ] improve DEFINE-PROPERTY to avoid unmapping replaced props
   - [ ] verify that after PROXY-PUT value verif. change benchs are still ok
 
-
+** Bugs [100%]
+  - [X] Don't inline functions that use new.target (see ecma6 bug)

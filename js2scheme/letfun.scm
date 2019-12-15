@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Jul 10 20:00:04 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 17:52:19 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimisation                                        */
@@ -98,13 +98,13 @@
    (with-access::J2SInit this (lhs rhs)
       (with-access::J2SRef lhs (decl)
 	 (if (isa? rhs J2SFun)
-	     (with-access::J2SDecl decl (id writable scope usage binder utype vtype loc)
+	     (with-access::J2SDecl decl (id writable scope _usage binder utype vtype loc)
 		(instantiate::J2SDeclFun
 		   (loc loc)
 		   (id id)
 		   (writable writable)
 		   (scope scope)
-		   (usage usage)
+		   (_usage _usage)
 		   (binder binder)
 		   (utype utype)
 		   (vtype vtype)

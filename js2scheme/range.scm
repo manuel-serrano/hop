@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec 13 19:01:22 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:08:01 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_range
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -1151,7 +1152,7 @@
 	 (when *indebug*
 	    (tprint "\\\\\\ J2SDeclInit.2 " id " env=" (dump-env env)))
 	 (cond
-	    ((decl-usage? this '(eval))
+	    ((decl-usage-has? this '(eval))
 	     (decl-vrange-add! this *infinity-intv* fix)
 	     (return #f (extend-env env this intv)))
 	    ((not intv)
@@ -1288,7 +1289,7 @@
 	 (let ((envp (map (lambda (p::J2SDecl)
 			     (with-access::J2SDecl p (irange)
 				(cond
-				   ((decl-strict-usage? p '(rest))
+				   ((decl-usage-has? p '(rest))
 				    (decl-vrange-add! p *infinity-intv* fix)
 				    (cons p *infinity-intv*))
 				   (vararg
@@ -1423,7 +1424,7 @@
 		  (cond
 		     (vararg
 		      (decl-irange-add! (car params) *infinity-intv* fix))
-		     ((and (null? (cdr params)) (decl-usage? (car params) '(rest)))
+		     ((and (null? (cdr params)) (decl-usage-has? (car params) '(rest)))
 		      (decl-irange-add! (car params) *infinity-intv* fix))
 		     ((null? iargs)
 		      (decl-irange-add! (car params) *infinity-intv* fix)

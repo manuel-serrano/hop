@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  3 07:00:40 2019                          */
-;*    Last change :  Sun Dec  8 07:04:13 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:42:18 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Loop specialization                                              */
@@ -17,7 +17,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_loopspec
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -108,7 +109,7 @@
 			       (cond
 				  ((eq? rdecl decl)
 				   armed)
-				  ((decl-usage? rdecl '(assig))
+				  ((decl-usage-has? rdecl '(assig))
 				   -1)
 				  (else
 				   (+ armed 1))))
@@ -194,7 +195,7 @@
    (define (constant-range? expr::J2SExpr)
       (when (isa? expr J2SRef)
 	 (with-access::J2SRef expr (decl)
-	    (not (decl-usage? decl '(assig eval))))))
+	    (not (decl-usage-has? decl '(assig eval))))))
    
    (when (isa? test J2SBinary)
       (with-access::J2SBinary test (lhs rhs op)
@@ -240,7 +241,7 @@
       (let ((ref (J2SRef decl)))
 	 (with-access::J2SRef ref ((rtype type))
 	    (set! rtype type))
-	 (J2SLetOptVtype type '(read assig)
+	 (J2SLetOptVtype type '(ref get assig)
 	    (symbol-append '%F id)
 	    ref))))
 
@@ -332,7 +333,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type-bint! this::J2SDeclInit env::pair-nil)
    (with-access::J2SDeclInit this (val vtype)
-      (when (and (isa? val J2SRef) (not (decl-usage? this '(assig))))
+      (when (and (isa? val J2SRef) (not (decl-usage-has? this '(assig))))
 	 (with-access::J2SRef val (decl)
 	    (when (memq decl env)
 	       (set-cdr! (last-pair env) (list this))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Thu Jun 20 09:18:41 2019 (serrano)                */
+;*    Last change :  Sat Dec 14 18:04:32 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -26,7 +26,7 @@
 	   __js2scheme_syntax
 	   __js2scheme_utils)
 
-   (include "ast.sch")
+   (include "ast.sch" "usage.sch")
 
    (static (final-class %J2STail::J2SReturn))
 
