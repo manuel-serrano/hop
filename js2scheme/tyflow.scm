@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Dec 14 18:06:47 2019 (serrano)                */
+;*    Last change :  Sun Dec 15 19:24:28 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1448,7 +1448,10 @@
 	 (multiple-value-bind (tyf envf bkf)
 	    (node-type field envo fix)
 	    (cond
-	       ((and (memq tyo '(array string arguments)) (j2s-field-length? field))
+	       ((and (memq tyo '(array string)) (j2s-field-length? field))
+		;; the length field of a arguments is not necessarily
+		;; an number (when assigned a random value, see
+		;; S10.6_A5_T4.js test
 		(with-access::J2SString field (val)
 		   (expr-type-add! this envf fix 'integer (append bko bkf))))
 	       ((not (j2s-field-name field))
