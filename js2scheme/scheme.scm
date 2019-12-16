@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Dec 14 19:23:28 2019 (serrano)                */
+;*    Last change :  Mon Dec 16 16:16:16 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2307,9 +2307,10 @@
 	      (set! pmap #t)))
 	 ((instanceof)
 	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (cmap)
-	      (set! cmap
-		 (js-object-cmap
-		    ,(j2s-scheme obj mode return conf)))))
+	      (when (js-object-mapped? ,(j2s-scheme obj mode return conf))
+		 (set! cmap
+		    (js-object-cmap
+		       ,(j2s-scheme obj mode return conf))))))
 	 (else
 	  (error "j2s-scheme" "Illegal J2SCacheUpdate property" prop)))))
 
