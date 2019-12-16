@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Dec  5 09:15:28 2019 (serrano)                */
+;*    Last change :  Mon Dec 16 17:38:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -209,6 +209,7 @@
 	  j2s-tyflow-stage
 	  j2s-sweep-stage
 	  j2s-hintnum-stage
+	  j2s-newtarget-stage
 	  j2s-propcache-stage
 	  j2s-instanceof-stage
 	  j2s-propcce-stage
@@ -224,7 +225,6 @@
 	  j2s-constrsize-stage
 	  j2s-unthis-stage
 	  j2s-arguments-stage
-	  j2s-newtarget-stage
 	  j2s-scheme-stage))
       (else
        (j2s-plain-driver))))

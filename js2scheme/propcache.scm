@@ -3,10 +3,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Dec 14 18:03:18 2019 (serrano)                */
+;*    Last change :  Mon Dec 16 16:30:39 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
+;*    -------------------------------------------------------------    */
+;*    Newtarget must have been executed first otherwise constructors   */
+;*    using new.target will be incorrectly optimized.                  */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -257,8 +260,8 @@
       (when (read-only-function? clazz)
 	 (with-access::J2SRef clazz (decl)
 	    (let ((val (j2sdeclinit-val-fun decl)))
-	       (with-access::J2SFun val (params vararg generator)
-		  (and (not vararg) (not generator)
+	       (with-access::J2SFun val (params vararg generator new-target)
+		  (and (not vararg) (not generator) (not new-target)
 		       (=fx (length params) (length args))))))))
    
    (with-access::J2SNew this (clazz args caches loc)
