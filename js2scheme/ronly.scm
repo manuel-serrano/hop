@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Sun Dec 15 09:33:02 2019 (serrano)                */
+;*    Last change :  Mon Dec 16 08:54:44 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -47,7 +47,7 @@
 (define (j2s-ronly-program this::J2SProgram args)
    (with-access::J2SProgram this (nodes headers decls mode)
       (let ((deval (direct-eval? this)))
-	 (when (not deval)
+	 (when (and (not deval) (not (config-get args :eval)))
 	    (init-decls-ronly! decls))
 	 (for-each (lambda (o) (ronly! o mode deval)) headers)
 	 (for-each (lambda (o) (ronly! o mode deval)) decls)

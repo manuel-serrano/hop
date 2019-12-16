@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Dec 15 19:24:28 2019 (serrano)                */
+;*    Last change :  Mon Dec 16 05:28:35 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1449,9 +1449,18 @@
 	    (node-type field envo fix)
 	    (cond
 	       ((and (memq tyo '(array string)) (j2s-field-length? field))
-		;; the length field of a arguments is not necessarily
+		(with-access::J2SString field (val)
+		   (expr-type-add! this envf fix 'integer (append bko bkf))))
+	       ((and (eq? tyo 'arguments) (isa? obj J2SRef)
+		     (with-access::J2SRef obj (decl)
+			(and (isa? decl J2SDeclArguments)
+			     (not (decl-usage-has? decl '(set ref))))))
+		;; The length field of a arguments is not necessarily
 		;; an number (when assigned a random value, see
-		;; S10.6_A5_T4.js test
+		;; S10.6_A5_T4.js test.
+		;; arguments.length is known to return and integer only
+		;; if arguments is not assigned anything and not passed
+		;; to anyone.
 		(with-access::J2SString field (val)
 		   (expr-type-add! this envf fix 'integer (append bko bkf))))
 	       ((not (j2s-field-name field))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Dec 14 19:25:57 2019 (serrano)                */
+;*    Last change :  Mon Dec 16 08:04:20 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -265,7 +265,7 @@
 (define (j2s-scheme-closure this::J2SDecl mode return conf)
 
    (define (no-closure? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (val)
+      (with-access::J2SDeclFun this (val id)
 	 (when (decl-ronly? this)
 	    (when (isa? val J2SFun)
 	       (with-access::J2SFun val (generator)
