@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Dec 16 05:28:35 2019 (serrano)                */
+;*    Last change :  Mon Dec 16 09:00:09 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1451,7 +1451,9 @@
 	       ((and (memq tyo '(array string)) (j2s-field-length? field))
 		(with-access::J2SString field (val)
 		   (expr-type-add! this envf fix 'integer (append bko bkf))))
-	       ((and (eq? tyo 'arguments) (isa? obj J2SRef)
+	       ((and (eq? tyo 'arguments)
+		     (isa? obj J2SRef)
+		     (j2s-field-length? field)
 		     (with-access::J2SRef obj (decl)
 			(and (isa? decl J2SDeclArguments)
 			     (not (decl-usage-has? decl '(set ref))))))
