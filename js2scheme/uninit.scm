@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Tue Dec 17 09:40:31 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 13:17:48 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -255,7 +255,7 @@
 (define-method (invalidate! this::J2SRef)
    (with-access::J2SRef this (decl loc)
       (when (decl-global? decl)
-	 (with-access::J2SDecl decl (%info id)
+	 (with-access::J2SDecl decl (%info id scope)
 	    (cond
 	       ((isa? decl J2SDeclFun)
 		(unless (funinfo-invalidated %info)

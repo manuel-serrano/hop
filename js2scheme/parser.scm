@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Dec 14 07:05:48 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 13:22:14 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1116,7 +1116,7 @@
 						(writable #f)
 						(_usage (usage '()))
 						(expression #t)
-						(scope 'global)
+;* 						(scope 'global)        */
 						(val fun))))
 			 fun))
 		     (else
@@ -1151,7 +1151,7 @@
 			      (decl (instantiate::J2SDeclSvc
 				       (loc loc)
 				       (id (cdr id))
-				       (scope 'global)
+;* 				       (scope 'global)                 */
 				       (writable #f)
 				       (_usage (usage '()))
 				       (val val))))
@@ -1176,7 +1176,7 @@
 				       (writable #f)
 				       (_usage (usage '()))
 				       (expression #t)
-				       (scope  'global)
+;* 				       (scope  'global)                */
 				       (val svc))))
 		svc))
 	    (else
