@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sat Dec 14 18:03:57 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 13:12:36 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -876,6 +876,7 @@
 	 (when optdecl
 	    (with-trace 'j2s-letopt "mark-decl-noopt!"
 	       (trace-item "decl=" (j2s-dump-decls decl))))
+	 (decl-usage-add! decl 'uninit)
 	 (set! optdecl #f)))
    decl)
 
