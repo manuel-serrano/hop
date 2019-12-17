@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Sat Dec 14 18:57:06 2019 (serrano)                */
+;*    Last change :  Mon Dec 16 19:22:41 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
@@ -95,12 +95,17 @@
 	  (instanceof/cache lhs lhs rhs be loc)))
    
    (with-access::J2SBinary this (op lhs rhs loc)
-      (if (or (not (eq? op 'instanceof)) (not (immutable? rhs)))
-	  (call-default-walker)
-	  (let* ((lbl '%instanceof)
-		 (be (J2SBindExit/type 'bool (gensym '%instanceof)
-			(J2SBlock/w-endloc))))
-	     (with-access::J2SBindExit be (stmt)
-		(set! stmt (instanceof-stmt lhs rhs be loc))
-		be)))))
+      (let ((ty (j2s-type lhs)))
+	 (cond
+	    ((and (not (type-object? ty)) (not (memq ty '(any unknown obj))))
+	     (call-default-walker))
+	    ((or (not (eq? op 'instanceof)) (not (immutable? rhs)))
+	     (call-default-walker))
+	    (else
+	     (let* ((lbl '%instanceof)
+		    (be (J2SBindExit/type 'bool (gensym '%instanceof)
+			   (J2SBlock/w-endloc))))
+		(with-access::J2SBindExit be (stmt)
+		   (set! stmt (instanceof-stmt lhs rhs be loc))
+		   be)))))))
 	  
