@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Tue Dec 17 13:17:48 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 14:51:09 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -232,21 +232,24 @@
 ;*    invalidate! ::J2SNode ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (invalidate! this::J2SNode)
-   (let* ((clazz (object-class this))
-	  (ctor (class-constructor clazz))
-	  (inst ((class-allocator clazz)))
-	  (fields (class-all-fields clazz)))
-      (let loop ((i (-fx (vector-length fields) 1)))
-	 (when (>=fx i 0)
-	    (let* ((f (vector-ref-ur fields i))
-		   (v ((class-field-accessor f) this))
-		   (fi (class-field-info f)))
-	       (cond
-		  ((and (pair? fi) (member "notraverse" fi)) v)
-		  ((pair? v) (for-each invalidate! v))
-		  ((isa? v J2SExpr) (invalidate! v))
-		  ((isa? v J2SNode) (invalidate! v)))
-	       (loop (-fx i 1)))))
+   (with-access::J2SNode this (%info)
+      (unless (eq? %info 'invalidated)
+	 (set! %info 'invalidated)
+	 (let* ((clazz (object-class this))
+		(ctor (class-constructor clazz))
+		(inst ((class-allocator clazz)))
+		(fields (class-all-fields clazz)))
+	    (let loop ((i (-fx (vector-length fields) 1)))
+	       (when (>=fx i 0)
+		  (let* ((f (vector-ref-ur fields i))
+			 (v ((class-field-accessor f) this))
+			 (fi (class-field-info f)))
+		     (cond
+			((and (pair? fi) (member "notraverse" fi)) v)
+			((pair? v) (for-each invalidate! v))
+			((isa? v J2SExpr) (invalidate! v))
+			((isa? v J2SNode) (invalidate! v)))
+		     (loop (-fx i 1)))))))
       this))
 
 ;*---------------------------------------------------------------------*/
