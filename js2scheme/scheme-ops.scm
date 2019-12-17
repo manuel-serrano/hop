@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Dec  6 05:39:14 2019 (serrano)                */
+;*    Last change :  Mon Dec 16 19:17:36 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -526,7 +526,8 @@
        `(js<- ,lhs ,rhs %this))
       ((instanceof)
        (if (> (config-get conf :debug 0) 0)
-	   `(js-instanceof?/debug %this ',loc ,lhs ,rhs)
+	   `(js-instanceof?/debug %this ',loc
+	       ,(box lhs (j2s-vtype l) conf) ,(box rhs (j2s-vtype r) conf))
 	   (j2s-instanceof? lhs rhs)))
       ((in)
        (j2s-in? loc lhs rhs conf))
