@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Jun 21 20:28:24 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 09:06:54 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -84,6 +84,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-call-XXX ...                                                  */
 ;*---------------------------------------------------------------------*/
+(define-expander js-call
+   js-call-expander)
+(define-expander js-call1
+   js-call-expander)
+(define-expander js-call2
+   js-call-expander)
+(define-expander js-call3
+   js-call-expander)
+(define-expander js-call4
+   js-call-expander)
 (define-expander js-call/cache
    js-call/cache-expander)
 (define-expander js-method-call-name/cache

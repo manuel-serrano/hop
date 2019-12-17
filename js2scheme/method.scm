@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sat Dec 14 17:47:59 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 09:18:04 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -162,7 +162,7 @@
 	     (nthisp (j2sdecl-duplicate thisp))
 	     (nbody (j2s-alpha body (cons thisp params) (cons nthisp nparams))))
 	 (set! optimize #f)
-	 (use-count nbody +1 #f)
+	 (use-count nbody +1 0)
 	 (with-access::J2SDecl nthisp (utype)
 	    (set! utype 'object)
 	    (let ((m (duplicate::J2SFun this
