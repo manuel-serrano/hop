@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Dec 16 16:16:16 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 11:20:55 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -231,14 +231,19 @@
    (define (j2s-scheme-var this)
       (with-access::J2SDecl this (loc id writable)
 	 (j2s-scheme-decl this '(js-undefined) writable mode return conf)))
+
+   (define (decl-init-val decl)
+      (if (decl-usage-has? decl '(uninit))
+	  '(js-make-let)
+	  #unspecified))
    
    (define (j2s-scheme-let this)
       (with-access::J2SDecl this (loc scope id utype)
 	 (epairify loc
 	    (if (memq scope '(global))
-		`(define ,(j2s-decl-scheme-id this) (js-make-let))
+		`(define ,(j2s-decl-scheme-id this) ,(decl-init-val this))
 		(let ((var (j2s-decl-scheme-id this)))
-		   `(,var (js-make-let)))))))
+		   `(,var ,(decl-init-val this)))))))
 
    (cond
       ((j2s-let? this)
@@ -406,8 +411,10 @@
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scheme-id decl))
 	    ((j2s-let? decl)
-	     (epairify loc
-		`(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this)))
+	     (if (decl-usage-has? decl '(uninit))
+		 (epairify loc
+		    `(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this))
+		 (j2s-decl-scheme-id decl)))
 	    ((and (memq scope '(global %scope export)) (in-eval? return))
 	     (epairify loc
 		`(js-global-object-get-name %scope

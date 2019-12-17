@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Dec 17 09:09:51 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 09:34:30 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -234,7 +234,6 @@
       (with-access::J2SRef fun (decl)
 	 (unless (decl-usage-has? decl '(assig))
 	    (with-access::J2SDecl decl (useinloop)
-	       (tprint "UIL=" useinloop)
 	       useinloop)))))
 
 ;*---------------------------------------------------------------------*/

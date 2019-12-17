@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Sat Dec 14 17:45:03 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 09:40:31 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -48,9 +48,33 @@
       (optional :optim-globprop)))
 
 ;*---------------------------------------------------------------------*/
+;*    funinfo ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-struct funinfo globals protos invalidated)
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-uninit! ::J2SProgram ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-uninit! this args)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (nodes decls direct-eval)
+	 (if direct-eval
+	     (for-each (lambda (decl)
+			  (unless (isa? decl J2SDeclFun)
+			     (decl-usage-add! decl 'uninit)))
+		decls)
+	     (begin
+		;; collect all the globals used by all global functions
+		(for-each function-collect-globals decls)
+		;; scan in sequence all the declaratins and all the nodes
+		(for-each scan-decl decls)
+		(for-each scan-node nodes)))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-uninit! ::J2SProgram ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-uninit-TBR! this args)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)
 	 (if direct-eval
@@ -71,8 +95,7 @@
 		;; mark global declinit single init
 		(for-each (lambda (decl)
 			     (with-access::J2SDecl decl (%info)
-				(when (and (isa? decl J2SDeclInit)
-					   (eq? %info 'init0))
+				(when (and (isa? decl J2SDeclInit) (eq? %info 'init0))
 				   (set! %info 'init))))
 		   decls)
 		;; mark variables used before initialized
@@ -80,10 +103,168 @@
 		;; mark all variables not initialized for sure
 		(for-each (lambda (decl)
 			     (with-access::J2SDecl decl (%info id)
-				(when (memq %info '(init0 uninit unknown overridden))
+				(when (memq %info '(init0 unknown overridden))
 				   (decl-usage-add! decl 'uninit))))
 		   decls)))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    decl-global? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (decl-global? decl::J2SDecl)
+   (unless (isa? decl J2SDeclExtern)
+      (with-access::J2SDecl decl (scope)
+	 (memq scope '(global %scope)))))
+
+;*---------------------------------------------------------------------*/
+;*    function-collect-globals ...                                     */
+;*---------------------------------------------------------------------*/
+(define (function-collect-globals decl::J2SDecl)
+   (when (isa? decl J2SDeclFun)
+      (with-access::J2SDeclFun decl (%info val)
+	 (set! %info
+	    (funinfo (collect-globals* val) '() #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-globals* ::J2SNode ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-globals* this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    collect-globals* ::J2SRef ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-globals* this::J2SRef)
+   (with-access::J2SRef this (decl)
+      (if (decl-global? decl)
+	  (list decl)
+	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    scan-decl ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (scan-decl decl::J2SDecl)
+   (when (and (isa? decl J2SDeclInit) (not (isa? decl J2SDeclFun)))
+      (with-access::J2SDeclInit decl (val)
+	 (invalidate! val))))
+
+;*---------------------------------------------------------------------*/
+;*    scan-node ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-generic (scan-node this::J2SNode)
+   (let* ((clazz (object-class this))
+	  (ctor (class-constructor clazz))
+	  (inst ((class-allocator clazz)))
+	  (fields (class-all-fields clazz)))
+      (let loop ((i (-fx (vector-length fields) 1)))
+	 (when (>=fx i 0)
+	    (let* ((f (vector-ref-ur fields i))
+		   (fi (class-field-info f))
+		   (v ((class-field-accessor f) this)))
+	       (cond
+		  ((and (pair? fi) (member "notraverse" fi)) v)
+		  ((pair? v) (map scan-node v))
+		  ((isa? v J2SExpr) (invalidate! v))
+		  ((isa? v J2SNode) (scan-node v)))
+	       (loop (-fx i 1)))))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    scan-node ::J2SStmtExpr ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (scan-node this::J2SStmtExpr)
+
+   (define (is-prototype? field)
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val)
+	    (and (string? val) (string=? val "prototype")))))
+   
+   (define (global-prototype-assign assig::J2SAssig)
+      (with-access::J2SAssig assig (lhs rhs)
+	 (if (isa? rhs J2SFun)
+	     (if (isa? lhs J2SAccess)
+		 (with-access::J2SAccess lhs (obj field)
+		    (if (isa? obj J2SAccess)
+			(with-access::J2SAccess obj (obj field)
+			   (if (isa? obj J2SRef)
+			       (with-access::J2SRef obj (decl)
+				  (if (and (decl-global? decl)
+					   (is-prototype? field))
+				      (values decl rhs)
+				      (values #f #f)))
+			       (values #f #f)))
+			(values #f #f)))
+		 (values #f #f))
+	     (values #f #f))))
+   
+   (with-access::J2SStmtExpr this (expr loc)
+      (cond
+	 ((isa? expr J2SInit)
+	  (with-access::J2SInit expr (lhs rhs)
+	     (invalidate! rhs)
+	     (with-access::J2SRef lhs (decl)
+		(if (decl-global? decl)
+		    (unless (decl-usage-has? decl '(uninit))
+		       (with-access::J2SDecl decl (%info)
+			  (set! %info 'init)))
+		    (invalidate! lhs)))))
+	 ((isa? expr J2SAssig)
+	  (multiple-value-bind (decl fun)
+	     (global-prototype-assign expr)
+	     (if (and decl fun)
+		 (with-access::J2SDecl decl (%info id)
+		    (if (or (not (funinfo? %info)) (funinfo-invalidated %info))
+			(invalidate! fun)
+			(funinfo-protos-set! %info
+			   (cons fun (funinfo-protos %info)))))
+		 (invalidate! expr))))
+	 (else
+	  (invalidate! expr)))))
+
+;*---------------------------------------------------------------------*/
+;*    invalidate! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-generic (invalidate! this)
+   (when (pair? this)
+      (for-each invalidate! this)))
+
+;*---------------------------------------------------------------------*/
+;*    invalidate! ::J2SNode ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (invalidate! this::J2SNode)
+   (let* ((clazz (object-class this))
+	  (ctor (class-constructor clazz))
+	  (inst ((class-allocator clazz)))
+	  (fields (class-all-fields clazz)))
+      (let loop ((i (-fx (vector-length fields) 1)))
+	 (when (>=fx i 0)
+	    (let* ((f (vector-ref-ur fields i))
+		   (v ((class-field-accessor f) this))
+		   (fi (class-field-info f)))
+	       (cond
+		  ((and (pair? fi) (member "notraverse" fi)) v)
+		  ((pair? v) (for-each invalidate! v))
+		  ((isa? v J2SExpr) (invalidate! v))
+		  ((isa? v J2SNode) (invalidate! v)))
+	       (loop (-fx i 1)))))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    invalidate! ::J2SRef ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (invalidate! this::J2SRef)
+   (with-access::J2SRef this (decl loc)
+      (when (decl-global? decl)
+	 (with-access::J2SDecl decl (%info id)
+	    (cond
+	       ((isa? decl J2SDeclFun)
+		(unless (funinfo-invalidated %info)
+		   (funinfo-invalidated-set! %info #t)
+		   (with-access::J2SDeclFun decl (val)
+		      (invalidate! val))
+		   (for-each invalidate! (funinfo-protos %info))))
+	       ((not (eq? %info 'init))
+		(decl-usage-add! decl 'uninit)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-overridden-decl ::J2SNode ...                         */
