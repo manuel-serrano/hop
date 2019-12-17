@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Dec 16 16:30:39 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 07:37:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -253,6 +253,12 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    propcache* ::J2SNew ...                                          */
+;*    -------------------------------------------------------------    */
+;*    !!! Warning: special treatment for new Buffer( ... ).            */
+;*    -------------------------------------------------------------    */
+;*    Buffer are special objects partially allocated in JavaScript     */
+;*    and partially allocated in Scheme. Because of that specificity   */
+;*    the buffer allocator _cannot_ be optimized.                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propcache* this::J2SNew count env ccall assig infunloop shared-pcache)
    
@@ -261,8 +267,10 @@
 	 (with-access::J2SRef clazz (decl)
 	    (let ((val (j2sdeclinit-val-fun decl)))
 	       (with-access::J2SFun val (params vararg generator new-target)
-		  (and (not vararg) (not generator) (not new-target)
-		       (=fx (length params) (length args))))))))
+		  (with-access::J2SDecl decl (id)
+		     (and (not (eq? id 'Buffer))
+			  (not vararg) (not generator) (not new-target)
+			  (=fx (length params) (length args)))))))))
    
    (with-access::J2SNew this (clazz args caches loc)
       (cond

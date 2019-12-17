@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Mon Dec 16 22:03:47 2019 (serrano)                */
+;*    Last change :  Sun Jun 23 06:55:05 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -292,7 +292,6 @@
 	 (with-access::JsFunction buf (alloc)
 	    (set! alloc
 	       (lambda (%this ctor)
-		  (tprint "ICI _buffer alloc...")
 		  ;; see makeFastBuffer below for the complete JavaScript
 		  ;; land JsTypedArray initialization
 		  (js-buffer-constr proto %this))))

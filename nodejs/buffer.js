@@ -153,11 +153,10 @@ var zeroBuffer = new SlowBuffer(0);
 // Buffer
 function Buffer(subject, encoding, offset) {
   if (!(this instanceof Buffer)) {
-     #:tprint( "PAS INSTANCE..." );
     return new Buffer(subject, encoding, offset);
   }
   var type;
-  #:tprint( "enc=", encoding, " off=", offset );
+
   // Are we slicing?
   if (typeof offset === 'number') {
     if (!Buffer.isBuffer(subject)) {
@@ -536,17 +535,9 @@ Buffer.prototype.copy = function(target, target_start, start, end) {
 // slice(start, end)
 Buffer.prototype.slice = function(start, end) {
   var len = this.length;
-  var f = Buffer;
   start = clamp(start, len, 0);
   end = clamp(end, len, len);
-  #:tprint( ">>>> ICI..." );
-  var o1 = this.parent;
-  var o2 = end -start;
-  var o3 = start + this.offset;
-  //var o = new f(this.parent, end - start, start + this.offset);
-  var o = new f(o1, o2, o3);
-  #:tprint( "<<< o=", o instanceof Buffer );
-  return o;
+  return new Buffer(this.parent, end - start, start + this.offset);
 };
 
 
