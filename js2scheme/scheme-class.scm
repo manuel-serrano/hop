@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Dec 14 19:26:18 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 13:04:56 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -266,6 +266,8 @@
 		   (set! binder 'let))
 		(with-access::J2SDecl decl (_scmid)
 		   (set! _scmid '%nothis))
+		;; for dead-zone check
+		(decl-usage-add! thisp 'uninit)
 		(set! body
 		   (instantiate::J2SLetBlock
 		      (loc loc)
