@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Tue Dec 17 14:51:09 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 16:38:25 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -202,12 +202,14 @@
 	 ((isa? expr J2SInit)
 	  (with-access::J2SInit expr (lhs rhs)
 	     (invalidate! rhs)
-	     (with-access::J2SRef lhs (decl)
-		(if (decl-global? decl)
-		    (unless (decl-usage-has? decl '(uninit))
-		       (with-access::J2SDecl decl (%info)
-			  (set! %info 'init)))
-		    (invalidate! lhs)))))
+	     (if (isa? lhs J2SRef)
+		 (with-access::J2SRef lhs (decl)
+		    (if (decl-global? decl)
+			(unless (decl-usage-has? decl '(uninit))
+			   (with-access::J2SDecl decl (%info)
+			      (set! %info 'init)))
+			(invalidate! lhs)))
+		 (invalidate! lhs))))
 	 ((isa? expr J2SAssig)
 	  (multiple-value-bind (decl fun)
 	     (global-prototype-assign expr)
