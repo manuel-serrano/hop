@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Dec 15 17:51:09 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 09:18:13 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -26,7 +26,7 @@
 	   j2s-dead-stage
 	   (generic reinit-use-count! ::J2SNode)
 	   (generic reset-use-count ::J2SNode)
-	   (generic use-count ::J2SNode inc::int inloop::bool)
+	   (generic use-count ::J2SNode inc::int looplevel::int)
 	   (filter-dead-declarations::pair-nil ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
@@ -58,7 +58,7 @@
    
    (define (use-nodes nodes)
       (for-each (lambda (o)
-		   (use-count o +1 #f)
+		   (use-count o +1 0)
 		   (j2s-use o 'ref deval #f))
 	 nodes))
    
@@ -116,7 +116,7 @@
 				    (set! keep #t)
 				    (when (isa? d J2SDeclInit)
 				       (with-access::J2SDeclInit d (val)
-					  (use-count val -1 #f)))
+					  (use-count val -1 0)))
 				    #f))))
 		  decls))
 	    (loop)))
@@ -125,69 +125,79 @@
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SNode inc inloop)
+(define-walk-method (use-count this::J2SNode inc looplevel)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SFun inc inloop)
+(define-walk-method (use-count this::J2SFun inc looplevel)
    (with-access::J2SFun this (params body decl)
-      (use-count body inc #f))
+      (use-count body inc looplevel))
    this)
    
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SSvc ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SSvc inc inloop)
+(define-walk-method (use-count this::J2SSvc inc looplevel)
    (with-access::J2SSvc this (params body decl)
-      (use-count body inc #f))
+      (use-count body inc looplevel))
    this)
-   
+
+;*---------------------------------------------------------------------*/
+;*    use-count ::J2SDecl ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (use-count this::J2SDecl inc looplevel)
+   (with-access::J2SDecl this (%info)
+      (set! %info looplevel)
+      (call-default-walker)))
+
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SRef inc inloop)
+(define-walk-method (use-count this::J2SRef inc looplevel)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (usecnt useinloop)
-	 (when inloop (set! useinloop #t))
+      (with-access::J2SDecl decl (usecnt useinloop %info)
+	 (when (and (integer? %info) (<fx %info looplevel))
+	    (set! useinloop #t))
 	 (set! usecnt (+fx inc usecnt))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SGlobalRef ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SGlobalRef inc inloop)
+(define-walk-method (use-count this::J2SGlobalRef inc looplevel)
    (with-access::J2SGlobalRef this (decl)
-      (with-access::J2SDecl decl (usecnt useinloop)
-	 (when inloop (set! useinloop #t))
+      (with-access::J2SDecl decl (usecnt useinloop %info)
+	 (when (and (integer? %info) (<fx %info looplevel))
+	    (set! useinloop #t))
 	 (set! usecnt (+fx inc usecnt))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SFor ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SFor inc inloop)
+(define-walk-method (use-count this::J2SFor inc looplevel)
    (with-access::J2SFor this (init test incr body)
-      (use-count init inc #f)
-      (use-count test inc #t)
-      (use-count incr inc #t)
-      (use-count body inc #t)))
+      (use-count init inc looplevel)
+      (use-count test inc (+fx 1 looplevel))
+      (use-count incr inc (+fx 1 looplevel))
+      (use-count body inc (+fx 1 looplevel))))
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SWhile ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SWhile inc inloop)
+(define-walk-method (use-count this::J2SWhile inc looplevel)
    (with-access::J2SWhile this (test body)
-      (use-count test inc #t)
-      (use-count body inc #t)))
+      (use-count test inc (+fx looplevel 1))
+      (use-count body inc (+fx looplevel 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    reinit-use-count! ::J2SNode ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reinit-use-count! this::J2SNode)
    (reset-use-count this)
-   (use-count this +1 #f)
+   (use-count this +1 0)
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -198,9 +208,9 @@
       (for-each reset-use-count headers)
       (for-each reset-use-count decls)
       (for-each reset-use-count nodes)
-      (for-each (lambda (n) (use-count n +1 #f)) headers)
-      (for-each (lambda (n) (use-count n +1 #f)) decls)
-      (for-each (lambda (n) (use-count n +1 #f)) nodes)
+      (for-each (lambda (n) (use-count n +1 0)) headers)
+      (for-each (lambda (n) (use-count n +1 0)) decls)
+      (for-each (lambda (n) (use-count n +1 0)) nodes)
       this))
 
 ;*---------------------------------------------------------------------*/

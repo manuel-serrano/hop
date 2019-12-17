@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Sun Dec  8 18:35:58 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 07:57:10 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -192,14 +192,13 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-narrow-fun! o::J2SFun)
    (with-access::J2SFun o (body loc)
-      ;; find the declaring block of all declarations
-      (j2s-find-init-blocks body body o)
       ;; find the variables used but not initialized
       (when #f 
 	 (j2s-narrow-fun/w-init! o))
       ;; create block for all variable initialization
-      (when #t
-	 (set! body (j2s-blockify! body)))
+      (set! body (j2s-blockify! body))
+      ;; find the declaring block of all declarations
+      (j2s-find-init-blocks body body o)
       ;; get the set of narrowable declarations
       (j2s-mark-narrowable body '() #f o (make-cell #f))
       ;; narrow the function body
@@ -553,16 +552,13 @@
 ;*    all its uses.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-drop-block decl::J2SDecl parent::J2SNode)
-   ;;(tprint "j2s-assign decl=" (j2s->list decl))
    (with-access::J2SDecl decl (%info)
       (when (isa? %info J2SNarrowInfo)
 	 (with-access::J2SNarrowInfo %info (useblocks)
-	    ;;(tprint "blocks=" (block*->list useblocks))
 	    (let loop ((blocks (cdr useblocks))
 		       (block (car useblocks)))
 	       (if (null? blocks)
 		   (unless (eq? block parent)
-		      ;;(tprint "block=" (car (block*->list (list block))))
 		      block)
 		   (loop (cdr blocks)
 		      (find-common-ancestor block (car blocks) parent))))))))

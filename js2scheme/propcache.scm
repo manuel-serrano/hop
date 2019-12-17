@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Dec 17 07:37:12 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 09:09:51 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -227,6 +227,17 @@
 	     #f)))))
 
 ;*---------------------------------------------------------------------*/
+;*    read-only-loop-ref? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (read-only-loop-ref? fun::J2SExpr)
+   (when (isa? fun J2SRef)
+      (with-access::J2SRef fun (decl)
+	 (unless (decl-usage-has? decl '(assig))
+	    (with-access::J2SDecl decl (useinloop)
+	       (tprint "UIL=" useinloop)
+	       useinloop)))))
+
+;*---------------------------------------------------------------------*/
 ;*    propcache* ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propcache* this::J2SCall count env ccall assig infunloop shared-pcache)
@@ -246,6 +257,8 @@
 		    (unless cache (set! cache (inc! count)))
 		    (cons cache (call-default-walker))))))
 	 ((read-only-function? fun)
+	  (call-default-walker))
+	 ((not (read-only-loop-ref? fun))
 	  (call-default-walker))
 	 (else
 	  (set! cache (inc! count))

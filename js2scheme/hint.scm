@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Dec 14 18:07:20 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 09:17:30 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -1005,7 +1005,6 @@
 			       (_usage (usage '()))
 			       (writable #f)
 			       (binder 'let)
-			       ;;(scope 'none)
 			       (usecnt 1)
 			       (%info fun)
 			       (utype 'function)
@@ -1013,7 +1012,7 @@
 			       (val newfun))))
 	       (with-access::J2SFun newfun (body)
 		  (set! body (return-patch! body val newfun)))
-	       (use-count nbody +1 #f)
+	       (use-count nbody +1 0)
 	       (with-access::J2SFun newfun (decl)
 		  (set! decl newdecl))
 	       (when (config-get conf :profile-hint)

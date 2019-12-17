@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Dec 15 08:48:18 2019 (serrano)                */
+;*    Last change :  Tue Dec 17 09:05:15 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -888,23 +888,67 @@
 ;*---------------------------------------------------------------------*/
 (define (js-call/cache-expander x e)
    
+   (define (call/tmp %this ccache fun this args)
+      (let ((len (length args)))
+         `(if (eq? (js-pcache-owner ,ccache) ,fun)
+              ((js-pcache-method ,ccache) ,this ,@args)
+              ,(case len
+                  ((0 1 2 3 4 5 6 7 8)
+                   (let ((caller (symbol-append 'js-call/cache-miss
+                                    (string->symbol (integer->string len)))))
+                      `(,caller ,%this ,ccache ,fun ,this ,@args)))
+                  (else
+                   `(if (and (js-function? ,fun)
+                             (with-access::JsFunction ,fun (procedure arity)
+                                (and (>=fx arity 0)
+                                     (correct-arity? procedure ,(+fx len 1)))))
+                        (with-access::JsPropertyCache ,ccache (method owner)
+                           (with-access::JsFunction ,fun (procedure)
+                              (set! owner ,fun)
+                              (set! method procedure)
+                              (procedure ,this ,@args)))
+                        ,(if (>=fx len 11)
+                             `(js-calln ,%this ,fun ,this ,@args)
+                             `(,(string->symbol (format "js-call~a" len))
+			       ,%this ,fun ,this ,@args))))))))
+
    (define (call %this ccache fun this args)
       (let* ((tmps (map (lambda (a)
-			      (match-case a
-				 ((uint32->fixnum (? symbol?)) #f)
-				 ((int32->fixnum (? symbol?)) #f)
-				 ((& ?-) #f)
-				 ((?- . ?-) (gensym '%a))
-				 (else #f)))
+			   (match-case a
+			      ((uint32->fixnum (? symbol?)) #f)
+			      ((int32->fixnum (? symbol?)) #f)
+			      ((& ?-) #f)
+			      ((?- . ?-) (gensym '%a))
+			      (else #f)))
 		      args))
 	     (bdgs (filter-map (lambda (t o) (when t (list t o))) tmps args)))
 	 (if (pair? bdgs)
 	     `(let ,bdgs
 		 ,(call/tmp %this ccache fun this
-		    (map (lambda (t a) (or t a)) tmps args)))
+		     (map (lambda (t a) (or t a)) tmps args)))
 	     (call/tmp %this ccache fun this args))))
+   
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-call)
+       (map (lambda (x) (e x e)) x))
+      (else
+       (match-case x
+	  ((js-call/cache ?%this ?ccache (and (? symbol?) ?fun) ?this . ?args)
+	   (e (call %this ccache fun this args) e))
+	  ((js-call/cache ?%this ?ccache ?fun ?this . ?args)
+	   (let ((f (gensym '%f)))
+	      (e `(let ((,f ,fun))
+		     (js-call/cache ,%this ,ccache ,f ,this ,@args))
+		 e)))
+	  (else
+	   (error "js-call/cache" "wrong form" x))))))
 
-   (define (call/tmp %this ccache fun this args)
+;*---------------------------------------------------------------------*/
+;*    js-call-expander ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-call-expander x e)
+   
+   (define (call/tmp %this fun this args)
       (let ((len (length args)))
 	 `(if (object? ,fun)
 	      ,(case len
@@ -933,6 +977,8 @@
 			(with-access::JsFunction ,fun (procedure)
 			   (procedure ,this ,@args))
 			(js-call4 ,%this ,fun ,this ,@args)))
+		  ((5)
+		   `(js-call5 ,%this ,fun ,this ,@args))
 		  ((6)
 		   `(js-call6 ,%this ,fun ,this ,@args))
 		  ((7)
@@ -947,44 +993,34 @@
 		   `(js-calln ,%this ,fun ,this ,@args)))
 	      (js-calln ,%this ,fun ,this ,@args))))
 
-   (define (call/tmp-TOBEREMOVED-13dec2019 %this ccache fun this args)
-      (let ((len (length args)))
-         `(if (eq? (js-pcache-owner ,ccache) ,fun)
-              ((js-pcache-method ,ccache) ,this ,@args)
-              ,(case len
-                  ((0 1 2 3 4 5 6 7 8)
-                   (let ((caller (symbol-append 'js-call/cache-miss
-                                    (string->symbol (integer->string len)))))
-                      `(,caller ,%this ,ccache ,fun ,this ,@args)))
-                  (else
-                   `(if (and (js-function? ,fun)
-                             (with-access::JsFunction ,fun (procedure arity)
-                                (and (>=fx arity 0)
-                                     (correct-arity? procedure ,(+fx len 1)))))
-                        (with-access::JsPropertyCache ,ccache (method owner)
-                           (with-access::JsFunction ,fun (procedure)
-                              (set! owner ,fun)
-                              (set! method procedure)
-                              (procedure ,this ,@args)))
-                        ,(if (>=fx len 11)
-                             `(js-calln ,%this ,fun ,this ,@args)
-                             `(,(string->symbol (format "js-call~a" len))
-			      ,%this ,fun ,this ,@args)))))))) 
+   (define (call %this fun this args)
+      (let* ((tmps (map (lambda (a)
+			   (match-case a
+			      ((uint32->fixnum (? symbol?)) #f)
+			      ((int32->fixnum (? symbol?)) #f)
+			      ((& ?-) #f)
+			      ((?- . ?-) (gensym '%a))
+			      (else #f)))
+		      args))
+	     (bdgs (filter-map (lambda (t o) (when t (list t o))) tmps args)))
+	 (if (pair? bdgs)
+	     `(let ,bdgs
+		 ,(call/tmp %this fun this
+		     (map (lambda (t a) (or t a)) tmps args)))
+	     (call/tmp %this fun this args))))
    
    (cond-expand
       ((or no-macro-cache no-macro-cache-call)
        (map (lambda (x) (e x e)) x))
       (else
        (match-case x
-	  ((js-call/cache ?%this ?ccache (and (? symbol?) ?fun) ?this . ?args)
-	   (e (call %this ccache fun this args) e))
-	  ((js-call/cache ?%this ?ccache ?fun ?this . ?args)
+	  ((?- ?%this (and (? symbol?) ?fun) ?this . ?args)
+	   (e (call %this fun this args) e))
+	  ((?- ?%this ?fun ?this . ?args)
 	   (let ((f (gensym '%f)))
-	      (e `(let ((,f ,fun))
-		     (js-call/cache ,%this ,ccache ,f ,this ,@args))
-		 e)))
+	      (e `(let ((,f ,fun)) (js-call ,%this ,f ,this ,@args)) e)))
 	  (else
-	   (error "js-call/cache" "wrong form" x))))))
+	   (error "js-call" "wrong form" x))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-prefetch-index-expander ...                            */
