@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Dec  6 12:48:57 2019 (serrano)                */
+;*    Last change :  Wed Dec 18 07:46:40 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2365,7 +2365,7 @@
 			    (let ((nextmap (cmap-find-sibling nmap
 					      (and (js-object-inline-elements? o)
 						   (<fx index (vector-length elements))))))
-			       (with-access::JsConstructMap nextmap (ctor methods props detachcnt)
+			       (with-access::JsConstructMap nextmap (ctor methods props detachcnt detachlocs)
 				  (cond
 				     ((not (js-function? v))
 				      (when (js-function? (vector-ref methods index))
@@ -2386,7 +2386,8 @@
 				      (js-invalidate-pmap-pcaches! %this "extend-method" name)
 				      (when cache
 					 (js-pcache-next-direct! cache o nextmap index)))
-				     ((>fx detachcnt (method-invalidation-threshold))
+				     ((or (>fx detachcnt (method-invalidation-threshold))
+					  (memq loc detachlocs))
 				      ;; MS 2019-01-19
 				      ;; on method conflicts, instead of
 				      ;; invalidating all methods,
@@ -2406,6 +2407,12 @@
 							    (and (js-object-inline-elements? o)
 								 (<fx index (vector-length elements))))))
 					 (set! detachcnt (+fx 1 detachcnt))
+					 ;; store the loc so that if a second methods
+					 ;; is added at the same location, a detached
+					 ;; map will not be created and a method
+					 ;; invalidation will take place.
+					 (when loc
+					    (set! detachlocs (cons loc detachlocs)))
 					 (with-access::JsConstructMap detachedmap (methods ctor %id)
 					    ;; validate cache method and don't cache
 					    (vector-set! methods index v))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Fri Jul 12 07:33:27 2019 (serrano)                */
+;*    Last change :  Wed Dec 18 09:20:28 2019 (serrano)                */
 ;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -88,6 +88,8 @@
 	     ,js-let-set!-expander))
    (eval `(define-expander js-null-or-undefined?
 	     ,js-null-or-undefined?-expander))
+   (eval `(define-expander js-tonumber
+	     ,js-tonumber-expander))
    
    (eval `(define-expander js-jsstring-append
 	     ,js-jsstring-append-expander))
