@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Nov  6 17:33:44 2019 (serrano)                */
+;*    Last change :  Wed Dec 18 08:02:37 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -122,6 +122,7 @@
 	      (methods::vector (default '#()))
 	      (transitions::pair-nil (default '()))
 	      (detachcnt::long (default 0))
+	      (detachlocs::pair-nil (default '()))
 	      (ctor::obj (default #f))
 	      (single::bool read-only (default #f))
 	      (vlen::long (default 0))
