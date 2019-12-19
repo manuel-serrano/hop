@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Dec 16 08:54:54 2019 (serrano)                */
+;*    Last change :  Thu Dec 19 08:16:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -94,6 +94,19 @@
 	   (js-call9 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (js-call10 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (js-calln ::JsGlobalObject fun::obj this . args)
+	   
+	   (js-call0/function ::JsGlobalObject fun::JsFunction this)
+	   (js-call1/function ::JsGlobalObject fun::JsFunction this a0)
+	   (js-call2/function ::JsGlobalObject fun::JsFunction this a0 a1)
+	   (js-call3/function ::JsGlobalObject fun::JsFunction this a0 a1 a2)
+	   (js-call4/function ::JsGlobalObject fun::JsFunction this a0 a1 a2 a3)
+	   (js-call5/function ::JsGlobalObject fun::JsFunction this a0 a1 a2 a3 a4)
+	   (js-call6/function ::JsGlobalObject fun::JsFunction this a0 a1 a2 a3 a4 a5)
+	   (js-call7/function ::JsGlobalObject fun::JsFunction this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call8/function ::JsGlobalObject fun::JsFunction this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call9/function ::JsGlobalObject fun::JsFunction this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call10/function ::JsGlobalObject fun::JsFunction this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-calln/function ::JsGlobalObject fun::JsFunction this . args)
 	   
 	   (js-call0/debug ::JsGlobalObject loc fun::obj this)
 	   (js-call1/debug ::JsGlobalObject loc fun::obj this a0)
@@ -710,6 +723,86 @@
        (js-call-proxyn %this fun this args))
       (else
        (js-raise-type-error %this "call: not a function ~s" fun))))
+
+(define-macro (gen-call/function %this fun this . args)
+   `(with-access::JsFunction ,fun (procedure)
+       (,(string->symbol (format "js-call~a%" (length args)))
+	,%this ,fun procedure ,this ,@args)))
+
+(define (js-call0/function %this fun this)
+   (gen-call/function %this fun this))
+
+(define (js-call1/function %this fun this a0)
+   (gen-call/function %this fun this a0))
+
+(define (js-call2/function %this fun this a0 a1)
+   (gen-call/function %this fun this a0 a1))
+
+(define (js-call3/function %this fun this a0 a1 a2)
+   (gen-call/function %this fun this a0 a1 a2))
+
+(define (js-call4/function %this fun this a0 a1 a2 a3)
+   (gen-call/function %this fun this a0 a1 a2 a3))
+
+(define (js-call5/function %this fun this a0 a1 a2 a3 a4)
+   (gen-call/function %this fun this a0 a1 a2 a3 a4))
+
+(define (js-call6/function %this fun this a0 a1 a2 a3 a4 a5)
+   (gen-call/function %this fun this a0 a1 a2 a3 a4 a5))
+
+(define (js-call7/function %this fun this a0 a1 a2 a3 a4 a5 a6)
+   (gen-call/function %this fun this a0 a1 a2 a3 a4 a5 a6))
+
+(define (js-call8/function %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-call/function %this fun this a0 a1 a2 a3 a4 a5 a6 a7))
+
+(define (js-call9/function %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-call/function %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+
+(define (js-call10/function %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-call/function %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
+(define (js-calln/function %this fun this . args)
+   (with-access::JsFunction fun (procedure method arity minlen rest len)
+      (let ((n (+fx 1 (length args)))
+	    (proc (if (and method (js-object? this)) method procedure)))
+	 (cond
+	    ((=fx arity n)
+	     (apply proc this args))
+	    ((>fx arity n)
+	     (if (>fx minlen 0)
+		 (js-raise-type-error %this
+		    "wrong number of arguments" (cons (length args) minlen))
+		 (apply proc this
+		    (append args
+		       (make-list (-fx arity n)
+			  (js-undefined))))))
+	    ((>=fx arity 0)
+	     (if (>fx minlen 0)
+		 (js-raise-type-error %this
+		    "wrong number of arguments" (cons (length args) minlen))
+		 (apply proc this (take args (-fx arity 1)))))
+	    ((=fx arity -2048)
+	     (proc this (apply vector args)))
+	    (else
+	     (cond
+		((and (<=fx (-fx n 1) minlen) (>fx minlen 0))
+		 (js-raise-type-error %this
+		    "wrong number of arguments" (cons (length args) minlen)))
+		((<=fx (-fx n 1) len)
+		 (if (not rest)
+		     (apply proc this
+			(append args (make-list (-fx (negfx arity) (+fx n 1)))))
+		     (apply proc this
+			(append args (js-rest-args %this (-fx (+fx len 1) n))))))
+		((not rest)
+		 (apply proc this args))
+		(else
+		 (apply proc this
+		    (append (take args len)
+		       (list
+			  (js-vector->jsarray
+			     (apply vector (drop args len)) %this)))))))))))
 
 (define-macro (gen-call/debug %this loc fun this . args)
    `(cond
