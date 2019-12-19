@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat Dec 14 07:07:42 2019 (serrano)                */
+#*    Last change :  Thu Dec 19 08:59:36 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -46,7 +46,7 @@ _OBJECTS = lexer header parser html ast usage dump utils \
   objinit arguments scheme scheme-utils scheme-program \
   scheme-fun scheme-ops scheme-test scheme-class scheme-string scheme-math \
   scheme-date scheme-array scheme-regexp scheme-cast scheme-arguments \
-  scheme-call scheme-spread scheme-json hop-module
+  scheme-call scheme-spread scheme-json scheme-bexit hop-module
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Dec 14 18:48:38 2019 (serrano)                */
+;*    Last change :  Thu Dec 19 08:33:45 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -85,6 +85,10 @@
 (define inline-dispatch-closure-test-size
    ;; the test size approximation of closure dispatch
    12)
+
+(define inline-arity-expansion-size-factor
+   ;; the size of the function body 
+   15)
 
 ;*---------------------------------------------------------------------*/
 ;*    dev                                                              */
@@ -824,7 +828,9 @@
    
    (define (inline-ref-call this::J2SCall fun::J2SRef thisarg args loc)
       (cond
-	 ((find-inline-decl-function this fun (length args) limit stack)
+	 ((find-inline-decl-function this fun (length args)
+	     (min limit (*fx (length args) inline-arity-expansion-size-factor))
+	     stack)
 	  =>
 	  (lambda (target)
 	     (inline-verb loc fun '(-) (function-size target) limit 0 conf)
@@ -1615,7 +1621,7 @@
       (set! expr (bind-exit! expr l cell env))
       (when (and (not exit) (not (memq from env)))
 	 (unless exit
-	    (set! tail #f)
+	    ;; (set! tail #f)
 	    (cell-set! cell (cons this (cell-ref cell)))))
       this))
 
@@ -1759,8 +1765,8 @@
 	    (when (>=fx (config-get conf :verbose 0) 4)
 	       (display " size: ")
 	       (display fsize)
-	       (display " cnt: ")
 	       (when (> allcnt 0)
+		  (display " cnt: ")
 		  (display (format "~(, )"
 			      (map (lambda (c)
 				      (format "~a ~a%" c

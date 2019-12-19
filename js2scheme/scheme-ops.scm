@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec 16 19:17:36 2019 (serrano)                */
+;*    Last change :  Thu Dec 19 08:44:12 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2195,6 +2195,8 @@
 	  ((fixnum? left)
 	   (if (fixnum? right) #t `(fixnum? ,right)))
 	  ((fixnum? right)
+	   `(fixnum? ,left))
+	  ((and (eq? left right) (symbol? left))
 	   `(fixnum? ,left))
 	  (else
 	   `(fixnums? ,left ,right))))

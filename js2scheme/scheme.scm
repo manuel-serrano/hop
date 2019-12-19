@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Dec 17 11:20:55 2019 (serrano)                */
+;*    Last change :  Thu Dec 19 08:57:12 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -39,7 +39,8 @@
 	   __js2scheme_scheme-date
 	   __js2scheme_scheme-array
 	   __js2scheme_scheme-arguments
-	   __js2scheme_scheme-spread)
+	   __js2scheme_scheme-spread
+	   __js2scheme_scheme-bexit)
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
@@ -711,17 +712,6 @@
 	  (epairify loc
 	     `(%return
 		 ,(j2s-scheme expr mode return conf)))))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SBindExit ...                                     */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SBindExit mode return conf)
-   (with-access::J2SBindExit this (lbl stmt loc)
-      (if lbl
-	  (epairify loc
-	     `(bind-exit (,lbl)
-		 ,(j2s-scheme stmt mode return conf)))
-	  (j2s-scheme stmt mode return conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SThrow ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Dec 14 19:26:49 2019 (serrano)                */
+;*    Last change :  Thu Dec 19 08:11:22 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -911,6 +911,11 @@
 		`(js-call/cache
 		    ,j2s-unresolved-call-workspace
 		    ,(js-pcache cache)
+		    ,(j2s-scheme fun mode return conf)
+		    ,@self
+		    ,@(j2s-scheme args mode return conf)))
+	       ((eq? (j2s-type fun) 'function)
+		`(,(symbol-append call '/function) ,j2s-unresolved-call-workspace
 		    ,(j2s-scheme fun mode return conf)
 		    ,@self
 		    ,@(j2s-scheme args mode return conf)))
