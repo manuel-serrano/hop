@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Dec 20 18:07:11 2019 (serrano)                */
+;*    Last change :  Sat Dec 21 09:02:16 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -749,7 +749,9 @@
 	     (return 'void (extend-env env this ty) bk))
 	    ((or (eq? ty 'unknown) (not ty))
 	     (return 'void env bk))
-	    ((and (not writable) (not (decl-usage-has? this '(uninit))))
+	    ((and (not writable)
+		  (not (decl-usage-has? this '(uninit)))
+		  (decl-usage-has? this '(assig)))
 	     ;; wait for the ::J2SInit expression for assigning a type
 	     ;; to this constant
 	     (return 'void env bk))

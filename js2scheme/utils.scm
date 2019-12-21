@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat Dec 14 07:01:24 2019 (serrano)                */
+;*    Last change :  Sat Dec 21 09:33:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -564,11 +564,13 @@
 	  ;; the variable type is unboxed, check for a more specific
 	  ;; expression type
 	  (let ((etype (j2s-type node)))
-	     (if (memq etype '(int32 uint32))
-		 (if (m64? conf)
-		     'int53
-		     vtype)
-		 etype)))))
+	     (cond
+		((memq etype '(int32 uint32))
+		 (if (m64? conf) 'int53 vtype))
+		((eq? etype 'integer)
+		 (if (m64? conf) 'int53 etype))
+		(else
+		 etype))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    class-of ...                                                     */
