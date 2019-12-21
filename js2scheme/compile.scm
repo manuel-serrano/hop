@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Dec 16 17:38:39 2019 (serrano)                */
+;*    Last change :  Fri Dec 20 19:12:29 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -245,6 +245,7 @@
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
+      j2s-uninit-force-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-any-stage
@@ -270,6 +271,7 @@
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
+      j2s-uninit-force-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-any-stage
@@ -293,6 +295,7 @@
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
+      j2s-uninit-force-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-any-stage
@@ -315,6 +318,7 @@
       j2s-letopt-stage
       j2s-unletrec-stage
       j2s-use-stage
+      j2s-uninit-force-stage
       j2s-varpreinit-stage
       j2s-tyflow-stage
       j2s-range-stage
@@ -512,19 +516,18 @@
 	 (unless (memq :optim-cinstanceof o)
 	    (set! o (cons* :optim-cinstanceof #t o)))
 	 (unless (memq :optim-multivar o)
-	    (set! o (cons* :optim-multivar #t o))))
+	    (set! o (cons* :optim-multivar #t o)))
+	 (unless (memq :optim-ccall o)
+	    (set! o (cons* :optim-ccall #t o)))
+	 (unless (memq :optim-clevel o)
+	    (set! o (cons* :optim-clevel #t o)))
+	 (unless (memq :optim-callapply o)
+	    (set! o (cons* :optim-callapply #t o)))
+	 (unless (memq :optim-uninit o)
+	    (set! o (cons* :optim-uninit #t o))))
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))
-      (when (>=fx l 2)
-	 (unless (memq :optim-ccall o)
-	    (set! o (cons* :optim-ccall #t o))))
-      (when (>=fx l 2)
-	 (unless (memq :optim-clevel o)
-	    (set! o (cons* :optim-clevel #t o))))
-      (when (>=fx l 2)
-	 (unless (memq :optim-callapply o)
-	    (set! o (cons* :optim-callapply #t o))))
 ;* 		     (unless (memq :optim-cce o)                       */
 ;* 			(set! o (cons* :optim-cce #t o)))              */
       

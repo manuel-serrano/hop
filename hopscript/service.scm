@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Oct  8 13:12:57 2019 (serrano)                */
+;*    Last change :  Fri Dec 20 17:47:08 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -163,7 +163,6 @@
 		   (proc (js-make-function %this
 			    (lambda (this) (js-undefined))
 			    0 (relative-path path)
-			    :rest #f
 			    :arity 1 :prototype #f
 			    :__proto__ #f
 			    :strict 'strict

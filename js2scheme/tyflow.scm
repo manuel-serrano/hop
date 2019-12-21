@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Dec 16 09:00:09 2019 (serrano)                */
+;*    Last change :  Fri Dec 20 18:07:11 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -705,7 +705,6 @@
 		  (if (isa? val J2SMethod)
 		      (escape-method val fix)
 		      (escape-fun val fix #f))))
-	    
 	    (if (memq utype '(unknown any))
 		(let ((ty (env-lookup env decl)))
 		   (expr-type-add! this nenv fix ty))
@@ -738,7 +737,7 @@
 ;*    node-type ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclInit env::pair-nil fix::cell)
-   (with-access::J2SDeclInit this (val utype id loc _usage)
+   (with-access::J2SDeclInit this (val utype id loc _usage writable)
       (multiple-value-bind (ty env bk)
 	 (node-type val env fix)
 	 (cond
@@ -749,6 +748,10 @@
 	     (decl-vtype-add! this 'any fix)
 	     (return 'void (extend-env env this ty) bk))
 	    ((or (eq? ty 'unknown) (not ty))
+	     (return 'void env bk))
+	    ((and (not writable) (not (decl-usage-has? this '(uninit))))
+	     ;; wait for the ::J2SInit expression for assigning a type
+	     ;; to this constant
 	     (return 'void env bk))
 	    (else
 	     (decl-vtype-add! this ty fix)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Tue Dec 17 16:38:25 2019 (serrano)                */
+;*    Last change :  Fri Dec 20 19:10:37 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -25,7 +25,8 @@
 	   __js2scheme_alpha)
 
    (export j2s-uninit-stage
-	   j2s-uninit-globprop-stage))
+	   j2s-uninit-globprop-stage
+	   j2s-uninit-force-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-uninit-stage ...                                             */
@@ -34,8 +35,7 @@
    (instantiate::J2SStageProc
       (name "uninit")
       (comment "Global variable initialization optimization")
-      (proc (lambda (n args) (j2s-uninit! n args)))
-      (optional 2)))
+      (proc (lambda (n args) (j2s-uninit! n args)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-uninit-stage ...                                             */
@@ -48,6 +48,15 @@
       (optional :optim-globprop)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-uninit-force-stage ...                                       */
+;*---------------------------------------------------------------------*/
+(define j2s-uninit-force-stage
+   (instantiate::J2SStageProc
+      (name "uninit")
+      (comment "Global variable initialization optimization")
+      (proc (lambda (n args) (j2s-uninit-force! n args)))))
+
+;*---------------------------------------------------------------------*/
 ;*    funinfo ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-struct funinfo globals protos invalidated)
@@ -58,17 +67,30 @@
 (define (j2s-uninit! this args)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)
-	 (if direct-eval
+	 (cond
+	    ((not (config-get args :optim-uninit #f))
+	     (j2s-uninit-force! this args))
+	    (direct-eval
 	     (for-each (lambda (decl)
 			  (unless (isa? decl J2SDeclFun)
 			     (decl-usage-add! decl 'uninit)))
-		decls)
-	     (begin
-		;; collect all the globals used by all global functions
-		(for-each function-collect-globals decls)
-		;; scan in sequence all the declaratins and all the nodes
-		(for-each scan-decl decls)
-		(for-each scan-node nodes)))))
+		decls))
+	    (else
+	     ;; collect all the globals used by all global functions
+	     (for-each function-collect-globals decls)
+	     ;; scan in sequence all the declaratins and all the nodes
+	     (for-each scan-decl decls)
+	     (for-each scan-node nodes)))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-uninit-force! ::J2SProgram ...                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-uninit-force! this args)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (nodes decls direct-eval)
+	 (for-each uninit-force! decls)
+	 (for-each uninit-force! nodes)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -415,4 +437,16 @@
       (invalidate-early-decl obj initp)
       (call-next-method)))
 
-      
+;*---------------------------------------------------------------------*/
+;*    uninit-force! ...                                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uninit-force! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    uninit-force! ::J2SDeclInit ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uninit-force! this::J2SDeclInit)
+   (unless (isa? this J2SDeclFun)
+      (decl-usage-add! this 'uninit))
+   (call-default-walker))

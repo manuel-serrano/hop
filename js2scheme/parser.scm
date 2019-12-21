@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Dec 17 13:22:14 2019 (serrano)                */
+;*    Last change :  Fri Dec 20 19:27:38 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1674,7 +1674,7 @@
 					  (loc (token-loc id))
 					  (id (token-value id))
 					  (writable #f)
-					  (_usage (usage '()))
+					  (_usage (usage '(uninit)))
 					  (scope 'global)
 					  (binder 'let)
 					  (val clazz))))
@@ -1688,7 +1688,7 @@
 					  (loc (token-loc id))
 					  (id (token-value id))
 					  (writable #f)
-					  (_usage (usage '()))
+					  (_usage (usage '(uninit)))
 					  (scope 'global)
 					  (binder 'let)
 					  (val clazz))))

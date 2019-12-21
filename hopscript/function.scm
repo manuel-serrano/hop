@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Dec  8 05:33:59 2019 (serrano)                */
+;*    Last change :  Fri Dec 20 17:41:50 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -43,11 +43,11 @@
 	      #!key
 	      method construct alloc
 	      __proto__ prototype
-	      (strict 'normal) arity (minlen -1) src rest
+	      (strict 'normal) arity (minlen -1) src 
 	      (size 0) (constrsize 3) (maxconstrsize 100)
 	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
-	      ::int ::bstring ::int ::int ::symbol ::bool ::int)
+	      ::int ::bstring ::int ::int ::symbol ::int)
 	   
 	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
 	   
@@ -449,7 +449,7 @@
 	   #!key
 	   method construct alloc
 	   __proto__ prototype
-	   (strict 'normal) arity (minlen -1) src rest
+	   (strict 'normal) arity (minlen -1) src 
 	   (size 0) (constrsize 3) (maxconstrsize 100)
 	   (constrmap (js-not-a-cmap)) (shared-cmap #t))
    (with-access::JsGlobalObject %this (js-function js-object
@@ -492,7 +492,6 @@
 			(construct (or construct procedure))
 			(alloc (or alloc js-not-a-constructor-alloc))
 			(arity (or arity (procedure-arity procedure)))
-			(rest rest)
 			(len length)
 			(__proto__ (or __proto__ %__proto__))
 			(src src)
@@ -598,11 +597,11 @@
 ;*    js-make-function-simple ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-make-function-simple %this::JsGlobalObject proc::procedure
-	   len::int name::bstring arity::int minlen::int strict::symbol rest::bool
+	   len::int name::bstring arity::int minlen::int strict::symbol
 	   constrsize::int)
    (js-make-function %this proc len name
       :prototype #f :__proto__ #f
-      :arity arity :strict strict :rest rest :minlen minlen
+      :arity arity :strict strict :minlen minlen
       :src #f
       :alloc js-object-alloc
       :construct proc :constrsize constrsize))
