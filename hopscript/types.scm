@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Dec 18 08:02:37 2019 (serrano)                */
+;*    Last change :  Fri Dec 20 17:40:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -215,7 +215,6 @@
 	      (len::int read-only)
 	      (arity::int read-only (default -1))
 	      (minlen::int read-only (default -1))
-	      (rest::bool read-only (default #f))
 	      ;; MS 2019-01-10: two prototype fields are required,
 	      ;; see isPrototypeOf in ECMAScript specification
 	      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.6

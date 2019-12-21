@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Dec 19 08:33:45 2019 (serrano)                */
+;*    Last change :  Fri Dec 20 06:52:44 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -191,32 +191,32 @@
 						(if (eq? n old) new n))
 					  v)))))))
 	 (class-all-fields (object-class parent))))
+
+   
    
    (define (inline-filter-dynamic-targets cli)
       ;; select the function to be inlined on a dynamic call site.
       ;; used to select the inline targets of method and closure calls.
-      (let ((l (let ((call (callloginfo-call cli)))
-		  (with-access::J2SCall call (loc)
-		     (caddr loc)))))
-	 (let* ((targets (callloginfo-targets cli))
-		(targets (filter (lambda (t)
-				    ;; filter out targets larger than
-				    ;; INLINE-max-function-size
-				    (and (<fx (function-size (cdr t))
-					    inline-max-function-size)
-					 (not (function-arguments? (cdr t)))
-					 (not (function-varargs? (cdr t)))
-					 (not (function-newtarget? (cdr t)))
-					 (not (function-generator? (cdr t)))
-					 (not (function-freevars? (cdr t)))))
-			    targets))
-		(targets (filter (lambda (t)
-				    ;; filter out targets that are called less than
-				    ;; INLINE-MIN-DISPATCH-PERCENTAGE times
-				    (> (/ (car t) (callloginfo-counter cli))
-				       inline-min-dispatch-percentage))
-			    targets)))
-	    targets)))
+      (let* ((targets (callloginfo-targets cli))
+	     (targets (filter (lambda (t)
+				 ;; filter out targets larger than
+				 ;; INLINE-max-function-size
+				 (and (<fx (function-size (cdr t))
+					 (min inline-max-function-size
+					    (function-max-expansion (cdr t))))
+				      (not (function-arguments? (cdr t)))
+				      (not (function-varargs? (cdr t)))
+				      (not (function-newtarget? (cdr t)))
+				      (not (function-generator? (cdr t)))
+				      (not (function-freevars? (cdr t)))))
+			 targets))
+	     (targets (filter (lambda (t)
+				 ;; filter out targets that are called less than
+				 ;; INLINE-MIN-DISPATCH-PERCENTAGE times
+				 (> (/ (car t) (callloginfo-counter cli))
+				    inline-min-dispatch-percentage))
+			 targets)))
+	 targets))
    
    (define (inline-call-guard-kind cli)
       ;; the kind of guard to protect the inlined code
@@ -282,6 +282,7 @@
 		  (let ((sz (function-size val)))
 		     (cond
 			((or (>fx sz inline-max-function-size)
+			     (>fx sz (function-max-expansion val))
 			     (>fx sz fuel))
 			 0)
 			((and (< (callloginfo-counter cli) (* allcnt 0.001))
@@ -508,7 +509,14 @@
       (let ((cell (make-cell #f)))
 	 (node-self-recursive body fun cell)
 	 (cell-ref cell))))
-			       
+
+;*---------------------------------------------------------------------*/
+;*    function-max-expansion ...                                       */
+;*---------------------------------------------------------------------*/
+(define (function-max-expansion this::J2SFun)
+   (with-access::J2SFun this (params)
+      (*fx (length params) inline-arity-expansion-size-factor)))
+
 ;*---------------------------------------------------------------------*/
 ;*    function-size ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -780,7 +788,8 @@
 			     (not (function-newtarget? val))
 			     (or (not leaf) (function-leaf? val))
 			     (not (memq val stack))
-			     (<=fx (function-size val) limit)
+			     (<=fx (function-size val)
+				(min limit (function-max-expansion val)))
 			     (check-id id)
 			     (not (function-self-recursive? val)))
 		     val))))))

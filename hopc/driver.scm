@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Apr 26 12:43:36 2019 (serrano)                */
+;*    Last change :  Sat Dec 21 06:42:30 2019 (serrano)                */
 ;*    Copyright   :  2014-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -348,6 +348,23 @@
 	       (let loop ()
 		  (let ((exp (hopc-read in)))
 		     (unless (eof-object? exp)
+			(write (obj->string exp) out)
+			(loop)))))
+	    file
+	    temp))
+
+      (define (compile-scheme in opts file temp)
+	 (compiler
+	    (append `("-fread-internal-src"
+			"--force-cc-o"
+			"-rpath" ,(make-file-path (hop-lib-directory)
+				     "hop" (hop-version))
+			"-I" ,(dirname file))
+	       opts)
+	    (lambda (out)
+	       (let loop ()
+		  (let ((exp (hopc-read in)))
+		     (unless (eof-object? exp)
 			(match-case exp
 			   ((module . ?-)
 			    (write (obj->string (compile-module exp)) out))
@@ -469,7 +486,11 @@
 	       ((hop)
 		(compile-hop in opts file (hopc-temp)))
 	       ((hopscript)
-		(compile-hopscript in opts file exec (hopc-temp))))
+		(compile-hopscript in opts file exec (hopc-temp)))
+	       ((scheme)
+		(compile-scheme in opts file (hopc-temp)))
+	       (else
+		(error "bigloo" "Unknown language" lang)))
 	    (when (and (string? file) (eq? (hopc-pass) 'so))
 	       (let ((obj (string-append (prefix file) ".o")))
 		  (when (file-exists? obj)

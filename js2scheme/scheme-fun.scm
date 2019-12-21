@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Dec 16 08:04:20 2019 (serrano)                */
+;*    Last change :  Fri Dec 20 17:41:09 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -161,6 +161,8 @@
 	  (+fx 1 (length params)))
 	 ((eq? vararg 'arguments)
 	  (if (config-get conf :optim-arguments) -2048 -1))
+	 ((eq? vararg 'rest)
+	  -2049)
 	 (else
 	  -1))))
 
@@ -185,7 +187,6 @@
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
 			  :src ,src
-			  :rest ,(eq? vararg 'rest)
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
@@ -198,7 +199,6 @@
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
 			  :src ,src
-			  :rest ,(eq? vararg 'rest)
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
@@ -211,7 +211,6 @@
 		     ((eq? vararg 'arguments)
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
-			  :rest ,(eq? vararg 'rest)
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode 
@@ -222,7 +221,6 @@
 		     (method
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
-			  :rest ,(eq? vararg 'rest)
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
@@ -235,7 +233,6 @@
 		     ((or (decl-usage-has? this '(new ref)) new-target)
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
-			  :rest ,(eq? vararg 'rest)
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
@@ -246,7 +243,7 @@
 		      `(js-make-function-simple %this ,fastid
 			  ,len ,(symbol->string! id)
 			  ,arity ,minlen
-			  ',mode ,(eq? vararg 'rest)
+			  ',mode
 			  ,constrsize))))))))
 
    (with-access::J2SDeclFun this (val)
@@ -577,7 +574,6 @@
 		`(js-make-function %this ,tmp ,len
 		    ,(symbol->string! name)
 		    :src ,src
-		    :rest ,(eq? vararg 'rest)
 		    :arity ,arity
 		    :prototype ,prototype
 		    :__proto__ ,__proto__
@@ -592,7 +588,6 @@
 	       ((eq? vararg 'arguments)
 		`(js-make-function %this ,tmp ,len
 		    ,(symbol->string! name)
-		    :rest ,(eq? vararg 'rest)
 		    :arity ,arity ,
 		    :minlen minlen
 		    :strict ',mode

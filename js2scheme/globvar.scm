@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sat Dec 14 17:47:14 2019 (serrano)                */
+;*    Last change :  Sat Dec 21 06:49:59 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (constant propagation).            */
@@ -109,8 +109,10 @@
       ;; no need to scan rhs as we are only looking for variable decls/inits
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (val %info id)
-		(if (and (not (decl-usage-has? decl '(assig uninit)))
+	     (with-access::J2SDecl decl (val %info id writable)
+		(if (and (or (not (decl-usage-has? decl '(assig uninit)))
+			     (and (not (decl-usage-has? decl '(uninit)))
+				  (not writable)))
 			 (constant? rhs))
 		    (begin
 		       (set! %info (cons 'init rhs))

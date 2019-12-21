@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Dec 19 08:16:10 2019 (serrano)                */
+;*    Last change :  Fri Dec 20 17:42:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -430,7 +430,7 @@
 (define (js-apply %this fun obj args::pair-nil)
    (cond
       ((js-function? fun)
-       (with-access::JsFunction fun (procedure rest)
+       (with-access::JsFunction fun (procedure)
 	  (js-apply% %this fun procedure obj args)))
       ((and (js-proxy? fun) (js-proxy-function? fun))
        (js-apply-proxy %this fun obj args))
@@ -441,7 +441,7 @@
 ;*    js-apply% ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-apply% %this fun::JsFunction proc::procedure obj args::pair-nil)
-   (with-access::JsFunction fun (arity rest len minlen name)
+   (with-access::JsFunction fun (arity len minlen name)
       (let ((n (+fx 1 (length args))))
 	 (cond
 	    ((=fx arity n)
@@ -465,7 +465,7 @@
 	     (if (>=fx minlen 0)
 		 (js-raise-arity-error %this fun (-fx n 1))
 		 (apply proc obj (take args (-fx arity 1)))))
-	    (rest
+	    ((=fx arity -2049)
 	     (js-apply-rest% %this proc obj args len n))
 	    ((=fx arity -2048)
 	     (proc obj (apply vector args)))
@@ -516,14 +516,14 @@
 ;*    js-raise-arity-error ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-raise-arity-error %this fun n)
-   (with-access::JsFunction fun (minlen arity rest len src)
+   (with-access::JsFunction fun (minlen arity len src)
       (let* ((name (js-get fun (& "name") %this))
 	     (m (format "~a: wrong number of arguments ~a provided, ~a expected"
 		   (if (js-jsstring? name) (js-jsstring->string name) "")
 		   n
 		   (cond
-		      ((or (<fx minlen 0) (and (=fx minlen len) (not rest))) len)
-		      (rest (format ">= ~a" minlen))
+		      ((or (<fx minlen 0) (and (=fx minlen len) (not (=fx arity -2049)))) len)
+		      ((=fx arity -2049) (format ">= ~a" minlen))
 		      (else (format "[~a..~a]" minlen len))))))
 	 (if (pair? src)
 	     (js-raise-type-error/loc %this (car src) m fun)
@@ -534,40 +534,40 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-calln . args)
    (let ((n (+fx 1 (length args))))
-      `(with-access::JsFunction fun (arity len rest minlen src)
+      `(with-access::JsFunction fun (arity len minlen src)
 	  (if (=fx ,n arity)
 	      (proc this ,@args)
 	      (case arity
 		 ((-1)
-		  (if (not rest)
-		      (proc this ,@args)
-		      (case len
-			 ((0)
-			  (proc this (js-vector->jsarray (vector ,@args) %this)))
-			 ,@(map (lambda (i)
-				   `((,i)
-				     ,(if (<=fx n i)
-					  `(if (and (<=fx ,n minlen) (>=fx minlen 0))
-					       (js-raise-arity-error %this fun ,(-fx n 1))
-					       (proc this ,@args ,@(make-list (-fx (+fx i 1) n) '(js-undefined))
-						  (js-vector->jsarray '#() %this)))
-					  `(proc this ,@(take args i)
-					      (js-vector->jsarray (vector ,@(drop args i)) %this)))))
-			    (iota 10 1))
+		  (proc this ,@args))
+		 ((-2049)
+		  (case len
+		     ((0)
+		      (proc this (js-vector->jsarray (vector ,@args) %this)))
+		     ,@(map (lambda (i)
+			       `((,i)
+				 ,(if (<=fx n i)
+				      `(if (and (<=fx ,n minlen) (>=fx minlen 0))
+					   (js-raise-arity-error %this fun ,(-fx n 1))
+					   (proc this ,@args ,@(make-list (-fx (+fx i 1) n) '(js-undefined))
+					      (js-vector->jsarray '#() %this)))
+				      `(proc this ,@(take args i)
+					  (js-vector->jsarray (vector ,@(drop args i)) %this)))))
+			(iota 10 1))
+		     (else
+		      (cond
+			 ((and (<=fx ,n minlen) (>=fx minlen 0))
+			  (js-raise-arity-error %this fun ,(-fx n 1)))
+			 ((<=fx ,(-fx n 1) len)
+			  (apply proc this ,@args
+			     (js-rest-args %this (-fx (+fx len 1) ,n))))
 			 (else
-			  (cond
-			     ((and (<=fx ,n minlen) (>=fx minlen 0))
-			      (js-raise-arity-error %this fun ,(-fx n 1)))
-			     ((<=fx ,(-fx n 1) len)
-			      (apply proc this ,@args
-				 (js-rest-args %this (-fx (+fx len 1) ,n))))
-			     (else
-			      (let ((args (list ,@args)))
-				 (apply proc this
-				    (append (take args len)
-				       (list
-					  (js-vector->jsarray
-					     (apply vector (drop args len)) %this)))))))))))
+			  (let ((args (list ,@args)))
+			     (apply proc this
+				(append (take args len)
+				   (list
+				      (js-vector->jsarray
+					 (apply vector (drop args len)) %this))))))))))
 		 ((-2048)
 		  (proc this (vector ,@args)))
 		 ,@(map (lambda (i)
@@ -674,7 +674,7 @@
    (gen-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
 (define (js-calln% %this fun this args)
-   (with-access::JsFunction fun (procedure method arity minlen rest len)
+   (with-access::JsFunction fun (procedure method arity minlen len)
       (let ((n (+fx 1 (length args)))
 	    (proc (if (and method (js-object? this)) method procedure)))
 	 (cond
@@ -701,12 +701,12 @@
 		 (js-raise-type-error %this
 		    "wrong number of arguments" (cons (length args) minlen)))
 		((<=fx (-fx n 1) len)
-		 (if (not rest)
+		 (if (not (=fx arity -2049))
 		     (apply proc this
 			(append args (make-list (-fx (negfx arity) (+fx n 1)))))
 		     (apply proc this
 			(append args (js-rest-args %this (-fx (+fx len 1) n))))))
-		((not rest)
+		((not (=fx arity -2049))
 		 (apply proc this args))
 		(else
 		 (apply proc this
@@ -763,7 +763,7 @@
    (gen-call/function %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
 (define (js-calln/function %this fun this . args)
-   (with-access::JsFunction fun (procedure method arity minlen rest len)
+   (with-access::JsFunction fun (procedure method arity minlen len)
       (let ((n (+fx 1 (length args)))
 	    (proc (if (and method (js-object? this)) method procedure)))
 	 (cond
@@ -790,12 +790,12 @@
 		 (js-raise-type-error %this
 		    "wrong number of arguments" (cons (length args) minlen)))
 		((<=fx (-fx n 1) len)
-		 (if (not rest)
+		 (if (not (=fx arity -2049))
 		     (apply proc this
 			(append args (make-list (-fx (negfx arity) (+fx n 1)))))
 		     (apply proc this
 			(append args (js-rest-args %this (-fx (+fx len 1) n))))))
-		((not rest)
+		((not (=fx arity -2049))
 		 (apply proc this args))
 		(else
 		 (apply proc this
