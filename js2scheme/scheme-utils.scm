@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Dec 14 19:25:34 2019 (serrano)                */
+;*    Last change :  Sat Dec 21 09:20:59 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -536,6 +536,25 @@
 	   (not (type-number? typrop))
 	   (not (eq? typrop 'array))))
 
+   (define (js-array-get obj prop typrop)
+      (case typrop
+	 ((uint32)
+	  `(js-array-index-ref ,obj ,prop %this))
+	 ((int32)
+	  `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
+	 ((fixnum int53)
+	  `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
+	 (else
+	  (cond
+	     ((and (string? prop) (string=? prop "length"))
+	      (if (eq? tyval 'uint32)
+		  `(js-array-length ,obj)
+		  (box `(js-array-length ,obj) 'uint32 conf)))
+	     ((mightbe-number? field)
+	      `(js-array-ref ,obj ,prop %this))
+	     (else
+	      `(js-array-noindex-ref ,obj ,prop %this))))))
+   
    (let ((propstr (match-case prop
 		     ((& ?str) str)
 		     (else #f))))
@@ -547,21 +566,7 @@
 	 ((equal? propstr "__proto__")
 	  `(js-getprototypeof ,obj %this "j2scheme"))
 	 ((eq? tyobj 'array)
-	  (case typrop
-	     ((uint32)
-	      `(js-array-index-ref ,obj ,prop %this))
-	     ((int32)
-	      `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
-	     (else
-	      (cond
-		 ((and (string? prop) (string=? prop "length"))
-		  (if (eq? tyval 'uint32)
-		      `(js-array-length ,obj)
-		      (box `(js-array-length ,obj) 'uint32 conf)))
-		 ((mightbe-number? field)
-		  `(js-array-ref ,obj ,prop %this))
-		 (else
-		  `(js-array-noindex-ref ,obj ,prop %this))))))
+	  (js-array-get obj prop typrop))
 	 ((eq? tyobj 'string)
 	  (cond
 	     ((type-uint32? typrop)
@@ -625,7 +630,7 @@
 	     `(let ((,o ,obj)
 		    (,p ,prop))
 		 (if (js-array? ,o)
-		     (js-array-ref ,o ,p %this)
+		     ,(js-array-get o p typrop)
 		     ,(js-get o p '%this)))))
 	 ((memq typrop '(int32 uint32))
 	  (js-get obj (box prop typrop conf) '%this))

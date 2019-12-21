@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Dec 20 06:52:44 2019 (serrano)                */
+;*    Last change :  Sat Dec 21 09:06:31 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -515,7 +515,8 @@
 ;*---------------------------------------------------------------------*/
 (define (function-max-expansion this::J2SFun)
    (with-access::J2SFun this (params)
-      (*fx (length params) inline-arity-expansion-size-factor)))
+      (max (*fx (length params) inline-arity-expansion-size-factor)
+	 (/fx inline-max-function-size 3))))
 
 ;*---------------------------------------------------------------------*/
 ;*    function-size ...                                                */
@@ -837,9 +838,7 @@
    
    (define (inline-ref-call this::J2SCall fun::J2SRef thisarg args loc)
       (cond
-	 ((find-inline-decl-function this fun (length args)
-	     (min limit (*fx (length args) inline-arity-expansion-size-factor))
-	     stack)
+	 ((find-inline-decl-function this fun (length args) limit stack)
 	  =>
 	  (lambda (target)
 	     (inline-verb loc fun '(-) (function-size target) limit 0 conf)
