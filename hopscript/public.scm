@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Dec 20 17:42:43 2019 (serrano)                */
+;*    Last change :  Sat Dec 21 19:29:41 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -144,6 +144,7 @@
 	   (inline js-totest::bool ::obj)
 	   (inline js-totest-likely-object::bool ::obj)
 	   (js-toboolean::bool ::obj)
+	   (js-toboolean-no-boolean::bool ::obj)
 	   (generic js-tonumber ::obj ::JsGlobalObject)
 	   (macro js-tointeger obj %this)
 	   (generic js-tointeger ::obj ::JsGlobalObject)
@@ -1073,7 +1074,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.5         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-totest obj)
-   (if (boolean? obj) obj (js-toboolean obj)))
+   (if (boolean? obj) obj (js-toboolean-no-boolean obj)))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-totest-likely-object ...                                      */
@@ -1091,9 +1092,22 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toboolean obj)
    (cond
-      ((eq? obj (js-null)) #f)
+      ((js-null-or-undefined? obj) #f)
+      ((js-jsstring? obj) (js-jsstring->bool obj))
+      ((object? obj) #t)
+      ((fixnum? obj) (not (=fx obj 0)))
+      ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
       ((boolean? obj) obj)
-      ((eq? obj (js-undefined)) #f)
+      (else #t)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toboolean-no-boolean ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.2          */
+;*---------------------------------------------------------------------*/
+(define (js-toboolean-no-boolean obj)
+   (cond
+      ((js-null-or-undefined? obj) #f)
       ((js-jsstring? obj) (js-jsstring->bool obj))
       ((object? obj) #t)
       ((fixnum? obj) (not (=fx obj 0)))
@@ -1563,7 +1577,11 @@
 ;*    avoid the double test when possible.                             */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-null-or-undefined? obj)
-   (or (eq? obj (js-undefined)) (eq? obj (js-null))))
+   (cond-expand
+      (bigloo4.3c
+       (or (eq? obj (js-undefined)) (eq? obj (js-null))))
+      (else
+       (null-or-unspecified? obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-super ...                                                     */

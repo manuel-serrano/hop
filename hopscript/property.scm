@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Dec 18 07:46:40 2019 (serrano)                */
+;*    Last change :  Tue Dec 24 16:50:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1900,12 +1900,6 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-;*    (set! cnt (+fx cnt 1))                                           */
-;*    (let ((c (assq name names)))                                     */
-;*       (if (pair? c)                                                 */
-;* 	  (set-cdr! c (+fx (cdr c) 1))                                 */
-;* 	  (set! names (cons (cons name 1) names))))                    */
-   
    (let loop ((obj o))
       (jsobject-find obj o name
          ;; map search

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Dec 14 18:08:01 2019 (serrano)                */
+;*    Last change :  Sat Dec 21 19:53:57 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -749,24 +749,63 @@
 ;*---------------------------------------------------------------------*/
 ;*    interval-add ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (interval-add left right)
-   (when (and (interval? left) (interval? right))
+(define (interval-add left right conf)
+
+   (define (+safe53 x y)
+      (cond
+	 ((and (=llong x #l1) (=llong y *max-int53*)) *max-int53*)
+	 ((and (=llong y #l1) (=llong x *max-int53*)) *max-int53*)
+	 (else (+llong x y))))
+   
+   (define (interval-add64 left right)
+      (let ((intr (interval
+		     (+safe53 (interval-min left) (interval-min right))
+		     (+safe53 (interval-max left) (interval-max right))
+		     (interval-merge-types left right))))
+	 (widening left right intr)))
+      
+   (define (interval-add32 left right)
       (let ((intr (interval
 		     (+ (interval-min left) (interval-min right))
 		     (+ (interval-max left) (interval-max right))
 		     (interval-merge-types left right))))
-	 (widening left right intr))))
+	 (widening left right intr)))
+   
+   (when (and (interval? left) (interval? right))
+      (if (m64? conf)
+	  (interval-add64 left right)
+	  (interval-add32 left right))))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval-sub ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (interval-sub left right)
+(define (interval-sub left right conf)
+   
+   (define (-safe53 x y)
+      (cond
+	 ((and (=llong x *min-int53*) (=llong y #l1)) *min-int53*)
+	 (else (-llong x y))))
+   
+   (define (interval-sub64 left right)
+      (when (and (interval? left) (interval? right))
+	 (let ((intr (interval
+			(-safe53 (interval-min left) (interval-max right))
+			(-safe53 (interval-max left) (interval-min right))
+			(interval-merge-types left right))))
+	    (widening left right intr))))
+
+   (define (interval-sub32 left right)
+      (when (and (interval? left) (interval? right))
+	 (let ((intr (interval
+			(- (interval-min left) (interval-max right))
+			(- (interval-max left) (interval-min right))
+			(interval-merge-types left right))))
+	    (widening left right intr))))
+   
    (when (and (interval? left) (interval? right))
-      (let ((intr (interval
-		     (- (interval-min left) (interval-max right))
-		     (- (interval-max left) (interval-min right))
-		     (interval-merge-types left right))))
-	 (widening left right intr))))
+      (if (m64? conf)
+	  (interval-sub64 left right)
+	  (interval-sub32 left right))))
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-mul ...                                                 */
@@ -1631,9 +1670,9 @@
 	 (debug *debug-range-binary* "envr=" (dump-env envr))
 	 (case op
 	    ((+)
-	     (expr-range-add! this env fix (interval-add intl intr)))
+	     (expr-range-add! this env fix (interval-add intl intr conf)))
 	    ((-)
-	     (expr-range-add! this env fix (interval-sub intl intr)))
+	     (expr-range-add! this env fix (interval-sub intl intr conf)))
 	    ((*)
 	     (expr-range-add! this env fix (interval-mul intl intr)))
 	    ((**)
