@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM debian:buster
 
 RUN apt-get update && apt-get install -y \
     bash \
@@ -19,7 +19,8 @@ RUN apt-get update && apt-get install -y \
     libflac8 libflac-dev \
     libmpg123-0 libmpg123-dev \
     libavahi-core7 libavahi-core-dev libavahi-common-dev libavahi-common3 \
-    libavahi-client3 libavahi-client-dev
+    libavahi-client3 libavahi-client-dev \
+    libunistring2 libunistring-dev
 
 WORKDIR /tmp
 
