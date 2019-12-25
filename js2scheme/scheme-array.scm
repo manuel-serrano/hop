@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Dec 21 09:34:25 2019 (serrano)                */
+;*    Last change :  Wed Dec 25 07:51:34 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -133,9 +133,9 @@
 	      (js-array-alloc %this)
 	      ,(k (j2s-scheme arg mode return conf))))
 	 (else
-	  `(js-array-construct %this (js-array-alloc %this)
-	      (list ,(box (j2s-scheme arg mode return conf)
-			(j2s-vtype arg) conf))))))
+	  `(js-array-construct1 %this (js-array-alloc %this)
+	      ,(box (j2s-scheme arg mode return conf)
+		  (j2s-vtype arg) conf)))))
    
    (with-access::J2SNew this (loc cache clazz args type)
       (cond
