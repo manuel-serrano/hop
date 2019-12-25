@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 19 08:59:11 2019                          */
-;*    Last change :  Thu Dec 19 09:05:30 2019 (serrano)                */
+;*    Last change :  Wed Dec 25 07:03:22 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of bind-exit forms.                       */
@@ -57,7 +57,8 @@
 ;*---------------------------------------------------------------------*/
 (define (all-return-tail? this::J2SNode bexit::J2SBindExit)
    (let ((cell (make-cell #t)))
-      (all-return-tail this bexit cell)))
+      (all-return-tail this bexit cell)
+      (cell-ref cell)))
 
 ;*---------------------------------------------------------------------*/
 ;*    all-return-tail ::J2SNode ...                                    */
@@ -71,7 +72,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (all-return-tail this::J2SReturn bexit::J2SBindExit cell)
    (with-access::J2SReturn this (tail from)
-      (if (eq? from bexit)
-	  (unless tail (cell-set! cell #f)))
+      (when (eq? from bexit)
+	 (unless tail (cell-set! cell #f)))
       (when (cell-ref cell)
 	 (call-default-walker))))
