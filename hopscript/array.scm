@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Dec 22 17:41:15 2019 (serrano)                */
+;*    Last change :  Wed Dec 25 07:49:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -103,6 +103,7 @@
 	   
 	   (js-array-alloc::JsArray ::JsGlobalObject)
 	   (js-array-construct::JsArray ::JsGlobalObject ::JsArray ::obj)
+	   (js-array-construct1::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (inline js-array-construct-alloc-small::JsArray ::JsGlobalObject ::uint32)
 	   (inline js-array-construct-alloc-small-sans-init::JsArray ::JsGlobalObject ::uint32)
 	   (js-array-construct/lengthu32::JsArray ::JsGlobalObject ::JsArray ::uint32)
@@ -2396,6 +2397,32 @@
        (let* ((vec (list->vector items-or-len))
 	      (len (vector-length vec)))
 	  (array-set! vec (fixnum->uint32 len) (fixnum->uint32 len))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-construct1 ...                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.2.1     */
+;*---------------------------------------------------------------------*/
+(define (js-array-construct1 %this::JsGlobalObject this::JsArray item-or-len)
+
+   (define (array-set! v::vector iln::uint32 ulen::uint32)
+      (with-access::JsArray this (vec ilen length)
+	 (set! length ulen)
+	 (set! ilen iln)
+	 (set! vec v))
+      this)
+
+   (cond
+      ((null? item-or-len)
+       (js-array-construct/length %this this 0))
+      ((fixnum? item-or-len)
+       (js-array-construct/length %this this item-or-len))
+      ((js-number? item-or-len)
+       (js-array-construct/length %this this item-or-len))
+      (else
+       (let* ((vec (vector item-or-len))
+	      (len (vector-length vec)))
+	  (array-set! vec #u32:1 #u32:1)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector->jsarray ...                                           */
