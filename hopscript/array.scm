@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Dec  7 19:03:41 2019 (serrano)                */
+;*    Last change :  Sun Dec 22 17:41:15 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -71,9 +71,11 @@
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
 	   (js-array-noindex-ref ::JsArray ::obj ::JsGlobalObject)
 	   (inline js-array-index-ref ::JsArray ::uint32 ::JsGlobalObject)
+	   (js-array-index-noinl-ref ::JsArray ::uint32 ::JsGlobalObject)
 	   (inline js-array-index-inl-ref ::JsArray ::uint32
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
 	   (inline js-array-fixnum-ref ::JsArray ::long ::JsGlobalObject)
+	   (js-array-fixnum-noinl-ref ::JsArray ::long ::JsGlobalObject)
 	   (inline js-array-fixnum-inl-ref ::JsArray ::long
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
 	   (inline js-array-string-ref ::JsArray ::obj ::JsGlobalObject)
@@ -770,9 +772,16 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-index-ref arr::JsArray idx::uint32 %this)
    (with-access::JsArray arr (vec ilen)
+      (if (<u32 idx ilen)
+	  (vector-ref vec (uint32->fixnum idx))
+	  (js-array-index-noinl-ref arr idx %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-index-noinl-ref ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-array-index-noinl-ref arr::JsArray idx::uint32 %this)
+   (with-access::JsArray arr (vec ilen)
       (cond
-	 ((<u32 idx ilen)
-	  (vector-ref vec (uint32->fixnum idx)))
 	 ((and (js-object-mode-holey? arr)
 	       (<u32 idx (fixnum->uint32 (vector-length vec))))
 	  (let ((v (vector-ref vec (uint32->fixnum idx))))
@@ -800,13 +809,20 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-fixnum-ref arr::JsArray idx::long %this)
    (with-access::JsArray arr (vec ilen)
-      (cond
-	 ((cond-expand
+      (if (cond-expand
 	     ((or bint30 bint32)
 	      (<u32 (fixnum->uint32 idx) ilen))
 	     (else
 	      (pragma::bool "(unsigned long)($1) < (unsigned long)($2)" idx ilen)))
-	  (vector-ref vec idx))
+	  (vector-ref vec idx)
+	  (js-array-fixnum-noinl-ref arr idx %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-fixnum-noinl-ref ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-array-fixnum-noinl-ref arr::JsArray idx::long %this)
+   (with-access::JsArray arr (vec ilen)
+      (cond
 	 ((and (js-object-mode-holey? arr)
 	       (cond-expand
 		  ((or bint30 bint32)

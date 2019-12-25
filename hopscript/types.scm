@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Dec 20 17:40:07 2019 (serrano)                */
+;*    Last change :  Tue Dec 24 16:34:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -570,11 +570,14 @@
 	 (bigloo-c
 	  ($js-make-jsobject constrsize constrmap __proto__ mode))
 	 (else
-	  (instantiateJsObject
-	     (cmap constrmap)
-	     (__proto__ __proto__)
-	     (elements (make-vector constrsize (js-undefined)))
-	     (mode mode))))))
+	  (let ((o (instantiate::JsObject
+		      (cmap constrmap)
+		      (__proto__ __proto__)
+		      (elements (make-vector constrsize (js-undefined))))))
+	     (js-object-mode-set! o mode)
+	     (js-object-mode-inline-set! o #f)
+	     (%object-widening-set! o '())
+	     o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-default-mode ...                                       */

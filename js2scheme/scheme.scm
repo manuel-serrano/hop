@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Dec 19 08:57:12 2019 (serrano)                */
+;*    Last change :  Mon Dec 23 06:57:52 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1411,9 +1411,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SSwitch mode return conf)
    (with-access::J2SSwitch this (loc key cases id need-bind-exit-break)
+
+      (define (comp-literal expr type)
+	 (j2s-cast (j2s-scheme expr mode return conf)
+	    expr (j2s-type expr) type conf))
       
       (define (test-switch tleft tright)
-	 (if (and (memq tleft '(number integer)) (memq tright '(number integer)))
+	 (if (and (memq tleft '(number integer))
+		  (memq tright '(number integer)))
 	     '=
 	     'js-strict-equal?))
       
@@ -1436,14 +1441,14 @@
 	    (if (isa? case J2SDefault)
 		(epairify loc `(else ,body))
 		(epairify loc
-		   `((eq? ,tmp ,(j2s-scheme expr mode return conf)) ,body)))))
+		   `((eq? ,tmp ,(comp-literal expr tleft)) ,body)))))
 
       (define (comp-switch-case-clause case body tleft)
 	 (with-access::J2SCase case (loc expr)
 	    (if (isa? case J2SDefault)
 		(epairify loc `(else ,body))
-		(let ((test `(,(j2s-scheme expr mode return conf))))
-		   (epairify loc `(,test ,body))))))
+		(let ((literal (comp-literal expr tleft)))
+		   (epairify loc `((,literal) ,body))))))
 
       (define (empty? seq::J2SSeq)
 	 (with-access::J2SSeq seq (nodes)

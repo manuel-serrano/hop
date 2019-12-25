@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Dec 17 09:17:30 2019 (serrano)                */
+;*    Last change :  Mon Dec 23 07:24:12 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -1115,7 +1115,7 @@
 						  (eq? tya t)
 						  (and (m64? conf)
 						       (eq? t 'integer)
-						       (memq tya '(uint32 int32)))))))
+						       (memq tya '(int53 uint32 int32)))))))
 				args types)
 			     (with-access::J2SFun val (idthis)
 				;; adjust the usecnt count
@@ -1139,7 +1139,7 @@
 						       (type-number? t))
 						  (and (m64? conf)
 						       (eq? t 'integer)
-						       (memq tya '(uint32 int32)))))))
+						       (memq tya '(int53 uint32 int32)))))))
 				args types)
 			     this)
 			    (else
