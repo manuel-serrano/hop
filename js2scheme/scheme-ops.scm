@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Dec 22 06:41:46 2019 (serrano)                */
+;*    Last change :  Thu Dec 26 08:59:53 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2451,13 +2451,13 @@
 		(and (uint32? left) (=u32 left #u32:1))
 		(not (inrange-int32? rhs))
 		(not (inrange-uint32? rhs)))
-	   `(js-int53-inc ,right))
+	   (j2s-int53-op 'inc right type))
 	  ((and (eq? op '-)
 		(and (uint32? left) (=u32 left #u32:1))
 		(not (inrange-int32? rhs))
 		(not (inrange-uint32? rhs))
 		flip)
-	   `(js-int53-dec ,right))
+	   (j2s-int53-op 'dec right type))
 	  (else
 	   (binop-fixnum-fixnum op type
 	      (asfixnum left tl) right flip))))
@@ -2816,4 +2816,14 @@
 		  `(,op ,right ,left %this)
 		  `(,op ,left ,right %this))))))))
 
-   
+;*---------------------------------------------------------------------*/
+;*    j2s-int53-op ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-int53-op op expr type)
+   (let ((op (symbol-append 'js-int53- op)))
+      (case type
+	 ((int32) `(fixnum->int32 (,op ,expr)))
+	 ((uint32) `(fixnum->uint32 (,op ,expr)))
+	 ((int53) `(,op ,expr))
+	 ((real) `(fixnum->flonum (,op ,expr)))
+	 (else `(,op ,expr)))))
