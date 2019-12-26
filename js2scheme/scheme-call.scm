@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Dec 19 08:11:22 2019 (serrano)                */
+;*    Last change :  Thu Dec 26 06:39:37 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1026,7 +1026,7 @@
 		     (fixnum->string ,(j2s-scheme obj mode return conf)
 			,(j2s-scheme (car args) mode return conf)))
 		 `(js-integer->jsstring
-		     (j2s-scheme (car args) mode return conf))))
+		     ,(j2s-scheme obj mode return conf))))
 	    ((int32)
 	     `(js-string->jsstring
 		 (number->string ,(j2s-scheme obj mode return conf)
