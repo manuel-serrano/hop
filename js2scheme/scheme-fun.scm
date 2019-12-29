@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Dec 20 17:41:09 2019 (serrano)                */
+;*    Last change :  Sun Dec 29 07:42:25 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -36,14 +36,6 @@
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
-
-   (define (no-closure? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (val)
-	 (when (decl-ronly? this)
-	    (when (isa? val J2SFun)
-	       (with-access::J2SFun val (generator)
-		  (unless generator
-		     (not (decl-usage-has? this '(new ref get set instanceof)))))))))
 
    (define (constructor-only? this::J2SDeclFun)
       (with-access::J2SDeclFun this (val)
@@ -87,7 +79,7 @@
 			 `(define ,(j2s-fast-constructor-id id)
 			     ,(j2sfun->ctor val mode return conf this))))
 		   '())
-	     ,@(if (no-closure? this)
+	     ,@(if (j2s-fun-no-closure? this)
 		   '()
 		   `((define ,scmid #unspecified))))))
 
@@ -104,7 +96,7 @@
 			 `(define ,(j2s-fast-constructor-id id)
 			     ,(j2sfun->ctor val mode return conf this))))
 		   '())
-	     ,@(if (no-closure? this)
+	     ,@(if (j2s-fun-no-closure? this)
 		   '()
 		   `((define ,scmid 
 			,(j2s-make-function this mode return conf)))))))
@@ -127,7 +119,7 @@
 					       (j2s-declfun-prototype this)
 					       (decl-usage-has? this '(new))))))
 			 
-			 (if (no-closure? this)
+			 (if (j2s-fun-no-closure? this)
 			     (list def)
 			     (list def
 				`(,scmid ,(j2s-make-function this
@@ -260,22 +252,13 @@
 ;*    j2s-scheme-closure ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-closure this::J2SDecl mode return conf)
-
-   (define (no-closure? this::J2SDeclFun)
-      (with-access::J2SDeclFun this (val id)
-	 (when (decl-ronly? this)
-	    (when (isa? val J2SFun)
-	       (with-access::J2SFun val (generator)
-		  (unless generator
-		     (not (decl-usage-has? this '(new ref get set instanceof)))))))))
-   
    (when (and (isa? this J2SDeclFun) (not (isa? this J2SDeclSvc)))
       (with-access::J2SDeclFun this (loc id scope val)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator)
 	       (let* ((scmid (j2s-decl-scheme-id this))
 		      (fastid (j2s-fast-id id)))
-		  (unless (no-closure? this)
+		  (unless (j2s-fun-no-closure? this)
 		     (case scope
 			((none)
 			 #f)
@@ -570,6 +553,8 @@
 	     (__proto__ (j2s-fun-__proto__ this)))
 	 (epairify-deep loc
 	    (cond
+	       ((eq? mode 'procedure)
+		tmp)
 	       ((or src prototype __proto__ method new-target)
 		`(js-make-function %this ,tmp ,len
 		    ,(symbol->string! name)
@@ -984,6 +969,18 @@
       (let* ((decl (if parent parent this))
 	     (scmid (j2s-decl-scheme-id decl)))
 	 `(js-get ,scmid (& "prototype") %this))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-fun-no-closure? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-fun-no-closure? this::J2SDeclFun)
+   (with-access::J2SDeclFun this (val id)
+      (when (decl-ronly? this)
+	 (when (isa? val J2SFun)
+	    (with-access::J2SFun val (generator mode)
+	       (unless generator
+		  (or (not (decl-usage-has? this '(new ref get set instanceof)))
+		      (eq? mode 'procedure))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ctor-body! ::J2SNode ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sun Nov  3 09:41:07 2019 (serrano)                */
+;*    Last change :  Sun Dec 29 18:45:52 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -40,15 +40,26 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-alpha/proc node olds news proc::procedure)
    (for-each (lambda (old new)
-		(with-access::J2SDecl old (%info)
-		   (set! %info
-		      (instantiate::AlphaInfo
-			 (new new)
-			 (%oinfo %info)))))
+		(cond
+		   ((isa? old J2SDecl)
+		    (with-access::J2SDecl old (%info)
+		       (set! %info
+			  (instantiate::AlphaInfo
+			     (new new)
+			     (%oinfo %info)))))
+		   ((and (isa? old J2SFun) (isa? new J2SFun))
+		    (with-access::J2SFun old (%info)
+		       (set! %info
+			  (instantiate::AlphaInfo
+			     (new new)
+			     (%oinfo %info)))))
+		   (else
+		    (error "j2s-alpha/proc" "Illegal expression"
+		       (j2s->list old)))))
       olds news)
    (let ((newbody (proc node)))
       (for-each (lambda (old)
-		   (with-access::J2SDecl old (%info)
+		   (with-access::J2SNode old (%info)
 		      (with-access::AlphaInfo %info (%oinfo)
 			 (set! %info %oinfo))))
 	 olds)
@@ -271,10 +282,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SFun)
    (with-access::J2SFun this (params body)
-      (let ((nparams (map j2sdecl-duplicate params)))
-	 (duplicate::J2SFun this
-	    (params nparams)
-	    (body (j2s-alpha body params nparams))))))
+      (let* ((nparams (map j2sdecl-duplicate params))
+	     (nfun (duplicate::J2SFun this
+		      (key (ast-decl-key))
+		      (params nparams)
+		      (body body))))
+	 (with-access::J2SFun nfun (body)
+	    (set! body (j2s-alpha body (cons this params) (cons nfun nparams))))
+	 nfun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SBlock ...                                             */
@@ -328,19 +343,29 @@
    (with-access::J2SSvc this (params body init)
       (let ((nparams (map j2sdecl-duplicate params)))
 	 (set! init (alpha init))
-	 (duplicate::J2SSvc this
-	    (params nparams)
-	    (body (j2s-alpha body params nparams))))))
+	 (let ((nsvc (duplicate::J2SSvc this
+			(key (ast-decl-key))
+			(params nparams)
+			(body body))))
+	    (with-access::J2SSvc nsvc (body)
+	       (set! body
+		  (j2s-alpha body (cons this params) (cons nsvc nparams))))
+	    nsvc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SArrow ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SArrow)
    (with-access::J2SArrow this (params body)
-      (let ((nparams (map j2sdecl-duplicate params)))
-	 (duplicate::J2SArrow this
-	    (params nparams)
-	    (body (j2s-alpha body params nparams))))))
+      (let* ((nparams (map j2sdecl-duplicate params))
+	     (narrow (duplicate::J2SArrow this
+			(key (ast-decl-key))
+			(params nparams)
+			(body body))))
+	 (with-access::J2SArrow narrow (body)
+	    (set! body
+	       (j2s-alpha body (cons this params) (cons narrow nparams))))
+	 narrow)))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SKont ...                                              */

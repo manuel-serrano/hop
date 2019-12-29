@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Dec 19 08:52:07 2019 (serrano)                */
+;*    Last change :  Sun Dec 29 18:52:07 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -355,8 +355,8 @@
 		    (with-access::J2SDecl from (id key)
 		       (format "[j2sdecl:~a,~a]" id key)))
 		   ((isa? from J2SFun)
-		    (with-access::J2SFun from (name loc)
-		       (format "[j2sfun:~a,~a]" name loc)))
+		    (with-access::J2SFun from (name loc key)
+		       (format "[j2sfun:~a,~a,~a]" name loc key)))
 		   ((boolean? from)
 		    from)
 		   (else
@@ -625,12 +625,13 @@
    (with-access::J2SFun this (name thisp argumentsp params body decl mode
 				rtype optimize
 				need-bind-exit-return new-target
-				idthis generator loc vararg)
+				idthis generator loc vararg (fkey key))
       (cond
 	 ((isa? decl J2SDeclFun)
 	  (with-access::J2SDecl decl (key usage scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
+		 ,@(dump-key fkey)
 		 ,@(dump-key key)
 		 ,@(dump-scope scope)
 		 ,@(dump-access decl)
@@ -651,6 +652,7 @@
 	  (with-access::J2SDecl decl (key scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
+		 ,@(dump-key fkey)
 		 ,@(dump-key key)
 		 ,@(dump-scope scope)
 		 ,@(dump-access decl)
@@ -669,6 +671,7 @@
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
 	      :name ,name
+	      ,@(dump-key fkey)
 	      ,@(dump-info this)
 	      ,@(dump-type this)
 	      ,@(dump-rtype this)

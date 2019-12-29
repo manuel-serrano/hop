@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Dec 14 06:23:40 2019 (serrano)                */
+;*    Last change :  Sun Dec 29 18:51:01 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -217,6 +217,7 @@
 	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SFun::J2SExpr
+	      (key (default (ast-decl-key)) (info '("notraverse")))
 	      (rtype::symbol (default 'unknown) (info '("notraverse")))
 	      (rrange::obj (default #unspecified) (info '("notraverse")))
 	      (idthis::obj (default 'this) (info '("notraverse")))

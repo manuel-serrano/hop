@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Dec 26 06:39:37 2019 (serrano)                */
+;*    Last change :  Sun Dec 29 07:52:29 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -948,6 +948,11 @@
       `(,(j2s-scheme fun mode return conf)
 	,@(map (lambda (a) (j2s-scheme a mode return conf)) args)))
 
+   (define (call-scheme-this this fun thisarg args)
+      `(,(j2s-scheme fun mode return conf)
+	,@(j2s-scheme thisarg mode return conf)
+	,@(map (lambda (a) (j2s-scheme a mode return conf)) args)))
+
    (with-access::J2SCall this (loc profid fun thisarg args protocol cache cspecs)
       (let loop ((fun fun))
 	 (epairify loc
@@ -1003,6 +1008,8 @@
 		=>
 		(lambda (fun)
 		   (call-known-function protocol profid fun thisarg args)))
+	       ((eq? protocol 'procedure)
+		(call-scheme-this this fun thisarg args))
 	       (else
 		(call-unknown-function fun
 		   (j2s-scheme thisarg mode return conf) args)))))))
