@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Dec 29 07:52:29 2019 (serrano)                */
+;*    Last change :  Mon Dec 30 07:43:30 2019 (serrano)                */
 ;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -948,6 +948,14 @@
       `(,(j2s-scheme fun mode return conf)
 	,@(map (lambda (a) (j2s-scheme a mode return conf)) args)))
 
+   (define (call-scheme-nothis this fun args)
+      (if (isa? fun J2SRef)
+	  (with-access::J2SRef fun (decl)
+	     (with-access::J2SDecl decl (id)
+		`(,(j2s-fast-id id)
+		  ,@(map (lambda (a) (j2s-scheme a mode return conf)) args))))
+	  (call-scheme this fun args)))
+
    (define (call-scheme-this this fun thisarg args)
       `(,(j2s-scheme fun mode return conf)
 	,@(j2s-scheme thisarg mode return conf)
@@ -958,7 +966,13 @@
 	 (epairify loc
 	    (cond
 	       ((eq? (j2s-vtype fun) 'procedure)
-		(call-scheme this fun args))
+		(case protocol
+		   ((procedure-this)
+		    (call-scheme-this this fun thisarg args))
+		   ((procedure-nothis)
+		    (call-scheme-nothis this fun args))
+		   (else
+		    (call-scheme this fun args))))
 	       ((eq? protocol 'spread)
 		(j2s-scheme-call-spread this mode return conf))
 	       ((isa? fun J2SAccess)
@@ -1008,8 +1022,6 @@
 		=>
 		(lambda (fun)
 		   (call-known-function protocol profid fun thisarg args)))
-	       ((eq? protocol 'procedure)
-		(call-scheme-this this fun thisarg args))
 	       (else
 		(call-unknown-function fun
 		   (j2s-scheme thisarg mode return conf) args)))))))

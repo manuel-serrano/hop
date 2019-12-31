@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Dec 21 09:06:31 2019 (serrano)                */
+;*    Last change :  Mon Dec 30 06:03:10 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -191,8 +191,6 @@
 						(if (eq? n old) new n))
 					  v)))))))
 	 (class-all-fields (object-class parent))))
-
-   
    
    (define (inline-filter-dynamic-targets cli)
       ;; select the function to be inlined on a dynamic call site.

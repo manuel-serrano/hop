@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sun Dec 29 18:45:52 2019 (serrano)                */
+;*    Last change :  Mon Dec 30 05:51:34 2019 (serrano)                */
 ;*    Copyright   :  2016-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -284,7 +284,6 @@
    (with-access::J2SFun this (params body)
       (let* ((nparams (map j2sdecl-duplicate params))
 	     (nfun (duplicate::J2SFun this
-		      (key (ast-decl-key))
 		      (params nparams)
 		      (body body))))
 	 (with-access::J2SFun nfun (body)
@@ -344,7 +343,6 @@
       (let ((nparams (map j2sdecl-duplicate params)))
 	 (set! init (alpha init))
 	 (let ((nsvc (duplicate::J2SSvc this
-			(key (ast-decl-key))
 			(params nparams)
 			(body body))))
 	    (with-access::J2SSvc nsvc (body)
@@ -359,7 +357,6 @@
    (with-access::J2SArrow this (params body)
       (let* ((nparams (map j2sdecl-duplicate params))
 	     (narrow (duplicate::J2SArrow this
-			(key (ast-decl-key))
 			(params nparams)
 			(body body))))
 	 (with-access::J2SArrow narrow (body)

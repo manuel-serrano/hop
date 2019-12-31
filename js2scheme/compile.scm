@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Dec 27 07:36:50 2019 (serrano)                */
+;*    Last change :  Mon Dec 30 06:22:10 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -71,7 +71,7 @@
 	   __js2scheme_pce
 	   __js2scheme_module
 	   __js2scheme_newtarget
-	   __js2scheme_closure)
+	   __js2scheme_procedure)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -226,7 +226,7 @@
 	  j2s-constrsize-stage
 	  j2s-unthis-stage
 	  j2s-arguments-stage
-	  j2s-closure-stage
+	  j2s-procedure-stage
 	  j2s-scheme-stage))
       (else
        (j2s-plain-driver))))
@@ -485,8 +485,8 @@
 	    (set! o (cons* :optim-loopspec #t o)))
 	 (unless (memq :optim-arguments o)
 	    (set! o (cons* :optim-arguments #t o)))
-	 (unless (memq :optim-closure o)
-	    (set! o (cons* :optim-closure #t o)))
+	 (unless (memq :optim-procedure o)
+	    (set! o (cons* :optim-procedure #t o)))
 	 )
       (when (>=fx l 3)
 	 (unless (memq :optim-literals o)

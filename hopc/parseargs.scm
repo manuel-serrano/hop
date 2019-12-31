@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Dec 19 08:52:29 2019 (serrano)                */
+;*    Last change :  Mon Dec 30 06:22:31 2019 (serrano)                */
 ;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -317,6 +317,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-arguments #t (hopc-j2s-flags))))
 	    (("-fno-arguments" (help "Disable arguments optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-arguments #f (hopc-j2s-flags))))
+	    (("-fprocedure" (help "Enable procedure optimization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-procedure #t (hopc-j2s-flags))))
+	    (("-fno-procedure" (help "Disable procedure optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-procedure #f (hopc-j2s-flags))))
 	    (("-fcce" (help "Enable common inline caching (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-cce #t (hopc-j2s-flags))))
 	    (("-fno-cce" (help "Disable common inline caching"))

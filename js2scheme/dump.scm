@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Dec 29 18:52:07 2019 (serrano)                */
+;*    Last change :  Mon Dec 30 05:52:05 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -25,6 +25,7 @@
    (export j2s-dump-stage
 	   (j2s-dump-decls::obj ::obj)
 	   (j2s-dump-range ::obj)
+	   (j2s-dump-register-struct-info! ::symbol ::procedure)
 	   (generic j2s->list ::obj)
 	   (generic j2s-info->list ::obj)))
 
@@ -89,13 +90,7 @@
       ((or (char? this) (eq? this #unspecified))
        this)
       ((struct? this)
-       (let ((o (make-struct (struct-key this) (struct-length this) #f)))
-	  (let loop ((i 0))
-	     (if (=fx i (struct-length this))
-		 o
-		 (begin
-		    (struct-set! o i (j2s-info->list (struct-ref this i)))
-		    (loop (+fx i 1)))))))
+       (struct-info->list this))
       ((isa? this J2SString)
        (with-access::J2SString this (val)
 	  (format "[[J2SString:~a]]" val)))
@@ -104,6 +99,32 @@
 	  (format "[[J2SDecl:~a]]" id)))
       (else
        (format "[[~a]]" (typeof this)))))
+
+;*---------------------------------------------------------------------*/
+;*    struct-info-dumps ...                                            */
+;*---------------------------------------------------------------------*/
+(define struct-info-dumps '())
+
+;*---------------------------------------------------------------------*/
+;*    j2s-dump-register-struct-info! ...                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-dump-register-struct-info! key proc)
+   (set! struct-info-dumps (cons (cons key proc) struct-info-dumps)))
+
+;*---------------------------------------------------------------------*/
+;*    struct-info->list ...                                            */
+;*---------------------------------------------------------------------*/
+(define (struct-info->list this)
+   (let ((proc (assq (struct-key this) struct-info-dumps)))
+      (if (pair? proc)
+	  ((cdr proc) this)
+	  (let ((o (make-struct (struct-key this) (struct-length this) #f)))
+	     (let loop ((i 0))
+		(if (=fx i (struct-length this))
+		    o
+		    (begin
+		       (struct-set! o i (j2s-info->list (struct-ref this i)))
+		       (loop (+fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-dump ...                                                    */
@@ -355,8 +376,8 @@
 		    (with-access::J2SDecl from (id key)
 		       (format "[j2sdecl:~a,~a]" id key)))
 		   ((isa? from J2SFun)
-		    (with-access::J2SFun from (name loc key)
-		       (format "[j2sfun:~a,~a,~a]" name loc key)))
+		    (with-access::J2SFun from (name loc)
+		       (format "[j2sfun:~a,~a]" name loc)))
 		   ((boolean? from)
 		    from)
 		   (else
@@ -625,13 +646,13 @@
    (with-access::J2SFun this (name thisp argumentsp params body decl mode
 				rtype optimize
 				need-bind-exit-return new-target
-				idthis generator loc vararg (fkey key))
+				idthis generator loc vararg)
       (cond
 	 ((isa? decl J2SDeclFun)
 	  (with-access::J2SDecl decl (key usage scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
-		 ,@(dump-key fkey)
+		 ,@(dump-loc loc)
 		 ,@(dump-key key)
 		 ,@(dump-scope scope)
 		 ,@(dump-access decl)
@@ -652,7 +673,7 @@
 	  (with-access::J2SDecl decl (key scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
-		 ,@(dump-key fkey)
+		 ,@(dump-loc loc)
 		 ,@(dump-key key)
 		 ,@(dump-scope scope)
 		 ,@(dump-access decl)
@@ -671,11 +692,10 @@
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
 	      :name ,name
-	      ,@(dump-key fkey)
+	      ,@(dump-loc loc)
 	      ,@(dump-info this)
 	      ,@(dump-type this)
 	      ,@(dump-rtype this)
-	      ,@(dump-loc loc)
 	      ,@(dump-need-bind-exit-return need-bind-exit-return)
 	      :optimize ,optimize
 	      :mode ,mode
@@ -693,8 +713,8 @@
    (with-access::J2SMethod this (function method loc)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
-	:function ,(j2s->list function)
-	:method ,(j2s->list method))))
+	  :function ,(j2s->list function)
+	  :method ,(j2s->list method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SBindExit ...                                      */
@@ -710,8 +730,9 @@
 ;*    j2s->list ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SReturn)
-   (with-access::J2SReturn this (expr tail from)
+   (with-access::J2SReturn this (expr tail from loc)
       `(,@(call-next-method)
+	  ,@(dump-loc loc)
 	  ,@(dump-from from)
 	  ,@(if (isa? from J2SFun)
 		(dump-rtype from)
@@ -958,9 +979,10 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid usage scope)
+   (with-access::J2SDecl this (id key binder _scmid usage scope loc)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
+	,@(dump-loc loc)
 	,@(dump-dump this)
 	,@(dump-key key)
 	,@(dump-access this)

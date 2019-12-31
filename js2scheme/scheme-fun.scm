@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Dec 29 07:42:25 2019 (serrano)                */
+;*    Last change :  Mon Dec 30 08:00:32 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -67,7 +67,7 @@
 	  expr)))
 
    (define (global-declfun this val scmid fastid)
-      (with-access::J2SDeclFun this (loc id)
+      (with-access::J2SDeclFun this (loc id val)
 	 `(begin
 	     ,(beautiful-define
 		 `(define ,fastid
@@ -542,7 +542,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2sfun->scheme this::J2SFun tmp tmpm mode return conf)
    (with-access::J2SFun this (loc name params mode vararg mode generator
-				constrsize method new-target)
+				constrsize method new-target type)
       (let* ((id (j2sfun-id this))
 	     (lparams (length params))
 	     (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
@@ -553,7 +553,7 @@
 	     (__proto__ (j2s-fun-__proto__ this)))
 	 (epairify-deep loc
 	    (cond
-	       ((eq? mode 'procedure)
+	       ((eq? type 'procedure)
 		tmp)
 	       ((or src prototype __proto__ method new-target)
 		`(js-make-function %this ,tmp ,len
@@ -977,10 +977,10 @@
    (with-access::J2SDeclFun this (val id)
       (when (decl-ronly? this)
 	 (when (isa? val J2SFun)
-	    (with-access::J2SFun val (generator mode)
+	    (with-access::J2SFun val (generator type)
 	       (unless generator
 		  (or (not (decl-usage-has? this '(new ref get set instanceof)))
-		      (eq? mode 'procedure))))))))
+		      (eq? type 'procedure))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ctor-body! ::J2SNode ...                                         */
