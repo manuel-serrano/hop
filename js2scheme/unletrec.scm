@@ -1,16 +1,16 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/unletrec.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/unletrec.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Tue May 29 07:13:04 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Tue Dec 31 16:35:59 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Letrec optimization                                              */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization transforms letrec into let(*). This improves   */
 ;*    generated code because it avoids boxing mutated rec variables    */
-;*    and it enables other optimization such as PCE.                   */
+;*    and it enables other optimizations such as PCE.                  */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -70,7 +70,7 @@
 ;*    unletrec! ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unletrec! this::J2SLetBlock)
-   (with-access::J2SLetBlock this (rec decls nodes loc)
+   (with-access::J2SLetBlock this (rec decls nodes loc endloc)
       (if (not rec)
 	  (call-default-walker)
 	  (let loop ((ds decls)
@@ -89,7 +89,7 @@
 			(decls (reverse! drec))
 			(nodes (map! unletrec! nodes))))
 		    (else
-		     (J2SSeq (map! unletrec! nodes)))))
+		     (J2SBlock* (map! unletrec! nodes)))))
 		((or (not (isa? (car ds) J2SDeclInit))
 		     (null? (get-used-decls (car ds) ds)))
 		 (if (pair? drec)

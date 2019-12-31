@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Tue Dec 31 13:51:34 2019 (serrano)                */
+;*    Last change :  Tue Dec 31 13:59:58 2019 (serrano)                */
 ;*    Copyright   :  2019 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -58,6 +58,14 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-procedure! this conf)
    (when (isa? this J2SProgram)
+      ;; prepare optimization dump
+      (when (or *debug-procedure*
+		*debug-procedure-ast-pre*
+		*debug-procedure-ast-post*)
+	 (j2s-dump-register-struct-info! 'node-procedure-info
+	    (lambda (i) (node-procedure-info->list i)))
+	 (j2s-dump-register-struct-info! 'fun-procedure-info
+	    (lambda (i) (fun-procedure-info->list i))))
       (with-access::J2SProgram this (direct-eval)
 	 (unless direct-eval
 	    ;; the fix point iteration
@@ -71,14 +79,13 @@
 		  (eval-procedure this fix)
 		  (unless (cell-ref fix)
 		     (loop (+fx i 1) #\.))))
+	    ;; dump the decorate tree
+	    (when *debug-procedure-ast-pre*
+	       (pp (j2s->list this) (current-output-port)))
 	    ;; disable all non-optimizable functions
 	    (disable-non-optimizable this)
 	    ;; dump the decorate tree
-	    (when *debug-procedure-ast*
-	       (j2s-dump-register-struct-info! 'node-procedure-info
-		  (lambda (i) (node-procedure-info->list i)))
-	       (j2s-dump-register-struct-info! 'fun-procedure-info
-		  (lambda (i) (fun-procedure-info->list i)))
+	    (when *debug-procedure-ast-post*
 	       (pp (j2s->list this) (current-output-port)))
 	    ;; annotate the ast
 	    (annotate-procedure this conf))))
@@ -87,11 +94,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    debug control                                                    */
 ;*---------------------------------------------------------------------*/
-(define *debug-env* (or (getenv "HOPTRACE") ""))
-(define *debug-procedure* (string-contains *debug-env* "j2s:procedure"))
-(define *debug-procedure-unfix* (string-contains *debug-env* "j2s:procedure-unfix"))
-(define *debug-procedure-escape* (string-contains *debug-env* "j2s:procedure-escape"))
-(define *debug-procedure-ast* (string-contains *debug-env* "j2s:procedure-ast"))
+(define *debug-env*
+   (or (getenv "HOPTRACE") ""))
+(define *debug-procedure*
+   (string-contains *debug-env* "j2s:procedure"))
+(define *debug-procedure-unfix*
+   (string-contains *debug-env* "j2s:procedure-unfix"))
+(define *debug-procedure-escape*
+   (string-contains *debug-env* "j2s:procedure-escape"))
+(define *debug-procedure-ast-pre*
+   (string-contains *debug-env* "j2s:procedure-ast-pre"))
+(define *debug-procedure-ast-post*
+   (string-contains *debug-env* "j2s:procedure-ast-post"))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-procedure-info ...                                          */
@@ -203,7 +217,7 @@
       (when *debug-procedure-escape* (tprint "escape " (typeof this) " " loc))
       (cond
 	 ((not (fun-procedure-info? %info))
-	  (fun-init-info! this '() #t fix)
+	  (fun-init-info! this 'top #t fix)
 	  (for-each (lambda (p) (escape! p fix)) params))
 	 ((fun-procedure-info-escapep %info)
 	  #unspecified)
@@ -211,7 +225,11 @@
 	  (unfix! fix "escape! ::J2SFun" loc)
 	  (fun-procedure-info-escapep-set! %info #t)
 	  (fun-procedure-info-optimizablep-set! %info #f)
-	  (for-each (lambda (p) (escape! p fix)) params))))
+	  (for-each (lambda (p) (escape! p fix)) params)
+	  (when (pair? (fun-procedure-info-retvals %info))
+	     (for-each (lambda (v) (escape! v fix))
+		(fun-procedure-info-retvals %info)))
+	  (fun-procedure-info-retvals-set! %info 'top))))
    (list this))
 
 ;*---------------------------------------------------------------------*/
@@ -255,12 +273,15 @@
       (cond
 	 ((not (fun-procedure-info? %info))
 	  (fun-init-info! this retvals #f fix))
-	 ((eq? (fun-procedure-info-retvals %info) 'top)
+	 ((or (eq? (fun-procedure-info-retvals %info) 'top)
+	      (fun-procedure-info-escapep %info))
 	  (when (pair? retvals)
 	     (for-each (lambda (v) (escape! v fix)) retvals)))
 	 ((eq? retvals 'top)
+	  (unfix! fix "fun-add-retvals" loc)
 	  (for-each (lambda (v) (escape! v fix))
-	     (fun-procedure-info-retvals %info)))
+	     (fun-procedure-info-retvals %info))
+	  (fun-procedure-info-retvals-set! %info 'top))
 	 (else
 	  (for-each (lambda (v)
 		       (unless (memq v (fun-procedure-info-retvals %info))
@@ -303,7 +324,7 @@
 		  ((isa? v J2SNode)
 		   (escape! (eval-procedure v fix) fix)))
 	       (loop (-fx i 1)))))
-      'top))
+      (node-add-vals! this 'top fix)))
 
 ;*---------------------------------------------------------------------*/
 ;*    eval-procedure ::J2SLiteralValue ...                             */
@@ -321,6 +342,15 @@
 ;*    eval-procedure ::J2SUndefined ...                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (eval-procedure this::J2SUndefined fix)
+   'top)
+
+;*---------------------------------------------------------------------*/
+;*    eval-procedure ::J2SDProducer ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (eval-procedure this::J2SDProducer fix)
+   (with-access::J2SDProducer this (decl expr)
+      (escape! decl fix)
+      (escape! (eval-procedure expr fix) fix))
    'top)
 
 ;*---------------------------------------------------------------------*/
@@ -439,7 +469,7 @@
 	     (fun-procedure-info-retvals %info)
 	     (fun-init-info! fun '() #f fix))))
    
-   (with-access::J2SCall this (fun thisarg args loc %info)
+   (with-access::J2SCall this (fun thisarg args loc %info loc)
       ;; initialize the call if needed
       (unless (node-procedure-info? %info)
 	 (node-init-info! this '() fix))
@@ -452,6 +482,7 @@
 	 (if (eq? funvals 'top)
 	     (begin
 		(for-each (lambda (a) (escape! a fix)) args)
+		(for-each (lambda (a) (escape! a fix)) argsvals)
 		(escape! this fix))
 	     (let ((vals* (map (lambda (fv) (call fv argsvals fix)) funvals)))
 		(if (eq? (node-procedure-info-vals %info) 'top)
@@ -595,7 +626,9 @@
 	 (when (>=fx (config-get conf :verbose 0) 3)
 	    (fprintf (current-error-port) " ~a@~a" name (caddr loc)))
 	 (set! type 'procedure)
-	 (when (pair? (fun-procedure-info-retvals %info))
+	 (when (and (pair? (fun-procedure-info-retvals %info))
+		    (with-access::J2SFun (car (fun-procedure-info-retvals %info)) (%info)
+		       (fun-procedure-info-optimizablep %info)))
 	    (set! rtype 'procedure)))
       (for-each (lambda (p)
 		   (with-access::J2SDecl p (vtype %info id)
@@ -624,10 +657,14 @@
    (call-default-walker)
    (with-access::J2SDeclInit this (vtype id loc key val %info)
       (with-access::J2SExpr val (%info)
-	 (when (node-procedure-info? %info)
-	    (when (and (node-procedure-info-optimizablep %info)
-		       (pair? (node-procedure-info-vals %info)))
-	       (set! vtype 'procedure))))))
+	 (cond
+	    ((node-procedure-info? %info)
+	     (when (and (node-procedure-info-optimizablep %info)
+			(pair? (node-procedure-info-vals %info)))
+		(set! vtype 'procedure)))
+	    ((fun-procedure-info? %info)
+	     (when (fun-procedure-info-optimizablep %info)
+		(set! vtype 'procedure)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function? ...                                          */

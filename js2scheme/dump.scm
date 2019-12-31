@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Dec 30 05:52:05 2019 (serrano)                */
+;*    Last change :  Tue Dec 31 17:14:43 2019 (serrano)                */
 ;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -820,8 +820,9 @@
 ;*    j2s->list ::J2SIf ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SIf)
-   (with-access::J2SIf this (test then else)
+   (with-access::J2SIf this (test then else loc)
       `(,@(call-next-method)
+	  ,@(dump-loc loc)
 	  ,@(dump-info this)
 	  ,(j2s->list test)
 	  ,(j2s->list then)

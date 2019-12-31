@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Dec 30 08:00:32 2019 (serrano)                */
+;*    Last change :  Tue Dec 31 14:45:23 2019 (serrano)                */
 ;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -67,7 +67,7 @@
 	  expr)))
 
    (define (global-declfun this val scmid fastid)
-      (with-access::J2SDeclFun this (loc id val)
+      (with-access::J2SDeclFun this (loc id vtype)
 	 `(begin
 	     ,(beautiful-define
 		 `(define ,fastid
@@ -79,12 +79,16 @@
 			 `(define ,(j2s-fast-constructor-id id)
 			     ,(j2sfun->ctor val mode return conf this))))
 		   '())
-	     ,@(if (j2s-fun-no-closure? this)
-		   '()
-		   `((define ,scmid #unspecified))))))
+	     ,@(cond
+		  ((eq? vtype 'procedure)
+		   `((define ,scmid ,fastid)))
+		  ((j2s-fun-no-closure? this)
+		   '())
+		  (else
+		   `((define ,scmid #unspecified)))))))
 
    (define (regular-declfun this val scmid fastid)
-      (with-access::J2SDeclFun this (loc id)
+      (with-access::J2SDeclFun this (loc id vtype)
 	 `(begin
 	     ,(beautiful-define
 		 `(define ,fastid
@@ -96,12 +100,16 @@
 			 `(define ,(j2s-fast-constructor-id id)
 			     ,(j2sfun->ctor val mode return conf this))))
 		   '())
-	     ,@(if (j2s-fun-no-closure? this)
-		   '()
+	     ,@(cond
+		  ((eq? vtype 'procedure)
+		   `((define ,scmid ,fastid)))
+		  ((j2s-fun-no-closure? this)
+		   '())
+		  (else
 		   `((define ,scmid 
-			,(j2s-make-function this mode return conf)))))))
+			,(j2s-make-function this mode return conf))))))))
    
-   (with-access::J2SDeclFun this (loc id scope val exports)
+   (with-access::J2SDeclFun this (loc id scope val exports vtype)
       (let ((val (declfun-fun this)))
 	 (with-access::J2SFun val (params mode vararg body name generator)
 	    (let* ((scmid (j2s-decl-scheme-id this))
@@ -118,12 +126,15 @@
 		      (let ((def `(,fastid ,(jsfun->lambda val mode return conf
 					       (j2s-declfun-prototype this)
 					       (decl-usage-has? this '(new))))))
-			 
-			 (if (j2s-fun-no-closure? this)
-			     (list def)
+			 (cond
+			    ((eq? vtype 'procedure)
+			     (list def `(,scmid ,fastid)))
+			    ((j2s-fun-no-closure? this)
+			     (list def))
+			    (else
 			     (list def
 				`(,scmid ,(j2s-make-function this
-					     mode return conf))))))
+					     mode return conf)))))))
 		     ((global %scope)
 		      (global-declfun this val scmid fastid))
 		     ((export)
@@ -253,7 +264,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-closure this::J2SDecl mode return conf)
    (when (and (isa? this J2SDeclFun) (not (isa? this J2SDeclSvc)))
-      (with-access::J2SDeclFun this (loc id scope val)
+      (with-access::J2SDeclFun this (loc id scope val vtype)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator)
 	       (let* ((scmid (j2s-decl-scheme-id this))
@@ -265,15 +276,18 @@
 			((letblock)
 			 #f)
 			((global %scope)
-			 (epairify-deep loc
-			    `(set! ,scmid
-				,(if (js-need-global? this scope mode)
-				     `(js-bind! %this ,scope ,(j2s-scheme-name id)
-					 :configurable #f
-					 :value ,(j2s-make-function this
-						    mode return conf))
-				     (j2s-make-function this
-					mode return conf)))))
+			 (if (eq? vtype 'procedure)
+			     #unspecified
+			     (epairify-deep loc
+				`(set! ,scmid
+				    ,(if (js-need-global? this scope mode)
+					 `(js-bind! %this ,scope
+					     ,(j2s-scheme-name id)
+					     :configurable #f
+					     :value ,(j2s-make-function this
+							mode return conf))
+					 (j2s-make-function this
+					    mode return conf))))))
 			(else
 			 #f)))))))))
       
@@ -979,8 +993,7 @@
 	 (when (isa? val J2SFun)
 	    (with-access::J2SFun val (generator type)
 	       (unless generator
-		  (or (not (decl-usage-has? this '(new ref get set instanceof)))
-		      (eq? type 'procedure))))))))
+		  (not (decl-usage-has? this '(new ref get set instanceof)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ctor-body! ::J2SNode ...                                         */
