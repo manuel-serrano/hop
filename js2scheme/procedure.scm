@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Tue Dec 31 13:59:58 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Wed Jan  1 07:00:57 2020 (serrano)                */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
 ;*                                                                     */
@@ -354,6 +354,23 @@
    'top)
 
 ;*---------------------------------------------------------------------*/
+;*    eval-procedure ::J2SDataPropertyInit ...                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (eval-procedure this::J2SDataPropertyInit fix)
+   (with-access::J2SDataPropertyInit this (val)
+      (escape! (eval-procedure val fix) fix)
+      'top))
+      
+;*---------------------------------------------------------------------*/
+;*    eval-procedure ::J2SAccessorPropertyInit ...                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (eval-procedure this::J2SAccessorPropertyInit fix)
+   (with-access::J2SAccessorPropertyInit this (get set)
+      (escape! (eval-procedure get fix) fix)
+      (escape! (eval-procedure set fix) fix)
+      'top))
+
+;*---------------------------------------------------------------------*/
 ;*    eval-procedure ::J2SRef ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (eval-procedure this::J2SRef fix)
@@ -398,7 +415,12 @@
       (let ((rhsv (eval-procedure rhs fix)))
 	 (if (isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
-		(decl-add-vals! decl rhsv fix))
+		(with-access::J2SDecl decl (scope)
+		   (if (memq scope '(global %scope))
+		       (begin
+			  (escape! rhsv fix)
+			  'top)
+		       (decl-add-vals! decl rhsv fix))))
 	     (let ((lhsv (eval-procedure lhs fix)))
 		(escape! lhsv fix)
 		(escape! rhsv fix)
@@ -567,7 +589,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (optimize-procedure this::J2SDecl fix)
    (call-default-walker)
-   (with-access::J2SDecl this (%info id)
+   (with-access::J2SDecl this (%info id scope)
       (when (node-procedure-info? %info)
 	 (when (node-procedure-info-optimizablep %info)
 	    (let ((vals (node-procedure-info-vals %info)))
@@ -590,9 +612,14 @@
 	    (cond
 	       ((isa? val J2SFun)
 		(with-access::J2SFun val ((vinfo %info))
-		   (unless (fun-procedure-info-optimizablep vinfo)
-		      (cell-set! fix #f)
-		      (node-procedure-info-optimizablep-set! %info #f))))
+		   (cond
+		      ((not (fun-procedure-info-optimizablep vinfo))
+		       (cell-set! fix #f)
+		       (node-procedure-info-optimizablep-set! %info #f))
+		      ((not (decl-usage-has? this '(ref assig)))
+		       (cell-set! fix #f)
+		       (node-procedure-info-optimizablep-set! %info #f)
+		       (fun-procedure-info-optimizablep-set! vinfo #f)))))
 	       (else
 		(with-access::J2SExpr val ((vinfo %info))
 		   (unless (node-procedure-info-optimizablep vinfo)
@@ -665,6 +692,17 @@
 	    ((fun-procedure-info? %info)
 	     (when (fun-procedure-info-optimizablep %info)
 		(set! vtype 'procedure)))))))
+
+;*---------------------------------------------------------------------*/
+;*    annotate-procedure ::J2SDecl ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (annotate-procedure this::J2SDecl conf)
+   (call-default-walker)
+   (with-access::J2SDecl this (vtype id loc key %info)
+      (when (node-procedure-info? %info)
+	 (when (and (node-procedure-info-optimizablep %info)
+		    (pair? (node-procedure-info-vals %info)))
+	    (set! vtype 'procedure)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function? ...                                          */
