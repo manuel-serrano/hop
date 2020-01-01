@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Wed Jan  1 07:00:57 2020 (serrano)                */
+;*    Last change :  Wed Jan  1 08:31:02 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -607,24 +607,28 @@
 (define-walk-method (optimize-procedure this::J2SDeclInit fix)
    (call-default-walker)
    (when (read-only-function? this)
-      (with-access::J2SDeclInit this (%info val)
+      (with-access::J2SDeclInit this (%info val id loc)
 	 (when (node-procedure-info-optimizablep %info)
-	    (cond
-	       ((isa? val J2SFun)
-		(with-access::J2SFun val ((vinfo %info))
-		   (cond
-		      ((not (fun-procedure-info-optimizablep vinfo))
-		       (cell-set! fix #f)
-		       (node-procedure-info-optimizablep-set! %info #f))
-		      ((not (decl-usage-has? this '(ref assig)))
-		       (cell-set! fix #f)
-		       (node-procedure-info-optimizablep-set! %info #f)
-		       (fun-procedure-info-optimizablep-set! vinfo #f)))))
-	       (else
-		(with-access::J2SExpr val ((vinfo %info))
-		   (unless (node-procedure-info-optimizablep vinfo)
-		      (cell-set! fix #f)
-		      (node-procedure-info-optimizablep-set! %info #f)))))))))
+	    (let loop ((val val))
+	       (cond
+		  ((isa? val J2SFun)
+		   (with-access::J2SFun val ((vinfo %info))
+		      (cond
+			 ((not (fun-procedure-info-optimizablep vinfo))
+			  (cell-set! fix #f)
+			  (node-procedure-info-optimizablep-set! %info #f))
+			 ((not (decl-usage-has? this '(ref assig)))
+			  (cell-set! fix #f)
+			  (node-procedure-info-optimizablep-set! %info #f)
+			  (fun-procedure-info-optimizablep-set! vinfo #f)))))
+		  ((isa? val J2SMethod)
+		   (with-access::J2SMethod val (function)
+		      (loop function)))
+		  (else
+		   (with-access::J2SExpr val ((vinfo %info))
+		      (unless (node-procedure-info-optimizablep vinfo)
+			 (cell-set! fix #f)
+			 (node-procedure-info-optimizablep-set! %info #f))))))))))
       
 ;*---------------------------------------------------------------------*/
 ;*    annotate-procedure ...                                           */
@@ -669,12 +673,23 @@
 ;*    annotate-procedure ::J2SCall ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (annotate-procedure this::J2SCall conf)
-   (with-access::J2SCall this (fun loc protocol)
+   
+   (define (correct-arities? funs arity)
+      (every (lambda (f)
+		(with-access::J2SFun f (params)
+		   (=fx (length params) arity)))
+	 funs))
+   
+   (with-access::J2SCall this (fun loc protocol args)
       (with-access::J2SExpr fun (%info)
 	 (when (node-procedure-info? %info)
 	    (when (and (node-procedure-info-optimizablep %info)
 		       (pair? (node-procedure-info-vals %info)))
-	       (set! protocol 'procedure-this))))
+	       (set! protocol
+		  (if (correct-arities? (node-procedure-info-vals %info)
+			 (length args))
+		      'procedure-this
+		      'procedure-this-arity)))))
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
@@ -683,15 +698,19 @@
 (define-walk-method (annotate-procedure this::J2SDeclInit conf)
    (call-default-walker)
    (with-access::J2SDeclInit this (vtype id loc key val %info)
-      (with-access::J2SExpr val (%info)
-	 (cond
-	    ((node-procedure-info? %info)
-	     (when (and (node-procedure-info-optimizablep %info)
-			(pair? (node-procedure-info-vals %info)))
-		(set! vtype 'procedure)))
-	    ((fun-procedure-info? %info)
-	     (when (fun-procedure-info-optimizablep %info)
-		(set! vtype 'procedure)))))))
+      (let loop ((val val))
+	 (with-access::J2SExpr val (%info)
+	    (cond
+	       ((isa? val J2SMethod)
+		(with-access::J2SMethod val (function)
+		   (loop function)))
+	       ((node-procedure-info? %info)
+		(when (and (node-procedure-info-optimizablep %info)
+			   (pair? (node-procedure-info-vals %info)))
+		   (set! vtype 'procedure)))
+	       ((fun-procedure-info? %info)
+		(when (fun-procedure-info-optimizablep %info)
+		   (set! vtype 'procedure))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    annotate-procedure ::J2SDecl ...                                 */

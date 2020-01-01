@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Dec 25 08:02:10 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Jan  1 09:46:36 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/
@@ -107,6 +107,19 @@
 	   (js-call9/function ::JsGlobalObject fun::JsFunction this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (js-call10/function ::JsGlobalObject fun::JsFunction this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (js-calln/function ::JsGlobalObject fun::JsFunction this . args)
+	   
+	   (js-call0/procedure fun::procedure this)
+	   (js-call1/procedure fun::procedure this a0)
+	   (js-call2/procedure fun::procedure this a0 a1)
+	   (js-call3/procedure fun::procedure this a0 a1 a2)
+	   (js-call4/procedure fun::procedure this a0 a1 a2 a3)
+	   (js-call5/procedure fun::procedure this a0 a1 a2 a3 a4)
+	   (js-call6/procedure fun::procedure this a0 a1 a2 a3 a4 a5)
+	   (js-call7/procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call8/procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call9/procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call10/procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-calln/procedure fun::procedure this . args)
 	   
 	   (js-call0/debug ::JsGlobalObject loc fun::obj this)
 	   (js-call1/debug ::JsGlobalObject loc fun::obj this a0)
@@ -725,6 +738,9 @@
       (else
        (js-raise-type-error %this "call: not a function ~s" fun))))
 
+;*---------------------------------------------------------------------*/
+;*    gen-call/function ...                                            */
+;*---------------------------------------------------------------------*/
 (define-macro (gen-call/function %this fun this . args)
    `(with-access::JsFunction ,fun (procedure)
        (,(string->symbol (format "js-call~a%" (length args)))
@@ -805,6 +821,76 @@
 			  (js-vector->jsarray
 			     (apply vector (drop args len)) %this)))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    gen-call/procedure ...                                           */
+;*---------------------------------------------------------------------*/
+(define-macro (gen-call/procedure proc this . args)
+   (let ((n (+fx 1 (length args))))
+      `(let ((arity (procedure-arity ,proc)))
+	  (cond
+	     ((=fx arity ,n)
+	      (,proc ,this ,@args))
+	     ((>fx arity ,n)
+	      (apply ,proc ,this ,@args
+		 (make-list (-fx arity ,n) (js-undefined))))
+	     ,@(map (lambda (i)
+		       `((=fx arity ,i)
+			 (,proc ,this ,@(take args (-fx i 1)))))
+		(iota (length args) 1))
+	     (else
+	      (js-undefined))))))
+   
+(define (js-call0/procedure proc this)
+   (gen-call/procedure proc this))
+
+(define (js-call1/procedure proc this a0)
+   (gen-call/procedure proc this a0))
+
+(define (js-call2/procedure proc this a0 a1)
+   (gen-call/procedure proc this a0 a1))
+
+(define (js-call3/procedure proc this a0 a1 a2)
+   (gen-call/procedure proc this a0 a1 a2))
+
+(define (js-call4/procedure proc this a0 a1 a2 a3)
+   (gen-call/procedure proc this a0 a1 a2 a3))
+
+(define (js-call5/procedure proc this a0 a1 a2 a3 a4)
+   (gen-call/procedure proc this a0 a1 a2 a3 a4))
+
+(define (js-call6/procedure proc this a0 a1 a2 a3 a4 a5)
+   (gen-call/procedure proc this a0 a1 a2 a3 a4 a5))
+
+(define (js-call7/procedure proc this a0 a1 a2 a3 a4 a5 a6)
+   (gen-call/procedure proc this a0 a1 a2 a3 a4 a5 a6))
+
+(define (js-call8/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-call/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7))
+
+(define (js-call9/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-call/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+
+(define (js-call10/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-call/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
+(define (js-calln/procedure proc this . args)
+   ;; this protocol only support fix arity
+   (let ((n (+fx 1 (length args)))
+	 (arity (procedure-arity proc)))
+      (cond
+	 ((=fx arity n)
+	  (apply proc this args))
+	 ((>fx arity n)
+	  (apply proc this
+	     (append args
+		(make-list (-fx arity n)
+		   (js-undefined)))))
+	 (else
+	  (apply proc this (take args (-fx arity 1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    gen-call/debug ...                                               */
+;*---------------------------------------------------------------------*/
 (define-macro (gen-call/debug %this loc fun this . args)
    `(cond
        ((js-function? ,fun)

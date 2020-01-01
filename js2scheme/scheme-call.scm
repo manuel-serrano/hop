@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Dec 30 07:43:30 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Wed Jan  1 08:32:34 2020 (serrano)                */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
 ;*=====================================================================*/
@@ -961,6 +961,15 @@
 	,@(j2s-scheme thisarg mode return conf)
 	,@(map (lambda (a) (j2s-scheme a mode return conf)) args)))
 
+   (define (call-scheme-this-arity this fun thisarg args)
+      (let ((len (length args)))
+	 `(,(if (>=fx len 11)
+		'js-calln/procedure
+		(string->symbol (format "js-call~a/procedure" len)))
+	   ,(j2s-scheme fun mode return conf)
+	   ,@(j2s-scheme thisarg mode return conf)
+	   ,@(map (lambda (a) (j2s-scheme a mode return conf)) args))))
+
    (with-access::J2SCall this (loc profid fun thisarg args protocol cache cspecs)
       (let loop ((fun fun))
 	 (epairify loc
@@ -969,6 +978,8 @@
 		(case protocol
 		   ((procedure-this)
 		    (call-scheme-this this fun thisarg args))
+		   ((procedure-this-arity)
+		    (call-scheme-this-arity this fun thisarg args))
 		   ((procedure-nothis)
 		    (call-scheme-nothis this fun args))
 		   (else

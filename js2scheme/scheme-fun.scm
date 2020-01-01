@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Dec 31 14:45:23 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Wed Jan  1 08:26:30 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
 ;*=====================================================================*/
@@ -568,7 +568,9 @@
 	 (epairify-deep loc
 	    (cond
 	       ((eq? type 'procedure)
-		tmp)
+		(error "j2sfun->scheme"
+		   "should not be here (see j2s-scheme::J2SFun)"
+		   tmp))
 	       ((or src prototype __proto__ method new-target)
 		`(js-make-function %this ,tmp ,len
 		    ,(symbol->string! name)
@@ -604,7 +606,7 @@
 ;*    j2s-scheme ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SFun mode return conf)
-   (with-access::J2SFun this (loc name params mode vararg generator method)
+   (with-access::J2SFun this (loc name params mode vararg generator method type)
       (let* ((id (j2sfun-id this))
 	     (tmp (if (eq? name '||)
 		      (gensym (format "~a:~a-"
@@ -612,7 +614,11 @@
 		      name))
 	     (tmpm (when method (symbol-append name '&)))
 	     (arity (if vararg -1 (+fx 1 (length params))))
-	     (fundef (if generator
+	     (fundef (cond
+			((eq? type 'procedure)
+			 (jsfun->lambda this mode return conf
+			    (j2s-fun-prototype this) #f))
+			(generator
 			 (let ((tmp2 (gensym id)))
 			    `(letrec* (,@(if method
 					     `((,tmpm ,(jsfun->lambda method mode return conf #f #f)))
@@ -620,14 +626,15 @@
 					 (,tmp ,(jsfun->lambda this mode return conf
 						   `(js-get ,tmp2 (& "prototype") %this)
 						   #f))
-				       (,tmp2 ,(j2sfun->scheme this tmp tmpm mode return conf)))
-				,tmp2))
+					 (,tmp2 ,(j2sfun->scheme this tmp tmpm mode return conf)))
+				,tmp2)))
+			(else
 			 `(let (,@(if method
 				      `((,tmpm ,(jsfun->lambda method mode return conf #f #f)))
 				      '())
 				  (,tmp ,(jsfun->lambda this mode return conf
 					    (j2s-fun-prototype this) #f)))
-			     ,(j2sfun->scheme this tmp tmpm mode return conf)))))
+			     ,(j2sfun->scheme this tmp tmpm mode return conf))))))
 	 (epairify-deep loc
 	    (if id
 		(let ((scmid (j2s-scheme-id id '^)))
