@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Jan  1 08:26:30 2020 (serrano)                */
+;*    Last change :  Thu Jan  2 08:57:33 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -568,9 +568,8 @@
 	 (epairify-deep loc
 	    (cond
 	       ((eq? type 'procedure)
-		(error "j2sfun->scheme"
-		   "should not be here (see j2s-scheme::J2SFun)"
-		   tmp))
+		(jsfun->lambda this mode return conf
+		   (j2s-fun-prototype this) #f))
 	       ((or src prototype __proto__ method new-target)
 		`(js-make-function %this ,tmp ,len
 		    ,(symbol->string! name)
@@ -616,8 +615,7 @@
 	     (arity (if vararg -1 (+fx 1 (length params))))
 	     (fundef (cond
 			((eq? type 'procedure)
-			 (jsfun->lambda this mode return conf
-			    (j2s-fun-prototype this) #f))
+			 (j2sfun->scheme this tmp tmpm mode return conf))
 			(generator
 			 (let ((tmp2 (gensym id)))
 			    `(letrec* (,@(if method

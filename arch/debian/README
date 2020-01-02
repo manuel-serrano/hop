@@ -6,10 +6,10 @@ they will additional build a Hop Maemo Launcher.
 
 To run the scripts uses:
 
-   $ REPO=<directory containing hop tarball> make -f hop<version>/arch/debian/Makefile
+   $ REPODIR=<directory containing hop tarball> make -f hop<version>/arch/debian/Makefile
 
 example:
 
-   $ (cd /tmp; REPO=/usr/local/src make -f hop-2.2.1/arch/debian/Makefile)
+   $ (cd /tmp; REPODIR=/usr/local/src make -f hop-3.3.0-pre1/arch/debian/Makefile)
 
-This will build a hop-2.2.1_XXX.deb package in the /tmp directory.
+This will build a hop-3.3.0-pre1_XXX.deb package in the /tmp directory.

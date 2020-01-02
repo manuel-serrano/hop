@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Wed Jan  1 08:31:02 2020 (serrano)                */
+;*    Last change :  Thu Jan  2 08:48:03 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -419,6 +419,7 @@
 		   (if (memq scope '(global %scope))
 		       (begin
 			  (escape! rhsv fix)
+			  (escape! decl fix)
 			  'top)
 		       (decl-add-vals! decl rhsv fix))))
 	     (let ((lhsv (eval-procedure lhs fix)))
@@ -682,14 +683,21 @@
    
    (with-access::J2SCall this (fun loc protocol args)
       (with-access::J2SExpr fun (%info)
-	 (when (node-procedure-info? %info)
-	    (when (and (node-procedure-info-optimizablep %info)
-		       (pair? (node-procedure-info-vals %info)))
-	       (set! protocol
-		  (if (correct-arities? (node-procedure-info-vals %info)
-			 (length args))
-		      'procedure-this
-		      'procedure-this-arity)))))
+	 (cond
+	    ((node-procedure-info? %info)
+	     (when (and (node-procedure-info-optimizablep %info)
+			(pair? (node-procedure-info-vals %info)))
+		(set! protocol
+		   (if (correct-arities? (node-procedure-info-vals %info)
+			  (length args))
+		       'procedure-this
+		       'procedure-this-arity))))
+	    ((fun-procedure-info? %info)
+	     (when (fun-procedure-info-optimizablep %info)
+		(set! protocol
+		   (if (correct-arities? (list fun) (length args))
+		       'procedure-this
+		       'procedure-this-arity))))))
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
