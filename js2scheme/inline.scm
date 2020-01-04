@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Dec 30 06:03:10 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Sat Jan  4 18:13:40 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
 ;*    -------------------------------------------------------------    */
@@ -307,7 +307,8 @@
       (let ((call (callloginfo-call cli)))
 	 (with-access::J2SCall call (fun loc)
 	    (cond
-	       ((isa? fun J2SAccess)
+	       ((and (isa? fun J2SAccess)
+		     (config-get conf :optim-inline-method #f))
 		(inline-call-method! cli fuel allcnt))
 	       ((not (isa? fun J2SRef))
 		0)
@@ -795,7 +796,8 @@
 
    (define (find-inline-methods this fun arity)
       (with-access::J2SAccess fun (obj field)
-	 (when (isa? field J2SString)
+	 (when (and (isa? field J2SString)
+		    (config-get conf :optim-inline-method #f))
 	    (with-access::J2SString field (val)
 	       (let* ((mets (filter (lambda (m::struct)
 				       (let ((f (protoinfo-method m)))

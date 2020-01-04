@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Dec 30 06:22:10 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Sat Jan  4 18:43:32 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
 ;*=====================================================================*/
@@ -477,8 +477,8 @@
       (when (>=fx l 900)
 	 (unless (memq :optim-integer o)
 	    (set! o (cons* :optim-integer #t o)))
-	 (unless (memq :optim-inline o)
-	    (set! o (cons* :optim-inline #t o)))
+	 (unless (memq :optim-inline-method o)
+	    (set! o (cons* :optim-inline-method #t o)))
 	 (unless (memq :optim-globprop o)
 	    (set! o (cons* :optim-globprop #t o)))
 	 (unless (memq :optim-loopspec o)
@@ -527,6 +527,8 @@
 	    (set! o (cons* :optim-clevel #t o)))
 	 (unless (memq :optim-callapply o)
 	    (set! o (cons* :optim-callapply #t o)))
+	 (unless (memq :optim-inline o)
+	    (set! o (cons* :optim-inline #t o)))
 	 (unless (memq :optim-uninit o)
 	    (set! o (cons* :optim-uninit #t o))))
       (when (>=fx l 1)

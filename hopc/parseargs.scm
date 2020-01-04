@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Dec 30 06:22:31 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Sat Jan  4 18:38:34 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -297,10 +297,14 @@
 	     (hopc-j2s-flags-set! (cons* :optim-integer #t (hopc-j2s-flags))))
 	    (("-fno-integer" (help "Disable integer optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-integer #f (hopc-j2s-flags))))
-	    (("-finlining" (help "Enable method inlining (-Ox)"))
+	    (("-finlining" (help "Enable function inlining (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-inline #t (hopc-j2s-flags))))
-	    (("-fno-inlining" (help "Disable method inlining"))
+	    (("-fno-inlining" (help "Disable function inlining"))
 	     (hopc-j2s-flags-set! (cons* :optim-inline #f (hopc-j2s-flags))))
+	    (("-finlining-method" (help "Enable method inlining (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-inline-method #t (hopc-j2s-flags))))
+	    (("-fno-inlining-method" (help "Disable method inlining"))
+	     (hopc-j2s-flags-set! (cons* :optim-inline-method #f (hopc-j2s-flags))))
 	    (("-fshared-pcache" (help "Share pcaches (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :shared-pcache #t (hopc-j2s-flags))))
 	    (("-fno-shared-pcache" (help "Disable share pcaches"))

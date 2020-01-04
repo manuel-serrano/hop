@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Dec 21 19:53:57 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Last change :  Sat Jan  4 05:46:44 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
 ;*=====================================================================*/
@@ -522,23 +522,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    interval-lts ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (interval-lts-TBR left::struct right::struct shift::int)
-   (let ((ra (- (interval-max right) shift)))
-      (if (< ra (interval-max left))
-	  (if (>= ra (interval-min left))
-	      (interval (min (interval-min left) ra) ra)
-	      (interval ra ra))
-	  left)))
-
 (define (interval-lts left::struct right::struct shift::int)
    (let ((ra (- (interval-max right) shift)))
       (cond
 	 ((< ra (interval-min left))
-	  (interval (interval-min left) (interval-min left)))
+	  (interval (interval-min left) (interval-min left)
+	     (interval-merge-types left right)))
 	 ((>= ra (interval-max left))
 	  left)
 	 (else
-	  (interval (interval-min left) ra)))))
+	  (interval (interval-min left) ra
+	     (interval-merge-types left right))))))
 
 (define (interval-lt left right)
    (interval-lts left right 1))
@@ -549,23 +543,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    interval-gts ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (interval-gts-TBR-8NOV2019 left::struct right::struct shift::int)
-   (let ((ri (+ (interval-min right) shift)))
-      (if (> ri (interval-min left))
-	  (if (<= ri (interval-max left))
-	      (interval ri (max (interval-max left) ri))
-	      (interval ri ri))
-	  left)))
-
 (define (interval-gts left::struct right::struct shift::int)
    (let ((ri (+ (interval-min right) shift)))
       (cond
 	 ((> ri (interval-max right))
-	  (interval (interval-max left) (interval-max left)))
+	  (interval (interval-max left) (interval-max left)
+	     (interval-merge-types left right)))
 	 ((<= ri (interval-min left))
 	  left)
 	 (else
-	  (interval ri (interval-max left))))))
+	  (interval ri (interval-max left)
+	     (interval-merge-types left right))))))
 
 (define (interval-gt left right)
    (interval-gts left right 1))
@@ -1168,7 +1156,7 @@
 		  (if (isa? val J2SMethod)
 		      (escape-method val fix)
 		      (escape-fun val fix #t))))
-	    (with-access::J2SDecl decl (range key)
+	    (with-access::J2SDecl decl (range key id)
 	       (let ((intv (env-lookup nenv decl)))
 		  (expr-range-add! this nenv fix intv)))))))
 
@@ -1792,10 +1780,10 @@
    
    (define (inv-op op)
       (case op
-	 ((<) '>)
-	 ((<=) '>=)
-	 ((>) '<)
-	 ((>=) '<=)
+	 ((<) '>=)
+	 ((<=) '>)
+	 ((>) '<=)
+	 ((>=) '<)
 	 ((== === eq?) op)
 	 ((!= !==) op)
 	 (else op)))

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Jul 19 18:23:44 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Last change :  Sat Jan  4 17:51:25 2020 (serrano)                */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
 /*=====================================================================*/
@@ -373,6 +373,17 @@ function misco() {
    return true;
 }
 
+/*---------------------------------------------------------------------*/
+/*    miscp ...                                                        */
+/*---------------------------------------------------------------------*/
+function miscp() {
+   let a = [ 1, 2, 3 ];
+   let b = [ 4, 5, 6 ];
+   let c = new Proxy( [ 7, 8, 9 ], {} );
+   
+   return a.concat( b, c ).length === 9;
+}
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
@@ -389,6 +400,7 @@ console.log( "   miscl()"); assert.ok( miscl(), "miscl" );
 console.log( "   miscm()"); assert.ok( miscm(), "miscm" );
 console.log( "   miscn()"); assert.ok( miscn(), "miscn" );
 console.log( "   misco()"); assert.ok( misco(), "misco" );
+console.log( "   miscp()"); assert.ok( miscp(), "miscp" );
       
 /*---------------------------------------------------------------------*/
 /*    mdn ...                                                          */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Dec 26 08:59:53 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Sat Jan  4 06:37:46 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
 ;*=====================================================================*/
@@ -743,24 +743,43 @@
 ;*    js-min-max ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (js-min-max loc op lhs rhs mode return conf)
-   (with-tmp lhs rhs mode return conf
-      (lambda (left right)
-	 (let ((lhs (if (symbol? left)
-			(with-access::J2SExpr lhs (loc)
-			   (instantiate::J2SHopRef
-			      (type (j2s-vtype lhs))
-			      (loc loc)
-			      (id left)))
-			lhs))
-	       (rhs (if (symbol? right)
-			(with-access::J2SExpr rhs (loc)
-			   (instantiate::J2SHopRef
-			      (type (j2s-vtype rhs))
-			      (loc loc)
-			      (id right)))
-			rhs)))
-	    `(if ,(js-cmp loc op  lhs rhs mode return conf)
-		 ,left ,right)))))
+   (let loop ((lhst lhs)
+	      (rhst rhs))
+      (cond
+	 ((isa? lhst J2SCast)
+	  (with-access::J2SCast lhst (expr)
+	     (loop expr rhst)))
+	 ((isa? rhst J2SCast)
+	  (with-access::J2SCast rhst (expr)
+	     (loop lhst expr)))
+	 (else
+	  (with-tmp lhst rhst mode return conf
+	     (lambda (left right)
+		(let ((lhsc (if (symbol? left)
+				(with-access::J2SExpr lhs (loc)
+				   (instantiate::J2SHopRef
+				      (type (j2s-vtype lhst))
+				      (loc loc)
+				      (id left)))
+				lhst))
+		      (rhsc (if (symbol? right)
+				(with-access::J2SExpr rhs (loc)
+				   (instantiate::J2SHopRef
+				      (type (j2s-vtype rhst))
+				      (loc loc)
+				      (id right)))
+				rhst)))
+		   `(if ,(js-cmp loc op lhsc rhsc mode return conf)
+			,(if (isa? lhs J2SCast)
+			     (j2s-scheme (duplicate::J2SCast lhs
+					    (expr lhsc))
+				mode return conf)
+			     left)
+			,(if (isa? rhs J2SCast)
+			     (j2s-scheme (duplicate::J2SCast rhs
+					    (expr rhsc))
+				mode return conf)
+			     right)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equality ...                                                  */
@@ -1717,43 +1736,34 @@
 	      `(if (and (not (=u32 ,right #u32:0))
 			(=u32 (remainderu32 ,left ,right) #u32:0))
 		   (js-uint32-tointeger (/u32 ,left ,right))
-		   (/fl ,(asreal left tl)
+		   (/integer ,(asreal left tl)
 		      ,(asreal right tr)))
-	      `(/fl ,(asreal left tl) ,(todouble right tr conf))))
+	      `(/integer ,(asreal left tl) ,(todouble right tr conf))))
 	 ((eq? tl 'int32)
 	  (if (eq? tr 'int32)
 	      `(if (and (not (=s32 ,right #s32:0))
 			(=s32 (remainders32 ,left ,right) #s32:0))
 		   (js-int32-tointeger (/s32 ,left ,right))
-		   (/fl ,(asreal left tl)
+		   (/integer ,(asreal left tl)
 		      ,(asreal right tr)))
-	      `(/fl ,(asreal left tl) ,(todouble right tr conf))))
+	      `(/integer ,(asreal left tl) ,(todouble right tr conf))))
 	 ((eq? tr 'uint32)
-	  `(/fl ,(todouble left tl conf) ,(asreal right tr)))
+	  `(/integer ,(todouble left tl conf) ,(asreal right tr)))
 	 ((eq? tr 'int32)
-	  `(/fl ,(todouble left tl conf) ,(asreal right tr)))
+	  `(/integer ,(todouble left tl conf) ,(asreal right tr)))
 	 ((eq? tl 'integer)
-	  (if (eq? tr 'integer)
-	      `(if (and (not (=fx ,right 0))
-			(=fx (remainderfx ,left ,right) 0))
-		   (/fx ,left ,right)
-		   (/fl ,(todouble left tl conf) ,(todouble right tr conf)))
-	      `(/fl ,(todouble left tl conf) ,(todouble right tr conf))))
+	  `(/integer ,(todouble left tl conf) ,(todouble right tr conf)))
 	 ((or (eq? tl 'real) (eq? tr 'real))
 	  `(/fl ,(todouble left tl conf) ,(todouble right tr conf)))
 	 ((eq? tr 'integer)
-	  `(/js ,(todouble left tl conf) ,(asreal right tr)))
+	  `(/integer ,(todouble left tl conf) ,(asreal right tr)))
 	 ((eq? type 'real)
 	  (if-flonums? left tl right tr
 	     `(/fl ,left ,right)
 	     `(/js ,left ,right %this)))
 	 (else
 	  (if-fixnums? left tl right tr
-	     `(if (and (not (=fx ,right 0))
-		       (=fx (remainderfx ,left ,right) 0))
-		  (/fx ,left ,right)
-		  (/fl ,(asreal left 'bint)
-		     ,(asreal right 'bint)))
+	     `(/integer ,(asreal left 'bint) ,(asreal right 'bint))
 	     (if-flonums? left tl right tr
 		`(/fl ,left ,right)
 		`(/js ,left ,right %this))))))
