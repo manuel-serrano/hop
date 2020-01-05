@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sat Jan  4 06:38:03 2020 (serrano)                */
+;*    Last change :  Sun Jan  5 18:33:02 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -171,7 +171,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (/integer x::double y::double)
    (let ((v (/fl x y)))
-      (if (integer? v)
+      (if (integerfl? v)
 	  (flonum->fixnum v)
 	  v)))
 

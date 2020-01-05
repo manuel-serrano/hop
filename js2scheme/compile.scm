@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sat Jan  4 18:43:32 2020 (serrano)                */
+;*    Last change :  Sun Jan  5 18:23:13 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -202,6 +202,7 @@
 	  j2s-clevel-stage
 	  j2s-method-stage
 	  j2s-return-stage
+	  j2s-newtarget-stage
 	  j2s-inline-stage
 	  j2s-cps-stage
 	  j2s-objinit-stage
@@ -210,7 +211,6 @@
 	  j2s-tyflow-stage
 	  j2s-sweep-stage
 	  j2s-hintnum-stage
-	  j2s-newtarget-stage
 	  j2s-propcache-stage
 	  j2s-instanceof-stage
 	  j2s-propcce-stage

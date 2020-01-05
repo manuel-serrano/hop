@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Jan  4 18:13:40 2020 (serrano)                */
+;*    Last change :  Sun Jan  5 07:42:04 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -471,6 +471,9 @@
    (with-access::J2SDecl decl (usecnt)
       (when (or (>fx usecnt 0)
 		(not (isa? decl J2SDeclFun))
+		(and (isa? decl J2SDeclFun)
+		     (with-access::J2SDeclFun decl (val)
+			(isa? val J2SSvc)))
 		(decl-usage-has? decl '(eval)))
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val)
@@ -791,7 +794,8 @@
 			     (<=fx (function-size val)
 				(min limit (function-max-expansion val)))
 			     (check-id id)
-			     (not (function-self-recursive? val)))
+			     (not (function-self-recursive? val))
+			     (not (isa? val J2SSvc)))
 		     val))))))
 
    (define (find-inline-methods this fun arity)
@@ -872,7 +876,8 @@
 	 ((eq? protocol 'spread)
 	  (call-default-walker))
 	 ((isa? fun J2SAccess)
-	  (or (inline-access-call this fun args loc) this))
+	  (or (inline-access-call this fun args loc)
+	      (call-default-walker)))
 	 ((isa? fun J2SRef)
 	  (or (inline-ref-call this fun thisarg args loc)
 	      (call-default-walker)))

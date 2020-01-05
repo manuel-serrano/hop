@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Dec 19 08:13:16 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Last change :  Sun Jan  5 09:51:46 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -735,7 +735,12 @@
 		 (if (null? cs)
 		     (if (or (memq 'pmap ccspecs) (memq 'pmap-inline ccspecs))
 			 `(if (eq? (js-pcache-cmap ,ccache) #t)
-			      ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc)
+			      ,(if (memq 'pmap-inline ccspecs)
+				   `(begin
+				       (with-access::JsPropertyCache ,ccache (function)
+					  (set! function #f))
+				       ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc))
+				   (calln-uncachable %this ocspecs obj prop args ccache ocache loc))
 			      ,(calln-miss %this obj prop args ccache ocache loc ccspecs ocspecs))
 			 (calln-uncachable %this ocspecs obj prop args ccache ocache loc))
 		     (case (car cs)
