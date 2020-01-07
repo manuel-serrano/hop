@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Jan  1 08:32:34 2020 (serrano)                */
+;*    Last change :  Tue Jan  7 14:04:36 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -702,7 +702,7 @@
 			  (let* ((self (j2s-scheme obj mode return conf))
 				 (s (gensym '%obj-profile))
 				 (f (duplicate::J2SAccess fun
-				       (cspecs '(pmap vtable-dummy-profile))
+				       (cspecs '(pmap-dummy-profile vtable-dummy-profile))
 				       (cache cache)
 				       (obj (J2SHopRef s)))))
 			     `(let ((,s ,self))
@@ -902,7 +902,8 @@
 				 ,@self
 				 ,@(j2s-scheme args mode return conf))))
 		   `(let ((,f ,(j2s-scheme fun mode return conf)))
-		       ,(when (isa? fun J2SAccess)
+		       ,(when (and (isa? fun J2SAccess)
+				   (config-get conf :profile-cmap #f))
 			   (with-access::J2SAccess fun (obj)
 			      (let ((o (j2s-scheme obj mode return conf)))
 				 (cmap-profile profid o))))

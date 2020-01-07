@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Mon Dec  2 11:11:26 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Tue Jan  7 14:43:26 2020 (serrano)                */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
 ;*=====================================================================*/
@@ -28,7 +28,7 @@
    (import __hopscript_types
 	   __hopscript_property)
 
-   (export (js-profile-init conf calltable)
+   (export (js-profile-init conf calltable symtable)
 	   *profile-cache*
 
 	   (js-profile-register-pcache ::JsPropertyCache)
@@ -87,7 +87,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-init ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-profile-init conf calltable)
+(define (js-profile-init conf calltable symtable)
    (unless *profile*
       (set! *profile* #t)
       (let ((trc (or (getenv "HOPTRACE") "")))
@@ -126,7 +126,7 @@
 			(when (string-contains trc "hopscript:alloc")
 			   (profile-allocs trc))
 			(when (string-contains trc "hopscript:call")
-			   (profile-calls trc))
+			   (profile-calls trc symtable))
 			(when (string-contains trc "hopscript:cmap")
 			   (profile-cmaps trc))
 			(profile-report-end trc conf)
@@ -1310,9 +1310,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    profile-calls ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (profile-calls trc)
-
-   (define (print-call-counts counts locations)
+(define (profile-calls trc symtable)
+   
+   (define (print-call-counts-json counts locations)
       (let ((sep "\n      "))
 	 (for-each (lambda (nl)
 		      (let ((n (car nl))
@@ -1332,25 +1332,98 @@
 	    (sort (lambda (x y)
 		     (< (cdr x) (cdr y)))
 	       (map cons counts locations)))))
+
+   (define (get-symbol table loc)
+      (let ((c (assq loc table)))
+	 (when (pair? c) (cdr c))))
+
+   (define (print-call-counts-json-symtable counts locations symtable)
+      (let ((sep "\n      "))
+	 (for-each (lambda (nl)
+		      (let* ((n (car nl))
+			     (l (cdr nl))
+			     (name (get-symbol symtable l)))
+			 (when (and (>=fx l 0) (or (not (number? n)) (> n 0)))
+			    (display sep)
+			    (set! sep ",\n      ")
+			    (if (number? n)
+				;; direct call
+				(printf "{ \"point\": ~a, \"name\": \"~a\", \"cnt\": ~a }" l name n) 
+				;; unknown call
+				(printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l 
+				   (map (lambda (n)
+					   (format "{ \"point\": ~a, \"name\": \"~a\", \"cnt\": ~a }"
+					      (car n) (get-symbol symtable (car n)) (cdr n)))
+				      n))))))
+	    (sort (lambda (x y)
+		     (< (cdr x) (cdr y)))
+	       (map cons counts locations)))))
+
+   (define (print-call-counts counts locations)
+      (for-each (lambda (nl)
+		   (let ((n (car nl))
+			 (l (cdr nl)))
+		      (when (and (>=fx l 0) (or (not (number? n)) (> n 0)))
+			 (if (number? n)
+			     ;; direct call
+			     (printf "   ~a: ~a\n" l n) 
+			     ;; unknown call
+			     (printf "   ~a: ~(, )\n" l
+				(map (lambda (n)
+					(format "~a@~a" (cdr n) (car n)))
+				   n))))))
+	 (sort (lambda (x y)
+		  (< (cdr x) (cdr y)))
+	    (map cons counts locations))))
    
-   (when (string-contains trc "format:fprofile")
-      (with-output-to-port *profile-port*
-	 (lambda ()
-	    (print "\"calls\": [")
-	    (let ((first #f))
-	       (for-each (lambda (t)
-			    (when first
-			       (set! first #f)
-			       (print ","))
-			    (print "  { \"filename\": \""
-			       (vector-ref t 0) "\",")
-			    (display "    \"calls\": [")
-			    (print-call-counts
-			       (vector->list (vector-ref t 1))
-			       (vector->list (vector-ref t 3)))
-			    (print " ] }"))
-		  *profile-call-tables*))
-	    (print "],")))))
+   (cond
+      ((string-contains trc "format:fprofile")
+       (with-output-to-port *profile-port*
+	  (lambda ()
+	     (print "\"calls\": [")
+	     (let ((first #f))
+		(for-each (lambda (t)
+			     (when first
+				(set! first #f)
+				(print ","))
+			     (print "  { \"filename\": \""
+				(vector-ref t 0) "\",")
+			     (display "    \"calls\": [")
+			     (print-call-counts-json
+				(vector->list (vector-ref t 1))
+				(vector->list (vector-ref t 3)))
+			     (print " ] }"))
+		   *profile-call-tables*))
+	     (print "],"))))
+      ((string-contains trc "format:memviz")
+       (with-output-to-port *profile-port*
+	  (lambda ()
+	     (print "{ \"calls\": [")
+	     (let ((first #f))
+		(for-each (lambda (t)
+			     (when first
+				(set! first #f)
+				(print ","))
+			     (print "  { \"filename\": \""
+				(vector-ref t 0) "\",")
+			     (display "    \"calls\": [")
+			     (print-call-counts-json-symtable
+				(vector->list (vector-ref t 1))
+				(vector->list (vector-ref t 3))
+				symtable)
+			     (print " ] }"))
+		   *profile-call-tables*))
+	     (print "]}"))))
+      (else
+       (with-output-to-port *profile-port*
+	  (lambda ()
+	     (let ((first #f))
+		(for-each (lambda (t)
+			     (print "filename: " (vector-ref t 0))
+			     (print-call-counts
+				(vector->list (vector-ref t 1))
+				(vector->list (vector-ref t 3))))
+		   *profile-call-tables*)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-cmaps ...                                                */
@@ -1371,7 +1444,7 @@
 		     (< (cdr x) (cdr y)))
 	       (map cons counts locations)))))
 
-   (when (string-contains trc "format:fprofile")
+   (when (or #t (string-contains trc "format:fprofile"))
       (with-output-to-port *profile-port*
 	 (lambda ()
 	    (print "\"cmaps\": [")

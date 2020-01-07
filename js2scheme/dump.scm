@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Dec 31 17:14:43 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Tue Jan  7 15:17:45 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
 ;*=====================================================================*/
@@ -27,7 +27,8 @@
 	   (j2s-dump-range ::obj)
 	   (j2s-dump-register-struct-info! ::symbol ::procedure)
 	   (generic j2s->list ::obj)
-	   (generic j2s-info->list ::obj)))
+	   (generic j2s-info->list ::obj)
+	   (generic j2ssum::long ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-dump-stage ...                                               */
@@ -1203,3 +1204,42 @@
 	  index: ,index
 	  writable: writable
 	  from: ,(typeof from) )))
+
+;*---------------------------------------------------------------------*/
+;*    j2ssum ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (j2ssum this::obj)
+   (if (pair? this)
+       (apply + (map j2ssum this))
+       0))
+
+;*---------------------------------------------------------------------*/
+;*    j2ssum ::J2SNode ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (j2ssum this::J2SNode)
+   (let* ((clazz (object-class this))
+	  (fields (class-all-fields clazz)))
+      (let loop ((i (-fx (vector-length fields) 1))
+		 (sum (get-hashnumber (class-name clazz))))
+	 (if (=fx i -1)
+	     sum
+	     (let* ((f (vector-ref-ur fields i))
+		    (fi (class-field-info f)))
+		(if (and (pair? fi) (member "notraverse" fi))
+		    (loop (-fx i 1) sum)
+		    (let ((v ((class-field-accessor f) this)))
+		       (loop (-fx i 1) (+fx 1 (+fx (j2ssum v) sum))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2ssum ::J2SLiteralValue ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (j2ssum this::J2SLiteralValue)
+   (with-access::J2SLiteralValue this (val)
+      (get-hashnumber val)))
+
+;*---------------------------------------------------------------------*/
+;*    j2ssum ::J2SDProducer ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2ssum this::J2SDProducer)
+   (with-access::J2SDProducer this (expr size)
+      (+fx 3 (+fx size (j2ssum expr)))))

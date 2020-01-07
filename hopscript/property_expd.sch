@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Jan  5 09:51:46 2020 (serrano)                */
+;*    Last change :  Tue Jan  7 14:36:17 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -390,6 +390,8 @@
 		    `(if (eq? %cmap (js-pcache-amap ,cache))
 			 ,(loop 'amap)
 			 ,(loop (cdr cs))))
+		   ((pmap-dummy-profile)
+		    (loop (cdr cs)))
 		   ((vtable-dummy-profile)
 		    `(begin
 			;; this fake entry is used when profiling
@@ -896,7 +898,12 @@
    (define (call/tmp %this ccache fun this args)
       (let ((len (length args)))
          `(if (eq? (js-pcache-owner ,ccache) ,fun)
-              ((js-pcache-method ,ccache) ,this ,@args)
+	      (let ((idx (js-pcache-index ,ccache)))
+		  ;; this fake entry is used when profiling
+		  ;; method calls
+		  (js-profile-log-cache ,ccache :pmap #t)
+		  (js-profile-log-index idx)
+		  ((js-pcache-method ,ccache) ,this ,@args))
               ,(case len
                   ((0 1 2 3 4 5 6 7 8)
                    (let ((caller (symbol-append 'js-call/cache-miss

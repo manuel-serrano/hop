@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Dec  2 11:13:15 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Tue Jan  7 14:06:34 2020 (serrano)                */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
 ;*=====================================================================*/
@@ -164,7 +164,7 @@
 				 `(let ((,id ,thunk))
 				     ,id))
 			      thunk))
-		      ,(profilers conf)
+		      ,(profilers this conf)
 		      ,(js-wait-worker '%worker)))
 		(&end!)))))
 
@@ -290,7 +290,7 @@
 		      '())
 		(define (main args)
 		   ,`(define __js_strings (&init!))
-		   ,(profilers conf)
+		   ,(profilers this conf)
 		   (hopscript-install-expanders!)
 		   (hop-port-set! -1)
 		   (hop-ssl-port-set! -1)
@@ -518,16 +518,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (profilers conf)
+(define (profilers this conf)
    (when (or (config-get conf :profile-call #f)
 	     (config-get conf :profile-cmap #f)
 	     (config-get conf :profile-cache #f)
 	     (config-get conf :profile-hint #f)
 	     (config-get conf :profile-alloc #f))
-      `(js-profile-init ',(filter-config conf)
-	  ,(if (config-get conf :profile-call #f)
-	       '(vector %source %call-log %cmap-log %call-locations)
-	       #f))))
+      `(js-profile-init ',(cons* :hash (j2ssum this) (filter-config conf))
+	  ,(cond
+	      ((and (config-get conf :profile-call #f)
+		    (config-get conf :profile-cmap #f))
+	       '(vector %source %call-log %cmap-log %call-locations))
+	      ((config-get conf :profile-call #f)
+	       '(vector %source %call-log #f %call-locations))
+	      ((config-get conf :profile-cmap #f)
+	       '(vector %source #f %cmap-log %call-locations))
+	      (else
+	       #f))
+	  ,(when (config-get conf :profile-symtable #f)
+	      `',(profile-symtable this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    filter-config ...                                                */
@@ -636,6 +645,95 @@
 	    ((at ?- ?point)
 	     (vector-set! vec profid point)))))
    vec)
+
+;*---------------------------------------------------------------------*/
+;*    profile-symtable ...                                             */
+;*---------------------------------------------------------------------*/
+(define (profile-symtable this::J2SProgram)
+   (sort (lambda (x y) (<fx (car x) (car y)))
+      (with-access::J2SProgram this (call-size)
+	 (collect-functions* this))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-functions* ::J2SNode ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-functions* this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    collect-functions* ::J2SDeclFun ...                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-functions* this::J2SDeclFun)
+   (with-access::J2SDeclFun this (profid loc id val parent)
+      (with-access::J2SFun val (body)
+	 (if parent
+	     (collect-functions* body)
+	     (cons (cons (caddr loc) id) (collect-functions* body))))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-functions* ::J2SAssig ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-functions* this::J2SAssig)
+   (with-access::J2SAssig this (lhs rhs loc)
+      (let loop ((rhs rhs))
+	 (cond
+	    ((isa? rhs J2SFun)
+	     (with-access::J2SFun rhs (body)
+		(cons (cons (+fx 2 (caddr loc)) (expr->id lhs))
+		   (collect-functions* body))))
+	    ((isa? rhs J2SMethod)
+	     (with-access::J2SMethod rhs (function)
+		(loop function)))
+	    (else
+	     (call-default-walker))))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-functions* ::J2SCall ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-functions* this::J2SCall)
+   (with-access::J2SCall this (fun loc)
+      (if (isa? fun J2SRef)
+	  (with-access::J2SRef fun (decl)
+	     (if (isa? decl J2SDeclFun)
+		 (with-access::J2SDecl decl (id)
+		    (cons (cons (caddr loc) id) (call-default-walker)))
+		 (call-default-walker)))
+	  (call-default-walker))))
+	       
+;*---------------------------------------------------------------------*/
+;*    collect-fuctions* ::J2SFun ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-functions* this::J2SFun)
+   (with-access::J2SFun this (loc)
+      (list (cons (caddr loc) 'anonymous))))
+
+;*---------------------------------------------------------------------*/
+;*    expr->id ::J2SExpr ...                                           */
+;*---------------------------------------------------------------------*/
+(define-generic (expr->id this::J2SExpr)
+   '?)
+
+;*---------------------------------------------------------------------*/
+;*    expr->id ::J2SRef ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (expr->id this::J2SRef)
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (id)
+	 id)))
+
+;*---------------------------------------------------------------------*/
+;*    expr->id ::J2SAccess ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (expr->id this::J2SAccess)
+   (with-access::J2SAccess this (obj field)
+     (symbol-append (expr->id obj) '|.| (expr->id field)))) 
+
+;*---------------------------------------------------------------------*/
+;*    expr->id ::J2SString ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (expr->id this::J2SString)
+   (with-access::J2SString this (val)
+      (string->symbol val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-program-checksum! ...                                        */

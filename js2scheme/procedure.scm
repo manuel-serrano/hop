@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Thu Jan  2 08:48:03 2020 (serrano)                */
+;*    Last change :  Tue Jan  7 15:18:56 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -305,8 +305,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (eval-procedure this::J2SExpr fix)
    (let* ((clazz (object-class this))
-	  (ctor (class-constructor clazz))
-	  (inst ((class-allocator clazz)))
 	  (fields (class-all-fields clazz)))
       (let loop ((i (-fx (vector-length fields) 1)))
 	 (when (>=fx i 0)
