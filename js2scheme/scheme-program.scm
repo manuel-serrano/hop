@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Jan  7 14:06:34 2020 (serrano)                */
+;*    Last change :  Tue Jan  7 18:09:52 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -704,8 +704,9 @@
 ;*    collect-fuctions* ::J2SFun ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-functions* this::J2SFun)
-   (with-access::J2SFun this (loc)
-      (list (cons (caddr loc) 'anonymous))))
+   (with-access::J2SFun this (loc body)
+      (cons (cons (caddr loc) 'anonymous)
+	 (collect-functions* body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expr->id ::J2SExpr ...                                           */
