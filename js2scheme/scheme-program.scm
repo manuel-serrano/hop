@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Jan  8 16:58:47 2020 (serrano)                */
+;*    Last change :  Wed Jan  8 20:10:15 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -545,8 +545,8 @@
 	       '(vector %source #f %cmap-log %call-locations))
 	      (else
 	       #f))
-	  ,(when (config-get conf :profile-symtable #f)
-	      `',(profile-symtable this)))))
+	  ,(when (config-get conf :profile-symbols #f)
+	      `',(profile-symbols this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    filter-config ...                                                */
@@ -657,9 +657,9 @@
    vec)
 
 ;*---------------------------------------------------------------------*/
-;*    profile-symtable ...                                             */
+;*    profile-symbols ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (profile-symtable this::J2SProgram)
+(define (profile-symbols this::J2SProgram)
    (sort (lambda (x y) (<fx (car x) (car y)))
       (with-access::J2SProgram this (call-size)
 	 (collect-functions* this))))
@@ -678,7 +678,9 @@
       (with-access::J2SFun val (body)
 	 (if parent
 	     (collect-functions* body)
-	     (cons (cons (caddr loc) id) (collect-functions* body))))))
+	     (with-access::J2SBlock body (endloc)
+		(cons (list (caddr loc) 'fun id (caddr endloc))
+		   (collect-functions* body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-functions* ::J2SAssig ...                                */
@@ -689,8 +691,9 @@
 	 (cond
 	    ((isa? rhs J2SFun)
 	     (with-access::J2SFun rhs (body)
-		(cons (cons (+fx 2 (caddr loc)) (expr->id lhs))
-		   (collect-functions* body))))
+		(with-access::J2SBlock body (endloc)
+		   (cons (list (+fx 2 (caddr loc)) 'fun (expr->id lhs) (caddr endloc))
+		      (collect-functions* body)))))
 	    ((isa? rhs J2SMethod)
 	     (with-access::J2SMethod rhs (function)
 		(loop function)))
@@ -706,7 +709,8 @@
 	  (with-access::J2SRef fun (decl)
 	     (if (isa? decl J2SDeclFun)
 		 (with-access::J2SDecl decl (id)
-		    (cons (cons (caddr loc) id) (call-default-walker)))
+		    (cons (list (caddr loc) 'call id)
+		       (call-default-walker)))
 		 (call-default-walker)))
 	  (call-default-walker))))
 	       
@@ -715,8 +719,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-functions* this::J2SFun)
    (with-access::J2SFun this (loc body)
-      (cons (cons (caddr loc) 'anonymous)
-	 (collect-functions* body))))
+      (with-access::J2SBlock body (endloc)
+	 (cons (list (caddr loc) 'fun '%%anonymous (caddr endloc))
+	    (collect-functions* body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expr->id ::J2SExpr ...                                           */
