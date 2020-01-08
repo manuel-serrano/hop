@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Jan  7 18:09:52 2020 (serrano)                */
+;*    Last change :  Wed Jan  8 16:58:47 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -55,6 +55,8 @@
 	       `(define %call-locations ',(call-locations this)))
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
+		   ,@(filter fundef? globals)
+		   ,@(filter fundef? body)
 		   (define __js_strings (&init!))
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
@@ -62,8 +64,8 @@
 		   (define %cnst-table ,cnsttable)
 		   ,@esimports
 		   ,esexports
-		   ,@globals
-		   ,@(exit-body body conf)))
+		   ,@(filter nofundef? globals)
+		   ,@(exit-body (filter nofundef? body) conf)))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
@@ -78,6 +80,8 @@
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
 		   (define __js_strings (&init!))
+		   ,@(filter fundef? globals)
+		   ,@(filter fundef? body)
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
 		   (define %pcache
@@ -97,8 +101,8 @@
 		   (define %cnst-table ,cnsttable)
 		   ,@esimports
 		   ,esexports
-		   ,@globals
-		   ,@(exit-body body conf)))
+		   ,@(filter nofundef? globals)
+		   ,@(exit-body (filter nofundef? body) conf)))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
@@ -115,14 +119,16 @@
 		(jsthis `(with-access::JsGlobalObject %this (js-object)
 			    (js-new0 %this js-object)))
 		(thunk `(lambda ()
+			   ,@(filter fundef? globals)
+			   ,@(filter fundef? body)
 			   (define _ (set! __js_strings (&init!)))
 			   (define %cnst-table ,cnsttable)
 			   (define %scope (nodejs-new-scope-object %this))
 			   (define this ,jsthis)
 			   ,@esimports
 			   ,esexports
-			   ,@globals
-			   ,@(exit-body body conf))))
+			   ,@(filter nofundef? globals)
+			   ,@(exit-body (filter nofundef? body) conf))))
 	    `(,jsmod
 		;; (&begin!) must not be a constant! (_do not_ use quote)
 		,`(define __js_strings (&begin!))
@@ -206,6 +212,8 @@
 		    (epairify-deep loc
 		       `(lambda (%this this %scope %module)
 			   (&with!
+			      ,@(filter fundef? globals)
+			      ,@(filter fundef? body)
 			      (%define-cnst-table ,(length cnsts))
 			      (%define-pcache ,pcache-size)	       
 			      (define %pcache
@@ -227,8 +235,8 @@
 			      (define %cnst-table ,cnsttable)
 			      ,@esimports
 			      ,esexports
-			      ,@globals
-			      ,@(exit-body body conf)))))
+			      ,@(filter nofundef? globals)
+			      ,@(exit-body (filter nofundef? body) conf)))))
 		   (main
 		    ;; generate a main hopscript module 
 		    (j2s-main-module/workers name cnsttable
@@ -249,6 +257,8 @@
 	 (epairify-deep loc
 	    `(,module 
 		;;; (&begin!) must not be a constant! (_do not_ use quote)
+		,@(filter fundef? globals)
+		,@(filter fundef? body)
 		(define __js_strings (&begin!))
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
@@ -283,7 +293,7 @@
 		(define %cnst-table ,cnsttable)
 		,@esimports
 		,esexports
-		,@globals
+		,@(filter nofundef? globals)
 		,@toplevel
 		,@(if (config-get conf :libs-dir #f)
 		      `((hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
@@ -296,7 +306,7 @@
 		   (hop-ssl-port-set! -1)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (set! !process (nodejs-process %worker %this))
-		   ,@(exit-body body conf))
+		   ,@(exit-body (filter nofundef? body) conf))
 		(&end!))))))
 
 ;*---------------------------------------------------------------------*/
@@ -888,3 +898,17 @@
 	  (vector-set! table cache `#(,point "xxx" put)))))
    (call-default-walker))
    
+;*---------------------------------------------------------------------*/
+;*    fundef? ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (fundef? e)
+   (match-case e
+      ((define (?- . ?arg) . ?-) #t)
+      ((define ?- (labels ((?id . ?-)) ?id)) #t)
+      (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    nofundef? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (nofundef? e)
+   (not (fundef? e)))
