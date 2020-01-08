@@ -4,10 +4,14 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
 <<<<<<< HEAD
+<<<<<<< HEAD
 ;*    Last change :  Wed Jan  8 09:24:30 2020 (serrano)                */
 =======
 ;*    Last change :  Wed Jan  8 16:58:47 2020 (serrano)                */
 >>>>>>> 96f8106a511f01502beac401f75587595c1877a6
+=======
+;*    Last change :  Wed Jan  8 20:10:15 2020 (serrano)                */
+>>>>>>> 07275e587d2956f991db4940c6c1f9b76118797a
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
