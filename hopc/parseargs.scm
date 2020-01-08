@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Jan  7 15:38:03 2020 (serrano)                */
+;*    Last change :  Wed Jan  8 16:02:59 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -383,8 +383,8 @@
 	    (("--profile-alloc" (help "Alloc profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile-alloc #t (hopc-j2s-flags))))
-	    (("--profile-symtable" (help "Profile with a symbol table"))
-	     (hopc-j2s-flags-set! (cons* :profile-symtable #t (hopc-j2s-flags))))
+	    (("--profile-symbols" (help "Profile with a symbol table"))
+	     (hopc-j2s-flags-set! (cons* :profile-symbols #t (hopc-j2s-flags))))
 	    (("--profile-mem?level" (help "Memory profiling mode (see bmem)"))
 	     (if (string=? level "")
 		 (hopc-bigloo-profile-options-set! '("-g2" "-gtrace5"))

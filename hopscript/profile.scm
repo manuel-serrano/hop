@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue Jan  7 14:43:26 2020 (serrano)                */
+;*    Last change :  Wed Jan  8 09:27:37 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -84,6 +84,10 @@
      putCacheMiss
      callCacheMissUncachable))
 
+(define *format-json-version* "0.0.1")
+(define *format-fprofile-version* "0.0.1")
+(define *format-memviz-version* "0.0.1")
+
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-init ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -118,7 +122,7 @@
 			(exception-notify e)
 			(exit -1))
 		     (begin
-			(profile-report-start trc)
+			(profile-report-start trc conf)
 			(when (string-contains trc "hopscript:cache")
 			   (profile-report-cache trc))
 			(when (string-contains trc "hopscript:hint")
@@ -127,6 +131,8 @@
 			   (profile-allocs trc))
 			(when (string-contains trc "hopscript:call")
 			   (profile-calls trc symtable))
+			(when (string-contains trc "hopscript:symtable")
+			   (profile-symtable trc symtable conf))
 			(when (string-contains trc "hopscript:cmap")
 			   (profile-cmaps trc))
 			(profile-report-end trc conf)
@@ -708,19 +714,27 @@
 ;*---------------------------------------------------------------------*/
 ;*    profile-report-start ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (profile-report-start trc)
-   (cond
-      ((string-contains trc "format:json")
-       (display "{\n\"format\": \"json\",\n" *profile-port*))
-      ((string-contains trc "format:fprofile")
-       (display "{\n\"format\": \"fprofile\",\n" *profile-port*))))
+(define (profile-report-start trc conf)
+   (with-output-to-port *profile-port*
+      (lambda ()
+	 (cond
+	    ((string-contains trc "format:json")
+	     (print "{\n\"format\": \"json\",")
+	     (printf "\"version\": \"~a\",\n" *format-json-version*))
+	    ((string-contains trc "format:fprofile")
+	     (print "{\n\"format\": \"fprofile\",")
+	     (printf "\"version\": \"~a\",\n" *format-fprofile-version*))
+	    ((string-contains trc "format:memviz")
+	     (print "{\n\"format\": \"memviz\",")
+	     (printf "\"version\": \"~a\",\n" *format-memviz-version*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-report-end ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (profile-report-end trc conf)
    (when (or (string-contains trc "format:json")
-	     (string-contains trc "format:fprofile"))
+	     (string-contains trc "format:fprofile")
+	     (string-contains trc "format:memviz"))
       (with-output-to-port *profile-port*
 	 (lambda ()
 	    (display "\"config\": ")
@@ -1311,6 +1325,16 @@
 ;*    profile-calls ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (profile-calls trc symtable)
+
+   (define (find-def sym symtable)
+      (let ((entry (find (lambda (entry)
+			    (and (eq? (cadr entry) 'fun) (eq? (caddr entry) sym)))
+		      symtable)))
+	 (when entry (car entry))))
+   
+   (define (get-target loc symtable)
+      (let ((c (assq loc symtable)))
+	 (if (pair? c) (find-def (caddr c) symtable) -1)))
    
    (define (print-call-counts-json counts locations)
       (let ((sep "\n      "))
@@ -1333,27 +1357,23 @@
 		     (< (cdr x) (cdr y)))
 	       (map cons counts locations)))))
 
-   (define (get-symbol table loc)
-      (let ((c (assq loc table)))
-	 (when (pair? c) (cdr c))))
-
-   (define (print-call-counts-json-symtable counts locations symtable)
+   (define (print-call-counts-memviz counts locations)
       (let ((sep "\n      "))
 	 (for-each (lambda (nl)
-		      (let* ((n (car nl))
-			     (l (cdr nl))
-			     (name (get-symbol symtable l)))
+		      (let ((n (car nl))
+			    (l (cdr nl)))
 			 (when (and (>=fx l 0) (or (not (number? n)) (> n 0)))
 			    (display sep)
 			    (set! sep ",\n      ")
 			    (if (number? n)
 				;; direct call
-				(printf "{ \"point\": ~a, \"name\": \"~a\", \"cnt\": ~a }" l name n) 
+				(printf "{ \"point\": ~a, \"cnt\": ~a, \"target\": ~a }" l n
+				   (get-target l symtable))
 				;; unknown call
-				(printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l 
+				(printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l
 				   (map (lambda (n)
-					   (format "{ \"point\": ~a, \"name\": \"~a\", \"cnt\": ~a }"
-					      (car n) (get-symbol symtable (car n)) (cdr n)))
+					   (format "{ \"target\": ~a, \"cnt\": ~a }"
+					      (car n) (cdr n)))
 				      n))))))
 	    (sort (lambda (x y)
 		     (< (cdr x) (cdr y)))
@@ -1398,7 +1418,7 @@
       ((string-contains trc "format:memviz")
        (with-output-to-port *profile-port*
 	  (lambda ()
-	     (print "{ \"calls\": [")
+	     (print "\"calls\": [")
 	     (let ((first #f))
 		(for-each (lambda (t)
 			     (when first
@@ -1407,13 +1427,12 @@
 			     (print "  { \"filename\": \""
 				(vector-ref t 0) "\",")
 			     (display "    \"calls\": [")
-			     (print-call-counts-json-symtable
+			     (print-call-counts-memviz
 				(vector->list (vector-ref t 1))
-				(vector->list (vector-ref t 3))
-				symtable)
+				(vector->list (vector-ref t 3)))
 			     (print " ] }"))
 		   *profile-call-tables*))
-	     (print "]}"))))
+	     (print "],"))))
       (else
        (with-output-to-port *profile-port*
 	  (lambda ()
@@ -1462,3 +1481,48 @@
 			    (print " ] }"))
 		  *profile-call-tables*))
 	    (print "],")))))
+
+;*---------------------------------------------------------------------*/
+;*    profile-symtable ...                                             */
+;*---------------------------------------------------------------------*/
+(define (profile-symtable trc symtable conf)
+   (cond
+      ((string-contains trc "format:memviz")
+       (with-output-to-port *profile-port*
+	  (lambda ()
+	     (display "\"symbols\": ")
+	     (json-array 2 (lambda (entry)
+			      (printf "  { \"point\": ~a, \"type\": \"~a\", \"name\": \"~a\", \"endpoint\": ~a }"
+				 (car entry) (cadr entry) (caddr entry) (cadddr entry)))
+		(filter (lambda (entry) (eq? (cadr entry) 'fun)) symtable))
+	     (print ","))))
+      (else
+       (with-output-to-port *profile-port*
+	  (lambda ()
+	     (print "symbols:")
+	     (for-each (lambda (entry)
+			  (print "  " (car entry) ": " (caddr entry)
+			     " (" (cadr entry) ")"))
+		symtable))))))
+
+;*---------------------------------------------------------------------*/
+;*    json-array ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (json-array margin proc lst::pair-nil)
+   (cond
+      ((null? lst)
+       (display "[]"))
+      ((null? (cdr lst))
+       (display "[")
+       (proc (car lst))
+       (display "]"))
+      (else
+       (print "[")
+       (let loop ((lst (cdr lst)))
+	  (proc (car lst))
+	  (if (null? (cdr lst))
+	      (display "\n]")
+	      (begin
+		 (print ",")
+		 (loop (cdr lst))))))))
+
