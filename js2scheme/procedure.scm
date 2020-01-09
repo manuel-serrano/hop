@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Tue Jan  7 15:18:56 2020 (serrano)                */
+;*    Last change :  Thu Jan  9 18:27:50 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -502,7 +502,7 @@
 	    (argsvals (map (lambda (a) (eval-procedure a fix)) args)))
 	 (if (eq? funvals 'top)
 	     (begin
-		(for-each (lambda (a) (escape! a fix)) args)
+		;;(for-each (lambda (a) (escape! a fix)) args)
 		(for-each (lambda (a) (escape! a fix)) argsvals)
 		(escape! this fix))
 	     (let ((vals* (map (lambda (fv) (call fv argsvals fix)) funvals)))
@@ -683,19 +683,34 @@
       (with-access::J2SExpr fun (%info)
 	 (cond
 	    ((node-procedure-info? %info)
-	     (when (and (node-procedure-info-optimizablep %info)
-			(pair? (node-procedure-info-vals %info)))
-		(set! protocol
-		   (if (correct-arities? (node-procedure-info-vals %info)
-			  (length args))
-		       'procedure-this
-		       'procedure-this-arity))))
+	     (when (pair? (node-procedure-info-vals %info))
+		(if (node-procedure-info-optimizablep %info)
+		    (set! protocol
+		       (if (correct-arities? (node-procedure-info-vals %info)
+			      (length args))
+			   'procedure-this
+			   'procedure-this-arity))
+		    (set! protocol
+		       (if (correct-arities? (node-procedure-info-vals %info)
+			      (length args))
+			   'function
+			   'function-arity)))))
 	    ((fun-procedure-info? %info)
 	     (when (fun-procedure-info-optimizablep %info)
 		(set! protocol
 		   (if (correct-arities? (list fun) (length args))
 		       'procedure-this
 		       'procedure-this-arity))))))
+      (when (>=fx (config-get conf :verbose 0) 3)
+	 (case protocol
+	    ((procedure-this)
+	     (fprintf (current-error-port) " ~a+++" (caddr loc)))
+	    ((procedure-this-arity)
+	     (fprintf (current-error-port) " ~a++" (caddr loc)))
+	    ((function)
+	     (fprintf (current-error-port) " ~a+" (caddr loc)))
+	    ((function-arity)
+	     (fprintf (current-error-port) " ~a" (caddr loc)))))
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
