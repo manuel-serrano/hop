@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Dec 21 09:06:31 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Sun Jan  5 07:42:04 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
 ;*    -------------------------------------------------------------    */
@@ -191,8 +191,6 @@
 						(if (eq? n old) new n))
 					  v)))))))
 	 (class-all-fields (object-class parent))))
-
-   
    
    (define (inline-filter-dynamic-targets cli)
       ;; select the function to be inlined on a dynamic call site.
@@ -309,7 +307,8 @@
       (let ((call (callloginfo-call cli)))
 	 (with-access::J2SCall call (fun loc)
 	    (cond
-	       ((isa? fun J2SAccess)
+	       ((and (isa? fun J2SAccess)
+		     (config-get conf :optim-inline-method #f))
 		(inline-call-method! cli fuel allcnt))
 	       ((not (isa? fun J2SRef))
 		0)
@@ -472,6 +471,9 @@
    (with-access::J2SDecl decl (usecnt)
       (when (or (>fx usecnt 0)
 		(not (isa? decl J2SDeclFun))
+		(and (isa? decl J2SDeclFun)
+		     (with-access::J2SDeclFun decl (val)
+			(isa? val J2SSvc)))
 		(decl-usage-has? decl '(eval)))
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val)
@@ -792,12 +794,14 @@
 			     (<=fx (function-size val)
 				(min limit (function-max-expansion val)))
 			     (check-id id)
-			     (not (function-self-recursive? val)))
+			     (not (function-self-recursive? val))
+			     (not (isa? val J2SSvc)))
 		     val))))))
 
    (define (find-inline-methods this fun arity)
       (with-access::J2SAccess fun (obj field)
-	 (when (isa? field J2SString)
+	 (when (and (isa? field J2SString)
+		    (config-get conf :optim-inline-method #f))
 	    (with-access::J2SString field (val)
 	       (let* ((mets (filter (lambda (m::struct)
 				       (let ((f (protoinfo-method m)))
@@ -872,7 +876,8 @@
 	 ((eq? protocol 'spread)
 	  (call-default-walker))
 	 ((isa? fun J2SAccess)
-	  (or (inline-access-call this fun args loc) this))
+	  (or (inline-access-call this fun args loc)
+	      (call-default-walker)))
 	 ((isa? fun J2SRef)
 	  (or (inline-ref-call this fun thisarg args loc)
 	      (call-default-walker)))

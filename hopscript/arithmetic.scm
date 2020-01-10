@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Wed Oct 30 07:06:39 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Sun Jan  5 18:33:02 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
 ;*=====================================================================*/
@@ -43,6 +43,7 @@
 	   (inline /pow2s32::int32 x::int32 y::long)
 	   (inline /pow2u32::uint32 x::uint32 y::long)
 	   (inline /pow2fx::long n::long k::long)
+	   (inline /integer::obj ::double ::double)
 	   
 	   (inline %$$II ::long ::long)
 	   (%$$NN ::obj ::obj)
@@ -164,7 +165,16 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (/pow2fx::long n::long k::long)
    (/fx n (bit-lsh 1 k)))
- 
+
+;*---------------------------------------------------------------------*/
+;*    /integer ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (/integer x::double y::double)
+   (let ((v (/fl x y)))
+      (if (integerfl? v)
+	  (flonum->fixnum v)
+	  v)))
+
 ;*---------------------------------------------------------------------*/
 ;*    negjs ...                                                        */
 ;*    -------------------------------------------------------------    */

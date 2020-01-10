@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Dec 26 06:39:37 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Thu Jan  9 18:44:55 2020 (serrano)                */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
 ;*=====================================================================*/
@@ -569,7 +569,7 @@
 
 	 
    (define (call-super-method fun args)
-      (call-unknown-function fun '(this) args))
+      (call-unknown-function 'direct fun '(this) args))
 
    (define (Array? self)
       (is-builtin-ref? self 'Array))
@@ -630,12 +630,12 @@
 					 (j2s-scheme arg mode return conf))
 				    args))))))
 		(else
-		 (call-unknown-function fun
+		 (call-unknown-function 'direct fun
 		    (list (box (j2s-scheme obj mode return conf)
 			     (j2s-type obj) conf))
 		    args))))
 	    (else
-	     (call-unknown-function fun
+	     (call-unknown-function 'direct fun
 		(list
 		   (box (j2s-scheme obj mode return conf) (j2s-type obj) conf))
 		args)))))
@@ -698,15 +698,17 @@
 				       (cache cache)
 				       (obj (J2SHopRef s)))))
 			     `(let ((,s ,self))
-				 ,(call-unknown-function f (list 'this) args)))
+				 ,(call-unknown-function 'direct
+				     f (list 'this) args)))
 			  (let* ((self (j2s-scheme obj mode return conf))
 				 (s (gensym '%obj-profile))
 				 (f (duplicate::J2SAccess fun
-				       (cspecs '(pmap vtable-dummy-profile))
+				       (cspecs '(pmap-dummy-profile vtable-dummy-profile))
 				       (cache cache)
 				       (obj (J2SHopRef s)))))
 			     `(let ((,s ,self))
-				 ,(call-unknown-function f (list s) args))))))
+				 ,(call-unknown-function 'direct
+				     f (list s) args))))))
 		  ((isa? obj J2SRef)
 		   (call-ref-method obj ccache acache ccspecs fun obj args))
 		  ((isa? obj J2SParen)
@@ -846,9 +848,9 @@
       (with-access::J2SWithRef fun (id withs loc)
 	 (let loop ((withs withs))
 	    (if (null? withs)
-		(call-unknown-function fun '((js-undefined)) args)
+		(call-unknown-function 'direct fun '((js-undefined)) args)
 		`(if ,(j2s-in? loc `(& ,(symbol->string id)) (car withs) conf)
-		     ,(call-unknown-function
+		     ,(call-unknown-function 'direct
 			 (j2s-get loc (car withs) #f 'object
 			    `(& ,(symbol->string id)) 'string 'any conf #f #f)
 			(list (car withs)) args)
@@ -881,49 +883,78 @@
 	 (else
 	  (error "js-scheme" "Should not be here" (j2s->list fun)))))
 
-   (define (call-unknown-function fun self::pair-nil args)
-      (let* ((len (length args))
-	     (call (if (>=fx len 11)
-		       'js-calln
-		       (string->symbol (format "js-call~a" len)))))
-	 (with-access::J2SCall this (loc cache profid)
-	    (cond
-	       ((> (config-get conf :debug 0) 0)
-		`(,(symbol-append call '/debug)
-		  ,j2s-unresolved-call-workspace
-		  ',loc
-		  ,(j2s-scheme fun mode return conf)
-		  ,@self
-		  ,@(j2s-scheme args mode return conf)))
-	       ((and (config-get conf :profile-call #f) (>=fx profid 0))
-		(let* ((f (gensym '%fun-profile))
-		       (call `(,call ,j2s-unresolved-call-workspace
-				 ,f
-				 ,@self
-				 ,@(j2s-scheme args mode return conf))))
-		   `(let ((,f ,(j2s-scheme fun mode return conf)))
-		       ,(when (isa? fun J2SAccess)
-			   (with-access::J2SAccess fun (obj)
-			      (let ((o (j2s-scheme obj mode return conf)))
-				 (cmap-profile profid o))))
-		       ,(funcall-profile profid f call))))
-	       (cache
-		`(js-call/cache
-		    ,j2s-unresolved-call-workspace
-		    ,(js-pcache cache)
-		    ,(j2s-scheme fun mode return conf)
-		    ,@self
-		    ,@(j2s-scheme args mode return conf)))
-	       ((eq? (j2s-type fun) 'function)
-		`(,(symbol-append call '/function) ,j2s-unresolved-call-workspace
-		    ,(j2s-scheme fun mode return conf)
-		    ,@self
-		    ,@(j2s-scheme args mode return conf)))
+   (define (call-unknown-function protocol fun self::pair-nil args)
+      (with-access::J2SCall this (loc cache profid)
+	 (let* ((len (length args))
+		(call (if (>=fx len 11)
+			  'js-calln
+			  (string->symbol (format "js-call~a" len)))))
+	    (case protocol
+	       ((function)
+		(cond
+		   ((> (config-get conf :debug 0) 0)
+		    `(,(symbol-append call '/debug)
+		      ,j2s-unresolved-call-workspace
+		      ',loc
+		      ,(j2s-scheme fun mode return conf)
+		      ,@self
+		      ,@(j2s-scheme args mode return conf)))
+		   ((and (config-get conf :profile-call #f) (>=fx profid 0))
+		    (let* ((f (gensym '%fun-profile))
+			   (call `(,call ,j2s-unresolved-call-workspace
+				     ,f
+				     ,@self
+				     ,@(j2s-scheme args mode return conf))))
+		       `(let ((,f ,(j2s-scheme fun mode return conf)))
+			   ,(when (and (isa? fun J2SAccess)
+				       (config-get conf :profile-cmap #f))
+			       (with-access::J2SAccess fun (obj)
+				  (let ((o (j2s-scheme obj mode return conf)))
+				     (cmap-profile profid o))))
+			   ,(funcall-profile profid f call))))
+		   (else
+		    `(with-access::JsFunction ,(j2s-scheme fun mode return conf) (procedure)
+			(procedure ,@self ,@(j2s-scheme args mode return conf))))))
 	       (else
-		`(,call ,j2s-unresolved-call-workspace
-		    ,(j2s-scheme fun mode return conf)
-		    ,@self
-		    ,@(j2s-scheme args mode return conf)))))))
+		(cond
+		   ((> (config-get conf :debug 0) 0)
+		    `(,(symbol-append call '/debug)
+		      ,j2s-unresolved-call-workspace
+		      ',loc
+		      ,(j2s-scheme fun mode return conf)
+		      ,@self
+		      ,@(j2s-scheme args mode return conf)))
+		   ((and (config-get conf :profile-call #f) (>=fx profid 0))
+		    (let* ((f (gensym '%fun-profile))
+			   (call `(,call ,j2s-unresolved-call-workspace
+				     ,f
+				     ,@self
+				     ,@(j2s-scheme args mode return conf))))
+		       `(let ((,f ,(j2s-scheme fun mode return conf)))
+			   ,(when (and (isa? fun J2SAccess)
+				       (config-get conf :profile-cmap #f))
+			       (with-access::J2SAccess fun (obj)
+				  (let ((o (j2s-scheme obj mode return conf)))
+				     (cmap-profile profid o))))
+			   ,(funcall-profile profid f call))))
+		   (cache
+		    `(js-call/cache
+			,j2s-unresolved-call-workspace
+			,(js-pcache cache)
+			,(j2s-scheme fun mode return conf)
+			,@self
+			,@(j2s-scheme args mode return conf)))
+		   ((eq? (j2s-type fun) 'function)
+		    `(,(symbol-append call '/function)
+		      ,j2s-unresolved-call-workspace
+		      ,(j2s-scheme fun mode return conf)
+		      ,@self
+		      ,@(j2s-scheme args mode return conf)))
+		   (else
+		    `(,call ,j2s-unresolved-call-workspace
+			,(j2s-scheme fun mode return conf)
+			,@self
+			,@(j2s-scheme args mode return conf)))))))))
 
    (define (call-eval-function fun args)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1.1
@@ -941,19 +972,49 @@
    (define (call-unresolved-function fun thisarg args)
       (if (is-eval? fun)
 	  (call-eval-function fun args)
-	  (call-unknown-function fun
+	  (call-unknown-function 'direct fun
 	     (j2s-scheme thisarg mode return conf) args)))
 
    (define (call-scheme this fun args)
       `(,(j2s-scheme fun mode return conf)
 	,@(map (lambda (a) (j2s-scheme a mode return conf)) args)))
 
+   (define (call-scheme-nothis this fun args)
+      (if (isa? fun J2SRef)
+	  (with-access::J2SRef fun (decl)
+	     (with-access::J2SDecl decl (id)
+		`(,(j2s-fast-id id)
+		  ,@(map (lambda (a) (j2s-scheme a mode return conf)) args))))
+	  (call-scheme this fun args)))
+
+   (define (call-scheme-this this fun thisarg args)
+      `(,(j2s-scheme fun mode return conf)
+	,@(j2s-scheme thisarg mode return conf)
+	,@(map (lambda (a) (j2s-scheme a mode return conf)) args)))
+
+   (define (call-scheme-this-arity this fun thisarg args)
+      (let ((len (length args)))
+	 `(,(if (>=fx len 11)
+		'js-calln/procedure
+		(string->symbol (format "js-call~a/procedure" len)))
+	   ,(j2s-scheme fun mode return conf)
+	   ,@(j2s-scheme thisarg mode return conf)
+	   ,@(map (lambda (a) (j2s-scheme a mode return conf)) args))))
+
    (with-access::J2SCall this (loc profid fun thisarg args protocol cache cspecs)
       (let loop ((fun fun))
 	 (epairify loc
 	    (cond
 	       ((eq? (j2s-vtype fun) 'procedure)
-		(call-scheme this fun args))
+		(case protocol
+		   ((procedure-this)
+		    (call-scheme-this this fun thisarg args))
+		   ((procedure-this-arity)
+		    (call-scheme-this-arity this fun thisarg args))
+		   ((procedure-nothis)
+		    (call-scheme-nothis this fun args))
+		   (else
+		    (call-scheme this fun args))))
 	       ((eq? protocol 'spread)
 		(j2s-scheme-call-spread this mode return conf))
 	       ((isa? fun J2SAccess)
@@ -997,14 +1058,14 @@
 	       ((isa? fun J2SPragma)
 		(call-pragma fun args))
 	       ((not (isa? fun J2SRef))
-		(call-unknown-function fun
+		(call-unknown-function protocol fun
 		   (j2s-scheme thisarg mode return conf) args))
 	       ((read-only-function fun)
 		=>
 		(lambda (fun)
 		   (call-known-function protocol profid fun thisarg args)))
 	       (else
-		(call-unknown-function fun
+		(call-unknown-function protocol fun
 		   (j2s-scheme thisarg mode return conf) args)))))))
 
 ;*---------------------------------------------------------------------*/

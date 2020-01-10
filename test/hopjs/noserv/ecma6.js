@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/ecma6.js        */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/ecma6.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Apr 19 14:21:00 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Last change :  Sun Jan  5 18:25:00 2020 (serrano)                */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 6 features                               */
 /*=====================================================================*/
@@ -169,7 +169,6 @@ function mdna() {
 function mdnb() {
    var test = { a: 1 };   
    
-   console.log( 0/0, Object.is(NaN, 0/0) );
    return Object.is('foo', 'foo')
       && !Object.is('foo', 'bar')
       && !Object.is([], [])

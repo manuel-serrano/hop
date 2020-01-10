@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Oct  8 13:15:37 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Sun Jan  5 19:43:25 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -605,14 +605,18 @@
 		(name "post-url")
 		(body (lambda ()
 			 (post
-			    (if (js-function? success)
-				(lambda (x)
-				   (js-worker-exec (js-current-worker) "post" #t
-				      (lambda ()
+			    (lambda (x)
+			       (js-worker-exec (js-current-worker) "post" #t
+				  (lambda ()
+				     (if (js-function? success)
 					 (js-call1 %this success %this
-					    (scheme->js x)))))
-				scheme->js)
-			    fail)))))
+					    (scheme->js x))
+					 (scheme->js x)))))
+			    (lambda (x)
+			       (tprint "IN POST-URL " x)
+			       (js-worker-exec (js-current-worker) "post" #t
+				  (lambda ()
+				     (fail x)))))))))
 	  (js-undefined))
 	 (else
 	  (with-access::JsGlobalObject %this (js-promise)
@@ -621,18 +625,22 @@
 			       (lambda (_ resolve reject)
 				  (thread-start!
 				     (instantiate::hopthread
-					(name "post-url")
+					(name "post-url-promise")
 					(body (lambda ()
 						 (post
 						    (lambda (x)
-						       (js-promise-async p
+						       (js-worker-exec (js-current-worker) "post" #t
 							  (lambda ()
-							     (js-promise-resolve p
-								(scheme->js x)))))
+							     (js-promise-async p
+								(lambda ()
+								   (js-promise-resolve p
+								      (scheme->js x)))))))
 						    (lambda (x)
-						       (js-promise-async p
+						       (js-worker-exec (js-current-worker) "post" #t
 							  (lambda ()
-							     (js-promise-reject p x))))))))))
+							     (js-promise-async p
+								(lambda ()
+								   (js-promise-reject p x))))))))))))
 			       2 "executor"))))
 		p))))))
 

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Dec 19 08:52:29 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Wed Jan  8 16:02:59 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -297,10 +297,14 @@
 	     (hopc-j2s-flags-set! (cons* :optim-integer #t (hopc-j2s-flags))))
 	    (("-fno-integer" (help "Disable integer optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-integer #f (hopc-j2s-flags))))
-	    (("-finlining" (help "Enable method inlining (-Ox)"))
+	    (("-finlining" (help "Enable function inlining (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-inline #t (hopc-j2s-flags))))
-	    (("-fno-inlining" (help "Disable method inlining"))
+	    (("-fno-inlining" (help "Disable function inlining"))
 	     (hopc-j2s-flags-set! (cons* :optim-inline #f (hopc-j2s-flags))))
+	    (("-finlining-method" (help "Enable method inlining (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-inline-method #t (hopc-j2s-flags))))
+	    (("-fno-inlining-method" (help "Disable method inlining"))
+	     (hopc-j2s-flags-set! (cons* :optim-inline-method #f (hopc-j2s-flags))))
 	    (("-fshared-pcache" (help "Share pcaches (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :shared-pcache #t (hopc-j2s-flags))))
 	    (("-fno-shared-pcache" (help "Disable share pcaches"))
@@ -317,6 +321,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-arguments #t (hopc-j2s-flags))))
 	    (("-fno-arguments" (help "Disable arguments optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-arguments #f (hopc-j2s-flags))))
+	    (("-fprocedure" (help "Enable procedure optimization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-procedure #t (hopc-j2s-flags))))
+	    (("-fno-procedure" (help "Disable procedure optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-procedure #f (hopc-j2s-flags))))
 	    (("-fcce" (help "Enable common inline caching (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-cce #t (hopc-j2s-flags))))
 	    (("-fno-cce" (help "Disable common inline caching"))
@@ -375,6 +383,8 @@
 	    (("--profile-alloc" (help "Alloc profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile-alloc #t (hopc-j2s-flags))))
+	    (("--profile-symbols" (help "Profile with a symbol table"))
+	     (hopc-j2s-flags-set! (cons* :profile-symbols #t (hopc-j2s-flags))))
 	    (("--profile-mem?level" (help "Memory profiling mode (see bmem)"))
 	     (if (string=? level "")
 		 (hopc-bigloo-profile-options-set! '("-g2" "-gtrace5"))

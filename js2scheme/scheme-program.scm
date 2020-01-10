@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Dec  2 11:13:15 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Wed Jan  8 20:10:15 2020 (serrano)                */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
 ;*=====================================================================*/
@@ -55,6 +55,8 @@
 	       `(define %call-locations ',(call-locations this)))
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
+		   ,@(filter fundef? globals)
+		   ,@(filter fundef? body)
 		   (define __js_strings (&init!))
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
@@ -62,8 +64,8 @@
 		   (define %cnst-table ,cnsttable)
 		   ,@esimports
 		   ,esexports
-		   ,@globals
-		   ,@(exit-body body conf)))
+		   ,@(filter nofundef? globals)
+		   ,@(exit-body (filter nofundef? body) conf)))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
@@ -78,6 +80,8 @@
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
 		   (define __js_strings (&init!))
+		   ,@(filter fundef? globals)
+		   ,@(filter fundef? body)
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
 		   (define %pcache
@@ -97,8 +101,8 @@
 		   (define %cnst-table ,cnsttable)
 		   ,@esimports
 		   ,esexports
-		   ,@globals
-		   ,@(exit-body body conf)))
+		   ,@(filter nofundef? globals)
+		   ,@(exit-body (filter nofundef? body) conf)))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
@@ -115,14 +119,16 @@
 		(jsthis `(with-access::JsGlobalObject %this (js-object)
 			    (js-new0 %this js-object)))
 		(thunk `(lambda ()
+			   ,@(filter fundef? globals)
+			   ,@(filter fundef? body)
 			   (define _ (set! __js_strings (&init!)))
 			   (define %cnst-table ,cnsttable)
 			   (define %scope (nodejs-new-scope-object %this))
 			   (define this ,jsthis)
 			   ,@esimports
 			   ,esexports
-			   ,@globals
-			   ,@(exit-body body conf))))
+			   ,@(filter nofundef? globals)
+			   ,@(exit-body (filter nofundef? body) conf))))
 	    `(,jsmod
 		;; (&begin!) must not be a constant! (_do not_ use quote)
 		,`(define __js_strings (&begin!))
@@ -164,7 +170,7 @@
 				 `(let ((,id ,thunk))
 				     ,id))
 			      thunk))
-		      ,(profilers conf)
+		      ,(profilers this conf)
 		      ,(js-wait-worker '%worker)))
 		(&end!)))))
 
@@ -206,6 +212,8 @@
 		    (epairify-deep loc
 		       `(lambda (%this this %scope %module)
 			   (&with!
+			      ,@(filter fundef? globals)
+			      ,@(filter fundef? body)
 			      (%define-cnst-table ,(length cnsts))
 			      (%define-pcache ,pcache-size)	       
 			      (define %pcache
@@ -227,8 +235,8 @@
 			      (define %cnst-table ,cnsttable)
 			      ,@esimports
 			      ,esexports
-			      ,@globals
-			      ,@(exit-body body conf)))))
+			      ,@(filter nofundef? globals)
+			      ,@(exit-body (filter nofundef? body) conf)))))
 		   (main
 		    ;; generate a main hopscript module 
 		    (j2s-main-module/workers name cnsttable
@@ -249,6 +257,8 @@
 	 (epairify-deep loc
 	    `(,module 
 		;;; (&begin!) must not be a constant! (_do not_ use quote)
+		,@(filter fundef? globals)
+		,@(filter fundef? body)
 		(define __js_strings (&begin!))
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
@@ -283,20 +293,20 @@
 		(define %cnst-table ,cnsttable)
 		,@esimports
 		,esexports
-		,@globals
+		,@(filter nofundef? globals)
 		,@toplevel
 		,@(if (config-get conf :libs-dir #f)
 		      `((hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
 		      '())
 		(define (main args)
 		   ,`(define __js_strings (&init!))
-		   ,(profilers conf)
+		   ,(profilers this conf)
 		   (hopscript-install-expanders!)
 		   (hop-port-set! -1)
 		   (hop-ssl-port-set! -1)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (set! !process (nodejs-process %worker %this))
-		   ,@(exit-body body conf))
+		   ,@(exit-body (filter nofundef? body) conf))
 		(&end!))))))
 
 ;*---------------------------------------------------------------------*/
@@ -518,16 +528,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (profilers conf)
+(define (profilers this conf)
    (when (or (config-get conf :profile-call #f)
 	     (config-get conf :profile-cmap #f)
 	     (config-get conf :profile-cache #f)
 	     (config-get conf :profile-hint #f)
 	     (config-get conf :profile-alloc #f))
-      `(js-profile-init ',(filter-config conf)
-	  ,(if (config-get conf :profile-call #f)
-	       '(vector %source %call-log %cmap-log %call-locations)
-	       #f))))
+      `(js-profile-init ',(cons* :hash (j2ssum this) (filter-config conf))
+	  ,(cond
+	      ((and (config-get conf :profile-call #f)
+		    (config-get conf :profile-cmap #f))
+	       '(vector %source %call-log %cmap-log %call-locations))
+	      ((config-get conf :profile-call #f)
+	       '(vector %source %call-log #f %call-locations))
+	      ((config-get conf :profile-cmap #f)
+	       '(vector %source #f %cmap-log %call-locations))
+	      (else
+	       #f))
+	  ,(when (config-get conf :profile-symbols #f)
+	      `',(profile-symbols this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    filter-config ...                                                */
@@ -636,6 +655,101 @@
 	    ((at ?- ?point)
 	     (vector-set! vec profid point)))))
    vec)
+
+;*---------------------------------------------------------------------*/
+;*    profile-symbols ...                                              */
+;*---------------------------------------------------------------------*/
+(define (profile-symbols this::J2SProgram)
+   (sort (lambda (x y) (<fx (car x) (car y)))
+      (with-access::J2SProgram this (call-size)
+	 (collect-functions* this))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-functions* ::J2SNode ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-functions* this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    collect-functions* ::J2SDeclFun ...                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-functions* this::J2SDeclFun)
+   (with-access::J2SDeclFun this (profid loc id val parent)
+      (with-access::J2SFun val (body)
+	 (if parent
+	     (collect-functions* body)
+	     (with-access::J2SBlock body (endloc)
+		(cons (list (caddr loc) 'fun id (caddr endloc))
+		   (collect-functions* body)))))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-functions* ::J2SAssig ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-functions* this::J2SAssig)
+   (with-access::J2SAssig this (lhs rhs loc)
+      (let loop ((rhs rhs))
+	 (cond
+	    ((isa? rhs J2SFun)
+	     (with-access::J2SFun rhs (body)
+		(with-access::J2SBlock body (endloc)
+		   (cons (list (+fx 2 (caddr loc)) 'fun (expr->id lhs) (caddr endloc))
+		      (collect-functions* body)))))
+	    ((isa? rhs J2SMethod)
+	     (with-access::J2SMethod rhs (function)
+		(loop function)))
+	    (else
+	     (call-default-walker))))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-functions* ::J2SCall ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-functions* this::J2SCall)
+   (with-access::J2SCall this (fun loc)
+      (if (isa? fun J2SRef)
+	  (with-access::J2SRef fun (decl)
+	     (if (isa? decl J2SDeclFun)
+		 (with-access::J2SDecl decl (id)
+		    (cons (list (caddr loc) 'call id)
+		       (call-default-walker)))
+		 (call-default-walker)))
+	  (call-default-walker))))
+	       
+;*---------------------------------------------------------------------*/
+;*    collect-fuctions* ::J2SFun ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-functions* this::J2SFun)
+   (with-access::J2SFun this (loc body)
+      (with-access::J2SBlock body (endloc)
+	 (cons (list (caddr loc) 'fun '%%anonymous (caddr endloc))
+	    (collect-functions* body)))))
+
+;*---------------------------------------------------------------------*/
+;*    expr->id ::J2SExpr ...                                           */
+;*---------------------------------------------------------------------*/
+(define-generic (expr->id this::J2SExpr)
+   '?)
+
+;*---------------------------------------------------------------------*/
+;*    expr->id ::J2SRef ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (expr->id this::J2SRef)
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (id)
+	 id)))
+
+;*---------------------------------------------------------------------*/
+;*    expr->id ::J2SAccess ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (expr->id this::J2SAccess)
+   (with-access::J2SAccess this (obj field)
+     (symbol-append (expr->id obj) '|.| (expr->id field)))) 
+
+;*---------------------------------------------------------------------*/
+;*    expr->id ::J2SString ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (expr->id this::J2SString)
+   (with-access::J2SString this (val)
+      (string->symbol val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-program-checksum! ...                                        */
@@ -789,3 +903,17 @@
 	  (vector-set! table cache `#(,point "xxx" put)))))
    (call-default-walker))
    
+;*---------------------------------------------------------------------*/
+;*    fundef? ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (fundef? e)
+   (match-case e
+      ((define (?- . ?arg) . ?-) #t)
+      ((define ?- (labels ((?id . ?-)) ?id)) #t)
+      (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    nofundef? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (nofundef? e)
+   (not (fundef? e)))

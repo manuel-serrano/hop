@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Dec 14 17:50:39 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Sun Jan  5 18:22:39 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -295,14 +295,6 @@
 			 (obj id)
 			 (fname (cadr loc))
 			 (location (caddr loc)))))
-;* 		  ((and (eq? id 'service) (eq-conf-lang? conf "hopscript")) */
-;* 		   (raise                                              */
-;* 		      (instantiate::&io-parse-error                    */
-;* 			 (proc "symbol resolution (symbol)")           */
-;* 			 (msg "Illegal parameter name")                */
-;* 			 (obj id)                                      */
-;* 			 (fname (cadr loc))                            */
-;* 			 (location (caddr loc)))))                     */
 		  ((find-decl id (cdr params))
 		   (raise
 		      (instantiate::&io-parse-error

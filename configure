@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Dec  7 06:31:50 2019 (serrano)                */
-#*    Copyright   :  2004-19 Manuel Serrano                            */
+#*    Last change :  Thu Jan  2 07:10:00 2020 (serrano)                */
+#*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -1692,13 +1692,12 @@ rm -f $deb 2> /dev/null
 echo "#!/bin/sh" > $deb
 echo "#* Automatically generated file (don't edit) */" >> $deb
 
-
 cat $deb.in \
   | sed -e "s|#!/bin/sh||" \
         -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
         -e "s|@VERSION@|$version|" \
         -e "s|@MINOR@|$minorversion|" \
-	> $deb  
+	>> $deb  
 chmod a+rx $deb
  
 # android

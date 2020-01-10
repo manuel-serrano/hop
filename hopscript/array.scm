@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Dec 25 07:49:43 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Sat Jan  4 07:41:28 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
 ;*=====================================================================*/
@@ -1137,6 +1137,9 @@
 		       ;; slow copy
 		       (copy-array-slow dst i src 0 (js-get-length src %this)))))
 	     (copy-array-slow dst i src 0 (js-get-length src %this))))
+
+      (define (copy-proxy src dst i)
+	 (copy-array-slow dst i src 0 (js-get-length src %this)))
       
       (let* ((o (js-toobject %this this))
 	     (l (cons o l))
@@ -1163,6 +1166,10 @@
 		   (loop (cdr l)
 		      (fixnum->uint32
 			 (copy-array (car l) arr (uint32->fixnum i)))))
+		  ((js-proxy? (car l))
+		   (loop (cdr l)
+		      (fixnum->uint32
+			 (copy-proxy (car l) arr (uint32->fixnum i)))))
 		  ((<u32 i ilen)
 		   (vector-set! vec (uint32->fixnum i) (car l))
 		   (loop (cdr l) (+u32 i #u32:1)))

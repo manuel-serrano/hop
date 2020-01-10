@@ -3,12 +3,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Tue Dec 17 07:57:10 2019 (serrano)                */
+;*    Last change :  Tue Dec 31 14:21:02 2019 (serrano)                */
 ;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
 ;*    -------------------------------------------------------------    */
-;*    This optimization consists in transforming global VAR decl into  */
+;*    This optimization transforms global VAR declarations into        */
 ;*    LET-OPT bindings.                                                */ 
 ;*=====================================================================*/
 
@@ -236,9 +236,10 @@
 	 (j2s-find-init-blocks rhs block fun)
 	 (when (isa? lhs J2SRef)
 	    (with-access::J2SRef lhs (decl)
-	       (unless (or (j2s-let? decl) (j2s-param? decl))
+	       ;;(unless (or (j2s-let? decl) (j2s-param? decl))
+	       (unless (j2s-param? decl)
 		  ;; skip let/const declarations
-		  (with-access::J2SDecl decl (%info %%dump binder)
+		  (with-access::J2SDecl decl (%info %%dump binder id)
 		     (if (isa? %info J2SNarrowInfo)
 			 (with-access::J2SNarrowInfo %info (useblocks defblock deffun)
 			    (when block
@@ -259,7 +260,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-find-init-blocks this::J2SRef block fun)
    (with-access::J2SRef this (decl)
-      (unless (or (j2s-let? decl) (j2s-param? decl))
+      ;;(unless (or (j2s-let? decl) (j2s-param? decl))
+      (unless (j2s-param? decl)
 	 ;; skip let/const declarations
 	 (with-access::J2SDecl decl (%info)
 	    (if (isa? %info J2SNarrowInfo)
@@ -466,7 +468,16 @@
    (with-access::J2SBlock this (nodes)
       (set! nodes (filter! (lambda (n) (not (isa? n J2SNop))) nodes))
       this))
-   
+
+;*---------------------------------------------------------------------*/
+;*    j2s-narrow-body! ::J2SLetBlock ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-narrow-body! this::J2SLetBlock)
+   (call-default-walker)
+   (with-access::J2SLetBlock this (decls)
+      (set! decls (filter! (lambda (n) (not (isa? n J2SNop))) decls))
+      this))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-lift-inits! ...                                              */
 ;*---------------------------------------------------------------------*/

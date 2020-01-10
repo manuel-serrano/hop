@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Dec 23 06:57:52 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Jan  1 07:36:00 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -865,6 +865,9 @@
 			     (tmp (j2s-fast-id id)))
 			  `((,tmp ,fun)
 			    (,var ,(j2sfun->scheme val tmp #f mode return conf)))))))
+;* 	       ((eq? vtype 'procedure)                                 */
+;* 		`((,id                                                 */
+;* 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f)))) */
 	       ((decl-usage-has? d '(call))
 		`((,(j2s-fast-id id)
 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f))))

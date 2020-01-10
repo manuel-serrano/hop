@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/serv/webService.js     */
+/*    serrano/prgm/project/hop/hop/test/hopjs/serv/webService.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  11 14:00:00 2015                         */
-/*    Last change :  Fri Oct  6 09:38:20 2017 (serrano)                */
-/*    Copyright   :  2015-17 Inria                                     */
+/*    Last change :  Sun Jan  5 19:50:57 2020 (serrano)                */
+/*    Copyright   :  2015-20 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing WebService                                               */
 /*=====================================================================*/

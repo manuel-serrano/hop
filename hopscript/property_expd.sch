@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Dec 19 08:13:16 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Last change :  Tue Jan  7 14:36:17 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -390,6 +390,8 @@
 		    `(if (eq? %cmap (js-pcache-amap ,cache))
 			 ,(loop 'amap)
 			 ,(loop (cdr cs))))
+		   ((pmap-dummy-profile)
+		    (loop (cdr cs)))
 		   ((vtable-dummy-profile)
 		    `(begin
 			;; this fake entry is used when profiling
@@ -735,7 +737,12 @@
 		 (if (null? cs)
 		     (if (or (memq 'pmap ccspecs) (memq 'pmap-inline ccspecs))
 			 `(if (eq? (js-pcache-cmap ,ccache) #t)
-			      ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc)
+			      ,(if (memq 'pmap-inline ccspecs)
+				   `(begin
+				       (with-access::JsPropertyCache ,ccache (function)
+					  (set! function #f))
+				       ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc))
+				   (calln-uncachable %this ocspecs obj prop args ccache ocache loc))
 			      ,(calln-miss %this obj prop args ccache ocache loc ccspecs ocspecs))
 			 (calln-uncachable %this ocspecs obj prop args ccache ocache loc))
 		     (case (car cs)
@@ -891,7 +898,12 @@
    (define (call/tmp %this ccache fun this args)
       (let ((len (length args)))
          `(if (eq? (js-pcache-owner ,ccache) ,fun)
-              ((js-pcache-method ,ccache) ,this ,@args)
+	      (let ((idx (js-pcache-index ,ccache)))
+		  ;; this fake entry is used when profiling
+		  ;; method calls
+		  (js-profile-log-cache ,ccache :pmap #t)
+		  (js-profile-log-index idx)
+		  ((js-pcache-method ,ccache) ,this ,@args))
               ,(case len
                   ((0 1 2 3 4 5 6 7 8)
                    (let ((caller (symbol-append 'js-call/cache-miss

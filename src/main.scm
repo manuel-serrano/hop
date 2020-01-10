@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Oct 14 10:33:45 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Tue Jan  7 15:48:04 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -225,7 +225,7 @@
 		  (nodejs-load path path %global %module %worker)))))
       ;; profiling
       (when (hop-profile)
-	 (js-profile-init `(:server #t) #f))
+	 (js-profile-init `(:server #t) #f #f))
       ;; rc.js file
       (when (string? (hop-rc-loaded))
 	 (javascript-rc %global %module %worker))

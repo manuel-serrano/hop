@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Dec 20 19:12:29 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Sun Jan  5 18:23:13 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
 ;*=====================================================================*/
@@ -70,7 +70,8 @@
 	   __js2scheme_hintnum
 	   __js2scheme_pce
 	   __js2scheme_module
-	   __js2scheme_newtarget)
+	   __js2scheme_newtarget
+	   __js2scheme_procedure)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -201,6 +202,7 @@
 	  j2s-clevel-stage
 	  j2s-method-stage
 	  j2s-return-stage
+	  j2s-newtarget-stage
 	  j2s-inline-stage
 	  j2s-cps-stage
 	  j2s-objinit-stage
@@ -209,7 +211,6 @@
 	  j2s-tyflow-stage
 	  j2s-sweep-stage
 	  j2s-hintnum-stage
-	  j2s-newtarget-stage
 	  j2s-propcache-stage
 	  j2s-instanceof-stage
 	  j2s-propcce-stage
@@ -225,6 +226,7 @@
 	  j2s-constrsize-stage
 	  j2s-unthis-stage
 	  j2s-arguments-stage
+	  j2s-procedure-stage
 	  j2s-scheme-stage))
       (else
        (j2s-plain-driver))))
@@ -475,14 +477,16 @@
       (when (>=fx l 900)
 	 (unless (memq :optim-integer o)
 	    (set! o (cons* :optim-integer #t o)))
-	 (unless (memq :optim-inline o)
-	    (set! o (cons* :optim-inline #t o)))
+	 (unless (memq :optim-inline-method o)
+	    (set! o (cons* :optim-inline-method #t o)))
 	 (unless (memq :optim-globprop o)
 	    (set! o (cons* :optim-globprop #t o)))
 	 (unless (memq :optim-loopspec o)
 	    (set! o (cons* :optim-loopspec #t o)))
 	 (unless (memq :optim-arguments o)
 	    (set! o (cons* :optim-arguments #t o)))
+	 (unless (memq :optim-procedure o)
+	    (set! o (cons* :optim-procedure #t o)))
 	 )
       (when (>=fx l 3)
 	 (unless (memq :optim-literals o)
@@ -523,6 +527,8 @@
 	    (set! o (cons* :optim-clevel #t o)))
 	 (unless (memq :optim-callapply o)
 	    (set! o (cons* :optim-callapply #t o)))
+	 (unless (memq :optim-inline o)
+	    (set! o (cons* :optim-inline #t o)))
 	 (unless (memq :optim-uninit o)
 	    (set! o (cons* :optim-uninit #t o))))
       (when (>=fx l 1)
