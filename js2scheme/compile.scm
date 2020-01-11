@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Jan  5 18:23:13 2020 (serrano)                */
+;*    Last change :  Fri Jan 10 08:03:17 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -473,6 +473,10 @@
 	    (set! o (cons* :profile-method #t o)))
 	 (unless (memq :profile-cmap o)
 	    (set! o (cons* :profile-cmap #t o))))
+      ;; memory profile
+      (when (config-get args :profile-mem #f)
+	 (unless (memq :profile-ident o)
+	    (set! o (cons* :profile-ident #t o))))
       ;; optimization
       (when (>=fx l 900)
 	 (unless (memq :optim-integer o)

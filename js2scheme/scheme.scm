@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jan  1 07:36:00 2020 (serrano)                */
+;*    Last change :  Fri Jan 10 07:57:42 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -794,7 +794,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-let-decl-toplevel::pair-nil d::J2SDeclInit mode return conf)
    (with-access::J2SDeclInit d (val id hint scope loc)
-      (let ((ident (j2s-decl-scheme-id d)))
+      (let ((ident (j2s-profile-id (j2s-decl-scheme-id d) loc conf)))
 	 (cond
 	    ((or (not (isa? val J2SFun))
 		 (isa? val J2SSvc)
@@ -811,7 +811,7 @@
 	    ((decl-usage-has? d '(ref get new set eval))
 	     (let ((fun (jsfun->lambda val mode return conf
 			   `(js-get ,ident (& "prototype") %this) #f))
-		   (tmp (j2s-fast-id id)))
+		   (tmp (j2s-profile-id (j2s-fast-id id) loc conf)))
 		`(begin
 		    (define ,tmp ,fun)
 		    (define ,ident
@@ -824,9 +824,10 @@
 			       ,(caddr loc)))
 			  '()))))
 	    ((decl-usage-has? d '(call))
-	     `(define ,(j2s-fast-id id)
-		 ,(jsfun->lambda val mode return conf
-		     `(js-get ,(j2s-fast-id id) (& "prototype") %this) #f)))
+	     (let ((fastid (j2s-profile-id (j2s-fast-id id) loc conf)))
+		`(define ,fastid
+		    ,(jsfun->lambda val mode return conf
+			`(js-get ,fastid (& "prototype") %this) #f))))
 	    (else
 	     '())))))
 
@@ -837,7 +838,7 @@
    
    (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return conf singledecl
 	      typed)
-      (with-access::J2SDeclInit d (id vtype)
+      (with-access::J2SDeclInit d (id vtype loc)
 	 (let* ((ident (j2s-decl-scheme-id d))
 		(var (if typed (type-ident ident vtype conf) ident))
 		(val (j2sdeclinit-val-fun d)))
@@ -850,7 +851,7 @@
 		(with-access::J2SFun val (decl)
 		   (if (isa? decl J2SDecl)
 		       (let ((id (j2sfun-id val))
-			     (tmp (j2s-fast-id id))
+			     (tmp (j2s-profile-id (j2s-fast-id id) loc conf))
 			     (proc (gensym 'proc))
 			     (^tmp (j2s-decl-scheme-id decl))
 			     (fun (jsfun->lambda val mode return conf
@@ -862,14 +863,11 @@
 				     ,proc))))
 		       (let ((fun (jsfun->lambda val mode return conf
 				     `(js-get ,ident (& "prototype") %this) #f))
-			     (tmp (j2s-fast-id id)))
+			     (tmp (j2s-profile-id (j2s-fast-id id) loc conf)))
 			  `((,tmp ,fun)
 			    (,var ,(j2sfun->scheme val tmp #f mode return conf)))))))
-;* 	       ((eq? vtype 'procedure)                                 */
-;* 		`((,id                                                 */
-;* 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f)))) */
 	       ((decl-usage-has? d '(call))
-		`((,(j2s-fast-id id)
+		`((,(j2s-profile-id (j2s-fast-id id) loc conf)
 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f))))
 	       (else
 		'())))))
@@ -2577,7 +2575,8 @@
       (with-access::J2SRef clazz (decl loc)
 	 (let* ((len (length args))
 		(fun (j2s-scheme clazz mode return conf))
-		(fid (with-access::J2SDecl decl (id) (j2s-fast-id id)))
+		(fid (with-access::J2SDecl decl (id loc)
+			(j2s-profile-id (j2s-fast-id id) loc conf)))
 		(obj (gensym '%obj)))
 	    `(let ((,obj ,(object-alloc clazz fun)))
 		,(if (constructor-no-return? decl)

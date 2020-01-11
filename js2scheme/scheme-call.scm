@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Jan  9 18:44:55 2020 (serrano)                */
+;*    Last change :  Fri Jan 10 08:16:08 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -870,16 +870,16 @@
    (define (call-known-function protocol profid fun::J2SDecl thisarg::pair-nil args)
       (cond
 	 ((isa? fun J2SDeclFun)
-	  (with-access::J2SDeclFun fun (id)
+	  (with-access::J2SDeclFun fun (id loc)
 	     (let ((val (j2sdeclinit-val-fun fun)))
 		(check-hopscript-fun-arity val id args)
 		(let ((%gen (if (typed-generator? fun) '(%gen) '())))
 		   (call-fun-function profid val thisarg protocol
-		      (j2s-fast-id id) %gen args)))))
+		      (j2s-profile-id (j2s-fast-id id) loc conf) %gen args)))))
 	 ((j2s-let-opt? fun)
-	  (with-access::J2SDeclInit fun (id val)
+	  (with-access::J2SDeclInit fun (id val loc)
 	     (call-fun-function profid val thisarg protocol
-		(j2s-fast-id id) '() args)))
+		(j2s-profile-id (j2s-fast-id id) loc conf) '() args)))
 	 (else
 	  (error "js-scheme" "Should not be here" (j2s->list fun)))))
 
@@ -982,8 +982,8 @@
    (define (call-scheme-nothis this fun args)
       (if (isa? fun J2SRef)
 	  (with-access::J2SRef fun (decl)
-	     (with-access::J2SDecl decl (id)
-		`(,(j2s-fast-id id)
+	     (with-access::J2SDecl decl (id loc)
+		`(,(j2s-profile-id (j2s-fast-id id) loc conf)
 		  ,@(map (lambda (a) (j2s-scheme a mode return conf)) args))))
 	  (call-scheme this fun args)))
 

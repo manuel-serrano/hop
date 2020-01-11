@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Jan  2 08:57:33 2020 (serrano)                */
+;*    Last change :  Fri Jan 10 08:09:37 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -113,7 +113,7 @@
       (let ((val (declfun-fun this)))
 	 (with-access::J2SFun val (params mode vararg body name generator)
 	    (let* ((scmid (j2s-decl-scheme-id this))
-		   (fastid (j2s-fast-id id)))
+		   (fastid (j2s-profile-id (j2s-fast-id id) loc conf)))
 	       (epairify-deep loc
 		  (case scope
 		     ((none)
@@ -179,7 +179,7 @@
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator
 					constrsize method new-target)
-	       (let* ((fastid (j2s-fast-id id))
+	       (let* ((fastid (j2s-profile-id (j2s-fast-id id) loc conf))
 		      (lparams (length params))
 		      (arity (j2s-function-arity val conf))
 		      (minlen (if (eq? mode 'hopscript) (j2s-minlen val) -1))
@@ -268,7 +268,7 @@
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator)
 	       (let* ((scmid (j2s-decl-scheme-id this))
-		      (fastid (j2s-fast-id id)))
+		      (fastid (j2s-profile-id (j2s-fast-id id) loc conf)))
 		  (unless (j2s-fun-no-closure? this)
 		     (case scope
 			((none)
@@ -297,7 +297,7 @@
 (define-method (j2s-scheme this::J2SDeclSvc mode return conf)
    (with-access::J2SDeclSvc this (loc id val scope)
       (let ((scmid (j2s-decl-scheme-id this))
-	    (fastid (j2s-fast-id id))
+	    (fastid (j2s-profile-id (j2s-fast-id id) loc conf))
 	    (fun (if (isa? val J2SFun)
 		     val
 		     (with-access::J2SMethod val (function)
@@ -330,7 +330,7 @@
 	     (type-ident idthis vtype conf))
 	  idthis))
    
-   (define (lambda-or-labels rtype %gen this id args body)
+   (define (lambda-or-labels rtype %gen this id args body loc)
       ;; in addition to the user explicit arguments, this and %gen
       ;; are treated as:
       ;;   - some typed functions are optimized and they don't expect a this
@@ -340,7 +340,7 @@
       (let* ((targs (if this (cons this args) args))
 	     (gtargs (if %gen (cons '%gen targs) targs)))
 	 (if id
-	     (let ((%id (j2s-fast-id id)))
+	     (let ((%id (j2s-profile-id (j2s-fast-id id) loc conf)))
 		`(labels ((,%id ,gtargs ,body)) ,%id))
 	     `(,(type-ident 'lambda rtype conf) ,gtargs ,body))))
 
@@ -350,23 +350,23 @@
 	    (type-ident a vtype conf))))
 		    
    (define (fixarg-lambda fun id body)
-      (with-access::J2SFun fun (idgen idthis thisp params rtype)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype loc)
 	 (let ((args (map j2s-type-scheme params)))
 	    (lambda-or-labels rtype idgen
 	       (type-this idthis thisp)
-	       (unless (isa? fun J2SArrow) id) args body))))
+	       (unless (isa? fun J2SArrow) id) args body loc))))
    
    (define (rest-lambda fun id body)
-      (with-access::J2SFun fun (idgen idthis thisp params rtype)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype loc)
 	 (let ((args (j2s-scheme params mode return conf)))
 	    (lambda-or-labels rtype idgen
 	       (type-this idthis thisp)
-	       (unless (isa? fun J2SArrow) id) args body))))
+	       (unless (isa? fun J2SArrow) id) args body loc))))
    
    (define (normal-vararg-lambda fun id body)
       ;; normal mode: arguments is an alias
       (let ((id (or id (gensym 'fun))))
-	 (with-access::J2SFun fun (idgen idthis thisp rtype vararg argumentsp)
+	 (with-access::J2SFun fun (idgen idthis thisp rtype vararg argumentsp loc)
 	    (let ((rest (if (isa? argumentsp J2SDeclArguments)
 			    (with-access::J2SDeclArguments argumentsp (argid)
 			       argid)
@@ -378,11 +378,12 @@
 			   (config-get conf :optim-arguments))
 		      (list rest)
 		      rest)
-		  (jsfun-normal-vararg-body fun body id rest conf))))))
+		  (jsfun-normal-vararg-body fun body id rest conf)
+		  loc)))))
    
    (define (strict-vararg-lambda fun id body)
       ;; strict mode: arguments is initialized on entrance
-      (with-access::J2SFun fun (idgen idthis thisp rtype vararg argumentsp)
+      (with-access::J2SFun fun (idgen idthis thisp rtype vararg argumentsp loc)
 	 (let ((rest (if (isa? argumentsp J2SDeclArguments)
 			 (with-access::J2SDeclArguments argumentsp (argid)
 			    argid)
@@ -393,7 +394,8 @@
 			(config-get conf :optim-arguments))
 		   (list rest)
 		   rest)
-	       (jsfun-strict-vararg-body fun body id rest conf)))))
+	       (jsfun-strict-vararg-body fun body id rest conf)
+	       loc))))
 
    (with-access::J2SFun this (loc vararg mode params generator name ismethodof)
       (let* ((id (or (j2sfun-id this)
@@ -858,7 +860,7 @@
 		   (configurable #t)
 		   (enumerable #t))))))
    
-   (define (optim-arguments-prelude argumentsp params body)
+   (define (optim-arguments-prelude argumentsp params body loc)
       (with-access::J2SDeclArguments argumentsp (argid alloc-policy mode)
 	 (if (eq? alloc-policy 'lazy)
 	     `(let* ((%len (vector-length ,argid))
@@ -889,11 +891,12 @@
 		       (loop (cdr ,rest) (+fx %i 1))))
 		 (js-bind! %this arguments (& "callee")
 		    :value (js-make-function %this
-			      ,(j2s-fast-id id) 0 ,(symbol->string! id))
+			      ,(j2s-profile-id (j2s-fast-id id) loc conf)
+			      0 ,(symbol->string! id))
 		    :enumerable #f)
 		 ,body))))
 	     
-   (define (regular-arguments-prelude argumentsp params body)
+   (define (regular-arguments-prelude argumentsp params body loc)
       `(let ((arguments
 		(js-arguments %this
 		   (make-vector (length ,rest) (js-absent)))))
@@ -925,14 +928,15 @@
 		(loop (cdr ,rest) (+fx %i 1))))
 	  (js-bind! %this arguments (& "callee")
 	     :value (js-make-function %this
-		       ,(j2s-fast-id id) 0 ,(symbol->string! id))
+		       ,(j2s-profile-id (j2s-fast-id id) loc conf) 0
+		       ,(symbol->string! id))
 	     :enumerable #f)
 	  ,body))
    
-   (with-access::J2SFun this (params argumentsp)
+   (with-access::J2SFun this (params argumentsp loc)
       (if (config-get conf :optim-arguments)
-	  (optim-arguments-prelude argumentsp params body)
-	  (regular-arguments-prelude argumentsp params body))))
+	  (optim-arguments-prelude argumentsp params body loc)
+	  (regular-arguments-prelude argumentsp params body loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-function-src ...                                             */

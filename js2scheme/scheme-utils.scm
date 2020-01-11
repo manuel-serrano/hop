@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Dec 21 09:20:59 2019 (serrano)                */
+;*    Last change :  Fri Jan 10 07:59:48 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -38,6 +38,7 @@
 	   (epairify loc expr)
 	   (epairify-deep loc expr)
 	   (strict-mode? mode)
+	   (j2s-profile-id id id conf)
 	   (j2s-fast-id id)
 	   (j2s-fast-constructor-id id)
 	   (j2s-scheme-id id pref)
@@ -155,6 +156,16 @@
 ;*---------------------------------------------------------------------*/
 (define (strict-mode? mode)
    (or (eq? mode 'strict) (eq? mode 'hopscript)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-profile-id ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-profile-id id loc conf)
+   (if (config-get conf :profile-ident #f)
+       (string->symbol (format "~a<@~a:~a@>" id (cadr loc) (caddr loc)))
+       (begin
+	  (tprint "pas prof " id)
+	  id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-fast-id ...                                                  */

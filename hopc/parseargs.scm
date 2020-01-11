@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jan  8 16:02:59 2020 (serrano)                */
+;*    Last change :  Fri Jan 10 08:13:59 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -386,10 +386,11 @@
 	    (("--profile-symbols" (help "Profile with a symbol table"))
 	     (hopc-j2s-flags-set! (cons* :profile-symbols #t (hopc-j2s-flags))))
 	    (("--profile-mem?level" (help "Memory profiling mode (see bmem)"))
+	     (hopc-j2s-flags-set! (cons* :profile-mem level (hopc-j2s-flags)))
 	     (if (string=? level "")
-		 (hopc-bigloo-profile-options-set! '("-g2" "-gtrace5"))
+		 (hopc-bigloo-profile-options-set! '("-gtraceall"))
 		 (let ((gtrace (string-append "-gtrace" level)))
-		    (hopc-bigloo-profile-options-set! `("-g2" ,gtrace)))))
+		    (hopc-bigloo-profile-options-set! `(,gtrace)))))
 	    (section "Dummy option for Hop command line similarity")
 	    (("--no-server" (help "Hop compatibility, ignored"))
 	     #unspecified)
