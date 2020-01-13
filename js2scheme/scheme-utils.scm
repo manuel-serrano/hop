@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Jan 10 07:59:48 2020 (serrano)                */
+;*    Last change :  Sat Jan 11 07:02:53 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -163,9 +163,7 @@
 (define (j2s-profile-id id loc conf)
    (if (config-get conf :profile-ident #f)
        (string->symbol (format "~a<@~a:~a@>" id (cadr loc) (caddr loc)))
-       (begin
-	  (tprint "pas prof " id)
-	  id)))
+       id))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-fast-id ...                                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Jan  8 20:10:15 2020 (serrano)                */
+;*    Last change :  Sat Jan 11 07:13:19 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -33,8 +33,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SProgram mode return conf)
    
-   (define (j2s-master-module module cnsttable esexports esimports body)
-      (with-access::J2SProgram this (mode pcache-size call-size globals cnsts loc)
+   (define (j2s-master-module module cnsttable esexports esimports scmheaders  body)
+      (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 (list module
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
 	    `(define __js_strings (&begin!))
@@ -55,23 +55,23 @@
 	       `(define %call-locations ',(call-locations this)))
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
-		   ,@(filter fundef? globals)
-		   ,@(filter fundef? body)
 		   (define __js_strings (&init!))
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
 		   (define %worker (js-current-worker))
 		   (define %cnst-table ,cnsttable)
+		   ,@scmheaders
+		   ,@globals
 		   ,@esimports
 		   ,esexports
-		   ,@(filter nofundef? globals)
+		   ,@(filter fundef? body)
 		   ,@(exit-body (filter nofundef? body) conf)))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
    
-   (define (j2s-slave-module module cnsttable esexports esimports body)
-      (with-access::J2SProgram this (mode pcache-size call-size globals cnsts loc)
+   (define (j2s-slave-module module cnsttable esexports esimports scmheaders body)
+      (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
 	    `(define __js_strings (&begin!))
@@ -80,8 +80,6 @@
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
 		   (define __js_strings (&init!))
-		   ,@(filter fundef? globals)
-		   ,@(filter fundef? body)
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
 		   (define %pcache
@@ -99,36 +97,93 @@
 			 '())
 		   (define %worker (js-current-worker))
 		   (define %cnst-table ,cnsttable)
+		   ,@scmheaders
+		   ,@globals
 		   ,@esimports
 		   ,esexports
-		   ,@(filter nofundef? globals)
+		   ,@(filter fundef? body)
 		   ,@(exit-body (filter nofundef? body) conf)))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
    
-   (define (j2s-module module cnsttable esexports esimports body)
+   (define (j2s-module module cnsttable esexports esimports scmheaders body)
       (if (config-get conf :worker-slave)
-	  (j2s-slave-module module cnsttable esexports esimports body)
-	  (j2s-master-module module cnsttable esexports esimports body)))
+	  (j2s-slave-module module cnsttable esexports esimports scmheaders body)
+	  (j2s-master-module module cnsttable esexports esimports scmheaders body)))
+
+   (define (j2s-expr module cnsttable esexports esimports scmheaders body)
+      (with-access::J2SProgram this (globals loc pcache-size call-size cnsts)
+	 (epairify-deep loc
+	    `(lambda (%this this %scope %module)
+		(&with!
+		   (%define-cnst-table ,(length cnsts))
+		   (%define-pcache ,pcache-size)	       
+		   (define %pcache
+		      (js-make-pcache-table ,pcache-size
+			 ,(config-get conf :filename)
+			 ,@(if (config-get conf :profile-cache #f)
+			       (list `',(j2s-profile-cache this conf))
+			       '())))
+		   ,@(if (config-get conf :profile-call #f)
+			 `((define %call-log (make-vector ,call-size #l0))
+			   (define %call-locations ',(call-locations this)))
+			 '())
+		   ,@(if (config-get conf :profile-cmap #f)
+			 `((define %cmap-log (make-vector ,call-size '())))
+			 '())
+		   (define %worker (js-current-worker))
+		   (define %source (or (the-loading-file) "/"))
+		   (define %resource (dirname %source))
+		   (define %cnst-table ,cnsttable)
+		   ,@scmheaders
+		   ,@globals
+		   ,@esimports
+		   ,esexports
+		   ,@scmheaders
+		   ,@(filter fundef? body)
+		   ,@(exit-body (filter nofundef? body) conf))))))
    
-   (define (j2s-main-module/workers name cnsttable esexports esimports body)
-      (with-access::J2SProgram this (mode pcache-size call-size path
+   (define (j2s-let-globals globals)
+      ;; transforms a list of (define id var) into a list of (id var)
+      (map cdr globals))
+
+   (define (j2s-let-headers headers)
+      (filter-map (lambda (hd)
+		     (match-case hd
+			((define ?id ?val) `(,id ,val))
+			(else #f)))
+	 headers))
+   
+   (define (j2s-expr-headers headers)
+      (filter-map (lambda (expr)
+		     (match-case expr
+			((define ?id ?val) #f)
+			((js-undefined) #f)
+			(else expr)))
+	 headers))
+   
+   (define (j2s-main-module/workers name cnsttable esexports esimports scmheaders body)
+      (with-access::J2SProgram this (pcache-size call-size path
 				       globals cnsts loc)
 	 (let* ((jsmod (js-module/main loc name))
 		(jsthis `(with-access::JsGlobalObject %this (js-object)
 			    (js-new0 %this js-object)))
 		(thunk `(lambda ()
-			   ,@(filter fundef? globals)
-			   ,@(filter fundef? body)
-			   (define _ (set! __js_strings (&init!)))
-			   (define %cnst-table ,cnsttable)
-			   (define %scope (nodejs-new-scope-object %this))
-			   (define this ,jsthis)
-			   ,@esimports
-			   ,esexports
-			   ,@(filter nofundef? globals)
-			   ,@(exit-body (filter nofundef? body) conf))))
+			   (let ((_ (set! __js_strings (&init!)))
+				 (%cnst-table ,cnsttable)
+				 (%scope (nodejs-new-scope-object %this))
+				 (this ,jsthis)
+				 ,@(j2s-let-globals globals))
+			      ;; the sole purpose of the scmheaders split
+			      ;; is not minimize letrec* nesting level
+			      (letrec ,(j2s-let-headers scmheaders)
+				 ,@(j2s-expr-headers scmheaders)
+				 ,@esimports
+				 ,esexports
+				 (let ()
+				    ,@(filter fundef? body)
+				    ,@(exit-body (filter nofundef? body) conf)))))))
 	    `(,jsmod
 		;; (&begin!) must not be a constant! (_do not_ use quote)
 		,`(define __js_strings (&begin!))
@@ -176,7 +231,7 @@
 
    (with-access::J2SProgram this (module main nodes headers decls
 					 mode name pcache-size call-size
-					 cnsts globals loc)
+					 cnsts loc)
       (let* ((esimports (j2s-module-imports this))
 	     (esexports (j2s-module-exports this))
 	     (conf (cons* :array (j2s-find-extern-decl headers 'Array)
@@ -201,50 +256,25 @@
 		(flatten-nodes scmnodes)
 		conf))
 	    (else
-	     (let ((body (flatten-nodes
-			    (append scmheaders scmdecls scmclos scmnodes))))
+	     (let ((body (flatten-nodes (append scmdecls scmclos scmnodes))))
 		(cond
 		   (module
 		    ;; a module whose declaration is in the source
-		    (j2s-module module cnsttable esexports esimports body))
+		    (j2s-module module cnsttable esexports esimports scmheaders
+		       body))
 		   ((not name)
 		    ;; a mere expression
-		    (epairify-deep loc
-		       `(lambda (%this this %scope %module)
-			   (&with!
-			      ,@(filter fundef? globals)
-			      ,@(filter fundef? body)
-			      (%define-cnst-table ,(length cnsts))
-			      (%define-pcache ,pcache-size)	       
-			      (define %pcache
-				 (js-make-pcache-table ,pcache-size
-				    ,(config-get conf :filename)
-				    ,@(if (config-get conf :profile-cache #f)
-					  (list `',(j2s-profile-cache this conf))
-					  '())))
-			      ,@(if (config-get conf :profile-call #f)
-				    `((define %call-log (make-vector ,call-size #l0))
-				      (define %call-locations ',(call-locations this)))
-				    '())
-			      ,@(if (config-get conf :profile-cmap #f)
-				    `((define %cmap-log (make-vector ,call-size '())))
-				    '())
-			      (define %worker (js-current-worker))
-			      (define %source (or (the-loading-file) "/"))
-			      (define %resource (dirname %source))
-			      (define %cnst-table ,cnsttable)
-			      ,@esimports
-			      ,esexports
-			      ,@(filter nofundef? globals)
-			      ,@(exit-body (filter nofundef? body) conf)))))
+		    (j2s-expr module cnsttable esexports esimports scmheaders
+		       body))
 		   (main
 		    ;; generate a main hopscript module 
 		    (j2s-main-module/workers name cnsttable
-		       esexports esimports body))
+		       esexports esimports scmheaders body))
 		   (else
 		    ;; generate the module clause
 		    (let ((mod (js-module loc name)))
-		       (j2s-module mod cnsttable esexports esimports body))))))))))
+		       (j2s-module mod cnsttable esexports esimports scmheaders
+			  body))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-main-sans-worker-module ...                                  */
