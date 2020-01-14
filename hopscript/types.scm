@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Dec 24 16:34:05 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Tue Jan 14 10:02:24 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -34,7 +34,9 @@
 
    (extern (include "bglhopscript_malloc.h"))
 
-   (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
+   (extern ($js-init-jsalloc::int ()
+	      "bgl_init_jsalloc")
+	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
