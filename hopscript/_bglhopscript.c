@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Dec  5 18:37:11 2019 (serrano)                */
-/*    Copyright   :  2016-19 Manuel Serrano                            */
+/*    Last change :  Mon Jan 13 18:07:25 2020 (serrano)                */
+/*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */
@@ -13,6 +13,7 @@
 #include <bigloo.h>
 #include "bglhopscript.h"
 #include "bglhopscript_malloc.h"
+#include <pthread.h>
 
 /*---------------------------------------------------------------------*/
 /*    Bigloo backward compatibility                                    */
@@ -49,6 +50,179 @@ obj_t bgl_profile_pcache_tables = BNIL;
 typedef struct BgL_jspropertycachez00_bgl pcache_t;
 
 /*---------------------------------------------------------------------*/
+/*    thread alloc                                                     */
+/*---------------------------------------------------------------------*/
+extern obj_t bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
+static obj_t bgl_make_jsobject_sans( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
+
+#define BUCKET_SIZE 10000
+#define ALLOC_STATS 1   
+#define ALLOC 1
+
+#define declare( sz ) \
+   pthread_mutex_t mutex##sz; \
+   pthread_spinlock_t lock##sz; \
+   pthread_cond_t cond##sz; \
+   static obj_t *preallocs##sz, *nextallocs##sz; \
+   static uint32_t allocidx##sz = 0; \
+   static obj_t *ptr##sz, *end##sz; \
+   static int preallocated##sz = 0; \
+   static long nbprealloc##sz = 0, nballoc##sz = 0
+
+declare( 1 );
+declare( 2 );
+declare( 3 );
+declare( 4 );
+declare( 5 );
+declare( 6 );
+
+/*---------------------------------------------------------------------*/
+/*    prealloc ...                                                     */
+/*---------------------------------------------------------------------*/
+#define prealloc( sz ) \
+   obj_t prealloc##sz() { \
+      switch( preallocated##sz ) { \
+         case 0: { \
+   	 pthread_mutex_lock( &mutex##sz ); \
+   	 if( preallocated##sz == 0 ) { \
+   	    preallocated##sz = 1; \
+   	    pthread_cond_signal( &cond##sz ); \
+   	 } \
+   	 pthread_mutex_unlock( &mutex##sz ); \
+   	 return bgl_make_jsobject_sans( sz, 0L, 0L, 0 ); \
+         } \
+         case 1: \
+   	 return bgl_make_jsobject_sans( sz, 0L, 0L, 0 ); \
+         default: { \
+   	 obj_t *nallocs = preallocs##sz; \
+   	 preallocs##sz = nextallocs##sz; \
+   	 nextallocs##sz = nallocs; \
+   	 ptr##sz = &(preallocs##sz[ 1 ]); \
+   	 end##sz = &(preallocs##sz[ BUCKET_SIZE ]); \
+   	 allocidx##sz = 1; \
+   	 preallocated##sz = 0; \
+   	 return preallocs##sz[ 0 ]; \
+         } \
+      } \
+   }
+
+prealloc( 1 )
+prealloc( 2 )
+prealloc( 3 )
+prealloc( 4 )
+prealloc( 5 )
+prealloc( 6 )
+
+/*---------------------------------------------------------------------*/
+/*    make ...                                                         */
+/*---------------------------------------------------------------------*/
+#if ALLOC == 1
+#  define make_decl( sz ) \
+   obj_t o = ( ptr##sz < end##sz ) ? *ptr##sz++ : prealloc##sz()
+#elif ALLOC == 2 \
+   obj_t o = ( allocidx##sz < BUCKET_SIZE ) \
+      ? preallocs##s[ allocidx##sz++ ] \
+      : (BgL_jsobjectz00_bglt)prealloc##sz()
+#else
+   obj_t o = bgl_make_jsobject_sans( sz, 0L, 0L, 0 )
+#endif
+
+#if ALLOC_STATS
+#  define make_stats( sz ) \
+   nballoc##sz++; \
+   if( nballoc##sz % 1000000 == 0 ) \
+      fprintf( stderr, "alloc=%d prealloc=%d in=%d (%d%%) out=%d\n", \
+	       nballoc##sz, \
+	       nbprealloc##sz, \
+	       nbprealloc##sz * BUCKET_SIZE, \
+	       (long)(100. * (double)nbprealloc##sz * BUCKET_SIZE / ((double)nballoc##sz)), \
+	       nballoc##sz - (nbprealloc##sz * BUCKET_SIZE) )
+#else
+#endif
+   
+  
+#define make( sz ) \
+   static obj_t \
+      bgl_make_jsobject##sz( obj_t constrmap, obj_t __proto__, uint32_t md ) { \
+      pthread_spin_lock( &lock##sz ); \
+      make_decl( sz ); \
+      BgL_jsobjectz00_bglt co = (BgL_jsobjectz00_bglt)(COBJECT( o )); \
+      pthread_spin_unlock( &lock##sz ); \
+      make_stats( sz ); \
+      co->BgL___proto__z00 = __proto__; \
+      co->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
+      BGL_OBJECT_HEADER_SIZE_SET( o, (long)md ); \
+      return o; \
+   }
+
+make( 1 )   
+make( 2 )   
+make( 3 )   
+make( 4 )   
+make( 5 )   
+make( 6 )   
+
+/*---------------------------------------------------------------------*/
+/*    thread_alloc ...                                                 */
+/*---------------------------------------------------------------------*/
+#define thread_alloc( sz ) \
+   void *thread_alloc##sz( void *arg ) { \
+   pthread_mutex_lock( &mutex##sz ); \
+   while( 1 ) { \
+      uint32_t i; \
+      pthread_cond_wait( &cond##sz, &mutex##sz ); \
+      for( i = 0; i < BUCKET_SIZE; i++ ) { \
+	 nextallocs##sz[ i ] = bgl_make_jsobject_sans( sz, 0L, 0L, 0 ); \
+      } \
+      preallocated##sz = 2; \
+   } \
+}
+
+thread_alloc( 1 )
+thread_alloc( 2 )
+thread_alloc( 3 )
+thread_alloc( 4 )
+thread_alloc( 5 )
+thread_alloc( 6 )
+
+/*---------------------------------------------------------------------*/
+/*    init_thread ...                                                  */
+/*---------------------------------------------------------------------*/
+#define init_thread( sz ) { \
+   pthread_t th##sz; \
+   pthread_attr_t thattr##sz; \
+   pthread_mutex_init( &mutex##sz, 0L ); \
+   \
+   pthread_cond_init( &cond##sz, 0L ); \
+   pthread_spin_init( &lock##sz, 0L ); \
+   pthread_attr_init( &thattr##sz ); \
+   \
+   pthread_attr_setdetachstate( &thattr##sz, PTHREAD_CREATE_DETACHED ); \
+   nextallocs##sz = (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * BUCKET_SIZE ); \
+   preallocs##sz = (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * BUCKET_SIZE ); \
+   allocidx##sz = BUCKET_SIZE; \
+   ptr##sz = end##sz = &(nextallocs##sz[ BUCKET_SIZE ]); \
+   preallocated##sz = 0; \
+   GC_pthread_create( &th##sz, &thattr##sz, thread_alloc##sz, 0L ); \
+   } 0
+
+
+void init_alloc() {
+   static int init = 0;
+
+   if( init ) return;
+
+   init = 1;
+
+   init_thread( 1 );
+   init_thread( 2 );
+   init_thread( 3 );
+   init_thread( 4 );
+   init_thread( 5 );
+   init_thread( 6 );
+}
+
+/*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
 /*    bgl_make_pcache_table ...                                        */
 /*    -------------------------------------------------------------    */
@@ -66,6 +240,8 @@ bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t thread, obj_t templa
 
    bgl_profile_pcache_tables = MAKE_PAIR( MAKE_PAIR( (obj_t)pcache, BINT( len ) ), bgl_profile_pcache_tables );
 
+   init_alloc();
+   
    return obj;
 }
 
@@ -95,7 +271,19 @@ bgl_profile_get_pcaches() {
    }
    return res;
 }
-   
+
+obj_t bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
+   switch( constrsize ) {
+      case 1: return bgl_make_jsobject1( constrmap, __proto__, mode );
+      case 2: return bgl_make_jsobject2( constrmap, __proto__, mode );
+      case 3: return bgl_make_jsobject3( constrmap, __proto__, mode );
+      case 4: return bgl_make_jsobject4( constrmap, __proto__, mode );
+      case 5: return bgl_make_jsobject5( constrmap, __proto__, mode );
+      case 6: return bgl_make_jsobject6( constrmap, __proto__, mode );
+      default: return bgl_make_jsobject_sans( constrsize, constrmap, __proto__, mode );
+   }
+}
+
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
 /*    bgl_make_jsobject ...                                            */
@@ -109,7 +297,7 @@ bgl_profile_get_pcaches() {
 /*         (__proto__ __proto__))                                      */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
+bgl_make_jsobject_sans( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
    long bsize = JSOBJECT_SIZE + VECTOR_SIZE + ( (constrsize-1) * OBJ_SIZE );
    BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)HOP_MALLOC( bsize );
    obj_t vector;
