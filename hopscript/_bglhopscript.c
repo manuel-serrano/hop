@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Jan 14 09:20:10 2020 (serrano)                */
+/*    Last change :  Wed Jan 15 05:55:28 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -90,7 +90,7 @@ declare( 6 );
       pthread_cond_wait( &cond##sz, &mutex##sz ); \
       nbprealloc##sz++; \
       for( i = 0; i < BUCKET_SIZE( sz ); i++ ) { \
-	 nextallocs##sz[ i ] = bgl_make_jsobject_sans( sz, 0L, 0L, 0 ); \
+	 nextallocs##sz[ i ] = bgl_make_jsobject_sans( sz, 0L, 0L, (uint32_t)arg ); \
       } \
       alloc_state##sz = PREALLOC_STATE_DONE; \
    } \
@@ -107,17 +107,17 @@ thread_alloc( 6 )
 /*    prealloc ...                                                     */
 /*---------------------------------------------------------------------*/
 #define prealloc( sz ) \
-   obj_t prealloc##sz() { \
+   obj_t prealloc##sz( uint32_t md ) { \
       switch( alloc_state##sz ) { \
          case PREALLOC_STATE_IDLE: { \
       	    pthread_mutex_lock( &mutex##sz ); \
 	    alloc_state##sz = PREALLOC_STATE_ALLOCATING; \
 	    pthread_cond_signal( &cond##sz ); \
    	    pthread_mutex_unlock( &mutex##sz ); \
-   	    return bgl_make_jsobject_sans( sz, 0L, 0L, 0 ); \
+   	    return bgl_make_jsobject_sans( sz, 0L, 0L, md ); \
             } \
          case PREALLOC_STATE_ALLOCATING: \
-   	    return bgl_make_jsobject_sans( sz, 0L, 0L, 0 ); \
+   	    return bgl_make_jsobject_sans( sz, 0L, 0L, md ); \
          default: { \
 	    obj_t tmp; \
       	    pthread_mutex_lock( &mutex##sz ); \
@@ -167,11 +167,11 @@ prealloc( 6 )
          o = preallocs##sz[ allocidx##sz ]; \
          preallocs##sz[ allocidx##sz++ ] = 0; \
       } else { \
-         o = prealloc##sz(); \
+         o = prealloc##sz( md ); \
       }
 #else
 #  define make_decl( sz ) \
-      obj_t o = bgl_make_jsobject_sans( sz, 0L, 0L, 0 )
+      obj_t o = bgl_make_jsobject_sans( sz, 0L, 0L, md )
 #endif
   
 #define make( sz ) \
@@ -184,7 +184,6 @@ prealloc( 6 )
       make_stats( sz ); \
       co->BgL___proto__z00 = __proto__; \
       co->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
-      BGL_OBJECT_HEADER_SIZE_SET( o, (long)md ); \
       return o; \
    }
 
@@ -198,7 +197,7 @@ make( 6 )
 /*---------------------------------------------------------------------*/
 /*    init_thread ...                                                  */
 /*---------------------------------------------------------------------*/
-#define init_thread( sz ) { \
+#define init_thread( sz, md ) { \
    pthread_t th##sz; \
    pthread_attr_t thattr##sz; \
    pthread_mutex_init( &mutex##sz, 0L ); \
@@ -214,7 +213,7 @@ make( 6 )
       (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * BUCKET_SIZE( sz ) ); \
    allocidx##sz = BUCKET_SIZE( sz ); \
    alloc_state##sz = PREALLOC_STATE_IDLE; \
-   GC_pthread_create( &th##sz, &thattr##sz, thread_alloc##sz, 0L ); \
+   GC_pthread_create( &th##sz, &thattr##sz, thread_alloc##sz, (void *)md ); \
 } 0
 
 
@@ -224,19 +223,19 @@ make( 6 )
 /*    -------------------------------------------------------------    */
 /*    Initialized the multithreaded background allocator.              */
 /*---------------------------------------------------------------------*/
-int bgl_init_jsalloc() {
+int bgl_init_jsalloc( uint32_t md ) {
    static int jsinit = 0;
 
    if( jsinit ) return 1;
 
    jsinit = 1;
 
-   init_thread( 1 );
-   init_thread( 2 );
-   init_thread( 3 );
-   init_thread( 4 );
-   init_thread( 5 );
-   init_thread( 6 );
+   init_thread( 1, md );
+   init_thread( 2, md );
+   init_thread( 3, md );
+   init_thread( 4, md );
+   init_thread( 5, md );
+   init_thread( 6, md );
 
    return 0;
 }
@@ -259,8 +258,6 @@ bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t thread, obj_t templa
 
    bgl_profile_pcache_tables = MAKE_PAIR( MAKE_PAIR( (obj_t)pcache, BINT( len ) ), bgl_profile_pcache_tables );
 
-   bgl_init_jsalloc();
-   
    return obj;
 }
 

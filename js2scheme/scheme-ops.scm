@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Jan  4 06:37:46 2020 (serrano)                */
+;*    Last change :  Wed Jan 15 05:20:12 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2755,7 +2755,18 @@
 	 ((bool)
 	  (binop-flip op left right flip))
 	 (else
-	  (binop-flip (symbol-append op '/overflow) left right flip)))))
+	  (cond
+	     ((eq? op '+fx)
+	      (cond
+		 ((eq? left 1) `(js-int53-inc ,right))
+		 ((eq? right 1) `(js-int53-inc ,left))
+		 (else `(,(symbol-append op '/overflow) ,left ,right))))
+	     ((and (eq? op '-fx) (not flip))
+	      (cond
+		 ((eq? right 1) `(js-int53-dec ,left))
+		 (else `(,(symbol-append op '/overflow) ,left ,right))))
+	     (else
+	      (binop-flip (symbol-append op '/overflow) left right flip)))))))
    
 (define (binop-flonum-flonum op type left right flip)
    (let ((op (if (memq op '(== ===)) '=fl (symbol-append op 'fl))))
