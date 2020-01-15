@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Jan 15 05:55:28 2020 (serrano)                */
+/*    Last change :  Wed Jan 15 06:07:24 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -43,6 +43,7 @@ extern obj_t BGl_JsArrayz00zz__hopscript_typesz00;
 
 extern obj_t bgl_js_profile_allocs;
 obj_t bgl_profile_pcache_tables = BNIL;
+extern int GC_pthread_create();
 
 /*---------------------------------------------------------------------*/
 /*    type alias                                                       */
@@ -90,7 +91,7 @@ declare( 6 );
       pthread_cond_wait( &cond##sz, &mutex##sz ); \
       nbprealloc##sz++; \
       for( i = 0; i < BUCKET_SIZE( sz ); i++ ) { \
-	 nextallocs##sz[ i ] = bgl_make_jsobject_sans( sz, 0L, 0L, (uint32_t)arg ); \
+	 nextallocs##sz[ i ] = bgl_make_jsobject_sans( sz, 0L, 0L, (uint32_t)(long)arg ); \
       } \
       alloc_state##sz = PREALLOC_STATE_DONE; \
    } \
@@ -213,7 +214,7 @@ make( 6 )
       (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * BUCKET_SIZE( sz ) ); \
    allocidx##sz = BUCKET_SIZE( sz ); \
    alloc_state##sz = PREALLOC_STATE_IDLE; \
-   GC_pthread_create( &th##sz, &thattr##sz, thread_alloc##sz, (void *)md ); \
+   GC_pthread_create( &th##sz, &thattr##sz, thread_alloc##sz, (void *)(long)md ); \
 } 0
 
 
