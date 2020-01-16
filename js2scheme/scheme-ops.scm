@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Jan 15 05:20:12 2020 (serrano)                */
+;*    Last change :  Thu Jan 16 18:17:41 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1333,7 +1333,7 @@
 		   (binop-real-xxx '+ type rhs tr right lhs tl left conf #t))
 		  (else
 		   (if-fixnums? left tl right tr
-		      (binop-fixnum-fixnum '+ type
+		      (binop-fixnum-fixnum/conf conf '+ type
 			 (asfixnum left tl)
 			 (asfixnum right tr)
 			 #f)
@@ -1417,7 +1417,7 @@
 			 #f)))
 		  ((and (eq? tl 'number) (eq? tr 'number))
 		   (if-fixnums? left tl right tr
-		      (binop-fixnum-fixnum op type
+		      (binop-fixnum-fixnum/conf conf op type
 			 (asfixnum left tl)
 			 (asfixnum right tr)
 			 #f)
@@ -1432,7 +1432,7 @@
 			    #f))))
 		  (else
 		   (if-fixnums? left tl right tr
-		      (binop-fixnum-fixnum op type
+		      (binop-fixnum-fixnum/conf conf op type
 			 (asfixnum left tl)
 			 (asfixnum right tr)
 			 #f)
@@ -1502,7 +1502,7 @@
 		      #f)))
 	       (else
 		(if-fixnums? left tl right tr
-		   (binop-fixnum-fixnum '* type
+		   (binop-fixnum-fixnum/conf conf '* type
 		      (asfixnum left tl)
 		      (asfixnum right tr)
 		      #f)
@@ -2317,7 +2317,7 @@
 	   (binop-uint32-uint32 op type
 	      (asuint32 left tl) right flip))
 	  ((m64? conf)
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  (else
 	   (case op
@@ -2331,14 +2331,14 @@
 		  (box left tl conf) (box right tr conf) flip))))))
       ((bint)
        (if (m64? conf)
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip)
 	   (binop-int32-int32 op type
 	      left (asint32 right tr) flip)))
       ((integer)
        (cond
 	  ((or (inrange-int30? rhs) (m64? conf))
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  ((inrange-int32? rhs)
 	   (binop-int32-int32 op type
@@ -2353,7 +2353,7 @@
        (binop-flonum-flonum op type
 	  (asreal left tl) right flip))
       ((int53)
-       (binop-fixnum-fixnum op type
+       (binop-int53-int53 op type
 	  (asfixnum left tl) right flip))
       (else
        (cond
@@ -2367,11 +2367,11 @@
 	   (binop-uint32-uint32 op type
 	      (asuint32 left tl) (coerceuint32 right tr conf) flip))
 	  ((and (inrange-uint32? rhs) (m64? conf))
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  (else
 	   `(if (fixnum? ,right)
-		,(binop-fixnum-fixnum op type
+		,(binop-fixnum-fixnum/conf conf op type
 		    (asfixnum left tl) right flip)
 		,(binop-any-any op type
 		   (box left tl conf) (box right tr conf) flip)))))))
@@ -2384,7 +2384,7 @@
       ((int32)
        (cond
 	  ((m64? conf)
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  ((inrange-int32? lhs)
 	   (binop-int32-int32 op type
@@ -2418,7 +2418,7 @@
       ((bint)
        (cond
 	  ((m64? conf)
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  ((inrange-int32? lhs)
 	   (binop-fixnum-fixnum op type
@@ -2438,7 +2438,7 @@
       ((integer)
        (cond
 	  ((m64? conf)
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  ((inrange-uint32? rhs)
 	   (binop-uint32-uint32 op type
@@ -2469,7 +2469,7 @@
 		flip)
 	   (j2s-int53-op 'dec right type))
 	  (else
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      (asfixnum left tl) right flip))))
       (else
        (cond
@@ -2483,11 +2483,11 @@
 	   (binop-int32-int32 op type
 	      (asint32 left tl) (coerceint32 right tr conf) flip))
 	  ((and (inrange-int32? rhs) (m64? conf))
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  (else
 	   `(if (fixnum? ,right)
-		,(binop-fixnum-fixnum op type
+		,(binop-fixnum-fixnum/conf conf op type
 		    (asfixnum left tl) right flip)
 		,(binop-any-any op type
 		    (box left tl conf) (box right tr conf) flip)))))))
@@ -2500,14 +2500,14 @@
 (define (binop-int53-xxx op type lhs tl left rhs tr right conf flip)
    (case tr
       ((int32)
-       (binop-fixnum-fixnum op type left (asfixnum right tr) flip))
+       (binop-int53-int53 op type left (asfixnum right tr) flip))
       ((uint32)
-       (binop-fixnum-fixnum op type left (asfixnum right tr) flip))
+       (binop-int53-int53 op type left (asfixnum right tr) flip))
       ((int53)
-       (binop-fixnum-fixnum op type left right flip))
+       (binop-int53-int53 op type left right flip))
       (else
        `(if (fixnum? ,right)
-	    ,(binop-fixnum-fixnum op type left right flip)
+	    ,(binop-int53-int53 op type left right flip)
 	    ,(if (memq type '(int32 uint32 integer bint real number))
 		 (binop-number-number op type
 		    (box left tl conf) (box right tr conf) flip)
@@ -2520,28 +2520,28 @@
 (define (binop-bint-xxx op type lhs tl left rhs tr right conf flip)
    (case tr
       ((int32)
-       (binop-fixnum-fixnum op type
+       (binop-fixnum-fixnum/conf conf op type
 	  left (asfixnum right tr) flip))
       ((uint32)
        (cond
 	  ((inrange-int32? rhs)
-	   (binop-fixnum-fixnum op type
+	   (binop-fixnum-fixnum/conf conf op type
 	      left (asfixnum right tr) flip))
 	  ((inrange-uint32? lhs)
 	   (binop-uint32-uint32 op type
 	      (asuint32 left tl) right flip))
 	  ((m64? conf)
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  (else
 	   (binop-number-number op type
 	      left (box right tr conf) flip))))
       ((bint)
-       (binop-fixnum-fixnum op type
+       (binop-fixnum-fixnum/conf conf op type
 	  left right flip))
       ((integer)
        (if (m64? conf)
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      left right flip)
 	   `(if (fixnum? ,right)
 		,(binop-fixnum-fixnum op type
@@ -2554,7 +2554,7 @@
       (else
        (cond
 	  ((inrange-int30? rhs)
-	   (binop-fixnum-fixnum op type
+	   (binop-fixnum-fixnum/conf conf op type
 	      left (asfixnum right tr) flip))
 	  ((inrange-int32? rhs)
 	   (binop-int32-int32 op type
@@ -2563,11 +2563,11 @@
 	   (binop-uint32-uint32 op type
 	      (asuint32 left tr) (coerceuint32 right tr conf) flip))
 	  ((and (inrange-uint32? rhs) (m64? conf))
-	   (binop-fixnum-fixnum op type
+	   (binop-int53-int53 op type
 	      left (asfixnum right tr) flip))
 	  (else
 	   `(if (fixnum? ,right)
-		,(binop-fixnum-fixnum op type
+		,(binop-fixnum-fixnum/conf conf op type
 		    left right flip)
 		,(if (memq type '(int32 uint32 integer bint real number))
 		     (binop-number-number op type
@@ -2705,7 +2705,7 @@
 	     (asreal left 'int32) (asreal right 'int32)
 	     flip))
 	 ((int53)
-	  (binop-fixnum-fixnum op type
+	  (binop-int53-int53 op type
 	     (asfixnum left 'int32) (asfixnum right 'int32)
 	     flip))
 	 ((bool)
@@ -2729,14 +2729,27 @@
 	     (asreal left 'uint32) (asreal right 'uint32)
 	     flip))
 	 ((int53)
-	  (binop-fixnum-fixnum op type
+	  (binop-int53-int53 op type
 	     (asfixnum left 'uint32) (asfixnum right 'uint32)
 	     flip))
 	 ((bool)
 	  (binop-flip opu32 left right flip))
 	 (else
 	  (binop-flip (symbol-append opu32 '/overflow) left right flip)))))
-   
+
+(define (binop-fixnum-fixnum/conf conf op type left right flip)
+   (if (m64? conf)
+       (binop-int53-int53 op type left right flip)
+       (binop-fixnum-fixnum op type left right flip)))
+       
+(define (binop-int53-int53 op type left right flip)
+   (let ((tmp (binop-fixnum-fixnum op type left right flip)))
+      (match-case tmp
+	  ((+fx/overflow ?x 1) `(js-int53-inc ,x))
+	  ((+fx/overflow 1 ?x) `(js-int53-inc ,x))
+	  ((-fx/overflow ?x 1) `(js-int53-dec ,x))
+	  (else tmp))))
+
 (define (binop-fixnum-fixnum op type left right flip)
    (let ((op (cond
 		((memq op '(== ===)) '=fx)
@@ -2755,18 +2768,7 @@
 	 ((bool)
 	  (binop-flip op left right flip))
 	 (else
-	  (cond
-	     ((eq? op '+fx)
-	      (cond
-		 ((eq? left 1) `(js-int53-inc ,right))
-		 ((eq? right 1) `(js-int53-inc ,left))
-		 (else `(,(symbol-append op '/overflow) ,left ,right))))
-	     ((and (eq? op '-fx) (not flip))
-	      (cond
-		 ((eq? right 1) `(js-int53-dec ,left))
-		 (else `(,(symbol-append op '/overflow) ,left ,right))))
-	     (else
-	      (binop-flip (symbol-append op '/overflow) left right flip)))))))
+	  (binop-flip (symbol-append op '/overflow) left right flip)))))
    
 (define (binop-flonum-flonum op type left right flip)
    (let ((op (if (memq op '(== ===)) '=fl (symbol-append op 'fl))))
@@ -2838,7 +2840,7 @@
 		  `(,op ,left ,right %this))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-int53-op ...                                                */
+;*    j2s-int53-op ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-int53-op op expr type)
    (let ((op (symbol-append 'js-int53- op)))
