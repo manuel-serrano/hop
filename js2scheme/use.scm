@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Dec 17 09:18:13 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Thu Jan 16 08:31:50 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
 ;*=====================================================================*/
@@ -255,11 +255,12 @@
 ;*    reset-use-count ::J2SDeclInit ...                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-use-count this::J2SDeclInit)
-   (with-access::J2SDeclInit this (usecnt val scope %info)
-      (set! %info this)
-      (when (or (>fx usecnt 0) (eq? scope 'export))
-	 (set! usecnt (if (eq? scope 'export) 1000 0))
-	 (reset-use-count val)))
+   (with-access::J2SDeclInit this (usecnt val scope %info id)
+      (unless (eq? %info this)
+	 (set! %info this)
+	 (when (or (>fx usecnt 0) (eq? scope 'export))
+	    (set! usecnt (if (eq? scope 'export) 1000 0))
+	    (reset-use-count val))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -267,8 +268,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-use-count this::J2SDeclSvc)
    (with-access::J2SDeclSvc this (val id %info)
-      (set! %info this)
-      (reset-use-count val))
+      (unless (eq? %info this)
+	 (set! %info this)
+	 (reset-use-count val)))
    this)
 
 ;*---------------------------------------------------------------------*/

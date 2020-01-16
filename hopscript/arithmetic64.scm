@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Dec 22 06:50:52 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Thu Jan 16 17:56:18 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
 ;*=====================================================================*/
@@ -167,9 +167,6 @@
    (if (pragma::bool "(uint64_t)($1 - -9007199254740992) <= (uint64_t)18014398509481983" v)
        v
        (fixnum->flonum v)))
-;*    (if (<=u64 (fixnum->uint64 (-fx v -9007199254740992)) #u64:)     */
-;*        v                                                            */
-;*        (fixnum->flonum v)))                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */

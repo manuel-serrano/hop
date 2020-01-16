@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Jan 10 08:09:37 2020 (serrano)                */
+;*    Last change :  Thu Jan 16 17:53:04 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -601,7 +601,7 @@
 	       (else
 		`(js-make-function-simple %this ,tmp ,len
 		    ,(symbol->string! name)
-		    ,arity ,minlen ',mode ,(eq? vararg 'rest) ,constrsize)))))))
+		    ,arity ,minlen ',mode ,constrsize)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SFun ...                                          */
