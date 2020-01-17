@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Dec  6 17:48:01 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Fri Jan 17 08:16:50 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
 ;*=====================================================================*/
@@ -60,13 +60,13 @@
 	  (inline +u32/overflow::obj ::uint32 ::uint32)
 	  (+/overflow::obj ::obj ::obj)
 	  
-	  (inline -fx/overflow::obj ::long ::long)
+	  (inline -fx/overflow::obj ::obj ::obj)
 	  (inline -fx32/overflow::obj ::long ::long)
 	  (inline -s32/overflow::obj ::int32 ::int32)
 	  (inline -u32/overflow::obj ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
 	  
-	  (inline *fx/overflow::obj ::long ::long)
+	  (inline *fx/overflow::obj ::obj ::obj)
 	  (inline *s32/overflow::obj ::int32 ::int32)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow::obj ::obj ::obj)))))
@@ -384,8 +384,6 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    +fx/overflow ...                                                 */
-;*    -------------------------------------------------------------    */
-;*    The arguments are 30bit integers encoded into long values.       */
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow x::obj y::obj)
    (cond-expand
@@ -482,11 +480,25 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    -fx/overflow ...                                                 */
-;*    -------------------------------------------------------------    */
-;*    The argument are 30bit integers encoded into long values.        */
 ;*---------------------------------------------------------------------*/
-(define-inline (-fx/overflow x::long y::long)
-   (overflowfx (-fx x y)))
+(define-inline (-fx/overflow x::obj y::obj)
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+       (let ((res::int 0))
+	  (if (pragma::bool "__builtin_ssub_overflow((int)((long)$1), (int)((long)$2), &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)(CINT($1)))+((double)(CINT($2))))"
+		 x y)
+	      (pragma::bint "BINT($1)" res))))
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  (if (pragma::bool "__builtin_ssubl_overflow((long)$1, (long)$2-TAG_INT, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)(CINT($1)))+((double)(CINT($2))))"
+		 x y)
+	      (pragma::bint "(obj_t)($1)" res))))
+      (else
+       (overflowfx (-fx x y)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    -fx32/overflow ...                                               */
@@ -563,10 +575,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    *fx/overflow ...                                                 */
-;*    -------------------------------------------------------------    */
-;*    The argument are 30bit integers encoded into long values.        */
 ;*---------------------------------------------------------------------*/
-(define-inline (*fx/overflow x::long y::long)
+(define-inline (*fx/overflow x::obj y::obj)
    (cond-expand
       ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
        (let ((res::int32 #s32:0))
@@ -585,7 +595,7 @@
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
 	  (cond
-	     ((pragma::bool "__builtin_smull_overflow($1, $2, &$3)"
+	     ((pragma::bool "__builtin_smull_overflow($1-TAG_INT, $2-TAG_INT, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
 		 x y))
@@ -595,7 +605,7 @@
 		  -0.0
 		  (overflowfx res)))
 	     (else
-	      (overflowfx res)))))
+	      (pragma::bint "BINT($1)" res)))))
       (else
        (define (neg? o)
 	  (if (flonum? o)
