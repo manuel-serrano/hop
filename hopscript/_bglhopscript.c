@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Jan 17 07:46:54 2020 (serrano)                */
+/*    Last change :  Fri Jan 17 13:26:40 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -53,7 +53,11 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 /*---------------------------------------------------------------------*/
 /*    thread alloc                                                     */
 /*---------------------------------------------------------------------*/
-#define HOP_THREAD_ALLOC 1
+#if BGL_HAVE_SPINLOCK
+#  define HOP_THREAD_ALLOC 1
+#else
+#  define HOP_THREAD_ALLOC 0
+#endif
 
 extern obj_t bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
 
