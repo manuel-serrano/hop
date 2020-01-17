@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Jan 17 10:07:49 2020 (serrano)                */
+;*    Last change :  Fri Jan 17 10:37:44 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -581,7 +581,7 @@
       ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
        (let ((res::int32 #s32:0))
 	  (cond
-	     ((pragma::bool "__builtin_smul_overflow($1, $2, &$3)"
+	     ((pragma::bool "__builtin_smul_overflow((int)((long)$1), (int)((long)$2) &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
 		 x y))
