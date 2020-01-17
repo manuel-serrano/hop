@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Sun Jun 23 06:28:35 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Fri Jan 17 15:16:10 2020 (serrano)                */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
 ;*    -------------------------------------------------------------    */
@@ -483,9 +483,7 @@
       :value (js-make-function %this js-map-set 2 "set"
 		:prototype (js-undefined))
       :enumerable #f
-      :hidden-class #t)
-   
-   )
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-map-delete ...                                                */
@@ -516,11 +514,6 @@
           (with-access::JsMap this (mapdata)
              (fixnum? (hashtable-get mapdata key)))
           (js-raise-type-error %this "Not a Map" this))))
-
-
-   
-   
-  
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
