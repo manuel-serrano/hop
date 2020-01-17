@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan 10 07:57:42 2020 (serrano)                */
+;*    Last change :  Fri Jan 17 08:44:21 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -522,8 +522,10 @@
 (define-method (j2s-scheme this::J2SLiteralValue mode return conf)
    (with-access::J2SLiteralValue this (val type)
       (cond
-	 ((number? val) (error "j2s-scheme" "should not find a number here" val))
-	 (else val))))
+	 ((number? val)
+	  (error "j2s-scheme" "should not find a number here" val))
+	 (else
+	  val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *int29* ...                                                      */
@@ -562,6 +564,9 @@
 	     ((m64? conf)
 	      val)
 	     ((and (>=fx val (negfx (bit-lsh 1 29))) (<fx val (bit-lsh 1 29)))
+	      val)
+	     ((and (>=fx val (negfx (bit-lsh 1 31))) (<fx val (bit-lsh 1 31))
+		   (=fx (config-get conf :int-size 29) 32))
 	      val)
 	     (else
 	      (fixnum->flonum val))))
