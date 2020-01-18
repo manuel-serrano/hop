@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Thu Jan 16 17:56:18 2020 (serrano)                */
+;*    Last change :  Sat Jan 18 07:21:43 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -54,8 +54,8 @@
 	  (inline js-int53-toint32::int32 ::obj)
 	  (inline js-int53-touint32::uint32 ::obj)
 
-	  (inline js-int53-inc::bint ::bint)
-	  (inline js-int53-dec::bint ::bint)
+	  (inline js-int53-inc::long ::long)
+	  (inline js-int53-dec::long ::long)
 	  
 	  (inline +fx/overflow::obj ::long ::long)
 	  (inline +s32/overflow::obj ::int32 ::int32)
@@ -447,13 +447,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-int53-inc ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-int53-inc x::bint)
+(define-inline (js-int53-inc x::long)
    (if (>fx (bit-rsh x 53) 0) x (+fx x 1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-int53-dec ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-int53-dec x::bint)
+(define-inline (js-int53-dec x::long)
    (if (<fx (bit-rsh x 53) -1) x (-fx x 1)))
 
 ;*---------------------------------------------------------------------*/
