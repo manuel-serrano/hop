@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Dec 14 18:04:32 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Mon Jan 20 09:45:02 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
 ;*    -------------------------------------------------------------    */
@@ -690,6 +690,7 @@
 	 (lbl
 	  ;; in order to inline code generator, the j2sreturn CPS
 	  ;; transformation must know how to map its lbl to a contination
+	  (tprint "THIS=" (j2s->list this))
 	  (error "cps" "generator cannot use inline expression" loc))
 	 (else
 	  (cps stmt
@@ -1255,8 +1256,7 @@
 ;*    yield-expr? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (yield-expr? this kbreaks kcontinues)
-   (let ((v (yield-expr* this kbreaks kcontinues)))
-      (find (lambda (v) v) v)))
+   (pair? (yield-expr* this kbreaks kcontinues '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SNode ...                                        */
@@ -1264,25 +1264,35 @@
 ;*    Returns #t iff a statement contains a YIELD. Otherwise           */
 ;*    returns #f.                                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SNode kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SNode kbreaks kcontinues localrets)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SYield ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SYield kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SYield kbreaks kcontinues localrets)
    (list this))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SReturn ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SReturn kbreaks kcontinues)
-   (list this))
+(define-walk-method (yield-expr* this::J2SReturn kbreaks kcontinues localrets)
+   (with-access::J2SReturn this (from)
+      (if (memq from localrets)
+	  '()
+	  (list this))))
+
+;*---------------------------------------------------------------------*/
+;*    yield-expr* ::J2SBindExit ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (yield-expr* this::J2SBindExit kbreaks kcontinues localrets)
+   (with-access::J2SBindExit this (stmt)
+      (yield-expr* stmt kbreaks kcontinues (cons this localrets))))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SBreak ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SBreak kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SBreak kbreaks kcontinues localrets)
    (with-access::J2SBreak this (target)
       (if (assq target kbreaks)
 	  (list this)
@@ -1291,7 +1301,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SContinue ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SContinue kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SContinue kbreaks kcontinues localrets)
    (with-access::J2SContinue this (target)
       (if (assq target kcontinues)
 	  (list this)
@@ -1300,13 +1310,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SFun kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SFun kbreaks kcontinues localrets)
    '())
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SCase ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SCase kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SCase kbreaks kcontinues localrets)
    (with-access::J2SCase this (expr body)
-      (append (yield-expr* expr kbreaks kcontinues)
-	 (yield-expr* body kbreaks kcontinues))))
+      (append (yield-expr* expr kbreaks kcontinues localrets)
+	 (yield-expr* body kbreaks kcontinues localrets))))

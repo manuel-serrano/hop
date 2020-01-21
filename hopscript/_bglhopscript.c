@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Jan 17 13:26:40 2020 (serrano)                */
+/*    Last change :  Mon Jan 20 07:49:33 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -94,7 +94,7 @@ declare( 6 );
 /*    thread_alloc ...                                                 */
 /*---------------------------------------------------------------------*/
 #define thread_alloc( sz ) \
-   void *thread_alloc##sz( void *arg ) { \
+   void *hop_thread_alloc##sz( void *arg ) { \
    pthread_mutex_lock( &mutex##sz ); \
    while( 1 ) { \
       uint32_t i; \
@@ -219,7 +219,7 @@ make( 6 )
       (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * BUCKET_SIZE( sz ) ); \
    allocidx##sz = BUCKET_SIZE( sz ); \
    alloc_state##sz = PREALLOC_STATE_IDLE; \
-   GC_pthread_create( &th##sz, &thattr##sz, thread_alloc##sz, (void *)(long)md ); \
+   GC_pthread_create( &th##sz, &thattr##sz, hop_thread_alloc##sz, (void *)(long)md ); \
 } 0
 
 

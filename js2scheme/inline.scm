@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Jan  5 07:42:04 2020 (serrano)                */
+;*    Last change :  Mon Jan 20 09:44:54 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -767,7 +767,7 @@
 		       targets leaf limit::long stack::pair-nil
 		       pmethods prgm conf)
    (with-access::J2SFun this (optimize body generator)
-      (when (and optimize (not generator))
+      (when (and optimize (or #t (not generator)))
 	 (set! body
 	    (inline! body
 	       targets leaf limit (cons this stack) pmethods prgm conf)))
