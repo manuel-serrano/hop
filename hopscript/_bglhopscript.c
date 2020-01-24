@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
+/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.tls.c       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Mon Jan 20 07:49:33 2020 (serrano)                */
+/*    Last change :  Fri Jan 24 08:35:21 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -53,175 +53,171 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 /*---------------------------------------------------------------------*/
 /*    thread alloc                                                     */
 /*---------------------------------------------------------------------*/
-#if BGL_HAVE_SPINLOCK
-#  define HOP_THREAD_ALLOC 1
+#define HOP_ALLOC_CLASSIC 1
+#define HOP_ALLOC_TLS 2
+#define HOP_ALLOC_SPINLOCK 3
+
+#if BGL_HAS_THREAD_LOCALSTORAGE == 1
+#  define HOP_ALLOC_POLICY HOP_ALLOC_TLS
+#elif BGL_HAVE_SPINLOCK
+#  define HOP_ALLOC_POLICY HOP_ALLOC_SPINLOCK
 #else
-#  define HOP_THREAD_ALLOC 0
+#  define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC
 #endif
 
 extern obj_t bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
 
-#if HOP_THREAD_ALLOC
+#if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
 static obj_t bgl_make_jsobject_sans( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
 #endif
 
-#define BUCKET_SIZE( sz ) (12800 >> sz)
+#define POOL_SIZE( sz ) (12800 >> sz)
+#define WORK_NUMBER 1
 #define ALLOC_STATS 0  
 
-#define PREALLOC_STATE_IDLE 0
-#define PREALLOC_STATE_ALLOCATING 1
-#define PREALLOC_STATE_DONE 2
-
-#define declare( sz ) \
-   pthread_mutex_t mutex##sz; \
-   pthread_spinlock_t lock##sz; \
-   pthread_cond_t cond##sz; \
-   static obj_t *preallocs##sz, *nextallocs##sz; \
-   static uint32_t allocidx##sz = 0; \
-   static int alloc_state##sz = PREALLOC_STATE_IDLE; \
-   static long nbprealloc##sz = 0, nballoc##sz = 0
-
-#if HOP_THREAD_ALLOC
-declare( 1 );
-declare( 2 );
-declare( 3 );
-declare( 4 );
-declare( 5 );
-declare( 6 );
-#endif
-
 /*---------------------------------------------------------------------*/
-/*    thread_alloc ...                                                 */
-/*---------------------------------------------------------------------*/
-#define thread_alloc( sz ) \
-   void *hop_thread_alloc##sz( void *arg ) { \
-   pthread_mutex_lock( &mutex##sz ); \
-   while( 1 ) { \
-      uint32_t i; \
-      pthread_cond_wait( &cond##sz, &mutex##sz ); \
-      nbprealloc##sz++; \
-      for( i = 0; i < BUCKET_SIZE( sz ); i++ ) { \
-	 nextallocs##sz[ i ] = bgl_make_jsobject_sans( sz, 0L, 0L, (uint32_t)(long)arg ); \
-      } \
-      alloc_state##sz = PREALLOC_STATE_DONE; \
-   } \
-}
-
-#if HOP_THREAD_ALLOC
-thread_alloc( 1 )
-thread_alloc( 2 )
-thread_alloc( 3 )
-thread_alloc( 4 )
-thread_alloc( 5 )
-thread_alloc( 6 )
-#endif
-
-/*---------------------------------------------------------------------*/
-/*    prealloc ...                                                     */
-/*---------------------------------------------------------------------*/
-#define prealloc( sz ) \
-   obj_t prealloc##sz( obj_t constrmap, obj_t proto, uint32_t md ) { \
-      switch( alloc_state##sz ) { \
-         case PREALLOC_STATE_IDLE: { \
-      	    pthread_mutex_lock( &mutex##sz ); \
-	    alloc_state##sz = PREALLOC_STATE_ALLOCATING; \
-	    pthread_cond_signal( &cond##sz ); \
-   	    pthread_mutex_unlock( &mutex##sz ); \
-   	    return bgl_make_jsobject_sans( sz, constrmap, proto, md ); \
-            } \
-         case PREALLOC_STATE_ALLOCATING: \
-   	    return bgl_make_jsobject_sans( sz, constrmap, proto, md ); \
-         default: { \
-	    obj_t tmp; \
-      	    pthread_mutex_lock( &mutex##sz ); \
-   	    obj_t *nallocs = preallocs##sz; \
-   	    preallocs##sz = nextallocs##sz; \
-   	    nextallocs##sz = nallocs; \
-	    alloc_state##sz = PREALLOC_STATE_ALLOCATING; \
-	    pthread_cond_signal( &cond##sz ); \
-      	    pthread_mutex_unlock( &mutex##sz ); \
-   	    allocidx##sz = 0; \
-   	    return bgl_make_jsobject_sans( sz, constrmap, proto, md ); \
-         } \
-      } \
-   }
-
-#if HOP_THREAD_ALLOC
-prealloc( 1 )
-prealloc( 2 )
-prealloc( 3 )
-prealloc( 4 )
-prealloc( 5 )
-prealloc( 6 )
-#endif
-   
-/*---------------------------------------------------------------------*/
-/*    make ...                                                         */
+/*    stat                                                             */
 /*---------------------------------------------------------------------*/
 #if ALLOC_STATS
-#  define make_stats( sz ) \
-      nballoc##sz++; \
-      if( nballoc##sz % 1000000 == 0 ) \
-         fprintf( stderr, "alloc(%d) =%d prealloc=%d in=%d (%d%%) out=%d\n", \
-	          sz, \
-	          nballoc##sz,	  \
-	          nbprealloc##sz, \
-		  nbprealloc##sz * BUCKET_SIZE( sz ), \
-	          (long)(100. * (double)nbprealloc##sz * BUCKET_SIZE( sz ) / ((double)nballoc##sz)), \
-	          nballoc##sz - (nbprealloc##sz * BUCKET_SIZE( sz )) )
+#  define ALLOC_STAT( x ) (x)
 #else
-#  define make_stats( sz )
+#  define ALLOC_STAT( x )
 #endif
 
-#define make( sz ) \
-   static obj_t \
-   bgl_make_jsobject##sz( obj_t constrmap, obj_t __proto__, uint32_t md ) { \
-      pthread_spin_lock( &lock##sz ); \
-      if( allocidx##sz < BUCKET_SIZE( sz ) ) {	\
-         obj_t o = preallocs##sz[ allocidx##sz ]; \
-         preallocs##sz[ allocidx##sz++ ] = 0; \
-	 pthread_spin_unlock( &lock##sz ); \
-	 make_stats( sz ); \
-	 ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL___proto__z00 = __proto__; \
-	 ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
-	 return o; \
-      } else { \
-	 pthread_spin_unlock( &lock##sz ); \
-         return prealloc##sz( constrmap, __proto__, md ); \
-      } \
+/*---------------------------------------------------------------------*/
+/*    spin locks                                                       */
+/*---------------------------------------------------------------------*/
+#if HOP_ALLOC_POLICY == HOP_ALLOC_SPINLOCK
+static pthread_spinlock_t lock1, lock2, lock3, lock4, lock5, lock6;
+
+#  define alloc_spin_init( x, attr ) pthread_spin_init( x, attr )
+#  define alloc_spin_lock( x ) pthread_spin_lock( x )
+#  define alloc_spin_unlock( x ) pthread_spin_unlock( x )
+#else
+#  define alloc_spin_init( x, attr ) 
+#  define alloc_spin_lock( x ) 
+#  define alloc_spin_unlock( x ) 
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    tls                                                              */
+/*---------------------------------------------------------------------*/
+#if HOP_ALLOC_POLICY == HOP_ALLOC_TLS
+#  define HOP_ALLOC_THREAD_DECL BGL_THREAD_DECL
+#else
+#  define HOP_ALLOC_THREAD_DECL
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    alloc pools                                                      */
+/*---------------------------------------------------------------------*/
+typedef struct apool {
+   obj_t *buffer;
+   const uint32_t size;
+   const uint32_t objsize;
+   uint32_t idx;
+} apool_t;
+
+static int pool_queue_idx = 0;
+static int pool_queue_len = 0;
+static apool_t **pool_queue = 0;;
+
+static pthread_mutex_t alloc_pool_mutex;
+static pthread_cond_t alloc_pool_cond;
+
+static HOP_ALLOC_THREAD_DECL apool_t pool1 = {
+   .objsize = 1, .idx = POOL_SIZE( 1 ), .size = POOL_SIZE( 1 ) };
+static HOP_ALLOC_THREAD_DECL apool_t npool1 = {
+   .objsize = 1, .idx = POOL_SIZE( 1 ), .size = POOL_SIZE( 1 ) };
+
+static HOP_ALLOC_THREAD_DECL apool_t pool2 = {
+   .objsize = 2, .idx = POOL_SIZE( 2 ), .size = POOL_SIZE( 2 ) };
+static HOP_ALLOC_THREAD_DECL apool_t npool2 = {
+   .objsize = 2, .idx = POOL_SIZE( 2 ), .size = POOL_SIZE( 2 ) };
+
+static HOP_ALLOC_THREAD_DECL apool_t pool3 = {
+   .objsize = 3, .idx = POOL_SIZE( 3 ), .size = POOL_SIZE( 3 ) };
+static HOP_ALLOC_THREAD_DECL apool_t npool3 = {
+   .objsize = 3, .idx = POOL_SIZE( 3 ), .size = POOL_SIZE( 3 ) };
+
+static HOP_ALLOC_THREAD_DECL apool_t pool4 = {
+   .objsize = 4, .idx = POOL_SIZE( 4 ), .size = POOL_SIZE( 4 ) };
+static HOP_ALLOC_THREAD_DECL apool_t npool4 = {
+   .objsize = 4, .idx = POOL_SIZE( 4 ), .size = POOL_SIZE( 4 ) };
+
+static HOP_ALLOC_THREAD_DECL apool_t pool5 = {
+   .objsize = 5, .idx = POOL_SIZE( 5 ), .size = POOL_SIZE( 5 ) };
+static HOP_ALLOC_THREAD_DECL apool_t npool5 = {
+   .objsize = 5, .idx = POOL_SIZE( 5 ), .size = POOL_SIZE( 5 ) };
+
+static HOP_ALLOC_THREAD_DECL apool_t pool6 = {
+   .objsize = 6, .idx = POOL_SIZE( 6 ), .size = POOL_SIZE( 6 ) };
+static HOP_ALLOC_THREAD_DECL apool_t npool6 = {
+   .objsize = 6, .idx = POOL_SIZE( 6 ), .size = POOL_SIZE( 6 ) };
+
+int inl1 = 0, snd1 = 0, slow1 = 0, qsz1 = 0;
+int inl2 = 0, snd2 = 0, slow2 = 0, qsz2 = 0;
+int inl3 = 0, snd3 = 0, slow3 = 0, qsz3 = 0;
+int inl4 = 0, snd4 = 0, slow4 = 0, qsz4 = 0;
+int inl5 = 0, snd5 = 0, slow5 = 0, qsz5 = 0;
+int inl6 = 0, snd6 = 0, slow6 = 0, qsz6 = 0;
+
+/*---------------------------------------------------------------------*/
+/*    static void                                                      */
+/*    pool_queue_add ...                                               */
+/*---------------------------------------------------------------------*/
+static void
+pool_queue_add( apool_t *pool ) {
+   pthread_mutex_lock( &alloc_pool_mutex );
+   
+   if( pool_queue_idx == pool_queue_len ) {
+      if( pool_queue_len == 0 ) {
+	 pool_queue_len = 10;
+	 pool_queue = malloc( pool_queue_len * sizeof( apool_t * ) );
+      } else {
+	 pool_queue_len *= 2;
+	 pool_queue = realloc( pool_queue, pool_queue_len );
+      }
    }
 
-#if HOP_THREAD_ALLOC
-make( 1 )   
-make( 2 )   
-make( 3 )   
-make( 4 )   
-make( 5 )   
-make( 6 )   
-#endif
+   //fprintf( stderr, "pool_queue_add idx=%d len=%d\n" , pool_queue_idx, pool_queue_len );
+   pool_queue[ pool_queue_idx++ ] = pool;
+   pthread_cond_signal( &alloc_pool_cond );
+   pthread_mutex_unlock( &alloc_pool_mutex );
+}
+
    
 /*---------------------------------------------------------------------*/
-/*    init_thread ...                                                  */
+/*    static void *                                                    */
+/*    thread_alloc_worker ...                                          */
 /*---------------------------------------------------------------------*/
-#define init_thread( sz, md ) { \
-   pthread_t th##sz; \
-   pthread_attr_t thattr##sz; \
-   pthread_mutex_init( &mutex##sz, 0L ); \
-   \
-   pthread_cond_init( &cond##sz, 0L ); \
-   pthread_spin_init( &lock##sz, 0L ); \
-   pthread_attr_init( &thattr##sz ); \
-   \
-   pthread_attr_setdetachstate( &thattr##sz, PTHREAD_CREATE_DETACHED ); \
-   nextallocs##sz = \
-      (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * BUCKET_SIZE( sz ) ); \
-   preallocs##sz = \
-      (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof( obj_t ) * BUCKET_SIZE( sz ) ); \
-   allocidx##sz = BUCKET_SIZE( sz ); \
-   alloc_state##sz = PREALLOC_STATE_IDLE; \
-   GC_pthread_create( &th##sz, &thattr##sz, hop_thread_alloc##sz, (void *)(long)md ); \
-} 0
+static void *
+thread_alloc_worker( void *arg ) {
+   apool_t *pool;
+   uint32_t size;
+   uint32_t objsize;
+   obj_t *buffer;
+   int i;
+   
+   while( 1 ) {
+      pthread_mutex_lock( &alloc_pool_mutex );
+      while( pool_queue_idx == 0 ) {
+	 pthread_cond_wait( &alloc_pool_cond, &alloc_pool_mutex );
+      }
+      
+      pool = pool_queue[ --pool_queue_idx ];
+      pthread_mutex_unlock( &alloc_pool_mutex );
 
+      buffer = pool->buffer;
+      size = pool->size;
+      objsize = pool->objsize;
+
+      for( i = 0; i < size; i++ ) {
+	 buffer[ i ] = bgl_make_jsobject_sans( objsize, 0L, 0L, (uint32_t)(long)arg );
+      }
+      pool->idx = 0;
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    int                                                              */
@@ -230,22 +226,183 @@ make( 6 )
 /*    Initialized the multithreaded background allocator.              */
 /*---------------------------------------------------------------------*/
 int bgl_init_jsalloc( uint32_t md ) {
+#if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
    static int jsinit = 0;
+   int i;
 
    if( jsinit ) return 1;
 
-#if HOP_THREAD_ALLOC
    jsinit = 1;
 
-   init_thread( 1, md );
-   init_thread( 2, md );
-   init_thread( 3, md );
-   init_thread( 4, md );
-   init_thread( 5, md );
-   init_thread( 6, md );
-#endif
+   /* initializes the mutexes and condition variables */
+   pthread_mutex_init( &alloc_pool_mutex, 0L );
+   pthread_cond_init( &alloc_pool_cond, 0L );
+   
+   /* start the allocator workers */
+   for( i = 0; i < WORK_NUMBER; i++ ) {
+      pthread_t th;
+      pthread_attr_t thattr;
+      pthread_attr_init( &thattr );
+      pthread_attr_setdetachstate( &thattr, PTHREAD_CREATE_DETACHED );
+      GC_pthread_create( &th, &thattr, thread_alloc_worker, (void *)(long)md );
+   }
+
+   alloc_spin_init( &lock1, 0L );
+   alloc_spin_init( &lock2, 0L );
+   alloc_spin_init( &lock3, 0L );
+   alloc_spin_init( &lock4, 0L );
+   alloc_spin_init( &lock5, 0L );
+   alloc_spin_init( &lock6, 0L );
    
    return 0;
+#endif   
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_MAKE_JSOBJECT ...                                            */
+/*---------------------------------------------------------------------*/
+#define BGL_MAKE_JSOBJECT( sz ) \
+   static obj_t bgl_make_jsobject##sz( obj_t constrmap, obj_t __proto__, uint32_t md ) { \
+   alloc_spin_lock( &lock##sz ); \
+   if( pool##sz.idx < POOL_SIZE( sz ) ) { \
+      obj_t o = pool##sz.buffer[ pool##sz.idx ]; \
+      pool##sz.buffer[ pool##sz.idx++ ] = 0; \
+      alloc_spin_unlock( &lock##sz ); \
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL___proto__z00 = __proto__;  \
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
+      ALLOC_STAT( inl##sz++ ); \
+      return o; \
+   } else if( npool##sz.idx == 0 ) { \
+      /* swap the two pools */ \
+      obj_t *buffer = pool##sz.buffer; \
+      obj_t o = npool##sz.buffer[ 0 ]; \
+      \
+      pool##sz.buffer = npool##sz.buffer; \
+      pool##sz.buffer[ 0 ] = 0; \
+      pool##sz.idx = 1; \
+      \
+      npool##sz.buffer = buffer; \
+      npool##sz.idx = npool##sz.size; \
+      \
+      /* add the pool to the pool queue */ \
+      pool_queue_add( &npool##sz ); \
+      \
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL___proto__z00 = __proto__;  \
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
+      \
+      ALLOC_STAT( snd##sz++ ); \
+      alloc_spin_unlock( &lock##sz ); \
+      return o; \
+   } else { \
+      /* initialize the two alloc pools */ \
+      if( !pool##sz.buffer ) { \
+	 pool##sz.buffer = \
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*POOL_SIZE( sz ) ); \
+	 pool##sz.idx = POOL_SIZE( sz ); \
+      } \
+      if( !npool##sz.buffer ) { \
+	 npool##sz.buffer = \
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*POOL_SIZE( sz ) ); \
+	 npool##sz.idx = POOL_SIZE( sz ); \
+	 pool_queue_add( &npool##sz ); \
+      } \
+      \
+      /* default slow alloc */ \
+      ALLOC_STAT( slow##sz++ ); \
+      ALLOC_STAT( pool_queue_idx > qsz##sz ? qsz##sz = pool_queue_idx : 0 ); \
+      ALLOC_STAT( (slow##sz % 1000000 == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", sz, inl##sz, snd##sz, slow##sz, (long)(100*(double)slow##sz/(double)(inl##sz+snd##sz)), inl##sz + snd##sz + slow##sz, qsz##sz) : 0 ); \
+      alloc_spin_unlock( &lock##sz ); \
+      return bgl_make_jsobject_sans( sz, constrmap, __proto__, md ); \
+   } \
+}
+
+BGL_MAKE_JSOBJECT( 1 )
+BGL_MAKE_JSOBJECT( 2 )
+BGL_MAKE_JSOBJECT( 3 )
+BGL_MAKE_JSOBJECT( 4 )
+BGL_MAKE_JSOBJECT( 5 )
+BGL_MAKE_JSOBJECT( 6 )
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsobject ...                                            */
+/*---------------------------------------------------------------------*/
+#if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
+obj_t
+bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
+   obj_t o;
+   
+   switch( constrsize ) {
+      case 1: return bgl_make_jsobject1( constrmap, __proto__, mode );
+      case 2: return bgl_make_jsobject2( constrmap, __proto__, mode );
+      case 3: return bgl_make_jsobject3( constrmap, __proto__, mode );
+      case 4: return bgl_make_jsobject4( constrmap, __proto__, mode );
+      case 5: return bgl_make_jsobject5( constrmap, __proto__, mode );
+      case 6: return bgl_make_jsobject6( constrmap, __proto__, mode );
+      default: return bgl_make_jsobject_sans( constrsize, constrmap, __proto__, mode );
+   }
+}
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsobject_sans ...                                       */
+/*    -------------------------------------------------------------    */
+/*    Fast C allocation, equivalent to                                 */
+/*                                                                     */
+/*      (instantiate::JsObject                                         */
+/*         (mode mode)                                                 */
+/*         (cmap constrmap)                                            */
+/*         (elements (make-vector constrsize (js-undefined)))          */
+/*         (__proto__ __proto__))                                      */
+/*---------------------------------------------------------------------*/
+#if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
+static obj_t
+bgl_make_jsobject_sans( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
+#else   
+obj_t
+bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
+#endif
+   long bsize = JSOBJECT_SIZE + VECTOR_SIZE + ( (constrsize-1) * OBJ_SIZE );
+   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)HOP_MALLOC( bsize );
+   obj_t vector;
+   int i;
+
+   // class initialization
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSOBJECT_CLASS_INDEX );
+   
+   // fields init
+   o->BgL___proto__z00 = __proto__;
+   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
+   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), BNIL );
+   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
+   
+   // elements initialization
+   vector = (obj_t)(&(o->BgL_elementsz00) + 1);
+
+#if( !defined( TAG_VECTOR ) )
+   vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
+#endif		
+   vector->vector.length = constrsize;
+   vector = BVECTOR( vector );
+   
+   o->BgL_elementsz00 = vector;
+
+   for( i = 0; i < constrsize; i++ ) {
+      VECTOR_SET( vector, i, BUNSPEC );
+   }
+
+#if( defined( HOP_PROFILE ) )
+   {
+      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
+		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
+		 : constrsize );
+      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
+      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
+   }
+#endif
+
+   return BNANOBJECT( o );
 }
 
 /*---------------------------------------------------------------------*/
@@ -294,86 +451,6 @@ bgl_profile_get_pcaches() {
       tables = CDR( tables );
    }
    return res;
-}
-
-/*---------------------------------------------------------------------*/
-/*    obj_t                                                            */
-/*    bgl_make_jsobject ...                                            */
-/*---------------------------------------------------------------------*/
-#if HOP_THREAD_ALLOC
-obj_t
-bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
-   switch( constrsize ) {
-      case 1: return bgl_make_jsobject1( constrmap, __proto__, mode );
-      case 2: return bgl_make_jsobject2( constrmap, __proto__, mode );
-      case 3: return bgl_make_jsobject3( constrmap, __proto__, mode );
-      case 4: return bgl_make_jsobject4( constrmap, __proto__, mode );
-      case 5: return bgl_make_jsobject5( constrmap, __proto__, mode );
-      case 6: return bgl_make_jsobject6( constrmap, __proto__, mode );
-      default: return bgl_make_jsobject_sans( constrsize, constrmap, __proto__, mode );
-   }
-}
-#endif
-
-/*---------------------------------------------------------------------*/
-/*    obj_t                                                            */
-/*    bgl_make_jsobject_sans ...                                       */
-/*    -------------------------------------------------------------    */
-/*    Fast C allocation, equivalent to                                 */
-/*                                                                     */
-/*      (instantiate::JsObject                                         */
-/*         (mode mode)                                                 */
-/*         (cmap constrmap)                                            */
-/*         (elements (make-vector constrsize (js-undefined)))          */
-/*         (__proto__ __proto__))                                      */
-/*---------------------------------------------------------------------*/
-#if HOP_THREAD_ALLOC
-static obj_t
-bgl_make_jsobject_sans( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
-#else   
-obj_t
-bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
-#endif
-   long bsize = JSOBJECT_SIZE + VECTOR_SIZE + ( (constrsize-1) * OBJ_SIZE );
-   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)HOP_MALLOC( bsize );
-   obj_t vector;
-   int i;
-
-   // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSOBJECT_CLASS_INDEX );
-   
-   // fields init
-   o->BgL___proto__z00 = __proto__;
-   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
-   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), BNIL );
-   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
-   
-   // elements initialization
-   vector = (obj_t)(&(o->BgL_elementsz00) + 1);
-
-#if( !defined( TAG_VECTOR ) )
-   vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
-#endif		
-   vector->vector.length = constrsize;
-   vector = BVECTOR( vector );
-   
-   o->BgL_elementsz00 = vector;
-
-   for( i = 0; i < constrsize; i++ ) {
-      VECTOR_SET( vector, i, BUNSPEC );
-   }
-
-#if( defined( HOP_PROFILE ) )
-   {
-      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
-		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
-		 : constrsize );
-      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
-      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
-   }
-#endif
-
-   return BNANOBJECT( o );
 }
 
 /*---------------------------------------------------------------------*/

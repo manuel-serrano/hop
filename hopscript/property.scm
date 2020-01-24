@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jan  5 07:12:15 2020 (serrano)                */
+;*    Last change :  Thu Jan 23 15:18:37 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -316,10 +316,6 @@
 	 (vector-set! methods idx #f)
 	 (for-each (lambda (tr)
 		      (let ((ncmap (transition-nextmap tr)))
-			 (with-access::JsConstructMap ncmap (methods)
-			    (when (<=fx (vector-length methods) idx)
-			       (js-debug-cmap cmap)
-			       (js-debug-cmap ncmap)))
 			 (js-invalidate-cache-method! ncmap idx reason who)))
 	    transitions))))
    
