@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sat Jan 25 08:14:40 2020 (serrano)                */
+/*    Last change :  Sat Jan 25 17:51:34 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -177,7 +177,6 @@ pool_queue_add( apool_t *pool ) {
       if( pool_queue_len == 0 ) {
 	 pool_queue_len = 10;
 	 pool_queue = malloc( pool_queue_len * sizeof( apool_t * ) );
-	 fprintf( stderr, "POOL.malloc\n" );
       } else {
 	 pool_queue_len *= 2;
 	 pool_queue = realloc( pool_queue, pool_queue_len * sizeof( apool_t * ) );
