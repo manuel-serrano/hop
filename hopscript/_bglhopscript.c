@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.tls.c       */
+/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Jan 24 08:35:21 2020 (serrano)                */
+/*    Last change :  Sat Jan 25 07:12:06 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -64,6 +64,9 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 #else
 #  define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC
 #endif
+
+/* #undef HOP_ALLOC_POLICY                                             */
+/* #define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC                          */
 
 extern obj_t bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
 
@@ -191,6 +194,7 @@ pool_queue_add( apool_t *pool ) {
 /*    static void *                                                    */
 /*    thread_alloc_worker ...                                          */
 /*---------------------------------------------------------------------*/
+#if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
 static void *
 thread_alloc_worker( void *arg ) {
    apool_t *pool;
@@ -198,7 +202,7 @@ thread_alloc_worker( void *arg ) {
    uint32_t objsize;
    obj_t *buffer;
    int i;
-   
+
    while( 1 ) {
       pthread_mutex_lock( &alloc_pool_mutex );
       while( pool_queue_idx == 0 ) {
@@ -218,6 +222,27 @@ thread_alloc_worker( void *arg ) {
       pool->idx = 0;
    }
 }
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    void                                                             */
+/*    bgl_init_jsalloc_locks ...                                       */
+/*    -------------------------------------------------------------    */
+/*    This function is split from BGL_INIT_JSALLOC to enable bmem      */
+/*    lock initialization without spawning the worker threads.         */
+/*---------------------------------------------------------------------*/
+void
+bgl_init_jsalloc_locks() {
+   pthread_mutex_init( &alloc_pool_mutex, 0L );
+   pthread_cond_init( &alloc_pool_cond, 0L );
+   
+   alloc_spin_init( &lock1, 0L );
+   alloc_spin_init( &lock2, 0L );
+   alloc_spin_init( &lock3, 0L );
+   alloc_spin_init( &lock4, 0L );
+   alloc_spin_init( &lock5, 0L );
+   alloc_spin_init( &lock6, 0L );
+}
 
 /*---------------------------------------------------------------------*/
 /*    int                                                              */
@@ -235,8 +260,7 @@ int bgl_init_jsalloc( uint32_t md ) {
    jsinit = 1;
 
    /* initializes the mutexes and condition variables */
-   pthread_mutex_init( &alloc_pool_mutex, 0L );
-   pthread_cond_init( &alloc_pool_cond, 0L );
+   bgl_init_jsalloc_locks();
    
    /* start the allocator workers */
    for( i = 0; i < WORK_NUMBER; i++ ) {
@@ -247,13 +271,6 @@ int bgl_init_jsalloc( uint32_t md ) {
       GC_pthread_create( &th, &thattr, thread_alloc_worker, (void *)(long)md );
    }
 
-   alloc_spin_init( &lock1, 0L );
-   alloc_spin_init( &lock2, 0L );
-   alloc_spin_init( &lock3, 0L );
-   alloc_spin_init( &lock4, 0L );
-   alloc_spin_init( &lock5, 0L );
-   alloc_spin_init( &lock6, 0L );
-   
    return 0;
 #endif   
 }
@@ -316,12 +333,14 @@ int bgl_init_jsalloc( uint32_t md ) {
    } \
 }
 
+#if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
 BGL_MAKE_JSOBJECT( 1 )
 BGL_MAKE_JSOBJECT( 2 )
 BGL_MAKE_JSOBJECT( 3 )
 BGL_MAKE_JSOBJECT( 4 )
 BGL_MAKE_JSOBJECT( 5 )
 BGL_MAKE_JSOBJECT( 6 )
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
