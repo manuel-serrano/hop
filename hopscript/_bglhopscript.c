@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sat Jan 25 07:12:06 2020 (serrano)                */
+/*    Last change :  Sat Jan 25 08:14:40 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -177,9 +177,10 @@ pool_queue_add( apool_t *pool ) {
       if( pool_queue_len == 0 ) {
 	 pool_queue_len = 10;
 	 pool_queue = malloc( pool_queue_len * sizeof( apool_t * ) );
+	 fprintf( stderr, "POOL.malloc\n" );
       } else {
 	 pool_queue_len *= 2;
-	 pool_queue = realloc( pool_queue, pool_queue_len );
+	 pool_queue = realloc( pool_queue, pool_queue_len * sizeof( apool_t * ) );
       }
    }
 
@@ -425,54 +426,6 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
 }
 
 /*---------------------------------------------------------------------*/
-/*    obj_t                                                            */
-/*    bgl_make_pcache_table ...                                        */
-/*    -------------------------------------------------------------    */
-/*    Create a fake Bigloo vector whose elements are inlined pcache    */
-/*    entries.                                                         */
-/*---------------------------------------------------------------------*/
-obj_t
-bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t thread, obj_t template ) {
-   pcache_t *pcache = (pcache_t *)obj;
-   int i;
-
-   for( i = 0; i < len; i++ ) {
-      memcpy( &(pcache[ i ]), COBJECT( template ), sizeof( pcache_t ) );
-   }
-
-   bgl_profile_pcache_tables = MAKE_PAIR( MAKE_PAIR( (obj_t)pcache, BINT( len ) ), bgl_profile_pcache_tables );
-
-   return obj;
-}
-
-/*---------------------------------------------------------------------*/
-/*    obj_t                                                            */
-/*    bgl_profile_get_pcaches ...                                      */
-/*    -------------------------------------------------------------    */
-/*    This function is called by the cache profiler, after the         */
-/*    execution, in order to get the list of all used                  */
-/*    property caches.                                                 */
-/*---------------------------------------------------------------------*/
-obj_t
-bgl_profile_get_pcaches() {
-   obj_t res = BNIL;
-   obj_t tables = bgl_profile_pcache_tables;
-
-   while( PAIRP( tables ) ) {
-      obj_t table = CAR( tables );
-      long i = CINT( CDR( table ) );
-      pcache_t *pcache = (pcache_t *)CAR( table );
-
-      while( --i >= 0 ) {
-	 res = MAKE_PAIR( BNANOBJECT( &(pcache[ i ]) ), res );
-      }
-
-      tables = CDR( tables );
-   }
-   return res;
-}
-
-/*---------------------------------------------------------------------*/
 /*    static obj_t                                                     */
 /*    empty_vector ...                                                 */
 /*---------------------------------------------------------------------*/
@@ -509,6 +462,7 @@ bgl_make_jsarray_sans_init( long size, uint32_t len, obj_t constrmap, obj_t __pr
    obj_t vector;
    int i;
 
+   //fprintf( stderr, "bgl_make_jsarray_sans size=%d\n", size );
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSARRAY_CLASS_INDEX );
    
@@ -546,6 +500,7 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj
    obj_t vector = o->BgL_vecz00;
    int i;
 
+   //fprintf( stderr, "bgl_make_jsarray size=%d\n", size );
    for( i = 0; i < size; i++ ) {
       VECTOR_SET( vector, i, absent );
    }
@@ -605,5 +560,53 @@ bgl_init_vector_sans_fill( obj_t vector, long len ) {
 long
 bgl_vector_bytesize( long len ) {
    return VECTOR_SIZE + ( (len-1) * OBJ_SIZE );
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_pcache_table ...                                        */
+/*    -------------------------------------------------------------    */
+/*    Create a fake Bigloo vector whose elements are inlined pcache    */
+/*    entries.                                                         */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t thread, obj_t template ) {
+   pcache_t *pcache = (pcache_t *)obj;
+   int i;
+
+   for( i = 0; i < len; i++ ) {
+      memcpy( &(pcache[ i ]), COBJECT( template ), sizeof( pcache_t ) );
+   }
+
+   bgl_profile_pcache_tables = MAKE_PAIR( MAKE_PAIR( (obj_t)pcache, BINT( len ) ), bgl_profile_pcache_tables );
+
+   return obj;
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_profile_get_pcaches ...                                      */
+/*    -------------------------------------------------------------    */
+/*    This function is called by the cache profiler, after the         */
+/*    execution, in order to get the list of all used                  */
+/*    property caches.                                                 */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_profile_get_pcaches() {
+   obj_t res = BNIL;
+   obj_t tables = bgl_profile_pcache_tables;
+
+   while( PAIRP( tables ) ) {
+      obj_t table = CAR( tables );
+      long i = CINT( CDR( table ) );
+      pcache_t *pcache = (pcache_t *)CAR( table );
+
+      while( --i >= 0 ) {
+	 res = MAKE_PAIR( BNANOBJECT( &(pcache[ i ]) ), res );
+      }
+
+      tables = CDR( tables );
+   }
+   return res;
 }
 

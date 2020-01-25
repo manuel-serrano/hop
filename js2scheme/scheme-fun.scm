@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Jan 16 17:53:04 2020 (serrano)                */
+;*    Last change :  Sat Jan 25 08:28:54 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -158,12 +158,17 @@
 ;*    j2s-function-arity ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-arity this::J2SFun conf)
-   (with-access::J2SFun this (vararg params)
+   (with-access::J2SFun this (vararg params argumentsp)
       (cond
 	 ((not vararg)
 	  (+fx 1 (length params)))
 	 ((eq? vararg 'arguments)
-	  (if (config-get conf :optim-arguments) -2048 -1))
+	  (if (config-get conf :optim-arguments)
+	      (with-access::J2SDeclArguments argumentsp (alloc-policy)
+		 (if (eq? alloc-policy 'lazy)
+		     -2047
+		     -2048))
+	      -1))
 	 ((eq? vararg 'rest)
 	  -2049)
 	 (else

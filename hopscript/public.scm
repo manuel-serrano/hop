@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jan  1 09:46:36 2020 (serrano)                */
+;*    Last change :  Sat Jan 25 08:23:06 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -16,7 +16,7 @@
 
    (option (set! *compiler-debug-trace* 0))
 
-   (include "types.sch" "stringliteral.sch" "property.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch" "array.sch")
    
    (library hop js2scheme)
    
@@ -483,6 +483,8 @@
 	     (js-apply-rest% %this proc obj args len n))
 	    ((=fx arity -2048)
 	     (proc obj (apply vector args)))
+	    ((=fx arity -2049)
+	     (proc obj (apply vector args)))
 	    (else
 	     (let ((-arity (-fx (negfx arity) 1)))
 		(if (<=fx -arity n)
@@ -582,6 +584,10 @@
 				   (list
 				      (js-vector->jsarray
 					 (apply vector (drop args len)) %this))))))))))
+		 ((-2047)
+		  (js-call-with-stack-vector
+		     (vector ,@args)
+		     (lambda (v) (proc this v))))
 		 ((-2048)
 		  (proc this (vector ,@args)))
 		 ,@(map (lambda (i)
@@ -709,6 +715,8 @@
 		 (apply proc this (take args (-fx arity 1)))))
 	    ((=fx arity -2048)
 	     (proc this (apply vector args)))
+	    ((=fx arity -2047)
+	     (proc this (apply vector args)))
 	    (else
 	     (cond
 		((and (<=fx (-fx n 1) minlen) (>fx minlen 0))
@@ -800,6 +808,8 @@
 		    "wrong number of arguments" (cons (length args) minlen))
 		 (apply proc this (take args (-fx arity 1)))))
 	    ((=fx arity -2048)
+	     (proc this (apply vector args)))
+	    ((=fx arity -2049)
 	     (proc this (apply vector args)))
 	    (else
 	     (cond

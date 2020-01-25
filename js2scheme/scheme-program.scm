@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat Jan 11 07:13:19 2020 (serrano)                */
+;*    Last change :  Sat Jan 25 10:09:16 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -177,7 +177,7 @@
 				 ,@(j2s-let-globals globals))
 			      ;; the sole purpose of the scmheaders split
 			      ;; is not minimize letrec* nesting level
-			      (letrec ,(j2s-let-headers scmheaders)
+			      (letrec* ,(j2s-let-headers scmheaders)
 				 ,@(j2s-expr-headers scmheaders)
 				 ,@esimports
 				 ,esexports

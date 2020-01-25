@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Jan 15 05:34:17 2020 (serrano)                */
+;*    Last change :  Sat Jan 25 08:26:04 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -868,6 +868,8 @@
 			   (iota len))))))
 		((=fx arity -2048)
 		 (procedure thisarg (js-arguments->vector argarray %this)))
+		((=fx arity -2047)
+		 (procedure thisarg (js-arguments->vector argarray %this)))
 		(else
 		 (js-apply %this this thisarg
 		    (map! (lambda (idx)
@@ -954,6 +956,8 @@
 		(else
 		 (js-apply %this this thisarg (vector->sublist vec n)))))
 	    ((=fx arity -2048)
+	     (procedure thisarg vec))
+	    ((=fx arity -2047)
 	     (procedure thisarg vec))
 	    (else
 	     (js-apply %this this thisarg (vector->sublist vec n)))))))
