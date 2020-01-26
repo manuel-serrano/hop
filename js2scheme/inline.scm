@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Jan 20 09:44:54 2020 (serrano)                */
+;*    Last change :  Sun Jan 26 07:28:26 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -399,7 +399,10 @@
 		fuel))))
    
    (let ((log (call-profile-log prgm logfile conf)))
-      (if log
+      (cond
+	 ((with-access::J2SProgram prgm (mode) (not (eq? mode 'strict)))
+	  (j2s-inline-noprofile prgm conf))
+	 (log
 	  (with-access::J2SProgram prgm (nodes)
 	     (let* ((size (node-size prgm))
 		    (funs (collect-funs* prgm prgm)))
@@ -415,8 +418,9 @@
 					  (display* "fuel " nfuel " (" fuel ")"))))
 				 (loop nfuel))
 			      (loop 0)))
-		       (j2s-inline-profile-cleanup! prgm conf)))))
-	  (j2s-inline-noprofile prgm conf))))
+		       (j2s-inline-profile-cleanup! prgm conf))))))
+	 (else
+	  (j2s-inline-noprofile prgm conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-inline-noprofile ...                                         */
@@ -572,6 +576,13 @@
 (define (function-newtarget? this::J2SFun)
    (with-access::J2SFun this (new-target)
       new-target))
+
+;*---------------------------------------------------------------------*/
+;*    function-mode ...                                                */
+;*---------------------------------------------------------------------*/
+(define (function-mode this::J2SFun)
+   (with-access::J2SFun this (mode)
+      mode))
 
 ;*---------------------------------------------------------------------*/
 ;*    function-glodecl ...                                             */
@@ -795,6 +806,7 @@
 				(min limit (function-max-expansion val)))
 			     (check-id id)
 			     (not (function-self-recursive? val))
+			     (eq? (function-mode val) (function-mode (car stack)))
 			     (not (isa? val J2SSvc)))
 		     val))))))
 

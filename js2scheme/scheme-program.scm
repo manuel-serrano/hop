@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat Jan 25 10:09:16 2020 (serrano)                */
+;*    Last change :  Sun Jan 26 07:14:52 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -140,7 +140,6 @@
 		   ,@globals
 		   ,@esimports
 		   ,esexports
-		   ,@scmheaders
 		   ,@(filter fundef? body)
 		   ,@(exit-body (filter nofundef? body) conf))))))
    
