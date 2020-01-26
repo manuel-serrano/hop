@@ -1,18 +1,18 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/hintnum.scm       */
+;*    serrano/prgm/project/hop/hop/js2scheme/hintnum.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Wed Aug 22 14:59:12 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Sun Jan 26 07:37:21 2020 (serrano)                */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization consists in propagating expression and         */
 ;*    declaration hints that will be used by the code generator.       */
 ;*    -------------------------------------------------------------    */
-;*    Two top-down hints are propagated on unary op, binary op, and    */
-;*    assignments.                                                     */
+;*    Two top-down/bottom-up hints are propagated on unary op, binary  */
+;*    op, and assignments.                                             */
 ;*                                                                     */
 ;*      1- if only one argument of binary expression is typed/hinted,  */
 ;*         add its type/hint as a hint of the second argument.         */
@@ -57,10 +57,10 @@
    (define j2s-verbose (config-get conf :verbose 0))
    
    (when (isa? this J2SProgram)
-      (when (>=fx j2s-verbose 4) (display " " (current-error-port)))
+      (when (>=fx j2s-verbose 3) (display " " (current-error-port)))
       (let ((fix (make-cell #t)))
 	 (let loop ((i 1))
-	    (when (>=fx j2s-verbose 4)
+	    (when (>=fx j2s-verbose 3)
 	       (fprintf (current-error-port) "~a." i)
 	       (flush-output-port (current-error-port)))
 	    (cell-set! fix #t)
@@ -70,7 +70,7 @@
       (when (>=fx j2s-verbose 4) (fprintf (current-error-port) "/"))
       (let ((fix (make-cell #t)))
 	 (let loop ((i 1))
-	    (when (>=fx j2s-verbose 4)
+	    (when (>=fx j2s-verbose 3)
 	       (fprintf (current-error-port) "~a." i)
 	       (flush-output-port (current-error-port)))
 	    (cell-set! fix #t)
@@ -85,8 +85,12 @@
 (define (expr-hint::pair-nil this::J2SExpr)
    (with-access::J2SExpr this (type hint)
       (cond
-	 ((not (memq type '(number any))) (list (cons type 100)))
-	 ((pair? hint) hint)
+	 ((isa? this J2SNumber)
+	  (if (eq? type 'integer)
+	      (list (cons 'integer 50) (cons 'real 50))
+	      (list (cons type 100))))
+	  ((not (memq type '(number any))) (list (cons type 100)))
+	  ((pair? hint) hint)
 	 (else '()))))
 
 ;*---------------------------------------------------------------------*/
@@ -146,10 +150,12 @@
       ((+ - * / %)
        (when (memq (j2s-type lhs) '(any number))
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
-	     (add-expr-hint! lhs hint #t fix)))
+	     (add-expr-hint! lhs hint #t fix)
+	     (add-expr-hint! this hint #f fix)))
        (when (memq (j2s-type rhs) '(any number))
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint lhs))))
-	     (add-expr-hint! rhs hint #t fix))))
+	     (add-expr-hint! rhs hint #t fix)
+	     (add-expr-hint! this hint #f fix))))
       ((< > <= >= == === != !==)
        (when (memq (j2s-type lhs) '(any number))
 	  (let ((hint (expr-hint rhs)))
@@ -172,6 +178,15 @@
 (define-walk-method (hintnum this::J2SUnary fix::cell)
    (call-default-walker)
    (with-access::J2SUnary this (expr)
+      (when (memq (j2s-type expr) '(any number))
+	 (add-expr-hint! expr (expr-hint this) #t fix))))
+
+;*---------------------------------------------------------------------*/
+;*    hintnum ::J2SParen ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hintnum this::J2SParen fix::cell)
+   (call-default-walker)
+   (with-access::J2SParen this (expr)
       (when (memq (j2s-type expr) '(any number))
 	 (add-expr-hint! expr (expr-hint this) #t fix))))
 
@@ -285,3 +300,23 @@
 	       (set! type 'real)
 	       (cell-set! fix #f))))))
 
+;*---------------------------------------------------------------------*/
+;*    propagate-types ::J2SParen ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-types this::J2SParen fix::cell)
+   (call-next-method)
+   (with-access::J2SParen this (expr type)
+      (when (eq? (j2s-vtype expr) 'real)
+	 (unless (eq? type 'real)
+	    (set! type 'real)
+	    (cell-set! fix #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-types ::J2SDeclInit ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-types this::J2SDeclInit fix::cell)
+   (call-next-method)
+   (with-access::J2SDeclInit this (val vtype)
+      (when (and (eq? vtype 'number) (eq? (j2s-vtype val) 'real))
+	 (set! vtype 'real)
+	 (cell-set! fix #f))))

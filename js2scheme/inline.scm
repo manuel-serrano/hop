@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Jan 26 07:28:26 2020 (serrano)                */
+;*    Last change :  Sun Jan 26 09:44:16 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -205,6 +205,7 @@
 				      (not (function-arguments? (cdr t)))
 				      (not (function-varargs? (cdr t)))
 				      (not (function-newtarget? (cdr t)))
+				      (not (function-delete-argument? (cdr t)))
 				      (not (function-generator? (cdr t)))
 				      (not (function-freevars? (cdr t)))))
 			 targets))
@@ -289,6 +290,7 @@
 			((or (function-arguments? val)
 			     (function-varargs? val)
 			     (function-newtarget? val)
+			     (function-delete-argument? val)
 			     (function-generator? val))
 			 0)
 			(else
@@ -585,6 +587,13 @@
       mode))
 
 ;*---------------------------------------------------------------------*/
+;*    function-delete-argument? ...                                    */
+;*---------------------------------------------------------------------*/
+(define (function-delete-argument? this::J2SFun)
+   (with-access::J2SFun this (params)
+      (any (lambda (d) (decl-usage-has? d '(delete))) params)))
+
+;*---------------------------------------------------------------------*/
 ;*    function-glodecl ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (function-glodecl this::J2SFun prgm)
@@ -800,6 +809,7 @@
 			     (function-fxarg? val)
 			     (not (function-generator? val))
 			     (not (function-newtarget? val))
+			     (not (function-delete-argument? val))
 			     (or (not leaf) (function-leaf? val))
 			     (not (memq val stack))
 			     (<=fx (function-size val)
