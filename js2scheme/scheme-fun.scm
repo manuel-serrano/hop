@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Jan 25 08:28:54 2020 (serrano)                */
+;*    Last change :  Mon Jan 27 12:18:26 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -564,8 +564,7 @@
 (define (j2sfun->scheme this::J2SFun tmp tmpm mode return conf)
    (with-access::J2SFun this (loc name params mode vararg mode generator
 				constrsize method new-target type)
-      (let* ((id (j2sfun-id this))
-	     (lparams (length params))
+      (let* ((lparams (length params))
 	     (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
 	     (arity (j2s-function-arity this conf))
 	     (minlen (if (eq? mode 'hopscript) (j2s-minlen this) -1))
@@ -612,7 +611,7 @@
 ;*    j2s-scheme ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SFun mode return conf)
-   (with-access::J2SFun this (loc name params mode vararg generator method type)
+   (with-access::J2SFun this (loc name params mode vararg generator method type decl)
       (let* ((id (j2sfun-id this))
 	     (tmp (if (eq? name '||)
 		      (gensym (format "~a:~a-"
@@ -642,7 +641,7 @@
 			     ,(j2sfun->scheme this tmp tmpm mode return conf))))))
 	 (epairify-deep loc
 	    (if id
-		(let ((scmid (j2s-scheme-id id '^)))
+		(let ((scmid (j2s-decl-scheme-id decl)))
 		   `(let ((,scmid (js-undefined)))
 		       (set! ,scmid ,fundef)
 		       ,scmid))
