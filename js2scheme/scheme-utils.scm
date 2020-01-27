@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Jan 11 07:02:53 2020 (serrano)                */
+;*    Last change :  Mon Jan 27 11:33:54 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -201,7 +201,12 @@
    (with-access::J2SDecl decl (_scmid id scope key)
       (if _scmid
 	  _scmid
-	  (let ((sid (j2s-scheme-id id (if (eq? scope '%scope) '! '^))))
+	  (let ((sid (j2s-scheme-id id
+			(if (eq? scope '%scope)
+			    '!
+			    (string->symbol
+			       (string-append "^"
+				  (integer->string key) "-"))))))
 	     (set! _scmid sid)
 	     sid))))
 
