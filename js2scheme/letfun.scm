@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sat Dec 14 17:52:19 2019 (serrano)                */
-;*    Copyright   :  2015-19 Manuel Serrano                            */
+;*    Last change :  Fri Jan 31 08:04:38 2020 (serrano)                */
+;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimisation                                        */
 ;*    -------------------------------------------------------------    */
@@ -70,18 +70,32 @@
 		      (let* ((odecls (map decloinit inits))
 			     (ndecls (map declninit inits))
 			     (noinits (filter (lambda (v)
-						 (not (memq v ndecls)))
+						 (not (memq v odecls)))
 					 vars))
 			     (nblock (duplicate::J2SBlock body
 					(nodes rest))))
 			 (set! body 
 			    (duplicate::J2SBlock body
-			       (nodes (append noinits
-					 ndecls
+			       (nodes (append
+					 (map (lambda (n)
+						 (decl-alpha n odecls ndecls))
+					    noinits)
+					 (map (lambda (n)
+						 (decl-alpha n odecls ndecls))
+					    ndecls)
 					 (list (j2s-alpha nblock
 						  odecls
 						  ndecls)))))))))))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    decl-alpha ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (decl-alpha d::J2SDecl olds news)
+   (when (isa? d J2SDeclInit)
+      (with-access::J2SDeclInit d (val)
+	 (set! val (j2s-alpha val olds news))))
+   d)
 
 ;*---------------------------------------------------------------------*/
 ;*    decloinit ...                                                    */
@@ -110,6 +124,7 @@
 		   (vtype vtype)
 		   (val rhs)))
 	     (duplicate::J2SDeclInit decl
+		(key (ast-decl-key))
 		(val rhs))))))
 
 ;*---------------------------------------------------------------------*/

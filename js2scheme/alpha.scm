@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Mon Dec 30 05:51:34 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Last change :  Fri Jan 31 08:05:05 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
 ;*=====================================================================*/
