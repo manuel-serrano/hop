@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Fri Jan 31 08:05:05 2020 (serrano)                */
+;*    Last change :  Fri Jan 31 16:43:33 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -281,14 +281,24 @@
 ;*    alpha ::J2SFun ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SFun)
-   (with-access::J2SFun this (params body)
+   (with-access::J2SFun this (params body method)
       (let* ((nparams (map j2sdecl-duplicate params))
 	     (nfun (duplicate::J2SFun this
 		      (params nparams)
+		      (method (alpha method))
 		      (body body))))
 	 (with-access::J2SFun nfun (body)
 	    (set! body (j2s-alpha body (cons this params) (cons nfun nparams))))
 	 nfun)))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SMethod ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SMethod)
+   (with-access::J2SMethod this (function method)
+      (duplicate::J2SMethod this
+	 (function (alpha function))
+	 (method (alpha method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SBlock ...                                             */

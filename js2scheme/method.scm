@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Dec 17 09:18:04 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Fri Jan 31 17:07:09 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
 ;*    -------------------------------------------------------------    */
@@ -46,7 +46,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    this-occurrence-threshold ...                                    */
 ;*---------------------------------------------------------------------*/
-(define this-occurrence-threshold 1)
+(define this-occurrence-threshold 2)
 (define body-size-threshold 150)
 
 ;*---------------------------------------------------------------------*/

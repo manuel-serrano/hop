@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Jan 27 12:18:26 2020 (serrano)                */
+;*    Last change :  Fri Jan 31 16:59:50 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -180,7 +180,7 @@
 (define (j2s-make-function this::J2SDeclFun mode return conf)
    
    (define (make-function-sans-alloc this::J2SDeclFun)
-      (with-access::J2SDeclFun this (loc id scope val)
+      (with-access::J2SDeclFun this (loc id scope val key)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator
 					constrsize method new-target)

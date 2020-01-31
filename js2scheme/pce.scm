@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Sat Dec 14 18:57:34 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Fri Jan 31 16:29:41 2020 (serrano)                */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
 ;*    -------------------------------------------------------------    */
@@ -547,6 +547,7 @@
 		(let* ((ndecls (map (lambda (d)
 				       (with-access::J2SDeclInit d (vtype loc _usage)
 					  (duplicate::J2SDeclInit d
+					     (key (ast-decl-key))
 					     (writable #t)
 					     (_usage (usage-add _usage 'assig))
 					     (val (neutral vtype loc)))))

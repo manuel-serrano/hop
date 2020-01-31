@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Jan  5 18:22:39 2020 (serrano)                */
+;*    Last change :  Fri Jan 31 16:30:12 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1176,11 +1176,16 @@
    (with-access::J2SVarDecls this (decls)
       (filter-map (lambda (d::J2SDecl)
 		     (cond
-			((j2s-let? d) #f)
-			((isa? d J2SDeclFun) d)
-			((isa? d J2SDeclExtern) d)
-			((isa? d J2SDeclInit) (duplicate::J2SDecl d))
-			(else d)))
+			((j2s-let? d)
+			 #f)
+			((isa? d J2SDeclFun)
+			 d)
+			((isa? d J2SDeclExtern)
+			 d)
+			((isa? d J2SDeclInit)
+			 (duplicate::J2SDecl d (key (ast-decl-key))))
+			(else
+			 d)))
 	 decls)))
 
 ;*---------------------------------------------------------------------*/
