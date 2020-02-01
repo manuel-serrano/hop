@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Sun Jan 26 07:37:21 2020 (serrano)                */
+;*    Last change :  Sun Jan 26 09:56:06 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -11,8 +11,8 @@
 ;*    This optimization consists in propagating expression and         */
 ;*    declaration hints that will be used by the code generator.       */
 ;*    -------------------------------------------------------------    */
-;*    Two top-down/bottom-up hints are propagated on unary op, binary  */
-;*    op, and assignments.                                             */
+;*    Two top-down hints are propagated on unary op, binary op, and    */
+;*    assignments.                                                     */
 ;*                                                                     */
 ;*      1- if only one argument of binary expression is typed/hinted,  */
 ;*         add its type/hint as a hint of the second argument.         */
@@ -58,25 +58,29 @@
    
    (when (isa? this J2SProgram)
       (when (>=fx j2s-verbose 3) (display " " (current-error-port)))
-      (let ((fix (make-cell #t)))
-	 (let loop ((i 1))
-	    (when (>=fx j2s-verbose 3)
-	       (fprintf (current-error-port) "~a." i)
-	       (flush-output-port (current-error-port)))
-	    (cell-set! fix #t)
-	    (hintnum this fix)
-	    (unless (cell-ref fix)
-	       (loop (+fx i 1)))))
-      (when (>=fx j2s-verbose 4) (fprintf (current-error-port) "/"))
-      (let ((fix (make-cell #t)))
-	 (let loop ((i 1))
-	    (when (>=fx j2s-verbose 3)
-	       (fprintf (current-error-port) "~a." i)
-	       (flush-output-port (current-error-port)))
-	    (cell-set! fix #t)
-	    (propagate-types this fix)
-	    (unless (cell-ref fix)
-	       (loop (+fx i 1))))))
+      (let global-loop ()
+	 (let ((fix (make-cell #t)))
+	    (let loop ((i 1))
+	       (when (>=fx j2s-verbose 3)
+		  (fprintf (current-error-port) "~a." i)
+		  (flush-output-port (current-error-port)))
+	       (cell-set! fix #t)
+	       (hintnum this fix)
+	       (unless (cell-ref fix)
+		  (loop (+fx i 1)))))
+	 (when (>=fx j2s-verbose 3) (fprintf (current-error-port) "/"))
+	 (let ((fix (make-cell #t)))
+	    (let loop ((i 1))
+	       (when (>=fx j2s-verbose 3)
+		  (fprintf (current-error-port) "~a." i)
+		  (flush-output-port (current-error-port)))
+	       (cell-set! fix #t)
+	       (propagate-types this fix)
+	       (cond
+		  ((not (cell-ref fix))
+		   (loop (+fx i 1)))
+		  ((>fx i 1)
+		   (global-loop)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -85,12 +89,8 @@
 (define (expr-hint::pair-nil this::J2SExpr)
    (with-access::J2SExpr this (type hint)
       (cond
-	 ((isa? this J2SNumber)
-	  (if (eq? type 'integer)
-	      (list (cons 'integer 50) (cons 'real 50))
-	      (list (cons type 100))))
-	  ((not (memq type '(number any))) (list (cons type 100)))
-	  ((pair? hint) hint)
+	 ((not (memq type '(number any integer))) (list (cons type 100)))
+	 ((pair? hint) hint)
 	 (else '()))))
 
 ;*---------------------------------------------------------------------*/
