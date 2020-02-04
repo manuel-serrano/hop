@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Nov 20 13:33:31 2019 (serrano)                */
-;*    Copyright   :  2015-19 Manuel Serrano                            */
+;*    Last change :  Tue Feb  4 16:03:07 2020 (serrano)                */
+;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
 ;*    -------------------------------------------------------------    */
@@ -73,29 +73,31 @@
    
    (define (async-proc k)
       (with-access::JsPromise obj (worker %this)
-	 (with-access::WorkerHopThread worker (%this)
-	    (js-promise-then-catch %this obj 
-	       (js-make-function %this
-		  (lambda (this resp)
-		     (js-promise-async obj
-			(lambda ()
-			   (k (scheme->response resp req %this)))))
-		  1 "reply")
-	       (js-make-function %this
-		  (lambda (this rej)
-		     (let ((errobj (url-path-encode
-				      (obj->string rej 'hop-client))))
-			(js-promise-async obj
-			   (lambda ()
-			      (k (instantiate::http-response-hop
-				    (start-line "HTTP/1.1 500 Internal Server Error")
-				    (backend (hop-xml-backend))
-				    (content-type "application/x-hop")
-				    (header `((Hop-Error: . ,errobj)))
-				    (value rej)
-				    (ctx %this)))))))
-		  1 "reject")
-	       obj))))
+	 (js-worker-exec worker "async-proc" #t
+	    (lambda ()
+	       (with-access::WorkerHopThread worker (%this)
+		  (js-promise-then-catch %this obj 
+		     (js-make-function %this
+			(lambda (this resp)
+			   (js-promise-async obj
+			      (lambda ()
+				 (k (scheme->response resp req %this)))))
+			1 "reply")
+		     (js-make-function %this
+			(lambda (this rej)
+			   (let ((errobj (url-path-encode
+					    (obj->string rej 'hop-client))))
+			      (js-promise-async obj
+				 (lambda ()
+				    (k (instantiate::http-response-hop
+					  (start-line "HTTP/1.1 500 Internal Server Error")
+					  (backend (hop-xml-backend))
+					  (content-type "application/x-hop")
+					  (header `((Hop-Error: . ,errobj)))
+					  (value rej)
+					  (ctx %this)))))))
+			1 "reject")
+		     obj))))))
    
    (with-access::JsPromise obj (worker)
       (with-access::WorkerHopThread worker (%this)
