@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jan  4 07:41:28 2020 (serrano)                */
+;*    Last change :  Tue Feb  4 15:40:38 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3544,16 +3544,17 @@
 	       (loop (+u32 i 1))))))
 
    (with-access::JsGlobalObject %this (js-symbol-iterator js-array-pcache)
-      (let ((fun (js-get-name/cache o js-symbol-iterator #f %this
-		    (js-pcache-ref js-array-pcache 19))))
-	 (if (and (js-function? fun)
-		  (with-access::JsFunction fun (elements)
-		     (not (eq? (vector-ref elements 2) (& "@@iterator")))))
-	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
-	     (with-access::JsArray o (length vec ilen)
-		(if (js-array-inlined? o)
-		    (vector-forof o length proc #u32:0)
-		    (array-forof o length proc #u32:0)))))))
+      (with-access::JsSymbolLiteral js-symbol-iterator (val)
+	 (let ((fun (js-get-name/cache o val #f %this
+		       (js-pcache-ref js-array-pcache 19))))
+	    (if (and (js-function? fun)
+		     (with-access::JsFunction fun (elements)
+			(not (eq? (vector-ref elements 2) (& "@@iterator")))))
+		(js-for-of-iterator (js-call0 %this fun o) o proc close %this)
+		(with-access::JsArray o (length vec ilen)
+		   (if (js-array-inlined? o)
+		       (vector-forof o length proc #u32:0)
+		       (array-forof o length proc #u32:0))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-concat1 ...                                   */
