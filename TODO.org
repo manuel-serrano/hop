@@ -10,12 +10,14 @@ Hop TODO stuff
   - [ ] integrate the new loopsec optimization
   - [ ] move the glob prop property optim to optim level 3
 
-** hopscript [0%]
-  - [ ] move the TONAME conversion how of JS-PUT-JSOBJECT! (property.scm)
+** hopscript [16%]
+  - [ ] move the TONAME conversion out of JS-PUT-JSOBJECT! (property.scm)
   - [ ] improve DEFINE-PROPERTY to avoid unmapping data properties
   - [ ] improve DEFINE-PROPERTY to avoid unmapping all properties
   - [ ] improve DEFINE-PROPERTY to avoid unmapping replaced props
-  - [ ] verify that after PROXY-PUT value verif. change benchs are still ok
+  - [X] verify that after PROXY-PUT value verif. change benchs are still ok
+  - [ ] improve JS-OBJECT-PROPERTIES in order to free OBJECT-WIDENING for els.
+        <2020-02-05 Wed 10:36> 
 
 ** Bugs [100%]
   - [X] Don't inline functions that use new.target (see ecma6 bug)
