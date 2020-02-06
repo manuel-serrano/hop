@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Jan 17 10:34:15 2020 (serrano)                */
+;*    Last change :  Thu Feb  6 08:16:16 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -640,11 +640,9 @@
 (define-inline (JS-OBJECT-MODE-SEALED) #u32:1024)
 (define-inline (JS-OBJECT-MODE-FROZEN) #u32:2048)
 (define-inline (JS-OBJECT-MODE-REVOKED) #u32:4096)
-;; WARNING: music be the two last constants (see js-array?)
+;; WARNING: must be the two last constants (see js-array?)
 (define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
 (define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
-(define-inline (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:8)
-(define-inline (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:16)
 
 (define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
 (define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
@@ -662,6 +660,10 @@
 ;; WARNING: must be the two last constants (see js-array?)
 (define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
 (define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
+
+(define-inline (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:8)
+(define-inline (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:16)
+
 (define-macro (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:8)
 (define-macro (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:16)
 
@@ -1228,6 +1230,7 @@
       (with-access::JsProxy obj ((target __proto__))
 	 (or (js-array? target)
 	     (js-proxy-array? target)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-function? ...                                           */
 ;*---------------------------------------------------------------------*/

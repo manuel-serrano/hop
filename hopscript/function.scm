@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jan 25 08:26:04 2020 (serrano)                */
+;*    Last change :  Thu Feb  6 09:00:35 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -56,9 +56,6 @@
 	   (js-function-apply-vec ::JsGlobalObject ::JsFunction ::obj ::vector ::uint32)
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
-	   (js-function-call0 ::JsGlobalObject ::obj ::obj ::obj)
-	   (js-function-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
-	   (js-function-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-call0 ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-maybe-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
@@ -136,7 +133,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-miss ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-object-get-name/cache-miss o::JsFunction p::JsStringLiteral
+(define-method (js-object-get-name/cache-miss o::JsFunction p::obj
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
    (if (eq? (js-toname p %this) (& "prototype"))
@@ -985,7 +982,7 @@
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
 	     (js-call2 %this
-		(js-get-name/cache this (& "apply") #f %this
+		(js-object-get-name/cache this (& "apply") #f %this
 		   (or cache (js-pcache-ref js-function-pcache 3)))
 		this thisarg argarray)))
 	 (else
@@ -999,7 +996,7 @@
        (js-call0 %this this thisarg)
        (with-access::JsGlobalObject %this (js-function-pcache)
 	  (js-call1 %this
-	     (js-get-name/cache this (& "call") #f %this
+	     (js-object-get-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4)))
 	     this thisarg))))
 
@@ -1011,7 +1008,7 @@
        (js-call1 %this this thisarg arg)
        (with-access::JsGlobalObject %this (js-function-pcache)
 	  (js-call2 %this
-	     (js-get-name/cache this (& "call") #f %this
+	     (js-object-get-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4)))
 	     this thisarg arg))))
 
@@ -1023,7 +1020,7 @@
        (js-call2 %this this thisarg arg0 arg1)
        (with-access::JsGlobalObject %this (js-function-pcache)
 	  (js-call3 %this
-	     (js-get-name/cache this (& "call") #f %this
+	     (js-object-get-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4)))
 	     this thisarg arg0 arg1))))
 
@@ -1035,7 +1032,7 @@
        (js-call3 %this this thisarg arg0 arg1 arg2)
        (with-access::JsGlobalObject %this (js-function-pcache)
 	  (js-call4 %this
-	     (js-get-name/cache this (& "call") #f %this
+	     (js-object-get-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4)))
 	     this thisarg arg0 arg1 arg2))))
 
@@ -1050,7 +1047,7 @@
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
 	     (js-call1 %this
-		(js-get-name/cache this (& "call") #f %this
+		(js-object-get-name/cache this (& "call") #f %this
 		   (or cache (js-pcache-ref js-function-pcache 5)))
 		this thisarg)))
 	 (else
@@ -1067,7 +1064,7 @@
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
 	     (js-call2 %this
-		(js-get-name/cache this (& "call") #f %this
+		(js-object-get-name/cache this (& "call") #f %this
 		   (or cache (js-pcache-ref js-function-pcache 5)))
 		this thisarg arg)))
 	 (else
@@ -1084,7 +1081,7 @@
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
 	     (js-call3 %this
-		(js-get-name/cache this (& "call") #f %this
+		(js-object-get-name/cache this (& "call") #f %this
 		   (or cache (js-pcache-ref js-function-pcache 5)))
 		this thisarg arg0 arg1)))
 	 (else
@@ -1101,7 +1098,7 @@
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
 	     (js-call4 %this
-		(js-get-name/cache this (& "call") #f %this
+		(js-object-get-name/cache this (& "call") #f %this
 		   (or cache (js-pcache-ref js-function-pcache 5)))
 		this thisarg arg0 arg1 arg2)))
 	 (else

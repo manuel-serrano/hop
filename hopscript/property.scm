@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Jan 23 15:18:37 2020 (serrano)                */
+;*    Last change :  Thu Feb  6 09:16:22 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -107,13 +107,13 @@
 
 	   (js-get/name-cache ::obj ::obj ::JsGlobalObject)
 	   (js-object-get/name-cache ::JsObject ::obj ::JsGlobalObject)
-	   (js-get-name/cache ::obj ::JsStringLiteral ::bool ::JsGlobalObject
+	   (js-get-name/cache ::obj ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   (js-object-get-name/cache ::JsObject ::JsStringLiteral
+	   (js-object-get-name/cache ::JsObject ::obj
 	      ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
-	   (generic js-object-get-name/cache-miss ::JsObject ::JsStringLiteral
+	   (generic js-object-get-name/cache-miss ::JsObject ::obj
 	      ::bool ::JsGlobalObject ::JsPropertyCache)
 	   (generic js-object-method-get-name/cache-miss ::JsObject ::JsStringLiteral
 	      ::bool ::JsGlobalObject ::JsPropertyCache)
@@ -1823,7 +1823,7 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-get-name/cache obj name::JsStringLiteral throw::bool
+(define (js-get-name/cache obj name::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (if (js-object? obj)
@@ -1835,7 +1835,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden by a macro in property.sch                         */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache o::JsObject name::JsStringLiteral
+(define (js-object-get-name/cache o::JsObject name::obj
 	   throw::bool %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-object-get-name/cache o name throw %this cache point cspecs))
@@ -1883,7 +1883,7 @@
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-object-get-name/cache-miss o::JsObject
-		   name::JsStringLiteral
+		   name::obj
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache)
    

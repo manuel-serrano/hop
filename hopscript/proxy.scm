@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Jan  5 07:05:50 2020 (serrano)                */
+;*    Last change :  Thu Feb  6 09:17:12 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -43,7 +43,7 @@
 	   (js-proxy-property-value ::JsObject ::JsProxy ::JsStringLiteral ::JsGlobalObject)
 	   (js-proxy-get ::JsProxy prop ::JsGlobalObject)
 	   (js-object-proxy-get-name/cache-miss ::JsObject
-	      ::JsStringLiteral ::bool ::JsGlobalObject ::JsPropertyCache)
+	      ::obj ::bool ::JsGlobalObject ::JsPropertyCache)
 	   (js-object-proxy-put-name/cache-miss! ::JsObject ::JsStringLiteral
 	      ::obj ::bool
 	      ::JsGlobalObject
@@ -381,7 +381,7 @@
 ;*    cost of an expensive generic function dispatch.                  */
 ;*---------------------------------------------------------------------*/
 (define (js-object-proxy-get-name/cache-miss o::JsObject
-		   name::JsStringLiteral
+		   name::obj
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache)
    (if (js-proxy? o)
@@ -392,7 +392,7 @@
 ;*    js-object-get-name/cache-miss ::JsProxy ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-object-get-name/cache-miss proxy::JsProxy
-		  prop::JsStringLiteral
+		  prop::obj
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
    (js-jsproxy-get proxy prop %this))

@@ -9,6 +9,8 @@ Hop TODO stuff
 ** js2scheme [0%]
   - [ ] integrate the new loopsec optimization
   - [ ] move the glob prop property optim to optim level 3
+  - [ ] implement the pre-overflow dection for 32 bits ops (crypo.js)
+        DEADLINE: <2020-02-06 Thu>      
 
 ** hopscript [16%]
   - [ ] move the TONAME conversion out of JS-PUT-JSOBJECT! (property.scm)

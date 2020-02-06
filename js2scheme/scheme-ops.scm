@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Jan 27 08:06:32 2020 (serrano)                */
+;*    Last change :  Thu Feb  6 10:08:43 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -544,7 +544,7 @@
        (if (> (config-get conf :debug 0) 0)
 	   `(js-instanceof?/debug %this ',loc
 	       ,(box lhs (j2s-vtype l) conf) ,(box rhs (j2s-vtype r) conf))
-	   (j2s-instanceof? lhs rhs)))
+	   (j2s-instanceof? lhs l rhs r)))
       ((in)
        (j2s-in? loc lhs rhs conf))
       ((+)
@@ -567,7 +567,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-instanceof? ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-instanceof? lhs rhs)
+(define (j2s-instanceof? lhs l rhs r)
    (case rhs
       ((!Object)
        `(js-object? ,lhs))
@@ -587,7 +587,13 @@
 	   `(let ((%o ,lhs))
 	       (or (js-proxy? %o) (js-instanceof? %this %o ,rhs)))))
       (else
-       `(js-instanceof? %this ,lhs ,rhs))))
+       (cond
+	  ((and (eq? (j2s-type r) 'function) (eq? (j2s-type l) 'object))
+	   `(js-object-function-instanceof? %this ,lhs ,rhs))
+	  ((eq? (j2s-type r) 'function)
+	   `(js-function-instanceof? %this ,lhs ,rhs))
+	  (else
+	   `(js-instanceof? %this ,lhs ,rhs))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-binop-arithmetic ...                                          */

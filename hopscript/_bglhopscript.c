@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sat Jan 25 17:51:34 2020 (serrano)                */
+/*    Last change :  Thu Feb  6 11:10:43 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -370,10 +370,9 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
 /*    Fast C allocation, equivalent to                                 */
 /*                                                                     */
 /*      (instantiate::JsObject                                         */
-/*         (mode mode)                                                 */
+/*         (__proto__ __proto__)                                       */
 /*         (cmap constrmap)                                            */
-/*         (elements (make-vector constrsize (js-undefined)))          */
-/*         (__proto__ __proto__))                                      */
+/*         (elements (make-vector constrsize (js-undefined))))         */
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
 static obj_t

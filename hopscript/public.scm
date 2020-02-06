@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Jan 25 08:23:06 2020 (serrano)                */
+;*    Last change :  Thu Feb  6 09:01:16 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -144,6 +144,8 @@
 	   (js-service/debug ::obj ::obj ::procedure)
 
 	   (js-ordinary-instanceof?::bool ::JsGlobalObject v f)
+	   (js-object-function-instanceof?::bool ::JsGlobalObject ::JsObject ::JsFunction)
+	   (js-function-instanceof?::bool ::JsGlobalObject v ::JsFunction)
 	   (js-instanceof?::bool ::JsGlobalObject v f)
 	   (js-instanceof?/debug::bool ::JsGlobalObject loc v f)
 	   
@@ -1078,7 +1080,7 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (cmap elements prototype)
+   (with-access::JsFunction f (prototype)
       (let ((o prototype))
 	 (if (not (js-object? o))
 	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
@@ -1088,19 +1090,52 @@
 		      ((eq? o nv)
 		       #t)
 		      ((eq? nv (js-null))
-		       (when (js-proxy? v)
+		       (when (eq? (object-class v) JsProxy)
 			  (with-access::JsProxy v ((target __proto__))
 			     (loop target))))
 		      (else
 		       (loop nv)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-instanceof? ...                                               */
+;*    js-function-instanceof? ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.6       */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.5.3   */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.5.3     */
 ;*---------------------------------------------------------------------*/
+(define (js-object-function-instanceof? %this v::JsObject f::JsFunction)
+   (if (js-object-mode-hasinstance? f)
+       (with-access::JsGlobalObject %this (js-symbol-hasinstance)
+	  (let ((h (js-get-jsobject f f js-symbol-hasinstance %this)))
+	     (if (js-function? h)
+		 (js-call1 %this h f v)
+		 (js-ordinary-instanceof? %this v f))))
+       (with-access::JsFunction f (prototype)
+	  (let ((o prototype))
+	     (if (not (js-object? o))
+		 (js-raise-type-error %this "instanceof: no prototype ~s" v)
+		 (let loop ((v v))
+		    (with-access::JsObject v ((nv __proto__))
+		       (cond
+			  ((eq? o nv)
+			   #t)
+			  ((eq? nv (js-null))
+			   (when (eq? (object-class v) JsProxy)
+			      (with-access::JsProxy v ((target __proto__))
+				 (loop target))))
+			  (else
+			   (loop nv))))))))))
+
+(define (js-function-instanceof? %this v f::JsFunction)
+   (when (js-object? v)
+      (if (js-object-mode-hasinstance? f)
+	  (with-access::JsGlobalObject %this (js-symbol-hasinstance)
+	     (let ((h (js-get-jsobject f f js-symbol-hasinstance %this)))
+		(if (js-function? h)
+		    (js-call1 %this h f v)
+		    (js-ordinary-instanceof? %this v f))))
+	  (js-ordinary-instanceof? %this v f))))
+
 (define (js-instanceof? %this v f)
    (if (not (js-function? f))
        (with-access::JsGlobalObject %this (js-symbol-hasinstance)
@@ -1112,7 +1147,7 @@
        (when (js-object? v)
 	  (if (js-object-mode-hasinstance? f)
 	      (with-access::JsGlobalObject %this (js-symbol-hasinstance)
-		 (let ((h (js-get f js-symbol-hasinstance %this)))
+		 (let ((h (js-get-jsobject f f js-symbol-hasinstance %this)))
 		    (if (js-function? h)
 			(js-call1 %this h f v)
 			(js-ordinary-instanceof? %this v f))))
