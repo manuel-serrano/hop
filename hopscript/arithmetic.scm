@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Mon Jan 27 08:15:42 2020 (serrano)                */
+;*    Last change :  Sat Feb  8 07:14:09 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -250,9 +250,13 @@
 ;*    %$$NN ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%$$NN lnum rnum)
-   (if (= rnum 0)
-       +nan.0
-       (%$$NZ lnum rnum)))
+   (cond
+      ((and (fixnums? lnum rnum) (>=fx lnum 0) (not (=fx rnum 0)))
+       (remainderfx lnum rnum))
+      ((= rnum 0)
+       +nan.0)
+      (else
+       (%$$NZ lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %$$NZ ...                                                        */

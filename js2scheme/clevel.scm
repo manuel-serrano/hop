@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sun Dec  1 07:19:15 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb  9 07:32:48 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
 ;*    This analysis scans the AST to find property assignments and     */
@@ -26,7 +26,8 @@
 
    (library web)
    
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -70,7 +71,9 @@
 			     ((pair? cspecs)  cspecs)
 			     ((symbol? cspecs) (list cspecs))
 			     (else (error "j2s-clevel" "Illegal cspecs" cspecs)))))
-		   (cspecs-update this cs args))))))
+		   (cspecs-update this cs args))))
+	    (else
+	     (cspecs-update-ctor! this))))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -603,3 +606,28 @@
    (with-access::J2SCall this (cspecs)
       (set! cspecs cs)
       (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-update! ::J2SDeclFun ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-update! this::J2SDeclFun cs)
+   (if (decl-usage-has? this '(new))
+       (with-access::J2SDeclFun this (val)
+	  (cspecs-update! val (remq 'imap (remq 'pmap cs))))
+       (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-update-ctor! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-update-ctor! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-update-ctor! ::J2SDeclFun ...                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-update-ctor! this::J2SDeclFun)
+   (if (decl-usage-has? this '(new))
+       (with-access::J2SDeclFun this (val c)
+	  (cspecs-update! val '(emap amap))
+	  this)
+       (call-default-walker)))

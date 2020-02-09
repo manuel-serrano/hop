@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sun Jun 30 18:02:15 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb  9 07:53:31 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
 ;*    -------------------------------------------------------------    */
@@ -198,6 +198,24 @@
 	  (with-access::J2SAccess expr ((o obj) field)
 	     (and (simple-expr? o obj)
 		  (simple-expr? field obj))))
+	 ((isa? expr J2SAssig)
+	  (with-access::J2SAssig expr (lhs rhs)
+	     (and (simple-expr? lhs obj)
+		  (simple-expr? rhs obj))))
+	 ((isa? expr J2SBindExit)
+	  (with-access::J2SBindExit expr (stmt)
+	     (simple-stmt? stmt obj)))
+	 (else
+	  #f)))
+
+   (define (simple-stmt? stmt obj)
+      (cond
+	 ((isa? stmt J2SBlock)
+	  (with-access::J2SBlock stmt (nodes)
+	     (every (lambda (n) (simple-stmt? n obj)) nodes)))
+	 ((isa? stmt J2SReturn)
+	  (with-access::J2SReturn stmt (expr)
+	     (simple-expr? expr obj)))
 	 (else
 	  #f)))
    
