@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Jan 26 08:01:06 2020 (serrano)                */
+;*    Last change :  Sun Feb  9 11:20:26 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -995,6 +995,21 @@
 	,@(if _scmid `(:_scmid ,_scmid) '())
 	,@(dump-info this)
 	,@(dump-scope scope))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SDeclRest ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SDeclRest)
+   (with-access::J2SDeclRest this (id key _scmid usage alloc-policy)
+      `(,(string->symbol (typeof this))
+	,id
+	,@(dump-dump this)
+	,@(dump-key key)
+	,@(dump-access this)
+	,@(dump-vtype this)
+	,@(if _scmid `(:_scmid ,_scmid) '())
+	:alloc-policy ,alloc-policy
+	,@(dump-info this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclArguments ...                                 */

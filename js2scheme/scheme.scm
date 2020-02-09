@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan 17 08:44:21 2020 (serrano)                */
+;*    Last change :  Sun Feb  9 11:08:11 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2252,7 +2252,8 @@
 	    ((eq? (j2s-type obj) 'vector)
 	     (j2s-vector-ref this mode return conf))
 	    ((eq? (j2s-type obj) 'array)
-	     (or (j2s-array-ref this mode return conf)
+	     (or (j2s-rest-ref this mode return conf)
+		 (j2s-array-ref this mode return conf)
 		 (get obj (j2s-scheme obj mode return conf)
 		    field cache cspecs #f loc)))
  	    ((eq? (j2s-type obj) 'string)

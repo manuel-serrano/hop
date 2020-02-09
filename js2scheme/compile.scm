@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Jan 10 08:03:17 2020 (serrano)                */
+;*    Last change :  Sun Feb  9 11:25:33 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -220,12 +220,12 @@
 	  j2s-ctor-stage
 	  j2s-pce-stage
 	  j2s-cast-stage
+	  j2s-arguments-stage
 	  j2s-vector-stage
 	  j2s-array-stage
 	  j2s-dead-stage
 	  j2s-constrsize-stage
 	  j2s-unthis-stage
-	  j2s-arguments-stage
 	  j2s-procedure-stage
 	  j2s-scheme-stage))
       (else

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Dec 30 05:51:16 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb  9 10:53:19 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -88,8 +88,10 @@
 	      ;; es module export
 	      (exports::pair-nil (default '()) (info '("notraverse"))))
 
-	   (class J2SDeclArguments::J2SDecl
-	      (alloc-policy::symbol (default 'heap) (info '("notraverse")))
+	   (class J2SDeclRest::J2SDecl
+	      (alloc-policy::symbol (default 'heap) (info '("notraverse"))))
+	   
+	   (class J2SDeclArguments::J2SDeclRest
 	      (argid::symbol read-only (info '("notraverse")))
 	      (mode::symbol read-only (info '("notraverse"))))
 	   

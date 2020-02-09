@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Dec 15 19:31:11 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb  9 11:08:24 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
 ;*=====================================================================*/
@@ -29,11 +29,42 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
 
-   (export (j2s-arguments-ref ::J2SAccess mode return conf)
+   (export (j2s-rest-ref ::J2SAccess mode return conf)
+	   (j2s-arguments-ref ::J2SAccess mode return conf)
 	   (j2s-arguments-set! ::J2SAssig mode return conf)
 	   (j2s-ref-arguments-lazy?::bool ::J2SRef)
 	   (j2s-ref-arguments-argid::symbol ::J2SRef)
 	   (j2s-ref-arguments-mode::symbol ::J2SRef)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-rest-ref ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-rest-ref this::J2SAccess mode return conf)
+   (with-access::J2SAccess this (obj field type)
+      (when (isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (when (eq? (object-class decl) J2SDeclRest)
+	       (with-access::J2SDeclRest decl (alloc-policy)
+		  (cond
+		     ((not (eq? alloc-policy 'lazy)) #f)
+		     ((maybe-number? field)
+		      (cond
+			 ((eq? (j2s-vtype field) 'uint32)
+			  `(js-rest-vector-index-ref 
+			      ,(j2s-scheme obj mode return conf)
+			      ,(j2s-scheme field mode return conf)))
+			 ((eq? (j2s-vtype field) 'int32)
+			  `(js-rest-vector-ref 
+			      ,(j2s-scheme obj mode return conf)
+			      (int32->fixnum ,(j2s-scheme field mode return conf))))
+			 (else
+			  `(js-rest-ref
+			      ,(j2s-scheme obj mode return conf)
+			      ,(j2s-scheme field mode return conf)))))
+		     ((j2s-field-length? field)
+		      `(vector-length ,(j2s-scheme obj mode return conf)))
+		     (else
+		      #f))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-arguments-ref ...                                            */

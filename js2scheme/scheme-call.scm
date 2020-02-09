@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Jan 10 08:16:08 2020 (serrano)                */
+;*    Last change :  Sun Feb  9 10:37:24 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -741,6 +741,23 @@
    (define (j2s-self thisarg)
       (map (lambda (t) (j2s-scheme t mode return conf)) thisarg))
 
+
+   (define (call-arguments-function fun::J2SFun thisarg::pair-nil f %gen args)
+      (with-access::J2SFun fun (params vararg idthis loc argumentsp)
+	 (let ((self (if idthis (j2s-self thisarg) '())))
+	    (if (config-get conf :optim-arguments)
+		(with-access::J2SDeclArguments argumentsp (alloc-policy)
+		   (if (eq? alloc-policy 'lazy)
+		       (let ((v (gensym 'vec)))
+			  `(js-call-with-stack-vector
+			      (vector ,@(j2s-scheme args mode return conf))
+			      (lambda (,v)
+				 (,f ,@%gen ,@self ,v))))
+		       `(,f ,@%gen ,@self
+			   (vector ,@(j2s-scheme args mode return conf)))))
+		`(,f ,@%gen ,@self
+		    ,@(j2s-scheme args mode return conf))))))
+   
    (define (call-rest-function fun::J2SFun thisarg::pair-nil f %gen args)
       ;; call a function that accepts a rest argument
       (with-access::J2SFun fun (params vararg)
@@ -750,10 +767,23 @@
 	    (cond
 	       ((null? (cdr params))
 		;; the rest argument
-		`(,f ,@%gen ,@(j2s-self thisarg) ,@(reverse! actuals)
-		    (js-vector->jsarray
-		       (vector ,@(j2s-scheme args mode return conf))
-		       %this)))
+		(with-access::J2SDeclRest (car params) (alloc-policy)
+		   (if (and (eq? alloc-policy 'lazy)
+			    (config-get conf :optim-arguments))
+		       (let ((v (gensym 'vec)))
+			  `(js-call-with-stack-vector
+			      (vector ,@(j2s-scheme args mode return conf))
+			      (lambda (,v)
+				 (,f ,@%gen
+				    ,@(j2s-self thisarg)
+				    ,@(reverse! actuals)
+				    ,v))))
+		       `(,f ,@%gen
+			   ,@(j2s-self thisarg)
+			   ,@(reverse! actuals)
+			   (js-vector->jsarray
+			      (vector ,@(j2s-scheme args mode return conf))
+			      %this)))))
 	       ((null? args)
 		(with-access::J2SDecl (car params) (loc)
 		   (loop (cdr params) '()
@@ -821,22 +851,8 @@
       (with-access::J2SFun fun (params vararg idthis loc argumentsp)
 	 (case (if (eq? protocol 'bounce) 'bounce vararg)
 	    ((arguments)
-	     (let ((self (if idthis (j2s-self thisarg) '())))
-		(if (config-get conf :optim-arguments)
-		    (with-access::J2SDeclArguments argumentsp (alloc-policy)
-		       (if (eq? alloc-policy 'lazy)
-			   (let ((v (gensym 'vec)))
-			      (call-profile profid
-				 `(js-call-with-stack-vector
-				     (vector ,@(j2s-scheme args mode return conf))
-				     (lambda (,v)
-					(,f ,@%gen ,@self ,v)))))
-			   (call-profile profid
-			      `(,f ,@%gen ,@self
-				  (vector ,@(j2s-scheme args mode return conf))))))
-		    (call-profile profid
-		       `(,f ,@%gen ,@self
-			   ,@(j2s-scheme args mode return conf))))))
+	     (call-profile profid
+		(call-arguments-function fun thisarg f %gen args)))
 	    ((rest)
 	     (call-profile profid
 		(call-rest-function fun (if idthis thisarg '()) f %gen args)))

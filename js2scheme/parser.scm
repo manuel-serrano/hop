@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec 20 19:27:38 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb  9 10:51:02 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -1532,7 +1532,7 @@
    (define (consume-rest-param!)
       (let* ((token (consume-token! 'ID))
 	     (loc (token-loc token)))
-	 (instantiate::J2SDecl
+	 (instantiate::J2SDeclRest
 	    (binder 'param)
 	    (loc loc)
 	    (_usage (usage '(rest)))

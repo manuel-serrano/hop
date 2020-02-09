@@ -3,14 +3,14 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Fri Dec  6 09:11:55 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Sun Feb  9 10:43:58 2020 (serrano)                */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
 ;*    -------------------------------------------------------------    */
-;*    This stage annotates ARGUMENTS usages so that the Scheme         */
-;*    code generation can better allocates and uses this special       */
-;*    variable.                                                        */
+;*    This stage annotates ARGUMENTS and OPTIONAL arguments usages     */
+;*    so that the Scheme code generation can better allocates and      */
+;*    uses this special variable.                                      */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -18,7 +18,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_arguments
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -76,6 +77,11 @@
 		 (or (memq mode '(strict hopscript)) (null? params)))
 	 (with-access::J2SDeclArguments argumentsp (alloc-policy)
 	    (set! alloc-policy 'lazy)))
+      (when (pair? params)
+	 (let ((decl (car (last-pair params))))
+	    (when (isa? decl J2SDeclRest)
+	       (with-access::J2SDeclRest decl (alloc-policy)
+		  (set! alloc-policy 'lazy)))))
       (annotate-arguments body parent)))
       
 ;*---------------------------------------------------------------------*/
@@ -84,7 +90,7 @@
 (define-method (annotate-arguments this::J2SRef parent)
    
    (define (arguments-invalidate! decl)
-      (with-access::J2SDeclArguments decl (alloc-policy)
+      (with-access::J2SDeclRest decl (alloc-policy)
 	 (set! alloc-policy 'eager)))
    
    (define (get-length? node::J2SAccess)
@@ -102,16 +108,23 @@
 		     (string=? val "apply")))))))
    
    (with-access::J2SRef this (decl)
-      (when (isa? decl J2SDeclArguments)
+      (when (isa? decl J2SDeclRest)
 	 (cond
 	    ((isa? parent J2SAccess)
 	     (with-access::J2SAccess parent (field)
-		(unless (or (memq (j2s-type field) '(integer uint32 int32 fixnum))
+		(unless (or (memq (j2s-type field)
+			       '(integer uint32 int32 fixnum))
 			    (get-length? parent))
+		   (when (isa? decl J2SDeclRest)
+		      (tprint "INV.1"))
 		   (arguments-invalidate! decl))))
 	    ((isa? parent J2SCall)
 	     (unless (apply? parent)
+		(when (isa? decl J2SDeclRest)
+		   (tprint "INV.2 " (j2s->list parent)))
 		(arguments-invalidate! decl)))
 	    (else
+	     (when (isa? decl J2SDeclRest)
+		   (tprint "INV.3"))
 	     (arguments-invalidate! decl))))))
    

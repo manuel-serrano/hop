@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Dec 14 18:46:20 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb  9 11:33:47 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
 ;*=====================================================================*/
@@ -223,10 +223,19 @@
 	     (with-access::J2SRef obj (type decl)
 		(if (and (eq? type 'array)
 			 (memq decl env)
-			 (type-number? (j2s-type field)))
+			 (type-number? (j2s-type field))
+			 (not (rest-lazy-argument? decl)))
 		    (cons decl fdaref)
 		    fdaref))))))
-      
+
+;*---------------------------------------------------------------------*/
+;*    rest-lazy-argument? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (rest-lazy-argument? decl)
+   (when (eq? (object-class decl) J2SDeclRest)
+      (with-access::J2SDeclRest decl (alloc-policy)
+	 (eq? alloc-policy 'lazy))))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    array-ref! ::J2SNode ...                                         */
 ;*    -------------------------------------------------------------    */

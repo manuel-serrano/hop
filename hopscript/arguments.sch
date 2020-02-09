@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:56:07 2019                          */
-;*    Last change :  Sun Dec  8 06:25:45 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Sun Feb  9 11:04:52 2020 (serrano)                */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments macros for js2scheme                                   */
 ;*=====================================================================*/
@@ -48,3 +48,31 @@
 	(begin
 	   (set! ,arguments (js-materialize-arguments ,%this ,vec ,arguments))
 	   (js-arguments-index-set! ,arguments ,idx ,val ,%this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-rest-vector-ref ...                                           */
+;*---------------------------------------------------------------------*/
+(define-macro (js-rest-vector-ref vec idx)
+   `(if (and (>=fx ,idx 0) (<fx ,idx (vector-length ,vec)))
+	(vector-ref-ur ,vec ,idx)
+	(js-undefined)))
+
+;*---------------------------------------------------------------------*/
+;*    js-rest-vector-index-ref ...                                     */
+;*---------------------------------------------------------------------*/
+(define-macro (js-rest-vector-index-ref vec idx)
+   `(if (<u32 ,idx (fixnum->uint32 (vector-length ,vec)))
+	(vector-ref-ur ,vec (uint32->fixnum ,idx))
+	(js-undefined)))
+
+;*---------------------------------------------------------------------*/
+;*    js-rest-ref ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-macro (js-rest-ref vec idx)
+   (let ((n (gensym '%n)))
+      `(if (fixnum? ,idx)
+	   (js-ref-vector-ref ,vec ,idx)
+	   (let ((,n (js-tonumber ,idx)))
+	      (if (fixnum? ,n)
+		  (js-ref-vector-ref ,vec ,n)
+		  (js-undefined))))))
