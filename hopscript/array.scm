@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Feb 12 22:16:16 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 22:24:28 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3417,7 +3417,6 @@
 				    (else
 				     ;; slow access
 				     (uninline-array! a %this)
-				     (tprint "unholey.6 " p)
 				     (unholey-array! a %this)
 				     (js-object-mode-plain-set! a #f)
 				     (js-define-own-property%
