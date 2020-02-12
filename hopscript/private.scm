@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Aug 13 09:03:20 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 07:44:21 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
 ;*=====================================================================*/
@@ -53,8 +53,6 @@
 	   (js-seal-property! ::JsPropertyDescriptor)
 	   (js-freeze-property! ::JsPropertyDescriptor)
 
-	   (js-properties-clone ::pair-nil)
-	   
 	   (generic js-valueof ::obj ::JsGlobalObject)
 	   
 	   (js-number->string ::obj)
@@ -167,19 +165,6 @@
 	 (with-access::JsValueDescriptor desc (writable)
 	    (when (eq? writable #t) (set! writable #f))))
       (when (eq? configurable #t) (set! configurable #f))))
-
-;*---------------------------------------------------------------------*/
-;*    js-properties-clone ...                                          */
-;*---------------------------------------------------------------------*/
-(define (js-properties-clone properties)
-   (map (lambda (p)
-	   (if (isa? p JsValueDescriptor)
-	       (with-access::JsValueDescriptor p (writable)
-		  (if writable
-		      (duplicate::JsValueDescriptor p)
-		      p))
-	       p))
-      properties))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::obj ...                                             */

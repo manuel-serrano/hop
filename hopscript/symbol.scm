@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jun  7 21:38:19 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 10:07:15 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
 ;*    -------------------------------------------------------------    */
@@ -63,8 +63,8 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((nobj (duplicate::JsSymbol obj
+			(elements '#())
 			(__proto__ (js-get js-object (& "prototype") %this)))))
-	    (js-object-properties-set! nobj '())
 	    (js-for-in obj
 	       (lambda (k %this)
 		  (js-put! nobj k

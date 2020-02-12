@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Oct 11 12:54:41 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 10:07:00 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
 ;*    -------------------------------------------------------------    */
@@ -146,9 +146,9 @@
 			     (configurable #f)
 			     (enumerable #f)
 			     (value (string-length str)))))
-		  (with-access::JsString o (val)
+		  (with-access::JsString o (val elements)
 		     (set! val (js-ascii->jsstring str))
-		     (js-object-properties-set! o (list len)))))
+		     (set! elements (vector len)))))
 	    
 	    (with-access::JsGlobalObject %this (js-new-target)
 	       (set! js-new-target (js-undefined)))
@@ -311,9 +311,9 @@
 		 (enumerable #f)
 		 (value (uint32->fixnum
 			   (js-jsstring-codeunit-length str))))))
-      (with-access::JsString o (val)
+      (with-access::JsString o (val elements)
 	 (set! val str)
-	 (js-object-properties-set! o (list len)))))
+	 (set! elements (vector len)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::JsString ...                                        */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Nov  4 16:31:14 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 08:51:29 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
 ;*                                                                     */
@@ -132,18 +132,20 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsObject worker::WorkerHopThread %_this)
    (with-access::WorkerHopThread worker (%this)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let ((nobj (duplicate::JsObject obj
-			(__proto__ (js-get js-object (& "prototype") %this)))))
-	    (js-object-properties-set! nobj '())
-	    (js-object-mode-set! nobj (js-object-mode obj))
-	    (js-for-in obj
-	       (lambda (k %this)
-		  (js-put! nobj (js-donate k worker %_this)
-		     (js-donate (js-get/name-cache obj k %_this) worker %_this)
-		     #f %this))
-	       %this)
-	    nobj))))
+      (with-access::JsGlobalObject %this (js-object js-initial-cmap)
+	 (with-access::JsObject obj (elements)
+	    (let ((nobj (duplicate::JsObject obj
+			   (cmap js-initial-cmap)
+			   (elements (make-vector (vector-length elements)))
+			   (__proto__ (js-get js-object (& "prototype") %this)))))
+	       (js-object-mode-set! nobj (js-object-mode obj))
+	       (js-for-in obj
+		  (lambda (k %this)
+		     (js-put! nobj (js-donate k worker %_this)
+			(js-donate (js-get/name-cache obj k %_this) worker %_this)
+			#f %this))
+		  %this)
+	       nobj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsObject ...                               */
@@ -860,18 +862,21 @@
       (define (issealed this o)
 	 ;; 1
 	 (let ((o (js-cast-object o %this "isSealed")))
-	    (with-access::JsObject o (cmap)
+	    (with-access::JsObject o (cmap elements)
 	       (and
 		;; 2
-		(with-access::JsConstructMap cmap (props)
-		   (vector-every (lambda (p)
-				    (let ((flags (prop-flags p)))
-				       (not (flags-configurable? flags))))
-		      props))
-		(every (lambda (desc::JsPropertyDescriptor)
-			  (with-access::JsPropertyDescriptor desc (configurable)
-			     (not (eq? configurable #t))))
-		   (js-object-properties o))
+		(or
+		 (and (js-object-mapped? o)
+		      (with-access::JsConstructMap cmap (props)
+			 (vector-every (lambda (p)
+					  (let ((flags (prop-flags p)))
+					     (not (flags-configurable? flags))))
+			    props)))
+		 (and (not (js-object-mapped? o))
+		      (vector-every (lambda (desc::JsPropertyDescriptor)
+				       (with-access::JsPropertyDescriptor desc (configurable)
+					  (not (eq? configurable #t))))
+			 elements)))
 		;; 3
 		(not (js-object-mode-extensible? o))))))
       
@@ -888,22 +893,25 @@
       (define (isfrozen this o)
 	 ;; 1
 	 (let ((o (js-cast-object o %this "isFrozen")))
-	    (with-access::JsObject o (cmap)
+	    (with-access::JsObject o (cmap elements)
 	       (and
 		;; 2
-		(with-access::JsConstructMap cmap (props)
-		   (vector-every (lambda (p)
-				    (let ((flags (prop-flags p)))
-				       (and (not (flags-writable? flags))
-					    (not (flags-configurable? flags)))))
-			props))	     
-		(every (lambda (desc::JsPropertyDescriptor)
-			  (with-access::JsPropertyDescriptor desc (configurable)
-			     (and (not (eq? configurable #t))
-				  (or (not (isa? desc JsValueDescriptor))
-				      (with-access::JsValueDescriptor desc (writable)
-					 (not (eq? writable #t)))))))
-		   (js-object-properties o))
+		(or
+		 (and (js-object-mapped? o)
+		      (with-access::JsConstructMap cmap (props)
+			 (vector-every (lambda (p)
+					  (let ((flags (prop-flags p)))
+					     (and (not (flags-writable? flags))
+						  (not (flags-configurable? flags)))))
+			    props)))
+		 (and (not (js-object-mapped? o))
+		      (vector-every (lambda (desc::JsPropertyDescriptor)
+				       (with-access::JsPropertyDescriptor desc (configurable)
+					  (and (not (eq? configurable #t))
+					       (or (not (isa? desc JsValueDescriptor))
+						   (with-access::JsValueDescriptor desc (writable)
+						      (not (eq? writable #t)))))))
+			 elements)))
 		;; 3
 		(not (js-object-mode-extensible? o))))))
       
@@ -982,7 +990,6 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (& "[object String]"))
-;* 	     this)                                                     */
 	    ((eq? this (js-undefined))
 	     (& "[object Undefined]"))
 	    ((eq? this (js-null))
@@ -1159,6 +1166,7 @@
 ;*---------------------------------------------------------------------*/
 (define (object-defineproperties %this::JsGlobalObject this _obj _properties)
    
+   
    (define (vfor-each proc vec)
       (let ((len (vector-length vec)))
 	 (let loop ((i 0))
@@ -1195,10 +1203,10 @@
 	       props))))
    
    (define (defineproperties/properties oprops obj properties)
-      (for-each (lambda (prop)
-		   (with-access::JsPropertyDescriptor prop (name enumerable)
-		      (when (eq? enumerable #t)
-			 (define-own-property obj name prop properties))))
+      (vector-for-each (lambda (prop)
+			  (with-access::JsPropertyDescriptor prop (name enumerable)
+			     (when (eq? enumerable #t)
+				(define-own-property obj name prop properties))))
 	 oprops))
 
    (if (not (js-object? _obj))
@@ -1206,11 +1214,10 @@
 	  "Object.defineProperties called on non-object: ~s" _obj)
        (let ((properties (js-cast-object (js-toobject %this _properties) %this
 			    "defineProperties")))
-	  (with-access::JsObject properties (cmap)
-	     (if (eq? cmap (js-not-a-cmap))
-		 (let ((oprops (js-object-properties properties)))
-		    (defineproperties/properties oprops _obj properties))
-		 (defineproperties/cmap cmap _obj properties)))
+	  (with-access::JsObject properties (cmap elements)
+	     (if (js-object-mapped? properties)
+		 (defineproperties/cmap cmap _obj properties)
+		 (defineproperties/properties elements _obj properties)))
 	  _obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -1229,15 +1236,16 @@
 	       #f
 	       (flags-accessor? flags)))))
 
-   (for-each js-seal-property! (js-object-properties o))
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-sealed-set! o #t)
-   (when (js-object-mapped? o)
-      (with-access::JsObject o (cmap)
-	 (with-access::JsConstructMap cmap (props)
-	    (let ((ncmap (duplicate::JsConstructMap cmap
-			    (props (vector-map prop-seal props)))))
-	       (set! cmap ncmap)))))
+   (if (js-object-mapped? o)
+       (with-access::JsObject o (cmap)
+	  (with-access::JsConstructMap cmap (props)
+	     (let ((ncmap (duplicate::JsConstructMap cmap
+			     (props (vector-map prop-seal props)))))
+		(set! cmap ncmap))))
+       (with-access::JsObject o (elements)
+	  (vector-for-each js-seal-property! elements)))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -1255,16 +1263,18 @@
 	       (flags-enumerable? flags)
 	       #f
 	       (flags-accessor? flags)))))
-
-   (for-each js-freeze-property! (js-object-properties o))
+   
+   
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-frozen-set! o #t)
-   (with-access::JsObject o (cmap)
-      (unless (eq? cmap (js-not-a-cmap))
-	 (with-access::JsConstructMap cmap (props)
-	    (let ((ncmap (duplicate::JsConstructMap cmap
-			    (props (vector-map prop-freeze props)))))
-	       (set! cmap ncmap)))))
+   (with-access::JsObject o (cmap elements)
+      (if (js-object-mapped? o)
+	  (with-access::JsConstructMap cmap (props)
+	     (let ((ncmap (duplicate::JsConstructMap cmap
+			     (props (vector-map prop-freeze props)))))
+		(set! cmap ncmap)))
+	  (with-access::JsObject o (elements)
+	     (vector-for-each js-freeze-property! elements))))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -1342,12 +1352,13 @@
 	       (when (eq? enumerable #t)
 		  (proc name %this))))))
    
-   (with-access::JsObject obj (cmap __proto__ elements)
+   (with-access::JsObject obj (cmap __proto__)
       (when (js-object-mode-enumerable? obj)
-	 (if (not (eq? cmap (js-not-a-cmap)))
+	 (if (js-object-mapped? obj)
 	     (with-access::JsConstructMap cmap (props)
 		(vfor-in props))
-	     (for-each in-property (js-object-properties obj))))
+	     (with-access::JsObject obj (elements)
+		(vector-for-each in-property elements))))
       (when (js-object? __proto__)
 	 (js-for-in-prototype __proto__ obj proc %this))))
 

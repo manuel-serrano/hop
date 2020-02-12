@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Feb  6 09:00:35 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 08:43:20 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -113,11 +113,11 @@
 (define-method (js-donate obj::JsFunction worker::WorkerHopThread %_this)
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-function)
-	 (with-access::JsFunction obj (procedure src)
+	 (with-access::JsFunction obj (procedure src elements)
 	    (if (eq? src 'builtin)
 		(let ((nobj (duplicate::JsFunction obj
-			       (__proto__ (js-get js-function (& "prototype") %this)))))
-		   (js-object-properties-set! nobj '())
+			       (__proto__ (js-get js-function (& "prototype") %this))
+			       (elements '#()))))
 		   (js-object-mode-set! nobj (js-object-mode obj))
 		   nobj)
 		(js-undefined))))))
@@ -570,14 +570,21 @@
 ;*    js-function-prototype-set ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-function-prototype-set obj v owner::JsFunction propname %this)
+   
+   (define (find-desc vec prop)
+      (let ((len (vector-length vec)))
+	 (let loop ((i 0))
+	    (when (<fx i len)
+	       (with-access::JsPropertyDescriptor (vector-ref vec i) (name)
+		  (if (eq? name prop)
+		      (vector-ref vec i)
+		      (loop (+fx i 1))))))))
+   
    (with-access::JsFunction owner (constrmap %prototype prototype elements cmap)
       ;; as the prototype property is not configurable,
       ;; it is always owned by the object
       (let ((desc (if (eq? cmap (js-not-a-cmap))
-		      (find (lambda (d)
-			       (with-access::JsPropertyDescriptor d (name)
-				  (eq? name (& "prototype"))))
-			 (js-object-properties owner))
+		      (find-desc elements (& "prototype"))
 		      (vector-ref elements 0))))
 	 (with-access::JsDataDescriptor desc (writable)
 	    (when writable
@@ -799,8 +806,7 @@
 		       (vector->sublist vec len)))))
 	     (else
 	      ;; slow path
-	      (let ((properties (js-object-properties argarray))
-		    (len (js-get argarray (& "length") %this)))
+	      (let ((len (js-get argarray (& "length") %this)))
 		 (js-apply %this this thisarg
 		    (map! (lambda (idx)
 			     (js-array-fixnum-ref argarray idx %this))

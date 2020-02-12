@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Oct 11 07:45:12 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 08:50:04 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */
@@ -345,7 +345,7 @@
 		(if (not (eq? cmap (js-not-a-cmap)))
 		    (with-access::JsConstructMap cmap (props)
 		       (vfor-each3 in-mapped-property elements props))
-		    (for-each in-property (js-object-properties o))))))
+		    (vector-for-each in-property elements)))))
 	 ((object? obj)
 	  (vfor-each2 (lambda (f) (proc (class-field-name f)))
 	     (class-all-fields (object-class obj))))

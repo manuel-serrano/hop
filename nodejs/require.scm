@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct 31 22:03:46 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 10:08:51 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
 ;*=====================================================================*/
@@ -971,7 +971,6 @@
 		      (cmap js-scope-cmap)
 		      (__proto__ global)
 		      (elements ($create-vector (SCOPE-ELEMENTS-LENGTH))))))
-	 (js-object-properties-set! scope '())
 	 (js-object-mode-set! scope (js-object-default-mode))
 	 (nodejs-scope-init! scope)
 	 scope)))
@@ -2247,10 +2246,11 @@
                (proc name))))
       
       (with-access::JsObject obj (cmap __proto__)
-         (if (not (eq? cmap (js-not-a-cmap)))
+         (if (js-object-mapped? obj)
              (with-access::JsConstructMap cmap (props)
                 (vfor-each in-mapped-property props))
-             (for-each in-property (js-object-properties obj)))))
+	     (with-access::JsObject obj (elements)
+		(vector-for-each in-property elements)))))
    
    ;; e start being undefined during the first steps of the rts boot
    (when (js-object? e)

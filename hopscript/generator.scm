@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Sun Jun 23 19:51:14 2019 (serrano)                */
-;*    Copyright   :  2015-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 08:47:45 2020 (serrano)                */
+;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
 ;*    -------------------------------------------------------------    */
@@ -251,10 +251,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! this::JsGenerator prop v throw %this)
    (with-access::JsGenerator this (cmap elements)
-      (when (and (null? (js-object-properties this)) (isa? cmap JsConstructMap))
+      (when (isa? cmap JsConstructMap)
 	 ;; de-optimze the generator first
-	 (set! cmap (js-not-a-cmap))
-	 (set! elements '#()))
+	 (js-object-unmap! this))
       ;; regular [[PUT]] invocation
       (call-next-method)))
 

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Dec 20 17:47:08 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 10:18:59 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
 ;*=====================================================================*/
@@ -1059,7 +1059,7 @@
 		       (js-raise-type-error %this
 			  "service not a constructor" arg)))
 	 (svc (or svc (default-service)))
-	 (properties (list
+	 (elements (vector
 			(instantiate::JsValueDescriptor
 			   (name (& "length"))
 			   (value 0))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Fri Dec  6 15:07:52 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 10:15:52 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
 ;*=====================================================================*/
@@ -19,8 +19,7 @@
 	 `(define (,(symbol-append 'js-instantiate- clazz '-expander) x e)
 	     
 	     (define builtins
-		'((properties '())
-		  (mode ,(if (pair? (cddr x))
+		'((mode ,(if (pair? (cddr x))
 			     (caddr x)
 			     '(js-object-default-mode)))))
 	     
@@ -56,8 +55,7 @@
 	 `(define (js-instantiate-JsObject-expander x e)
 	     
 	     (define builtins
-		'((properties '())
-		  (mode ,(if (pair? (cddr x))
+		'((mode ,(if (pair? (cddr x))
 			     (caddr x)
 			     '(js-object-default-mode)))))
 	     

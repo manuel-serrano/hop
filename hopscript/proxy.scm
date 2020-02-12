@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Thu Feb  6 09:17:12 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 10:05:33 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -602,7 +602,8 @@
 (define (proxy-check-property-value target owner prop %this v get-or-set)
    (cond
       ((and (not (js-object-mapped? target))
-	    (null? (js-object-properties target)))
+	    (with-access::JsObject target (elements)
+	       (=fx (vector-length elements) 0)))
        v)
       (else
        (let ((prop (js-get-own-property target prop %this)))
@@ -800,7 +801,8 @@
       ((all-symbol-or-string? r)
        (err))
       ((and (not (js-object-mapped? target))
-	    (null? (js-object-properties target)))
+	    (with-access::JsObject target (elements)
+	       (=fx (vector-length elements) 0)))
        (if (js-extensible? target %this)
 	   r
 	   (same-list (js-properties-name target #t %this) r)))

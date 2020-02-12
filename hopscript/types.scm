@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Feb  6 08:16:16 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 07:43:37 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -532,9 +532,6 @@
 
 	   (inline js-object-cmap ::JsObject)
 	   
-	   (inline js-object-properties ::JsObject)
-	   (inline js-object-properties-set! ::JsObject ::obj)
-	   
 	   (inline js-object-mode::uint32 ::object)
 	   (inline js-object-mode-set! ::object ::uint32)
 
@@ -986,10 +983,8 @@
 		     (__proto__ (js-clone __proto__))
 		     (cmap (js-clone cmap))
 		     (elements (vector-map js-clone elements)))))
-	 (let ((properties (js-object-properties obj)))
-	    (js-object-properties-set! nobj (js-properties-clone properties))
-	    (js-object-mode-set! nobj (js-object-mode obj))
-	    nobj))))
+	 (js-object-mode-set! nobj (js-object-mode obj))
+	 nobj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-clone ::JsConstructMap ...                                    */
@@ -1000,6 +995,15 @@
        (with-access::JsConstructMap obj (props)
 	  (duplicate::JsConstructMap obj
 	     (props (vector-copy props))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-clone ::JsValueDescriptor ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (js-clone obj::JsValueDescriptor)
+   (with-access::JsValueDescriptor obj (writable)
+      (if writable
+	  (duplicate::JsValueDescriptor obj)
+	  obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ...                                                    */
@@ -1245,18 +1249,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-cmap o)
    (with-access::JsObject o (cmap) cmap))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-properties ...                                         */
-;*---------------------------------------------------------------------*/
-(define-inline (js-object-properties o)
-   (object-widening o))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-properties-set! ...                                    */
-;*---------------------------------------------------------------------*/
-(define-inline (js-object-properties-set! o p)
-   (object-widening-set! o p))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-mode ...                                               */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Aug 14 10:46:05 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 07:48:21 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
 ;*=====================================================================*/
@@ -627,7 +627,6 @@
 	 (define (js-typedarray-alloc %this constructor::JsFunction)
 	    (let ((o (allocate-instance (string->symbol (string-append "Js" name)))))
 	       (with-access::JsTypedArray o (cmap bpe __proto__ elements)
-		  (js-object-properties-set! o '())
 		  (js-object-mode-set! o (js-object-default-mode))
 		  (js-object-mode-extensible-set! o #t)
 		  (set! cmap (js-not-a-cmap))
@@ -742,8 +741,7 @@
 ;*    js-properties-names ::JsTypedArray ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-names::vector obj::JsTypedArray enump %this)
-   (tprint "js-properties-names=" (typeof obj) " enump=" enump
-      " " (typeof (js-object-properties obj)))
+   (tprint "js-properties-names=" (typeof obj) " enump=" enump)
    (with-access::JsTypedArray obj (length)
       (let ((len (uint32->fixnum length)))
 	 (append! (map js-integer->jsstring (iota len))
