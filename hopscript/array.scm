@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Feb 12 20:32:30 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 22:16:16 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2817,7 +2817,7 @@
 	 (when (>=fx i 0)
 	    (let ((v (vector-ref vec i)))
 	       (if (js-absent? v)
-		   (loop (-fx i 1) offset)
+		   (loop (-fx i 1) j)
 		   (let ((desc (instantiate::JsValueDescriptor
 				  (name (js-integer-name i))
 				  (value v)
@@ -3116,7 +3116,7 @@
 (define (expandable-array vec::JsArray index::uint32 len::uint32)
    ;; Check is an inline array can be expanded based
    ;; on a simple heuristic.
-   (when (js-array-inlined? vec)
+   (when (or (js-array-inlined? vec) (js-object-mode-holey? vec))
       ;; the vector is inlined, make the real check
       (when (<u32 index (MAX-EXPANDABLE-ARRAY-SIZE))
 	 (cond
@@ -3417,6 +3417,7 @@
 				    (else
 				     ;; slow access
 				     (uninline-array! a %this)
+				     (tprint "unholey.6 " p)
 				     (unholey-array! a %this)
 				     (js-object-mode-plain-set! a #f)
 				     (js-define-own-property%
